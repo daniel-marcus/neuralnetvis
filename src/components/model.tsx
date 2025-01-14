@@ -1,8 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  createContext,
+  useCallback,
+} from "react"
 import { Sequential } from "./sequential"
 import * as tf from "@tensorflow/tfjs"
 import trainData from "./train_data.json"
 import trainLabels from "./train_labels.json"
+
+interface Options {
+  hideLines?: boolean
+}
+
+export const OptionsContext = createContext<Options>({})
 
 export const Model = () => {
   const [input, label, next] = useInputData()
@@ -15,15 +27,19 @@ export const Model = () => {
     }
     loadModel()
   }, [])
-  useKeypressTrainer(input, model, setModel, next, label)
+  const isTraining = useKeypressTrainer(model, input, next, label)
   if (!model) return null
-  return <Sequential model={model} input={input} />
+  return (
+    <OptionsContext.Provider value={{ hideLines: isTraining }}>
+      <Sequential model={model} input={input} />
+    </OptionsContext.Provider>
+  )
 }
 
 function useInputData() {
   const initialRandomIndex = Math.floor(Math.random() * ds.length)
   const [i, setI] = useState(initialRandomIndex)
-  const data = useMemo(() => ds[i], [i])
+  const input = useMemo(() => ds[i], [i])
   const label = useMemo(() => trainLabels[i][0], [i])
   const next = useCallback(
     () => setI((i) => (i < ds.length - 1 ? i + 1 : 0)),
@@ -42,7 +58,7 @@ function useInputData() {
       clearInterval(l)
     }
   }, [next])
-  return [data, label, next] as const
+  return [input, label, next] as const
 }
 
 export const normalize = (data: number[]) => {
@@ -52,10 +68,11 @@ export const normalize = (data: number[]) => {
 
 const ds = trainData.map(normalize)
 
+let shouldInterrupt = false // used to avoid the last next() call on auto-training abort
+
 function useKeypressTrainer(
-  input: number[],
   model: tf.LayersModel | null,
-  setModel: React.Dispatch<React.SetStateAction<tf.LayersModel | null>>,
+  input: number[],
   next: () => void,
   label?: number
 ) {
@@ -66,29 +83,46 @@ function useKeypressTrainer(
       if (e.key >= "0" && e.key <= "9") {
         const pressedNumber = parseInt(e.key)
         await train(model, input, pressedNumber)
-        setModel(model)
         next()
       }
-      if (e.key === "t") setIsAutoTraining((t) => !t)
+      if (e.key === "t")
+        setIsAutoTraining((t) => {
+          if (t) {
+            shouldInterrupt = true
+            return false
+          } else {
+            shouldInterrupt = false
+            return true
+          }
+        })
     }
     window.addEventListener("keydown", onKeydown)
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [input, model, setModel, next])
+  }, [input, model, next])
   useEffect(() => {
     if (!isAutoTraining || !model || typeof label === "undefined") return
     async function autoTrain() {
       if (!model || typeof label === "undefined") return
       await train(model, input, label)
-      setModel(model)
-      next()
+      if (!shouldInterrupt) next()
     }
     autoTrain()
-  }, [model, isAutoTraining, input, next, label, setModel])
+  }, [model, isAutoTraining, input, next, label])
+  return isAutoTraining
 }
 
-async function train(model: tf.LayersModel, input: number[], label: number) {
+let isTraining = false
+
+async function train(
+  model: tf.LayersModel,
+  input: number[],
+  label: number,
+  cb?: () => void
+) {
+  if (isTraining) return
+  isTraining = true
   const X = tf.tensor([input])
   const numClasses = 10
   const y = tf.oneHot([label], numClasses)
@@ -99,11 +133,18 @@ async function train(model: tf.LayersModel, input: number[], label: number) {
       metrics: ["accuracy"], // Track accuracy during training
     })
   }
-  await model.fit(X, y, {
-    epochs: 1,
-    batchSize: 1,
-  })
-  // console.log("Training completed!")
+  await model
+    .fit(X, y, {
+      epochs: 1,
+      batchSize: 1,
+      callbacks: {
+        onEpochEnd: async () => {
+          isTraining = false
+          if (typeof cb === "function") cb()
+        },
+      },
+    })
+    .catch(console.error)
 }
 
 function isModelCompiled(model: tf.LayersModel) {
