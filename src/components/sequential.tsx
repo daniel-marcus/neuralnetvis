@@ -102,7 +102,7 @@ function getGridYZ(
   total: number,
   type: LayerType
 ): [number, number] {
-  const NEURON_SPACING = type === "input" ? 1.1 : 2
+  const NEURON_SPACING = type === "input" ? 0.7 : 1.8
   const gridSize = Math.ceil(Math.sqrt(total))
   const offsetY = (gridSize - 1) * NEURON_SPACING * 0.5
   const offsetZ = (gridSize - 1) * NEURON_SPACING * -0.5
