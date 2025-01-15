@@ -22,11 +22,11 @@ export const TrainingLabelContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
   const [input, label, next] = useInputData()
-  const [model, isTraining] = useModel(input, label, next)
-  useKeypressTrainer(model, input, next)
+  const [model, hideLines] = useModel(input, label, next)
+  useManualTraining(model, input, next)
   if (!model) return null
   return (
-    <OptionsContext.Provider value={{ hideLines: isTraining }}>
+    <OptionsContext.Provider value={{ hideLines }}>
       <TrainingLabelContext.Provider value={label}>
         <Sequential model={model} input={input} />
       </TrainingLabelContext.Provider>
@@ -56,15 +56,8 @@ let epochCount = 0
 
 function useModel(input: number[], label: number, next: () => void) {
   const [isTraining, setIsTraining] = useState(false)
-
-  const config = useControls({
-    layer1: defaultUnitConfig,
-    layer2: { ...defaultUnitConfig, disabled: true },
-    layer3: { ...defaultUnitConfig, disabled: true },
-  }) as Record<string, number>
-
-  useControls({
-    "start/stop training": button(() => {
+  const toggleTraining = useCallback(
+    () =>
       setIsTraining((t) => {
         if (t) {
           shouldInterrupt = true
@@ -73,9 +66,35 @@ function useModel(input: number[], label: number, next: () => void) {
           shouldInterrupt = false
           return true
         }
-      })
-    }),
-  })
+      }),
+    []
+  )
+  useEffect(() => {
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === "t") toggleTraining()
+    }
+    window.addEventListener("keydown", onKeydown)
+    return () => {
+      window.removeEventListener("keydown", onKeydown)
+    }
+  }, [toggleTraining])
+
+  const config = useControls("layers and units", {
+    layer1: defaultUnitConfig,
+    layer2: { ...defaultUnitConfig, disabled: true },
+    layer3: { ...defaultUnitConfig, disabled: true },
+  }) as Record<string, number>
+
+  const hideLinesDuringTraining = true
+
+  useControls(
+    {
+      [`${isTraining ? "Stop" : "Start"} training`]: button(() =>
+        toggleTraining()
+      ),
+    },
+    [isTraining]
+  )
 
   const setStatusText = useContext(StatusTextContext)
 
@@ -101,18 +120,21 @@ Params: ${totalParamas.toLocaleString("en-US")}`
     async function autoTrain() {
       if (!model || typeof label === "undefined") return
       const cb: TrainCallback = (_, loss, acc) => {
-        epochCount++
-        setStatusText(`Training... Epoch ${epochCount}<br/>
+        if (!shouldInterrupt)
+          setStatusText(`Training ... Epoch ${epochCount}<br/>
 Loss: ${loss ?? "N/A"}<br/>
 Acc: ${acc ?? "N/A"}`)
       }
+      epochCount++
       await train(model, input, label, cb)
       if (!shouldInterrupt) next()
     }
     autoTrain()
   }, [model, isTraining, input, next, label, setStatusText])
 
-  return [model, isTraining, setIsTraining] as const
+  const hideLines = isTraining && hideLinesDuringTraining
+
+  return [model, hideLines] as const
 }
 
 function createModel(hiddenLayerUnits = [128, 64]) {
@@ -158,7 +180,7 @@ export const normalize = (data: number[] | unknown) => {
 
 const ds = trainData.map(normalize)
 
-function useKeypressTrainer(
+function useManualTraining(
   model: tf.LayersModel | null,
   input: number[],
   next: () => void
