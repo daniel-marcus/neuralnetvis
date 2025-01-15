@@ -17,7 +17,18 @@ interface Options {
 export const OptionsContext = createContext<Options>({})
 
 export const Model = () => {
+  const model = useModelLoader()
   const [input, label, next] = useInputData()
+  const isTraining = useKeypressTrainer(model, input, next, label)
+  if (!model) return null
+  return (
+    <OptionsContext.Provider value={{ hideLines: isTraining }}>
+      <Sequential model={model} input={input} />
+    </OptionsContext.Provider>
+  )
+}
+
+function useModelLoader() {
   const [model, setModel] = useState<tf.LayersModel | null>(null)
   useEffect(() => {
     async function loadModel() {
@@ -27,13 +38,7 @@ export const Model = () => {
     }
     loadModel()
   }, [])
-  const isTraining = useKeypressTrainer(model, input, next, label)
-  if (!model) return null
-  return (
-    <OptionsContext.Provider value={{ hideLines: isTraining }}>
-      <Sequential model={model} input={input} />
-    </OptionsContext.Provider>
-  )
+  return model
 }
 
 function useInputData() {

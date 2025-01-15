@@ -30,9 +30,11 @@ export const Dense = ({
       {Array.from({ length: units }).map((_, i) => {
         const position = positions?.[i]
         const neuronWeights = weights?.map((w) => w[i])
+        if (!position) return null
         return (
           <Neuron
             key={i}
+            index={i}
             position={position}
             prevLayer={prevLayer}
             type={type}

@@ -1,23 +1,24 @@
 import * as THREE from "three"
 import React, { useContext, useState } from "react"
-import { ThreeElements } from "@react-three/fiber"
 import { Layer, LayerType } from "./sequential"
 import { Connection } from "./connection"
 import { OptionsContext } from "./model"
+import { Text } from "@react-three/drei"
 
 const LINE_THRESHOLD = 0.7
 
-export function Neuron(
-  props: ThreeElements["mesh"] & {
-    type?: LayerType
-    prevLayer?: Layer
-    activation?: number
-    normalizedActivation?: number
-    weights?: number[]
-    bias?: number
-  }
-) {
+export function Neuron(props: {
+  type?: LayerType
+  index: number
+  position: [number, number, number]
+  prevLayer?: Layer
+  activation?: number
+  normalizedActivation?: number
+  weights?: number[]
+  bias?: number
+}) {
   const {
+    index,
     position,
     type = "hidden",
     prevLayer,
@@ -42,6 +43,7 @@ export function Neuron(
       ? "rgb(12, 12, 12)"
       : "#2f74c0"
   const { hideLines } = useContext(OptionsContext)
+  const [x, y, z] = position
   return (
     <group>
       <mesh
@@ -80,6 +82,18 @@ export function Neuron(
             )
           })}
         </group>
+      )}
+      {type === "output" && position && (
+        <Text
+          position={[x, y + 3, z]}
+          fontSize={4}
+          color={color}
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, -Math.PI / 2, 0]}
+        >
+          {index}
+        </Text>
       )}
     </group>
   )
