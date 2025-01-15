@@ -10,6 +10,8 @@ import { Sequential } from "./sequential"
 import * as tf from "@tensorflow/tfjs"
 import trainData from "@/data/train_data.json"
 import trainLabels from "@/data/train_labels.json"
+import testData from "@/data/test_data.json"
+import testLabels from "@/data/test_labels.json"
 import { button, useControls } from "leva"
 import { StatusTextContext } from "./app"
 
@@ -51,21 +53,15 @@ const defaultUnitConfig: SliderInput = {
   optional: true,
 }
 
-let shouldInterrupt = false // used to avoid the last next() call on training stop
-let epochCount = 0
+let shouldInterrupt = false
 
 function useModel(i: number, next: (step?: number) => void) {
   const [isTraining, setIsTraining] = useState(false)
   const toggleTraining = useCallback(
     () =>
       setIsTraining((t) => {
-        if (t) {
-          shouldInterrupt = true
-          return false
-        } else {
-          shouldInterrupt = false
-          return true
-        }
+        shouldInterrupt = t
+        return !t
       }),
     []
   )
@@ -80,16 +76,22 @@ function useModel(i: number, next: (step?: number) => void) {
   }, [toggleTraining])
 
   const config = useControls("layers and units", {
-    layer1: defaultUnitConfig,
+    layer1: { ...defaultUnitConfig, value: 64 },
     layer2: { ...defaultUnitConfig, disabled: true },
     layer3: { ...defaultUnitConfig, disabled: true },
   }) as Record<string, number>
 
   const hideLinesDuringTraining = true // could be control
 
-  const { batchSize } = useControls({
-    batchSize: { value: 1, min: 1, max: 32, step: 1 },
-  })
+  const { sampleSize, batchSize, epochs, silentTraining } = useControls(
+    "training settings",
+    {
+      sampleSize: { value: 2000, min: 1, max: ds.length, step: 100 },
+      batchSize: { value: 32, min: 1, max: 32, step: 1 },
+      epochs: { value: 2, min: 1, max: 100, step: 1 },
+      silentTraining: false,
+    }
+  )
 
   useControls(
     {
@@ -104,7 +106,6 @@ function useModel(i: number, next: (step?: number) => void) {
 
   const model = useMemo(() => {
     setIsTraining(false)
-    epochCount = 0
     const layerUnits = Object.keys(config)
       .map((key) => config[key] as number)
       .filter((l) => l)
@@ -121,32 +122,55 @@ Params: ${totalParamas.toLocaleString("en-US")}`
 
   useEffect(() => {
     if (!isTraining || !model) return
-    const inputs = getBatch(ds, batchSize, i)
-    const labels = getBatch(trainLabels, batchSize, i).map((l) => l[0])
-    async function autoTrain() {
+    const i = 0 // TODO: match with current i?
+    const inputs = getSubset(ds, sampleSize, i)
+    const labels = getSubset(trainLabels, sampleSize, i).map((l) => l[0])
+    async function startTraining() {
       if (!model) return
-      console.log(i)
-      const cb: TrainCallback = (_, loss, acc) => {
-        if (!shouldInterrupt)
-          setStatusText(`Training ... Epoch ${epochCount}<br/>
-Loss: ${loss ?? "N/A"}<br/>
-Acc: ${acc ?? "N/A"}`)
+      console.log("Training started", i)
+      const callbacks: tf.ModelFitArgs["callbacks"] = {
+        onBatchEnd: (batchIndex) => {
+          const totalBatches = Math.ceil(sampleSize / batchSize)
+          setStatusText(`Training batch ${batchIndex + 1}/${totalBatches}`)
+          if (shouldInterrupt) {
+            model.stopTraining = true
+            return
+          }
+          if (!silentTraining) next(batchSize)
+        },
+        onTrainEnd: async () => {
+          setIsTraining(false)
+          const { accuracy, loss } = await getModelEvaluation(model)
+          setStatusText(
+            `Training finished<br/>Loss: ${loss.toFixed(
+              4
+            )}<br/>Accuracy: ${accuracy?.toFixed(4)}`
+          )
+        },
       }
-      epochCount++
-      await train(model, inputs, labels, batchSize, cb)
-      if (!shouldInterrupt) next(batchSize)
+      await train(model, inputs, labels, batchSize, epochs, callbacks)
+      // if (!shouldInterrupt) next(batchSize)
     }
-    autoTrain()
-  }, [model, isTraining, i, next, setStatusText, batchSize])
+    startTraining()
+  }, [
+    model,
+    isTraining,
+    next,
+    setStatusText,
+    sampleSize,
+    batchSize,
+    epochs,
+    silentTraining,
+  ])
 
   const hideLines = isTraining && hideLinesDuringTraining
 
   return [model, hideLines] as const
 }
 
-function getBatch<T>(arr: T[], batchSize: number, startI = 0) {
-  const batch = arr.slice(startI, startI + batchSize)
-  return batch
+function getSubset<T>(arr: T[], size: number, startI = 0) {
+  const subset = arr.slice(startI, startI + size)
+  return subset
 }
 
 function createModel(hiddenLayerUnits = [128, 64]) {
@@ -190,7 +214,20 @@ export const normalize = (data: number[] | unknown) => {
   return data.map((d) => d / max)
 }
 
-const ds = trainData.map(normalize)
+const ds = (trainData as number[][]).map(normalize)
+const dsTest = (testData as number[][]).map(normalize)
+
+async function getModelEvaluation(model: tf.LayersModel) {
+  const X = tf.tensor(dsTest)
+  const y = tf.oneHot(
+    testLabels.map((l) => l[0]),
+    10
+  )
+  const result = await model.evaluate(X, y, { batchSize: 32 })
+  const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
+  const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
+  return { loss, accuracy }
+}
 
 function useManualTraining(
   model: tf.LayersModel | null,
@@ -213,15 +250,16 @@ function useManualTraining(
   }, [input, model, next])
 }
 
-type TrainCallback = (epoch: number, loss?: string, acc?: string) => void
-
 async function train(
   model: tf.LayersModel,
   inputs: number[][],
   labels: number[],
   batchSize = 1,
-  cb?: TrainCallback //  | (() => void)
+  epochs = 1,
+  callbacks?: tf.ModelFitArgs["callbacks"]
 ) {
+  // TODO: interrupt ongoing training if necessary
+
   const X = tf.tensor(inputs)
   const numClasses = 10
   const y = tf.oneHot(labels, numClasses)
@@ -234,15 +272,9 @@ async function train(
   }
   await model
     .fit(X, y, {
-      epochs: 1,
       batchSize,
-      callbacks: {
-        onEpochEnd: (epoch, logs) => {
-          const loss = logs?.loss.toFixed(4)
-          const acc = logs?.acc ? (logs?.acc * 100).toFixed(2) : undefined
-          if (typeof cb === "function") cb(epoch, loss, acc)
-        },
-      },
+      epochs,
+      callbacks,
     })
     .catch(console.error)
 }
