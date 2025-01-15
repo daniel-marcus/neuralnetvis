@@ -31,13 +31,25 @@ export const Model = () => {
 function useModelLoader() {
   const [model, setModel] = useState<tf.LayersModel | null>(null)
   useEffect(() => {
-    async function loadModel() {
+    /* async function loadModel() {
       const _model = await tf.loadLayersModel("/model/model.json")
       console.log("MODEL LOADED", _model)
       setModel(_model)
     }
-    loadModel()
+    loadModel() */
+    const newModel = createModel([64])
+    setModel(newModel)
   }, [])
+  return model
+}
+
+function createModel(hiddenLayerUnits = [128, 64]) {
+  const model = tf.sequential()
+  model.add(tf.layers.inputLayer({ batchInputShape: [null, 784] }))
+  for (const units of hiddenLayerUnits) {
+    model.add(tf.layers.dense({ units, activation: "relu" }))
+  }
+  model.add(tf.layers.dense({ units: 10, activation: "softmax" }))
   return model
 }
 
