@@ -15,6 +15,7 @@ interface Options {
 }
 
 export const OptionsContext = createContext<Options>({})
+export const TrainingLabelContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
   const model = useModelLoader()
@@ -23,7 +24,9 @@ export const Model = () => {
   if (!model) return null
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
-      <Sequential model={model} input={input} />
+      <TrainingLabelContext.Provider value={label}>
+        <Sequential model={model} input={input} />
+      </TrainingLabelContext.Provider>
     </OptionsContext.Provider>
   )
 }

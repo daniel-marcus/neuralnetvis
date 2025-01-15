@@ -1,7 +1,7 @@
 import { useContext, useState, ReactElement } from "react"
 import { Layer, LayerType } from "./sequential"
 import { Connection } from "./connection"
-import { OptionsContext } from "./model"
+import { OptionsContext, TrainingLabelContext } from "./model"
 import { Text } from "@react-three/drei"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
@@ -31,17 +31,10 @@ export function Neuron(props: {
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   const geometry = geometryMap[type]
-  const color =
-    normalizedActivation !== undefined
-      ? `rgb(${Math.ceil(normalizedActivation * 255)}, 20, 100)`
-      : hovered
-      ? "hotpink"
-      : active
-      ? "#1f4f80"
-      : type === "input"
-      ? "rgb(12, 12, 12)"
-      : "#2f74c0"
+  const value = normalizedActivation ?? 0
+  const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
   const { hideLines } = useContext(OptionsContext)
+  const trainingLabel = useContext(TrainingLabelContext)
   const [x, y, z] = position
   return (
     <group>
@@ -93,6 +86,20 @@ export function Neuron(props: {
           {index}
         </Text>
       )}
+      {type === "output" &&
+        typeof trainingLabel === "number" &&
+        trainingLabel === index && (
+          <Text
+            position={[x, y + 6, z]}
+            fontSize={2}
+            color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
+            anchorX="center"
+            anchorY="middle"
+            rotation={[0, -Math.PI / 2, 0]}
+          >
+            .
+          </Text>
+        )}
     </group>
   )
 }
