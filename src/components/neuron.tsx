@@ -1,8 +1,9 @@
-import { useContext, useState, ReactElement } from "react"
+import { useContext, useState, ReactElement, useEffect } from "react"
 import { Layer, LayerType } from "./sequential"
 import { Connection } from "./connection"
 import { OptionsContext, TrainingLabelContext } from "./model"
 import { Text } from "@react-three/drei"
+import { StatusTextContext } from "./app"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
 const LINE_WEIGHT_THRESHOLD = 0.1
@@ -33,9 +34,10 @@ export function Neuron(props: {
   const geometry = geometryMap[type]
   const value = normalizedActivation ?? 0
   const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
+  const [x, y, z] = position
   const { hideLines } = useContext(OptionsContext)
   const trainingLabel = useContext(TrainingLabelContext)
-  const [x, y, z] = position
+  useStatusText(hovered, index, activation, bias, weights, prevLayer)
   return (
     <group>
       <mesh
@@ -108,4 +110,38 @@ const geometryMap: Record<LayerType, ReactElement> = {
   input: <boxGeometry args={[0.6, 0.6, 0.6]} />,
   hidden: <sphereGeometry args={[0.6, 32, 32]} />,
   output: <boxGeometry args={[1.8, 1.8, 1.8]} />,
+}
+
+function useStatusText(
+  hovered: boolean,
+  index: number,
+  activation: number | undefined,
+  bias: number | undefined,
+  weights: number[] | undefined,
+  prevLayer: Layer | undefined
+) {
+  const setStatusText = useContext(StatusTextContext)
+  const layerIndex = (prevLayer?.props.index ?? -1) + 1
+  useEffect(() => {
+    if (!hovered) return
+    const weightObjects = weights?.map((w, i) => ({ w, i }))
+    const strongestWeights = weightObjects
+      ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
+      .toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
+      .slice(0, 5)
+    const weightsText = strongestWeights?.length
+      ? `<br/>Top weights:<br/>${strongestWeights
+          .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w})`)
+          .join("<br/>")}`
+      : ""
+    setStatusText(
+      `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
+Activation: ${activation}<br/>
+Bias: ${bias}<br/>
+${weightsText}`
+    )
+    return () => {
+      setStatusText("")
+    }
+  }, [hovered, index, activation, bias, setStatusText, layerIndex, weights])
 }

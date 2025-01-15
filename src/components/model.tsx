@@ -40,7 +40,7 @@ function useModelLoader() {
       setModel(_model)
     }
     loadModel() */
-    const newModel = createModel([64])
+    const newModel = createModel([])
     setModel(newModel)
   }, [])
   return model
