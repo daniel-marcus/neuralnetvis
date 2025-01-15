@@ -123,25 +123,26 @@ function useStatusText(
   const setStatusText = useContext(StatusTextContext)
   const layerIndex = (prevLayer?.props.index ?? -1) + 1
   useEffect(() => {
-    if (!hovered) return
-    const weightObjects = weights?.map((w, i) => ({ w, i }))
-    const strongestWeights = weightObjects
-      ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
-      .toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
-      .slice(0, 5)
-    const weightsText = strongestWeights?.length
-      ? `<br/>Top weights:<br/>${strongestWeights
-          .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w})`)
-          .join("<br/>")}`
-      : ""
-    setStatusText(
-      `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
+    if (hovered) {
+      const weightObjects = weights?.map((w, i) => ({ w, i }))
+      const strongestWeights = weightObjects
+        ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
+        .toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
+        .slice(0, 5)
+      const weightsText = strongestWeights?.length
+        ? `<br/>Top weights:<br/>${strongestWeights
+            .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w})`)
+            .join("<br/>")}`
+        : ""
+      setStatusText(
+        `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
 Activation: ${activation}<br/>
 Bias: ${bias}<br/>
 ${weightsText}`
-    )
-    return () => {
-      setStatusText("")
+      )
+      return () => {
+        setStatusText("")
+      }
     }
   }, [hovered, index, activation, bias, setStatusText, layerIndex, weights])
 }

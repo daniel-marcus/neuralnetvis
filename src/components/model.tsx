@@ -4,11 +4,14 @@ import React, {
   useState,
   createContext,
   useCallback,
+  useContext,
 } from "react"
 import { Sequential } from "./sequential"
 import * as tf from "@tensorflow/tfjs"
 import trainData from "@/data/train_data.json"
 import trainLabels from "@/data/train_labels.json"
+import { button, useControls } from "leva"
+import { StatusTextContext } from "./app"
 
 interface Options {
   hideLines?: boolean
@@ -18,9 +21,9 @@ export const OptionsContext = createContext<Options>({})
 export const TrainingLabelContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
-  const model = useModelLoader()
   const [input, label, next] = useInputData()
-  const isTraining = useKeypressTrainer(model, input, next, label)
+  const [model, isTraining] = useModel(input, label, next)
+  useKeypressTrainer(model, input, next)
   if (!model) return null
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
@@ -31,19 +34,85 @@ export const Model = () => {
   )
 }
 
-function useModelLoader() {
-  const [model, setModel] = useState<tf.LayersModel | null>(null)
+interface SliderInput {
+  value: number
+  min: number
+  max: number
+  step: number
+  optional?: boolean
+  disabled?: boolean
+}
+
+const defaultUnitConfig: SliderInput = {
+  value: 32,
+  min: 16,
+  max: 256,
+  step: 16,
+  optional: true,
+}
+
+let shouldInterrupt = false // used to avoid the last next() call on training stop
+let epochCount = 0
+
+function useModel(input: number[], label: number, next: () => void) {
+  const [isTraining, setIsTraining] = useState(false)
+
+  const config = useControls({
+    layer1: defaultUnitConfig,
+    layer2: { ...defaultUnitConfig, disabled: true },
+    layer3: { ...defaultUnitConfig, disabled: true },
+  }) as Record<string, number>
+
+  useControls({
+    "start/stop training": button(() => {
+      setIsTraining((t) => {
+        if (t) {
+          shouldInterrupt = true
+          return false
+        } else {
+          shouldInterrupt = false
+          return true
+        }
+      })
+    }),
+  })
+
+  const setStatusText = useContext(StatusTextContext)
+
+  const model = useMemo(() => {
+    setIsTraining(false)
+    epochCount = 0
+    const layerUnits = Object.keys(config)
+      .map((key) => config[key] as number)
+      .filter((l) => l)
+    const _model = createModel(layerUnits)
+    const totalParamas = _model.countParams()
+    const text = `Sequential Model created<br/>
+Input (784) | ${layerUnits
+      .map((u) => `Dense (${u})`)
+      .join(" | ")} | Output (10)<br/>
+Params: ${totalParamas.toLocaleString("en-US")}`
+    setStatusText(text)
+    return _model
+  }, [config, setStatusText])
+
   useEffect(() => {
-    /* async function loadModel() {
-      const _model = await tf.loadLayersModel("/model/model.json")
-      console.log("MODEL LOADED", _model)
-      setModel(_model)
+    if (!isTraining || !model || typeof label === "undefined") return
+    async function autoTrain() {
+      if (!model || typeof label === "undefined") return
+      const cb: TrainCallback = (_, loss, acc) => {
+        epochCount++
+        setStatusText(`Training... Epoch ${epochCount}<br/>
+Loss: ${loss ?? "N/A"}<br/>
+Acc: ${acc ?? "N/A"}`)
+      }
+      await train(model, input, label, cb)
+      if (!shouldInterrupt) next()
     }
-    loadModel() */
-    const newModel = createModel([])
-    setModel(newModel)
-  }, [])
-  return model
+    autoTrain()
+  }, [model, isTraining, input, next, label, setStatusText])
+
+  return [model, isTraining, setIsTraining] as const
 }
 
 function createModel(hiddenLayerUnits = [128, 64]) {
@@ -89,15 +158,11 @@ export const normalize = (data: number[] | unknown) => {
 
 const ds = trainData.map(normalize)
 
-let shouldInterrupt = false // used to avoid the last next() call on auto-training abort
-
 function useKeypressTrainer(
   model: tf.LayersModel | null,
   input: number[],
-  next: () => void,
-  label?: number
+  next: () => void
 ) {
-  const [isAutoTraining, setIsAutoTraining] = useState(false)
   useEffect(() => {
     if (!model) return
     const onKeydown = async (e: KeyboardEvent) => {
@@ -106,44 +171,22 @@ function useKeypressTrainer(
         await train(model, input, pressedNumber)
         next()
       }
-      if (e.key === "t")
-        setIsAutoTraining((t) => {
-          if (t) {
-            shouldInterrupt = true
-            return false
-          } else {
-            shouldInterrupt = false
-            return true
-          }
-        })
     }
     window.addEventListener("keydown", onKeydown)
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
   }, [input, model, next])
-  useEffect(() => {
-    if (!isAutoTraining || !model || typeof label === "undefined") return
-    async function autoTrain() {
-      if (!model || typeof label === "undefined") return
-      await train(model, input, label)
-      if (!shouldInterrupt) next()
-    }
-    autoTrain()
-  }, [model, isAutoTraining, input, next, label])
-  return isAutoTraining
 }
 
-let isTraining = false
+type TrainCallback = (epoch: number, loss?: string, acc?: string) => void
 
 async function train(
   model: tf.LayersModel,
   input: number[],
   label: number,
-  cb?: () => void
+  cb?: TrainCallback //  | (() => void)
 ) {
-  if (isTraining) return
-  isTraining = true
   const X = tf.tensor([input])
   const numClasses = 10
   const y = tf.oneHot([label], numClasses)
@@ -159,9 +202,10 @@ async function train(
       epochs: 1,
       batchSize: 1,
       callbacks: {
-        onEpochEnd: async () => {
-          isTraining = false
-          if (typeof cb === "function") cb()
+        onEpochEnd: (epoch, logs) => {
+          const loss = logs?.loss.toFixed(4)
+          const acc = logs?.acc ? (logs?.acc * 100).toFixed(2) : undefined
+          if (typeof cb === "function") cb(epoch, loss, acc)
         },
       },
     })

@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import { Model } from "./model"
 import React, { createContext, useState } from "react"
+import { Leva } from "leva"
 
 type StatusTextSetter = React.Dispatch<React.SetStateAction<string>>
 export const StatusTextContext = createContext<StatusTextSetter>(null!)
@@ -34,6 +35,7 @@ export const App = () => {
           className="fixed bottom-0 right-0 text-right text-sm p-4 text-white select-none max-w-[50%] overflow-auto"
           dangerouslySetInnerHTML={{ __html: statusText }}
         ></div>
+        <Leva />
       </div>
     </StatusTextContext.Provider>
   )
