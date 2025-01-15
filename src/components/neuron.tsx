@@ -1,11 +1,11 @@
-import * as THREE from "three"
-import React, { useContext, useState } from "react"
+import { useContext, useState, ReactElement } from "react"
 import { Layer, LayerType } from "./sequential"
 import { Connection } from "./connection"
 import { OptionsContext } from "./model"
 import { Text } from "@react-three/drei"
 
-const LINE_THRESHOLD = 0.7
+const LINE_ACTIVATION_THRESHOLD = 0.5
+const LINE_WEIGHT_THRESHOLD = 0.1
 
 export function Neuron(props: {
   type?: LayerType
@@ -31,7 +31,6 @@ export function Neuron(props: {
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   const geometry = geometryMap[type]
-  // TODO: normalizedValue
   const color =
     normalizedActivation !== undefined
       ? `rgb(${Math.ceil(normalizedActivation * 255)}, 20, 100)`
@@ -61,23 +60,22 @@ export function Neuron(props: {
       {!!prevLayer && !hideLines && (
         <group>
           {prevLayer.props.positions?.map((prevPos, j) => {
-            const visible =
-              (hovered ||
-                active ||
-                Number(normalizedActivation) >= LINE_THRESHOLD) &&
-              prevLayer.props.input &&
-              prevLayer.props.input[j] >= LINE_THRESHOLD
-            if (!visible) return null
+            if (
+              !hovered &&
+              !active &&
+              Number(normalizedActivation) < LINE_ACTIVATION_THRESHOLD
+            )
+              return null
+            const weight = weights?.[j] ?? 0
+            const input = prevLayer.props.activations?.[j] ?? 0
+            if (Math.abs(weight) < LINE_WEIGHT_THRESHOLD) return null
             return (
               <Connection
                 key={j}
-                start={new THREE.Vector3(...prevPos)}
-                end={
-                  new THREE.Vector3(...(position as [number, number, number]))
-                }
-                weight={weights?.[j]}
-                input={prevLayer.props.input?.[j]}
-                bias={bias}
+                start={prevPos}
+                end={position as [number, number, number]}
+                weight={weight}
+                input={input}
               />
             )
           })}
@@ -99,7 +97,7 @@ export function Neuron(props: {
   )
 }
 
-const geometryMap: Record<LayerType, React.ReactElement> = {
+const geometryMap: Record<LayerType, ReactElement> = {
   input: <boxGeometry args={[0.6, 0.6, 0.6]} />,
   hidden: <sphereGeometry args={[0.6, 32, 32]} />,
   output: <boxGeometry args={[1.8, 1.8, 1.8]} />,

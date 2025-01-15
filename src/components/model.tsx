@@ -7,8 +7,8 @@ import React, {
 } from "react"
 import { Sequential } from "./sequential"
 import * as tf from "@tensorflow/tfjs"
-import trainData from "./train_data.json"
-import trainLabels from "./train_labels.json"
+import trainData from "@/data/train_data.json"
+import trainLabels from "@/data/train_labels.json"
 
 interface Options {
   hideLines?: boolean
@@ -78,7 +78,8 @@ function useInputData() {
   return [input, label, next] as const
 }
 
-export const normalize = (data: number[]) => {
+export const normalize = (data: number[] | unknown) => {
+  if (!Array.isArray(data)) return [] as number[]
   const max = Math.max(...data)
   return data.map((d) => d / max)
 }

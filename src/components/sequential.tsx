@@ -1,6 +1,7 @@
 import React, { ReactElement, createContext, useMemo } from "react"
 import { Dense, DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
+import { normalize } from "./model"
 
 export type Layer = ReactElement<DenseProps>
 export type LayerType = "input" | "output" | "hidden"
@@ -17,13 +18,19 @@ export const Sequential = ({ model, input }: SequentialProps) => {
   const activations = useActivations(model, input)
   const layers = model.layers.map((l, i) => {
     const units = (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
+    const type = getLayerType(model.layers.length, i)
+    const layerActivations = type === "input" ? input : activations?.[i]?.[0]
+    const normalizedActivations =
+      type === "output" ? layerActivations : normalize(layerActivations)
     return (
       <Dense
         key={i}
-        units={units}
         index={i}
+        type={type}
+        units={units}
         positions={getNeuronPositions(i, model.layers.length, units)}
-        input={i === 0 ? input : activations?.[i]?.[0]}
+        activations={layerActivations}
+        normalizedActivations={normalizedActivations}
         weights={getWeights(l)}
         biases={getBiases(l)}
       />
