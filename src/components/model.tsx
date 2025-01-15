@@ -21,8 +21,8 @@ export const OptionsContext = createContext<Options>({})
 export const TrainingLabelContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
-  const [input, label, next] = useInputData()
-  const [model, hideLines] = useModel(input, label, next)
+  const [input, label, next, i] = useInputData()
+  const [model, hideLines] = useModel(i, next)
   useManualTraining(model, input, next)
   if (!model) return null
   return (
@@ -54,7 +54,7 @@ const defaultUnitConfig: SliderInput = {
 let shouldInterrupt = false // used to avoid the last next() call on training stop
 let epochCount = 0
 
-function useModel(input: number[], label: number, next: () => void) {
+function useModel(i: number, next: (step?: number) => void) {
   const [isTraining, setIsTraining] = useState(false)
   const toggleTraining = useCallback(
     () =>
@@ -85,7 +85,11 @@ function useModel(input: number[], label: number, next: () => void) {
     layer3: { ...defaultUnitConfig, disabled: true },
   }) as Record<string, number>
 
-  const hideLinesDuringTraining = true
+  const hideLinesDuringTraining = true // could be control
+
+  const { batchSize } = useControls({
+    batchSize: { value: 1, min: 1, max: 32, step: 1 },
+  })
 
   useControls(
     {
@@ -116,9 +120,12 @@ Params: ${totalParamas.toLocaleString("en-US")}`
   }, [config, setStatusText])
 
   useEffect(() => {
-    if (!isTraining || !model || typeof label === "undefined") return
+    if (!isTraining || !model) return
+    const inputs = getBatch(ds, batchSize, i)
+    const labels = getBatch(trainLabels, batchSize, i).map((l) => l[0])
     async function autoTrain() {
-      if (!model || typeof label === "undefined") return
+      if (!model) return
+      console.log(i)
       const cb: TrainCallback = (_, loss, acc) => {
         if (!shouldInterrupt)
           setStatusText(`Training ... Epoch ${epochCount}<br/>
@@ -126,15 +133,20 @@ Loss: ${loss ?? "N/A"}<br/>
 Acc: ${acc ?? "N/A"}`)
       }
       epochCount++
-      await train(model, input, label, cb)
-      if (!shouldInterrupt) next()
+      await train(model, inputs, labels, batchSize, cb)
+      if (!shouldInterrupt) next(batchSize)
     }
     autoTrain()
-  }, [model, isTraining, input, next, label, setStatusText])
+  }, [model, isTraining, i, next, setStatusText, batchSize])
 
   const hideLines = isTraining && hideLinesDuringTraining
 
   return [model, hideLines] as const
+}
+
+function getBatch<T>(arr: T[], batchSize: number, startI = 0) {
+  const batch = arr.slice(startI, startI + batchSize)
+  return batch
 }
 
 function createModel(hiddenLayerUnits = [128, 64]) {
@@ -153,7 +165,7 @@ function useInputData() {
   const input = useMemo(() => ds[i], [i])
   const label = useMemo(() => trainLabels[i][0], [i])
   const next = useCallback(
-    () => setI((i) => (i < ds.length - 1 ? i + 1 : 0)),
+    (step = 1) => setI((i) => (i + step < ds.length ? i + step : 0)),
     []
   )
   useEffect(() => {
@@ -169,7 +181,7 @@ function useInputData() {
       clearInterval(l)
     }
   }, [next])
-  return [input, label, next] as const
+  return [input, label, next, i] as const
 }
 
 export const normalize = (data: number[] | unknown) => {
@@ -190,7 +202,7 @@ function useManualTraining(
     const onKeydown = async (e: KeyboardEvent) => {
       if (e.key >= "0" && e.key <= "9") {
         const pressedNumber = parseInt(e.key)
-        await train(model, input, pressedNumber)
+        await train(model, [input], [pressedNumber])
         next()
       }
     }
@@ -205,13 +217,14 @@ type TrainCallback = (epoch: number, loss?: string, acc?: string) => void
 
 async function train(
   model: tf.LayersModel,
-  input: number[],
-  label: number,
+  inputs: number[][],
+  labels: number[],
+  batchSize = 1,
   cb?: TrainCallback //  | (() => void)
 ) {
-  const X = tf.tensor([input])
+  const X = tf.tensor(inputs)
   const numClasses = 10
-  const y = tf.oneHot([label], numClasses)
+  const y = tf.oneHot(labels, numClasses)
   if (!isModelCompiled(model)) {
     model.compile({
       optimizer: "adam", // Adam optimizer
@@ -222,7 +235,7 @@ async function train(
   await model
     .fit(X, y, {
       epochs: 1,
-      batchSize: 1,
+      batchSize,
       callbacks: {
         onEpochEnd: (epoch, logs) => {
           const loss = logs?.loss.toFixed(4)
