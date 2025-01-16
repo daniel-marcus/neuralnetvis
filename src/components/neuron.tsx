@@ -6,7 +6,7 @@ import { Text } from "@react-three/drei"
 import { StatusTextContext } from "./app"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
-const LINE_WEIGHT_THRESHOLD = 0.1
+const LINE_WEIGHT_THRESHOLD = 0.15
 
 export function Neuron(props: {
   type?: LayerType
