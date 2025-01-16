@@ -34,7 +34,6 @@ export function Neuron(props: NeuronProps) {
     ...otherProps
   } = props
   const [hovered, setHover] = useState(false)
-  const [active, setActive] = useState(false)
   const geometry = geometryMap[type]
   const value = normalizedActivation ?? 0
   const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
@@ -49,7 +48,6 @@ export function Neuron(props: NeuronProps) {
         position={position}
         userData={{ activation, bias }}
         scale={1}
-        onClick={() => setActive(!active)}
         onPointerOver={(e) => {
           if (e.buttons) return
           setHover(true)
@@ -64,7 +62,6 @@ export function Neuron(props: NeuronProps) {
           {prevLayer.positions?.map((prevPos, j) => {
             if (
               !hovered &&
-              !active &&
               Number(normalizedActivation) < LINE_ACTIVATION_THRESHOLD
             )
               return null
