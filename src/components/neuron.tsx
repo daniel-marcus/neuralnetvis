@@ -140,7 +140,6 @@ function useHoverStatus(
   const layerIndex = (prevLayer?.index ?? -1) + 1
   useEffect(() => {
     if (hovered) {
-      console.log("R")
       const weightObjects = weights?.map((w, i) => ({ w, i }))
       const strongestWeights = weightObjects
         ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)

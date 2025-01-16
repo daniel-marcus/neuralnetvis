@@ -33,7 +33,7 @@ export function useTraining(
   }, [toggleTraining])
 
   const trainingConfig = useControls("training", {
-    batchSize: { value: 16, min: 1, max: 64, step: 1 },
+    batchSize: { value: 32, min: 1, max: 64, step: 1 },
     epochs: { value: 2, min: 1, max: 50, step: 1 },
     silent: { value: false },
   })
@@ -59,15 +59,21 @@ export function useTraining(
     async function startTraining() {
       if (!model) return
       let startTime = Date.now()
+      let epochCount = 0
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchEnd: (batchIndex) => {
           const totalBatches = Math.ceil(inputs.length / batchSize)
-          setStatusText(`Training batch ${batchIndex + 1}/${totalBatches}`)
+          setStatusText(`Training ...<br/>
+Epoch ${epochCount + 1}/${epochs}<br/>
+Batch ${batchIndex + 1}/${totalBatches}`)
           if (shouldInterrupt) {
             model.stopTraining = true
             return
           }
           if (!silent) next(batchSize)
+        },
+        onEpochBegin: (epoch) => {
+          epochCount = epoch
         },
         onTrainBegin: () => {
           startTime = Date.now()

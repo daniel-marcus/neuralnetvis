@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useCallback } from "react"
 import { useControls } from "leva"
 
 import mnistTrainData from "@/data/mnist/train_data.json"
@@ -84,13 +84,34 @@ export function useDatasets() {
 
   // TODO: reset i on ds change
   const initialRandomIndex = Math.floor(Math.random() * ds.trainData.length)
-  const [i, setI] = useState(initialRandomIndex)
+  const [{ i }, set, get] = useControls(
+    "data",
+    () => ({
+      i: {
+        label: "currIndex",
+        value: initialRandomIndex,
+        min: 0,
+        max: ds.trainData.length - 1,
+        step: 1,
+      },
+    }),
+    [ds]
+  )
+  const setI = useCallback(
+    (arg: number | ((prev: number) => number)) => {
+      const currI = get("i")
+      const newI = typeof arg === "function" ? arg(currI) : arg
+      set({ i: newI })
+    },
+    [set, get]
+  )
+
   const input = useMemo(() => ds.trainData[i], [i, ds])
   const label = useMemo(() => ds.trainLabels[i], [i, ds])
 
   const next = useCallback(
     (step = 1) => setI((i) => (i + step < ds.trainData.length ? i + step : 0)),
-    [ds]
+    [ds, setI]
   )
   useEffect(() => {
     const prev = () => setI((i) => (i > 0 ? i - 1 : ds.trainData.length - 1))
@@ -104,7 +125,7 @@ export function useDatasets() {
       window.removeEventListener("keydown", onKeydown)
       clearInterval(l)
     }
-  }, [next, ds])
+  }, [next, ds, setI])
   return [input, label, next, ds] as const
 }
 
