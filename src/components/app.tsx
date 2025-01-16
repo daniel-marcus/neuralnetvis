@@ -3,29 +3,20 @@
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import { Model } from "./model"
-import React, { createContext, useState } from "react"
 import { Leva } from "leva"
-
-type StatusTextSetter = React.Dispatch<React.SetStateAction<string>>
-export const StatusTextContext = createContext<StatusTextSetter>(null!)
+import { StatusText } from "./status-text"
 
 export const App = () => {
-  const [statusText, setStatusText] = useState("")
   return (
-    <StatusTextContext.Provider value={setStatusText}>
-      <div className="w-screen h-screen bg-[#110000]">
-        <Canvas>
-          <Lights />
-          <OrbitControls />
-          <Model />
-        </Canvas>
-        <div
-          className="fixed bottom-0 right-0 text-right text-sm p-4 text-white select-none max-w-[50%] overflow-auto"
-          dangerouslySetInnerHTML={{ __html: statusText }}
-        ></div>
-        <Leva />
-      </div>
-    </StatusTextContext.Provider>
+    <div className="w-screen h-screen bg-[#110000]">
+      <Canvas>
+        <Lights />
+        <OrbitControls />
+        <Model />
+      </Canvas>
+      <Leva />
+      <StatusText />
+    </div>
   )
 }
 

@@ -1,24 +1,26 @@
-import { useContext, useState, ReactElement, useEffect } from "react"
-import { Layer, LayerType, OUTPUT_ORIENT } from "./sequential"
+import React, { useState, ReactElement, useEffect, useContext } from "react"
+import { LayerProps, LayerType, OUTPUT_ORIENT } from "./sequential"
 import { Connection } from "./connection"
-import { OptionsContext, TrainingLabelContext } from "./model"
 import { Text } from "@react-three/drei"
-import { StatusTextContext } from "./app"
+import { useStatusText } from "./status-text"
+import { OptionsContext, TrainingLabelContext } from "./model"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
-const LINE_WEIGHT_THRESHOLD = 0.15
+const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
 
-export function Neuron(props: {
+interface NeuronProps {
   type?: LayerType
   index: number
   position: [number, number, number]
-  prevLayer?: Layer
+  prevLayer?: LayerProps
   activation?: number
   normalizedActivation?: number
   weights?: number[]
   bias?: number
   label?: string
-}) {
+}
+
+export function Neuron(props: NeuronProps) {
   const {
     index,
     position,
@@ -39,7 +41,7 @@ export function Neuron(props: {
   const [x, y, z] = position
   const { hideLines } = useContext(OptionsContext)
   const trainingLabel = useContext(TrainingLabelContext)
-  useStatusText(hovered, index, activation, bias, weights, prevLayer)
+  useHoverStatus(hovered, index, activation, bias, weights, prevLayer)
   return (
     <group>
       <mesh
@@ -48,7 +50,10 @@ export function Neuron(props: {
         userData={{ activation, bias }}
         scale={1}
         onClick={() => setActive(!active)}
-        onPointerOver={() => setHover(true)}
+        onPointerOver={(e) => {
+          if (e.buttons) return
+          setHover(true)
+        }}
         onPointerOut={() => setHover(false)}
       >
         {geometry}
@@ -56,7 +61,7 @@ export function Neuron(props: {
       </mesh>
       {!!prevLayer && !hideLines && (
         <group>
-          {prevLayer.props.positions?.map((prevPos, j) => {
+          {prevLayer.positions?.map((prevPos, j) => {
             if (
               !hovered &&
               !active &&
@@ -64,7 +69,7 @@ export function Neuron(props: {
             )
               return null
             const weight = weights?.[j] ?? 0
-            const input = prevLayer.props.activations?.[j] ?? 0
+            const input = prevLayer.activations?.[j] ?? 0
             if (Math.abs(weight) < LINE_WEIGHT_THRESHOLD) return null
             return (
               <Connection
@@ -123,18 +128,19 @@ const geometryMap: Record<LayerType, ReactElement> = {
   output: <boxGeometry args={[1.8, 1.8, 1.8]} />,
 }
 
-function useStatusText(
+function useHoverStatus(
   hovered: boolean,
   index: number,
   activation: number | undefined,
   bias: number | undefined,
   weights: number[] | undefined,
-  prevLayer: Layer | undefined
+  prevLayer: LayerProps | undefined
 ) {
-  const setStatusText = useContext(StatusTextContext)
-  const layerIndex = (prevLayer?.props.index ?? -1) + 1
+  const setStatusText = useStatusText((s) => s.setStatusText)
+  const layerIndex = (prevLayer?.index ?? -1) + 1
   useEffect(() => {
     if (hovered) {
+      console.log("R")
       const weightObjects = weights?.map((w, i) => ({ w, i }))
       const strongestWeights = weightObjects
         ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
@@ -155,5 +161,5 @@ ${weightsText}`
         setStatusText("")
       }
     }
-  }, [hovered, index, activation, bias, setStatusText, layerIndex, weights])
+  }, [hovered, index, activation, bias, layerIndex, weights, setStatusText])
 }

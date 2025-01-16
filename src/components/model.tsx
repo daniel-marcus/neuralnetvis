@@ -1,8 +1,8 @@
-import React, { useMemo, createContext, useContext } from "react"
+import React, { useMemo, createContext } from "react"
 import { Sequential } from "./sequential"
 import * as tf from "@tensorflow/tfjs"
 import { useControls } from "leva"
-import { StatusTextContext } from "./app"
+import { useStatusText } from "./status-text"
 import { useTraining } from "@/lib/training"
 import { Dataset, useDatasets } from "@/lib/datasets"
 
@@ -43,7 +43,7 @@ function useModel(ds: Dataset) {
     layer3: { ...defaultUnitConfig, disabled: true },
   }) as Record<string, number>
 
-  const setStatusText = useContext(StatusTextContext)
+  const setStatusText = useStatusText((s) => s.setStatusText)
 
   const model = useMemo(() => {
     // setIsTraining(false)

@@ -1,6 +1,5 @@
-import { useContext } from "react"
 import { Neuron } from "./neuron"
-import { LayerContext, LayerType } from "./sequential"
+import { LayerProps, LayerType } from "./sequential"
 
 export interface DenseProps {
   index?: number
@@ -11,11 +10,11 @@ export interface DenseProps {
   weights?: number[][]
   biases?: number[]
   positions?: [number, number, number][]
+  prevLayer?: LayerProps
   labelNames?: string[]
 }
 
 export const Dense = ({
-  index = 0,
   type,
   units,
   activations,
@@ -24,9 +23,8 @@ export const Dense = ({
   biases,
   positions,
   labelNames,
+  prevLayer,
 }: DenseProps) => {
-  const layers = useContext(LayerContext)
-  const prevLayer = layers.find((l) => l.props.index === index - 1)
   return (
     <group>
       {Array.from({ length: units }).map((_, i) => {

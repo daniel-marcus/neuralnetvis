@@ -1,9 +1,9 @@
-import React, { ReactElement, createContext, useMemo } from "react"
+import React, { useMemo } from "react"
 import { Dense, DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
 import { normalize } from "@/lib/datasets"
 
-export type Layer = ReactElement<DenseProps>
+export type LayerProps = DenseProps
 export type LayerType = "input" | "output" | "hidden"
 
 interface SequentialProps {
@@ -12,36 +12,38 @@ interface SequentialProps {
   labelNames?: string[]
 }
 
-export const ModelContext = createContext<tf.LayersModel>(null!)
-export const LayerContext = createContext([] as Layer[])
-
 export const Sequential = ({ model, input, labelNames }: SequentialProps) => {
   const activations = useActivations(model, input)
-  const layers = model.layers.map((l, i) => {
-    const units = (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
-    const type = getLayerType(model.layers.length, i)
-    const layerActivations = type === "input" ? input : activations?.[i]?.[0]
-    const normalizedActivations =
-      type === "output" ? layerActivations : normalize(layerActivations)
-    return (
-      <Dense
-        key={i}
-        index={i}
-        type={type}
-        units={units}
-        positions={getNeuronPositions(i, model.layers.length, units)}
-        activations={layerActivations}
-        normalizedActivations={normalizedActivations}
-        weights={getWeights(l)}
-        biases={getBiases(l)}
-        labelNames={type === "output" ? labelNames : undefined}
-      />
-    )
-  })
+  const layerProps = useMemo(
+    () =>
+      model.layers.map((l, i) => {
+        const units =
+          (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
+        const type = getLayerType(model.layers.length, i)
+        const layerActivations =
+          type === "input" ? input : activations?.[i]?.[0]
+        const normalizedActivations =
+          type === "output" ? layerActivations : normalize(layerActivations)
+        return {
+          index: i,
+          type,
+          units,
+          activations: layerActivations,
+          normalizedActivations,
+          weights: getWeights(l),
+          biases: getBiases(l),
+          positions: getNeuronPositions(i, model.layers.length, units),
+          labelNames: type === "output" ? labelNames : undefined,
+        }
+      }),
+    [input, activations, model, labelNames]
+  )
   return (
-    <ModelContext.Provider value={model}>
-      <LayerContext.Provider value={layers}>{layers}</LayerContext.Provider>
-    </ModelContext.Provider>
+    <group>
+      {layerProps.map((props, i) => (
+        <Dense key={i} {...props} prevLayer={layerProps[i - 1]} />
+      ))}
+    </group>
   )
 }
 
@@ -56,12 +58,6 @@ function getBiases(layer: tf.layers.Layer) {
 function useActivations(model: tf.LayersModel, input?: number[]) {
   return useMemo(() => {
     if (!model || !input) return []
-    const tensor = tf.tensor([input])
-
-    /* const prediction = model.predict(tensor) as tf.Tensor
-    const result = prediction.arraySync() as number[][]
-    const predictedClass = result[0].indexOf(Math.max(...result[0]))
-    console.log("Predicted class:", predictedClass) */
 
     // Define a model that outputs activations for each layer
     const layerOutputs = model.layers.flatMap((layer) => layer.output)
@@ -71,6 +67,7 @@ function useActivations(model: tf.LayersModel, input?: number[]) {
       outputs: layerOutputs,
     })
 
+    const tensor = tf.tensor([input])
     // Get the activations for each layer
     const _activations = activationModel.predict(tensor) as tf.Tensor<tf.Rank>[]
 

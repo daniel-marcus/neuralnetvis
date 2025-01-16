@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useContext } from "react"
+import { useState, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { StatusTextContext } from "@/components/app"
 import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
+import { useStatusText } from "@/components/status-text"
 
 let shouldInterrupt = false
 
@@ -49,17 +49,16 @@ export function useTraining(
     [isTraining]
   )
 
-  const setStatusText = useContext(StatusTextContext)
+  const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
     if (!isTraining || !model) return
     const { batchSize, epochs, silent } = trainingConfig
-    const i = 0 // TODO: match with current i?
     const inputs = ds.trainData
     const labels = ds.trainLabels
     async function startTraining() {
       if (!model) return
-      console.log("Training started", i)
+      let startTime = Date.now()
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchEnd: (batchIndex) => {
           const totalBatches = Math.ceil(inputs.length / batchSize)
@@ -70,20 +69,33 @@ export function useTraining(
           }
           if (!silent) next(batchSize)
         },
+        onTrainBegin: () => {
+          startTime = Date.now()
+        },
         onTrainEnd: async () => {
+          const endTime = Date.now()
+          const totalTime = (endTime - startTime) / 1000
           setIsTraining(false)
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           setStatusText(
             `Training finished<br/>Loss: ${loss.toFixed(
               4
-            )}<br/>Accuracy: ${accuracy?.toFixed(4)}`
+            )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
           )
         },
       }
       await train(model, inputs, labels, batchSize, epochs, callbacks)
     }
     startTraining()
-  }, [model, isTraining, next, setStatusText, trainingConfig, ds])
+  }, [
+    model,
+    isTraining,
+    setIsTraining,
+    next,
+    setStatusText,
+    trainingConfig,
+    ds,
+  ])
 
   useManualTraining(model, input, next)
 
