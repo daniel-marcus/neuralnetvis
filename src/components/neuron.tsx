@@ -1,5 +1,5 @@
 import { useContext, useState, ReactElement, useEffect } from "react"
-import { Layer, LayerType } from "./sequential"
+import { Layer, LayerType, OUTPUT_ORIENT } from "./sequential"
 import { Connection } from "./connection"
 import { OptionsContext, TrainingLabelContext } from "./model"
 import { Text } from "@react-three/drei"
@@ -17,6 +17,7 @@ export function Neuron(props: {
   normalizedActivation?: number
   weights?: number[]
   bias?: number
+  label?: string
 }) {
   const {
     index,
@@ -27,6 +28,7 @@ export function Neuron(props: {
     normalizedActivation,
     weights,
     bias,
+    label,
     ...otherProps
   } = props
   const [hovered, setHover] = useState(false)
@@ -78,32 +80,41 @@ export function Neuron(props: {
       )}
       {type === "output" && position && (
         <Text
-          position={[x, y + 3, z]}
-          fontSize={4}
+          position={getTextPos(x, y, z)}
+          fontSize={3}
           color={color}
-          anchorX="center"
+          anchorX={OUTPUT_ORIENT === "vertical" ? "left" : "center"}
           anchorY="middle"
           rotation={[0, -Math.PI / 2, 0]}
         >
-          {index}
+          {label ?? index}
         </Text>
       )}
       {type === "output" &&
         typeof trainingLabel === "number" &&
         trainingLabel === index && (
           <Text
-            position={[x, y + 6, z]}
-            fontSize={2}
+            position={getDotPos(x, y, z)}
+            fontSize={3}
             color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
             anchorX="center"
             anchorY="middle"
             rotation={[0, -Math.PI / 2, 0]}
           >
-            .
+            ·
           </Text>
         )}
     </group>
   )
+}
+
+function getTextPos(x: number, y: number, z: number) {
+  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5]
+  else return [x, y + 3, z]
+}
+function getDotPos(x: number, y: number, z: number) {
+  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 2.5]
+  else return [x, y + 5, z]
 }
 
 const geometryMap: Record<LayerType, ReactElement> = {

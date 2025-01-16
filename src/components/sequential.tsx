@@ -9,12 +9,13 @@ export type LayerType = "input" | "output" | "hidden"
 interface SequentialProps {
   model: tf.LayersModel
   input?: number[]
+  labelNames?: string[]
 }
 
 export const ModelContext = createContext<tf.LayersModel>(null!)
 export const LayerContext = createContext([] as Layer[])
 
-export const Sequential = ({ model, input }: SequentialProps) => {
+export const Sequential = ({ model, input, labelNames }: SequentialProps) => {
   const activations = useActivations(model, input)
   const layers = model.layers.map((l, i) => {
     const units = (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
@@ -33,6 +34,7 @@ export const Sequential = ({ model, input }: SequentialProps) => {
         normalizedActivations={normalizedActivations}
         weights={getWeights(l)}
         biases={getBiases(l)}
+        labelNames={type === "output" ? labelNames : undefined}
       />
     )
   })
@@ -81,6 +83,9 @@ function useActivations(model: tf.LayersModel, input?: number[]) {
 
 const LAYER_SPACING = 12
 
+type OutputOrient = "horizontal" | "vertical"
+export const OUTPUT_ORIENT: OutputOrient = "vertical"
+
 export function getNeuronPositions(
   layerIndex: number,
   totalLayers: number,
@@ -92,7 +97,9 @@ export function getNeuronPositions(
   const positions = Array.from({ length: units }).map((_, i) => {
     const x = offsetX
     const [y, z] =
-      type === "output" ? getLineYZ(i, units) : getGridYZ(i, units, type)
+      type === "output"
+        ? getLineYZ(i, units, OUTPUT_ORIENT)
+        : getGridYZ(i, units, type)
     return [x, y, z] as [number, number, number]
   })
   return positions
@@ -118,10 +125,15 @@ function getGridYZ(
   return [y, z] as const
 }
 
-function getLineYZ(i: number, total: number): [number, number] {
+function getLineYZ(
+  i: number,
+  total: number,
+  orient: OutputOrient = "vertical"
+): [number, number] {
   const NEURON_SPACING = 3
-  const offsetZ = (total - 1) * NEURON_SPACING * -0.5
-  const y = 0
-  const z = i * NEURON_SPACING + offsetZ
-  return [y, z] as const
+  const offsetY = (total - 1) * NEURON_SPACING * -0.5
+  const factor = orient === "vertical" ? -1 : 1 // reverse
+  const y = (i * NEURON_SPACING + offsetY) * factor
+  const z = 0
+  return orient === "vertical" ? ([y, z] as const) : ([z, y] as const)
 }

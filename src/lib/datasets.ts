@@ -1,27 +1,53 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { useControls } from "leva"
 
-import trainData from "@/data/mnist/train_data.json"
-import trainLabels from "@/data/mnist/train_labels.json"
-import testData from "@/data/mnist/test_data.json"
-import testLabels from "@/data/mnist/test_labels.json"
+import mnistTrainData from "@/data/mnist/train_data.json"
+import mnistTrainLabels from "@/data/mnist/train_labels.json"
+import mnistTestData from "@/data/mnist/test_data.json"
+import mnistTestLabels from "@/data/mnist/test_labels.json"
+
+import fashionTrainData from "@/data/fashion_mnist/train_data.json"
+import fashionTrainLabels from "@/data/fashion_mnist/train_labels.json"
+import fashionTestData from "@/data/fashion_mnist/test_data.json"
+import fashionTestLabels from "@/data/fashion_mnist/test_labels.json"
 
 // TODO: use only 1 dataset and set training split / sampleSize manually
+// + load data on demand
 export interface Dataset {
   name: string
   trainData: number[][]
   trainLabels: number[]
   testData: number[][]
   testLabels: number[]
+  labelNames?: string[]
 }
 
 const datasets: Dataset[] = [
   {
     name: "mnist",
-    trainData: (trainData as number[][]).map(normalize),
-    trainLabels: trainLabels.map((l) => l[0]), // TODO
-    testData: (testData as number[][]).map(normalize),
-    testLabels: testLabels.map((l) => l[0]), // TODO
+    trainData: (mnistTrainData as number[][]).map(normalize),
+    trainLabels: mnistTrainLabels,
+    testData: (mnistTestData as number[][]).map(normalize),
+    testLabels: mnistTestLabels,
+  },
+  {
+    name: "fashion mnist",
+    trainData: (fashionTrainData as number[][]).map(normalize),
+    trainLabels: fashionTrainLabels,
+    testData: (fashionTestData as number[][]).map(normalize),
+    testLabels: fashionTestLabels,
+    labelNames: [
+      "T-shirt/top",
+      "Trouser",
+      "Pullover",
+      "Dress",
+      "Coat",
+      "Sandal",
+      "Shirt",
+      "Sneaker",
+      "Bag",
+      "Ankle boot",
+    ],
   },
 ]
 
@@ -40,7 +66,7 @@ export function useDatasets() {
       sampleSize: {
         value: 2000,
         min: 1,
-        max: datasets[datasetId].trainData.length,
+        max: datasets[datasetId].trainData.length - 1, // TODO: display values > 10,000
         step: 100,
       },
     },

@@ -11,6 +11,7 @@ export interface DenseProps {
   weights?: number[][]
   biases?: number[]
   positions?: [number, number, number][]
+  labelNames?: string[]
 }
 
 export const Dense = ({
@@ -22,6 +23,7 @@ export const Dense = ({
   weights,
   biases,
   positions,
+  labelNames,
 }: DenseProps) => {
   const layers = useContext(LayerContext)
   const prevLayer = layers.find((l) => l.props.index === index - 1)
@@ -42,6 +44,7 @@ export const Dense = ({
             normalizedActivation={normalizedActivations?.[i]}
             weights={neuronWeights}
             bias={biases?.[i]}
+            label={labelNames?.[i]}
           />
         )
       })}

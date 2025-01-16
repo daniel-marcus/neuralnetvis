@@ -4,8 +4,9 @@ import * as tf from "@tensorflow/tfjs"
 import { useControls } from "leva"
 import { StatusTextContext } from "./app"
 import { useTraining } from "@/lib/training"
-import { useDatasets } from "@/lib/datasets"
+import { Dataset, useDatasets } from "@/lib/datasets"
 
+// TODO: move to app?
 interface Options {
   hideLines?: boolean
 }
@@ -15,13 +16,13 @@ export const TrainingLabelContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
   const [input, label, next, ds] = useDatasets()
-  const model = useModel()
+  const model = useModel(ds)
   const isTraining = useTraining(model, input, next, ds)
   if (!model) return null
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
       <TrainingLabelContext.Provider value={label}>
-        <Sequential model={model} input={input} />
+        <Sequential model={model} input={input} labelNames={ds.labelNames} />
       </TrainingLabelContext.Provider>
     </OptionsContext.Provider>
   )
@@ -35,7 +36,7 @@ const defaultUnitConfig = {
   optional: true,
 }
 
-function useModel() {
+function useModel(ds: Dataset) {
   const config = useControls("model", {
     layer1: { ...defaultUnitConfig, value: 64 },
     layer2: { ...defaultUnitConfig, disabled: true },
@@ -49,23 +50,24 @@ function useModel() {
     const layerUnits = Object.keys(config)
       .map((key) => config[key] as number)
       .filter((l) => l)
-    const _model = createModel(layerUnits)
+    const inputSize = ds.trainData[0].length
+    const _model = createModel(inputSize, layerUnits)
     const totalParamas = _model.countParams()
     const text = `Sequential Model created<br/>
-Input (784) | ${layerUnits
+Input (${inputSize}) | ${layerUnits
       .map((u) => `Dense (${u})`)
       .join(" | ")} | Output (10)<br/>
 Params: ${totalParamas.toLocaleString("en-US")}`
     setStatusText(text)
     return _model
-  }, [config, setStatusText])
+  }, [config, setStatusText, ds])
 
   return model
 }
 
-function createModel(hiddenLayerUnits = [128, 64]) {
+function createModel(inputSize = 784, hiddenLayerUnits = [128, 64]) {
   const model = tf.sequential()
-  model.add(tf.layers.inputLayer({ batchInputShape: [null, 784] }))
+  model.add(tf.layers.inputLayer({ batchInputShape: [null, inputSize] }))
   for (const units of hiddenLayerUnits) {
     model.add(tf.layers.dense({ units, activation: "relu" }))
   }

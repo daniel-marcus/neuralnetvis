@@ -15,19 +15,7 @@ export const App = () => {
     <StatusTextContext.Provider value={setStatusText}>
       <div className="w-screen h-screen bg-[#110000]">
         <Canvas>
-          <ambientLight intensity={Math.PI / 2} />
-          <spotLight
-            position={[10, 10, 10]}
-            angle={0.15}
-            penumbra={1}
-            decay={0}
-            intensity={Math.PI}
-          />
-          <pointLight
-            position={[-10, -10, -10]}
-            decay={0}
-            intensity={Math.PI}
-          />
+          <Lights />
           <OrbitControls />
           <Model />
         </Canvas>
@@ -40,3 +28,17 @@ export const App = () => {
     </StatusTextContext.Provider>
   )
 }
+
+const Lights = () => (
+  <>
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight
+      position={[10, 10, 10]}
+      angle={0.15}
+      penumbra={1}
+      decay={0}
+      intensity={Math.PI}
+    />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+  </>
+)
