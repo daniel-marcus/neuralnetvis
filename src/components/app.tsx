@@ -11,7 +11,7 @@ export const App = () => {
     <div className="w-screen h-screen bg-[#110000]">
       <Canvas>
         <Lights />
-        <PerspectiveCamera makeDefault position={[-23, 0, 35]} />
+        <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
         <OrbitControls target={[6, 0, 0]} />
         <Model />
       </Canvas>

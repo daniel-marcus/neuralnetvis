@@ -110,7 +110,12 @@ export function useDatasets() {
   const label = useMemo(() => ds.trainLabels[i], [i, ds])
 
   const next = useCallback(
-    (step = 1) => setI((i) => (i + step < ds.trainData.length ? i + step : 0)),
+    (step = 1) =>
+      setI((i) =>
+        i + step < ds.trainData.length
+          ? i + step
+          : i + step - ds.trainData.length
+      ),
     [ds, setI]
   )
   useEffect(() => {

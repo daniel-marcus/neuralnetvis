@@ -4,6 +4,8 @@ import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
+import { lossPlot } from "@/components/loss-plot"
+import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
 
@@ -38,7 +40,23 @@ export function useTraining(
     silent: { value: false },
   })
 
-  // TODO: add to training folder
+  const [, set] = useControls("training", () => ({
+    lossHistory: lossPlot({
+      value: [] as number[],
+      label: "lossHistory",
+    }) as CustomInput<number[]>,
+  }))
+
+  const setLossHistory = useCallback(
+    (lh: number[]) => {
+      set({ lossHistory: lh })
+    },
+    [set]
+  )
+  useEffect(() => {
+    setLossHistory([])
+  }, [model, setLossHistory])
+
   useControls(
     "training",
     {
@@ -60,17 +78,25 @@ export function useTraining(
       if (!model) return
       let startTime = Date.now()
       let epochCount = 0
+      const lossValues: number[] = []
+      setLossHistory([])
+      const totalBatches = Math.ceil(inputs.length / batchSize)
       const callbacks: tf.ModelFitArgs["callbacks"] = {
-        onBatchEnd: (batchIndex) => {
-          const totalBatches = Math.ceil(inputs.length / batchSize)
+        onBatchBegin: (batchIndex) => {
+          const isLast =
+            batchIndex === totalBatches - 1 && epochCount === epochs - 1
+          const remainingSamples = inputs.length - batchIndex * batchSize
+          const step = isLast ? remainingSamples - 1 : batchSize
+          if (!silent) next(step)
+        },
+        onBatchEnd: (batchIndex, logs) => {
+          const loss = logs?.loss
+          if (typeof loss === "number") lossValues.push(loss)
+          setLossHistory([...lossValues])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
-          if (shouldInterrupt) {
-            model.stopTraining = true
-            return
-          }
-          if (!silent) next(batchSize)
+          if (shouldInterrupt) model.stopTraining = true
         },
         onEpochBegin: (epoch) => {
           epochCount = epoch
@@ -82,7 +108,8 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const endTime = Date.now()
           const totalTime = (endTime - startTime) / 1000
           setIsTraining(false)
-          if (silent) next(1) // update view
+          if (silent) next(inputs.length - 1) // update view
+          setLossHistory(lossValues)
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           setStatusText(
             `Training finished<br/>Loss: ${loss.toFixed(
@@ -94,14 +121,18 @@ Batch ${batchIndex + 1}/${totalBatches}`)
       await train(model, inputs, labels, batchSize, epochs, callbacks)
     }
     startTraining()
+    return () => {
+      shouldInterrupt = true
+      model.stopTraining = true
+    }
   }, [
     model,
     isTraining,
-    setIsTraining,
     next,
     setStatusText,
     trainingConfig,
     ds,
+    setLossHistory,
   ])
 
   useManualTraining(model, input, next)
