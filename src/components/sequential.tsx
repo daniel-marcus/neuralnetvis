@@ -78,7 +78,7 @@ function useActivations(model: tf.LayersModel, input?: number[]) {
   }, [model, input])
 }
 
-const LAYER_SPACING = 12
+const LAYER_SPACING = 11
 
 type OutputOrient = "horizontal" | "vertical"
 export const OUTPUT_ORIENT: OutputOrient = "vertical"

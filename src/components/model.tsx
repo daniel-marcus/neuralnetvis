@@ -39,7 +39,7 @@ const defaultUnitConfig = {
 function useModel(ds: Dataset) {
   const config = useControls("model", {
     layer1: { ...defaultUnitConfig, value: 64 },
-    layer2: { ...defaultUnitConfig, disabled: true },
+    layer2: { ...defaultUnitConfig, value: 32 },
     layer3: { ...defaultUnitConfig, disabled: true },
   }) as Record<string, number>
 

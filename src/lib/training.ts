@@ -33,8 +33,8 @@ export function useTraining(
   }, [toggleTraining])
 
   const trainingConfig = useControls("training", {
-    batchSize: { value: 32, min: 1, max: 64, step: 1 },
-    epochs: { value: 2, min: 1, max: 50, step: 1 },
+    batchSize: { value: 64, min: 1, max: 64, step: 1 },
+    epochs: { value: 1, min: 1, max: 50, step: 1 },
     silent: { value: false },
   })
 

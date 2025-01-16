@@ -64,7 +64,7 @@ export function useDatasets() {
     "data",
     {
       sampleSize: {
-        value: 2000,
+        value: 5000,
         min: 1,
         max: datasets[datasetId].trainData.length - 1, // TODO: display values > 10,000
         step: 100,
