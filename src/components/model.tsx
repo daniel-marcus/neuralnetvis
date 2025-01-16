@@ -45,12 +45,12 @@ function useModel(ds: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
+  const inputSize = ds.trainData[0].length
   const model = useMemo(() => {
     // setIsTraining(false)
     const layerUnits = Object.keys(config)
       .map((key) => config[key] as number)
       .filter((l) => l)
-    const inputSize = ds.trainData[0].length
     const _model = createModel(inputSize, layerUnits)
     const totalParamas = _model.countParams()
     const text = `Sequential Model created<br/>
@@ -60,7 +60,7 @@ Input (${inputSize}) | ${layerUnits
 Params: ${totalParamas.toLocaleString("en-US")}`
     setStatusText(text)
     return _model
-  }, [config, setStatusText, ds])
+  }, [config, setStatusText, inputSize])
 
   return model
 }

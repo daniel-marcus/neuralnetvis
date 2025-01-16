@@ -82,6 +82,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const endTime = Date.now()
           const totalTime = (endTime - startTime) / 1000
           setIsTraining(false)
+          if (silent) next(1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           setStatusText(
             `Training finished<br/>Loss: ${loss.toFixed(
