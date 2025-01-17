@@ -1,10 +1,8 @@
-import React, { useMemo, createContext } from "react"
+import React, { createContext } from "react"
 import { Sequential } from "./sequential"
-import * as tf from "@tensorflow/tfjs"
-import { useControls } from "leva"
-import { useStatusText } from "./status-text"
 import { useTraining } from "@/lib/training"
-import { Dataset, useDatasets } from "@/lib/datasets"
+import { useDatasets } from "@/lib/datasets"
+import { useModel } from "@/lib/model"
 
 // TODO: move to app?
 interface Options {
@@ -26,51 +24,4 @@ export const Model = () => {
       </TrainingLabelContext.Provider>
     </OptionsContext.Provider>
   )
-}
-
-const defaultUnitConfig = {
-  value: 32,
-  min: 16,
-  max: 256,
-  step: 16,
-  optional: true,
-}
-
-function useModel(ds: Dataset) {
-  const config = useControls("model", {
-    layer1: { ...defaultUnitConfig, value: 64 },
-    layer2: { ...defaultUnitConfig, value: 32 },
-    layer3: { ...defaultUnitConfig, disabled: true },
-  }) as Record<string, number>
-
-  const setStatusText = useStatusText((s) => s.setStatusText)
-
-  const inputSize = ds.trainData[0].length
-  const model = useMemo(() => {
-    // setIsTraining(false)
-    const layerUnits = Object.keys(config)
-      .map((key) => config[key] as number)
-      .filter((l) => l)
-    const _model = createModel(inputSize, layerUnits)
-    const totalParamas = _model.countParams()
-    const text = `Sequential Model created<br/>
-Input (${inputSize}) | ${layerUnits
-      .map((u) => `Dense (${u})`)
-      .join(" | ")} | Output (10)<br/>
-Params: ${totalParamas.toLocaleString("en-US")}`
-    setStatusText(text)
-    return _model
-  }, [config, setStatusText, inputSize])
-
-  return model
-}
-
-function createModel(inputSize = 784, hiddenLayerUnits = [128, 64]) {
-  const model = tf.sequential()
-  model.add(tf.layers.inputLayer({ batchInputShape: [null, inputSize] }))
-  for (const units of hiddenLayerUnits) {
-    model.add(tf.layers.dense({ units, activation: "relu" }))
-  }
-  model.add(tf.layers.dense({ units: 10, activation: "softmax" }))
-  return model
 }

@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@leva-ui/plugin-plot": "^0.9.15",
     "@react-three/drei": "^9.120.6",
     "@react-three/fiber": "^9.0.0-rc.1",
     "@tensorflow/tfjs": "^4.22.0",
