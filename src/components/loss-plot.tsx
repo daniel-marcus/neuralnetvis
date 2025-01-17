@@ -10,48 +10,77 @@ import { useCallback, useEffect, useRef, useState, forwardRef } from "react"
 
 const { Row, Label } = Components
 
-export const EPOCH_DIVIDER = "|"
-export type LossHistory = (number | typeof EPOCH_DIVIDER)[]
-type LossPlotProps = LevaInputProps<LossHistory>
+export type TrainingLog = {
+  epoch?: number
+  batch?: number
+  size?: number
+  loss?: number
+  acc?: number
+}
+
+type LossPlotProps = LevaInputProps<TrainingLog[]>
 
 export const lossPlot = createPlugin({
   component: LossPlot,
-  normalize: (input?: { value?: LossHistory }) => {
-    return { value: input?.value ?? ([] as LossHistory) }
+  normalize: (input?: { value?: TrainingLog[] }) => {
+    return { value: input?.value ?? ([] as TrainingLog[]) }
   },
 })
 
 type TooltipContent = React.ReactNode | null
 
+const TOOLTIP_WIDTH = 88
+
 function LossPlot() {
-  const { value: lossHistory, label } = useInputContext<LossPlotProps>()
-  const canvasRef = useCanvasUpdate(lossHistory)
+  const { value: logs, label } = useInputContext<LossPlotProps>()
+  const canvasRef = useCanvasUpdate(logs)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const cursorRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      if (!tooltipRef.current) {
-        console.log("no tooltip ref")
-        return
+      if (!tooltipRef.current) return
+      // prevent overflow
+      const tooltipX = Math.max(
+        Math.min(x, rect.width - TOOLTIP_WIDTH / 2),
+        TOOLTIP_WIDTH / 2
+      )
+      const tooltipY = Math.max(y, 0)
+      tooltipRef.current.style.left = `${tooltipX}px`
+      tooltipRef.current.style.top = `${tooltipY - 10}px`
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${x}px`
       }
-      tooltipRef.current.style.left = `${x}px`
-      tooltipRef.current.style.top = `${y - 5}px`
-      const xVal = (x / rect.width) * lossHistory.length
+      const xVal = (x / rect.width) * logs.length
       const i = Math.floor(xVal)
-      const lossVal = lossHistory
-        .filter((v) => typeof v === "number")
-        [i]?.toFixed(4)
-      setTooltip(<div>{lossVal}</div>)
+      const log = logs[i]
+      if (!log) return
+      const { epoch, batch, loss, acc } = log
+      const tt = (
+        <div>
+          {(typeof epoch !== "undefined" || typeof batch !== "undefined") && (
+            <div>
+              <strong>
+                Batch {(epoch ?? 0) + 1}.{(batch ?? 0) + 1}
+              </strong>
+            </div>
+          )}
+          {typeof loss !== "undefined" && <div>Loss: {loss?.toFixed(4)}</div>}
+          {typeof acc !== "undefined" && <div>Acc: {acc?.toFixed(4)}</div>}
+        </div>
+      )
+      setTooltip(<div>{tt}</div>)
     },
-    [lossHistory, tooltipRef]
+    [logs, tooltipRef, cursorRef]
   )
   return (
     <Row>
       <Label>{label}</Label>
       <div className="relative" onMouseLeave={() => setTooltip(null)}>
+        <CursorLine ref={cursorRef} hidden={!tooltip} />
         <canvas
           ref={canvasRef}
           className={`w-full h-[80px]`}
@@ -62,6 +91,18 @@ function LossPlot() {
     </Row>
   )
 }
+
+const CursorLine = forwardRef<HTMLDivElement, { hidden: boolean }>(
+  ({ hidden }, ref) => (
+    <div
+      ref={ref}
+      className={`${
+        hidden ? "hidden" : ""
+      } absolute top-0 w-[1px] h-full bg-[rgba(0,123,255,0.5)] pointer-events-none`}
+    />
+  )
+)
+CursorLine.displayName = "CursorLine"
 
 interface TooltipProps {
   children?: React.ReactNode
@@ -75,7 +116,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         ref={ref}
         className={`${
           hidden ? "hidden" : ""
-        } absolute bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
+        } absolute w-[88px] bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
       >
         {children}
       </div>
@@ -84,10 +125,10 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
 )
 Tooltip.displayName = "Tooltip"
 
-function useCanvasUpdate(lossHistory: LossHistory) {
+function useCanvasUpdate(logs: TrainingLog[]) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    if (!Array.isArray(lossHistory)) return
+    if (!Array.isArray(logs)) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
@@ -95,20 +136,15 @@ function useCanvasUpdate(lossHistory: LossHistory) {
     const { width, height } = canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    const lossHistoryWithEpochs = lossHistory.reduce((acc, v, i, arr) => {
-      if (v === EPOCH_DIVIDER) return acc
-      else if (arr[i - 1] === EPOCH_DIVIDER && i > 1) {
-        acc.push({ value: v, newEpoch: true })
-      } else {
-        acc.push({ value: v })
-      }
-      return acc
-    }, [] as { value: number; newEpoch?: boolean }[])
-    const maxVal = Math.max(...lossHistoryWithEpochs.map(({ value }) => value))
-    const getX = (i: number) => (i / (lossHistoryWithEpochs.length - 1)) * width
+    const logsWithLoss = logs.filter(hasLoss)
+
+    const maxVal = Math.max(...logsWithLoss.map(({ loss }) => loss))
+    const getX = (i: number) => (i / (logs.length - 1)) * width
 
     // first: draw epoch separators
-    lossHistoryWithEpochs.forEach(({ newEpoch }, i) => {
+    logs.forEach(({ epoch }, i, arr) => {
+      const prevEpoch = arr[i - 1]?.epoch
+      const newEpoch = typeof prevEpoch !== "undefined" && prevEpoch !== epoch
       if (newEpoch) {
         const x = getX(i)
         ctx.beginPath()
@@ -124,9 +160,9 @@ function useCanvasUpdate(lossHistory: LossHistory) {
     ctx.beginPath()
     ctx.strokeStyle = "white"
     ctx.lineWidth = 2
-    lossHistoryWithEpochs.forEach(({ value }, i) => {
+    logsWithLoss.forEach(({ loss }, i) => {
       const x = getX(i)
-      const y = height - (value / maxVal) * height
+      const y = height - (loss / maxVal) * height
       if (i === 0) {
         ctx.moveTo(x, y) // Move to the first point
       } else {
@@ -134,6 +170,10 @@ function useCanvasUpdate(lossHistory: LossHistory) {
       }
     })
     ctx.stroke()
-  }, [lossHistory])
+  }, [logs])
   return canvasRef
+}
+
+function hasLoss(log: TrainingLog): log is { loss: number } {
+  return typeof log.loss === "number"
 }

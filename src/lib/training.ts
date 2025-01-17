@@ -4,13 +4,13 @@ import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { EPOCH_DIVIDER, LossHistory, lossPlot } from "@/components/loss-plot"
+import { TrainingLog, lossPlot } from "@/components/loss-plot"
 import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
 
-type LossHistorySetter = (
-  arg: LossHistory | ((prev: LossHistory) => LossHistory)
+type TrainingLogSetter = (
+  arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
 ) => void
 
 export function useTraining(
@@ -46,12 +46,12 @@ export function useTraining(
 
   const [, set, get] = useControls("training", () => ({
     lossHistory: lossPlot({
-      value: [] as LossHistory,
+      value: [] as TrainingLog[],
       label: "lossHistory",
-    }) as CustomInput<LossHistory>,
+    }) as CustomInput<TrainingLog[]>,
   }))
 
-  const setLossHistory: LossHistorySetter = useCallback(
+  const setLossHistory: TrainingLogSetter = useCallback(
     (arg) => {
       const newVal = typeof arg === "function" ? arg(get("lossHistory")) : arg
       set({ lossHistory: newVal })
@@ -60,7 +60,7 @@ export function useTraining(
   )
 
   useEffect(() => {
-    setLossHistory([] as LossHistory)
+    setLossHistory([] as TrainingLog[])
   }, [model, setLossHistory])
 
   useControls(
@@ -94,9 +94,11 @@ export function useTraining(
           if (!silent) next(step)
         },
         onBatchEnd: (batchIndex, logs) => {
-          const loss = logs?.loss
-          if (typeof loss === "number")
-            setLossHistory((prev) => [...prev, loss])
+          const log = logs as
+            | { batch?: number; size?: number; loss?: number; acc?: number }
+            | undefined
+          if (typeof log !== "undefined")
+            setLossHistory((prev) => [...prev, { epoch: epochCount, ...log }])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
@@ -104,7 +106,6 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         },
         onEpochBegin: (epoch) => {
           epochCount = epoch
-          setLossHistory((prev) => [...prev, EPOCH_DIVIDER])
         },
         onTrainBegin: () => {
           startTime = Date.now()
@@ -148,7 +149,7 @@ export function useManualTraining(
   model: tf.LayersModel | null,
   input: number[],
   next: () => void,
-  setLossHistory: LossHistorySetter
+  setLossHistory: TrainingLogSetter
 ) {
   useEffect(() => {
     if (!model) return
@@ -160,7 +161,7 @@ export function useManualTraining(
           onBatchEnd: (_, logs) => {
             const loss = logs?.loss
             if (typeof loss === "number")
-              setLossHistory((prev) => [...prev, loss])
+              setLossHistory((prev) => [...prev, { loss }])
           },
         }
         await train(model, [input], [pressedNumber], 1, 1, callbacks)
