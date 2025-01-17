@@ -9,8 +9,10 @@ import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
 
+export const EPOCH_DIVIDER = "|"
+export type LossHistory = (number | typeof EPOCH_DIVIDER)[]
 type LossHistorySetter = (
-  arg: number[] | ((prev: number[]) => number[])
+  arg: LossHistory | ((prev: LossHistory) => LossHistory)
 ) => void
 
 export function useTraining(
@@ -46,20 +48,20 @@ export function useTraining(
 
   const [, set, get] = useControls("training", () => ({
     lossHistory: lossPlot({
-      value: [] as number[],
+      value: [] as LossHistory,
       label: "lossHistory",
-    }) as CustomInput<number[]>,
+    }) as CustomInput<LossHistory>,
   }))
 
   const setLossHistory: LossHistorySetter = useCallback(
-    (arg: number[] | ((prev: number[]) => number[])) => {
+    (arg) => {
       const newVal = typeof arg === "function" ? arg(get("lossHistory")) : arg
       set({ lossHistory: newVal })
     },
     [set, get]
   )
   useEffect(() => {
-    setLossHistory([])
+    setLossHistory([] as LossHistory)
   }, [model, setLossHistory])
 
   useControls(
