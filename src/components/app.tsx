@@ -15,7 +15,7 @@ export const App = () => {
         <OrbitControls target={[6, 0, 0]} />
         <Model />
       </Canvas>
-      <Leva />
+      <Leva hideCopyButton />
       <StatusText />
     </div>
   )

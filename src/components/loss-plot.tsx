@@ -4,7 +4,7 @@ import {
   useInputContext,
   LevaInputProps,
 } from "leva/plugin"
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState, forwardRef } from "react"
 
 // careful with circular imports!
 
@@ -21,8 +21,70 @@ export const lossPlot = createPlugin({
   },
 })
 
+type TooltipContent = React.ReactNode | null
+
 function LossPlot() {
   const { value: lossHistory, label } = useInputContext<LossPlotProps>()
+  const canvasRef = useCanvasUpdate(lossHistory)
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      if (!tooltipRef.current) {
+        console.log("no tooltip ref")
+        return
+      }
+      tooltipRef.current.style.left = `${x}px`
+      tooltipRef.current.style.top = `${y - 5}px`
+      const xVal = (x / rect.width) * lossHistory.length
+      const i = Math.floor(xVal)
+      const lossVal = lossHistory
+        .filter((v) => typeof v === "number")
+        [i]?.toFixed(4)
+      setTooltip(<div>{lossVal}</div>)
+    },
+    [lossHistory, tooltipRef]
+  )
+  return (
+    <Row>
+      <Label>{label}</Label>
+      <div className="relative" onMouseLeave={() => setTooltip(null)}>
+        <canvas
+          ref={canvasRef}
+          className={`w-full h-[80px]`}
+          onMouseMove={onMouseMove}
+        />
+        <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
+      </div>
+    </Row>
+  )
+}
+
+interface TooltipProps {
+  children?: React.ReactNode
+}
+
+const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
+  ({ children }, ref) => {
+    const hidden = !children
+    return (
+      <div
+        ref={ref}
+        className={`${
+          hidden ? "hidden" : ""
+        } absolute bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
+      >
+        {children}
+      </div>
+    )
+  }
+)
+Tooltip.displayName = "Tooltip"
+
+function useCanvasUpdate(lossHistory: LossHistory) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     if (!Array.isArray(lossHistory)) return
@@ -73,10 +135,5 @@ function LossPlot() {
     })
     ctx.stroke()
   }, [lossHistory])
-  return (
-    <Row>
-      <Label>{label}</Label>
-      <canvas ref={canvasRef} className={`w-full h-[80px]`} />
-    </Row>
-  )
+  return canvasRef
 }
