@@ -1,41 +1,63 @@
-import { useEffect, useMemo, useCallback } from "react"
+import { useEffect, useMemo, useCallback, useState } from "react"
 import { useControls } from "leva"
-
-import mnistTrainData from "@/data/mnist/train_data.json"
-import mnistTrainLabels from "@/data/mnist/train_labels.json"
-import mnistTestData from "@/data/mnist/test_data.json"
-import mnistTestLabels from "@/data/mnist/test_labels.json"
-
-import fashionTrainData from "@/data/fashion_mnist/train_data.json"
-import fashionTrainLabels from "@/data/fashion_mnist/train_labels.json"
-import fashionTestData from "@/data/fashion_mnist/test_data.json"
-import fashionTestLabels from "@/data/fashion_mnist/test_labels.json"
+import { useStatusText } from "@/components/status-text"
 
 // TODO: use only 1 dataset and set training split / sampleSize manually
 // + load data on demand
-export interface Dataset {
-  name: string
+
+interface DatasetData {
   trainData: number[][]
   trainLabels: number[]
   testData: number[][]
   testLabels: number[]
+}
+interface DatasetDef {
+  name: string
   labelNames?: string[]
+  loadData: () => Promise<DatasetData>
 }
 
-const datasets: Dataset[] = [
+export type Dataset = Omit<DatasetDef, "loadData"> & DatasetData // omit loadData?
+
+// TODO: normalize somewhere else?
+const loadMNISTData = async () => {
+  const [trainData, trainLabels, testData, testLabels] = await Promise.all([
+    import("@/data/mnist/train_data.json"),
+    import("@/data/mnist/train_labels.json"),
+    import("@/data/mnist/test_data.json"),
+    import("@/data/mnist/test_labels.json"),
+  ])
+  return {
+    trainData: (trainData.default as number[][]).map(normalize),
+    trainLabels: trainLabels.default,
+    testData: testData.default.map(normalize),
+    testLabels: testLabels.default,
+  }
+}
+
+const loadFashionMNISTData = async () => {
+  const [trainData, trainLabels, testData, testLabels] = await Promise.all([
+    import("@/data/fashion_mnist/train_data.json"),
+    import("@/data/fashion_mnist/train_labels.json"),
+    import("@/data/fashion_mnist/test_data.json"),
+    import("@/data/fashion_mnist/test_labels.json"),
+  ])
+  return {
+    trainData: (trainData.default as number[][]).map(normalize),
+    trainLabels: trainLabels.default,
+    testData: testData.default.map(normalize),
+    testLabels: testLabels.default,
+  }
+}
+
+const datasets: DatasetDef[] = [
   {
     name: "mnist",
-    trainData: (mnistTrainData as number[][]).map(normalize),
-    trainLabels: mnistTrainLabels,
-    testData: (mnistTestData as number[][]).map(normalize),
-    testLabels: mnistTestLabels,
+    loadData: loadMNISTData,
   },
   {
     name: "fashion mnist",
-    trainData: (fashionTrainData as number[][]).map(normalize),
-    trainLabels: fashionTrainLabels,
-    testData: (fashionTestData as number[][]).map(normalize),
-    testLabels: fashionTestLabels,
+    loadData: loadFashionMNISTData,
     labelNames: [
       "T-shirt/top",
       "Trouser",
@@ -60,27 +82,59 @@ export function useDatasets() {
     },
   })
 
+  const setStatusText = useStatusText((s) => s.setStatusText)
+  const [isLoading, setIsLoading] = useState(false)
+  useEffect(() => {
+    if (isLoading) setStatusText("Loading dataset ...")
+  }, [isLoading, setStatusText])
+
+  const [dataset, setDataset] = useState<Dataset | null>(null)
+  useEffect(() => {
+    setIsLoading(true)
+    const datasetDef = datasets[datasetId]
+    if (!datasetDef) return
+    datasetDef
+      .loadData()
+      .then((data) => {
+        setDataset({
+          ...datasetDef,
+          ...data,
+        })
+      })
+      .finally(() => setIsLoading(false))
+  }, [datasetId])
+
+  const dsFull = useMemo(() => {
+    if (dataset) return dataset
+    return {
+      name: "Loading ...",
+      trainData: [],
+      trainLabels: [],
+      testData: [],
+      testLabels: [],
+    } as Dataset
+  }, [dataset])
+
   const { sampleSize } = useControls(
     "data",
     {
       sampleSize: {
         value: 5000,
         min: 1,
-        max: datasets[datasetId].trainData.length - 1, // TODO: display values > 10,000
+        max: dsFull.trainData.length ? dsFull.trainData.length - 1 : 5000, // TODO: display values > 10,000
         step: 100,
       },
     },
-    [datasetId]
+    [dsFull]
   )
 
-  const ds = useMemo(
-    () => ({
-      ...datasets[datasetId],
-      trainData: datasets[datasetId].trainData.slice(0, sampleSize),
-      trainLabels: datasets[datasetId].trainLabels.slice(0, sampleSize),
-    }),
-    [datasetId, sampleSize]
-  )
+  const ds = useMemo(() => {
+    return {
+      ...dsFull,
+      trainData: dsFull.trainData.slice(0, sampleSize),
+      trainLabels: dsFull.trainLabels.slice(0, sampleSize),
+    }
+  }, [dsFull, sampleSize])
 
   // TODO: reset i on ds change
   const initialRandomIndex = Math.floor(Math.random() * ds.trainData.length)
@@ -91,7 +145,7 @@ export function useDatasets() {
         label: "currIndex",
         value: initialRandomIndex,
         min: 0,
-        max: ds.trainData.length - 1,
+        max: Math.max(ds.trainData.length - 1, 0),
         step: 1,
       },
     }),
