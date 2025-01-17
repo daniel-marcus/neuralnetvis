@@ -9,6 +9,10 @@ import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
 
+type LossHistorySetter = (
+  arg: number[] | ((prev: number[]) => number[])
+) => void
+
 export function useTraining(
   model: tf.LayersModel | null,
   input: number[], // only for manual training
@@ -35,23 +39,24 @@ export function useTraining(
   }, [toggleTraining])
 
   const trainingConfig = useControls("training", {
-    batchSize: { value: 64, min: 1, max: 64, step: 1 },
+    batchSize: { value: 64, min: 1, max: 128, step: 1 },
     epochs: { value: 1, min: 1, max: 50, step: 1 },
     silent: { value: false },
   })
 
-  const [, set] = useControls("training", () => ({
+  const [, set, get] = useControls("training", () => ({
     lossHistory: lossPlot({
       value: [] as number[],
       label: "lossHistory",
     }) as CustomInput<number[]>,
   }))
 
-  const setLossHistory = useCallback(
-    (lh: number[]) => {
-      set({ lossHistory: lh })
+  const setLossHistory: LossHistorySetter = useCallback(
+    (arg: number[] | ((prev: number[]) => number[])) => {
+      const newVal = typeof arg === "function" ? arg(get("lossHistory")) : arg
+      set({ lossHistory: newVal })
     },
-    [set]
+    [set, get]
   )
   useEffect(() => {
     setLossHistory([])
@@ -78,8 +83,6 @@ export function useTraining(
       if (!model) return
       let startTime = Date.now()
       let epochCount = 0
-      const lossValues: number[] = []
-      setLossHistory([])
       const totalBatches = Math.ceil(inputs.length / batchSize)
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchBegin: (batchIndex) => {
@@ -91,8 +94,8 @@ export function useTraining(
         },
         onBatchEnd: (batchIndex, logs) => {
           const loss = logs?.loss
-          if (typeof loss === "number") lossValues.push(loss)
-          setLossHistory([...lossValues])
+          if (typeof loss === "number")
+            setLossHistory((prev) => [...prev, loss])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
@@ -109,7 +112,6 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const totalTime = (endTime - startTime) / 1000
           setIsTraining(false)
           if (silent) next(inputs.length - 1) // update view
-          setLossHistory(lossValues)
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           setStatusText(
             `Training finished<br/>Loss: ${loss.toFixed(
@@ -135,7 +137,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
     setLossHistory,
   ])
 
-  useManualTraining(model, input, next)
+  useManualTraining(model, input, next, setLossHistory)
 
   return isTraining
 }
@@ -143,14 +145,23 @@ Batch ${batchIndex + 1}/${totalBatches}`)
 export function useManualTraining(
   model: tf.LayersModel | null,
   input: number[],
-  next: () => void
+  next: () => void,
+  setLossHistory: LossHistorySetter
 ) {
   useEffect(() => {
     if (!model) return
     const onKeydown = async (e: KeyboardEvent) => {
       if (e.key >= "0" && e.key <= "9") {
+        if (document.activeElement?.tagName.toLowerCase() === "input") return
         const pressedNumber = parseInt(e.key)
-        await train(model, [input], [pressedNumber])
+        const callbacks: tf.ModelFitArgs["callbacks"] = {
+          onBatchEnd: (_, logs) => {
+            const loss = logs?.loss
+            if (typeof loss === "number")
+              setLossHistory((prev) => [...prev, loss])
+          },
+        }
+        await train(model, [input], [pressedNumber], 1, 1, callbacks)
         next()
       }
     }
@@ -158,7 +169,7 @@ export function useManualTraining(
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [input, model, next])
+  }, [input, model, next, setLossHistory])
 }
 
 async function train(
@@ -197,7 +208,7 @@ function isModelCompiled(model: tf.LayersModel) {
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
   const X = tf.tensor(ds.testData)
   const y = tf.oneHot(ds.testLabels, 10)
-  const result = await model.evaluate(X, y, { batchSize: 32 })
+  const result = model.evaluate(X, y, { batchSize: 32 })
   const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
   const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
   return { loss, accuracy }
