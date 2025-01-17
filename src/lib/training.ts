@@ -4,13 +4,11 @@ import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { lossPlot } from "@/components/loss-plot"
+import { EPOCH_DIVIDER, LossHistory, lossPlot } from "@/components/loss-plot"
 import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
 
-export const EPOCH_DIVIDER = "|"
-export type LossHistory = (number | typeof EPOCH_DIVIDER)[]
 type LossHistorySetter = (
   arg: LossHistory | ((prev: LossHistory) => LossHistory)
 ) => void
@@ -60,6 +58,7 @@ export function useTraining(
     },
     [set, get]
   )
+
   useEffect(() => {
     setLossHistory([] as LossHistory)
   }, [model, setLossHistory])
@@ -105,6 +104,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         },
         onEpochBegin: (epoch) => {
           epochCount = epoch
+          setLossHistory((prev) => [...prev, EPOCH_DIVIDER])
         },
         onTrainBegin: () => {
           startTime = Date.now()

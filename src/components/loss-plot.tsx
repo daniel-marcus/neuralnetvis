@@ -1,4 +1,3 @@
-import { EPOCH_DIVIDER, LossHistory } from "@/lib/training"
 import {
   createPlugin,
   Components,
@@ -7,8 +6,12 @@ import {
 } from "leva/plugin"
 import { useEffect, useRef } from "react"
 
+// careful with circular imports!
+
 const { Row, Label } = Components
 
+export const EPOCH_DIVIDER = "|"
+export type LossHistory = (number | typeof EPOCH_DIVIDER)[]
 type LossPlotProps = LevaInputProps<LossHistory>
 
 export const lossPlot = createPlugin({
