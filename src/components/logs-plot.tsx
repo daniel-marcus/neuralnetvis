@@ -20,8 +20,8 @@ export type TrainingLog = {
 
 type LossPlotProps = LevaInputProps<TrainingLog[]>
 
-export const lossPlot = createPlugin({
-  component: LossPlot,
+export const logsPlot = createPlugin({
+  component: LogsPlot,
   normalize: (input?: { value?: TrainingLog[] }) => {
     return { value: input?.value ?? ([] as TrainingLog[]) }
   },
@@ -31,9 +31,12 @@ type TooltipContent = React.ReactNode | null
 
 const TOOLTIP_WIDTH = 88
 
-function LossPlot() {
+const METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
+
+function LogsPlot() {
   const { value: logs, label } = useInputContext<LossPlotProps>()
-  const canvasRef = useCanvasUpdate(logs)
+  const [metric, setMetric] = useState<(typeof METRICS)[number]>("loss")
+  const canvasRef = useCanvasUpdate(logs, metric)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
@@ -77,18 +80,40 @@ function LossPlot() {
     [logs, tooltipRef, cursorRef]
   )
   return (
-    <Row>
-      <Label>{label}</Label>
-      <div className="relative" onMouseLeave={() => setTooltip(null)}>
-        <CursorLine ref={cursorRef} hidden={!tooltip} />
-        <canvas
-          ref={canvasRef}
-          className={`w-full h-[80px]`}
-          onMouseMove={onMouseMove}
-        />
-        <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
-      </div>
-    </Row>
+    <>
+      <Row input={!!label}>
+        {!!label && <Label>{label}</Label>}
+        <div className={`flex space-x-2`}>
+          {METRICS.map((m) => {
+            const isSelected = m === metric
+            return (
+              <button
+                key={m}
+                className={`${
+                  isSelected
+                    ? "text-white"
+                    : "hover:bg-[var(--leva-colors-elevation3)] "
+                } rounded px-2 py-1`}
+                onClick={() => setMetric(m)}
+              >
+                {m}
+              </button>
+            )
+          })}
+        </div>
+      </Row>
+      <Row>
+        <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
+          <CursorLine ref={cursorRef} hidden={!tooltip} />
+          <canvas
+            ref={canvasRef}
+            className={`w-full h-[80px]`}
+            onMouseMove={onMouseMove}
+          />
+          <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
+        </div>
+      </Row>
+    </>
   )
 }
 
@@ -125,7 +150,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
 )
 Tooltip.displayName = "Tooltip"
 
-function useCanvasUpdate(logs: TrainingLog[]) {
+function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     if (!Array.isArray(logs)) return
@@ -136,15 +161,15 @@ function useCanvasUpdate(logs: TrainingLog[]) {
     const { width, height } = canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    const logsWithLoss = logs.filter(hasLoss)
+    const logsWithValue = logs.filter((log) => typeof log[metric] === "number")
 
-    const maxVal = Math.max(...logsWithLoss.map(({ loss }) => loss))
+    const maxVal = Math.max(...logsWithValue.map((log) => log[metric] ?? 0))
     const getX = (i: number) => (i / (logs.length - 1)) * width
 
     // first: draw epoch separators
     logs.forEach(({ epoch }, i, arr) => {
       const prevEpoch = arr[i - 1]?.epoch
-      const newEpoch = typeof prevEpoch !== "undefined" && prevEpoch !== epoch
+      const newEpoch = prevEpoch !== epoch
       if (newEpoch) {
         const x = getX(i)
         ctx.beginPath()
@@ -160,9 +185,11 @@ function useCanvasUpdate(logs: TrainingLog[]) {
     ctx.beginPath()
     ctx.strokeStyle = "white"
     ctx.lineWidth = 2
-    logsWithLoss.forEach(({ loss }, i) => {
+    logs.forEach((log, i) => {
+      const value = log[metric]
+      if (typeof value !== "number") return
       const x = getX(i)
-      const y = height - (loss / maxVal) * height
+      const y = height - (value / maxVal) * height
       if (i === 0) {
         ctx.moveTo(x, y) // Move to the first point
       } else {
@@ -170,10 +197,6 @@ function useCanvasUpdate(logs: TrainingLog[]) {
       }
     })
     ctx.stroke()
-  }, [logs])
+  }, [logs, metric])
   return canvasRef
-}
-
-function hasLoss(log: TrainingLog): log is { loss: number } {
-  return typeof log.loss === "number"
 }

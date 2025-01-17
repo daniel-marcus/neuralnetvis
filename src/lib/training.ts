@@ -4,7 +4,7 @@ import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { TrainingLog, lossPlot } from "@/components/loss-plot"
+import { TrainingLog, logsPlot } from "@/components/logs-plot"
 import { CustomInput } from "leva/plugin"
 
 let shouldInterrupt = false
@@ -45,23 +45,23 @@ export function useTraining(
   })
 
   const [, set, get] = useControls("training", () => ({
-    lossHistory: lossPlot({
+    logs: logsPlot({
       value: [] as TrainingLog[],
-      label: "lossHistory",
+      label: "logs",
     }) as CustomInput<TrainingLog[]>,
   }))
 
-  const setLossHistory: TrainingLogSetter = useCallback(
+  const setLogs: TrainingLogSetter = useCallback(
     (arg) => {
-      const newVal = typeof arg === "function" ? arg(get("lossHistory")) : arg
-      set({ lossHistory: newVal })
+      const newVal = typeof arg === "function" ? arg(get("logs")) : arg
+      set({ logs: newVal })
     },
     [set, get]
   )
 
   useEffect(() => {
-    setLossHistory([] as TrainingLog[])
-  }, [model, setLossHistory])
+    setLogs([] as TrainingLog[])
+  }, [model, setLogs])
 
   useControls(
     "training",
@@ -98,7 +98,7 @@ export function useTraining(
             | { batch?: number; size?: number; loss?: number; acc?: number }
             | undefined
           if (typeof log !== "undefined")
-            setLossHistory((prev) => [...prev, { epoch: epochCount, ...log }])
+            setLogs((prev) => [...prev, { epoch: epochCount, ...log }])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
@@ -130,17 +130,9 @@ Batch ${batchIndex + 1}/${totalBatches}`)
       shouldInterrupt = true
       model.stopTraining = true
     }
-  }, [
-    model,
-    isTraining,
-    next,
-    setStatusText,
-    trainingConfig,
-    ds,
-    setLossHistory,
-  ])
+  }, [model, isTraining, next, setStatusText, trainingConfig, ds, setLogs])
 
-  useManualTraining(model, input, next, setLossHistory)
+  useManualTraining(model, input, next, setLogs)
 
   return isTraining
 }
@@ -149,7 +141,7 @@ export function useManualTraining(
   model: tf.LayersModel | null,
   input: number[],
   next: () => void,
-  setLossHistory: TrainingLogSetter
+  setLogs: TrainingLogSetter
 ) {
   useEffect(() => {
     if (!model) return
@@ -160,8 +152,7 @@ export function useManualTraining(
         const callbacks: tf.ModelFitArgs["callbacks"] = {
           onBatchEnd: (_, logs) => {
             const loss = logs?.loss
-            if (typeof loss === "number")
-              setLossHistory((prev) => [...prev, { loss }])
+            if (typeof loss === "number") setLogs((prev) => [...prev, { loss }])
           },
         }
         await train(model, [input], [pressedNumber], 1, 1, callbacks)
@@ -172,7 +163,7 @@ export function useManualTraining(
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [input, model, next, setLossHistory])
+  }, [input, model, next, setLogs])
 }
 
 async function train(
