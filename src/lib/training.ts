@@ -40,7 +40,7 @@ export function useTraining(
 
   const trainingConfig = useControls("training", {
     batchSize: { value: 64, min: 1, max: 128, step: 1 },
-    epochs: { value: 1, min: 1, max: 50, step: 1 },
+    epochs: { value: 3, min: 1, max: 50, step: 1 },
     silent: { value: false },
   })
 

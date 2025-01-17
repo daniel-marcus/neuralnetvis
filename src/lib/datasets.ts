@@ -3,7 +3,6 @@ import { useControls } from "leva"
 import { useStatusText } from "@/components/status-text"
 
 // TODO: use only 1 dataset and set training split / sampleSize manually
-// + load data on demand
 
 interface DatasetData {
   trainData: number[][]
@@ -17,9 +16,11 @@ interface DatasetDef {
   loadData: () => Promise<DatasetData>
 }
 
-export type Dataset = Omit<DatasetDef, "loadData"> & DatasetData // omit loadData?
+export type Dataset = Omit<DatasetDef, "loadData"> & DatasetData
 
 // TODO: normalize somewhere else?
+// TODO: use external sources
+
 const loadMNISTData = async () => {
   const [trainData, trainLabels, testData, testLabels] = await Promise.all([
     import("@/data/mnist/train_data.json"),
