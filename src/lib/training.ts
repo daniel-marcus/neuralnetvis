@@ -46,8 +46,8 @@ export function useTraining(
       max: 0.5,
       step: 0.1,
     },
-    batchSize: { value: 128, min: 1, max: 512, step: 1 },
-    epochs: { value: 3, min: 1, max: 50, step: 1 },
+    batchSize: { value: 256, min: 1, max: 512, step: 1 },
+    epochs: { value: 5, min: 1, max: 50, step: 1 },
     silent: false,
   })
 
@@ -93,7 +93,7 @@ export function useTraining(
       if (!model) return
       let startTime = Date.now()
       let epochCount = 0
-      const totalBatches = Math.ceil(inputs.length / batchSize)
+      const totalBatches = Math.ceil(trainSampleSize / batchSize)
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchBegin: (batchIndex) => {
           const isLastInBatch = batchIndex === totalBatches - 1

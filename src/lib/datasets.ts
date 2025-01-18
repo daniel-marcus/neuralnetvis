@@ -162,6 +162,7 @@ export function useDatasets() {
   useEffect(() => {
     const prev = () => setI((i) => (i > 1 ? i - 1 : ds.trainData.length))
     const onKeydown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "ArrowRight") next()
       if (e.key === "ArrowLeft") prev()
     }

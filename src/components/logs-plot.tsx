@@ -15,6 +15,8 @@ import {
 
 // careful with circular imports!
 
+// reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
+
 const { Row } = Components
 
 export type TrainingLog = {
@@ -51,13 +53,15 @@ function LogsPlot() {
   const filteredLogs = useMemo(
     () =>
       logs.filter((log) =>
-        isEpochMetric ? typeof log[EPOCH_METRICS[0]] !== "undefined" : log
+        isEpochMetric
+          ? typeof log[EPOCH_METRICS[0]] !== "undefined"
+          : typeof log[EPOCH_METRICS[0]] === "undefined"
       ),
     [logs, isEpochMetric]
   )
   const tooltipRef = useRef<HTMLDivElement>(null)
-  const cursorRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useCanvasUpdate(filteredLogs, metric)
+  const dotRef = useRef<HTMLDivElement>(null)
+  const [canvasRef, positions] = useCanvasUpdate(filteredLogs, metric)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -73,13 +77,20 @@ function LogsPlot() {
       const tooltipY = Math.max(y, 0)
       tooltipRef.current.style.left = `${tooltipX}px`
       tooltipRef.current.style.top = `${tooltipY - 10}px`
-      if (cursorRef.current) {
-        cursorRef.current.style.left = `${x}px`
-      }
-      const xVal = (x / rect.width) * filteredLogs.length
-      const i = Math.floor(xVal)
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const xRel = x / rect.width
+      const i = Math.floor(xRel * filteredLogs.length)
       const log = filteredLogs[i]
       if (!log) return
+      if (dotRef.current) {
+        const point = positions.current[i]
+        if (!point) return
+        const dotX = (point[0] / canvas.width) * rect.width
+        const dotY = (point[1] / canvas.height) * rect.height
+        dotRef.current.style.left = `${dotX}px`
+        dotRef.current.style.top = `${dotY}px`
+      }
       const { epoch, batch } = log
       const epochNr = (epoch ?? 0) + 1
       const batchNr = (batch ?? 0) + 1
@@ -101,7 +112,7 @@ function LogsPlot() {
       )
       setTooltip(<div>{tt}</div>)
     },
-    [filteredLogs, tooltipRef, cursorRef, isEpochMetric]
+    [filteredLogs, tooltipRef, isEpochMetric, positions, canvasRef]
   )
   return (
     <>
@@ -127,12 +138,12 @@ function LogsPlot() {
       </Row>
       <Row>
         <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
-          <CursorLine ref={cursorRef} hidden={!tooltip} />
           <canvas
             ref={canvasRef}
             className={`w-full h-[80px]`}
             onMouseMove={onMouseMove}
           />
+          <Dot ref={dotRef} hidden={!tooltip} />
           <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
         </div>
       </Row>
@@ -140,17 +151,17 @@ function LogsPlot() {
   )
 }
 
-const CursorLine = forwardRef<HTMLDivElement, { hidden: boolean }>(
+const Dot = forwardRef<HTMLDivElement, { hidden: boolean }>(
   ({ hidden }, ref) => (
     <div
       ref={ref}
-      className={`${
+      className={`absolute ${
         hidden ? "hidden" : ""
-      } absolute top-0 w-[1px] h-full bg-[rgba(0,123,255,0.5)] pointer-events-none`}
+      } p-0 w-2 h-2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--leva-colors-highlight3)] pointer-events-none`}
     />
   )
 )
-CursorLine.displayName = "CursorLine"
+Dot.displayName = "Dot"
 
 interface TooltipProps {
   children?: React.ReactNode
@@ -175,6 +186,7 @@ Tooltip.displayName = "Tooltip"
 
 function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const positions = useRef<[number, number][]>([])
   useEffect(() => {
     if (!Array.isArray(logs)) return
     const canvas = canvasRef.current
@@ -183,6 +195,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
     if (!ctx) return
     const { width, height } = canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    positions.current = []
 
     const logsWithValue = logs.filter((log) => typeof log[metric] === "number")
 
@@ -217,6 +230,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
       if (typeof value !== "number") return
       const x = getX(i)
       const y = height - (value / maxVal) * height
+      positions.current.push([x, y])
       if (i === 0) {
         ctx.moveTo(x, y) // Move to the first point
       } else {
@@ -225,5 +239,5 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
     })
     ctx.stroke()
   }, [logs, metric])
-  return canvasRef
+  return [canvasRef, positions] as const
 }
