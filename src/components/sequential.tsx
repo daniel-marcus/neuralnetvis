@@ -1,18 +1,18 @@
 import React, { useMemo } from "react"
 import { Dense, DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
-import { normalize } from "@/lib/datasets"
+import { Dataset, normalize } from "@/lib/datasets"
 
 export type LayerProps = DenseProps
 export type LayerType = "input" | "output" | "hidden"
 
 interface SequentialProps {
   model: tf.LayersModel
+  ds: Dataset
   input?: number[]
-  labelNames?: string[]
 }
 
-export const Sequential = ({ model, input, labelNames }: SequentialProps) => {
+export const Sequential = ({ model, ds, input }: SequentialProps) => {
   const activations = useActivations(model, input)
   const layerProps = useMemo(
     () =>
@@ -33,10 +33,10 @@ export const Sequential = ({ model, input, labelNames }: SequentialProps) => {
           weights: getWeights(l),
           biases: getBiases(l),
           positions: getNeuronPositions(i, model.layers.length, units),
-          labelNames: type === "output" ? labelNames : undefined,
+          ds,
         }
       }),
-    [input, activations, model, labelNames]
+    [input, activations, model, ds]
   )
   return (
     <group>
@@ -96,6 +96,8 @@ export function getNeuronPositions(
     const [y, z] =
       type === "output"
         ? getLineYZ(i, units, OUTPUT_ORIENT)
+        : type === "input" && units <= 10
+        ? getLineYZ(i, units, "vertical")
         : getGridYZ(i, units, type)
     return [x, y, z] as [number, number, number]
   })

@@ -20,7 +20,7 @@ export const Model = () => {
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
       <TrainingYContext.Provider value={trainingY}>
-        <Sequential model={model} input={input} labelNames={ds.output.labels} />
+        <Sequential model={model} input={input} ds={ds} />
       </TrainingYContext.Provider>
     </OptionsContext.Provider>
   )

@@ -11,6 +11,9 @@ interface DatasetData {
 interface DatasetDef {
   name: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
+  input?: {
+    labels?: string[]
+  }
   output: {
     size: number
     activation: "softmax" | "linear"
@@ -31,7 +34,7 @@ const datasets: DatasetDef[] = [
     output: {
       size: 10,
       activation: "softmax",
-      labels: Array.from({ length: 10 }, (_, i) => i.toString()),
+      labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
@@ -42,9 +45,9 @@ const datasets: DatasetDef[] = [
       ])
       return {
         trainX: (trainX.default as number[][]).map(normalize),
-        trainY: trainY.default,
-        testX: testX.default.map(normalize),
-        testY: testY.default,
+        trainY: trainY.default as number[],
+        testX: (testX.default as number[][]).map(normalize),
+        testY: testY.default as number[],
       }
     },
   },
@@ -77,7 +80,7 @@ const datasets: DatasetDef[] = [
       return {
         trainX: (trainX.default as number[][]).map(normalize),
         trainY: trainY.default,
-        testX: testX.default.map(normalize),
+        testX: (testX.default as number[][]).map(normalize),
         testY: testY.default,
       }
     },
@@ -85,6 +88,18 @@ const datasets: DatasetDef[] = [
   {
     name: "california housing",
     loss: "meanSquaredError",
+    input: {
+      labels: [
+        "longitude",
+        "latitude",
+        "housing_median_age",
+        "total_rooms",
+        "total_bedrooms",
+        "population",
+        "households",
+        "median_income",
+      ],
+    },
     output: {
       size: 1,
       activation: "linear",
@@ -96,8 +111,8 @@ const datasets: DatasetDef[] = [
         import("@/data/california_housing/test_X.json"),
         import("@/data/california_housing/test_y.json"),
       ])
-      const [scaledTrainX, means, stdDevs] = applyStandardScaler(trainX.default)
-      const [scaledTextX] = applyStandardScaler(testX.default, means, stdDevs)
+      const scaledTrainX = applyStandardScaler(trainX.default)
+      const scaledTextX = applyStandardScaler(testX.default)
       return {
         trainX: scaledTrainX,
         trainY: trainY.default,
@@ -214,31 +229,24 @@ export function useDatasets() {
 export function normalize(data: number[] | unknown) {
   if (!Array.isArray(data)) return [] as number[]
   const max = Math.max(...data)
-  return data.map((d) => d / max)
+  const min = Math.min(...data)
+  return data.map((v) => (v - min) / (max - min))
 }
 
-export function standardize(column: number[], mean?: number, stdDev?: number) {
-  mean = mean ?? column.reduce((acc, v) => acc + v, 0) / column.length
-  stdDev =
-    stdDev ??
-    Math.sqrt(
-      column.reduce((acc, v) => acc + (v - mean) ** 2, 0) / column.length
-    )
-  const zScaled = column.map((v) => (v - mean) / stdDev)
-  return [zScaled, mean, stdDev] as const
-}
-
-export function applyStandardScaler(
-  data: number[][],
-  means?: number[],
-  stdDevs?: number[]
-) {
-  const colums = data[0].map((_, j) => data.map((row) => row[j]))
-  const scaled = colums.map((col, i) =>
-    standardize(col, means?.[i], stdDevs?.[i])
+export function standardize(column: number[] | undefined) {
+  if (!column) return [] as number[]
+  const mean = column.reduce((acc, v) => acc + v, 0) / column.length
+  const stdDev = Math.sqrt(
+    column.reduce((acc, v) => acc + (v - mean) ** 2, 0) / column.length
   )
-  const returnData = scaled.map((s) => s[0])
-  const returnMeans = scaled.map((s) => s[1])
-  const returnStdDevs = scaled.map((s) => s[2])
-  return [returnData, returnMeans, returnStdDevs] as const
+  const zScaled = column.map((v) => (v - mean) / stdDev)
+  return zScaled
+}
+
+export function applyStandardScaler(data: number[][]) {
+  const colums = data[0].map((_, j) => data.map((row) => row[j]))
+  const scaledCols = colums.map((col) => standardize(col))
+  const returnData = data.map((_, i) => scaledCols.map((col) => col[i]))
+  // TODO: collect and reuse means and stdDevs for test data
+  return returnData
 }

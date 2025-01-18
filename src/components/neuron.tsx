@@ -9,9 +9,9 @@ const LINE_ACTIVATION_THRESHOLD = 0.5
 const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
 
 interface NeuronProps {
-  type?: LayerType
   index: number
   position: [number, number, number]
+  layer: LayerProps
   prevLayer?: LayerProps
   activation?: number
   normalizedActivation?: number
@@ -24,7 +24,7 @@ export function Neuron(props: NeuronProps) {
   const {
     index,
     position,
-    type = "hidden",
+    layer,
     prevLayer,
     activation,
     normalizedActivation,
@@ -34,7 +34,7 @@ export function Neuron(props: NeuronProps) {
     ...otherProps
   } = props
   const [hovered, setHover] = useState(false)
-  const geometry = geometryMap[type]
+  const geometry = getGeometry(layer.type, layer.units)
   const value = normalizedActivation ? Math.min(normalizedActivation, 1) : 0
   const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
   const [x, y, z] = position
@@ -66,7 +66,7 @@ export function Neuron(props: NeuronProps) {
             )
               return null
             const weight = weights?.[j] ?? 0
-            const input = prevLayer.activations?.[j] ?? 0
+            const input = prevLayer.normalizedActivations?.[j] ?? 0
             if (Math.abs(weight) < LINE_WEIGHT_THRESHOLD) return null
             return (
               <Connection
@@ -80,19 +80,26 @@ export function Neuron(props: NeuronProps) {
           })}
         </group>
       )}
-      {type === "output" && position && (
+      {(layer.type === "output" || !!label) && (
         <Text
-          position={getTextPos(x, y, z)}
+          position={getTextPos(x, y, z, layer.type)}
           fontSize={3}
           color={color}
-          anchorX={OUTPUT_ORIENT === "vertical" ? "left" : "center"}
+          anchorX={
+            OUTPUT_ORIENT === "vertical"
+              ? layer.type === "input"
+                ? "right"
+                : "left"
+              : "center"
+          }
           anchorY="middle"
           rotation={[0, -Math.PI / 2, 0]}
         >
-          {label ?? `${activation?.toFixed(0)} vs. ${trainingY}`}
+          {label ??
+            (activation ? `${activation?.toFixed(0)} vs. ${trainingY}` : "")}
         </Text>
       )}
-      {type === "output" && // TODO: show correct values for linear output (california housing)
+      {layer.type === "output" && // TODO: show correct values for linear output (california housing)
         typeof trainingY === "number" &&
         trainingY === index && (
           <Text
@@ -110,8 +117,9 @@ export function Neuron(props: NeuronProps) {
   )
 }
 
-function getTextPos(x: number, y: number, z: number) {
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5]
+function getTextPos(x: number, y: number, z: number, layerType?: LayerType) {
+  const factor = layerType === "output" ? 1 : -1
+  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5 * factor]
   else return [x, y + 3, z]
 }
 function getDotPos(x: number, y: number, z: number) {
@@ -119,10 +127,18 @@ function getDotPos(x: number, y: number, z: number) {
   else return [x, y + 5, z]
 }
 
-const geometryMap: Record<LayerType, ReactElement> = {
-  input: <boxGeometry args={[0.6, 0.6, 0.6]} />,
-  hidden: <sphereGeometry args={[0.6, 32, 32]} />,
-  output: <boxGeometry args={[1.8, 1.8, 1.8]} />,
+const geometryMap: Record<string, ReactElement> = {
+  boxSmall: <boxGeometry args={[0.6, 0.6, 0.6]} />,
+  boxBig: <boxGeometry args={[1.8, 1.8, 1.8]} />,
+  sphere: <sphereGeometry args={[0.6, 32, 32]} />,
+}
+
+function getGeometry(type: LayerType, units: number) {
+  if (["input", "output"].includes(type)) {
+    if (units <= 10) return geometryMap.boxBig
+    return geometryMap.boxSmall
+  }
+  return geometryMap.sphere
 }
 
 function useHoverStatus(
