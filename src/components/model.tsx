@@ -10,18 +10,18 @@ interface Options {
 }
 
 export const OptionsContext = createContext<Options>({})
-export const TrainingLabelContext = createContext<number | undefined>(undefined)
+export const TrainingYContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
-  const [input, label, next, ds] = useDatasets()
+  const [input, trainingY, next, ds] = useDatasets()
   const model = useModel(ds)
   const isTraining = useTraining(model, input, next, ds)
   if (!model) return null
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
-      <TrainingLabelContext.Provider value={label}>
-        <Sequential model={model} input={input} labelNames={ds.labelNames} />
-      </TrainingLabelContext.Provider>
+      <TrainingYContext.Provider value={trainingY}>
+        <Sequential model={model} input={input} labelNames={ds.output.labels} />
+      </TrainingYContext.Provider>
     </OptionsContext.Provider>
   )
 }

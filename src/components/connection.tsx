@@ -13,6 +13,9 @@ export const Connection = ({
   weight = 0,
   input = 0,
 }: ConnectionProps) => {
-  const z = weight * input
-  return <Line points={[start, end]} lineWidth={z} />
+  const z = Math.abs(weight * input)
+  const scaledZ = Math.log1p(z)
+  const lineWidth = Math.min(scaledZ, 3)
+  // TODO: scaled values?
+  return <Line points={[start, end]} lineWidth={lineWidth} />
 }

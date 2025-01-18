@@ -1,9 +1,4 @@
-import {
-  createPlugin,
-  Components,
-  useInputContext,
-  LevaInputProps,
-} from "leva/plugin"
+import { createPlugin, Components } from "leva/plugin"
 import {
   useMemo,
   useCallback,
@@ -12,6 +7,7 @@ import {
   useState,
   forwardRef,
 } from "react"
+import { create } from "zustand"
 
 // careful with circular imports!
 
@@ -29,13 +25,24 @@ export type TrainingLog = {
   val_acc?: number // for epoch only
 }
 
-type LossPlotProps = LevaInputProps<TrainingLog[]>
+export type TrainingLogSetter = (
+  arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
+) => void
+
+export const useLogStore = create<{
+  logs: TrainingLog[]
+  setLogs: TrainingLogSetter
+}>((set) => ({
+  logs: [] as TrainingLog[],
+  setLogs: (arg) =>
+    set((state) => {
+      const newVal = typeof arg === "function" ? arg(state.logs) : arg
+      return { logs: newVal }
+    }),
+}))
 
 export const logsPlot = createPlugin({
   component: LogsPlot,
-  normalize: (input?: { value?: TrainingLog[] }) => {
-    return { value: input?.value ?? ([] as TrainingLog[]) }
-  },
 })
 
 type TooltipContent = React.ReactNode | null
@@ -47,7 +54,7 @@ const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
 const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
 
 function LogsPlot() {
-  const { value: logs } = useInputContext<LossPlotProps>()
+  const logs = useLogStore((s) => s.logs)
   const [metric, setMetric] = useState<(typeof METRICS)[number]>("loss")
   const isEpochMetric = EPOCH_METRICS.includes(metric)
   const filteredLogs = useMemo(

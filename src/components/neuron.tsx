@@ -3,7 +3,7 @@ import { LayerProps, LayerType, OUTPUT_ORIENT } from "./sequential"
 import { Connection } from "./connection"
 import { Text } from "@react-three/drei"
 import { useStatusText } from "./status-text"
-import { OptionsContext, TrainingLabelContext } from "./model"
+import { OptionsContext, TrainingYContext } from "./model"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
 const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
@@ -35,11 +35,11 @@ export function Neuron(props: NeuronProps) {
   } = props
   const [hovered, setHover] = useState(false)
   const geometry = geometryMap[type]
-  const value = normalizedActivation ?? 0
+  const value = normalizedActivation ? Math.min(normalizedActivation, 1) : 0
   const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
   const [x, y, z] = position
   const { hideLines } = useContext(OptionsContext)
-  const trainingLabel = useContext(TrainingLabelContext)
+  const trainingY = useContext(TrainingYContext)
   useHoverStatus(hovered, index, activation, bias, weights, prevLayer)
   return (
     <group>
@@ -89,12 +89,12 @@ export function Neuron(props: NeuronProps) {
           anchorY="middle"
           rotation={[0, -Math.PI / 2, 0]}
         >
-          {label ?? index}
+          {label ?? `${activation?.toFixed(0)} vs. ${trainingY}`}
         </Text>
       )}
-      {type === "output" &&
-        typeof trainingLabel === "number" &&
-        trainingLabel === index && (
+      {type === "output" && // TODO: show correct values for linear output (california housing)
+        typeof trainingY === "number" &&
+        trainingY === index && (
           <Text
             position={getDotPos(x, y, z)}
             fontSize={3}

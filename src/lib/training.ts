@@ -4,14 +4,14 @@ import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { TrainingLog, logsPlot } from "@/components/logs-plot"
-import { CustomInput } from "leva/plugin"
+import {
+  TrainingLog,
+  TrainingLogSetter,
+  logsPlot,
+  useLogStore,
+} from "@/components/logs-plot"
 
 let shouldInterrupt = false
-
-type TrainingLogSetter = (
-  arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
-) => void
 
 let epochCount = 0
 
@@ -53,20 +53,11 @@ export function useTraining(
     silent: false,
   })
 
-  const [, set, get] = useControls("training", () => ({
-    logs: logsPlot({
-      value: [] as TrainingLog[],
-      label: "logs",
-    }) as CustomInput<TrainingLog[]>,
+  useControls("training", () => ({
+    logs: logsPlot(),
   }))
 
-  const setLogs: TrainingLogSetter = useCallback(
-    (arg) => {
-      const newVal = typeof arg === "function" ? arg(get("logs")) : arg
-      set({ logs: newVal })
-    },
-    [set, get]
-  )
+  const setLogs = useLogStore((s) => s.setLogs)
 
   useEffect(() => {
     setLogs([] as TrainingLog[])
@@ -96,8 +87,8 @@ export function useTraining(
       epochs: _epochs,
       silent,
     } = trainingConfig
-    const inputs = ds.trainData
-    const labels = ds.trainLabels
+    const inputs = ds.trainX
+    const labels = ds.trainY
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
     // TODO: implement initialEpoch?
     const initialEpoch = epochCount > 0 ? epochCount + 1 : 0
@@ -156,7 +147,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         callbacks,
         initialEpoch,
       }
-      await train(model, inputs, labels, options)
+      await train(model, inputs, labels, options, ds.output, ds.loss)
     }
     startTraining()
     return () => {
@@ -165,7 +156,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
     }
   }, [model, isTraining, next, setStatusText, trainingConfig, ds, setLogs])
 
-  useManualTraining(model, input, next, setLogs)
+  useManualTraining(model, input, next, setLogs, ds)
 
   return isTraining
 }
@@ -174,7 +165,8 @@ export function useManualTraining(
   model: tf.LayersModel | null,
   input: number[],
   next: () => void,
-  setLogs: TrainingLogSetter
+  setLogs: TrainingLogSetter,
+  ds: Dataset
 ) {
   useEffect(() => {
     if (!model) return
@@ -200,7 +192,14 @@ export function useManualTraining(
           validationSplit: 0,
           callbacks,
         }
-        await train(model, [input], [pressedNumber], options)
+        await train(
+          model,
+          [input],
+          [pressedNumber],
+          options,
+          ds.output,
+          ds.loss
+        )
         next()
       }
     }
@@ -208,7 +207,7 @@ export function useManualTraining(
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [input, model, next, setLogs])
+  }, [input, model, next, setLogs, ds])
 }
 
 const defaultOptions: tf.ModelFitArgs = {
@@ -221,18 +220,19 @@ const defaultOptions: tf.ModelFitArgs = {
 async function train(
   model: tf.LayersModel,
   inputs: number[][],
-  labels: number[],
-  options: tf.ModelFitArgs = {}
+  trainY: number[],
+  options: tf.ModelFitArgs = {},
+  output: Dataset["output"],
+  lossFunction: Dataset["loss"] = "categoricalCrossentropy"
 ) {
   // TODO: interrupt ongoing training if necessary
   options = { ...defaultOptions, ...options }
   const X = tf.tensor(inputs)
-  const numClasses = 10
-  const y = tf.oneHot(labels, numClasses)
+  const y = getY(trainY, output)
   if (!isModelCompiled(model)) {
     model.compile({
       optimizer: "adam",
-      loss: "categoricalCrossentropy",
+      loss: lossFunction,
       metrics: ["accuracy"],
     })
   }
@@ -241,14 +241,20 @@ async function train(
   y.dispose()
 }
 
+function getY(trainY: number[], output: Dataset["output"]) {
+  return output.activation === "softmax"
+    ? tf.oneHot(trainY, output.size)
+    : tf.tensor(trainY)
+}
+
 function isModelCompiled(model: tf.LayersModel) {
   return model.loss !== undefined && model.optimizer !== undefined
 }
 
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
-  const X = tf.tensor(ds.testData)
-  const y = tf.oneHot(ds.testLabels, 10)
-  const result = model.evaluate(X, y, { batchSize: 32 })
+  const X = tf.tensor(ds.testX)
+  const y = getY(ds.testY, ds.output)
+  const result = model.evaluate(X, y, { batchSize: 64 })
   const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
   const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
   X.dispose()
