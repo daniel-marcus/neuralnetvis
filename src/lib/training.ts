@@ -13,6 +13,8 @@ type TrainingLogSetter = (
   arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
 ) => void
 
+let epochCount = 0
+
 export function useTraining(
   model: tf.LayersModel | null,
   input: number[], // only for manual training
@@ -46,7 +48,7 @@ export function useTraining(
       max: 0.5,
       step: 0.1,
     },
-    batchSize: { value: 256, min: 1, max: 512, step: 1 },
+    batchSize: { value: 128, min: 1, max: 512, step: 1 },
     epochs: { value: 5, min: 1, max: 50, step: 1 },
     silent: false,
   })
@@ -83,16 +85,26 @@ export function useTraining(
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
+    epochCount = 0
+  }, [model])
+
+  useEffect(() => {
     if (!isTraining || !model) return
-    const { validationSplit, batchSize, epochs, silent } = trainingConfig
+    const {
+      validationSplit,
+      batchSize,
+      epochs: _epochs,
+      silent,
+    } = trainingConfig
     const inputs = ds.trainData
     const labels = ds.trainLabels
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
     // TODO: implement initialEpoch?
+    const initialEpoch = epochCount > 0 ? epochCount + 1 : 0
+    const epochs = _epochs + initialEpoch
     async function startTraining() {
       if (!model) return
       let startTime = Date.now()
-      let epochCount = 0
       const totalBatches = Math.ceil(trainSampleSize / batchSize)
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchBegin: (batchIndex) => {
@@ -137,7 +149,13 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           )
         },
       }
-      const options = { batchSize, epochs, validationSplit, callbacks }
+      const options = {
+        batchSize,
+        epochs,
+        validationSplit,
+        callbacks,
+        initialEpoch,
+      }
       await train(model, inputs, labels, options)
     }
     startTraining()
@@ -172,7 +190,8 @@ export function useManualTraining(
         const pressedNumber = parseInt(e.key)
         const callbacks: tf.ModelFitArgs["callbacks"] = {
           onBatchEnd: (_, logs) => {
-            if (typeof logs !== "undefined") setLogs((prev) => [...prev, logs])
+            if (typeof logs !== "undefined")
+              setLogs((prev) => [...prev, { ...logs, epoch: -1, batch: -1 }])
           },
         }
         const options = {
@@ -218,6 +237,8 @@ async function train(
     })
   }
   await model.fit(X, y, options).catch(console.error)
+  X.dispose()
+  y.dispose()
 }
 
 function isModelCompiled(model: tf.LayersModel) {
@@ -230,5 +251,7 @@ async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
   const result = model.evaluate(X, y, { batchSize: 32 })
   const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
   const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
+  X.dispose()
+  y.dispose()
   return { loss, accuracy }
 }
