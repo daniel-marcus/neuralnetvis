@@ -2,8 +2,6 @@ import { useEffect, useMemo, useCallback, useState } from "react"
 import { useControls } from "leva"
 import { useStatusText } from "@/components/status-text"
 
-// TODO: use only 1 dataset and set training split / sampleSize manually
-
 interface DatasetData {
   trainData: number[][]
   trainLabels: number[]
@@ -29,9 +27,9 @@ const loadMNISTData = async () => {
     import("@/data/mnist/test_labels.json"),
   ])
   return {
-    trainData: (trainData.default as number[][]).map(normalize),
+    trainData: trainData.default as number[][],
     trainLabels: trainLabels.default,
-    testData: testData.default.map(normalize),
+    testData: testData.default,
     testLabels: testLabels.default,
   }
 }
@@ -44,9 +42,9 @@ const loadFashionMNISTData = async () => {
     import("@/data/fashion_mnist/test_labels.json"),
   ])
   return {
-    trainData: (trainData.default as number[][]).map(normalize),
+    trainData: trainData.default as number[][],
     trainLabels: trainLabels.default,
-    testData: testData.default.map(normalize),
+    testData: testData.default,
     testLabels: testLabels.default,
   }
 }
@@ -105,8 +103,13 @@ export function useDatasets() {
       .finally(() => setIsLoading(false))
   }, [datasetId])
 
-  const dsFull = useMemo(() => {
-    if (dataset) return dataset
+  const ds = useMemo(() => {
+    if (dataset)
+      return {
+        ...dataset,
+        trainData: dataset.trainData.map(normalize),
+        testData: dataset.testData.map(normalize),
+      }
     return {
       name: "Loading ...",
       trainData: [],
@@ -116,28 +119,6 @@ export function useDatasets() {
     } as Dataset
   }, [dataset])
 
-  const { sampleSize } = useControls(
-    "data",
-    {
-      sampleSize: {
-        value: 5000,
-        min: 1,
-        max: dsFull.trainData.length ? dsFull.trainData.length : 5000,
-        step: 100,
-      },
-    },
-    [dsFull]
-  )
-
-  const ds = useMemo(() => {
-    return {
-      ...dsFull,
-      trainData: dsFull.trainData.slice(0, sampleSize),
-      trainLabels: dsFull.trainLabels.slice(0, sampleSize),
-    }
-  }, [dsFull, sampleSize])
-
-  // TODO: reset i on ds change
   const initialRandomIndex = Math.floor(Math.random() * ds.trainData.length)
   const [{ i }, set, get] = useControls(
     "data",

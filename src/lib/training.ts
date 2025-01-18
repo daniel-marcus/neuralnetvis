@@ -39,9 +39,16 @@ export function useTraining(
   }, [toggleTraining])
 
   const trainingConfig = useControls("training", {
-    batchSize: { value: 128, min: 1, max: 256, step: 1 },
+    validationSplit: {
+      label: "validSplit",
+      value: 0.1,
+      min: 0,
+      max: 0.5,
+      step: 0.1,
+    },
+    batchSize: { value: 128, min: 1, max: 512, step: 1 },
     epochs: { value: 3, min: 1, max: 50, step: 1 },
-    silent: { value: false },
+    silent: false,
   })
 
   const [, set, get] = useControls("training", () => ({
@@ -77,9 +84,11 @@ export function useTraining(
 
   useEffect(() => {
     if (!isTraining || !model) return
-    const { batchSize, epochs, silent } = trainingConfig
+    const { validationSplit, batchSize, epochs, silent } = trainingConfig
     const inputs = ds.trainData
     const labels = ds.trainLabels
+    const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
+    // TODO: implement initialEpoch?
     async function startTraining() {
       if (!model) return
       let startTime = Date.now()
@@ -89,7 +98,7 @@ export function useTraining(
         onBatchBegin: (batchIndex) => {
           const isLastInBatch = batchIndex === totalBatches - 1
           const isLastInEpoch = isLastInBatch && epochCount === epochs - 1
-          const remainingSamples = inputs.length - batchIndex * batchSize
+          const remainingSamples = trainSampleSize - batchIndex * batchSize
           const step = isLastInEpoch
             ? remainingSamples - 1 // stop on last sample
             : isLastInBatch
@@ -98,11 +107,8 @@ export function useTraining(
           if (!silent) next(step)
         },
         onBatchEnd: (batchIndex, logs) => {
-          const log = logs as
-            | { batch?: number; size?: number; loss?: number; acc?: number }
-            | undefined
-          if (typeof log !== "undefined")
-            setLogs((prev) => [...prev, { epoch: epochCount, ...log }])
+          if (typeof logs !== "undefined")
+            setLogs((prev) => [...prev, { epoch: epochCount, ...logs }])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
@@ -111,6 +117,10 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         onEpochBegin: (epoch) => {
           epochCount = epoch
         },
+        onEpochEnd: (epoch, logs) => {
+          if (typeof logs !== "undefined")
+            setLogs((prev) => [...prev, { epoch, ...logs }])
+        },
         onTrainBegin: () => {
           startTime = Date.now()
         },
@@ -118,7 +128,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const endTime = Date.now()
           const totalTime = (endTime - startTime) / 1000
           setIsTraining(false)
-          if (silent) next(inputs.length - 1) // update view
+          if (silent) next(trainSampleSize - 1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           setStatusText(
             `Training finished<br/>Loss: ${loss.toFixed(
@@ -127,7 +137,8 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           )
         },
       }
-      await train(model, inputs, labels, batchSize, epochs, callbacks)
+      const options = { batchSize, epochs, validationSplit, callbacks }
+      await train(model, inputs, labels, options)
     }
     startTraining()
     return () => {
@@ -164,7 +175,13 @@ export function useManualTraining(
             if (typeof logs !== "undefined") setLogs((prev) => [...prev, logs])
           },
         }
-        await train(model, [input], [pressedNumber], 1, 1, callbacks)
+        const options = {
+          batchSize: 1,
+          epochs: 1,
+          validationSplit: 0,
+          callbacks,
+        }
+        await train(model, [input], [pressedNumber], options)
         next()
       }
     }
@@ -175,16 +192,21 @@ export function useManualTraining(
   }, [input, model, next, setLogs])
 }
 
+const defaultOptions: tf.ModelFitArgs = {
+  batchSize: 1,
+  epochs: 1,
+  validationSplit: 0,
+  shuffle: true,
+}
+
 async function train(
   model: tf.LayersModel,
   inputs: number[][],
   labels: number[],
-  batchSize = 1,
-  epochs = 1,
-  callbacks?: tf.ModelFitArgs["callbacks"]
+  options: tf.ModelFitArgs = {}
 ) {
   // TODO: interrupt ongoing training if necessary
-
+  options = { ...defaultOptions, ...options }
   const X = tf.tensor(inputs)
   const numClasses = 10
   const y = tf.oneHot(labels, numClasses)
@@ -195,13 +217,7 @@ async function train(
       metrics: ["accuracy"],
     })
   }
-  await model
-    .fit(X, y, {
-      batchSize,
-      epochs,
-      callbacks,
-    })
-    .catch(console.error)
+  await model.fit(X, y, options).catch(console.error)
 }
 
 function isModelCompiled(model: tf.LayersModel) {

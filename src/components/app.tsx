@@ -8,7 +8,7 @@ import { StatusText } from "./status-text"
 import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
 
 const levaTheme: LevaCustomTheme = {
-  sizes: { numberInputMinWidth: "46px", controlWidth: "168px" },
+  sizes: { numberInputMinWidth: "46px", controlWidth: "172px" },
 }
 
 export const App = () => {

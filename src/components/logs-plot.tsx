@@ -4,11 +4,18 @@ import {
   useInputContext,
   LevaInputProps,
 } from "leva/plugin"
-import { useCallback, useEffect, useRef, useState, forwardRef } from "react"
+import {
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  forwardRef,
+} from "react"
 
 // careful with circular imports!
 
-const { Row, Label } = Components
+const { Row } = Components
 
 export type TrainingLog = {
   epoch?: number
@@ -16,6 +23,8 @@ export type TrainingLog = {
   size?: number
   loss?: number
   acc?: number
+  val_loss?: number // for epoch only
+  val_acc?: number // for epoch only
 }
 
 type LossPlotProps = LevaInputProps<TrainingLog[]>
@@ -29,16 +38,26 @@ export const logsPlot = createPlugin({
 
 type TooltipContent = React.ReactNode | null
 
-const TOOLTIP_WIDTH = 88
+const TOOLTIP_WIDTH = 120
 
-const METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
+const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
+const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
+const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
 
 function LogsPlot() {
-  const { value: logs, label } = useInputContext<LossPlotProps>()
+  const { value: logs } = useInputContext<LossPlotProps>()
   const [metric, setMetric] = useState<(typeof METRICS)[number]>("loss")
-  const canvasRef = useCanvasUpdate(logs, metric)
+  const isEpochMetric = EPOCH_METRICS.includes(metric)
+  const filteredLogs = useMemo(
+    () =>
+      logs.filter((log) =>
+        isEpochMetric ? typeof log[EPOCH_METRICS[0]] !== "undefined" : log
+      ),
+    [logs, isEpochMetric]
+  )
   const tooltipRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useCanvasUpdate(filteredLogs, metric)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -57,33 +76,37 @@ function LogsPlot() {
       if (cursorRef.current) {
         cursorRef.current.style.left = `${x}px`
       }
-      const xVal = (x / rect.width) * logs.length
+      const xVal = (x / rect.width) * filteredLogs.length
       const i = Math.floor(xVal)
-      const log = logs[i]
+      const log = filteredLogs[i]
       if (!log) return
-      const { epoch, batch, loss, acc } = log
+      const { epoch, batch } = log
+      const epochNr = (epoch ?? 0) + 1
+      const batchNr = (batch ?? 0) + 1
       const tt = (
         <div>
-          {(typeof epoch !== "undefined" || typeof batch !== "undefined") && (
-            <div>
-              <strong>
-                Batch {(epoch ?? 0) + 1}.{(batch ?? 0) + 1}
-              </strong>
+          <div>
+            <strong>
+              {isEpochMetric
+                ? `Epoch ${epochNr}`
+                : `Batch ${epochNr}.${batchNr}`}
+            </strong>
+          </div>
+          {METRICS.filter((m) => typeof log[m] == "number").map((m) => (
+            <div key={m}>
+              {m}: {log[m]?.toFixed(4)}
             </div>
-          )}
-          {typeof loss !== "undefined" && <div>Loss: {loss?.toFixed(4)}</div>}
-          {typeof acc !== "undefined" && <div>Acc: {acc?.toFixed(4)}</div>}
+          ))}
         </div>
       )
       setTooltip(<div>{tt}</div>)
     },
-    [logs, tooltipRef, cursorRef]
+    [filteredLogs, tooltipRef, cursorRef, isEpochMetric]
   )
   return (
     <>
-      <Row input={!!label}>
-        {!!label && <Label>{label}</Label>}
-        <div className={`flex space-x-2`}>
+      <Row>
+        <div className={`flex justify-center space-x-2`}>
           {METRICS.map((m) => {
             const isSelected = m === metric
             return (
@@ -141,7 +164,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         ref={ref}
         className={`${
           hidden ? "hidden" : ""
-        } absolute w-[88px] bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
+        } absolute w-[120px] bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
       >
         {children}
       </div>
@@ -163,7 +186,11 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
 
     const logsWithValue = logs.filter((log) => typeof log[metric] === "number")
 
-    const maxVal = Math.max(...logsWithValue.map((log) => log[metric] ?? 0))
+    const maxVal = Math.max(
+      ...logsWithValue.map((log) =>
+        typeof log[metric] === "number" ? log[metric] : 0
+      )
+    )
     const getX = (i: number) => (i / (logs.length - 1)) * width
 
     // first: draw epoch separators
