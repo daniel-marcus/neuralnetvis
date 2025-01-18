@@ -122,7 +122,7 @@ export function useDatasets() {
       sampleSize: {
         value: 5000,
         min: 1,
-        max: dsFull.trainData.length ? dsFull.trainData.length - 1 : 5000, // TODO: display values > 10,000
+        max: dsFull.trainData.length ? dsFull.trainData.length : 5000,
         step: 100,
       },
     },
@@ -143,15 +143,20 @@ export function useDatasets() {
     "data",
     () => ({
       i: {
-        label: "currIndex",
+        label: "currSample",
         value: initialRandomIndex,
-        min: 0,
-        max: Math.max(ds.trainData.length - 1, 0),
+        min: 1,
+        max: Math.max(ds.trainData.length, 1),
         step: 1,
       },
     }),
     [ds]
   )
+  useEffect(() => {
+    const currI = get("i")
+    if (currI > ds.trainData.length) set({ i: ds.trainData.length })
+  }, [ds, get, set])
+
   const setI = useCallback(
     (arg: number | ((prev: number) => number)) => {
       const currI = get("i")
@@ -161,20 +166,20 @@ export function useDatasets() {
     [set, get]
   )
 
-  const input = useMemo(() => ds.trainData[i], [i, ds])
-  const label = useMemo(() => ds.trainLabels[i], [i, ds])
+  const input = useMemo(() => ds.trainData[i - 1], [i, ds])
+  const label = useMemo(() => ds.trainLabels[i - 1], [i, ds])
 
   const next = useCallback(
     (step = 1) =>
       setI((i) =>
-        i + step < ds.trainData.length
+        i + step <= ds.trainData.length
           ? i + step
           : i + step - ds.trainData.length
       ),
     [ds, setI]
   )
   useEffect(() => {
-    const prev = () => setI((i) => (i > 0 ? i - 1 : ds.trainData.length - 1))
+    const prev = () => setI((i) => (i > 1 ? i - 1 : ds.trainData.length))
     const onKeydown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") next()
       if (e.key === "ArrowLeft") prev()

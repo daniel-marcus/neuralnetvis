@@ -5,6 +5,11 @@ import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { Leva } from "leva"
 import { StatusText } from "./status-text"
+import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
+
+const levaTheme: LevaCustomTheme = {
+  sizes: { numberInputMinWidth: "46px", controlWidth: "168px" },
+}
 
 export const App = () => {
   return (
@@ -15,7 +20,7 @@ export const App = () => {
         <OrbitControls target={[6, 0, 0]} />
         <Model />
       </Canvas>
-      <Leva hideCopyButton />
+      <Leva hideCopyButton theme={levaTheme} />
       <StatusText />
     </div>
   )
@@ -42,15 +47,3 @@ const Lights = () => (
     />
   </>
 )
-
-/* 
-
-
-    <spotLight
-      position={[10, 10, 10]}
-      angle={0.15}
-      penumbra={1}
-      decay={0}
-      intensity={Math.PI}
-    />
-*/

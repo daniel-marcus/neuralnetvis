@@ -39,7 +39,7 @@ export function useTraining(
   }, [toggleTraining])
 
   const trainingConfig = useControls("training", {
-    batchSize: { value: 64, min: 1, max: 128, step: 1 },
+    batchSize: { value: 128, min: 1, max: 256, step: 1 },
     epochs: { value: 3, min: 1, max: 50, step: 1 },
     silent: { value: false },
   })
@@ -87,10 +87,14 @@ export function useTraining(
       const totalBatches = Math.ceil(inputs.length / batchSize)
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchBegin: (batchIndex) => {
-          const isLast =
-            batchIndex === totalBatches - 1 && epochCount === epochs - 1
+          const isLastInBatch = batchIndex === totalBatches - 1
+          const isLastInEpoch = isLastInBatch && epochCount === epochs - 1
           const remainingSamples = inputs.length - batchIndex * batchSize
-          const step = isLast ? remainingSamples - 1 : batchSize
+          const step = isLastInEpoch
+            ? remainingSamples - 1 // stop on last sample
+            : isLastInBatch
+            ? remainingSamples % batchSize
+            : batchSize
           if (!silent) next(step)
         },
         onBatchEnd: (batchIndex, logs) => {
@@ -146,13 +150,18 @@ export function useManualTraining(
   useEffect(() => {
     if (!model) return
     const onKeydown = async (e: KeyboardEvent) => {
+      /* if (e.key === "b") {
+        const backend = tf.getBackend()
+        const newBackend = backend === "cpu" ? "webgl" : "cpu"
+        tf.setBackend(newBackend)
+        console.log(`Backend switched to ${newBackend}`)
+      } */
       if (e.key >= "0" && e.key <= "9") {
         if (document.activeElement?.tagName.toLowerCase() === "input") return
         const pressedNumber = parseInt(e.key)
         const callbacks: tf.ModelFitArgs["callbacks"] = {
           onBatchEnd: (_, logs) => {
-            const loss = logs?.loss
-            if (typeof loss === "number") setLogs((prev) => [...prev, { loss }])
+            if (typeof logs !== "undefined") setLogs((prev) => [...prev, logs])
           },
         }
         await train(model, [input], [pressedNumber], 1, 1, callbacks)
@@ -181,9 +190,9 @@ async function train(
   const y = tf.oneHot(labels, numClasses)
   if (!isModelCompiled(model)) {
     model.compile({
-      optimizer: "adam", // Adam optimizer
-      loss: "categoricalCrossentropy", // Loss function (for multi-class classification)
-      metrics: ["accuracy"], // Track accuracy during training
+      optimizer: "adam",
+      loss: "categoricalCrossentropy",
+      metrics: ["accuracy"],
     })
   }
   await model
