@@ -13,14 +13,14 @@ export const OptionsContext = createContext<Options>({})
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
 export const Model = () => {
-  const [input, trainingY, next, ds] = useDatasets()
+  const [input, rawInput, trainingY, next, ds] = useDatasets()
   const model = useModel(ds)
   const isTraining = useTraining(model, input, next, ds)
   if (!model) return null
   return (
     <OptionsContext.Provider value={{ hideLines: isTraining }}>
       <TrainingYContext.Provider value={trainingY}>
-        <Sequential model={model} input={input} ds={ds} />
+        <Sequential model={model} input={input} rawInput={rawInput} ds={ds} />
       </TrainingYContext.Provider>
     </OptionsContext.Provider>
   )

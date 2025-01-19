@@ -8,11 +8,13 @@ interface DatasetData {
   testX: number[][]
   testY: number[]
 }
+
 interface DatasetDef {
   name: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
+    preprocess?: (data: number[][]) => number[][]
   }
   output: {
     size: number
@@ -22,7 +24,10 @@ interface DatasetDef {
   loadData: () => Promise<DatasetData>
 }
 
-export type Dataset = Omit<DatasetDef, "loadData"> & DatasetData
+export type Dataset = Omit<DatasetDef, "loadData"> & {
+  dataRaw: DatasetData
+  data: DatasetData
+}
 
 // TODO: normalize somewhere else?
 // TODO: use external sources
@@ -31,6 +36,9 @@ const datasets: DatasetDef[] = [
   {
     name: "mnist",
     loss: "categoricalCrossentropy",
+    input: {
+      preprocess: (data) => data.map((row) => row.map((v) => v / 255)),
+    },
     output: {
       size: 10,
       activation: "softmax",
@@ -38,15 +46,15 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
-        import("@/data/mnist/train_data.json"),
-        import("@/data/mnist/train_labels.json"),
-        import("@/data/mnist/test_data.json"),
-        import("@/data/mnist/test_labels.json"),
+        import("@/data/mnist/10k/train_data.json"),
+        import("@/data/mnist/10k/train_labels.json"),
+        import("@/data/mnist/10k/test_data.json"),
+        import("@/data/mnist/10k/test_labels.json"),
       ])
       return {
-        trainX: (trainX.default as number[][]).map(normalize),
+        trainX: trainX.default as number[][],
         trainY: trainY.default as number[],
-        testX: (testX.default as number[][]).map(normalize),
+        testX: testX.default as number[][],
         testY: testY.default as number[],
       }
     },
@@ -54,6 +62,9 @@ const datasets: DatasetDef[] = [
   {
     name: "fashion mnist",
     loss: "categoricalCrossentropy",
+    input: {
+      preprocess: (data) => data.map((row) => row.map((v) => v / 255)),
+    },
     output: {
       size: 10,
       activation: "softmax",
@@ -72,15 +83,15 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
-        import("@/data/fashion_mnist/train_data.json"),
-        import("@/data/fashion_mnist/train_labels.json"),
-        import("@/data/fashion_mnist/test_data.json"),
-        import("@/data/fashion_mnist/test_labels.json"),
+        import("@/data/fashion_mnist/10k/train_data.json"),
+        import("@/data/fashion_mnist/10k/train_labels.json"),
+        import("@/data/fashion_mnist/10k/test_data.json"),
+        import("@/data/fashion_mnist/10k/test_labels.json"),
       ])
       return {
-        trainX: (trainX.default as number[][]).map(normalize),
+        trainX: trainX.default as number[][],
         trainY: trainY.default,
-        testX: (testX.default as number[][]).map(normalize),
+        testX: testX.default as number[][],
         testY: testY.default,
       }
     },
@@ -89,6 +100,7 @@ const datasets: DatasetDef[] = [
     name: "california housing",
     loss: "meanSquaredError",
     input: {
+      preprocess: applyStandardScaler,
       labels: [
         "longitude",
         "latitude",
@@ -111,12 +123,10 @@ const datasets: DatasetDef[] = [
         import("@/data/california_housing/test_X.json"),
         import("@/data/california_housing/test_y.json"),
       ])
-      const scaledTrainX = applyStandardScaler(trainX.default)
-      const scaledTextX = applyStandardScaler(testX.default)
       return {
-        trainX: scaledTrainX,
+        trainX: trainX.default,
         trainY: trainY.default,
-        testX: scaledTextX,
+        testX: testX.default,
         testY: testY.default,
       }
     },
@@ -148,7 +158,17 @@ export function useDatasets() {
       .then((data) => {
         setDataset({
           ...datasetDef,
-          ...data,
+          dataRaw: data,
+          data: {
+            // apply preprocess if available
+            ...data,
+            trainX: datasetDef.input?.preprocess
+              ? datasetDef.input.preprocess(data.trainX)
+              : data.trainX,
+            testX: datasetDef.input?.preprocess
+              ? datasetDef.input.preprocess(data.testX)
+              : data.testX,
+          },
         })
       })
       .finally(() => setIsLoading(false))
@@ -163,14 +183,12 @@ export function useDatasets() {
         size: 10,
         activation: "softmax",
       },
-      trainX: [],
-      trainY: [],
-      testX: [],
-      testY: [],
+      dataRaw: { trainX: [], trainY: [], testX: [], testY: [] },
+      data: { trainX: [], trainY: [], testX: [], testY: [] },
     } as Dataset
   }, [dataset])
 
-  const initialRandomIndex = Math.floor(Math.random() * ds.trainX.length)
+  const initialRandomIndex = Math.floor(Math.random() * ds.data.trainX.length)
   const [{ i }, set, get] = useControls(
     "data",
     () => ({
@@ -178,7 +196,7 @@ export function useDatasets() {
         label: "currSample",
         value: initialRandomIndex,
         min: 1,
-        max: Math.max(ds.trainX.length, 1),
+        max: Math.max(ds.data.trainX.length, 1),
         step: 1,
       },
     }),
@@ -186,7 +204,7 @@ export function useDatasets() {
   )
   useEffect(() => {
     const currI = get("i")
-    if (currI > ds.trainX.length) set({ i: ds.trainX.length })
+    if (currI > ds.data.trainX.length) set({ i: ds.data.trainX.length })
   }, [ds, get, set])
 
   const setI = useCallback(
@@ -198,18 +216,21 @@ export function useDatasets() {
     [set, get]
   )
 
-  const input = useMemo(() => ds.trainX[i - 1], [i, ds])
-  const trainingY = useMemo(() => ds.trainY[i - 1], [i, ds])
+  const input = useMemo(() => ds.data.trainX[i - 1], [i, ds])
+  const rawInput = useMemo(() => ds.dataRaw.trainX[i - 1], [i, ds])
+  const trainingY = useMemo(() => ds.data.trainY[i - 1], [i, ds])
 
   const next = useCallback(
     (step = 1) =>
       setI((i) =>
-        i + step <= ds.trainX.length ? i + step : i + step - ds.trainX.length
+        i + step <= ds.data.trainX.length
+          ? i + step
+          : i + step - ds.data.trainX.length
       ),
     [ds, setI]
   )
   useEffect(() => {
-    const prev = () => setI((i) => (i > 1 ? i - 1 : ds.trainX.length))
+    const prev = () => setI((i) => (i > 1 ? i - 1 : ds.data.trainX.length))
     const onKeydown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "ArrowRight") next()
@@ -223,10 +244,11 @@ export function useDatasets() {
     }
   }, [next, ds, setI])
 
-  return [input, trainingY, next, ds] as const
+  return [input, rawInput, trainingY, next, ds] as const
 }
 
 export function normalize(data: number[] | unknown) {
+  // min-max normalization [0, 1]
   if (!Array.isArray(data)) return [] as number[]
   const max = Math.max(...data)
   const min = Math.min(...data)

@@ -6,6 +6,7 @@ export interface DenseProps {
   index?: number
   type: LayerType
   units: number
+  rawInput?: number[]
   activations?: number[]
   normalizedActivations?: number[]
   weights?: number[][]
@@ -19,6 +20,7 @@ export const Dense = (props: DenseProps) => {
   const {
     units,
     type,
+    rawInput,
     activations,
     normalizedActivations,
     weights,
@@ -40,6 +42,7 @@ export const Dense = (props: DenseProps) => {
             position={position}
             layer={props}
             prevLayer={prevLayer}
+            rawInput={rawInput?.[i]}
             activation={activations?.[i]}
             normalizedActivation={normalizedActivations?.[i]}
             weights={neuronWeights}

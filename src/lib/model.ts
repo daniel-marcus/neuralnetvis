@@ -21,7 +21,7 @@ export function useModel(ds: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  const inputSize = ds.trainX[0]?.length ?? 0
+  const inputSize = ds.data.trainX[0]?.length ?? 0
   const model = useMemo(() => {
     const hiddenLayerUnits = Object.keys(config)
       .map((key) => config[key] as number)

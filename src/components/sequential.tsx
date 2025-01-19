@@ -10,9 +10,10 @@ interface SequentialProps {
   model: tf.LayersModel
   ds: Dataset
   input?: number[]
+  rawInput?: number[]
 }
 
-export const Sequential = ({ model, ds, input }: SequentialProps) => {
+export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
   const activations = useActivations(model, input)
   const layerProps = useMemo(
     () =>
@@ -20,14 +21,15 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
         const units =
           (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
         const type = getLayerType(model.layers.length, i)
-        const layerActivations =
-          type === "input" ? input : activations?.[i]?.[0]
+        const layerActivations = activations?.[i]?.[0]
+        // TODO: normalize on column
         const normalizedActivations =
           type === "output" ? layerActivations : normalize(layerActivations)
         return {
           index: i,
           type,
           units,
+          rawInput: type === "input" ? rawInput : undefined,
           activations: layerActivations,
           normalizedActivations,
           weights: getWeights(l),
@@ -36,7 +38,7 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
           ds,
         }
       }),
-    [input, activations, model, ds]
+    [activations, model, ds, rawInput]
   )
   return (
     <group>

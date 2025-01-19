@@ -87,8 +87,8 @@ export function useTraining(
       epochs: _epochs,
       silent,
     } = trainingConfig
-    const inputs = ds.trainX
-    const labels = ds.trainY
+    const inputs = ds.data.trainX
+    const labels = ds.data.trainY
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
     // TODO: implement initialEpoch?
     const initialEpoch = epochCount > 0 ? epochCount + 1 : 0
@@ -252,8 +252,8 @@ function isModelCompiled(model: tf.LayersModel) {
 }
 
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
-  const X = tf.tensor(ds.testX)
-  const y = getY(ds.testY, ds.output)
+  const X = tf.tensor(ds.data.testX)
+  const y = getY(ds.data.testY, ds.output)
   const result = model.evaluate(X, y, { batchSize: 64 })
   const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
   const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined

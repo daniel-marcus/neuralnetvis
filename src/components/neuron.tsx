@@ -4,15 +4,17 @@ import { Connection } from "./connection"
 import { Text } from "@react-three/drei"
 import { useStatusText } from "./status-text"
 import { OptionsContext, TrainingYContext } from "./model"
+import { normalize } from "@/lib/datasets"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
-const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
+const LINE_WEIGHT_THRESHOLD = 0.8 // 0.1 // maybe use dynamic threshold based on max weight?
 
 interface NeuronProps {
   index: number
   position: [number, number, number]
   layer: LayerProps
   prevLayer?: LayerProps
+  rawInput?: number
   activation?: number
   normalizedActivation?: number
   weights?: number[]
@@ -26,6 +28,7 @@ export function Neuron(props: NeuronProps) {
     position,
     layer,
     prevLayer,
+    rawInput,
     activation,
     normalizedActivation,
     weights,
@@ -40,7 +43,7 @@ export function Neuron(props: NeuronProps) {
   const [x, y, z] = position
   const { hideLines } = useContext(OptionsContext)
   const trainingY = useContext(TrainingYContext)
-  useHoverStatus(hovered, index, activation, bias, weights, prevLayer)
+  useHoverStatus(hovered, index, rawInput, activation, bias, weights, prevLayer)
   return (
     <group>
       <mesh
@@ -65,7 +68,8 @@ export function Neuron(props: NeuronProps) {
               Number(normalizedActivation) < LINE_ACTIVATION_THRESHOLD
             )
               return null
-            const weight = weights?.[j] ?? 0
+            const normalizedWeights = normalize(weights)
+            const weight = normalizedWeights?.[j] ?? 0 // weights?.[j] ?? 0
             const input = prevLayer.normalizedActivations?.[j] ?? 0
             if (Math.abs(weight) < LINE_WEIGHT_THRESHOLD) return null
             return (
@@ -97,6 +101,18 @@ export function Neuron(props: NeuronProps) {
         >
           {label ??
             (activation ? `${activation?.toFixed(0)} vs. ${trainingY}` : "")}
+        </Text>
+      )}
+      {layer.type === "input" && !!label && rawInput !== undefined && (
+        <Text
+          position={getTextPos(x, y, z, "output")} // show on the other side
+          fontSize={3}
+          color={color}
+          anchorX={"left"}
+          anchorY="middle"
+          rotation={[0, -Math.PI / 2, 0]}
+        >
+          {rawInput}
         </Text>
       )}
       {layer.type === "output" && // TODO: show correct values for linear output (california housing)
@@ -144,6 +160,7 @@ function getGeometry(type: LayerType, units: number) {
 function useHoverStatus(
   hovered: boolean,
   index: number,
+  rawInput: number | undefined,
   activation: number | undefined,
   bias: number | undefined,
   weights: number[] | undefined,
@@ -160,18 +177,28 @@ function useHoverStatus(
         .slice(0, 5)
       const weightsText = strongestWeights?.length
         ? `<br/>Top weights:<br/>${strongestWeights
-            .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w})`)
+            .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w.toFixed(4)})`)
             .join("<br/>")}`
         : ""
       setStatusText(
         `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
-Activation: ${activation}<br/>
-Bias: ${bias}<br/>
+${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}
+Activation: ${activation?.toFixed(4)}<br/>
+${bias !== undefined ? `Bias: ${bias?.toFixed(4)}<br/>` : ""}
 ${weightsText}`
       )
       return () => {
         setStatusText("")
       }
     }
-  }, [hovered, index, activation, bias, layerIndex, weights, setStatusText])
+  }, [
+    hovered,
+    index,
+    rawInput,
+    activation,
+    bias,
+    layerIndex,
+    weights,
+    setStatusText,
+  ])
 }
