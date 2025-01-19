@@ -4,7 +4,7 @@ import * as tf from "@tensorflow/tfjs"
 import { Dataset, normalize } from "@/lib/datasets"
 
 export type LayerProps = DenseProps
-export type LayerType = "input" | "output" | "hidden"
+export type LayerPosition = "input" | "hidden" | "output"
 
 interface SequentialProps {
   model: tf.LayersModel
@@ -20,16 +20,18 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
       model.layers.map((l, i) => {
         const units =
           (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
-        const type = getLayerType(model.layers.length, i)
+        const layerPosition = getLayerPosition(model.layers.length, i)
         const layerActivations = activations?.[i]?.[0]
         // TODO: normalize on column
         const normalizedActivations =
-          type === "output" ? layerActivations : normalize(layerActivations)
+          layerPosition === "output"
+            ? layerActivations
+            : normalize(layerActivations)
         return {
           index: i,
-          type,
+          layerPosition,
           units,
-          rawInput: type === "input" ? rawInput : undefined,
+          rawInput: layerPosition === "input" ? rawInput : undefined,
           activations: layerActivations,
           normalizedActivations,
           weights: getWeights(l),
@@ -90,7 +92,7 @@ export function getNeuronPositions(
   totalLayers: number,
   units: number
 ) {
-  const type = getLayerType(totalLayers, layerIndex)
+  const type = getLayerPosition(totalLayers, layerIndex)
   const offsetX =
     layerIndex * LAYER_SPACING + (totalLayers - 1) * LAYER_SPACING * -0.5
   const positions = Array.from({ length: units }).map((_, i) => {
@@ -106,7 +108,10 @@ export function getNeuronPositions(
   return positions
 }
 
-export function getLayerType(totalLayers: number, index: number): LayerType {
+export function getLayerPosition(
+  totalLayers: number,
+  index: number
+): LayerPosition {
   if (index === 0) return "input"
   if (index === totalLayers - 1) return "output"
   return "hidden"
@@ -115,7 +120,7 @@ export function getLayerType(totalLayers: number, index: number): LayerType {
 function getGridYZ(
   i: number,
   total: number,
-  type: LayerType
+  type: LayerPosition
 ): [number, number] {
   const NEURON_SPACING = type === "input" ? 0.7 : 1.8
   const gridSize = Math.ceil(Math.sqrt(total))

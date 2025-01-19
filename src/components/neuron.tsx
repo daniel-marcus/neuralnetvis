@@ -1,5 +1,5 @@
 import React, { useState, ReactElement, useEffect, useContext } from "react"
-import { LayerProps, LayerType, OUTPUT_ORIENT } from "./sequential"
+import { LayerProps, LayerPosition, OUTPUT_ORIENT } from "./sequential"
 import { Connection } from "./connection"
 import { Text } from "@react-three/drei"
 import { useStatusText } from "./status-text"
@@ -37,7 +37,7 @@ export function Neuron(props: NeuronProps) {
     ...otherProps
   } = props
   const [hovered, setHover] = useState(false)
-  const geometry = getGeometry(layer.type, layer.units)
+  const geometry = getGeometry(layer.layerPosition, layer.units)
   const value = normalizedActivation ? Math.min(normalizedActivation, 1) : 0
   const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
   const [x, y, z] = position
@@ -84,14 +84,14 @@ export function Neuron(props: NeuronProps) {
           })}
         </group>
       )}
-      {(layer.type === "output" || !!label) && (
+      {(layer.layerPosition === "output" || !!label) && (
         <Text
-          position={getTextPos(x, y, z, layer.type)}
+          position={getTextPos(x, y, z, layer.layerPosition)}
           fontSize={3}
           color={color}
           anchorX={
             OUTPUT_ORIENT === "vertical"
-              ? layer.type === "input"
+              ? layer.layerPosition === "input"
                 ? "right"
                 : "left"
               : "center"
@@ -103,7 +103,7 @@ export function Neuron(props: NeuronProps) {
             (activation ? `${activation?.toFixed(0)} vs. ${trainingY}` : "")}
         </Text>
       )}
-      {layer.type === "input" && !!label && rawInput !== undefined && (
+      {layer.layerPosition === "input" && !!label && rawInput !== undefined && (
         <Text
           position={getTextPos(x, y, z, "output")} // show on the other side
           fontSize={3}
@@ -115,7 +115,7 @@ export function Neuron(props: NeuronProps) {
           {rawInput}
         </Text>
       )}
-      {layer.type === "output" && // TODO: show correct values for linear output (california housing)
+      {layer.layerPosition === "output" && // TODO: show correct values for linear output (california housing)
         typeof trainingY === "number" &&
         trainingY === index && (
           <Text
@@ -133,7 +133,12 @@ export function Neuron(props: NeuronProps) {
   )
 }
 
-function getTextPos(x: number, y: number, z: number, layerType?: LayerType) {
+function getTextPos(
+  x: number,
+  y: number,
+  z: number,
+  layerType?: LayerPosition
+) {
   const factor = layerType === "output" ? 1 : -1
   if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5 * factor]
   else return [x, y + 3, z]
@@ -149,7 +154,7 @@ const geometryMap: Record<string, ReactElement> = {
   sphere: <sphereGeometry args={[0.6, 32, 32]} />,
 }
 
-function getGeometry(type: LayerType, units: number) {
+function getGeometry(type: LayerPosition, units: number) {
   if (["input", "output"].includes(type)) {
     if (units <= 10) return geometryMap.boxBig
     return geometryMap.boxSmall

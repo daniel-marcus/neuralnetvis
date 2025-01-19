@@ -1,10 +1,10 @@
 import { Dataset } from "@/lib/datasets"
 import { Neuron } from "./neuron"
-import { LayerProps, LayerType } from "./sequential"
+import { LayerProps, LayerPosition } from "./sequential"
 
 export interface DenseProps {
   index?: number
-  type: LayerType
+  layerPosition: LayerPosition
   units: number
   rawInput?: number[]
   activations?: number[]
@@ -19,7 +19,7 @@ export interface DenseProps {
 export const Dense = (props: DenseProps) => {
   const {
     units,
-    type,
+    layerPosition,
     rawInput,
     activations,
     normalizedActivations,
@@ -48,9 +48,9 @@ export const Dense = (props: DenseProps) => {
             weights={neuronWeights}
             bias={biases?.[i]}
             label={
-              type === "output"
+              layerPosition === "output"
                 ? ds.output.labels?.[i]
-                : type === "input"
+                : layerPosition === "input"
                 ? ds.input?.labels?.[i]
                 : undefined
             }
