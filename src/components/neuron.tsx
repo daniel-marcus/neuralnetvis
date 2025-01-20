@@ -1,15 +1,15 @@
 import React, { useState, ReactElement, useEffect, useContext } from "react"
-import { LayerProps, LayerPosition, OUTPUT_ORIENT } from "./sequential"
-import { Connection } from "./connection"
-import { Text } from "@react-three/drei"
+import { LayerProps, LayerPosition } from "./sequential"
+import { NeuronConnections } from "./neuron-connections"
 import { useStatusText } from "./status-text"
 import { OptionsContext, TrainingYContext } from "./model"
-import { normalize } from "@/lib/datasets"
+import { Dot, NeuronLabel } from "./neuron-label"
+import { Dataset } from "@/lib/datasets"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
-const LINE_WEIGHT_THRESHOLD = 0.8 // 0.1 // maybe use dynamic threshold based on max weight?
+export const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
 
-interface NeuronProps {
+export interface NeuronProps {
   index: number
   position: [number, number, number]
   layer: LayerProps
@@ -20,6 +20,7 @@ interface NeuronProps {
   weights?: number[]
   bias?: number
   label?: string
+  ds: Dataset
 }
 
 export function Neuron(props: NeuronProps) {
@@ -29,25 +30,44 @@ export function Neuron(props: NeuronProps) {
     layer,
     prevLayer,
     rawInput,
-    activation,
-    normalizedActivation,
+    activation = 0,
+    normalizedActivation = 0,
     weights,
     bias,
     label,
-    ...otherProps
+    ds,
   } = props
   const [hovered, setHover] = useState(false)
   const geometry = getGeometry(layer.layerPosition, layer.units)
-  const value = normalizedActivation ? Math.min(normalizedActivation, 1) : 0
-  const color = `rgb(${Math.ceil(value * 255)}, 20, 100)`
-  const [x, y, z] = position
   const { hideLines } = useContext(OptionsContext)
   const trainingY = useContext(TrainingYContext)
-  useHoverStatus(hovered, index, rawInput, activation, bias, weights, prevLayer)
+  useHoverStatus(hovered, props)
+
+  const isClassification = !ds.input?.labels?.length
+  const showValueLabel =
+    !isClassification && ["input", "output"].includes(layer.layerPosition)
+  const showDot =
+    layer.layerPosition === "output" &&
+    typeof trainingY === "number" &&
+    trainingY === index
+
+  const linearY = trainingY ?? 1
+  //  TODO: use R squared?
+  const linearPredictionQuality = 1 - Math.abs(activation - linearY) / linearY
+  const colorValue =
+    isClassification || layer.layerPosition !== "output"
+      ? normalizedActivation
+      : linearPredictionQuality
+  const color = `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
+
+  const showLines =
+    !!prevLayer &&
+    !hideLines &&
+    Number(normalizedActivation) >= LINE_ACTIVATION_THRESHOLD
+  // && isClassification
   return (
     <group>
       <mesh
-        {...otherProps}
         position={position}
         userData={{ activation, bias }}
         scale={1}
@@ -60,92 +80,36 @@ export function Neuron(props: NeuronProps) {
         {geometry}
         <meshStandardMaterial color={color} />
       </mesh>
-      {!!prevLayer && !hideLines && (
-        <group>
-          {prevLayer.positions?.map((prevPos, j) => {
-            if (
-              !hovered &&
-              Number(normalizedActivation) < LINE_ACTIVATION_THRESHOLD
-            )
-              return null
-            const normalizedWeights = normalize(weights)
-            const weight = normalizedWeights?.[j] ?? 0 // weights?.[j] ?? 0
-            const input = prevLayer.normalizedActivations?.[j] ?? 0
-            if (Math.abs(weight) < LINE_WEIGHT_THRESHOLD) return null
-            return (
-              <Connection
-                key={j}
-                start={prevPos}
-                end={position as [number, number, number]}
-                weight={weight}
-                input={input}
-              />
-            )
-          })}
-        </group>
+      {showLines && (
+        <NeuronConnections
+          prevLayer={prevLayer}
+          position={position}
+          weights={weights}
+        />
       )}
-      {(layer.layerPosition === "output" || !!label) && (
-        <Text
-          position={getTextPos(x, y, z, layer.layerPosition)}
-          fontSize={3}
+      {!!label && (
+        <NeuronLabel
+          side={isClassification ? "right" : "left"}
+          position={position}
           color={color}
-          anchorX={
-            OUTPUT_ORIENT === "vertical"
-              ? layer.layerPosition === "input"
-                ? "right"
-                : "left"
-              : "center"
-          }
-          anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
         >
-          {label ??
+          {label}
+        </NeuronLabel>
+      )}
+      {showValueLabel && (
+        <NeuronLabel side={"right"} position={position} color={color}>
+          {rawInput ??
             (activation ? `${activation?.toFixed(0)} vs. ${trainingY}` : "")}
-        </Text>
+        </NeuronLabel>
       )}
-      {layer.layerPosition === "input" && !!label && rawInput !== undefined && (
-        <Text
-          position={getTextPos(x, y, z, "output")} // show on the other side
-          fontSize={3}
-          color={color}
-          anchorX={"left"}
-          anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
-        >
-          {rawInput}
-        </Text>
+      {showDot && (
+        <Dot
+          position={position}
+          color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
+        />
       )}
-      {layer.layerPosition === "output" && // TODO: show correct values for linear output (california housing)
-        typeof trainingY === "number" &&
-        trainingY === index && (
-          <Text
-            position={getDotPos(x, y, z)}
-            fontSize={3}
-            color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
-            anchorX="center"
-            anchorY="middle"
-            rotation={[0, -Math.PI / 2, 0]}
-          >
-            ·
-          </Text>
-        )}
     </group>
   )
-}
-
-function getTextPos(
-  x: number,
-  y: number,
-  z: number,
-  layerType?: LayerPosition
-) {
-  const factor = layerType === "output" ? 1 : -1
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5 * factor]
-  else return [x, y + 3, z]
-}
-function getDotPos(x: number, y: number, z: number) {
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 2.5]
-  else return [x, y + 5, z]
 }
 
 const geometryMap: Record<string, ReactElement> = {
@@ -162,19 +126,12 @@ function getGeometry(type: LayerPosition, units: number) {
   return geometryMap.sphere
 }
 
-function useHoverStatus(
-  hovered: boolean,
-  index: number,
-  rawInput: number | undefined,
-  activation: number | undefined,
-  bias: number | undefined,
-  weights: number[] | undefined,
-  prevLayer: LayerProps | undefined
-) {
+function useHoverStatus(hovered: boolean, props: NeuronProps) {
   const setStatusText = useStatusText((s) => s.setStatusText)
-  const layerIndex = (prevLayer?.index ?? -1) + 1
   useEffect(() => {
     if (hovered) {
+      const { index, layer, rawInput, activation, weights, bias } = props
+      const layerIndex = layer.index ?? 0
       const weightObjects = weights?.map((w, i) => ({ w, i }))
       const strongestWeights = weightObjects
         ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
@@ -196,14 +153,5 @@ ${weightsText}`
         setStatusText("")
       }
     }
-  }, [
-    hovered,
-    index,
-    rawInput,
-    activation,
-    bias,
-    layerIndex,
-    weights,
-    setStatusText,
-  ])
+  }, [hovered, props, setStatusText])
 }

@@ -13,7 +13,7 @@ const defaultUnitConfig = {
 }
 
 export function useModel(ds: Dataset) {
-  const config = useControls("model", {
+  const modelConfig = useControls("model", {
     layer1: { ...defaultUnitConfig, value: 64 },
     layer2: { ...defaultUnitConfig, value: 32 },
     layer3: { ...defaultUnitConfig, disabled: true },
@@ -23,8 +23,8 @@ export function useModel(ds: Dataset) {
 
   const inputSize = ds.data.trainX[0]?.length ?? 0
   const model = useMemo(() => {
-    const hiddenLayerUnits = Object.keys(config)
-      .map((key) => config[key] as number)
+    const hiddenLayerUnits = Object.keys(modelConfig)
+      .map((key) => modelConfig[key] as number)
       .filter((l) => l)
     const _model = createModel(inputSize, hiddenLayerUnits, ds.output)
     const totalParamas = _model.countParams()
@@ -35,7 +35,7 @@ Input (${inputSize}) | ${hiddenLayerUnits
 Params: ${totalParamas.toLocaleString("en-US")}`
     setStatusText(text)
     return _model
-  }, [config, setStatusText, inputSize, ds.name, ds.output])
+  }, [modelConfig, setStatusText, inputSize, ds.name, ds.output])
 
   return model
 }

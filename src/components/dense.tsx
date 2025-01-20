@@ -54,6 +54,7 @@ export const Dense = (props: DenseProps) => {
                 ? ds.input?.labels?.[i]
                 : undefined
             }
+            ds={ds}
           />
         )
       })}

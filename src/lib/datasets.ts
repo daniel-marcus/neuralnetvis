@@ -115,6 +115,7 @@ const datasets: DatasetDef[] = [
     output: {
       size: 1,
       activation: "linear",
+      labels: ["median_house_value"],
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
