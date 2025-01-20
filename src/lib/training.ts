@@ -30,15 +30,25 @@ export function useTraining(
       }),
     []
   )
+
+  const setStatusText = useStatusText((s) => s.setStatusText)
+
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "t") toggleTraining()
+      if (e.key === "b") {
+        const backend = tf.getBackend()
+        const newBackend = backend === "webgl" ? "cpu" : "webgl"
+        tf.setBackend(newBackend)
+        setStatusText(`Switched backend to ${newBackend}`)
+      }
     }
     window.addEventListener("keydown", onKeydown)
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [toggleTraining])
+  }, [toggleTraining, setStatusText])
 
   const trainingConfig = useControls("training", {
     validationSplit: {
@@ -72,8 +82,6 @@ export function useTraining(
     },
     [isTraining]
   )
-
-  const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
     epochCount = 0
@@ -133,8 +141,9 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           setIsTraining(false)
           if (silent) next(trainSampleSize - 1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
+          const backend = tf.getBackend()
           setStatusText(
-            `Training finished<br/>Loss: ${loss.toFixed(
+            `Training finished (${backend})<br/>Loss: ${loss.toFixed(
               4
             )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
           )
@@ -171,14 +180,8 @@ export function useManualTraining(
   useEffect(() => {
     if (!model) return
     const onKeydown = async (e: KeyboardEvent) => {
-      /* if (e.key === "b") {
-        const backend = tf.getBackend()
-        const newBackend = backend === "cpu" ? "webgl" : "cpu"
-        tf.setBackend(newBackend)
-        console.log(`Backend switched to ${newBackend}`)
-      } */
+      if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key >= "0" && e.key <= "9") {
-        if (document.activeElement?.tagName.toLowerCase() === "input") return
         const pressedNumber = parseInt(e.key)
         const callbacks: tf.ModelFitArgs["callbacks"] = {
           onBatchEnd: (_, logs) => {
@@ -225,13 +228,13 @@ async function train(
   output: Dataset["output"],
   lossFunction: Dataset["loss"] = "categoricalCrossentropy"
 ) {
-  // TODO: interrupt ongoing training if necessary
+  // TODO: interrupt ongoing training if necessary?
   options = { ...defaultOptions, ...options }
   const X = tf.tensor(inputs)
   const y = getY(trainY, output)
   if (!isModelCompiled(model)) {
     model.compile({
-      optimizer: "adam",
+      optimizer: tf.train.adam(),
       loss: lossFunction,
       metrics: ["accuracy"],
     })
