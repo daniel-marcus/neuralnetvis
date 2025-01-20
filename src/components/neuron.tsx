@@ -1,13 +1,18 @@
-import React, { useState, ReactElement, useEffect, useContext } from "react"
+import React, {
+  useState,
+  ReactElement,
+  useEffect,
+  useContext,
+  useMemo,
+} from "react"
 import { useStatusText } from "./status-text"
 import { OptionsContext, TrainingYContext } from "./model"
 
-import type { LayerProps, LayerPosition } from "./sequential"
+import type { LayerProps, LayerPosition, Point } from "./sequential"
 
 import { Dot, NeuronLabel } from "./neuron-label"
 import {
   LINE_ACTIVATION_THRESHOLD,
-  LINE_WEIGHT_THRESHOLD,
   NeuronConnections,
 } from "./neuron-connections"
 
@@ -33,6 +38,7 @@ export function Neuron(props: NeuronProps) {
     position,
     layer,
     prevLayer,
+    // prevLayerPositions,
     rawInput,
     activation = 0,
     normalizedActivation = 0,
@@ -67,8 +73,13 @@ export function Neuron(props: NeuronProps) {
   const showLines =
     !!prevLayer &&
     !hideLines &&
-    Number(normalizedActivation) >= LINE_ACTIVATION_THRESHOLD
-  // && isClassification
+    Number(normalizedActivation) >= LINE_ACTIVATION_THRESHOLD &&
+    isClassification
+
+  const linePoints = useMemo(() => {
+    if (!prevLayer?.positions) return []
+    return prevLayer?.positions?.map((prevPos) => [prevPos, position]) ?? []
+  }, [prevLayer?.positions, position]) as [Point, Point][]
   return (
     <group>
       <mesh
@@ -86,9 +97,9 @@ export function Neuron(props: NeuronProps) {
       </mesh>
       {showLines && (
         <NeuronConnections
-          prevLayer={prevLayer}
-          position={position}
+          linePoints={linePoints}
           weights={weights}
+          inputs={prevLayer?.activations}
         />
       )}
       {!!label && (
@@ -103,7 +114,9 @@ export function Neuron(props: NeuronProps) {
       {showValueLabel && (
         <NeuronLabel side={"right"} position={position} color={color}>
           {rawInput ??
-            (activation ? `${activation?.toFixed(0)} vs. ${trainingY}` : "")}
+            (activation
+              ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
+              : "")}
         </NeuronLabel>
       )}
       {showDot && (
@@ -138,8 +151,8 @@ function useHoverStatus(hovered: boolean, props: NeuronProps) {
       const layerIndex = layer.index ?? 0
       const weightObjects = weights?.map((w, i) => ({ w, i }))
       const strongestWeights = weightObjects
-        ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
-        .toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
+        // ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
+        ?.toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
         .slice(0, 5)
       const weightsText = strongestWeights?.length
         ? `<br/>Top weights:<br/>${strongestWeights

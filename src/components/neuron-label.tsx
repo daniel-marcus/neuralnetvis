@@ -47,6 +47,7 @@ export const Dot = ({ position: [x, y, z], color }: DotProps) => (
     anchorX="center"
     anchorY="middle"
     rotation={[0, -Math.PI / 2, 0]}
+    characters="·"
   >
     ·
   </Text>

@@ -1,6 +1,6 @@
 import { Neuron } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
-import type { LayerProps, LayerPosition } from "./sequential"
+import type { LayerPosition, LayerProps } from "./sequential"
 
 export interface DenseProps {
   index?: number

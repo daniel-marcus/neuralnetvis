@@ -5,6 +5,7 @@ import { type Dataset, normalize } from "@/lib/datasets"
 
 export type LayerProps = DenseProps
 export type LayerPosition = "input" | "hidden" | "output"
+export type Point = [number, number, number]
 
 interface SequentialProps {
   model: tf.LayersModel
@@ -15,11 +16,16 @@ interface SequentialProps {
 
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
   const activations = useActivations(model, input)
+  const neuronPositions = useMemo(
+    () =>
+      model.layers.map((l, i) =>
+        getNeuronPositions(i, model.layers.length, getUnits(l))
+      ),
+    [model]
+  )
   const layerProps = useMemo(
     () =>
       model.layers.map((l, i) => {
-        const units =
-          (l.getConfig().units as number) ?? l.batchInputShape?.[1] ?? 0
         const layerPosition = getLayerPosition(model.layers.length, i)
         const layerActivations = activations?.[i]?.[0]
         // TODO: normalize on column
@@ -30,17 +36,17 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
         return {
           index: i,
           layerPosition,
-          units,
+          units: getUnits(l),
           rawInput: layerPosition === "input" ? rawInput : undefined,
           activations: layerActivations,
           normalizedActivations,
           weights: getWeights(l),
           biases: getBiases(l),
-          positions: getNeuronPositions(i, model.layers.length, units),
+          positions: neuronPositions[i],
           ds,
         }
       }),
-    [activations, model, ds, rawInput]
+    [activations, model, ds, rawInput, neuronPositions]
   )
   return (
     <group>
@@ -49,6 +55,10 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
       ))}
     </group>
   )
+}
+
+function getUnits(layer: tf.layers.Layer) {
+  return (layer.getConfig().units as number) ?? layer.batchInputShape?.[1] ?? 0
 }
 
 function getWeights(layer: tf.layers.Layer) {
@@ -103,7 +113,7 @@ export function getNeuronPositions(
         : type === "input" && units <= 10
         ? getLineYZ(i, units, "vertical")
         : getGridYZ(i, units, type)
-    return [x, y, z] as [number, number, number]
+    return [x, y, z] as Point
   })
   return positions
 }
