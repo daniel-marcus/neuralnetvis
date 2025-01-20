@@ -151,12 +151,14 @@ export function useDatasets() {
 
   const [dataset, setDataset] = useState<Dataset | null>(null)
   useEffect(() => {
+    console.log("loading dataset", datasetId)
     setIsLoading(true)
     const datasetDef = datasets[datasetId]
     if (!datasetDef) return
     datasetDef
       .loadData()
       .then((data) => {
+        console.log("loaded dataset", datasetId)
         setDataset({
           ...datasetDef,
           dataRaw: data,
@@ -173,6 +175,9 @@ export function useDatasets() {
         })
       })
       .finally(() => setIsLoading(false))
+    return () => {
+      setDataset(null)
+    }
   }, [datasetId])
 
   const ds = useMemo(() => {

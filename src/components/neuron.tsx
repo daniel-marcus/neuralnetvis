@@ -1,15 +1,19 @@
 import React, { useState, ReactElement, useEffect, useContext } from "react"
-import { LayerProps, LayerPosition } from "./sequential"
-import { NeuronConnections } from "./neuron-connections"
 import { useStatusText } from "./status-text"
 import { OptionsContext, TrainingYContext } from "./model"
+
+import type { LayerProps, LayerPosition } from "./sequential"
+
 import { Dot, NeuronLabel } from "./neuron-label"
-import { Dataset } from "@/lib/datasets"
+import {
+  LINE_ACTIVATION_THRESHOLD,
+  LINE_WEIGHT_THRESHOLD,
+  NeuronConnections,
+} from "./neuron-connections"
 
-const LINE_ACTIVATION_THRESHOLD = 0.5
-export const LINE_WEIGHT_THRESHOLD = 0.1 // maybe use dynamic threshold based on max weight?
+import type { Dataset } from "@/lib/datasets"
 
-export interface NeuronProps {
+interface NeuronProps {
   index: number
   position: [number, number, number]
   layer: LayerProps
@@ -44,12 +48,6 @@ export function Neuron(props: NeuronProps) {
   useHoverStatus(hovered, props)
 
   const isClassification = !ds.input?.labels?.length
-  const showValueLabel =
-    !isClassification && ["input", "output"].includes(layer.layerPosition)
-  const showDot =
-    layer.layerPosition === "output" &&
-    typeof trainingY === "number" &&
-    trainingY === index
 
   const linearY = trainingY ?? 1
   //  TODO: use R squared?
@@ -60,6 +58,12 @@ export function Neuron(props: NeuronProps) {
       : linearPredictionQuality
   const color = `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
 
+  const showValueLabel =
+    !isClassification && ["input", "output"].includes(layer.layerPosition)
+  const showDot =
+    layer.layerPosition === "output" &&
+    typeof trainingY === "number" &&
+    trainingY === index
   const showLines =
     !!prevLayer &&
     !hideLines &&

@@ -49,7 +49,7 @@ export function useTraining(
       step: 0.1,
     },
     batchSize: { value: 128, min: 1, max: 512, step: 1 },
-    epochs: { value: 5, min: 1, max: 100, step: 1 },
+    epochs: { value: 1, min: 1, max: 100, step: 1 },
     silent: false,
   })
 
@@ -90,7 +90,7 @@ export function useTraining(
     const inputs = ds.data.trainX
     const labels = ds.data.trainY
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
-    // TODO: implement initialEpoch?
+    // TODO: fix epoch count with epochs_ = 1 ...
     const initialEpoch = epochCount > 0 ? epochCount + 1 : 0
     const epochs = _epochs + initialEpoch
     async function startTraining() {

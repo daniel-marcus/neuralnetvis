@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
-import { Dense, DenseProps } from "./dense"
+import { Dense, type DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset, normalize } from "@/lib/datasets"
+import { type Dataset, normalize } from "@/lib/datasets"
 
 export type LayerProps = DenseProps
 export type LayerPosition = "input" | "hidden" | "output"

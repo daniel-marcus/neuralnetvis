@@ -1,10 +1,15 @@
 import { Line } from "@react-three/drei"
-import { LINE_WEIGHT_THRESHOLD, NeuronProps } from "./neuron"
+import type { LayerProps } from "./sequential"
 
-type NeuronConnectionsProps = Pick<
-  NeuronProps,
-  "prevLayer" | "position" | "weights"
->
+export const LINE_ACTIVATION_THRESHOLD = 0.5
+// maybe use dynamic threshold based on max weight?
+export const LINE_WEIGHT_THRESHOLD = 0.1
+
+type NeuronConnectionsProps = {
+  prevLayer?: LayerProps
+  position: [number, number, number]
+  weights?: number[]
+}
 
 export const NeuronConnections = ({
   prevLayer,

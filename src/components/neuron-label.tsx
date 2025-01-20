@@ -2,14 +2,14 @@ import { Text } from "@react-three/drei"
 import { OUTPUT_ORIENT } from "./sequential"
 
 interface NeuronLabelProps {
-  position: [number, number, number]
+  position?: [number, number, number]
   side?: "left" | "right"
   color?: string
   children?: React.ReactNode
 }
 
 export const NeuronLabel = ({
-  position: [x, y, z],
+  position: [x, y, z] = [0, 0, 0],
   side = "right",
   color,
   children,
