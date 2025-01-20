@@ -3,8 +3,6 @@ import { Point } from "./sequential"
 import { normalize } from "@/lib/datasets"
 
 export const LINE_ACTIVATION_THRESHOLD = 0.5
-// maybe use dynamic threshold based on max weight?
-const LINE_Z_THRESHOLD = 0.5
 
 type NeuronConnectionsProps = {
   linePoints?: [Point, Point][]
@@ -12,22 +10,23 @@ type NeuronConnectionsProps = {
   inputs?: number[]
 }
 
-const MAX_WIDTH = 0.5
+const MAX_WIDTH = 1
 
 export const NeuronConnections = ({
   linePoints,
   weights,
   inputs,
 }: NeuronConnectionsProps) => {
-  const zValues = weights?.map((w, i) => Math.abs(w * (inputs?.[i] ?? 0)))
-  const zNorm = normalize(zValues)
+  const normalizedWeights = normalize(weights?.map((w) => Math.abs(w)))
   return (
     <group>
-      {linePoints?.map((points, j) => {
-        const z = zNorm?.[j] ?? 0
-        if (z < LINE_Z_THRESHOLD) return null
+      {linePoints?.map((points, i) => {
+        if (!inputs?.[i]) return null
+        const wNorm = normalizedWeights?.[i] ?? 0
+        if (wNorm < LINE_ACTIVATION_THRESHOLD) return null
+        const z = Math.abs((weights?.[i] ?? 0) * (inputs?.[i] ?? 0))
         const lineWidth = Math.min(z * MAX_WIDTH, MAX_WIDTH)
-        return <Line key={j} points={points} lineWidth={lineWidth} />
+        return <Line key={i} points={points} lineWidth={lineWidth} />
       })}
     </group>
   )
