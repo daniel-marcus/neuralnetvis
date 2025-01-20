@@ -1,5 +1,10 @@
 import { Text } from "@react-three/drei"
 import { OUTPUT_ORIENT } from "./sequential"
+import { useFrame, useThree } from "@react-three/fiber"
+import { useRef } from "react"
+import { Mesh } from "three"
+
+const FONT_SIZE = 2.5
 
 interface NeuronLabelProps {
   position?: [number, number, number]
@@ -14,10 +19,19 @@ export const NeuronLabel = ({
   color,
   children,
 }: NeuronLabelProps) => {
+  const labelRef = useRef<Mesh>(null)
+  const camera = useThree((state) => state.camera)
+  useFrame(() => {
+    if (labelRef.current) {
+      labelRef.current.lookAt(camera.position)
+    }
+  })
+
   return (
     <Text
+      ref={labelRef}
       position={getTextPos(x, y, z, side)}
-      fontSize={3}
+      fontSize={FONT_SIZE}
       color={color}
       anchorX={
         OUTPUT_ORIENT === "vertical"
@@ -42,7 +56,7 @@ interface DotProps {
 export const Dot = ({ position: [x, y, z], color }: DotProps) => (
   <Text
     position={getDotPos(x, y, z)}
-    fontSize={3}
+    fontSize={FONT_SIZE}
     color={color}
     anchorX="center"
     anchorY="middle"

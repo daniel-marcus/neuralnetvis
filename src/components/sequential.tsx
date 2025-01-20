@@ -27,8 +27,8 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
     () =>
       model.layers.map((l, i) => {
         const layerPosition = getLayerPosition(model.layers.length, i)
-        const layerActivations = activations?.[i]?.[0]
-        // TODO: normalize on column
+        const layerActivations = activations?.[i]
+        // TODO: normalize on column?
         const normalizedActivations =
           layerPosition === "output"
             ? layerActivations
@@ -88,7 +88,7 @@ function useActivations(model: tf.LayersModel, input?: number[]) {
     const activations = _activations.map(
       (activation) => activation.arraySync() as number[][]
     )
-    return activations
+    return activations.map((a) => a[0])
   }, [model, input])
 }
 

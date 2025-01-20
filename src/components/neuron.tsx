@@ -38,7 +38,6 @@ export function Neuron(props: NeuronProps) {
     position,
     layer,
     prevLayer,
-    // prevLayerPositions,
     rawInput,
     activation = 0,
     normalizedActivation = 0,
@@ -56,7 +55,6 @@ export function Neuron(props: NeuronProps) {
   const isClassification = !ds.input?.labels?.length
 
   const linearY = trainingY ?? 1
-  //  TODO: use R squared?
   const linearPredictionQuality = 1 - Math.abs(activation - linearY) / linearY
   const colorValue =
     isClassification || layer.layerPosition !== "output"
