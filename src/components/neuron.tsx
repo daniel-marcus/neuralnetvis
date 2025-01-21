@@ -17,27 +17,43 @@ import {
 } from "./neuron-connections"
 
 import type { Dataset } from "@/lib/datasets"
+import { NodeId, useSelectedNodes } from "@/lib/node-select"
 
-interface NeuronProps {
+export type NeuronDef = {
   index: number
+  nid: NodeId
+  layerIndex: number
+}
+
+type NeuronContext = {
   position: [number, number, number]
   layer: LayerProps
-  prevLayer?: LayerProps
+  allLayers?: LayerProps[]
+  ds: Dataset
+}
+
+export type NeuronState = {
   rawInput?: number
   activation?: number
   normalizedActivation?: number
   weights?: number[]
+  normalizedWeights?: number[]
   bias?: number
+  weightedInputs?: number[]
   label?: string
-  ds: Dataset
+  isSelected?: boolean
+  highlightValue?: number // [-1, 1]
+  isDimmed?: boolean
 }
+
+export type NeuronProps = NeuronDef & NeuronContext & NeuronState
 
 export function Neuron(props: NeuronProps) {
   const {
     index,
     position,
     layer,
-    prevLayer,
+    allLayers,
     rawInput,
     activation = 0,
     normalizedActivation = 0,
@@ -45,9 +61,16 @@ export function Neuron(props: NeuronProps) {
     bias,
     label,
     ds,
+    isSelected,
+    highlightValue,
   } = props
+  const nodeId = `${layer.index}_${index}`
+  const { selectedNode, toggleNode } = useSelectedNodes()
+
+  const prevLayer = allLayers?.[layer.index - 1]
+
   const [hovered, setHover] = useState(false)
-  const geometry = getGeometry(layer.layerPosition, layer.units)
+  const geometry = getGeometry(layer.layerPosition, layer.neurons.length)
   const { hideLines } = useContext(OptionsContext)
   const trainingY = useContext(TrainingYContext)
   useHoverStatus(hovered, props)
@@ -78,26 +101,41 @@ export function Neuron(props: NeuronProps) {
     if (!prevLayer?.positions) return []
     return prevLayer?.positions?.map((prevPos) => [prevPos, position]) ?? []
   }, [prevLayer?.positions, position]) as [Point, Point][]
+
+  const highlightColor =
+    typeof highlightValue === "number"
+      ? highlightValue > 0
+        ? `rgb(0, ${Math.ceil(Math.abs(highlightValue) * 255)}, 0)`
+        : `rgb(${Math.ceil(Math.abs(highlightValue) * 255)}, 0, 0)`
+      : undefined
+
   return (
-    <group>
+    <group name={`neuron_${nodeId}`}>
       <mesh
         position={position}
         userData={{ activation, bias }}
-        scale={1}
+        scale={isSelected ? 1.5 : 1}
         onPointerOver={(e) => {
           if (e.buttons) return
           setHover(true)
         }}
         onPointerOut={() => setHover(false)}
+        onClick={() => {
+          toggleNode(nodeId)
+        }}
       >
         {geometry}
-        <meshStandardMaterial color={color} />
+        <meshStandardMaterial
+          color={highlightColor ?? color}
+          transparent={true}
+          opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
+        />
       </mesh>
-      {showLines && (
+      {showLines && !selectedNode && (
         <NeuronConnections
           linePoints={linePoints}
           weights={weights}
-          inputs={prevLayer?.activations}
+          inputs={prevLayer?.neurons.map((n) => n.activation)}
         />
       )}
       {!!label && (
@@ -145,24 +183,17 @@ function useHoverStatus(hovered: boolean, props: NeuronProps) {
   const setStatusText = useStatusText((s) => s.setStatusText)
   useEffect(() => {
     if (hovered) {
-      const { index, layer, rawInput, activation, weights, bias } = props
+      const { index, layer, rawInput, activation, bias } = props
       const layerIndex = layer.index ?? 0
-      const weightObjects = weights?.map((w, i) => ({ w, i }))
-      const strongestWeights = weightObjects
-        // ?.filter((o) => Math.abs(o.w) > LINE_WEIGHT_THRESHOLD)
-        ?.toSorted((a, b) => Math.abs(b.w) - Math.abs(a.w))
-        .slice(0, 5)
-      const weightsText = strongestWeights?.length
-        ? `<br/>Top weights:<br/>${strongestWeights
-            .map((o) => `Neuron ${layerIndex - 1}_${o.i} (${o.w.toFixed(4)})`)
-            .join("<br/>")}`
-        : ""
       setStatusText(
         `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
 ${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}
 Activation: ${activation?.toFixed(4)}<br/>
-${bias !== undefined ? `Bias: ${bias?.toFixed(4)}<br/>` : ""}
-${weightsText}`
+${
+  bias !== undefined
+    ? `Bias: ${bias?.toFixed(4)}<br/><br/>Click to see influencs`
+    : ""
+}`
       )
       return () => {
         setStatusText("")

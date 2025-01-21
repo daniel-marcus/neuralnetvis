@@ -1,60 +1,31 @@
-import { Neuron } from "./neuron"
+import { Neuron, NeuronDef, NeuronState } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
 import type { LayerPosition, LayerProps } from "./sequential"
 
 export interface DenseProps {
-  index?: number
+  index: number
   layerPosition: LayerPosition
-  units: number
-  rawInput?: number[]
-  activations?: number[]
-  normalizedActivations?: number[]
-  weights?: number[][]
-  biases?: number[]
-  positions?: [number, number, number][]
-  prevLayer?: LayerProps
+  positions?: [number, number, number][] // keep separated from changing data
+  allLayers?: LayerProps[]
   ds: Dataset
+  neurons: (NeuronDef & NeuronState)[]
 }
 
 export const Dense = (props: DenseProps) => {
-  const {
-    units,
-    layerPosition,
-    rawInput,
-    activations,
-    normalizedActivations,
-    weights,
-    biases,
-    positions,
-    prevLayer,
-    ds,
-  } = props
+  const { index, allLayers, ds, neurons, positions } = props
   return (
-    <group>
-      {Array.from({ length: units }).map((_, i) => {
+    <group name={`dense_${index}`}>
+      {neurons.map((neuronProps, i) => {
         const position = positions?.[i]
-        const neuronWeights = weights?.map((w) => w[i])
         if (!position) return null
         return (
           <Neuron
             key={i}
-            index={i}
             position={position}
             layer={props}
-            prevLayer={prevLayer}
-            rawInput={rawInput?.[i]}
-            activation={activations?.[i]}
-            normalizedActivation={normalizedActivations?.[i]}
-            weights={neuronWeights}
-            bias={biases?.[i]}
-            label={
-              layerPosition === "output"
-                ? ds.output.labels?.[i]
-                : layerPosition === "input"
-                ? ds.input?.labels?.[i]
-                : undefined
-            }
+            allLayers={allLayers}
             ds={ds}
+            {...neuronProps}
           />
         )
       })}

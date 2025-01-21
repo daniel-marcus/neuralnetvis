@@ -1,13 +1,13 @@
 import { Line } from "@react-three/drei"
 import { Point } from "./sequential"
-import { normalize } from "@/lib/datasets"
+import { normalize } from "@/lib/normalization"
 
 export const LINE_ACTIVATION_THRESHOLD = 0.5
 
 type NeuronConnectionsProps = {
   linePoints?: [Point, Point][]
-  weights?: number[]
-  inputs?: number[]
+  weights?: (number | undefined)[]
+  inputs?: (number | undefined)[]
 }
 
 const MAX_WIDTH = 1
@@ -17,7 +17,9 @@ export const NeuronConnections = ({
   weights,
   inputs,
 }: NeuronConnectionsProps) => {
-  const normalizedWeights = normalize(weights?.map((w) => Math.abs(w)))
+  const normalizedWeights = normalize(
+    weights?.filter((w) => typeof w === "number").map((w) => Math.abs(w))
+  )
   return (
     <group>
       {linePoints?.map((points, i) => {

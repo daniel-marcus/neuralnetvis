@@ -1,7 +1,10 @@
 import React, { useMemo } from "react"
 import { Dense, type DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
-import { type Dataset, normalize } from "@/lib/datasets"
+import { type Dataset } from "@/lib/datasets"
+import { minMax, normalize } from "@/lib/normalization"
+import { NeuronState } from "./neuron"
+import { useNodeSelect } from "@/lib/node-select"
 
 export type LayerProps = DenseProps
 export type LayerPosition = "input" | "hidden" | "output"
@@ -23,35 +26,67 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
       ),
     [model]
   )
-  const layerProps = useMemo(
-    () =>
-      model.layers.map((l, i) => {
-        const layerPosition = getLayerPosition(model.layers.length, i)
-        const layerActivations = activations?.[i]
-        // TODO: normalize on column?
-        const normalizedActivations =
-          layerPosition === "output"
-            ? layerActivations
-            : normalize(layerActivations)
+  const layerProps = useMemo(() => {
+    const weightsAndBiases = getWeightsAndBiases(model)
+    return model.layers.map((l, i) => {
+      const units = getUnits(l)
+      const layerPosition = getLayerPosition(model.layers.length, i)
+      const layerActivations = activations?.[i]
+      const normalizedActivations =
+        layerPosition === "output"
+          ? layerActivations
+          : normalize(layerActivations)
+      const { weights, biases } = weightsAndBiases[i]
+
+      const neurons: (NeuronState & {
+        nid: string
+        index: number
+        layerIndex: number
+      })[] = Array.from({
+        length: units,
+      }).map((_, j) => {
+        const activation = layerActivations?.[j]
+        const bias = biases?.[j]
+        const thisWeights = weights?.map((w) => w[j])
+        const prevActivations = activations?.[i - 1]
+        const weightedInputs = prevActivations?.map(
+          (a, k) => a * (thisWeights?.[k] ?? 0)
+        )
         return {
-          index: i,
-          layerPosition,
-          units: getUnits(l),
-          rawInput: layerPosition === "input" ? rawInput : undefined,
-          activations: layerActivations,
-          normalizedActivations,
-          weights: getWeights(l),
-          biases: getBiases(l),
-          positions: neuronPositions[i],
+          nid: `${i}_${j}`,
+          index: j,
+          layerIndex: i,
+          rawInput: layerPosition === "input" ? rawInput?.[j] : undefined,
+          activation,
+          normalizedActivation: normalizedActivations?.[j],
+          weights: thisWeights,
+          normalizedWeights: minMax(thisWeights),
+          bias,
+          weightedInputs,
+          label:
+            layerPosition === "output"
+              ? ds.output.labels?.[j]
+              : layerPosition === "input"
+              ? ds.input?.labels?.[j]
+              : undefined,
           ds,
         }
-      }),
-    [activations, model, ds, rawInput, neuronPositions]
-  )
+      })
+      const layer = {
+        index: i,
+        layerPosition,
+        neurons,
+        positions: neuronPositions[i],
+        ds,
+      }
+      return layer
+    })
+  }, [activations, model, ds, rawInput, neuronPositions])
+  const patchedLayerProps = useNodeSelect(layerProps)
   return (
     <group>
-      {layerProps.map((props, i) => (
-        <Dense key={i} {...props} prevLayer={layerProps[i - 1]} />
+      {patchedLayerProps.map((props, i) => (
+        <Dense key={i} {...props} allLayers={layerProps} />
       ))}
     </group>
   )
@@ -61,12 +96,14 @@ function getUnits(layer: tf.layers.Layer) {
   return (layer.getConfig().units as number) ?? layer.batchInputShape?.[1] ?? 0
 }
 
-function getWeights(layer: tf.layers.Layer) {
-  return layer.getWeights()[0]?.arraySync() as number[][]
-}
-
-function getBiases(layer: tf.layers.Layer) {
-  return layer.getWeights()[1]?.arraySync() as number[]
+function getWeightsAndBiases(model: tf.LayersModel) {
+  return model.layers.map((layer) => {
+    const [weights, biases] = layer.getWeights().map((w) => w.arraySync())
+    return { weights, biases } as {
+      weights: number[][] | undefined
+      biases: number[] | undefined
+    }
+  })
 }
 
 function useActivations(model: tf.LayersModel, input?: number[]) {

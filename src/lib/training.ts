@@ -56,11 +56,12 @@ export function useTraining(
   })
 
   useEffect(() => {
-    setStatusText(
-      trainingConfig.silent
-        ? "Silent mode activated.<br/>Graphics will upate only after training."
-        : "Silent mode deactivated.<br/>Graphics will update during training."
-    )
+    if (!trainingPromise)
+      setStatusText(
+        trainingConfig.silent
+          ? "Silent mode activated.<br/>Graphics will upate only after training."
+          : "Silent mode deactivated.<br/>Graphics will update during training."
+      )
   }, [trainingConfig.silent, setStatusText])
 
   useControls("training", () => ({
@@ -103,13 +104,7 @@ export function useTraining(
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
     const isNewSession = !trainingPromise
     if (isNewSession) sessionEpochCount = 0
-    const initialEpoch =
-      epochCount > 0
-        ? isNewSession
-          ? epochCount + 1 // new epoch when previous session finished
-          : epochCount // resume ongoing epoch when params change
-        : 0
-    // TODO: subtract epochs already trained
+    const initialEpoch = epochCount > 0 ? epochCount : 0
     const epochs = initialEpoch + _epochs - sessionEpochCount
     async function startTraining() {
       if (!model) return
@@ -155,12 +150,14 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           if (silent) next(trainSampleSize - 1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           const backend = tf.getBackend()
-          setStatusText(
-            `Training finished (${backend})<br/>Loss: ${loss.toFixed(
-              4
-            )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
-          )
+          if (!trainingPromise || trainingComplete)
+            setStatusText(
+              `Training finished (${backend})<br/>Loss: ${loss.toFixed(
+                4
+              )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
+            )
           if (trainingComplete) {
+            epochCount++
             trainingPromise = null
             setIsTraining(false)
           }
