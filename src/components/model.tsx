@@ -3,7 +3,6 @@ import { Sequential } from "./sequential"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
-import { create } from "zustand"
 
 // TODO: move to app?
 interface Options {
@@ -12,19 +11,6 @@ interface Options {
 
 export const OptionsContext = createContext<Options>({})
 export const TrainingYContext = createContext<number | undefined>(undefined)
-
-type NodeId = string // layerIndex_nodeIndex
-
-export const useSelectedNodes = create<{
-  selectedNode: NodeId | null
-  toggleNode: (nodeId: NodeId) => void
-}>((set) => ({
-  selectedNode: null,
-  toggleNode: (nodeId) =>
-    set(({ selectedNode }) => ({
-      selectedNode: selectedNode === nodeId ? null : nodeId,
-    })),
-}))
 
 export const Model = () => {
   const [input, rawInput, trainingY, next, ds] = useDatasets()
