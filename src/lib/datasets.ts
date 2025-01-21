@@ -6,8 +6,8 @@ import { applyStandardScaler } from "./normalization"
 interface DatasetData {
   trainX: number[][]
   trainY: number[]
-  testX: number[][]
-  testY: number[]
+  testX?: number[][]
+  testY?: number[]
 }
 
 interface DatasetDef {
@@ -171,9 +171,10 @@ export function useDatasets() {
             trainX: datasetDef.input?.preprocess
               ? datasetDef.input.preprocess(data.trainX)
               : data.trainX,
-            testX: datasetDef.input?.preprocess
-              ? datasetDef.input.preprocess(data.testX)
-              : data.testX,
+            testX:
+              datasetDef.input?.preprocess && data.testX
+                ? datasetDef.input.preprocess(data.testX)
+                : data.testX,
           },
         })
       })

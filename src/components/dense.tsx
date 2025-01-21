@@ -18,13 +18,12 @@ export const Dense = (props: DenseProps) => {
   const geometry = getGeometry(props.layerPosition, neurons.length)
   return (
     <group name={`dense_${index}`}>
-      <Instances>
+      <Instances limit={neurons.length || undefined}>
         {geometry}
         <meshStandardMaterial />
         {neurons.map((neuronProps, i) => {
           const position = positions?.[i]
           if (!position) return null
-          // return <Instance key={i} position={position} />
           return (
             <Neuron
               key={i}

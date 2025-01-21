@@ -90,6 +90,8 @@ export function useTraining(
   }, [model])
 
   useEffect(() => {
+    const inputs = ds.data.trainX
+    const labels = ds.data.trainY
     if (!isTraining || !model) {
       trainingPromise = null
       return
@@ -100,8 +102,6 @@ export function useTraining(
       epochs: _epochs,
       silent,
     } = trainingConfig
-    const inputs = ds.data.trainX
-    const labels = ds.data.trainY
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
     const isNewSession = !trainingPromise
     if (isNewSession) sessionEpochCount = 0
@@ -153,7 +153,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const backend = tf.getBackend()
           if (!trainingPromise || trainingComplete)
             setStatusText(
-              `Training finished (${backend})<br/>Loss: ${loss.toFixed(
+              `Training finished (${backend})<br/>Loss: ${loss?.toFixed(
                 4
               )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
             )
@@ -278,6 +278,8 @@ function isModelCompiled(model: tf.LayersModel) {
 }
 
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
+  if (!ds.data.testX || !ds.data.testY)
+    return { loss: undefined, accuracy: undefined }
   const X = tf.tensor(ds.data.testX)
   const y = getY(ds.data.testY, ds.output)
   const result = model.evaluate(X, y, { batchSize: 64 })

@@ -13,6 +13,7 @@ import {
 import type { Dataset } from "@/lib/datasets"
 import { NodeId, useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
+import { ThreeEvent } from "@react-three/fiber"
 
 export type NeuronDef = {
   index: number
@@ -99,15 +100,13 @@ export function Neuron(props: NeuronProps) {
 
   const highlightColor =
     typeof highlightValue === "number" ? getColor(highlightValue) : undefined
-
   return (
     <group name={`neuron_${nodeId}`}>
       <Instance
         position={position}
         userData={{ activation, bias }}
         scale={isSelected ? 1.5 : 1}
-        onPointerOver={(e) => {
-          // TODO: e Type
+        onPointerOver={(e: ThreeEvent<PointerEvent>) => {
           if (e.buttons) return
           setHover(true)
         }}
