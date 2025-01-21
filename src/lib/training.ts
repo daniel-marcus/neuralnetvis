@@ -11,9 +11,8 @@ import {
   useLogStore,
 } from "@/components/logs-plot"
 
-let shouldInterrupt = false
-
 let epochCount = 0
+let sessionEpochCount = 0
 
 export function useTraining(
   model: tf.LayersModel | null,
@@ -22,14 +21,7 @@ export function useTraining(
   ds: Dataset
 ) {
   const [isTraining, setIsTraining] = useState(false)
-  const toggleTraining = useCallback(
-    () =>
-      setIsTraining((t) => {
-        shouldInterrupt = t
-        return !t
-      }),
-    []
-  )
+  const toggleTraining = useCallback(() => setIsTraining((t) => !t), [])
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
@@ -63,6 +55,14 @@ export function useTraining(
     silent: false,
   })
 
+  useEffect(() => {
+    setStatusText(
+      trainingConfig.silent
+        ? "Silent mode activated.<br/>Graphics will upate only after training."
+        : "Silent mode deactivated.<br/>Graphics will update during training."
+    )
+  }, [trainingConfig.silent, setStatusText])
+
   useControls("training", () => ({
     logs: logsPlot(),
   }))
@@ -88,7 +88,10 @@ export function useTraining(
   }, [model])
 
   useEffect(() => {
-    if (!isTraining || !model) return
+    if (!isTraining || !model) {
+      trainingPromise = null
+      return
+    }
     const {
       validationSplit,
       batchSize,
@@ -98,32 +101,43 @@ export function useTraining(
     const inputs = ds.data.trainX
     const labels = ds.data.trainY
     const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
-    // TODO: fix epoch count with epochs_ = 1 ...
-    const initialEpoch = epochCount > 0 ? epochCount + 1 : 0
-    const epochs = _epochs + initialEpoch
+    const isNewSession = !trainingPromise
+    if (isNewSession) sessionEpochCount = 0
+    const initialEpoch =
+      epochCount > 0
+        ? isNewSession
+          ? epochCount + 1 // new epoch when previous session finished
+          : epochCount // resume ongoing epoch when params change
+        : 0
+    // TODO: subtract epochs already trained
+    const epochs = initialEpoch + _epochs - sessionEpochCount
     async function startTraining() {
       if (!model) return
       let startTime = Date.now()
       const totalBatches = Math.ceil(trainSampleSize / batchSize)
+      const isLastBatch = (batchIndex: number) =>
+        batchIndex === totalBatches - 1
+      const isLastEpoch = () => epochCount === epochs - 1
+      let trainingComplete = false
       const callbacks: tf.ModelFitArgs["callbacks"] = {
         onBatchBegin: (batchIndex) => {
-          const isLastInBatch = batchIndex === totalBatches - 1
-          const isLastInEpoch = isLastInBatch && epochCount === epochs - 1
           const remainingSamples = trainSampleSize - batchIndex * batchSize
-          const step = isLastInEpoch
-            ? remainingSamples - 1 // stop on last sample
-            : isLastInBatch
-            ? remainingSamples % batchSize
-            : batchSize
+          const step =
+            isLastEpoch() && isLastBatch(batchIndex)
+              ? remainingSamples - 1 // stop on last sample
+              : isLastBatch(batchIndex)
+              ? remainingSamples % batchSize
+              : batchSize
           if (!silent) next(step)
         },
         onBatchEnd: (batchIndex, logs) => {
+          if (isLastBatch(batchIndex)) sessionEpochCount++
+          if (isLastEpoch() && isLastBatch(batchIndex)) trainingComplete = true
           if (typeof logs !== "undefined")
             setLogs((prev) => [...prev, { epoch: epochCount, ...logs }])
           setStatusText(`Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
 Batch ${batchIndex + 1}/${totalBatches}`)
-          if (shouldInterrupt) model.stopTraining = true
         },
         onEpochBegin: (epoch) => {
           epochCount = epoch
@@ -138,7 +152,6 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         onTrainEnd: async () => {
           const endTime = Date.now()
           const totalTime = (endTime - startTime) / 1000
-          setIsTraining(false)
           if (silent) next(trainSampleSize - 1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           const backend = tf.getBackend()
@@ -147,6 +160,10 @@ Batch ${batchIndex + 1}/${totalBatches}`)
               4
             )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
           )
+          if (trainingComplete) {
+            trainingPromise = null
+            setIsTraining(false)
+          }
         },
       }
       const options = {
@@ -160,7 +177,6 @@ Batch ${batchIndex + 1}/${totalBatches}`)
     }
     startTraining()
     return () => {
-      shouldInterrupt = true
       model.stopTraining = true
     }
   }, [model, isTraining, next, setStatusText, trainingConfig, ds, setLogs])
@@ -195,6 +211,7 @@ export function useManualTraining(
           validationSplit: 0,
           callbacks,
         }
+        // TODO: use tf trainOnBatch method?
         await train(
           model,
           [input],
@@ -220,6 +237,8 @@ const defaultOptions: tf.ModelFitArgs = {
   shuffle: true,
 }
 
+let trainingPromise: Promise<tf.History | void> | null = null
+
 async function train(
   model: tf.LayersModel,
   inputs: number[][],
@@ -228,7 +247,11 @@ async function train(
   output: Dataset["output"],
   lossFunction: Dataset["loss"] = "categoricalCrossentropy"
 ) {
-  // TODO: interrupt ongoing training if necessary?
+  if (trainingPromise) {
+    console.log("Changing ongoing training ...")
+    await trainingPromise
+    trainingPromise = null
+  }
   options = { ...defaultOptions, ...options }
   const X = tf.tensor(inputs)
   const y = getY(trainY, output)
@@ -239,9 +262,11 @@ async function train(
       metrics: ["accuracy"],
     })
   }
-  await model.fit(X, y, options).catch(console.error)
+  trainingPromise = model.fit(X, y, options).catch(console.error)
+  const history = await trainingPromise
   X.dispose()
   y.dispose()
+  return history
 }
 
 function getY(trainY: number[], output: Dataset["output"]) {
