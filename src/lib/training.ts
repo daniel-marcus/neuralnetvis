@@ -50,7 +50,7 @@ export function useTraining(
       max: 0.5,
       step: 0.1,
     },
-    batchSize: { value: 128, min: 1, max: 512, step: 1 },
+    batchSize: { value: 256, min: 1, max: 512, step: 1 },
     epochs: { value: 3, min: 1, max: 100, step: 1 },
     silent: false,
   })
