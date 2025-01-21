@@ -30,8 +30,10 @@ export type Dataset = Omit<DatasetDef, "loadData"> & {
   data: DatasetData
 }
 
-// TODO: normalize somewhere else?
 // TODO: use external sources
+
+const MNIST_SIZE: "10k" | "20k" = "20k"
+const FASHION_MNIST_SIZE: "10k" | "60k" = "60k"
 
 const datasets: DatasetDef[] = [
   {
@@ -47,10 +49,10 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
-        import("@/data/mnist/10k/train_data.json"),
-        import("@/data/mnist/10k/train_labels.json"),
-        import("@/data/mnist/10k/test_data.json"),
-        import("@/data/mnist/10k/test_labels.json"),
+        import(`@/data/mnist/${MNIST_SIZE}/train_data.json`),
+        import(`@/data/mnist/${MNIST_SIZE}/train_labels.json`),
+        import(`@/data/mnist/${MNIST_SIZE}/test_data.json`),
+        import(`@/data/mnist/${MNIST_SIZE}/test_labels.json`),
       ])
       return {
         trainX: trainX.default as number[][],
@@ -84,10 +86,10 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [trainX, trainY, testX, testY] = await Promise.all([
-        import("@/data/fashion_mnist/10k/train_data.json"),
-        import("@/data/fashion_mnist/10k/train_labels.json"),
-        import("@/data/fashion_mnist/10k/test_data.json"),
-        import("@/data/fashion_mnist/10k/test_labels.json"),
+        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/train_data.json`),
+        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/train_labels.json`),
+        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/test_data.json`),
+        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/test_labels.json`),
       ])
       return {
         trainX: trainX.default as number[][],

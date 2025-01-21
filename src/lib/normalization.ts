@@ -24,11 +24,16 @@ export function applyStandardScaler(data: number[][]) {
   return returnData
 }
 
-export function minMax(values: number[] | undefined) {
-  // returns values between -1 and 1
+export function normalizeWithSign(values: number[] | undefined) {
+  // returns values between -1 and 1 and keeps the sign
   if (typeof values === "undefined") return values
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const result = values.map((v) => (2 * (v - min)) / (max - min) - 1)
-  return result
+  if (values.length === 0) return []
+
+  const maxAbs = Math.max(...values.map(Math.abs))
+
+  if (maxAbs === 0) {
+    return values.map(() => 0)
+  }
+
+  return values.map((v) => v / maxAbs)
 }

@@ -72,6 +72,7 @@ export function useTraining(
 
   useEffect(() => {
     setLogs([] as TrainingLog[])
+    setIsTraining(false)
   }, [model, setLogs])
 
   useControls(

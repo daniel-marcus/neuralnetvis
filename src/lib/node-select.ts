@@ -1,7 +1,7 @@
 import { LayerProps } from "@/components/sequential"
 import { useMemo } from "react"
 import { create } from "zustand"
-import { minMax } from "./normalization"
+import { normalizeWithSign } from "./normalization"
 import { useControls } from "leva"
 
 export type NodeId = string // layerIndex_nodeIndex
@@ -35,7 +35,7 @@ export function useNodeSelect(layerProps: LayerProps[]) {
     if (!selN) return layerProps
     const tempObj = {
       normalizedWeights: selN.normalizedWeights,
-      weightedInputs: minMax(selN.weightedInputs),
+      weightedInputs: normalizeWithSign(selN.weightedInputs),
     }
     return layerProps.map((l) => {
       return {

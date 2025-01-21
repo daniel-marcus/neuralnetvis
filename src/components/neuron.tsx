@@ -103,11 +103,7 @@ export function Neuron(props: NeuronProps) {
   }, [prevLayer?.positions, position]) as [Point, Point][]
 
   const highlightColor =
-    typeof highlightValue === "number"
-      ? highlightValue > 0
-        ? `rgb(0, ${Math.ceil(Math.abs(highlightValue) * 255)}, 0)`
-        : `rgb(${Math.ceil(Math.abs(highlightValue) * 255)}, 0, 0)`
-      : undefined
+    typeof highlightValue === "number" ? getColor(highlightValue) : undefined
 
   return (
     <group name={`neuron_${nodeId}`}>
@@ -128,6 +124,7 @@ export function Neuron(props: NeuronProps) {
         <meshStandardMaterial
           color={highlightColor ?? color}
           transparent={true}
+          // opacity={!!selectedNode && !!highlightValue ? Math.max(highlightValue, 0) : 1}
           opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
         />
       </mesh>
@@ -163,6 +160,17 @@ export function Neuron(props: NeuronProps) {
       )}
     </group>
   )
+}
+
+function getColor(
+  value: number, // between -1 and 1
+  base: [number, number, number] = [250, 20, 100]
+) {
+  const absVal = Math.abs(value)
+  const a = Math.ceil(absVal * base[0])
+  const b = Math.ceil(absVal * base[1])
+  const c = Math.ceil(absVal * base[2])
+  return value > 0 ? `rgb(${a}, ${b}, ${c})` : `rgb(${c}, ${b}, ${a})` // `rgb(${b}, ${a}, ${c})` //
 }
 
 const geometryMap: Record<string, ReactElement> = {

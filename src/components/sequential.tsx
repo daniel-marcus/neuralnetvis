@@ -2,7 +2,7 @@ import React, { useMemo } from "react"
 import { Dense, type DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
 import { type Dataset } from "@/lib/datasets"
-import { minMax, normalize } from "@/lib/normalization"
+import { normalizeWithSign, normalize } from "@/lib/normalization"
 import { NeuronState } from "./neuron"
 import { useNodeSelect } from "@/lib/node-select"
 
@@ -60,7 +60,7 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
           activation,
           normalizedActivation: normalizedActivations?.[j],
           weights: thisWeights,
-          normalizedWeights: minMax(thisWeights),
+          normalizedWeights: normalizeWithSign(thisWeights),
           bias,
           weightedInputs,
           label:
