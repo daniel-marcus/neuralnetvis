@@ -34,11 +34,14 @@ export function useModel(ds: Dataset) {
       .filter((l) => l)
     const _model = createModel(inputShape, hiddenLayerUnits, ds.output)
     const totalParamas = _model.countParams()
-    const text = `${ds.name}: New Sequential Model created<br/>
+    const totalSamples = ds.data.trainX.length
+    const text = `New Model: Sequential (${totalParamas.toLocaleString(
+      "en-US"
+    )} params)<br/>
 Input (${inputSize}) | ${hiddenLayerUnits
       .map((u) => `Dense (${u})`)
       .join(" | ")} | Output (10)<br/>
-Params: ${totalParamas.toLocaleString("en-US")}`
+Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
     setStatusText(text)
     return _model
   }, [modelConfig, setStatusText, ds])

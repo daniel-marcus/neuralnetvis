@@ -12,7 +12,9 @@
     "@react-three/drei": "^9.120.6",
     "@react-three/fiber": "^9.0.0-rc.1",
     "@tensorflow/tfjs": "^4.22.0",
+    "jszip": "^3.10.1",
     "leva": "^0.9.35",
+    "ndarray": "^1.0.19",
     "next": "^15.1.5",
     "npyjs": "^0.7.0",
     "react": "^19.0.0",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/ndarray": "^1.0.14",
     "@types/node": "^22.10.7",
     "@types/react": "^19",
     "@types/react-dom": "^19",

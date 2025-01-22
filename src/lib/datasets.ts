@@ -3,6 +3,7 @@ import { useControls } from "leva"
 import { useStatusText } from "@/components/status-text"
 import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
+import JSZip from "jszip"
 
 const n = new npyjs()
 
@@ -36,10 +37,7 @@ export type Dataset = Omit<DatasetDef, "loadData"> & {
   data: DatasetData
 }
 
-// TODO: use external sources
-
-const MNIST_SIZE: "10k" | "20k" = "20k"
-const FASHION_MNIST_SIZE: "10k" | "60k" = "60k"
+// TODO: use external sources ?
 
 const datasets: DatasetDef[] = [
   {
@@ -48,7 +46,10 @@ const datasets: DatasetDef[] = [
     input: {
       preprocess: (data) => {
         if (Array.isArray(data[0][0]))
-          return (data as ColorPixel[][]).map((row) => row.map((v) => v[0]))
+          // TODO: use all channels!
+          return (data as ColorPixel[][]).map((row) =>
+            row.map((v) => v[0] / 255)
+          )
         else return data
       },
     },
@@ -69,17 +70,17 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const x = await n.load("/data/cifar10/x_train.npy")
-      const y = await n.load("/data/cifar10/y_train.npy")
-      const xTest = await n.load("/data/cifar10/x_test.npy")
-      const yText = await n.load("/data/cifar10/y_test.npy")
-      const trainX = reshapeCifar10(x)
-      const testX = reshapeCifar10(xTest)
+      const xTrain = await fetchNpz("/data/cifar10/x_train.npz")
+      const yTrain = await fetchNpz("/data/cifar10/y_train.npz")
+      const xTest = await fetchNpz("/data/cifar10/x_test.npz")
+      const yTest = await fetchNpz("/data/cifar10/y_test.npz")
+      const trainX = reshapeArray(xTrain)
+      const testX = reshapeArray(xTest)
       return {
         trainX,
-        trainY: Array.from(y.data as Uint8Array),
+        trainY: Array.from(yTrain.data as Uint8Array),
         testX,
-        testY: Array.from(yText.data as Uint8Array),
+        testY: Array.from(yTest.data as Uint8Array),
       }
     },
   },
@@ -97,17 +98,17 @@ const datasets: DatasetDef[] = [
       labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     },
     loadData: async () => {
-      const [trainX, trainY, testX, testY] = await Promise.all([
-        import(`@/data/mnist/${MNIST_SIZE}/train_data.json`),
-        import(`@/data/mnist/${MNIST_SIZE}/train_labels.json`),
-        import(`@/data/mnist/${MNIST_SIZE}/test_data.json`),
-        import(`@/data/mnist/${MNIST_SIZE}/test_labels.json`),
-      ])
+      const xTrain = await fetchNpz("/data/mnist/x_train.npz")
+      const yTrain = await fetchNpz("/data/mnist/y_train.npz")
+      const xTest = await fetchNpz("/data/mnist/x_test.npz")
+      const yTest = await fetchNpz("/data/mnist/y_test.npz")
+      const trainX = reshapeArray(xTrain)
+      const testX = reshapeArray(xTest)
       return {
-        trainX: trainX.default as number[][],
-        trainY: trainY.default as number[],
-        testX: testX.default as number[][],
-        testY: testY.default as number[],
+        trainX,
+        trainY: Array.from(yTrain.data as Uint8Array),
+        testX,
+        testY: Array.from(yTest.data as Uint8Array),
       }
     },
   },
@@ -135,17 +136,17 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const [trainX, trainY, testX, testY] = await Promise.all([
-        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/train_data.json`),
-        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/train_labels.json`),
-        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/test_data.json`),
-        import(`@/data/fashion_mnist/${FASHION_MNIST_SIZE}/test_labels.json`),
-      ])
+      const xTrain = await fetchNpz("/data/fashion_mnist/x_train.npz")
+      const yTrain = await fetchNpz("/data/fashion_mnist/y_train.npz")
+      const xTest = await fetchNpz("/data/fashion_mnist/x_test.npz")
+      const yTest = await fetchNpz("/data/fashion_mnist/y_test.npz")
+      const trainX = reshapeArray(xTrain)
+      const testX = reshapeArray(xTest)
       return {
-        trainX: trainX.default as number[][],
-        trainY: trainY.default,
-        testX: testX.default as number[][],
-        testY: testY.default,
+        trainX,
+        trainY: Array.from(yTrain.data as Uint8Array),
+        testX,
+        testY: Array.from(yTest.data as Uint8Array),
       }
     },
   },
@@ -307,27 +308,45 @@ export function useDatasets() {
   return [input, rawInput, trainingY, next, ds] as const
 }
 
-function reshapeCifar10(x: Parsed) {
-  const xData = x.data as unknown as number[]
-  const imageWidth = 32
-  const imageHeight = 32
-  const channels = 3
-  const pixelsPerImage = imageWidth * imageHeight
-  const valuesPerImage = pixelsPerImage * channels
-  const numImages = x.data.length / valuesPerImage
+async function fetchNpz(path: string) {
+  const response = await fetch(path)
+  const arrayBuffer = await response.arrayBuffer()
+  const zip = await JSZip.loadAsync(arrayBuffer)
+  const file = Object.values(zip.files)[0]
+  if (!file) throw new Error("No files in zip")
+  if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
+  const data = await file.async("arraybuffer")
+  const parsed = n.parse(data)
+  return parsed
+}
 
-  const returnX: ColorPixel[][] = []
+function reshapeArray(parsed: Parsed) {
+  // TODO fix typing / keep Array type for memory efficiency?
+  const x = parsed.data as unknown as number[]
+  const shape = parsed.shape
+  // const numImages = shape[0]
+  const width = shape[1]
+  const height = shape[2]
+  const channels = shape[3] ?? 1 // 1 or 3
+  const valuesPerImage = width * height * channels
+  const numImages = x.length / valuesPerImage
+
+  const returnX: (number | ColorPixel)[][] = []
   for (let i = 0; i < numImages; i++) {
     const imageStart = i * valuesPerImage
-    const image: ColorPixel[] = []
-    for (let row = 0; row < imageHeight; row++) {
-      for (let col = 0; col < imageWidth; col++) {
-        const pixelStart = imageStart + (row * imageWidth + col) * channels
-        const pixel: ColorPixel = [
-          xData[pixelStart],
-          xData[pixelStart + 1],
-          xData[pixelStart + 2],
-        ]
+    const image: (number | ColorPixel)[] = []
+    for (let row = 0; row < width; row++) {
+      for (let col = 0; col < width; col++) {
+        const pixelStart = imageStart + (row * width + col) * channels
+        const pixel =
+          channels === 1
+            ? x[pixelStart]
+            : ([
+                x[pixelStart],
+                x[pixelStart + 1],
+                x[pixelStart + 2],
+              ] as ColorPixel)
+        // TODO: don't flatten
         image.push(pixel)
       }
     }

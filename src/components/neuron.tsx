@@ -81,9 +81,7 @@ export function Neuron(props: NeuronProps) {
       : linearPredictionQuality
   const color =
     layer.layerPosition === "input" && Array.isArray(rawInput)
-      ? `rgb(${Math.ceil(rawInput[0] * 255)}, ${Math.ceil(
-          rawInput[1] * 255
-        )}, ${Math.ceil(rawInput[2] * 255)})`
+      ? `rgb(${rawInput[0]}, ${rawInput[1]}, ${rawInput[2]})`
       : `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
 
   const showValueLabel =
