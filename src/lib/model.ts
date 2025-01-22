@@ -12,7 +12,7 @@ const defaultUnitConfig = {
   optional: true,
 }
 
-export function useModel(ds: Dataset) {
+export function useModel(ds?: Dataset) {
   const modelConfig = useControls("model", {
     layer1: { ...defaultUnitConfig, value: 64 },
     layer2: { ...defaultUnitConfig, value: 32 },
@@ -22,23 +22,22 @@ export function useModel(ds: Dataset) {
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   const model = useMemo(() => {
-    const inputSize = ds.data.trainX[0]?.length ?? 0
-    const channels = Array.isArray(ds.data.trainX[0]?.[0])
-      ? ds.data.trainX[0][0].length
-      : undefined
-    const inputShape = channels
-      ? [null, inputSize, channels]
-      : [null, inputSize]
+    if (!ds) return
+    const [totalSamples, ...dims] = ds.data.trainX.shape
+
+    const flattenedInputSize = dims.reduce((a, b) => a * b, 1)
+
+    const inputShape = [null, ...dims]
+
     const hiddenLayerUnits = Object.keys(modelConfig)
       .map((key) => modelConfig[key] as number)
       .filter((l) => l)
     const _model = createModel(inputShape, hiddenLayerUnits, ds.output)
     const totalParamas = _model.countParams()
-    const totalSamples = ds.data.trainX.length
     const text = `New Model: Sequential (${totalParamas.toLocaleString(
       "en-US"
     )} params)<br/>
-Input (${inputSize}) | ${hiddenLayerUnits
+Input (${flattenedInputSize}) | Flatten | ${hiddenLayerUnits
       .map((u) => `Dense (${u})`)
       .join(" | ")} | Output (10)<br/>
 Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
@@ -56,6 +55,7 @@ function createModel(
 ) {
   const model = tf.sequential()
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
+  model.add(tf.layers.flatten())
   for (const units of hiddenLayerUnits) {
     model.add(tf.layers.dense({ units, activation: "relu" }))
   }

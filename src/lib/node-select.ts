@@ -18,7 +18,7 @@ export const useSelectedNodes = create<{
 }))
 
 export function useNodeSelect(layerProps: LayerProps[]) {
-  const { highlightProp } = useControls("model", {
+  const { highlightProp } = useControls("ui", {
     highlightProp: {
       label: "onSelect",
       options: {

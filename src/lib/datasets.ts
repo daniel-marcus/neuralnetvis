@@ -4,16 +4,17 @@ import { useStatusText } from "@/components/status-text"
 // import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
+import * as tf from "@tensorflow/tfjs"
 
 const n = new npyjs()
 
-type ColorPixel = [number, number, number]
-export type DataType = number | ColorPixel
+export type LayerInput = NodeInput[]
+export type NodeInput = number | number[] | number[][] // flat, (width,height), (width,height,channel)
 
 interface DatasetData {
-  trainX: DataType[][]
+  trainX: Parsed
   trainY: number[]
-  testX?: DataType[][]
+  testX: Parsed
   testY?: number[]
 }
 
@@ -22,7 +23,7 @@ interface DatasetDef {
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
-    preprocess?: (data: DataType[]) => DataType[] // TODO: fix typing
+    preprocess?: (data: LayerInput) => LayerInput // TODO: fix typing
   }
   output: {
     size: number
@@ -41,18 +42,38 @@ export type Dataset = Omit<DatasetDef, "loadData"> & {
 
 const datasets: DatasetDef[] = [
   {
-    name: "cifar10",
+    name: "mnist",
     loss: "categoricalCrossentropy",
     input: {
       preprocess: (input) => {
-        if (Array.isArray(input[0]))
-          // TODO: use all channels!
-          return (input as ColorPixel[]).map(
-            (pixel) => pixel.map((v) => v / 255) as ColorPixel
-          )
-        else return input
+        return (input as number[]).map((v) => v / 255)
       },
     },
+    output: {
+      size: 10,
+      activation: "softmax",
+      labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+    },
+    loadData: async () => {
+      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
+        fetchNpy("/data/mnist/x_train.npz"),
+        fetchNpy("/data/mnist/y_train.npz"),
+        fetchNpy("/data/mnist/x_test.npz"),
+        fetchNpy("/data/mnist/y_test.npz"),
+      ])
+      const trainX = xTrain // reshapeArray(xTrain)
+      const testX = xTest // reshapeArray(xTest)
+      return {
+        trainX,
+        trainY: Array.from(yTrain.data as Uint8Array),
+        testX,
+        testY: Array.from(yTest.data as Uint8Array),
+      }
+    },
+  },
+  {
+    name: "cifar10",
+    loss: "categoricalCrossentropy",
     output: {
       size: 10,
       activation: "softmax",
@@ -76,42 +97,10 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/cifar10/x_test.npy"),
         fetchNpy("/data/cifar10/y_test.npy"),
       ])
-      const trainX = reshapeArray(xTrain)
-      const testX = reshapeArray(xTest)
       return {
-        trainX,
+        trainX: xTrain,
         trainY: Array.from(yTrain.data as Uint8Array),
-        testX,
-        testY: Array.from(yTest.data as Uint8Array),
-      }
-    },
-  },
-  {
-    name: "mnist",
-    loss: "categoricalCrossentropy",
-    input: {
-      preprocess: (input) => {
-        return (input as number[]).map((v) => v / 255)
-      },
-    },
-    output: {
-      size: 10,
-      activation: "softmax",
-      labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-    },
-    loadData: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/mnist/x_train.npz"),
-        fetchNpy("/data/mnist/y_train.npz"),
-        fetchNpy("/data/mnist/x_test.npz"),
-        fetchNpy("/data/mnist/y_test.npz"),
-      ])
-      const trainX = reshapeArray(xTrain)
-      const testX = reshapeArray(xTest)
-      return {
-        trainX,
-        trainY: Array.from(yTrain.data as Uint8Array),
-        testX,
+        testX: xTest,
         testY: Array.from(yTest.data as Uint8Array),
       }
     },
@@ -147,17 +136,15 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/fashion_mnist/x_test.npz"),
         fetchNpy("/data/fashion_mnist/y_test.npz"),
       ])
-      const trainX = reshapeArray(xTrain)
-      const testX = reshapeArray(xTest)
       return {
-        trainX,
+        trainX: xTrain,
         trainY: Array.from(yTrain.data as Uint8Array),
-        testX,
+        testX: xTest,
         testY: Array.from(yTest.data as Uint8Array),
       }
     },
   },
-  {
+  /* {
     name: "california housing",
     loss: "meanSquaredError",
     input: {
@@ -193,7 +180,7 @@ const datasets: DatasetDef[] = [
         testY: testY.default,
       }
     },
-  },
+  }, */
 ]
 
 export function useDatasets() {
@@ -211,7 +198,7 @@ export function useDatasets() {
     if (isLoading) setStatusText("Loading dataset ...")
   }, [isLoading, setStatusText])
 
-  const [dataset, setDataset] = useState<Dataset | null>(null)
+  const [ds, setDataset] = useState<Dataset | undefined>(undefined)
   useEffect(() => {
     console.log("loading dataset", datasetId)
     setIsLoading(true)
@@ -228,25 +215,13 @@ export function useDatasets() {
       })
       .finally(() => setIsLoading(false))
     return () => {
-      setDataset(null)
+      setDataset(undefined)
     }
   }, [datasetId])
 
-  const ds = useMemo(() => {
-    if (dataset) return dataset
-    return {
-      name: "Loading ...",
-      loss: "categoricalCrossentropy",
-      output: {
-        size: 10,
-        activation: "softmax",
-      },
-      dataRaw: { trainX: [], trainY: [], testX: [], testY: [] },
-      data: { trainX: [], trainY: [], testX: [], testY: [] },
-    } as Dataset
-  }, [dataset])
+  const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
 
-  const initialRandomIndex = Math.floor(Math.random() * ds.data.trainX.length)
+  const initialRandomIndex = Math.floor(Math.random() * totalSamples)
   const [{ i }, set, get] = useControls(
     "data",
     () => ({
@@ -254,16 +229,16 @@ export function useDatasets() {
         label: "currSample",
         value: initialRandomIndex,
         min: 1,
-        max: Math.max(ds.data.trainX.length, 1),
+        max: Math.max(totalSamples, 1),
         step: 1,
       },
     }),
-    [ds]
+    [totalSamples]
   )
   useEffect(() => {
     const currI = get("i")
-    if (currI > ds.data.trainX.length) set({ i: ds.data.trainX.length })
-  }, [ds, get, set])
+    if (currI > totalSamples) set({ i: totalSamples })
+  }, [totalSamples, get, set])
 
   const setI = useCallback(
     (arg: number | ((prev: number) => number)) => {
@@ -274,26 +249,33 @@ export function useDatasets() {
     [set, get]
   )
 
-  const rawInput = useMemo(() => ds.data.trainX[i - 1], [i, ds])
   const input = useMemo(() => {
-    if (!ds.input?.preprocess) return rawInput
-    return ds.input.preprocess(rawInput)
-  }, [rawInput, ds])
-
-  // const rawInput = useMemo(() => ds.dataRaw?.trainX[i - 1], [i, ds])
-  const trainingY = useMemo(() => ds.data.trainY[i - 1], [i, ds])
+    if (!ds) return
+    const { data } = ds.data.trainX
+    const [, ...dims] = ds.data.trainX.shape
+    const valsPerSample = dims.reduce((a, b) => a * b, 1)
+    const index = i - 1
+    const flatVals = data.slice(
+      index * valsPerSample,
+      (index + 1) * valsPerSample
+    )
+    const result = tf
+      .tensor(flatVals as unknown as number[], [...dims]) // valsPerSample
+      .div(255)
+      .arraySync() as LayerInput
+    return result
+  }, [i, ds])
+  const trainingY = useMemo(() => ds?.data.trainY[i - 1], [i, ds])
 
   const next = useCallback(
     (step = 1) =>
       setI((i) =>
-        i + step <= ds.data.trainX.length
-          ? i + step
-          : i + step - ds.data.trainX.length
+        i + step <= totalSamples ? i + step : i + step - totalSamples
       ),
-    [ds, setI]
+    [totalSamples, setI]
   )
   useEffect(() => {
-    const prev = () => setI((i) => (i > 1 ? i - 1 : ds.data.trainX.length))
+    const prev = () => setI((i) => (i > 1 ? i - 1 : totalSamples))
     const onKeydown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "ArrowRight") next()
@@ -305,9 +287,9 @@ export function useDatasets() {
       window.removeEventListener("keydown", onKeydown)
       clearInterval(l)
     }
-  }, [next, ds, setI])
+  }, [next, totalSamples, setI])
 
-  return [input, rawInput, trainingY, next, ds] as const
+  return [ds, input, trainingY, next] as const
 }
 
 async function fetchNpy(path: string): Promise<Parsed> {
@@ -334,39 +316,4 @@ async function fetchNpy(path: string): Promise<Parsed> {
   } else {
     throw new Error("Invalid file extension")
   }
-}
-
-function reshapeArray(parsed: Parsed) {
-  // TODO fix typing / keep Array type for memory efficiency?
-  const x = parsed.data as unknown as number[]
-  const shape = parsed.shape
-  // const numImages = shape[0]
-  const width = shape[1]
-  const height = shape[2]
-  const channels = shape[3] ?? 1 // 1 or 3
-  const valuesPerImage = width * height * channels
-  const numImages = x.length / valuesPerImage
-
-  const returnX: (number | ColorPixel)[][] = []
-  for (let i = 0; i < numImages; i++) {
-    const imageStart = i * valuesPerImage
-    const image: (number | ColorPixel)[] = []
-    for (let row = 0; row < width; row++) {
-      for (let col = 0; col < width; col++) {
-        const pixelStart = imageStart + (row * width + col) * channels
-        const pixel =
-          channels === 1
-            ? x[pixelStart]
-            : ([
-                x[pixelStart],
-                x[pixelStart + 1],
-                x[pixelStart + 2],
-              ] as ColorPixel)
-        // TODO: don't flatten
-        image.push(pixel)
-      }
-    }
-    returnX.push(image)
-  }
-  return returnX
 }

@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useContext, useMemo } from "react"
+import React, { useState, useEffect, useContext } from "react"
 import { useStatusText } from "./status-text"
-import { OptionsContext, TrainingYContext } from "./model"
+import { TrainingYContext } from "./model"
 
-import type { LayerProps, Point } from "./sequential"
+import type { LayerProps } from "./sequential"
 
 import { Dot, NeuronLabel } from "./neuron-label"
-import {
-  LINE_ACTIVATION_THRESHOLD,
-  NeuronConnections,
-} from "./neuron-connections"
 
-import type { Dataset, DataType } from "@/lib/datasets"
+import type { Dataset, NodeInput } from "@/lib/datasets"
 import { NodeId, useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { ThreeEvent } from "@react-three/fiber"
@@ -25,11 +21,11 @@ type NeuronContext = {
   position: [number, number, number]
   layer: LayerProps
   allLayers?: LayerProps[]
-  ds: Dataset
+  ds?: Dataset
 }
 
 export type NeuronState = {
-  rawInput?: DataType
+  rawInput?: NodeInput // maybe element of ... ?
   activation?: number
   normalizedActivation?: number
   weights?: number[]
@@ -49,11 +45,9 @@ export function Neuron(props: NeuronProps) {
     index,
     position,
     layer,
-    allLayers,
     rawInput,
     activation = 0,
     normalizedActivation = 0,
-    weights,
     bias,
     label,
     ds,
@@ -63,15 +57,12 @@ export function Neuron(props: NeuronProps) {
   const nodeId = `${layer.index}_${index}`
   const { selectedNode, toggleNode } = useSelectedNodes()
 
-  const prevLayer = allLayers?.[layer.index - 1]
-
   const [hovered, setHover] = useState(false)
   // const geometry = getGeometry(layer.layerPosition, layer.neurons.length)
-  const { hideLines } = useContext(OptionsContext)
   const trainingY = useContext(TrainingYContext)
   useHoverStatus(hovered, props)
 
-  const isClassification = !ds.input?.labels?.length
+  const isClassification = !ds?.input?.labels?.length
 
   const linearY = trainingY ?? 1
   const linearPredictionQuality = 1 - Math.abs(activation - linearY) / linearY
@@ -79,10 +70,16 @@ export function Neuron(props: NeuronProps) {
     isClassification || layer.layerPosition !== "output"
       ? normalizedActivation
       : linearPredictionQuality
+
+  const hasColorChannels = !!ds?.data.trainX.shape[3]
+  const rest = index % 3
+  const colorArr = [0, 0, 0]
+  colorArr[rest] = Math.ceil(colorValue * 255)
   const color =
-    layer.layerPosition === "input" && Array.isArray(rawInput)
-      ? `rgb(${rawInput[0]}, ${rawInput[1]}, ${rawInput[2]})`
-      : `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
+    layer.layerPosition === "input" && hasColorChannels
+      ? `rgb(${colorArr.join(", ")})`
+      : // Array.isArray(rawInput) ? `rgb(${rawInput[0]}, ${rawInput[1]}, ${rawInput[2]})`
+        `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
 
   const showValueLabel =
     !isClassification && ["input", "output"].includes(layer.layerPosition)
@@ -90,16 +87,6 @@ export function Neuron(props: NeuronProps) {
     layer.layerPosition === "output" &&
     typeof trainingY === "number" &&
     trainingY === index
-  const showLines =
-    !!prevLayer &&
-    !hideLines &&
-    Number(normalizedActivation) >= LINE_ACTIVATION_THRESHOLD &&
-    isClassification
-
-  const linePoints = useMemo(() => {
-    if (!prevLayer?.positions) return []
-    return prevLayer?.positions?.map((prevPos) => [prevPos, position]) ?? []
-  }, [prevLayer?.positions, position]) as [Point, Point][]
 
   const highlightColor =
     typeof highlightValue === "number" ? getColor(highlightValue) : undefined
@@ -118,17 +105,9 @@ export function Neuron(props: NeuronProps) {
           toggleNode(nodeId)
         }}
         color={highlightColor ?? color}
-        transparent={true}
-        // opacity={!!selectedNode && !!highlightValue ? Math.max(highlightValue, 0) : 1}
+        transparent={!!selectedNode}
         opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
       />
-      {showLines && !selectedNode && (
-        <NeuronConnections
-          linePoints={linePoints}
-          weights={weights}
-          inputs={prevLayer?.neurons.map((n) => n.activation)}
-        />
-      )}
       {!!label && (
         <NeuronLabel
           side={isClassification ? "right" : "left"}
@@ -172,8 +151,12 @@ function useHoverStatus(hovered: boolean, props: NeuronProps) {
   const setStatusText = useStatusText((s) => s.setStatusText)
   useEffect(() => {
     if (hovered) {
-      const { index, layer, rawInput, activation, bias } = props
+      const { index, layer, rawInput, activation: _activation, bias } = props
       const layerIndex = layer.index ?? 0
+      // TODO: handle multiple activations?
+      const activation = Array.isArray(_activation)
+        ? _activation[0]
+        : _activation
       setStatusText(
         `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
 ${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}

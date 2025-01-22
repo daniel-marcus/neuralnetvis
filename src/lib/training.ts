@@ -2,23 +2,17 @@ import { useState, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { button, useControls } from "leva"
 
-import { Dataset, DataType } from "./datasets"
+import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import {
-  TrainingLog,
-  TrainingLogSetter,
-  logsPlot,
-  useLogStore,
-} from "@/components/logs-plot"
+import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
 
 let epochCount = 0
 let sessionEpochCount = 0
 
 export function useTraining(
-  model: tf.LayersModel | null,
-  input: DataType[], // only for manual training
-  next: (step?: number) => void,
-  ds: Dataset
+  model: tf.LayersModel | undefined,
+  ds: Dataset | undefined,
+  next: (step?: number) => void
 ) {
   const [isTraining, setIsTraining] = useState(false)
   const toggleTraining = useCallback(() => setIsTraining((t) => !t), [])
@@ -90,9 +84,7 @@ export function useTraining(
   }, [model])
 
   useEffect(() => {
-    const inputs = ds.data.trainX
-    const labels = ds.data.trainY
-    if (!isTraining || !model) {
+    if (!isTraining || !ds || !model) {
       trainingPromise = null
       return
     }
@@ -102,13 +94,14 @@ export function useTraining(
       epochs: _epochs,
       silent,
     } = trainingConfig
-    const trainSampleSize = Math.floor(inputs.length * (1 - validationSplit))
+    const totalSamples = ds.data.trainX.shape[0]
+    const trainSampleSize = Math.floor(totalSamples * (1 - validationSplit))
     const isNewSession = !trainingPromise
     if (isNewSession) sessionEpochCount = 0
     const initialEpoch = epochCount > 0 ? epochCount : 0
     const epochs = initialEpoch + _epochs - sessionEpochCount
     async function startTraining() {
-      if (!model) return
+      if (!model || !ds) return
       let startTime = Date.now()
       const totalBatches = Math.ceil(trainSampleSize / batchSize)
       const isLastBatch = (batchIndex: number) =>
@@ -171,7 +164,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         callbacks,
         initialEpoch,
       }
-      await train(model, inputs, labels, options, ds.output, ds.loss)
+      await train(model, ds, options)
     }
     startTraining()
     return () => {
@@ -179,12 +172,12 @@ Batch ${batchIndex + 1}/${totalBatches}`)
     }
   }, [model, isTraining, next, setStatusText, trainingConfig, ds, setLogs])
 
-  useManualTraining(model, input, next, setLogs, ds)
+  // useManualTraining(model, input, next, setLogs, ds)
 
   return isTraining
 }
 
-export function useManualTraining(
+/* export function useManualTraining(
   model: tf.LayersModel | null,
   input: DataType[],
   next: () => void,
@@ -226,7 +219,7 @@ export function useManualTraining(
       window.removeEventListener("keydown", onKeydown)
     }
   }, [input, model, next, setLogs, ds])
-}
+} */
 
 const defaultOptions: tf.ModelFitArgs = {
   batchSize: 1,
@@ -239,11 +232,10 @@ let trainingPromise: Promise<tf.History | void> | null = null
 
 async function train(
   model: tf.LayersModel,
-  inputs: DataType[][],
-  trainY: number[],
-  options: tf.ModelFitArgs = {},
-  output: Dataset["output"],
-  lossFunction: Dataset["loss"] = "categoricalCrossentropy"
+  ds: Dataset,
+  options: tf.ModelFitArgs = {}
+  // output: Dataset["output"],
+  // lossFunction: Dataset["loss"] = "categoricalCrossentropy"
 ) {
   if (trainingPromise) {
     console.log("Changing ongoing training ...")
@@ -251,15 +243,24 @@ async function train(
     trainingPromise = null
   }
   options = { ...defaultOptions, ...options }
-  const X = tf.tensor(inputs)
-  const y = getY(trainY, output)
+
+  const { data, shape } = ds.data.trainX
+
+  if (data instanceof BigUint64Array || data instanceof BigInt64Array) {
+    throw new Error("BigUint64Array/BigInt64Array not supported")
+  }
+
+  // TODO: normalize in normalize layer?
+  const X = tf.tensor(data, shape).div(255)
+  const y = getY(ds.data.trainY, ds.output)
   if (!isModelCompiled(model)) {
     model.compile({
       optimizer: tf.train.adam(),
-      loss: lossFunction,
+      loss: ds.loss,
       metrics: ["accuracy"],
     })
   }
+
   trainingPromise = model.fit(X, y, options).catch(console.error)
   const history = await trainingPromise
   X.dispose()
@@ -280,7 +281,12 @@ function isModelCompiled(model: tf.LayersModel) {
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
   if (!ds.data.testX || !ds.data.testY)
     return { loss: undefined, accuracy: undefined }
-  const X = tf.tensor(ds.data.testX)
+  const { data, shape } = ds.data.testX
+
+  if (data instanceof BigUint64Array || data instanceof BigInt64Array) {
+    throw new Error("BigUint64Array/BigInt64Array not supported")
+  }
+  const X = tf.tensor(data, shape).div(255)
   const y = getY(ds.data.testY, ds.output)
   const result = model.evaluate(X, y, { batchSize: 64 })
   const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]

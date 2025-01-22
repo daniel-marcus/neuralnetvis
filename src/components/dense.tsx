@@ -1,30 +1,40 @@
-import { ReactElement } from "react"
+import { ReactElement, useContext } from "react"
 import { Neuron, NeuronDef, NeuronState } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
 import type { LayerPosition, LayerProps } from "./sequential"
 import { Instances } from "@react-three/drei"
+import { AdditiveBlending } from "three"
+import { OptionsContext } from "./model"
+import { Connections } from "./connections"
 
 export interface DenseProps {
   index: number
   layerPosition: LayerPosition
   positions?: [number, number, number][] // keep separated from changing data
   allLayers?: LayerProps[]
-  ds: Dataset
+  ds?: Dataset
   neurons: (NeuronDef & NeuronState)[]
 }
 
 export const Dense = (props: DenseProps) => {
-  const { index, allLayers, ds, neurons, positions } = props
-  const geometry = getGeometry(props.layerPosition, neurons.length)
+  const { index, allLayers, ds, neurons, positions, layerPosition } = props
+  const geometry = getGeometry(layerPosition, neurons.length)
+  const { splitColors } = useContext(OptionsContext)
   if (!neurons.length) return null
+  const hasColorChannels = !!ds?.data.trainX.shape[3]
+  const hasAdditiveBlending =
+    layerPosition === "input" && hasColorChannels && !splitColors
+  const prevLayer = allLayers?.[index - 1]
   return (
     <group name={`dense_${index}`}>
       <Instances
         limit={neurons.length}
-        key={`dense_${index}_${neurons.length}`}
+        key={`dense_${index}_${neurons.length}_${hasAdditiveBlending}`}
       >
         {geometry}
-        <meshStandardMaterial />
+        <meshStandardMaterial
+          blending={hasAdditiveBlending ? AdditiveBlending : undefined}
+        />
         {neurons.map((neuronProps, i) => {
           const position = positions?.[i]
           if (!position) return null
@@ -40,6 +50,7 @@ export const Dense = (props: DenseProps) => {
           )
         })}
       </Instances>
+      {!!prevLayer && <Connections layer={props} prevLayer={prevLayer} />}
     </group>
   )
 }
