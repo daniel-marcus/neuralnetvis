@@ -21,12 +21,18 @@ export function useModel(ds: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  const inputSize = ds.data.trainX[0]?.length ?? 0
   const model = useMemo(() => {
+    const inputSize = ds.data.trainX[0]?.length ?? 0
+    const channels = Array.isArray(ds.data.trainX[0]?.[0])
+      ? ds.data.trainX[0][0].length
+      : undefined
+    const inputShape = channels
+      ? [null, inputSize, channels]
+      : [null, inputSize]
     const hiddenLayerUnits = Object.keys(modelConfig)
       .map((key) => modelConfig[key] as number)
       .filter((l) => l)
-    const _model = createModel(inputSize, hiddenLayerUnits, ds.output)
+    const _model = createModel(inputShape, hiddenLayerUnits, ds.output)
     const totalParamas = _model.countParams()
     const text = `${ds.name}: New Sequential Model created<br/>
 Input (${inputSize}) | ${hiddenLayerUnits
@@ -35,18 +41,18 @@ Input (${inputSize}) | ${hiddenLayerUnits
 Params: ${totalParamas.toLocaleString("en-US")}`
     setStatusText(text)
     return _model
-  }, [modelConfig, setStatusText, inputSize, ds.name, ds.output])
+  }, [modelConfig, setStatusText, ds])
 
   return model
 }
 
 function createModel(
-  inputSize = 784,
+  inputShape: (number | null)[],
   hiddenLayerUnits = [128, 64],
   output: Dataset["output"]
 ) {
   const model = tf.sequential()
-  model.add(tf.layers.inputLayer({ batchInputShape: [null, inputSize] }))
+  model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
   for (const units of hiddenLayerUnits) {
     model.add(tf.layers.dense({ units, activation: "relu" }))
   }

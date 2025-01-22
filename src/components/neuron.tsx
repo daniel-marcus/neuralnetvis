@@ -10,7 +10,7 @@ import {
   NeuronConnections,
 } from "./neuron-connections"
 
-import type { Dataset } from "@/lib/datasets"
+import type { Dataset, DataType } from "@/lib/datasets"
 import { NodeId, useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { ThreeEvent } from "@react-three/fiber"
@@ -29,7 +29,7 @@ type NeuronContext = {
 }
 
 export type NeuronState = {
-  rawInput?: number
+  rawInput?: DataType
   activation?: number
   normalizedActivation?: number
   weights?: number[]
@@ -79,7 +79,12 @@ export function Neuron(props: NeuronProps) {
     isClassification || layer.layerPosition !== "output"
       ? normalizedActivation
       : linearPredictionQuality
-  const color = `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
+  const color =
+    layer.layerPosition === "input" && Array.isArray(rawInput)
+      ? `rgb(${Math.ceil(rawInput[0] * 255)}, ${Math.ceil(
+          rawInput[1] * 255
+        )}, ${Math.ceil(rawInput[2] * 255)})`
+      : `rgb(${Math.ceil(colorValue * 255)}, 20, 100)`
 
   const showValueLabel =
     !isClassification && ["input", "output"].includes(layer.layerPosition)

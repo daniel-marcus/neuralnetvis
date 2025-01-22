@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { Dense, type DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
-import { type Dataset } from "@/lib/datasets"
+import type { DataType, Dataset } from "@/lib/datasets"
 import { normalizeWithSign, normalize } from "@/lib/normalization"
 import { NeuronState } from "./neuron"
 import { useNodeSelect } from "@/lib/node-select"
@@ -13,8 +13,8 @@ export type Point = [number, number, number]
 interface SequentialProps {
   model: tf.LayersModel
   ds: Dataset
-  input?: number[]
-  rawInput?: number[]
+  input?: DataType[]
+  rawInput?: DataType[]
 }
 
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
@@ -106,9 +106,13 @@ function getWeightsAndBiases(model: tf.LayersModel) {
   })
 }
 
-function useActivations(model: tf.LayersModel, input?: number[]) {
+function useActivations(model: tf.LayersModel, input?: DataType[]) {
   return useMemo(() => {
-    if (!model || !input) return []
+    if (!model || !input || input.length === 0) return []
+
+    // TODO: handle multi-dimensional input without flattening
+
+    const isMultiDim = Array.isArray(input[0])
 
     // Define a model that outputs activations for each layer
     const layerOutputs = model.layers.flatMap((layer) => layer.output)
@@ -123,9 +127,13 @@ function useActivations(model: tf.LayersModel, input?: number[]) {
     const _activations = activationModel.predict(tensor) as tf.Tensor<tf.Rank>[]
 
     const activations = _activations.map(
-      (activation) => activation.arraySync() as number[][]
+      (activation) => activation.arraySync() as (number | number[])[][]
     )
-    return activations.map((a) => a[0])
+    // TODO: handle multi-dimensional output!!
+    const result = isMultiDim
+      ? activations.map((a) => a[0]).map((a) => a[0]) // use only the first channel so far ...
+      : activations.map((a) => a[0])
+    return result as number[][] // single activations for each layer and neuron
   }, [model, input])
 }
 

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { button, useControls } from "leva"
 
-import { Dataset } from "./datasets"
+import { Dataset, DataType } from "./datasets"
 import { useStatusText } from "@/components/status-text"
 import {
   TrainingLog,
@@ -16,7 +16,7 @@ let sessionEpochCount = 0
 
 export function useTraining(
   model: tf.LayersModel | null,
-  input: number[], // only for manual training
+  input: DataType[], // only for manual training
   next: (step?: number) => void,
   ds: Dataset
 ) {
@@ -186,7 +186,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
 
 export function useManualTraining(
   model: tf.LayersModel | null,
-  input: number[],
+  input: DataType[],
   next: () => void,
   setLogs: TrainingLogSetter,
   ds: Dataset
@@ -239,7 +239,7 @@ let trainingPromise: Promise<tf.History | void> | null = null
 
 async function train(
   model: tf.LayersModel,
-  inputs: number[][],
+  inputs: DataType[][],
   trainY: number[],
   options: tf.ModelFitArgs = {},
   output: Dataset["output"],

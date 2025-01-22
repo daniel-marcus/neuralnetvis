@@ -16,9 +16,13 @@ export interface DenseProps {
 export const Dense = (props: DenseProps) => {
   const { index, allLayers, ds, neurons, positions } = props
   const geometry = getGeometry(props.layerPosition, neurons.length)
+  if (!neurons.length) return null
   return (
     <group name={`dense_${index}`}>
-      <Instances limit={neurons.length || undefined}>
+      <Instances
+        limit={neurons.length}
+        key={`dense_${index}_${neurons.length}`}
+      >
         {geometry}
         <meshStandardMaterial />
         {neurons.map((neuronProps, i) => {

@@ -2,11 +2,17 @@ import { useEffect, useMemo, useCallback, useState } from "react"
 import { useControls } from "leva"
 import { useStatusText } from "@/components/status-text"
 import { applyStandardScaler } from "./normalization"
+import npyjs, { Parsed } from "npyjs"
+
+const n = new npyjs()
+
+type ColorPixel = [number, number, number]
+export type DataType = number | ColorPixel
 
 interface DatasetData {
-  trainX: number[][]
+  trainX: DataType[][]
   trainY: number[]
-  testX?: number[][]
+  testX?: DataType[][]
   testY?: number[]
 }
 
@@ -15,7 +21,7 @@ interface DatasetDef {
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
-    preprocess?: (data: number[][]) => number[][]
+    preprocess?: (data: DataType[][]) => DataType[][] // TODO: fix typing
   }
   output: {
     size: number
@@ -37,10 +43,53 @@ const FASHION_MNIST_SIZE: "10k" | "60k" = "60k"
 
 const datasets: DatasetDef[] = [
   {
+    name: "cifar10",
+    loss: "categoricalCrossentropy",
+    input: {
+      preprocess: (data) => {
+        if (Array.isArray(data[0][0]))
+          return (data as ColorPixel[][]).map((row) => row.map((v) => v[0]))
+        else return data
+      },
+    },
+    output: {
+      size: 10,
+      activation: "softmax",
+      labels: [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+      ],
+    },
+    loadData: async () => {
+      const x = await n.load("/data/cifar10/x_train.npy")
+      const y = await n.load("/data/cifar10/y_train.npy")
+      const xTest = await n.load("/data/cifar10/x_test.npy")
+      const yText = await n.load("/data/cifar10/y_test.npy")
+      const trainX = reshapeCifar10(x)
+      const testX = reshapeCifar10(xTest)
+      return {
+        trainX,
+        trainY: Array.from(y.data as Uint8Array),
+        testX,
+        testY: Array.from(yText.data as Uint8Array),
+      }
+    },
+  },
+  {
     name: "mnist",
     loss: "categoricalCrossentropy",
     input: {
-      preprocess: (data) => data.map((row) => row.map((v) => v / 255)),
+      preprocess: (data) => {
+        return (data as number[][]).map((row) => row.map((v) => v / 255))
+      },
     },
     output: {
       size: 10,
@@ -66,7 +115,8 @@ const datasets: DatasetDef[] = [
     name: "fashion mnist",
     loss: "categoricalCrossentropy",
     input: {
-      preprocess: (data) => data.map((row) => row.map((v) => v / 255)),
+      preprocess: (data) =>
+        (data as number[][]).map((row) => row.map((v) => v / 255)),
     },
     output: {
       size: 10,
@@ -103,7 +153,7 @@ const datasets: DatasetDef[] = [
     name: "california housing",
     loss: "meanSquaredError",
     input: {
-      preprocess: applyStandardScaler,
+      preprocess: (data) => applyStandardScaler(data as number[][]),
       labels: [
         "longitude",
         "latitude",
@@ -169,11 +219,11 @@ export function useDatasets() {
             // apply preprocess if available
             ...data,
             trainX: datasetDef.input?.preprocess
-              ? datasetDef.input.preprocess(data.trainX)
+              ? datasetDef.input.preprocess(data.trainX as number[][]) // TODO: fix typing
               : data.trainX,
             testX:
               datasetDef.input?.preprocess && data.testX
-                ? datasetDef.input.preprocess(data.testX)
+                ? datasetDef.input.preprocess(data.testX as number[][]) // TODO: fix typing
                 : data.testX,
           },
         })
@@ -255,4 +305,33 @@ export function useDatasets() {
   }, [next, ds, setI])
 
   return [input, rawInput, trainingY, next, ds] as const
+}
+
+function reshapeCifar10(x: Parsed) {
+  const xData = x.data as unknown as number[]
+  const imageWidth = 32
+  const imageHeight = 32
+  const channels = 3
+  const pixelsPerImage = imageWidth * imageHeight
+  const valuesPerImage = pixelsPerImage * channels
+  const numImages = x.data.length / valuesPerImage
+
+  const returnX: ColorPixel[][] = []
+  for (let i = 0; i < numImages; i++) {
+    const imageStart = i * valuesPerImage
+    const image: ColorPixel[] = []
+    for (let row = 0; row < imageHeight; row++) {
+      for (let col = 0; col < imageWidth; col++) {
+        const pixelStart = imageStart + (row * imageWidth + col) * channels
+        const pixel: ColorPixel = [
+          xData[pixelStart],
+          xData[pixelStart + 1],
+          xData[pixelStart + 2],
+        ]
+        image.push(pixel)
+      }
+    }
+    returnX.push(image)
+  }
+  return returnX
 }
