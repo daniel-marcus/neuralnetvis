@@ -17,10 +17,12 @@ export const TrainingYContext = createContext<number | undefined>(undefined)
 export const Model = () => {
   const [ds, input, trainingY, next] = useDatasets()
   const model = useModel(ds)
-  const splitColors = useSplitColors()
+  const [hideLines, splitColors] = useSplitColors(ds)
   const isTraining = useTraining(model, ds, next)
   return (
-    <OptionsContext.Provider value={{ hideLines: isTraining, splitColors }}>
+    <OptionsContext.Provider
+      value={{ hideLines: hideLines || isTraining, splitColors }}
+    >
       <TrainingYContext.Provider value={trainingY}>
         <Sequential model={model} input={input} ds={ds} />
       </TrainingYContext.Provider>

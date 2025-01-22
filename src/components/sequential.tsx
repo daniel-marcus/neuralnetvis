@@ -49,6 +49,7 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
         nid: string
         index: number
         layerIndex: number
+        position: Point
       })[] = Array.from({
         length: units,
       }).map((_, j) => {
@@ -63,6 +64,7 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
           nid: `${i}_${j}`,
           index: j,
           layerIndex: i,
+          position: neuronPositions?.[i]?.[j] ?? [0, 0, 0],
           rawInput: layerPosition === "input" ? rawInput?.[j] : undefined,
           activation,
           normalizedActivation: normalizedActivations?.[j],
@@ -70,6 +72,7 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
           normalizedWeights: normalizeWithSign(thisWeights),
           bias,
           weightedInputs: weightedInputs?.[i],
+          normalizedWeightedInputs: normalizeWithSign(weightedInputs?.[i]),
           label:
             layerPosition === "output"
               ? ds?.output.labels?.[j]

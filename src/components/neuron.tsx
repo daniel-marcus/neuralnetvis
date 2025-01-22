@@ -15,10 +15,10 @@ export type NeuronDef = {
   index: number
   nid: NodeId
   layerIndex: number
+  position: [number, number, number]
 }
 
 type NeuronContext = {
-  position: [number, number, number]
   layer: LayerProps
   allLayers?: LayerProps[]
   ds?: Dataset
@@ -32,6 +32,7 @@ export type NeuronState = {
   normalizedWeights?: number[]
   bias?: number
   weightedInputs?: number[]
+  normalizedWeightedInputs?: number[]
   label?: string
   isSelected?: boolean
   highlightValue?: number // [-1, 1]

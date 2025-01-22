@@ -10,14 +10,14 @@ import { Connections } from "./connections"
 export interface DenseProps {
   index: number
   layerPosition: LayerPosition
-  positions?: [number, number, number][] // keep separated from changing data
+  // positions?: [number, number, number][] // keep separated from changing data
   allLayers?: LayerProps[]
   ds?: Dataset
   neurons: (NeuronDef & NeuronState)[]
 }
 
 export const Dense = (props: DenseProps) => {
-  const { index, allLayers, ds, neurons, positions, layerPosition } = props
+  const { index, allLayers, ds, neurons, layerPosition } = props
   const geometry = getGeometry(layerPosition, neurons.length)
   const { splitColors } = useContext(OptionsContext)
   if (!neurons.length) return null
@@ -36,12 +36,9 @@ export const Dense = (props: DenseProps) => {
           blending={hasAdditiveBlending ? AdditiveBlending : undefined}
         />
         {neurons.map((neuronProps, i) => {
-          const position = positions?.[i]
-          if (!position) return null
           return (
             <Neuron
               key={i}
-              position={position}
               layer={props}
               allLayers={allLayers}
               ds={ds}
