@@ -1,8 +1,17 @@
-import { Text } from "@react-three/drei"
 import { OUTPUT_ORIENT } from "./sequential"
-import { useFrame, useThree } from "@react-three/fiber"
+import { useFrame, useThree, extend } from "@react-three/fiber"
 import { useRef } from "react"
 import { Mesh } from "three"
+import { Text } from "troika-three-text"
+
+// https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
+class CustomText extends Text {}
+extend({ CustomText })
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    customText: unknown // Object3DNode<CustomText, typeof CustomText>
+  }
+}
 
 const FONT_SIZE = 2.5
 
@@ -10,7 +19,7 @@ interface NeuronLabelProps {
   position?: [number, number, number]
   side?: "left" | "right"
   color?: string
-  children?: React.ReactNode
+  children?: string | number // React.ReactNode
 }
 
 export const NeuronLabel = ({
@@ -28,8 +37,9 @@ export const NeuronLabel = ({
   })
 
   return (
-    <Text
+    <customText
       ref={labelRef}
+      text={children}
       position={getTextPos(x, y, z, side)}
       fontSize={FONT_SIZE}
       color={color}
@@ -42,9 +52,7 @@ export const NeuronLabel = ({
       }
       anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
-    >
-      {children}
-    </Text>
+    />
   )
 }
 
@@ -54,17 +62,16 @@ interface DotProps {
 }
 
 export const Dot = ({ position: [x, y, z], color }: DotProps) => (
-  <Text
+  <customText
     position={getDotPos(x, y, z)}
+    text={"."}
     fontSize={FONT_SIZE}
     color={color}
     anchorX="center"
     anchorY="middle"
     rotation={[0, -Math.PI / 2, 0]}
     characters="·"
-  >
-    ·
-  </Text>
+  />
 )
 
 function getTextPos(

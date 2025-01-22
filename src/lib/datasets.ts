@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useCallback, useState } from "react"
 import { useControls } from "leva"
 import { useStatusText } from "@/components/status-text"
-import { applyStandardScaler } from "./normalization"
+// import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 
@@ -22,7 +22,7 @@ interface DatasetDef {
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
-    preprocess?: (data: DataType[][]) => DataType[][] // TODO: fix typing
+    preprocess?: (data: DataType[]) => DataType[] // TODO: fix typing
   }
   output: {
     size: number
@@ -33,7 +33,7 @@ interface DatasetDef {
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
-  dataRaw: DatasetData
+  dataRaw?: DatasetData
   data: DatasetData
 }
 
@@ -44,13 +44,13 @@ const datasets: DatasetDef[] = [
     name: "cifar10",
     loss: "categoricalCrossentropy",
     input: {
-      preprocess: (data) => {
-        if (Array.isArray(data[0][0]))
+      preprocess: (input) => {
+        if (Array.isArray(input[0]))
           // TODO: use all channels!
-          return (data as ColorPixel[][]).map((row) =>
-            row.map((v) => v[0] / 255)
+          return (input as ColorPixel[]).map(
+            (pixel) => pixel.map((v) => v / 255) as ColorPixel
           )
-        else return data
+        else return input
       },
     },
     output: {
@@ -70,10 +70,12 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const xTrain = await fetchNpz("/data/cifar10/x_train.npz")
-      const yTrain = await fetchNpz("/data/cifar10/y_train.npz")
-      const xTest = await fetchNpz("/data/cifar10/x_test.npz")
-      const yTest = await fetchNpz("/data/cifar10/y_test.npz")
+      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
+        fetchNpy("/data/cifar10/x_train.npy"),
+        fetchNpy("/data/cifar10/y_train.npy"),
+        fetchNpy("/data/cifar10/x_test.npy"),
+        fetchNpy("/data/cifar10/y_test.npy"),
+      ])
       const trainX = reshapeArray(xTrain)
       const testX = reshapeArray(xTest)
       return {
@@ -88,8 +90,8 @@ const datasets: DatasetDef[] = [
     name: "mnist",
     loss: "categoricalCrossentropy",
     input: {
-      preprocess: (data) => {
-        return (data as number[][]).map((row) => row.map((v) => v / 255))
+      preprocess: (input) => {
+        return (input as number[]).map((v) => v / 255)
       },
     },
     output: {
@@ -98,10 +100,12 @@ const datasets: DatasetDef[] = [
       labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     },
     loadData: async () => {
-      const xTrain = await fetchNpz("/data/mnist/x_train.npz")
-      const yTrain = await fetchNpz("/data/mnist/y_train.npz")
-      const xTest = await fetchNpz("/data/mnist/x_test.npz")
-      const yTest = await fetchNpz("/data/mnist/y_test.npz")
+      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
+        fetchNpy("/data/mnist/x_train.npz"),
+        fetchNpy("/data/mnist/y_train.npz"),
+        fetchNpy("/data/mnist/x_test.npz"),
+        fetchNpy("/data/mnist/y_test.npz"),
+      ])
       const trainX = reshapeArray(xTrain)
       const testX = reshapeArray(xTest)
       return {
@@ -116,8 +120,9 @@ const datasets: DatasetDef[] = [
     name: "fashion mnist",
     loss: "categoricalCrossentropy",
     input: {
-      preprocess: (data) =>
-        (data as number[][]).map((row) => row.map((v) => v / 255)),
+      preprocess: (input) => {
+        return (input as number[]).map((v) => v / 255)
+      },
     },
     output: {
       size: 10,
@@ -136,10 +141,12 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const xTrain = await fetchNpz("/data/fashion_mnist/x_train.npz")
-      const yTrain = await fetchNpz("/data/fashion_mnist/y_train.npz")
-      const xTest = await fetchNpz("/data/fashion_mnist/x_test.npz")
-      const yTest = await fetchNpz("/data/fashion_mnist/y_test.npz")
+      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
+        fetchNpy("/data/fashion_mnist/x_train.npz"),
+        fetchNpy("/data/fashion_mnist/y_train.npz"),
+        fetchNpy("/data/fashion_mnist/x_test.npz"),
+        fetchNpy("/data/fashion_mnist/y_test.npz"),
+      ])
       const trainX = reshapeArray(xTrain)
       const testX = reshapeArray(xTest)
       return {
@@ -154,7 +161,8 @@ const datasets: DatasetDef[] = [
     name: "california housing",
     loss: "meanSquaredError",
     input: {
-      preprocess: (data) => applyStandardScaler(data as number[][]),
+      // TODO ...
+      // preprocess: (data) => applyStandardScaler(data as number[][]),
       labels: [
         "longitude",
         "latitude",
@@ -215,18 +223,7 @@ export function useDatasets() {
         console.log("loaded dataset", datasetId)
         setDataset({
           ...datasetDef,
-          dataRaw: data,
-          data: {
-            // apply preprocess if available
-            ...data,
-            trainX: datasetDef.input?.preprocess
-              ? datasetDef.input.preprocess(data.trainX as number[][]) // TODO: fix typing
-              : data.trainX,
-            testX:
-              datasetDef.input?.preprocess && data.testX
-                ? datasetDef.input.preprocess(data.testX as number[][]) // TODO: fix typing
-                : data.testX,
-          },
+          data,
         })
       })
       .finally(() => setIsLoading(false))
@@ -277,8 +274,13 @@ export function useDatasets() {
     [set, get]
   )
 
-  const input = useMemo(() => ds.data.trainX[i - 1], [i, ds])
-  const rawInput = useMemo(() => ds.dataRaw.trainX[i - 1], [i, ds])
+  const rawInput = useMemo(() => ds.data.trainX[i - 1], [i, ds])
+  const input = useMemo(() => {
+    if (!ds.input?.preprocess) return rawInput
+    return ds.input.preprocess(rawInput)
+  }, [rawInput, ds])
+
+  // const rawInput = useMemo(() => ds.dataRaw?.trainX[i - 1], [i, ds])
   const trainingY = useMemo(() => ds.data.trainY[i - 1], [i, ds])
 
   const next = useCallback(
@@ -308,16 +310,30 @@ export function useDatasets() {
   return [input, rawInput, trainingY, next, ds] as const
 }
 
-async function fetchNpz(path: string) {
-  const response = await fetch(path)
-  const arrayBuffer = await response.arrayBuffer()
-  const zip = await JSZip.loadAsync(arrayBuffer)
-  const file = Object.values(zip.files)[0]
-  if (!file) throw new Error("No files in zip")
-  if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
-  const data = await file.async("arraybuffer")
-  const parsed = n.parse(data)
-  return parsed
+async function fetchNpy(path: string): Promise<Parsed> {
+  const startTime = new Date().getTime()
+  if (path.endsWith(".npy")) {
+    const x = await n.load(path)
+    const endTime = new Date().getTime()
+    console.log(`Loaded ${path} in ${endTime - startTime}ms`)
+    return x
+  } else if (path.endsWith(".npz")) {
+    const response = await fetch(path, {
+      cache: "force-cache",
+    })
+    const arrayBuffer = await response.arrayBuffer()
+    const zip = await JSZip.loadAsync(arrayBuffer)
+    const file = Object.values(zip.files)[0]
+    if (!file) throw new Error("No files in zip")
+    if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
+    const data = await file.async("arraybuffer")
+    const parsed = n.parse(data)
+    const endTime = new Date().getTime()
+    console.log(`Loaded ${path} in ${endTime - startTime}ms`)
+    return parsed
+  } else {
+    throw new Error("Invalid file extension")
+  }
 }
 
 function reshapeArray(parsed: Parsed) {

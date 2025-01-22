@@ -140,10 +140,11 @@ export function Neuron(props: NeuronProps) {
       )}
       {showValueLabel && (
         <NeuronLabel side={"right"} position={position} color={color}>
-          {rawInput ??
-            (activation
-              ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
-              : "")}
+          {rawInput
+            ? String(rawInput)
+            : activation
+            ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
+            : ""}
         </NeuronLabel>
       )}
       {showDot && (
