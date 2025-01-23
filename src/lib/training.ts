@@ -246,10 +246,6 @@ async function train(
 
   const { data, shape } = ds.data.trainX
 
-  if (data instanceof BigUint64Array || data instanceof BigInt64Array) {
-    throw new Error("BigUint64Array/BigInt64Array not supported")
-  }
-
   // TODO: normalize in normalize layer?
   const X = tf.tensor(data, shape).div(255)
   const y = getY(ds.data.trainY, ds.output)
@@ -283,9 +279,6 @@ async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
     return { loss: undefined, accuracy: undefined }
   const { data, shape } = ds.data.testX
 
-  if (data instanceof BigUint64Array || data instanceof BigInt64Array) {
-    throw new Error("BigUint64Array/BigInt64Array not supported")
-  }
   const X = tf.tensor(data, shape).div(255)
   const y = getY(ds.data.testY, ds.output)
   const result = model.evaluate(X, y, { batchSize: 64 })

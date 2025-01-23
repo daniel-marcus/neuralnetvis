@@ -1,45 +1,66 @@
 import { ReactElement, useContext } from "react"
 import { Neuron, NeuronDef, NeuronState } from "./neuron"
-import type { Dataset } from "@/lib/datasets"
-import type { LayerPosition } from "@/lib/layer-props"
+import { numColorChannels, type Dataset } from "@/lib/datasets"
+import { getVisibleLayers, type LayerPosition } from "@/lib/layer-props"
 import { Instances } from "@react-three/drei"
 import { AdditiveBlending } from "three"
-import { OptionsContext } from "./model"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
-import { getGridWidth, getOffsetX } from "@/lib/neuron-positions"
+import { getGridWidth, getOffsetX } from "@/lib/layer-layout"
+import { UiOptionsContext } from "@/lib/ui-options"
+import * as tf from "@tensorflow/tfjs"
 
 export interface LayerDef {
   index: number
+  visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerPosition: LayerPosition
+  tfLayer: tf.layers.Layer
   neurons: (NeuronDef & NeuronState)[]
+  geometry: ReactElement
+  spacing: number
 }
 
 interface LayerContext {
   allLayers: LayerDef[]
   ds?: Dataset
+  model?: tf.LayersModel
 }
 
 export type LayerProps = LayerDef & LayerContext
 
 export const Layer = (props: LayerProps) => {
-  const { index, allLayers, ds, layerPosition } = props
-  const colorChannels = ds?.data.trainX.shape[3] ?? 1
+  const { index, visibleIndex, allLayers, ds, layerPosition, tfLayer } = props
+  const { neurons, geometry } = props
+  const colorChannels = numColorChannels(ds)
   const hasColorChannels = colorChannels > 1
-  const groups =
-    hasColorChannels && layerPosition === "input" ? colorChannels : 1
-  const prevLayer = allLayers?.[index - 1]
+  const groupCount =
+    hasColorChannels && layerPosition === "input"
+      ? colorChannels
+      : (tfLayer.outputShape?.[3] as number | undefined) ?? 1
+
+  const { splitColors } = useContext(UiOptionsContext)
+  const hasAdditiveBlending =
+    layerPosition === "input" && groupCount > 1 && !splitColors
+
+  const prevLayer = getVisibleLayers(allLayers)[visibleIndex - 1]
   const position = [getOffsetX(index, allLayers), 0, 0]
   const ref = useAnimatedPosition(position, 0.1)
   return (
-    <>
+    <Instances
+      limit={neurons.length}
+      key={`${index}_${neurons.length}`} // _${hasAdditiveBlending}
+    >
+      {geometry}
+      <meshStandardMaterial
+        blending={hasAdditiveBlending ? AdditiveBlending : undefined}
+      />
       <group name={`layer_${index}`} ref={ref}>
-        {Array.from({ length: groups }).map((_, groupIndex) => {
+        {Array.from({ length: groupCount }).map((_, groupIndex) => {
           return (
             <NeuronGroup
               key={groupIndex}
               groupIndex={groupIndex}
-              groups={groups}
+              groups={groupCount}
               {...props}
             />
           )
@@ -48,7 +69,7 @@ export const Layer = (props: LayerProps) => {
       {!!prevLayer && !!prevLayer.neurons.length && (
         <Connections layer={props} prevLayer={prevLayer} />
       )}
-    </>
+    </Instances>
   )
 }
 
@@ -59,54 +80,41 @@ type NeuronGroupProps = LayerProps & {
 
 const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupIndex, groups, ...layerProps } = props
-  const { allLayers, ds, neurons, layerPosition } = layerProps
-  const geometry = getGeometry(layerPosition, neurons.length)
-  const { splitColors } = useContext(OptionsContext)
-  const hasAdditiveBlending =
-    layerPosition === "input" && groups > 1 && !splitColors
+  const { spacing, allLayers, ds, neurons, layerPosition } = layerProps
+
+  // get grouped neurons in parent class ...
   const groupedNeurons = neurons.filter((n) => n.index % groups === groupIndex)
 
-  const gridWidth = getGridWidth(groupedNeurons.length, layerPosition) + 0.6
-  const rest = groupIndex % groups
-  const shiftZ = 1 * (rest - (groups - 1) / 2)
-  const position = splitColors ? [0, 0, shiftZ * gridWidth] : [0, 0, 0]
+  const GRID_SPACING = 0.6
+  const gridSize = getGridWidth(groupedNeurons.length, spacing) + GRID_SPACING
+  const groupsPerRow = Math.ceil(Math.sqrt(groups))
+  const offsetY = (groupsPerRow - 1) * gridSize * 0.5
+  const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
+  const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
+  const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
+
+  const { splitColors } = useContext(UiOptionsContext)
+  const position =
+    layerPosition === "input"
+      ? splitColors
+        ? [0, 0, groupIndex * gridSize - (groups - 1) * gridSize * 0.5] // spread on z-axis
+        : [0, 0, 0]
+      : [0, y, z]
   const ref = useAnimatedPosition(position)
   return (
     <group ref={ref}>
-      <Instances
-        limit={groupedNeurons.length}
-        key={`${groupIndex}_${groupedNeurons.length}`} // _${hasAdditiveBlending}
-      >
-        {geometry}
-        <meshStandardMaterial
-          blending={hasAdditiveBlending ? AdditiveBlending : undefined}
-        />
-        {groupedNeurons.map((neuronProps, i) => {
-          return (
-            <Neuron
-              key={i}
-              layer={props}
-              allLayers={allLayers}
-              ds={ds}
-              {...neuronProps}
-            />
-          )
-        })}
-      </Instances>
+      {groupedNeurons.map((neuronProps, i) => {
+        // return <Instance key={i} {...neuronProps} />
+        return (
+          <Neuron
+            key={i}
+            layer={props}
+            allLayers={allLayers}
+            ds={ds}
+            {...neuronProps}
+          />
+        )
+      })}
     </group>
   )
-}
-
-const geometryMap: Record<string, ReactElement> = {
-  boxSmall: <boxGeometry args={[0.6, 0.6, 0.6]} />,
-  boxBig: <boxGeometry args={[1.8, 1.8, 1.8]} />,
-  sphere: <sphereGeometry args={[0.6, 32, 32]} />,
-}
-
-function getGeometry(type: LayerPosition, units: number) {
-  if (["input", "output"].includes(type)) {
-    if (units <= 10) return geometryMap.boxBig
-    return geometryMap.boxSmall
-  }
-  return geometryMap.sphere
 }

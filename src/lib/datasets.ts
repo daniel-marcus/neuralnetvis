@@ -8,13 +8,32 @@ import * as tf from "@tensorflow/tfjs"
 
 const n = new npyjs()
 
+type SupportedTypedArray =
+  | Int8Array
+  | Uint8Array
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Uint32Array
+  | Float32Array
+  | Float64Array
+
+type ParsedSafe = Parsed & { data: SupportedTypedArray }
+
+function isSafe(parsed: Parsed): parsed is ParsedSafe {
+  return !(
+    parsed.data instanceof BigUint64Array ||
+    parsed.data instanceof BigInt64Array
+  )
+}
+
 export type LayerInput = NodeInput[]
 export type NodeInput = number | number[] | number[][] // flat, (width,height), (width,height,channel)
 
 interface DatasetData {
-  trainX: Parsed
+  trainX: ParsedSafe
   trainY: number[]
-  testX: Parsed
+  testX: ParsedSafe
   testY?: number[]
 }
 
@@ -61,8 +80,11 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/mnist/x_test.npz"),
         fetchNpy("/data/mnist/y_test.npz"),
       ])
-      const trainX = xTrain // reshapeArray(xTrain)
-      const testX = xTest // reshapeArray(xTest)
+      const trainX = xTrain
+      const testX = xTest
+      // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
+      trainX.shape = [...trainX.shape, 1]
+      testX.shape = [...testX.shape, 1]
       return {
         trainX,
         trainY: Array.from(yTrain.data as Uint8Array),
@@ -136,6 +158,9 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/fashion_mnist/x_test.npz"),
         fetchNpy("/data/fashion_mnist/y_test.npz"),
       ])
+      // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
+      xTrain.shape = [...xTrain.shape, 1]
+      xTest.shape = [...xTest.shape, 1]
       return {
         trainX: xTrain,
         trainY: Array.from(yTrain.data as Uint8Array),
@@ -292,13 +317,15 @@ export function useDatasets() {
   return [ds, input, trainingY, next] as const
 }
 
-async function fetchNpy(path: string): Promise<Parsed> {
+async function fetchNpy(path: string): Promise<ParsedSafe> {
   const startTime = new Date().getTime()
   if (path.endsWith(".npy")) {
-    const x = await n.load(path)
+    const parsed = await n.load(path)
     const endTime = new Date().getTime()
     console.log(`Loaded ${path} in ${endTime - startTime}ms`)
-    return x
+    if (!isSafe(parsed))
+      throw new Error("BigUint64Array/BigInt64Array not supported")
+    return parsed
   } else if (path.endsWith(".npz")) {
     const response = await fetch(path, {
       cache: "force-cache",
@@ -312,8 +339,14 @@ async function fetchNpy(path: string): Promise<Parsed> {
     const parsed = n.parse(data)
     const endTime = new Date().getTime()
     console.log(`Loaded ${path} in ${endTime - startTime}ms`)
+    if (!isSafe(parsed))
+      throw new Error("BigUint64Array/BigInt64Array not supported")
     return parsed
   } else {
     throw new Error("Invalid file extension")
   }
+}
+
+export function numColorChannels(ds?: Dataset) {
+  return ds?.data.trainX.shape[3] ?? 1
 }

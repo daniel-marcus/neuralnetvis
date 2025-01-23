@@ -3,18 +3,20 @@ import * as tf from "@tensorflow/tfjs"
 import { normalize } from "./normalization"
 import { NeuronDef, NeuronRefType, NeuronState } from "@/components/neuron"
 import { Dataset, LayerInput } from "./datasets"
+import { LayerLayout } from "./layer-layout"
+import { LayerDef } from "@/components/layer"
 
 const DEBUG = false
 
 // TODO: fix rawInput
 
-export type LayerPosition = "input" | "hidden" | "output"
+export type LayerPosition = "input" | "hidden" | "output" | "invisible"
 export type Point = [number, number, number]
 
 export function useLayerProps(
   model: tf.LayersModel | undefined,
   ds: Dataset | undefined,
-  neuronPositions: [number, number, number][][] | undefined,
+  layerLayouts: LayerLayout[],
   activations: number[][],
   rawInput?: LayerInput
 ) {
@@ -28,15 +30,24 @@ export function useLayerProps(
     if (!model) return []
     const startTime = Date.now()
     const weightsAndBiases = getWeightsAndBiases(model)
+    const visibleLayers = model.layers.filter((l) => getUnits(l))
     const result = model.layers.map((l, i) => {
+      const visibleIndex = visibleLayers.indexOf(l)
+      const { geometry, spacing, positions: neuronPositions } = layerLayouts[i]
       const units = getUnits(l)
       const layerPosition = getLayerPosition(l, model)
-      const layerActivations = activations?.[i]
+      const _layerActivations = activations?.[i]
+      const layerActivations = Array.isArray(_layerActivations?.[0])
+        ? _layerActivations.flat(2) // TODO: make dimensions flexible?
+        : _layerActivations
       const normalizedActivations =
         layerPosition === "output"
           ? layerActivations
           : normalize(layerActivations)
-      const inputs = activations?.[i - 1]
+      const _inputs = activations?.[i - 1]
+      const inputs = Array.isArray(_inputs?.[0])
+        ? _inputs.flat(2) // TODO: make dimensions flexible?
+        : _inputs
       const { weights, biases } = weightsAndBiases[i]
 
       const neurons: (NeuronDef & NeuronState)[] = Array.from({
@@ -49,7 +60,8 @@ export function useLayerProps(
           nid: `${i}_${j}`,
           index: j,
           layerIndex: i,
-          position: neuronPositions?.[i]?.[j] ?? [0, 0, 0],
+          visibleLayerIndex: visibleIndex,
+          position: neuronPositions?.[j] ?? [0, 0, 0],
           ref: neuronRefs?.[i]?.[j] ?? createRef<NeuronRefType>(),
           rawInput: layerPosition === "input" ? rawInput?.[j] : undefined,
           activation,
@@ -68,35 +80,47 @@ export function useLayerProps(
       })
       const layer = {
         index: i,
+        visibleIndex,
         layerPosition,
+        tfLayer: l,
         neurons,
-        positions: neuronPositions?.[i],
+        geometry,
+        spacing,
         ds,
       }
       return layer
     })
     const endTime = Date.now()
-    if (DEBUG) console.log("LayerProps time:", endTime - startTime)
+    if (DEBUG)
+      console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
-  }, [activations, model, ds, rawInput, neuronPositions, neuronRefs])
+  }, [activations, model, ds, rawInput, layerLayouts, neuronRefs])
   return layerProps
+}
+
+export function getVisibleLayers(allLayers: LayerDef[]) {
+  return allLayers.filter((l) => l.neurons.length)
 }
 
 export function getUnits(layer: tf.layers.Layer) {
   const unitsFromConfig = layer.getConfig().units as number
-  if (unitsFromConfig) return unitsFromConfig
-  else if (layer.batchInputShape) {
+  if (unitsFromConfig) {
+    // dense
+    return unitsFromConfig
+  } else if (layer.batchInputShape) {
     // input layer
-    // const [, ...dims] = layer.batchInputShape
-    // const flattened = (dims as number[]).reduce((a, b) => a * b, 1)
-    // const [width = 1, height = 1, channels = 1] = dims as number[]
-    // const flattened = width * height * 1
-    return 0
-  } else {
+    const [, ...dims] = layer.batchInputShape
+    const flattenedNumber = (dims as number[]).reduce((a, b) => a * b, 1)
+    return flattenedNumber
+  } else if (layer.getClassName() === "Flatten") {
     // flatten layer
-    // return 0
-    return typeof layer.outputShape[1] === "number" ? layer.outputShape[1] : 0
+    // eturn typeof layer.outputShape[1] === "number" ? layer.outputShape[1] : 0
+    return 0
   }
+  // Conv2D, MaxPooling2D, etc.
+  const [, width, height, channels] = layer.outputShape as number[]
+  const flattenedNumber = [width, height, channels].reduce((a, b) => a * b, 1)
+  return flattenedNumber
 }
 
 function getWeightsAndBiases(model: tf.LayersModel) {
@@ -115,8 +139,8 @@ export function getLayerPosition(
 ): LayerPosition {
   const index = model.layers.indexOf(layer)
   const totalLayers = model.layers.length
-  const isInputFlatten = layer.getClassName() === "Flatten" && index === 1
-  if (isInputFlatten || index === 0) return "input"
+  if (index === 0) return "input"
   if (index === totalLayers - 1) return "output"
+  if (getUnits(layer) === 0) return "invisible"
   return "hidden"
 }

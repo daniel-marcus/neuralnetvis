@@ -43,7 +43,7 @@ export function useNodeSelect(layerProps: LayerDef[]) {
         ...l,
         neurons: l.neurons.map((n, j) => {
           const highlightValue =
-            n.layerIndex === selN.layerIndex - 1
+            n.visibleLayerIndex === selN.visibleLayerIndex - 1
               ? tempObj[highlightProp]?.[j] // selN.normalizedWeights?.[j]
               : undefined
           return {
@@ -63,6 +63,8 @@ export function getWeightedInputs(
   neuronWeights?: number[]
 ) {
   if (!neuronInput || !neuronWeights) return undefined
+  console.log({ neuronInput, neuronWeights })
+  // TODO: Conv2D layer ...
   const weightedInputs = tf.tidy(() => {
     const weightsTensor = tf.tensor1d(neuronWeights)
     const inputsTensor = tf.tensor1d(neuronInput)

@@ -4,7 +4,7 @@ import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
 import { useNodeSelect } from "@/lib/node-select"
 import { useActivations } from "@/lib/activations"
-import { useNeuronPositions } from "@/lib/neuron-positions"
+import { useLayerLayout } from "@/lib/layer-layout"
 import { useLayerProps } from "@/lib/layer-props"
 
 interface SequentialProps {
@@ -15,14 +15,14 @@ interface SequentialProps {
 }
 
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
-  const positions = useNeuronPositions(model)
+  const layouts = useLayerLayout(model)
   const activations = useActivations(model, input)
-  const layerProps = useLayerProps(model, ds, positions, activations, rawInput)
+  const layerProps = useLayerProps(model, ds, layouts, activations, rawInput)
   const patchedLayerProps = useNodeSelect(layerProps)
   return (
     <group>
       {patchedLayerProps.map((props, i) => (
-        <Layer key={i} {...props} allLayers={layerProps} />
+        <Layer key={i} {...props} allLayers={layerProps} model={model} />
       ))}
     </group>
   )

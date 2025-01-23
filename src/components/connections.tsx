@@ -1,13 +1,15 @@
 import { Suspense, useContext, useMemo, useRef } from "react"
-import { OptionsContext } from "./model"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Vector2, Vector3 } from "three"
 import { LayerDef } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
+import { UiOptionsContext } from "@/lib/ui-options"
 
-export const LINE_ACTIVATION_THRESHOLD = 0.5
-const MAX_LINES_PER_LAYER = 200
+const DEBUG = false
+
+const LINE_ACTIVATION_THRESHOLD = 0.5
+const MAX_LINES_PER_LAYER = 100
 const MIN_LINE_WIDTH = 0.1
 
 type NeuronConnectionsProps = {
@@ -16,12 +18,12 @@ type NeuronConnectionsProps = {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const { hideLines } = useContext(OptionsContext)
+  const { showLines } = useContext(UiOptionsContext)
   const layerMaxWeight = useMemo(() => {
     const allWeights = layer.neurons.flatMap((n) => n.weights ?? [])
     return allWeights.reduce((max, w) => Math.max(max, w), -Infinity)
   }, [layer])
-  if (hideLines) return null
+  if (!showLines) return null
   let lineCount = 0
   return (
     <Suspense fallback={null}>
@@ -39,14 +41,17 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
             const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
             return weights
               .map((weight) => ({ weight, index: weights.indexOf(weight) }))
+              .filter(() => {
+                if (lineCount > MAX_LINES_PER_LAYER) {
+                  if (DEBUG) console.log("Max lines reached")
+                  return false
+                }
+                return true
+              })
               .filter(({ weight }) => weight > layerMaxWeight * 0.5)
               .sort((a, b) => b.weight - a.weight)
               .slice(0, maxLinesPerNeuron)
               .map(({ weight, index }) => {
-                if (lineCount > MAX_LINES_PER_LAYER) {
-                  console.log("Max lines reached")
-                  return null
-                }
                 const prevNeuron = prevLayer.neurons[index]
                 const prevActivation = prevNeuron?.activation ?? 0
                 const weightedInput = weight * prevActivation
@@ -94,7 +99,7 @@ export const DynamicLine = ({ fromRef, toRef }: DynamicLineProps) => {
   return <line ref={lineRef} />
 }
 
-const DynamicLine2 = ({ fromRef, toRef, width }: DynamicLineProps) => {
+export const DynamicLine2 = ({ fromRef, toRef, width }: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 

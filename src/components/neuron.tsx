@@ -4,7 +4,7 @@ import { TrainingYContext } from "./model"
 
 import { NeuronLabel, Pointer } from "./neuron-label"
 
-import type { Dataset, NodeInput } from "@/lib/datasets"
+import { numColorChannels, type Dataset, type NodeInput } from "@/lib/datasets"
 import { useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { ThreeEvent } from "@react-three/fiber"
@@ -18,6 +18,7 @@ export type NeuronDef = {
   index: number
   nid: NodeId
   layerIndex: number
+  visibleLayerIndex: number
   position: [number, number, number]
   ref: React.RefObject<NeuronRefType>
 }
@@ -74,7 +75,7 @@ export function Neuron(props: NeuronProps) {
       ? normalizedActivation
       : linearPredictionQuality
 
-  const hasColorChannels = !!ds?.data.trainX.shape[3]
+  const hasColorChannels = numColorChannels(ds) > 1
   const rest = index % 3
   const colorArr = [0, 0, 0]
   colorArr[rest] = Math.ceil(colorValue * 255)
@@ -160,7 +161,7 @@ function useHoverStatus(hovered: boolean, props: NeuronProps) {
       const layerIndex = layer.index ?? 0
       // TODO: handle multiple activations?
       const activation = Array.isArray(_activation)
-        ? _activation[0]
+        ? undefined // _activation[0]
         : _activation
       setStatusText(
         `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
