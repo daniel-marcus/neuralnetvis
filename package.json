@@ -13,6 +13,7 @@
     "@react-three/fiber": "^9.0.0-rc.1",
     "@tensorflow/tfjs": "^4.22.0",
     "jszip": "^3.10.1",
+    "leva": "^0.10.0",
     "ndarray": "^1.0.19",
     "next": "^15.1.5",
     "npyjs": "^0.7.0",
