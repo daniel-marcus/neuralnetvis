@@ -56,21 +56,20 @@ export const NeuronLabel = ({
   )
 }
 
-interface DotProps {
+interface PointerProps {
   position: [number, number, number]
   color: string
 }
 
-export const Dot = ({ position: [x, y, z], color }: DotProps) => (
+export const Pointer = ({ position: [x, y, z], color }: PointerProps) => (
   <customText
-    position={getDotPos(x, y, z)}
-    text={"."}
-    fontSize={FONT_SIZE}
+    position={getPointerPos(x, y, z)}
+    text={"☜"} // ·
+    fontSize={1}
     color={color}
     anchorX="center"
     anchorY="middle"
     rotation={[0, -Math.PI / 2, 0]}
-    characters="·"
   />
 )
 
@@ -85,7 +84,8 @@ function getTextPos(
   else return [x, y + 3, z]
 }
 
-function getDotPos(x: number, y: number, z: number) {
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 2.5]
+function getPointerPos(x: number, y: number, z: number) {
+  if (OUTPUT_ORIENT === "vertical")
+    return [x, y - 0.1, z + 2.2] // [x, y, z + 2.5]
   else return [x, y + 5, z]
 }

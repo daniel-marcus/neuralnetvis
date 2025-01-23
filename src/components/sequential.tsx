@@ -1,5 +1,5 @@
 import React, { useMemo } from "react"
-import { Dense, type DenseProps } from "./dense"
+import { Layer, LayerDef } from "./layer"
 import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
 import { normalizeWithSign, normalize } from "@/lib/normalization"
@@ -7,7 +7,6 @@ import { NeuronState } from "./neuron"
 import { useNodeSelect } from "@/lib/node-select"
 import { useActivations } from "@/lib/activations"
 
-export type LayerProps = DenseProps
 export type LayerPosition = "input" | "hidden" | "output"
 export type Point = [number, number, number]
 
@@ -20,7 +19,6 @@ interface SequentialProps {
 
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
   const activations = useActivations(model, input)
-  // const visibleLayers = useMemo(() => model.layers.filter(l => l.getClassName() !== ""), [model])
   const neuronPositions = useMemo(
     () => model?.layers.map((l) => getNeuronPositions(l, model)),
     [model]
@@ -95,7 +93,7 @@ export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
   return (
     <group>
       {patchedLayerProps.map((props, i) => (
-        <Dense key={i} {...props} allLayers={layerProps} />
+        <Layer key={i} {...props} allLayers={layerProps} />
       ))}
     </group>
   )
@@ -138,23 +136,21 @@ function getWeightedInputs(layerInput: number[], weights: number[][]) {
   return weightedInputs
 }
 
-const LAYER_SPACING = 11
-
+export const LAYER_SPACING = 11
 type OutputOrient = "horizontal" | "vertical"
 export const OUTPUT_ORIENT: OutputOrient = "vertical"
 
-function getNeuronPositions(
-  layer: tf.layers.Layer,
-  model: tf.LayersModel
-  // splitColors?: boolean
-) {
-  const visibleLayers = model.layers.filter((l) => getUnits(l))
-  const layerIndex = visibleLayers.indexOf(layer)
+export function getOffsetX(_layerIndex: number, allLayers: LayerDef[]) {
+  const visibleLayers = allLayers.filter((l) => l.neurons.length)
+  const layerIndex = visibleLayers.indexOf(allLayers[_layerIndex])
   const totalLayers = visibleLayers.length
+  return layerIndex * LAYER_SPACING + (totalLayers - 1) * LAYER_SPACING * -0.5
+}
+
+function getNeuronPositions(layer: tf.layers.Layer, model: tf.LayersModel) {
   const units = getUnits(layer)
   const type = getLayerPosition(layer, model)
-  const offsetX =
-    layerIndex * LAYER_SPACING + (totalLayers - 1) * LAYER_SPACING * -0.5
+  const offsetX = 0 // control offsetX with groups in Layer component
   const colorChannels = model.layers[0].batchInputShape?.[3] ?? 1
   const positions = Array.from({ length: units }).map((_, i) => {
     const [x, y, z] =

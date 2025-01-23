@@ -2,14 +2,13 @@ import React, { useState, useEffect, useContext } from "react"
 import { useStatusText } from "./status-text"
 import { TrainingYContext } from "./model"
 
-import type { LayerProps } from "./sequential"
-
-import { Dot, NeuronLabel } from "./neuron-label"
+import { NeuronLabel, Pointer } from "./neuron-label"
 
 import type { Dataset, NodeInput } from "@/lib/datasets"
 import { NodeId, useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { ThreeEvent } from "@react-three/fiber"
+import { LayerDef } from "./layer"
 
 export type NeuronDef = {
   index: number
@@ -19,8 +18,8 @@ export type NeuronDef = {
 }
 
 type NeuronContext = {
-  layer: LayerProps
-  allLayers?: LayerProps[]
+  layer: LayerDef
+  allLayers?: LayerDef[]
   ds?: Dataset
 }
 
@@ -83,7 +82,7 @@ export function Neuron(props: NeuronProps) {
 
   const showValueLabel =
     !isClassification && ["input", "output"].includes(layer.layerPosition)
-  const showDot =
+  const showPointer =
     layer.layerPosition === "output" &&
     typeof trainingY === "number" &&
     trainingY === index
@@ -127,8 +126,8 @@ export function Neuron(props: NeuronProps) {
             : ""}
         </NeuronLabel>
       )}
-      {showDot && (
-        <Dot
+      {showPointer && (
+        <Pointer
           position={position}
           color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
         />

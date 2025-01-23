@@ -1,8 +1,8 @@
-import { LayerProps } from "@/components/sequential"
 import { useMemo } from "react"
 import { create } from "zustand"
 import { normalizeWithSign } from "./normalization"
 import { useControls } from "leva"
+import { LayerDef } from "@/components/layer"
 
 export type NodeId = string // layerIndex_nodeIndex
 
@@ -17,7 +17,7 @@ export const useSelectedNodes = create<{
     })),
 }))
 
-export function useNodeSelect(layerProps: LayerProps[]) {
+export function useNodeSelect(layerProps: LayerDef[]) {
   const { highlightProp } = useControls("ui", {
     highlightProp: {
       label: "onSelect",

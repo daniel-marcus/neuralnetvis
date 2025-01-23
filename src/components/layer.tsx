@@ -1,52 +1,60 @@
-import { ReactElement, useContext, useRef } from "react"
+import { ReactElement, useContext } from "react"
 import { Neuron, NeuronDef, NeuronState } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
-import { getGridWidth, type LayerPosition, type LayerProps } from "./sequential"
-import { Instances, PositionMesh } from "@react-three/drei"
-import { AdditiveBlending, Vector3 } from "three"
+import { getGridWidth, getOffsetX, type LayerPosition } from "./sequential"
+import { Instances } from "@react-three/drei"
+import { AdditiveBlending } from "three"
 import { OptionsContext } from "./model"
 import { Connections } from "./connections"
-import { useFrame } from "@react-three/fiber"
+import { useAnimatedPosition } from "@/lib/animated-position"
 
-export interface DenseProps {
+export interface LayerDef {
   index: number
   layerPosition: LayerPosition
-  // positions?: [number, number, number][] // keep separated from changing data
-  allLayers?: LayerProps[]
-  ds?: Dataset
   neurons: (NeuronDef & NeuronState)[]
 }
 
-export const Dense = (props: DenseProps) => {
+interface LayerContext {
+  allLayers: LayerDef[]
+  ds?: Dataset
+}
+
+export type LayerProps = LayerDef & LayerContext
+
+export const Layer = (props: LayerProps) => {
   const { index, allLayers, ds, layerPosition } = props
   const colorChannels = ds?.data.trainX.shape[3] ?? 1
   const hasColorChannels = colorChannels > 1
   const groups =
     hasColorChannels && layerPosition === "input" ? colorChannels : 1
   const prevLayer = allLayers?.[index - 1]
+  const position = [getOffsetX(index, allLayers), 0, 0]
+  const ref = useAnimatedPosition(position)
   return (
-    <group name={`dense_${index}`}>
-      {Array.from({ length: groups }).map((_, groupIndex) => {
-        return (
-          <NeuronGroup
-            key={groupIndex}
-            groupIndex={groupIndex}
-            groups={groups}
-            {...props}
-          />
-        )
-      })}
+    <>
+      <group name={`layer_${index}`} ref={ref}>
+        {Array.from({ length: groups }).map((_, groupIndex) => {
+          return (
+            <NeuronGroup
+              key={groupIndex}
+              groupIndex={groupIndex}
+              groups={groups}
+              {...props}
+            />
+          )
+        })}
+      </group>
       {!!prevLayer && <Connections layer={props} prevLayer={prevLayer} />}
-    </group>
+    </>
   )
 }
 
-type NeuronGrupProps = DenseProps & {
+type NeuronGroupProps = LayerProps & {
   groupIndex: number
   groups: number
 }
 
-const NeuronGroup = (props: NeuronGrupProps) => {
+const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupIndex, groups, ...layerProps } = props
   const { allLayers, ds, neurons, layerPosition } = layerProps
   const geometry = getGeometry(layerPosition, neurons.length)
@@ -55,38 +63,11 @@ const NeuronGroup = (props: NeuronGrupProps) => {
     layerPosition === "input" && groups > 1 && !splitColors
   const groupedNeurons = neurons.filter((n) => n.index % groups === groupIndex)
 
-  const ref = useRef<PositionMesh>(null!)
   const gridWidth = getGridWidth(groupedNeurons.length, layerPosition) + 0.6
   const rest = groupIndex % groups
   const shiftZ = 1 * (rest - (groups - 1) / 2)
-
   const position = splitColors ? [0, 0, shiftZ * gridWidth] : [0, 0, 0]
-  const currentPosition = useRef(new Vector3())
-  useFrame(() => {
-    // TODO: shift group instead of individual neurons
-    if (ref.current) {
-      const targetPosition = new Vector3(...position)
-      const speed = 0.4
-      currentPosition.current.x = customInterpolation(
-        currentPosition.current.x,
-        targetPosition.x,
-        speed
-      )
-      currentPosition.current.y = customInterpolation(
-        currentPosition.current.y,
-        targetPosition.y,
-        speed
-      )
-      currentPosition.current.z = customInterpolation(
-        currentPosition.current.z,
-        targetPosition.z,
-        speed
-      )
-
-      ref.current.position.copy(currentPosition.current)
-    }
-  })
-
+  const ref = useAnimatedPosition(position)
   return (
     <group ref={ref}>
       <Instances
@@ -125,8 +106,4 @@ function getGeometry(type: LayerPosition, units: number) {
     return geometryMap.boxSmall
   }
   return geometryMap.sphere
-}
-
-const customInterpolation = (start: number, end: number, alpha: number) => {
-  return start + (end - start) * alpha
 }
