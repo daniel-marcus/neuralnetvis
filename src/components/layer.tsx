@@ -1,12 +1,13 @@
 import { ReactElement, useContext } from "react"
 import { Neuron, NeuronDef, NeuronState } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
-import { getGridWidth, getOffsetX, type LayerPosition } from "./sequential"
+import type { LayerPosition } from "@/lib/layer-props"
 import { Instances } from "@react-three/drei"
 import { AdditiveBlending } from "three"
 import { OptionsContext } from "./model"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
+import { getGridWidth, getOffsetX } from "@/lib/neuron-positions"
 
 export interface LayerDef {
   index: number
@@ -29,7 +30,7 @@ export const Layer = (props: LayerProps) => {
     hasColorChannels && layerPosition === "input" ? colorChannels : 1
   const prevLayer = allLayers?.[index - 1]
   const position = [getOffsetX(index, allLayers), 0, 0]
-  const ref = useAnimatedPosition(position)
+  const ref = useAnimatedPosition(position, 0.1)
   return (
     <>
       <group name={`layer_${index}`} ref={ref}>
@@ -44,7 +45,9 @@ export const Layer = (props: LayerProps) => {
           )
         })}
       </group>
-      {!!prevLayer && <Connections layer={props} prevLayer={prevLayer} />}
+      {!!prevLayer && !!prevLayer.neurons.length && (
+        <Connections layer={props} prevLayer={prevLayer} />
+      )}
     </>
   )
 }

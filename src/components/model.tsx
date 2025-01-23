@@ -18,11 +18,9 @@ export const Model = () => {
   const [ds, input, trainingY, next] = useDatasets()
   const model = useModel(ds)
   const [hideLines, splitColors] = useSplitColors(ds)
-  const isTraining = useTraining(model, ds, next)
+  useTraining(model, ds, next)
   return (
-    <OptionsContext.Provider
-      value={{ hideLines: hideLines || isTraining, splitColors }}
-    >
+    <OptionsContext.Provider value={{ hideLines, splitColors }}>
       <TrainingYContext.Provider value={trainingY}>
         <Sequential model={model} input={input} ds={ds} />
       </TrainingYContext.Provider>

@@ -1,4 +1,4 @@
-import { OUTPUT_ORIENT } from "./sequential"
+import { OUTPUT_ORIENT } from "@/lib/neuron-positions"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import { useRef } from "react"
 import { Mesh } from "three"

@@ -3,8 +3,8 @@ import { create } from "zustand"
 import { normalizeWithSign } from "./normalization"
 import { useControls } from "leva"
 import { LayerDef } from "@/components/layer"
-
-export type NodeId = string // layerIndex_nodeIndex
+import * as tf from "@tensorflow/tfjs"
+import { NodeId } from "@/components/neuron"
 
 export const useSelectedNodes = create<{
   selectedNode: NodeId | null
@@ -22,7 +22,7 @@ export function useNodeSelect(layerProps: LayerDef[]) {
     highlightProp: {
       label: "onSelect",
       options: {
-        "show weights": "normalizedWeights",
+        "show weights": "weights",
         "show weighted inputs": "weightedInputs",
       },
     } as const,
@@ -33,9 +33,10 @@ export function useNodeSelect(layerProps: LayerDef[]) {
     const allNeurons = layerProps.flatMap((l) => l.neurons)
     const selN = allNeurons.find(({ nid }) => nid === selectedNode)
     if (!selN) return layerProps
+    const weightedInputs = getWeightedInputs(selN.inputs, selN.weights)
     const tempObj = {
-      normalizedWeights: selN.normalizedWeights,
-      weightedInputs: normalizeWithSign(selN.weightedInputs),
+      weights: normalizeWithSign(selN.weights),
+      weightedInputs: normalizeWithSign(weightedInputs),
     }
     return layerProps.map((l) => {
       return {
@@ -55,4 +56,17 @@ export function useNodeSelect(layerProps: LayerDef[]) {
     })
   }, [layerProps, selectedNode, highlightProp])
   return patchedLayerProps
+}
+
+export function getWeightedInputs(
+  neuronInput?: number[],
+  neuronWeights?: number[]
+) {
+  if (!neuronInput || !neuronWeights) return undefined
+  const weightedInputs = tf.tidy(() => {
+    const weightsTensor = tf.tensor1d(neuronWeights)
+    const inputsTensor = tf.tensor1d(neuronInput)
+    return tf.mul(weightsTensor, inputsTensor).arraySync() as number[]
+  })
+  return weightedInputs
 }

@@ -5,16 +5,21 @@ import { TrainingYContext } from "./model"
 import { NeuronLabel, Pointer } from "./neuron-label"
 
 import type { Dataset, NodeInput } from "@/lib/datasets"
-import { NodeId, useSelectedNodes } from "@/lib/node-select"
+import { useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { ThreeEvent } from "@react-three/fiber"
 import { LayerDef } from "./layer"
+import { Object3D } from "three"
+
+export type NodeId = string // layerIndex_nodeIndex
+export type NeuronRefType = Object3D | null
 
 export type NeuronDef = {
   index: number
   nid: NodeId
   layerIndex: number
   position: [number, number, number]
+  ref: React.RefObject<NeuronRefType>
 }
 
 type NeuronContext = {
@@ -27,11 +32,9 @@ export type NeuronState = {
   rawInput?: NodeInput // maybe element of ... ?
   activation?: number
   normalizedActivation?: number
+  inputs?: number[]
   weights?: number[]
-  normalizedWeights?: number[]
   bias?: number
-  weightedInputs?: number[]
-  normalizedWeightedInputs?: number[]
   label?: string
   isSelected?: boolean
   highlightValue?: number // [-1, 1]
@@ -43,6 +46,7 @@ export type NeuronProps = NeuronDef & NeuronContext & NeuronState
 export function Neuron(props: NeuronProps) {
   const {
     index,
+    ref,
     position,
     layer,
     rawInput,
@@ -93,6 +97,7 @@ export function Neuron(props: NeuronProps) {
   return (
     <group name={`neuron_${nodeId}`}>
       <Instance
+        ref={ref}
         name={nodeId}
         position={position}
         scale={isSelected ? 1.5 : 1}
