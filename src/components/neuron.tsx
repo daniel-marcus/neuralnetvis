@@ -49,7 +49,6 @@ export function Neuron(props: NeuronProps) {
     rawInput,
     activation = 0,
     normalizedActivation = 0,
-    bias,
     label,
     ds,
     isSelected,
@@ -91,11 +90,12 @@ export function Neuron(props: NeuronProps) {
 
   const highlightColor =
     typeof highlightValue === "number" ? getColor(highlightValue) : undefined
+
   return (
     <group name={`neuron_${nodeId}`}>
       <Instance
+        name={nodeId}
         position={position}
-        userData={{ activation, bias }}
         scale={isSelected ? 1.5 : 1}
         onPointerOver={(e: ThreeEvent<PointerEvent>) => {
           if (e.buttons) return

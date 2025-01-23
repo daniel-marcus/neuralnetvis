@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react"
+import React, { useMemo } from "react"
 import { Dense, type DenseProps } from "./dense"
 import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
@@ -6,7 +6,6 @@ import { normalizeWithSign, normalize } from "@/lib/normalization"
 import { NeuronState } from "./neuron"
 import { useNodeSelect } from "@/lib/node-select"
 import { useActivations } from "@/lib/activations"
-import { OptionsContext } from "./model"
 
 export type LayerProps = DenseProps
 export type LayerPosition = "input" | "hidden" | "output"
@@ -20,12 +19,11 @@ interface SequentialProps {
 }
 
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
-  const splitColors = useContext(OptionsContext).splitColors
   const activations = useActivations(model, input)
   // const visibleLayers = useMemo(() => model.layers.filter(l => l.getClassName() !== ""), [model])
   const neuronPositions = useMemo(
-    () => model?.layers.map((l) => getNeuronPositions(l, model, splitColors)),
-    [model, splitColors]
+    () => model?.layers.map((l) => getNeuronPositions(l, model)),
+    [model]
   )
   const layerProps = useMemo(() => {
     if (!model) return []
@@ -147,8 +145,8 @@ export const OUTPUT_ORIENT: OutputOrient = "vertical"
 
 function getNeuronPositions(
   layer: tf.layers.Layer,
-  model: tf.LayersModel,
-  splitColors?: boolean
+  model: tf.LayersModel
+  // splitColors?: boolean
 ) {
   const visibleLayers = model.layers.filter((l) => getUnits(l))
   const layerIndex = visibleLayers.indexOf(layer)
@@ -165,7 +163,7 @@ function getNeuronPositions(
         : type === "input" && units <= 10
         ? getLineXYZ(i, units, "vertical")
         : type === "input"
-        ? getGroupedGridXYZ(i, units, type, colorChannels, splitColors)
+        ? getGroupedGridXYZ(i, units, type, colorChannels, false) // splitColors
         : getGroupedGridXYZ(i, units, type)
     return [x + offsetX, y, z] as Point
   })
@@ -184,6 +182,16 @@ function getLayerPosition(
   return "hidden"
 }
 
+function getNeuronSpacing(layerPosition: LayerPosition) {
+  return layerPosition === "input" ? 0.7 : 1.8
+}
+
+export function getGridWidth(total: number, layerPosition: LayerPosition) {
+  const gridSize = Math.ceil(Math.sqrt(total))
+  const NEURON_SPACING = getNeuronSpacing(layerPosition)
+  return gridSize * NEURON_SPACING
+}
+
 function getGroupedGridXYZ(
   _i: number,
   _total: number,
@@ -195,13 +203,14 @@ function getGroupedGridXYZ(
   const i = Math.floor(_i / groupSize)
   const rest = _i % groupSize
   const gridSize = Math.ceil(Math.sqrt(total))
-  const NEURON_SPACING = type === "input" ? 0.7 : 1.8
+  const NEURON_SPACING = getNeuronSpacing(type)
   const offsetY = (gridSize - 1) * NEURON_SPACING * 0.5
   const offsetZ = (gridSize - 1) * NEURON_SPACING * -0.5
 
   const y = -1 * Math.floor(i / gridSize) * NEURON_SPACING + offsetY // row
   const z = (i % gridSize) * NEURON_SPACING + offsetZ // column
 
+  // shift now done in neuron group
   const shiftMatrix = split ? [0, 0, 2 * (offsetZ - NEURON_SPACING)] : [0, 0, 0]
   const [shiftX, shiftY, shiftZ] = shiftMatrix.map(
     (v) => -v * (rest - (groupSize - 1) / 2)
