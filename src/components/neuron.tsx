@@ -11,11 +11,14 @@ import { ThreeEvent } from "@react-three/fiber"
 import { LayerDef } from "./layer"
 import { Object3D } from "three"
 
-export type NodeId = string // layerIndex_nodeIndex
+export type NodeId = string // layerIndex_{index3d.join(".")}
 export type NeuronRefType = Object3D | null
+
+export type Index3D = [number, number, number] // height, width, depth
 
 export type NeuronDef = {
   index: number
+  index3d: Index3D
   nid: NodeId
   layerIndex: number
   visibleLayerIndex: number
@@ -157,14 +160,13 @@ function useHoverStatus(hovered: boolean, props: NeuronProps) {
   const setStatusText = useStatusText((s) => s.setStatusText)
   useEffect(() => {
     if (hovered) {
-      const { index, layer, rawInput, activation: _activation, bias } = props
-      const layerIndex = layer.index ?? 0
+      const { nid, rawInput, activation: _activation, bias } = props
       // TODO: handle multiple activations?
       const activation = Array.isArray(_activation)
         ? undefined // _activation[0]
         : _activation
       setStatusText(
-        `<strong>Neuron ${layerIndex}_${index}</strong><br/><br/>
+        `<strong>Neuron ${nid}</strong><br/><br/>
 ${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}
 Activation: ${activation?.toFixed(4)}<br/>
 ${

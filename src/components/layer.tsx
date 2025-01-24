@@ -50,38 +50,42 @@ export const Layer = (props: LayerProps) => {
   )
   const ref = useAnimatedPosition(position, 0.1)
   if (!neurons.length) return null
+  const name = tfLayer.getClassName()
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
-    <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
-      <Instances
-        limit={neurons.length}
-        key={`${index}_${neurons.length}_${visibleLayers.length}}`} // _${hasAdditiveBlending
-      >
-        {geometry}
-        <meshStandardMaterial
-          blending={hasAdditiveBlending ? AdditiveBlending : undefined}
-        />
-        {Array.from({ length: groupCount }).map((_, i) => {
-          // use reversed index for input layer to get RGB on z-axis
-          const groupIndex = layerPosition === "input" ? groupCount - i - 1 : i
-          const groupedNeurons = neurons.filter(
-            (n) => n.index % groupCount === groupIndex
-          )
-          return (
-            <NeuronGroup
-              key={groupIndex}
-              groupIndex={groupIndex}
-              groupCount={groupCount}
-              groupedNeurons={groupedNeurons}
-              {...props}
-            />
-          )
-        })}
-      </Instances>
+    <>
+      <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
+        <Instances
+          limit={neurons.length}
+          key={`${index}_${name}_${neurons.length}_${visibleLayers.length}}`} // _${hasAdditiveBlending
+        >
+          {geometry}
+          <meshStandardMaterial
+            blending={hasAdditiveBlending ? AdditiveBlending : undefined}
+          />
+          {Array.from({ length: groupCount }).map((_, i) => {
+            // use reversed index for input layer to get RGB on z-axis
+            const groupIndex =
+              layerPosition === "input" ? groupCount - i - 1 : i
+            const groupedNeurons = neurons.filter(
+              (n) => n.index % groupCount === groupIndex
+            )
+            return (
+              <NeuronGroup
+                key={groupIndex}
+                groupIndex={groupIndex}
+                groupCount={groupCount}
+                groupedNeurons={groupedNeurons}
+                {...props}
+              />
+            )
+          })}
+        </Instances>
+      </group>
       {!!prevLayer && !!prevLayer.neurons.length && (
         <Connections layer={props} prevLayer={prevLayer} />
       )}
-    </group>
+    </>
   )
 }
 

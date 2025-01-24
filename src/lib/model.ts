@@ -3,6 +3,7 @@ import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
 import { useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 
 const defaultUnitConfig = {
   value: 32,
@@ -14,6 +15,14 @@ const defaultUnitConfig = {
 
 const defaultModelConfig = {
   conv1: {
+    value: 4,
+    min: 1,
+    max: 16,
+    step: 1,
+    optional: true,
+    disabled: true,
+  },
+  conv2: {
     value: 4,
     min: 1,
     max: 16,
@@ -94,11 +103,11 @@ function createModel(
   const model = tf.sequential()
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
   for (const c of layerConfig) {
-    const i = layerConfig.indexOf(c)
     if (c.name.startsWith("dense")) {
-      if (i === 0) model.add(tf.layers.flatten())
-      model.add(tf.layers.dense({ units: c.size, activation: "relu" }))
+      // dense layer
+      addDenseWithFlattenIfNeeded(model, { units: c.size, activation: "relu" })
     } else if (c.name.startsWith("conv")) {
+      // conv2d layer + maxpooling
       model.add(
         tf.layers.conv2d({
           filters: c.size,
@@ -107,14 +116,28 @@ function createModel(
         })
       )
       model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
-      model.add(tf.layers.flatten())
     }
   }
   if (!layerConfig.length) {
+    // no hidden layers
     model.add(tf.layers.flatten())
   }
-  model.add(
-    tf.layers.dense({ units: output.size, activation: output.activation })
-  )
+  // output layer
+  addDenseWithFlattenIfNeeded(model, {
+    units: output.size,
+    activation: output.activation,
+  })
   return model
+}
+
+function addDenseWithFlattenIfNeeded(
+  model: tf.Sequential,
+  denseArgs: DenseLayerArgs
+) {
+  const prevLayer = model.layers[model.layers.length - 1]
+  const isMutliDim = prevLayer.outputShape.length > 2
+  if (isMutliDim) {
+    model.add(tf.layers.flatten())
+  }
+  model.add(tf.layers.dense(denseArgs))
 }

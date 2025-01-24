@@ -1,12 +1,17 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { normalize } from "./normalization"
-import { NeuronDef, NeuronRefType, NeuronState } from "@/components/neuron"
+import {
+  Index3D,
+  NeuronDef,
+  NeuronRefType,
+  NeuronState,
+} from "@/components/neuron"
 import { Dataset, LayerInput } from "./datasets"
 import { LayerLayout } from "./layer-layout"
 import { LayerDef } from "@/components/layer"
 
-const DEBUG = true
+const DEBUG = false
 
 // TODO: fix rawInput
 
@@ -32,6 +37,7 @@ export function useLayerProps(
     const weightsAndBiases = getWeightsAndBiases(model)
     const visibleLayers = model.layers.filter((l) => getUnits(l))
     const result = model.layers.map((l, i) => {
+      const outputShape = l.outputShape as number[] // [batch, height, width, channels]
       const visibleIndex = visibleLayers.indexOf(l)
       const { geometry, spacing, positions: neuronPositions } = layerLayouts[i]
       const units = getUnits(l)
@@ -56,9 +62,11 @@ export function useLayerProps(
         const activation = layerActivations?.[j]
         const bias = biases?.[j]
         const thisWeights = weights?.map((w) => w[j])
+        const index3d = getNeuronIndex3d(j, outputShape)
         return {
-          nid: `${i}_${j}`,
+          nid: getNid(i, index3d),
           index: j,
+          index3d: getNeuronIndex3d(j, outputShape),
           layerIndex: i,
           visibleLayerIndex: visibleIndex,
           position: neuronPositions?.[j] ?? [0, 0, 0],
@@ -98,6 +106,18 @@ export function useLayerProps(
   return layerProps
 }
 
+function getNid(layerIndex: number, index3d: Index3D) {
+  return `${layerIndex}_${index3d.join(".")}`
+}
+
+function getNeuronIndex3d(flatIndex: number, outputShape: number[]) {
+  const [, , width = 1, depth = 1] = outputShape
+  const depthIndex = flatIndex % depth
+  const widthIndex = Math.floor(flatIndex / depth) % width
+  const heightIndex = Math.floor(flatIndex / (depth * width))
+  return [heightIndex, widthIndex, depthIndex] as Index3D
+}
+
 export function getVisibleLayers(allLayers: LayerDef[]) {
   return allLayers.filter((l) => l.neurons.length)
 }
@@ -118,8 +138,8 @@ export function getUnits(layer: tf.layers.Layer) {
     return 0
   }
   // Conv2D, MaxPooling2D, etc.
-  const [, width, height, channels] = layer.outputShape as number[]
-  const flattenedNumber = [width, height, channels].reduce((a, b) => a * b, 1)
+  const [, ...dims] = layer.outputShape as number[] // [batch, height, width, channels]
+  const flattenedNumber = dims.reduce((a, b) => a * b, 1)
   return flattenedNumber
 }
 
