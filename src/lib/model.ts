@@ -1,7 +1,7 @@
 import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { useMemo } from "react"
+import { useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 
 const defaultUnitConfig = {
@@ -12,20 +12,42 @@ const defaultUnitConfig = {
   optional: true,
 }
 
+const defaultModelConfig = {
+  conv1: {
+    value: 4,
+    min: 1,
+    max: 16,
+    step: 1,
+    optional: true,
+    disabled: true,
+  },
+  dense1: { ...defaultUnitConfig, value: 64 },
+  dense2: { ...defaultUnitConfig, value: 32, disabled: true },
+}
+
 export function useModel(ds?: Dataset) {
-  const modelConfig = useControls("model", {
-    conv2d: {
-      value: 4,
-      min: 1,
-      max: 16,
-      step: 1,
-      optional: true,
-      disabled: true,
-    },
-    dense1: { ...defaultUnitConfig, value: 64 },
-    dense2: { ...defaultUnitConfig, value: 32, disabled: true },
-    // dense3: { ...defaultUnitConfig, disabled: true },
-  }) as Record<string, number>
+  const [isEditing, setIsEditing] = useState(false)
+  const modelConfigRef = useRef<Record<string, number>>({})
+  const _modelConfig = useControls(
+    "model",
+    Object.fromEntries(
+      Object.entries(defaultModelConfig).map(([key, config]) => [
+        key,
+        {
+          ...config,
+          onEditStart: () => setIsEditing(true),
+          onEditEnd: () => setIsEditing(false),
+        },
+      ])
+    )
+  ) as Record<string, number>
+
+  const modelConfig = useMemo(() => {
+    // update conv layer only after editing for smoother UI
+    if (isEditing) return modelConfigRef.current
+    modelConfigRef.current = _modelConfig
+    return _modelConfig
+  }, [_modelConfig, isEditing])
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
@@ -43,6 +65,7 @@ export function useModel(ds?: Dataset) {
 
     const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
     console.log({ _model })
+    if (!_model) return
     const layersStr = _model.layers
       .map((l) => {
         const name = l.constructor.name
@@ -75,7 +98,7 @@ function createModel(
     if (c.name.startsWith("dense")) {
       if (i === 0) model.add(tf.layers.flatten())
       model.add(tf.layers.dense({ units: c.size, activation: "relu" }))
-    } else if (c.name.startsWith("conv2d")) {
+    } else if (c.name.startsWith("conv")) {
       model.add(
         tf.layers.conv2d({
           filters: c.size,

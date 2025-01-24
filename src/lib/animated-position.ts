@@ -14,7 +14,6 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
         // invalidate the canvas to trigger a re-render
         invalidate()
       }
-      console.log("render")
       currentPosition.current.lerp(targetPosition, speed)
       // allow tolerance for floating point errors
       if (currentPosition.current.distanceTo(targetPosition) < 0.01) {

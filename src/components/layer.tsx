@@ -49,16 +49,17 @@ export const Layer = (props: LayerProps) => {
     [visibleIndex, visibleLayers.length]
   )
   const ref = useAnimatedPosition(position, 0.1)
+  if (!neurons.length) return null
   return (
-    <Instances
-      limit={neurons.length}
-      key={`${index}_${neurons.length}`} // _${hasAdditiveBlending}
-    >
-      {geometry}
-      <meshStandardMaterial
-        blending={hasAdditiveBlending ? AdditiveBlending : undefined}
-      />
-      <group name={`layer_${index}`} ref={ref}>
+    <group ref={ref}>
+      <Instances
+        limit={neurons.length}
+        key={`${index}_${neurons.length}_${visibleLayers.length}`} // } _${hasAdditiveBlending}
+      >
+        {geometry}
+        <meshStandardMaterial
+          blending={hasAdditiveBlending ? AdditiveBlending : undefined}
+        />
         {Array.from({ length: groupCount }).map((_, groupIndex) => {
           const groupedNeurons = neurons.filter(
             (n) => n.index % groupCount === groupIndex
@@ -73,11 +74,11 @@ export const Layer = (props: LayerProps) => {
             />
           )
         })}
-      </group>
+      </Instances>
       {!!prevLayer && !!prevLayer.neurons.length && (
         <Connections layer={props} prevLayer={prevLayer} />
       )}
-    </Instances>
+    </group>
   )
 }
 

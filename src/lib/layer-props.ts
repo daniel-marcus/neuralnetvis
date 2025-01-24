@@ -6,7 +6,7 @@ import { Dataset, LayerInput } from "./datasets"
 import { LayerLayout } from "./layer-layout"
 import { LayerDef } from "@/components/layer"
 
-const DEBUG = false
+const DEBUG = true
 
 // TODO: fix rawInput
 
