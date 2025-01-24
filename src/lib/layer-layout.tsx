@@ -1,10 +1,4 @@
-import { LayerDef } from "@/components/layer"
-import {
-  getLayerPosition,
-  getUnits,
-  getVisibleLayers,
-  LayerPosition,
-} from "@/lib/layer-props"
+import { getLayerPosition, getUnits, LayerPosition } from "@/lib/layer-props"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement, useMemo } from "react"
 
@@ -63,11 +57,11 @@ function getGeometryAndSpacing(
   return [geometryMap.sphere, 1.8]
 }
 
-export function getOffsetX(_layerIndex: number, allLayers: LayerDef[]) {
-  const visibleLayers = getVisibleLayers(allLayers)
-  const layerIndex = visibleLayers.indexOf(allLayers[_layerIndex])
-  const totalLayers = visibleLayers.length
-  return layerIndex * LAYER_SPACING + (totalLayers - 1) * LAYER_SPACING * -0.5
+export function getOffsetX(visibleIndex: number, totalVisibleLayers: number) {
+  return (
+    visibleIndex * LAYER_SPACING +
+    (totalVisibleLayers - 1) * LAYER_SPACING * -0.5
+  )
 }
 
 function getNeuronPositions(

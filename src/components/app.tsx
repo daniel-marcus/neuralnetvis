@@ -1,7 +1,7 @@
 "use client"
 
 import { Canvas } from "@react-three/fiber"
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
+import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
 import { Model } from "./model"
 import { Leva } from "leva"
 import { StatusText } from "./status-text"
@@ -14,11 +14,12 @@ const levaTheme: LevaCustomTheme = {
 export const App = () => {
   return (
     <div className="w-screen h-screen bg-[#110000]">
-      <Canvas>
+      <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
         <OrbitControls target={[6, 0, 0]} />
         <Model />
+        <Stats />
       </Canvas>
       <Leva hideCopyButton theme={levaTheme} />
       <StatusText />

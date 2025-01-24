@@ -1,4 +1,4 @@
-import { ReactElement, useContext } from "react"
+import { ReactElement, useContext, useMemo } from "react"
 import { Neuron, NeuronDef, NeuronState } from "./neuron"
 import { numColorChannels, type Dataset } from "@/lib/datasets"
 import { getVisibleLayers, type LayerPosition } from "@/lib/layer-props"
@@ -42,8 +42,12 @@ export const Layer = (props: LayerProps) => {
   const hasAdditiveBlending =
     layerPosition === "input" && groupCount > 1 && !splitColors
 
-  const prevLayer = getVisibleLayers(allLayers)[visibleIndex - 1]
-  const position = [getOffsetX(index, allLayers), 0, 0]
+  const visibleLayers = getVisibleLayers(allLayers)
+  const prevLayer = visibleLayers[visibleIndex - 1]
+  const position = useMemo(
+    () => [getOffsetX(visibleIndex, visibleLayers.length), 0, 0],
+    [visibleIndex, visibleLayers.length]
+  )
   const ref = useAnimatedPosition(position, 0.1)
   return (
     <Instances
@@ -56,11 +60,15 @@ export const Layer = (props: LayerProps) => {
       />
       <group name={`layer_${index}`} ref={ref}>
         {Array.from({ length: groupCount }).map((_, groupIndex) => {
+          const groupedNeurons = neurons.filter(
+            (n) => n.index % groupCount === groupIndex
+          )
           return (
             <NeuronGroup
               key={groupIndex}
               groupIndex={groupIndex}
-              groups={groupCount}
+              groupCount={groupCount}
+              groupedNeurons={groupedNeurons}
               {...props}
             />
           )
@@ -75,31 +83,14 @@ export const Layer = (props: LayerProps) => {
 
 type NeuronGroupProps = LayerProps & {
   groupIndex: number
-  groups: number
+  groupCount: number
+  groupedNeurons: (NeuronDef & NeuronState)[]
 }
 
 const NeuronGroup = (props: NeuronGroupProps) => {
-  const { groupIndex, groups, ...layerProps } = props
-  const { spacing, allLayers, ds, neurons, layerPosition } = layerProps
-
-  // get grouped neurons in parent class ...
-  const groupedNeurons = neurons.filter((n) => n.index % groups === groupIndex)
-
-  const GRID_SPACING = 0.6
-  const gridSize = getGridWidth(groupedNeurons.length, spacing) + GRID_SPACING
-  const groupsPerRow = Math.ceil(Math.sqrt(groups))
-  const offsetY = (groupsPerRow - 1) * gridSize * 0.5
-  const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
-  const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
-  const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
-
-  const { splitColors } = useContext(UiOptionsContext)
-  const position =
-    layerPosition === "input"
-      ? splitColors
-        ? [0, 0, groupIndex * gridSize - (groups - 1) * gridSize * 0.5] // spread on z-axis
-        : [0, 0, 0]
-      : [0, y, z]
+  const { groupedNeurons, ...layerProps } = props
+  const { allLayers, ds } = layerProps
+  const position = useGroupPosition(props)
   const ref = useAnimatedPosition(position)
   return (
     <group ref={ref}>
@@ -117,4 +108,25 @@ const NeuronGroup = (props: NeuronGroupProps) => {
       })}
     </group>
   )
+}
+
+function useGroupPosition(props: NeuronGroupProps) {
+  const { groupIndex, groupCount, layerPosition, spacing } = props
+  const neuronCount = props.groupedNeurons.length
+  const { splitColors } = useContext(UiOptionsContext)
+  const position = useMemo(() => {
+    const GRID_SPACING = 0.6
+    const gridSize = getGridWidth(neuronCount, spacing) + GRID_SPACING
+    const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
+    const offsetY = (groupsPerRow - 1) * gridSize * 0.5
+    const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
+    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
+    const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
+    return layerPosition === "input"
+      ? splitColors
+        ? [0, 0, groupIndex * gridSize - (groupCount - 1) * gridSize * 0.5] // spread on z-axis
+        : [0, 0, 0]
+      : [0, y, z]
+  }, [groupIndex, groupCount, neuronCount, layerPosition, spacing, splitColors])
+  return position
 }

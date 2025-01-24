@@ -1,16 +1,27 @@
 import { PositionMesh } from "@react-three/drei"
-import { useFrame } from "@react-three/fiber"
-import { useRef } from "react"
+import { useFrame, useThree } from "@react-three/fiber"
+import { useMemo, useRef } from "react"
 import { Vector3 } from "three"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   const ref = useRef<PositionMesh>(null)
   const currentPosition = useRef(new Vector3())
+  const { invalidate } = useThree()
+  const targetPosition = useMemo(() => new Vector3(...position), [position])
   useFrame(() => {
     if (ref.current) {
-      const targetPosition = new Vector3(...position)
+      if (!targetPosition.equals(currentPosition.current)) {
+        // invalidate the canvas to trigger a re-render
+        invalidate()
+      }
+      console.log("render")
       currentPosition.current.lerp(targetPosition, speed)
-      ref.current.position.copy(currentPosition.current)
+      // allow tolerance for floating point errors
+      if (currentPosition.current.distanceTo(targetPosition) < 0.01) {
+        currentPosition.current.copy(targetPosition)
+      } else {
+        ref.current.position.copy(currentPosition.current)
+      }
     }
   })
   return ref
