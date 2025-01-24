@@ -51,16 +51,19 @@ export const Layer = (props: LayerProps) => {
   const ref = useAnimatedPosition(position, 0.1)
   if (!neurons.length) return null
   return (
-    <group ref={ref}>
+    // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
+    <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
       <Instances
         limit={neurons.length}
-        key={`${index}_${neurons.length}_${visibleLayers.length}`} // } _${hasAdditiveBlending}
+        key={`${index}_${neurons.length}_${visibleLayers.length}}`} // _${hasAdditiveBlending
       >
         {geometry}
         <meshStandardMaterial
           blending={hasAdditiveBlending ? AdditiveBlending : undefined}
         />
-        {Array.from({ length: groupCount }).map((_, groupIndex) => {
+        {Array.from({ length: groupCount }).map((_, i) => {
+          // use reversed index for input layer to get RGB on z-axis
+          const groupIndex = layerPosition === "input" ? groupCount - i - 1 : i
           const groupedNeurons = neurons.filter(
             (n) => n.index % groupCount === groupIndex
           )
@@ -92,7 +95,7 @@ const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, ...layerProps } = props
   const { allLayers, ds } = layerProps
   const position = useGroupPosition(props)
-  const ref = useAnimatedPosition(position)
+  const ref = useAnimatedPosition(position, 0.1)
   return (
     <group ref={ref}>
       {groupedNeurons.map((neuronProps, i) => {
@@ -119,14 +122,16 @@ function useGroupPosition(props: NeuronGroupProps) {
     const GRID_SPACING = 0.6
     const gridSize = getGridWidth(neuronCount, spacing) + GRID_SPACING
     const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
-    const offsetY = (groupsPerRow - 1) * gridSize * 0.5
+    const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
+    const offsetY = (groupsPerColumn - 1) * gridSize * 0.5
     const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
     const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
     const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
+    const SPLIT_COLORS_X_OFFSET = 0.6 // to avoid z-fighting
     return layerPosition === "input"
       ? splitColors
         ? [0, 0, groupIndex * gridSize - (groupCount - 1) * gridSize * 0.5] // spread on z-axis
-        : [0, 0, 0]
+        : [groupIndex * SPLIT_COLORS_X_OFFSET, 0, 0]
       : [0, y, z]
   }, [groupIndex, groupCount, neuronCount, layerPosition, spacing, splitColors])
   return position
