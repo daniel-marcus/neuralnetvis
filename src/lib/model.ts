@@ -111,7 +111,7 @@ function createModel(
       model.add(
         tf.layers.conv2d({
           filters: c.size,
-          kernelSize: 3, // 3x3 kernel
+          kernelSize: [5, 5],
           activation: "relu",
         })
       )

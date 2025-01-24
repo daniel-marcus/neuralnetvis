@@ -51,6 +51,7 @@ export const Layer = (props: LayerProps) => {
   const ref = useAnimatedPosition(position, 0.1)
   if (!neurons.length) return null
   const name = tfLayer.getClassName()
+  // if (name === "Conv2D" || name === "MaxPooling2D") return null
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>

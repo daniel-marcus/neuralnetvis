@@ -5,6 +5,7 @@ import { LayerDef } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
 import { UiOptionsContext } from "@/lib/ui-options"
+import { useSelectedNodes } from "@/lib/node-select"
 
 const DEBUG = false
 
@@ -19,6 +20,11 @@ type NeuronConnectionsProps = {
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const { showLines } = useContext(UiOptionsContext)
+  // TODO: refactor / separate from layer connections
+  const selectedNode = useSelectedNodes((s) => s.selectedNode)
+  const selN = selectedNode
+    ? layer.neurons.find(({ nid }) => nid === selectedNode)
+    : undefined
   const layerMaxWeight = useMemo(() => {
     const allWeights = layer.neurons.flatMap((n) => n.weights ?? [])
     return allWeights.reduce((max, w) => Math.max(max, w), -Infinity)
@@ -27,7 +33,23 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   let lineCount = 0
   return (
     <Suspense fallback={null}>
-      <group>
+      {!!selN && !!selN.inputNeurons && (
+        <group name={`selected_node_connections`}>
+          {selN.inputNeurons?.map((nid) => {
+            const prevNeuron = prevLayer.neurons.find((n) => n.nid === nid)
+            if (!prevNeuron) return null
+            return (
+              <DynamicLine2
+                key={`${selN.index}_${prevNeuron.index}`}
+                fromRef={prevNeuron.ref}
+                toRef={selN.ref}
+                width={0.5}
+              />
+            )
+          })}
+        </group>
+      )}
+      <group name={`layer_${layer.index}_connections`}>
         {layer.neurons
           .filter(
             (n) => (n.normalizedActivation ?? 0) > LINE_ACTIVATION_THRESHOLD
@@ -99,7 +121,11 @@ export const DynamicLine = ({ fromRef, toRef }: DynamicLineProps) => {
   return <line ref={lineRef} />
 }
 
-export const DynamicLine2 = ({ fromRef, toRef, width }: DynamicLineProps) => {
+export const DynamicLine2 = ({
+  fromRef,
+  toRef,
+  width = 1,
+}: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 

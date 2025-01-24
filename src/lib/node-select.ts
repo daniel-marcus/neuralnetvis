@@ -33,19 +33,36 @@ export function useNodeSelect(layerProps: LayerDef[]) {
     const allNeurons = layerProps.flatMap((l) => l.neurons)
     const selN = allNeurons.find(({ nid }) => nid === selectedNode)
     if (!selN) return layerProps
-    const weightedInputs = getWeightedInputs(selN.inputs, selN.weights)
+    const isFlat = !!selN.inputs && selN.inputs.length === selN.weights?.length
+    const weightedInputs = isFlat
+      ? getWeightedInputs(selN.inputs, selN.weights)
+      : [] // TODO
     const tempObj = {
       weights: normalizeWithSign(selN.weights),
       weightedInputs: normalizeWithSign(weightedInputs),
     }
+    console.log({ selN })
     return layerProps.map((l) => {
       return {
         ...l,
         neurons: l.neurons.map((n, j) => {
-          const highlightValue =
-            n.visibleLayerIndex === selN.visibleLayerIndex - 1
-              ? tempObj[highlightProp]?.[j] // selN.normalizedWeights?.[j]
-              : undefined
+          if (selN.nid === n.nid) return { ...n, isSelected: true }
+          if (n.visibleLayerIndex !== selN.visibleLayerIndex - 1) return n
+          let highlightValue: number | undefined
+          if (isFlat) highlightValue = tempObj[highlightProp]?.[j]
+          else {
+            // Conv2D
+            const inputNeurons = selN.inputNeurons ?? []
+            if (!inputNeurons.includes(n.nid)) return n
+            const idx = inputNeurons.indexOf(n.nid)
+            // const weight = selN.weights?.[idx] ?? 0
+            // TODO ... calculate normalized weighted input ahead?
+            const weightedInput = selN.weights?.[idx] ?? 0 * (n.activation ?? 0)
+            highlightValue =
+              highlightProp === "weights"
+                ? tempObj[highlightProp]?.[idx]
+                : weightedInput // TODO ...
+          }
           return {
             ...n,
             highlightValue,
@@ -63,7 +80,6 @@ export function getWeightedInputs(
   neuronWeights?: number[]
 ) {
   if (!neuronInput || !neuronWeights) return undefined
-  console.log({ neuronInput, neuronWeights })
   // TODO: Conv2D layer ...
   const weightedInputs = tf.tidy(() => {
     const weightsTensor = tf.tensor1d(neuronWeights)

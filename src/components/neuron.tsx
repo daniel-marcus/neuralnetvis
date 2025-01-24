@@ -39,6 +39,7 @@ export type NeuronState = {
   inputs?: number[]
   weights?: number[]
   bias?: number
+  inputNeurons?: NodeId[] // for Conv2D: neurons in the receptive field
   label?: string
   isSelected?: boolean
   highlightValue?: number // [-1, 1]
@@ -49,6 +50,7 @@ export type NeuronProps = NeuronDef & NeuronContext & NeuronState
 
 export function Neuron(props: NeuronProps) {
   const {
+    nid,
     index,
     ref,
     position,
@@ -61,7 +63,6 @@ export function Neuron(props: NeuronProps) {
     isSelected,
     highlightValue,
   } = props
-  const nodeId = `${layer.index}_${index}`
   const { selectedNode, toggleNode } = useSelectedNodes()
 
   const [hovered, setHover] = useState(false)
@@ -99,10 +100,10 @@ export function Neuron(props: NeuronProps) {
     typeof highlightValue === "number" ? getColor(highlightValue) : undefined
 
   return (
-    <group name={`neuron_${nodeId}`}>
+    <group name={`neuron_${nid}`}>
       <Instance
         ref={ref}
-        name={nodeId}
+        name={nid}
         position={position}
         scale={isSelected ? 1.5 : 1}
         onPointerOver={(e: ThreeEvent<PointerEvent>) => {
@@ -111,10 +112,10 @@ export function Neuron(props: NeuronProps) {
         }}
         onPointerOut={() => setHover(false)}
         onClick={() => {
-          toggleNode(nodeId)
+          toggleNode(nid)
         }}
         color={highlightColor ?? color}
-        transparent={!!selectedNode}
+        transparent={!!selectedNode} // TODO: fix
         opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
       />
       {!!label && (

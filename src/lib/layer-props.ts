@@ -6,6 +6,7 @@ import {
   NeuronDef,
   NeuronRefType,
   NeuronState,
+  NodeId,
 } from "@/components/neuron"
 import { Dataset, LayerInput } from "./datasets"
 import { LayerLayout } from "./layer-layout"
@@ -38,6 +39,8 @@ export function useLayerProps(
     const visibleLayers = model.layers.filter((l) => getUnits(l))
     const result = model.layers.map((l, i) => {
       const outputShape = l.outputShape as number[] // [batch, height, width, channels]
+      const prevLayer = model.layers[i - 1]
+      const prevOutputShape = prevLayer?.outputShape as number[] | undefined
       const visibleIndex = visibleLayers.indexOf(l)
       const { geometry, spacing, positions: neuronPositions } = layerLayouts[i]
       const units = getUnits(l)
@@ -55,13 +58,48 @@ export function useLayerProps(
         ? _inputs.flat(2) // TODO: make dimensions flexible?
         : _inputs
       const { weights, biases } = weightsAndBiases[i]
-
+      const flattenedWeights = weights?.flat(2)
       const neurons: (NeuronDef & NeuronState)[] = Array.from({
         length: units,
       }).map((_, j) => {
         const activation = layerActivations?.[j]
-        const bias = biases?.[j]
-        const thisWeights = weights?.map((w) => w[j])
+        let bias: number | undefined = undefined
+        let thisWeights: number[] | undefined
+        let inputNeurons: NodeId[] | undefined = undefined
+        if (l.getClassName() === "Conv2D") {
+          // Conv2D (multi-dim)
+          const filters = (l.getConfig().filters as number) ?? 1
+          const [filterHeight, filterWidth] =
+            (l.getConfig().kernelSize as number[]) ?? ([] as number[])
+          const filterSize = filterHeight * filterWidth
+          const kernelIndex = j % filters
+          // parameter sharing: 1 bias per filter + [filterSize] weights
+          bias = biases?.[kernelIndex]
+          thisWeights = flattenedWeights
+            ?.map((w: number | number[]) =>
+              Array.isArray(w) ? w?.[kernelIndex] : undefined
+            )
+            .filter((v) => v !== undefined) as number[]
+          if (prevOutputShape) {
+            const depth = prevOutputShape[3]
+            // TODO: padding?
+
+            const [thisY, thisX] = getNeuronIndex3d(j, outputShape)
+            for (let k = 0; k < filterSize * depth; k++) {
+              const depthIndex = k % depth
+              const widthIndex = thisX + (Math.floor(k / depth) % filterWidth)
+              const heightIndex = thisY + Math.floor(k / (depth * filterWidth))
+              const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
+              const inputNid = getNid(i - 1, index3d)
+              if (!inputNeurons) inputNeurons = [] as NodeId[]
+              inputNeurons.push(inputNid)
+            }
+          }
+        } else {
+          // Dense (flat)
+          bias = biases?.[j]
+          thisWeights = weights?.map((w) => w[j]) as number[]
+        }
         const index3d = getNeuronIndex3d(j, outputShape)
         return {
           nid: getNid(i, index3d),
@@ -74,6 +112,7 @@ export function useLayerProps(
           rawInput: layerPosition === "input" ? rawInput?.[j] : undefined,
           activation,
           normalizedActivation: normalizedActivations?.[j],
+          inputNeurons,
           inputs: inputs,
           weights: thisWeights,
           bias,
@@ -147,7 +186,7 @@ function getWeightsAndBiases(model: tf.LayersModel) {
   return model.layers.map((layer) => {
     const [weights, biases] = layer.getWeights().map((w) => w.arraySync())
     return { weights, biases } as {
-      weights: number[][] | undefined
+      weights: number[][] | number[][][] | number[][][][] | undefined
       biases: number[] | undefined
     }
   })
