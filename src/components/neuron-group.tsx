@@ -2,22 +2,23 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
-  useState,
 } from "react"
 import { InstancedMesh, Object3D } from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import * as THREE from "three"
 import { getGridWidth, getNeuronPosition } from "@/lib/layer-layout"
-import { NeuronDef, NeuronState, NodeId } from "./neuron"
 import { LayerPosition } from "@/lib/layer-props"
 import { NeuronLabels } from "./neuron-label"
 import { UiOptionsContext } from "@/lib/ui-options"
 import { LayerProps } from "./layer"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useStatusText } from "./status-text"
-import { useSelectedNodes } from "@/lib/node-select"
+import { useLocalSelected, useSelected } from "@/lib/neuron-select"
+import { Neuron } from "./neuron"
+import { DEBUG } from "@/lib/_debug"
 
 const temp = new Object3D()
 
@@ -26,7 +27,7 @@ export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 type NeuronGroupProps = LayerProps & {
   groupIndex: number
   groupCount: number
-  groupedNeurons: (NeuronDef & NeuronState)[]
+  groupedNeurons: Neuron[]
 }
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
@@ -39,8 +40,8 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const instances = groupedNeurons.length
   useNeuronPositions(meshRef, instances, layerPosition, spacing)
   useColors(meshRef, groupedNeurons)
-  const [eventHandlers, hoveredNeuron] = useInteractions(groupedNeurons)
-  useScale(meshRef, groupedNeurons, hoveredNeuron)
+  const eventHandlers = useInteractions(groupedNeurons)
+  useScale(meshRef, groupedNeurons, layerIndex, groupIndex)
   const { splitColors } = useContext(UiOptionsContext)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
@@ -116,7 +117,8 @@ function useNeuronPositions(
   layerPosition: LayerPosition,
   spacing: number
 ) {
-  useEffect(() => {
+  // has to be useLayoutEffect, otherwise raycasting probably won't work
+  useLayoutEffect(() => {
     if (!meshRef.current) return
     const positions = [] as [number, number, number][]
     for (let i = 0; i < instances; i++) {
@@ -130,24 +132,23 @@ function useNeuronPositions(
   }, [meshRef, instances, layerPosition, spacing])
 }
 
-function useColors(
-  meshRef: InstancedMeshRef,
-  neurons: (NeuronDef & NeuronState)[]
-) {
+function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
+  const tmpColor = useMemo(() => new THREE.Color(), [])
   useEffect(() => {
     if (!meshRef.current) return
+    if (DEBUG) console.log("upd colors")
     for (const n of neurons) {
       const i = neurons.indexOf(n)
       const colorStr = getNeuronColor(n)
-      const color = new THREE.Color(colorStr)
+      const color = tmpColor.set(colorStr)
       meshRef.current.setColorAt(i, color)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, neurons])
+  }, [meshRef, neurons, tmpColor])
 }
 
-function getNeuronColor(n: NeuronDef & NeuronState) {
+function getNeuronColor(n: Neuron) {
   return n.highlightValue
     ? getHighlightColor(n.highlightValue)
     : n.hasColorChannels
@@ -155,7 +156,7 @@ function getNeuronColor(n: NeuronDef & NeuronState) {
     : getActivationColor(n)
 }
 
-function getActivationColor(neuron: NeuronDef & NeuronState) {
+function getActivationColor(neuron: Neuron) {
   const colorValue = neuron.normalizedActivation ?? 0
   return `rgb(${Math.ceil(colorValue * 255)},20,100)`
 }
@@ -171,46 +172,66 @@ function getHighlightColor(
   return value > 0 ? `rgb(${a}, ${b}, ${c})` : `rgb(${c}, ${b}, ${a})` // `rgb(${b}, ${a}, ${c})` //
 }
 
-function getColorChannelColor(n: NeuronDef & NeuronState) {
+function getColorChannelColor(n: Neuron) {
   const rest = n.index % 3
   const colorArr = [0, 0, 0]
   colorArr[rest] = Math.ceil((n.normalizedActivation ?? 0) * 255)
   return `rgb(${colorArr.join(", ")})`
 }
 
+let counter = 0
+
 function useScale(
   meshRef: InstancedMeshRef,
-  neurons: (NeuronDef & NeuronState)[],
-  hoveredNeuron: NodeId | null
+  neurons: Neuron[],
+  layerIndex: number,
+  groupIndex: number
 ) {
+  // use string to avoid unnecessary updates
+  const nidsStr = neurons.map((n) => `${n.nid}`).join(",")
+  const { selectedNid, hoveredNid } = useLocalSelected(layerIndex, groupIndex)
   const { invalidate } = useThree()
+  const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
+  const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {
     if (!meshRef.current) return
-    const tempMatrix = new THREE.Matrix4()
-    const scale = new THREE.Matrix4()
+    const nids = nidsStr.split(",")
+    if (nids.length > 256) return
+    if (DEBUG) console.log("upd scale", counter++, { nids })
     const baseScale = 1
-    for (const n of neurons) {
-      const i = neurons.indexOf(n)
+    const highlightScale = 1.5
+    for (const nid of nids) {
+      const i = nids.indexOf(nid)
 
       meshRef.current.getMatrixAt(i, tempMatrix)
       const elements = tempMatrix.elements
       const currentScale = Math.cbrt(elements[0] * elements[5] * elements[10])
       const targetScale =
-        n.isSelected || n.nid === hoveredNeuron ? baseScale * 1.5 : baseScale
+        nid === selectedNid || nid === hoveredNid
+          ? baseScale * highlightScale
+          : baseScale
       const scaleFactor = targetScale / currentScale
-      scale.makeScale(scaleFactor, scaleFactor, scaleFactor)
-      tempMatrix.multiply(scale)
+      tempScale.makeScale(scaleFactor, scaleFactor, scaleFactor)
+      tempMatrix.multiply(tempScale)
       meshRef.current.setMatrixAt(i, tempMatrix)
     }
     meshRef.current.instanceMatrix.needsUpdate = true
     invalidate()
-  }, [meshRef, neurons, hoveredNeuron, invalidate])
+  }, [
+    meshRef,
+    selectedNid,
+    hoveredNid,
+    invalidate,
+    nidsStr,
+    tempMatrix,
+    tempScale,
+  ]) // neurons
 }
 
 function useHoverStatus() {
   const setStatusText = useStatusText((s) => s.setStatusText)
   const showNeuronState = useCallback(
-    (neuron?: (NeuronDef & NeuronState) | null, isSelected?: boolean) => {
+    (neuron?: Neuron | null, isSelected?: boolean) => {
       if (neuron === null) setStatusText("")
       if (!neuron) return
       const { nid, rawInput, activation: _activation, bias } = neuron
@@ -243,9 +264,8 @@ function useAdditiveBlending(active?: boolean) {
   return materialRef
 }
 
-function useInteractions(groupedNeurons: (NeuronDef & NeuronState)[]) {
-  const [hoveredNeuron, setHoveredNeuron] = useState<NodeId | null>(null)
-  const { selectedNode, toggleNode } = useSelectedNodes()
+function useInteractions(groupedNeurons: Neuron[]) {
+  const { selectedNid, toggleSelected, toggleHovered } = useSelected()
   const showNeuronState = useHoverStatus()
   const eventHandlers = useMemo(() => {
     const result = {
@@ -254,23 +274,29 @@ function useInteractions(groupedNeurons: (NeuronDef & NeuronState)[]) {
         const neuron = groupedNeurons[e.instanceId as number]
         if (!neuron) return
         // TODO: debounce?
-        if (!selectedNode) showNeuronState(neuron)
-        setHoveredNeuron(neuron.nid)
-        // toggleNode(neuron.nid)
+        if (selectedNid && neuron.nid === selectedNid)
+          showNeuronState(neuron, true)
+        else showNeuronState(neuron)
+        toggleHovered(neuron.nid)
       },
       onPointerOut: () => {
-        if (!selectedNode) showNeuronState(null)
-        setHoveredNeuron(null)
-        // toggleNode(null)
+        showNeuronState(null)
+        toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
         const neuron = groupedNeurons[e.instanceId as number]
         if (!neuron) return
         showNeuronState(neuron, true)
-        toggleNode(neuron.nid)
+        toggleSelected(neuron.nid)
       },
     }
     return result
-  }, [groupedNeurons, showNeuronState, toggleNode, selectedNode])
-  return [eventHandlers, hoveredNeuron] as const
+  }, [
+    groupedNeurons,
+    showNeuronState,
+    toggleHovered,
+    toggleSelected,
+    selectedNid,
+  ])
+  return eventHandlers
 }

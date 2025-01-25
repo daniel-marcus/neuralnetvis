@@ -1,5 +1,5 @@
 import { ReactElement, useContext, useMemo } from "react"
-import { NeuronDef, NeuronRefType, NeuronState } from "./neuron"
+import { Neuron, NeuronRefType } from "./neuron"
 import { numColorChannels, type Dataset } from "@/lib/datasets"
 import { getVisibleLayers, type LayerPosition } from "@/lib/layer-props"
 import { Connections } from "./connections"
@@ -14,7 +14,7 @@ export interface LayerDef {
   visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerPosition: LayerPosition
   tfLayer: tf.layers.Layer
-  neurons: (NeuronDef & NeuronState)[]
+  neurons: Neuron[] // with context: T is Neuron type
   geometry: ReactElement
   spacing: number
 }
@@ -50,9 +50,6 @@ export const Layer = (props: LayerProps) => {
   )
   const ref = useAnimatedPosition(position, 0.1)
   if (!neurons.length) return null
-  // const name = tfLayer.getClassName()
-  // if (name === "Conv2D" || name === "MaxPooling2D") return null
-
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>

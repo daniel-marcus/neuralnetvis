@@ -24,9 +24,17 @@ export function useUiOptions(ds?: Dataset) {
         value: defaultOptions.splitColors,
         render: () => hasColorChannels,
       },
+      highlightProp: {
+        label: "onHover",
+        options: {
+          "show weights": "weights",
+          "show weighted inputs": "weightedInputs",
+        },
+      },
     },
     { collapsed: true },
     [hasColorChannels]
   )
+
   return uiOptions
 }

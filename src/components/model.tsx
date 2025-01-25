@@ -12,6 +12,7 @@ export const Model = () => {
   const model = useModel(ds)
   const uiOptions = useUiOptions(ds)
   useTraining(model, ds, next)
+  if (!model) return null
   return (
     <UiOptionsContext.Provider value={uiOptions}>
       <TrainingYContext.Provider value={trainingY}>

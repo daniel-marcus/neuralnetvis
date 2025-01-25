@@ -4,8 +4,7 @@ import { useStatusText } from "@/components/status-text"
 import { useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
-
-const DEBUG = true
+import { DEBUG } from "@/lib/_debug"
 
 const defaultUnitConfig = {
   value: 32,
@@ -76,11 +75,11 @@ export function useModel(ds?: Dataset) {
       .filter((l) => l.size)
 
     const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
-    console.log({ _model })
+    if (DEBUG) console.log({ _model })
     if (!_model) return
     const layersStr = _model.layers
       .map((l) => {
-        const name = l.constructor.name
+        const name = l.getClassName()
         const shape = l.outputShape.slice(1).join("x")
         return `${name} (${shape})`
       })

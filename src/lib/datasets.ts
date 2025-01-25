@@ -218,31 +218,23 @@ export function useDatasets() {
   })
 
   const setStatusText = useStatusText((s) => s.setStatusText)
-  const [isLoading, setIsLoading] = useState(false)
-  useEffect(() => {
-    if (isLoading) setStatusText("Loading dataset ...")
-  }, [isLoading, setStatusText])
-
   const [ds, setDataset] = useState<Dataset | undefined>(undefined)
   useEffect(() => {
+    setStatusText("Loading dataset ...")
     console.log("loading dataset", datasetId)
-    setIsLoading(true)
     const datasetDef = datasets[datasetId]
     if (!datasetDef) return
-    datasetDef
-      .loadData()
-      .then((data) => {
-        console.log("loaded dataset", datasetId)
-        setDataset({
-          ...datasetDef,
-          data,
-        })
+    datasetDef.loadData().then((data) => {
+      console.log("loaded dataset", datasetId)
+      setDataset({
+        ...datasetDef,
+        data,
       })
-      .finally(() => setIsLoading(false))
+    })
     return () => {
       setDataset(undefined)
     }
-  }, [datasetId])
+  }, [datasetId, setStatusText])
 
   const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
 

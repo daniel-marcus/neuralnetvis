@@ -1,8 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { useMemo } from "react"
 import type { LayerInput } from "./datasets"
-
-const DEBUG = true
+import { DEBUG } from "@/lib/_debug"
 
 export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
   return useMemo(() => {

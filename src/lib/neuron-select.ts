@@ -1,37 +1,57 @@
-import { useMemo } from "react"
 import { create } from "zustand"
-import { normalizeWithSign } from "./normalization"
-import { useControls } from "leva"
-import { LayerDef } from "@/components/layer"
 import * as tf from "@tensorflow/tfjs"
-import { NodeId } from "@/components/neuron"
+import { Neuron, Nid } from "@/components/neuron"
 
-export const useSelectedNodes = create<{
-  selectedNode: NodeId | null
-  toggleNode: (nodeId: NodeId | null) => void
+export const useSelected = create<{
+  selectedNid: Nid | null
+  selectedNeuron: Neuron | null
+  hoveredNid: Nid | null
+  toggleSelectedNeuron: (n: Neuron | null) => void
+  toggleSelected: (Nid: Nid | null) => void
+  toggleHovered: (Nid: Nid | null) => void
 }>((set) => ({
-  selectedNode: null,
-  toggleNode: (nodeId) =>
-    set(({ selectedNode }) => ({
-      selectedNode: selectedNode === nodeId ? null : nodeId,
+  selectedNid: null,
+  hoveredNid: null,
+  selectedNeuron: null,
+  toggleSelected: (nid) =>
+    set(({ selectedNid }) => ({
+      selectedNid: selectedNid === nid ? null : nid,
+    })),
+  toggleSelectedNeuron: (n) =>
+    set(({ selectedNeuron }) => ({
+      selectedNeuron:
+        selectedNeuron && n?.nid === selectedNeuron.nid ? null : n,
+    })),
+  toggleHovered: (nid) =>
+    set(({ hoveredNid }) => ({
+      hoveredNid: hoveredNid === nid ? null : nid,
     })),
 }))
 
-export function useNodeSelect(layerProps: LayerDef[]) {
-  const { highlightProp } = useControls("ui", {
-    highlightProp: {
-      label: "onHover",
-      options: {
-        "show weights": "weights",
-        "show weighted inputs": "weightedInputs",
-      },
-    } as const,
-  })
-  const selectedNode = useSelectedNodes((s) => s.selectedNode)
+function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
+  return nid?.startsWith(`${layerIndex}_`) && nid.endsWith(`.${groupIndex}`)
+}
+
+export function useLocalSelected(layerIndex: number, groupIndex: number) {
+  // returns values only if they are in the same group avoid unnecessary re-renders
+  const _selectedNid = useSelected((s) => s.selectedNid)
+  const _hoveredNid = useSelected((s) => s.hoveredNid)
+  return {
+    selectedNid: isInGroup(_selectedNid, layerIndex, groupIndex)
+      ? _selectedNid
+      : null,
+    hoveredNid: isInGroup(_hoveredNid, layerIndex, groupIndex)
+      ? _hoveredNid
+      : null,
+  }
+}
+
+export function useNeuronSelect() {
+  /* const selectedNid = useSelected((s) => s.selectedNid)
   const patchedLayerProps = useMemo(() => {
-    if (!selectedNode) return layerProps
+    if (!selectedNid) return layerProps
     const allNeurons = layerProps.flatMap((l) => l.neurons)
-    const selN = allNeurons.find(({ nid }) => nid === selectedNode)
+    const selN = allNeurons.find(({ nid }) => nid === selectedNid)
     if (!selN) return layerProps
     const isFlat = !!selN.inputs && selN.inputs.length === selN.weights?.length
     const weightedInputs = isFlat
@@ -54,8 +74,8 @@ export function useNodeSelect(layerProps: LayerDef[]) {
           else {
             // Conv2D
             const inputNeurons = selN.inputNeurons ?? []
-            if (!inputNeurons.includes(n.nid)) return n
-            const idx = inputNeurons.indexOf(n.nid)
+            if (!inputNeurons.includes(n)) return n
+            const idx = inputNeurons.indexOf(n)
             // const weight = selN.weights?.[idx] ?? 0
             // TODO ... calculate normalized weighted input ahead?
             const weightedInput = selN.weights?.[idx] ?? 0 * (n.activation ?? 0)
@@ -72,8 +92,8 @@ export function useNodeSelect(layerProps: LayerDef[]) {
         }),
       }
     })
-  }, [layerProps, selectedNode, highlightProp])
-  return patchedLayerProps
+  }, [layerProps, selectedNid, highlightProp])
+  return patchedLayerProps */
 }
 
 export function getWeightedInputs(

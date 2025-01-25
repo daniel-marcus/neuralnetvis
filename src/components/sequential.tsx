@@ -2,10 +2,10 @@ import React from "react"
 import { Layer } from "./layer"
 import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
-import { useNodeSelect } from "@/lib/node-select"
 import { useActivations } from "@/lib/activations"
 import { useLayerLayout } from "@/lib/layer-layout"
 import { useLayerProps } from "@/lib/layer-props"
+import { Neuron } from "./neuron"
 
 interface SequentialProps {
   model?: tf.LayersModel
@@ -14,27 +14,33 @@ interface SequentialProps {
   rawInput?: LayerInput
 }
 
-export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
+export const Sequential = ({ model, ds, input }: SequentialProps) => {
   const layouts = useLayerLayout(model)
   const activations = useActivations(model, input)
   const [layerProps, neuronRefs] = useLayerProps(
     model,
     ds,
     layouts,
-    activations,
-    rawInput
+    activations
   )
-  const patchedLayerProps = useNodeSelect(layerProps)
   return (
     <group>
-      {patchedLayerProps.map((props, i) => {
+      {layerProps.map((props, i, arr) => {
         const layerType = props.tfLayer.getClassName()
+        const { neurons: _neurons, ...otherProps } = props
+        // enrich neurons with context
+        const neurons: Neuron[] = _neurons.map((n) => ({
+          ...n,
+          layer: props,
+          prevLayer: arr[i - 1],
+        }))
         const neuronCount = props.neurons.length
         const key = `${i}_${layerType}_${neuronCount}_${layerProps.length}`
         return (
           <Layer
             key={key}
-            {...props}
+            neurons={neurons}
+            {...otherProps}
             allLayers={layerProps}
             model={model}
             neuronRefs={neuronRefs}
