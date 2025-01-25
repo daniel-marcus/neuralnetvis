@@ -12,7 +12,7 @@ import { Dataset, LayerInput } from "./datasets"
 import { LayerLayout } from "./layer-layout"
 import { LayerDef } from "@/components/layer"
 
-const DEBUG = false
+const DEBUG = true
 
 // TODO: fix rawInput
 
@@ -27,10 +27,14 @@ export function useLayerProps(
   rawInput?: LayerInput
 ) {
   const neuronRefs = useMemo(() => {
-    return model?.layers.map((layer) => {
-      const units = getUnits(layer)
-      return Array.from({ length: units }).map(() => createRef<NeuronRefType>())
-    })
+    return (
+      model?.layers.map((layer) => {
+        const units = getUnits(layer)
+        return Array.from({ length: units }).map(() =>
+          createRef<NeuronRefType>()
+        )
+      }) ?? []
+    )
   }, [model])
   const layerProps = useMemo(() => {
     if (!model) return []
@@ -122,6 +126,7 @@ export function useLayerProps(
               : layerPosition === "input"
               ? ds?.input?.labels?.[j]
               : undefined,
+          hasColorChannels: layerPosition === "input" && outputShape[3] > 1,
           ds,
         }
       })
@@ -142,7 +147,7 @@ export function useLayerProps(
       console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
   }, [activations, model, ds, rawInput, layerLayouts, neuronRefs])
-  return layerProps
+  return [layerProps, neuronRefs] as const
 }
 
 function getNid(layerIndex: number, index3d: Index3D) {

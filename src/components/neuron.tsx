@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useContext } from "react"
-import { useStatusText } from "./status-text"
+import React, { useContext, RefObject } from "react"
 import { TrainingYContext } from "./model"
 
 import { NeuronLabel, Pointer } from "./neuron-label"
@@ -7,12 +6,14 @@ import { NeuronLabel, Pointer } from "./neuron-label"
 import { numColorChannels, type Dataset, type NodeInput } from "@/lib/datasets"
 import { useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
-import { ThreeEvent } from "@react-three/fiber"
 import { LayerDef } from "./layer"
-import { Object3D } from "three"
+import { InstancedMesh } from "three"
 
 export type NodeId = string // layerIndex_{index3d.join(".")}
-export type NeuronRefType = Object3D | null
+export type NeuronRefType = {
+  meshRef: RefObject<InstancedMesh | null>
+  indexInGroup: number
+} | null // Object3D | null
 
 export type Index3D = [number, number, number] // height, width, depth
 
@@ -24,6 +25,7 @@ export type NeuronDef = {
   visibleLayerIndex: number
   position: [number, number, number]
   ref: React.RefObject<NeuronRefType>
+  hasColorChannels?: boolean
 }
 
 type NeuronContext = {
@@ -61,14 +63,9 @@ export function Neuron(props: NeuronProps) {
     label,
     ds,
     isSelected,
-    highlightValue,
   } = props
-  const { selectedNode, toggleNode } = useSelectedNodes()
-
-  const [hovered, setHover] = useState(false)
-  // const geometry = getGeometry(layer.layerPosition, layer.neurons.length)
+  const { selectedNode } = useSelectedNodes()
   const trainingY = useContext(TrainingYContext)
-  useHoverStatus(hovered, props)
 
   const isClassification = !ds?.input?.labels?.length
 
@@ -96,9 +93,6 @@ export function Neuron(props: NeuronProps) {
     typeof trainingY === "number" &&
     trainingY === index
 
-  const highlightColor =
-    typeof highlightValue === "number" ? getColor(highlightValue) : undefined
-
   return (
     <group name={`neuron_${nid}`}>
       <Instance
@@ -106,17 +100,8 @@ export function Neuron(props: NeuronProps) {
         name={nid}
         position={position}
         scale={isSelected ? 1.5 : 1}
-        onPointerOver={(e: ThreeEvent<PointerEvent>) => {
-          if (e.buttons) return
-          setHover(true)
-        }}
-        onPointerOut={() => setHover(false)}
-        onClick={() => {
-          toggleNode(nid)
-        }}
-        color={highlightColor ?? color}
         transparent={!!selectedNode} // TODO: fix
-        opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
+        // opacity={!!selectedNode && !isSelected && !highlightColor ? 0.2 : 1}
       />
       {!!label && (
         <NeuronLabel
@@ -144,41 +129,4 @@ export function Neuron(props: NeuronProps) {
       )}
     </group>
   )
-}
-
-function getColor(
-  value: number, // between -1 and 1
-  base: [number, number, number] = [250, 20, 100]
-) {
-  const absVal = Math.abs(value)
-  const a = Math.ceil(absVal * base[0])
-  const b = Math.ceil(absVal * base[1])
-  const c = Math.ceil(absVal * base[2])
-  return value > 0 ? `rgb(${a}, ${b}, ${c})` : `rgb(${c}, ${b}, ${a})` // `rgb(${b}, ${a}, ${c})` //
-}
-
-function useHoverStatus(hovered: boolean, props: NeuronProps) {
-  const setStatusText = useStatusText((s) => s.setStatusText)
-  useEffect(() => {
-    if (hovered) {
-      const { nid, rawInput, activation: _activation, bias } = props
-      // TODO: handle multiple activations?
-      const activation = Array.isArray(_activation)
-        ? undefined // _activation[0]
-        : _activation
-      setStatusText(
-        `<strong>Neuron ${nid}</strong><br/><br/>
-${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}
-Activation: ${activation?.toFixed(4)}<br/>
-${
-  bias !== undefined
-    ? `Bias: ${bias?.toFixed(4)}<br/><br/>Click to see influencs`
-    : ""
-}`
-      )
-      return () => {
-        setStatusText("")
-      }
-    }
-  }, [hovered, props, setStatusText])
 }

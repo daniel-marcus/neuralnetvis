@@ -14,7 +14,7 @@ const levaTheme: LevaCustomTheme = {
 export const App = () => {
   return (
     <div className="w-screen h-screen bg-[#110000]">
-      <Canvas>
+      <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
         <OrbitControls target={[6, 0, 0]} />

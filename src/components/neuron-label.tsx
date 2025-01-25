@@ -1,8 +1,10 @@
 import { OUTPUT_ORIENT } from "@/lib/layer-layout"
 import { useFrame, useThree, extend } from "@react-three/fiber"
-import { useRef } from "react"
+import { useContext, useRef } from "react"
 import { Mesh } from "three"
 import { Text } from "troika-three-text"
+import { NeuronDef, NeuronState } from "./neuron"
+import { TrainingYContext } from "./model"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -14,6 +16,49 @@ declare module "@react-three/fiber" {
 }
 
 const FONT_SIZE = 2.5
+
+interface NeuronLabelsProps {
+  neuron: NeuronDef & NeuronState
+  position?: [number, number, number]
+  color?: string
+}
+
+export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
+  const { label, activation } = neuron
+  const isClassification = true // TODO
+  const showValueLabel = false
+  const trainingY = useContext(TrainingYContext)
+  const showPointer = !!trainingY && trainingY === neuron.index
+  if (!position) return null
+  return (
+    <group>
+      {!!label && (
+        <NeuronLabel
+          side={isClassification ? "right" : "left"}
+          position={position}
+          color={color}
+        >
+          {label}
+        </NeuronLabel>
+      )}
+      {showValueLabel && (
+        <NeuronLabel side={"right"} position={position} color={color}>
+          {/* rawInput
+            ? String(rawInput)
+            : activation
+            ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
+            : "" */}
+        </NeuronLabel>
+      )}
+      {showPointer && (
+        <Pointer
+          position={position}
+          color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
+        />
+      )}
+    </group>
+  )
+}
 
 interface NeuronLabelProps {
   position?: [number, number, number]

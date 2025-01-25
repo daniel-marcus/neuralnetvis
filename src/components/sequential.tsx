@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { Layer } from "./layer"
 import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
@@ -17,12 +17,27 @@ interface SequentialProps {
 export const Sequential = ({ model, ds, input, rawInput }: SequentialProps) => {
   const layouts = useLayerLayout(model)
   const activations = useActivations(model, input)
-  const layerProps = useLayerProps(model, ds, layouts, activations, rawInput)
+  const [layerProps, neuronRefs] = useLayerProps(
+    model,
+    ds,
+    layouts,
+    activations,
+    rawInput
+  )
+  useEffect(() => {
+    console.log("neuronRefs", neuronRefs)
+  }, [neuronRefs])
   const patchedLayerProps = useNodeSelect(layerProps)
   return (
     <group>
       {patchedLayerProps.map((props, i) => (
-        <Layer key={i} {...props} allLayers={layerProps} model={model} />
+        <Layer
+          key={i}
+          {...props}
+          allLayers={layerProps}
+          model={model}
+          neuronRefs={neuronRefs}
+        />
       ))}
     </group>
   )

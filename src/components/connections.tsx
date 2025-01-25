@@ -1,11 +1,13 @@
 import { Suspense, useContext, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Line, Vector2, Vector3 } from "three"
+import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
 import { LayerDef } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
 import { UiOptionsContext } from "@/lib/ui-options"
 import { useSelectedNodes } from "@/lib/node-select"
+
+// TODO: find efficient olution without refs for instanced neurons ...
 
 const DEBUG = false
 
@@ -101,26 +103,6 @@ interface DynamicLineProps {
   width?: number
 }
 
-export const DynamicLine = ({ fromRef, toRef }: DynamicLineProps) => {
-  // has always width = 1
-  const lineRef = useRef<Line | null>(null)
-
-  const fromPosition = useMemo(() => new Vector3(), [])
-  const toPosition = useMemo(() => new Vector3(), [])
-
-  useFrame(() => {
-    if (lineRef.current && fromRef.current && toRef.current) {
-      fromRef.current.getWorldPosition(fromPosition)
-      toRef.current.getWorldPosition(toPosition)
-
-      lineRef.current.geometry.setFromPoints([fromPosition, toPosition])
-      lineRef.current.geometry.attributes.position.needsUpdate = true
-    }
-  })
-  // @ts-expect-error line is falsely interpreted as SVG
-  return <line ref={lineRef} />
-}
-
 export const DynamicLine2 = ({
   fromRef,
   toRef,
@@ -129,27 +111,45 @@ export const DynamicLine2 = ({
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 
-  const [geometry, material] = useMemo(() => {
-    const geo = new LineGeometry()
-    const mat = new LineMaterial({
-      // color,
-      linewidth: width,
-      resolution: new Vector2(size.width, size.height),
-    })
-    return [geo, mat]
-  }, [width, size])
+  const [geometry, material] = useMemo(
+    () => [
+      new LineGeometry(),
+      new LineMaterial({
+        linewidth: width,
+        resolution: new Vector2(size.width, size.height),
+      }),
+    ],
+    [width, size]
+  )
 
-  const fromPosition = useMemo(() => new Vector3(), [])
-  const toPosition = useMemo(() => new Vector3(), [])
-
+  const [fromPosition, toPosition, tempMatrix, tempWorldMatrix] = useMemo(
+    () => [new Vector3(), new Vector3(), new Matrix4(), new Matrix4()],
+    []
+  )
   useFrame(() => {
     if (lineRef.current && fromRef.current && toRef.current) {
-      fromRef.current.getWorldPosition(fromPosition)
-      toRef.current.getWorldPosition(toPosition)
+      const { meshRef: fromMeshRef, indexInGroup: fromIndex } = fromRef.current
+      const { meshRef: toMeshRef, indexInGroup: toIndex } = toRef.current
+      if (!fromMeshRef?.current || !toMeshRef?.current) return
+
+      fromMeshRef.current.getMatrixAt(fromIndex, tempMatrix)
+      tempWorldMatrix.multiplyMatrices(
+        fromMeshRef.current.matrixWorld,
+        tempMatrix
+      )
+      tempWorldMatrix.decompose(fromPosition, new Quaternion(), new Vector3())
+
+      toMeshRef.current.getMatrixAt(toIndex, tempMatrix)
+      tempWorldMatrix.multiplyMatrices(
+        toMeshRef.current.matrixWorld,
+        tempMatrix
+      )
+      tempWorldMatrix.decompose(toPosition, new Quaternion(), new Vector3())
 
       geometry.setPositions([...fromPosition, ...toPosition])
       lineRef.current.computeLineDistances()
     }
   })
+
   return <primitive object={new Line2(geometry, material)} ref={lineRef} />
 }

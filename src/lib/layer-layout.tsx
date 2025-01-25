@@ -71,19 +71,9 @@ function getNeuronPositions(
 ) {
   const units = getUnits(layer)
   const type = getLayerPosition(layer, model)
-  const offsetX = 0 // control offsetX with groups in Layer component
-  const colorChannels = model.layers[0].batchInputShape?.[3] ?? 1
-  const outputChannels = (layer.outputShape?.[3] as number | undefined) ?? 1
   const positions = Array.from({ length: units }).map((_, i) => {
-    const [x, y, z] =
-      type === "output"
-        ? getLineXYZ(i, units, OUTPUT_ORIENT)
-        : type === "input" && units <= 10
-        ? getLineXYZ(i, units, "vertical")
-        : type === "input"
-        ? getGroupedGridXYZ(i, units, spacing, colorChannels, false) // splitColors
-        : getGroupedGridXYZ(i, units, spacing, outputChannels, false)
-    return [x + offsetX, y, z] as [number, number, number]
+    const [x, y, z] = getNeuronPosition(i, units, type, spacing)
+    return [x, y, z] as [number, number, number]
   })
   return positions
 }
@@ -96,7 +86,19 @@ export function getGridWidth(
   return gridSize * spacing
 }
 
-function getGroupedGridXYZ(
+export function getNeuronPosition(
+  i: number,
+  total: number,
+  layerPosition: LayerPosition,
+  spacing: number
+) {
+  return layerPosition === "output" ||
+    (layerPosition === "input" && total <= 10)
+    ? getLineXYZ(i, total)
+    : getGroupedGridXYZ(i, total, spacing)
+}
+
+export function getGroupedGridXYZ(
   _i: number,
   _total: number,
   spacing: number,

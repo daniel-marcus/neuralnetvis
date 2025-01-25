@@ -2,9 +2,12 @@ import * as tf from "@tensorflow/tfjs"
 import { useMemo } from "react"
 import type { LayerInput } from "./datasets"
 
+const DEBUG = true
+
 export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
   return useMemo(() => {
     if (!model || !input || input.length === 0) return []
+    const startTime = Date.now()
     // TODO: handle multi-dimensional input without flattening
 
     const result = tf.tidy(() => {
@@ -31,6 +34,8 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
       // TODO: handle multi-dimensional output!!
       return activations.map((a) => a[0])
     })
+    const endTime = Date.now()
+    if (DEBUG) console.log("Activations computed in", endTime - startTime, "ms")
     return result as number[][] // single activations for each layer and neuron
   }, [model, input])
 }

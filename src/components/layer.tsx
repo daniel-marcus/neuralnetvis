@@ -1,14 +1,17 @@
 import { ReactElement, useContext, useMemo } from "react"
-import { Neuron, NeuronDef, NeuronState } from "./neuron"
+import { NeuronDef, NeuronRefType, NeuronState } from "./neuron"
 import { numColorChannels, type Dataset } from "@/lib/datasets"
 import { getVisibleLayers, type LayerPosition } from "@/lib/layer-props"
 import { Instances } from "@react-three/drei"
 import { AdditiveBlending } from "three"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
-import { getGridWidth, getOffsetX } from "@/lib/layer-layout"
+import { getOffsetX } from "@/lib/layer-layout"
 import { UiOptionsContext } from "@/lib/ui-options"
 import * as tf from "@tensorflow/tfjs"
+import { NeuronGroup } from "./neuron-group"
+
+// refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
 
 export interface LayerDef {
   index: number
@@ -24,6 +27,7 @@ interface LayerContext {
   allLayers: LayerDef[]
   ds?: Dataset
   model?: tf.LayersModel
+  neuronRefs: React.RefObject<NeuronRefType>[][]
 }
 
 export type LayerProps = LayerDef & LayerContext
@@ -56,7 +60,7 @@ export const Layer = (props: LayerProps) => {
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
       <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
-        <Instances
+        <Instances // remove after refactoring
           limit={neurons.length}
           key={`${index}_${name}_${neurons.length}_${visibleLayers.length}}`} // _${hasAdditiveBlending
         >
@@ -88,56 +92,4 @@ export const Layer = (props: LayerProps) => {
       )}
     </>
   )
-}
-
-type NeuronGroupProps = LayerProps & {
-  groupIndex: number
-  groupCount: number
-  groupedNeurons: (NeuronDef & NeuronState)[]
-}
-
-const NeuronGroup = (props: NeuronGroupProps) => {
-  const { groupedNeurons, ...layerProps } = props
-  const { allLayers, ds } = layerProps
-  const position = useGroupPosition(props)
-  const ref = useAnimatedPosition(position, 0.1)
-  return (
-    <group ref={ref}>
-      {groupedNeurons.map((neuronProps, i) => {
-        // return <Instance key={i} {...neuronProps} />
-        return (
-          <Neuron
-            key={i}
-            layer={props}
-            allLayers={allLayers}
-            ds={ds}
-            {...neuronProps}
-          />
-        )
-      })}
-    </group>
-  )
-}
-
-function useGroupPosition(props: NeuronGroupProps) {
-  const { groupIndex, groupCount, layerPosition, spacing } = props
-  const neuronCount = props.groupedNeurons.length
-  const { splitColors } = useContext(UiOptionsContext)
-  const position = useMemo(() => {
-    const GRID_SPACING = 0.6
-    const gridSize = getGridWidth(neuronCount, spacing) + GRID_SPACING
-    const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
-    const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
-    const offsetY = (groupsPerColumn - 1) * gridSize * 0.5
-    const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
-    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
-    const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
-    const SPLIT_COLORS_X_OFFSET = 0.6 // to avoid z-fighting
-    return layerPosition === "input"
-      ? splitColors
-        ? [0, 0, groupIndex * gridSize - (groupCount - 1) * gridSize * 0.5] // spread on z-axis
-        : [groupIndex * SPLIT_COLORS_X_OFFSET, 0, 0]
-      : [0, y, z]
-  }, [groupIndex, groupCount, neuronCount, layerPosition, spacing, splitColors])
-  return position
 }

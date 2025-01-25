@@ -5,6 +5,8 @@ import { useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 
+const DEBUG = true
+
 const defaultUnitConfig = {
   value: 32,
   min: 16,
@@ -17,7 +19,7 @@ const defaultModelConfig = {
   conv1: {
     value: 4,
     min: 1,
-    max: 16,
+    max: 32,
     step: 1,
     optional: true,
     disabled: true,
@@ -25,7 +27,7 @@ const defaultModelConfig = {
   conv2: {
     value: 4,
     min: 1,
-    max: 16,
+    max: 32,
     step: 1,
     optional: true,
     disabled: true,
@@ -62,6 +64,7 @@ export function useModel(ds?: Dataset) {
 
   const model = useMemo(() => {
     if (!ds) return
+    const startTime = Date.now()
     const [totalSamples, ...dims] = ds.data.trainX.shape
     const inputShape = [null, ...dims]
 
@@ -89,9 +92,10 @@ export function useModel(ds?: Dataset) {
 ${layersStr}<br/>
 Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
     setStatusText(text)
+    const endTime = Date.now()
+    if (DEBUG) console.log(`create model took ${endTime - startTime}ms`)
     return _model
   }, [modelConfig, setStatusText, ds])
-
   return model
 }
 
