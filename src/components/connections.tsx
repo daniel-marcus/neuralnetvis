@@ -131,7 +131,7 @@ export const DynamicLine2 = ({
       const { meshRef: fromMeshRef, indexInGroup: fromIndex } = fromRef.current
       const { meshRef: toMeshRef, indexInGroup: toIndex } = toRef.current
       if (!fromMeshRef?.current || !toMeshRef?.current) return
-
+      // console.log(fromMeshRef.current, toMeshRef.current, fromIndex, toIndex)
       fromMeshRef.current.getMatrixAt(fromIndex, tempMatrix)
       tempWorldMatrix.multiplyMatrices(
         fromMeshRef.current.matrixWorld,

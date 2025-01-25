@@ -8,7 +8,7 @@ import { NodeId } from "@/components/neuron"
 
 export const useSelectedNodes = create<{
   selectedNode: NodeId | null
-  toggleNode: (nodeId: NodeId) => void
+  toggleNode: (nodeId: NodeId | null) => void
 }>((set) => ({
   selectedNode: null,
   toggleNode: (nodeId) =>
@@ -20,7 +20,7 @@ export const useSelectedNodes = create<{
 export function useNodeSelect(layerProps: LayerDef[]) {
   const { highlightProp } = useControls("ui", {
     highlightProp: {
-      label: "onSelect",
+      label: "onHover",
       options: {
         "show weights": "weights",
         "show weighted inputs": "weightedInputs",
@@ -41,7 +41,8 @@ export function useNodeSelect(layerProps: LayerDef[]) {
       weights: normalizeWithSign(selN.weights),
       weightedInputs: normalizeWithSign(weightedInputs),
     }
-    console.log({ selN })
+    // console.log("selected", selN)
+    // TODO: manipulate only affected nodes directly
     return layerProps.map((l) => {
       return {
         ...l,

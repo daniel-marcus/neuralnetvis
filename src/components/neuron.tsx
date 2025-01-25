@@ -1,4 +1,4 @@
-import React, { useContext, RefObject } from "react"
+import React, { useContext } from "react"
 import { TrainingYContext } from "./model"
 
 import { NeuronLabel, Pointer } from "./neuron-label"
@@ -7,11 +7,13 @@ import { numColorChannels, type Dataset, type NodeInput } from "@/lib/datasets"
 import { useSelectedNodes } from "@/lib/node-select"
 import { Instance } from "@react-three/drei"
 import { LayerDef } from "./layer"
-import { InstancedMesh } from "three"
+import { InstancedMeshRef } from "./neuron-group"
+
+// refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
 
 export type NodeId = string // layerIndex_{index3d.join(".")}
 export type NeuronRefType = {
-  meshRef: RefObject<InstancedMesh | null>
+  meshRef: InstancedMeshRef
   indexInGroup: number
 } | null // Object3D | null
 

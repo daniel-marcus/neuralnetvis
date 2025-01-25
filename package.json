@@ -30,7 +30,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.172.0",
-    "eslint": "^9",
+    "eslint": "^9.19.0",
     "eslint-config-next": "^15.1.5",
     "leva": "^0.10.0",
     "postcss": "^8",

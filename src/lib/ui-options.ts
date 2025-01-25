@@ -8,7 +8,7 @@ interface UiOptions {
 }
 
 const defaultOptions = {
-  showLines: false,
+  showLines: true,
   splitColors: false,
 }
 
