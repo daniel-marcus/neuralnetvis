@@ -12,6 +12,7 @@ import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
 import { UiOptionsContext, useUiOptions } from "@/lib/ui-options"
+import { useDebug } from "@/lib/_debug"
 
 const levaTheme: LevaCustomTheme = {
   sizes: { numberInputMinWidth: "46px", controlWidth: "172px" },
@@ -24,6 +25,7 @@ export const App = () => {
   const [model, isPending] = useModel(ds)
   const uiOptions = useUiOptions(ds)
   useTraining(model, ds, next)
+  const debug = useDebug((s) => s.debug)
   return (
     <div className="w-screen h-screen bg-[#110000]">
       <Canvas frameloop="always">
@@ -35,7 +37,7 @@ export const App = () => {
             <Model model={model} input={input} ds={ds} isPending={false} />
           </TrainingYContext.Provider>
         </UiOptionsContext.Provider>
-        <Stats />
+        {debug && <Stats />}
       </Canvas>
       <Leva hideCopyButton theme={levaTheme} />
       <LoadingSpinner isActive={isLoading || isPending} />

@@ -6,7 +6,7 @@ import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
 import { UiOptionsContext } from "@/lib/ui-options"
 import { useSelected } from "@/lib/neuron-select"
-import { DEBUG } from "@/lib/_debug"
+import { debug } from "@/lib/_debug"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
 const MAX_LINES_PER_LAYER = 50
@@ -69,7 +69,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
                   }))
                   .filter(() => {
                     if (lineCount > MAX_LINES_PER_LAYER) {
-                      if (DEBUG) console.log("Max lines reached")
+                      if (debug()) console.log("Max lines reached")
                       return false
                     }
                     return true

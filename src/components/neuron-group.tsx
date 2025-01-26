@@ -18,7 +18,7 @@ import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useStatusText } from "./status-text"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "./neuron"
-import { DEBUG } from "@/lib/_debug"
+import { debug } from "@/lib/_debug"
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 
@@ -84,7 +84,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
   const { groupCount, groupIndex, index: layerIndex, neuronRefs } = props
   const instances = props.groupedNeurons.length
   useEffect(() => {
-    if (DEBUG) console.log("upd refs")
+    if (debug()) console.log("upd refs")
     for (let indexInGroup = 0; indexInGroup < instances; indexInGroup++) {
       const neuronFlatIdx = indexInGroup * groupCount + groupIndex
       if (!neuronRefs[layerIndex][neuronFlatIdx]) {
@@ -133,7 +133,7 @@ function useNeuronPositions(
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!meshRef.current) return
-    if (DEBUG) console.log("upd pos", layerPos, height, width)
+    if (debug()) console.log("upd pos", layerPos, height, width)
     for (let i = 0; i < height * width; i++) {
       const position = getNeuronPosition(i, layerPos, height, width, spacing)
       tempObj.position.set(...position)
@@ -148,7 +148,7 @@ function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
   const tmpColor = useMemo(() => new THREE.Color(), [])
   useLayoutEffect(() => {
     if (!meshRef.current) return
-    if (DEBUG) console.log("upd colors")
+    if (debug()) console.log("upd colors")
     for (const n of neurons) {
       const i = neurons.indexOf(n)
       const colorStr = getNeuronColor(n)
@@ -210,7 +210,7 @@ function useScale(
     if (!meshRef.current) return
     const nids = nidsStr.split(",")
     if (nids.length > 256) return
-    if (DEBUG) console.log("upd scale", counter++, { nids })
+    if (debug()) console.log("upd scale", counter++, { nids })
     const baseScale = 1
     const highlightScale = 1.5
     for (const nid of nids) {

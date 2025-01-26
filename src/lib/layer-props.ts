@@ -9,7 +9,7 @@ import {
   LayerStatic,
   LayerType,
 } from "@/components/layer"
-import { DEBUG } from "@/lib/_debug"
+import { debug } from "@/lib/_debug"
 import { useActivations } from "./activations"
 
 // TODO: fix rawInput
@@ -329,7 +329,7 @@ function useStatefulLayers(
     }, [] as LayerStateful[])
     const endTime = Date.now()
 
-    if (DEBUG)
+    if (debug())
       console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
   }, [statelessLayers, activations])

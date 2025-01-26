@@ -1,7 +1,7 @@
 import { useControls } from "leva"
 import { Dataset, numColorChannels } from "./datasets"
 import { createContext, useEffect } from "react"
-import { DEBUG, toggleDebug } from "./_debug"
+import { useDebug } from "./_debug"
 import { useStatusText } from "@/components/status-text"
 import * as tf from "@tensorflow/tfjs"
 
@@ -41,11 +41,13 @@ export function useUiOptions(ds?: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
+  const toggleDebug = useDebug((s) => s.toggleDebug)
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
       if (e.key === "d") {
         toggleDebug()
-        setStatusText(`Debug mode ${DEBUG ? "enabled" : "disabled"}`)
+        const debug = useDebug.getState().debug
+        setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
       }
       if (e.key === "s") {
         const memoryInfo = tf.memory() as tf.MemoryInfo & {
@@ -68,7 +70,7 @@ Tensors: ${memoryInfo.numTensors} / Data Buffers: ${
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [setStatusText])
+  }, [setStatusText, toggleDebug])
 
   return uiOptions
 }

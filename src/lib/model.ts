@@ -4,7 +4,7 @@ import { useStatusText } from "@/components/status-text"
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
-import { DEBUG } from "@/lib/_debug"
+import { debug } from "@/lib/_debug"
 
 const defaultUnitConfig = {
   value: 32,
@@ -82,15 +82,15 @@ export function useModel(ds?: Dataset) {
       .filter((l) => l.size)
 
     const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
-    if (DEBUG) console.log({ _model })
+    if (debug()) console.log({ _model })
     if (!_model) return
     const endTime = Date.now()
-    if (DEBUG) console.log(`create model took ${endTime - startTime}ms`)
+    if (debug()) console.log(`create model took ${endTime - startTime}ms`)
     return _model
     /* async function setup() {
       setStatusText("Generating new model ...")
       await tf.setBackend("webgl").then((success) => {
-        if (DEBUG) console.info(`WebGL backend set with success: ${success}`)
+        if (debug()) console.info(`WebGL backend set with success: ${success}`)
       })
       setModel(_model)
     } 
@@ -121,7 +121,7 @@ Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
     setStatusText(text)
 
     if (!isModelCompiled(model)) {
-      if (DEBUG) console.log("Model not compiled. Compiling ...")
+      if (debug()) console.log("Model not compiled. Compiling ...")
       model.compile({
         optimizer: tf.train.adam(),
         loss: ds.loss,

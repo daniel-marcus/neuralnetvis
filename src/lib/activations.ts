@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { useMemo } from "react"
 import type { LayerInput } from "./datasets"
-import { DEBUG } from "@/lib/_debug"
+import { debug } from "@/lib/_debug"
 import { normalizeTensor } from "./normalization"
 
 export function useActivations(
@@ -44,7 +44,8 @@ export function useActivations(
       return activations
     })
     const endTime = Date.now()
-    if (DEBUG) console.log("Activations computed in", endTime - startTime, "ms")
+    if (debug())
+      console.log("Activations computed in", endTime - startTime, "ms")
     return result
   }, [isPending, model, input])
 }

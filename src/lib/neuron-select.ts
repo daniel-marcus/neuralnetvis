@@ -4,7 +4,7 @@ import { Neuron, Nid } from "@/components/neuron"
 import { LayerStateful } from "@/components/layer"
 import { useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
-import { DEBUG } from "./_debug"
+import { debug } from "./_debug"
 
 export const useSelected = create<{
   selectedNid: Nid | null
@@ -69,7 +69,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       weightedInputs: normalizeWithSign(weightedInputs),
     }
 
-    if (DEBUG) console.log("selected", selN, tempObj)
+    if (debug()) console.log("selected", selN, tempObj)
     // TODO: manipulate only affected nodes directly
     return layerProps.map((l) => {
       const patchdNeurons = l.neurons.map((n, j) => {
