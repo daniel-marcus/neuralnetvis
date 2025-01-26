@@ -15,6 +15,7 @@ export function useTraining(
   next: (step?: number) => void
 ) {
   const [isTraining, setIsTraining] = useState(false)
+
   const toggleTraining = useCallback(() => setIsTraining((t) => !t), [])
 
   const setStatusText = useStatusText((s) => s.setStatusText)

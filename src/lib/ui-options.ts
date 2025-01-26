@@ -5,14 +5,18 @@ import { useDebug } from "./_debug"
 import { useStatusText } from "@/components/status-text"
 import * as tf from "@tensorflow/tfjs"
 
+export type HighlightProp = "weights" | "weightedInputs"
+
 interface UiOptions {
   showLines: boolean
   splitColors: boolean
+  highlightProp: HighlightProp | string
 }
 
 const defaultOptions = {
   showLines: true,
   splitColors: false,
+  highlightProp: "weights",
 }
 
 export const UiOptionsContext = createContext<UiOptions>(defaultOptions)
@@ -28,6 +32,7 @@ export function useUiOptions(ds?: Dataset) {
         render: () => hasColorChannels,
       },
       highlightProp: {
+        value: defaultOptions.highlightProp as HighlightProp,
         label: "onHover",
         options: {
           "show weights": "weights",
@@ -48,6 +53,8 @@ export function useUiOptions(ds?: Dataset) {
         toggleDebug()
         const debug = useDebug.getState().debug
         setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
+        if (debug) tf.enableDebugMode()
+        else tf.enableProdMode()
       }
       if (e.key === "s") {
         const memoryInfo = tf.memory() as tf.MemoryInfo & {
@@ -64,6 +71,8 @@ Tensors: ${memoryInfo.numTensors} / Data Buffers: ${
         `
         setStatusText(statusText)
         console.log(statusText.replaceAll("<br/>", ""), { memoryInfo })
+        const engine = tf.engine()
+        console.log({ engine })
       }
     }
     window.addEventListener("keydown", onKeydown)

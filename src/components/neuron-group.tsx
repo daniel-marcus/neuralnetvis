@@ -161,7 +161,7 @@ function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
 }
 
 function getNeuronColor(n: Neuron) {
-  return n.highlightValue
+  return typeof n.highlightValue !== "undefined"
     ? getHighlightColor(n.highlightValue)
     : n.hasColorChannels
     ? getColorChannelColor(n)

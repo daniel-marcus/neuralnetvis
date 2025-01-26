@@ -2,9 +2,10 @@ import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { Neuron, Nid } from "@/components/neuron"
 import { LayerStateful } from "@/components/layer"
-import { useMemo } from "react"
+import { useContext, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { debug } from "./_debug"
+import { HighlightProp, UiOptionsContext } from "./ui-options"
 
 export const useSelected = create<{
   selectedNid: Nid | null
@@ -53,7 +54,7 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
 }
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
-  const highlightProp = "weights" // "weightedInputs"
+  const { highlightProp } = useContext(UiOptionsContext)
   const selectedNid = useSelected((s) => s.selectedNid)
   const patchedLayerProps = useMemo(() => {
     if (!selectedNid) return layerProps
@@ -75,7 +76,8 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       const patchdNeurons = l.neurons.map((n, j) => {
         if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n
         let highlightValue: number | undefined
-        if (isFlat) highlightValue = tempObj[highlightProp]?.[j]
+        if (isFlat)
+          highlightValue = tempObj[highlightProp as HighlightProp]?.[j]
         else {
           // Conv2D
           const inputNids = selN.inputNids ?? []

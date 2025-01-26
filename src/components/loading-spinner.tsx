@@ -7,10 +7,8 @@ interface LoadingSpinnerProps {
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isActive }) => {
   return (
     <div
-      className={`absolute z-[1] inset-0 flex items-center justify-center bg-black bg-opacity-80 transition-opacity duration-300 ease-in-out ${
-        isActive
-          ? "opacity-50 pointer-events-auto"
-          : "opacity-0 pointer-events-none"
+      className={`absolute z-[1] inset-0 flex items-end justify-start bg-transparent transition-opacity duration-300 ease-in-out p-4 pointer-events-none ${
+        isActive ? "opacity-50" : "opacity-0 "
       }`}
     >
       <div

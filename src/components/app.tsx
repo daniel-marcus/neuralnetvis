@@ -24,7 +24,7 @@ export const App = () => {
   const [ds, isLoading, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const uiOptions = useUiOptions(ds)
-  useTraining(model, ds, next)
+  const isTraining = useTraining(model, ds, next)
   const debug = useDebug((s) => s.debug)
   return (
     <div className="w-screen h-screen bg-[#110000]">
@@ -40,7 +40,7 @@ export const App = () => {
         {debug && <Stats />}
       </Canvas>
       <Leva hideCopyButton theme={levaTheme} />
-      <LoadingSpinner isActive={isLoading || isPending} />
+      <LoadingSpinner isActive={isLoading || isPending || isTraining} />
       <StatusText />
     </div>
   )
