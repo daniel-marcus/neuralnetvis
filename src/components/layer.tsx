@@ -1,13 +1,13 @@
 import { ReactElement, useContext, useMemo } from "react"
-import { Neuron, NeuronRefType } from "./neuron"
-import { numColorChannels, type Dataset } from "@/lib/datasets"
+import { Neuron, NeuronDef, NeuronRefType, Nid } from "./neuron"
+import type { Dataset } from "@/lib/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { getOffsetX } from "@/lib/layer-layout"
 import { UiOptionsContext } from "@/lib/ui-options"
 import * as tf from "@tensorflow/tfjs"
-import { NeuronGroup } from "./neuron-group"
+import { GroupDef, NeuronGroup } from "./neuron-group"
 
 export type LayerType =
   | "InputLayer"
@@ -17,43 +17,43 @@ export type LayerType =
   | "MaxPooling2D"
 export type LayerPosition = "input" | "hidden" | "output" | "invisible"
 
-export interface LayerDef {
+export interface LayerStatic {
   index: number
   visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerType: LayerType
-  layerPosition: LayerPosition
+  layerPos: LayerPosition
   tfLayer: tf.layers.Layer
-  neurons: Neuron[]
   geometry: ReactElement
   spacing: number
-  neuronsMap?: Map<string, Neuron>
-  prevLayer?: LayerDef
-  prevVisibleLayer?: LayerDef
+  prevLayer?: LayerStatic
+  prevVisibleLayer?: LayerStatic
+  neurons: NeuronDef[]
+  neuronsMap?: Map<Nid, NeuronDef>
+}
+
+export interface LayerStateful extends LayerStatic {
+  neurons: Neuron[]
+  neuronsMap?: Map<Nid, Neuron>
   maxAbsWeight?: number
+  groups: GroupDef[]
 }
 
 interface LayerContext {
-  allLayers: LayerDef[]
+  allLayers: LayerStateful[]
   ds?: Dataset
-  model?: tf.LayersModel
   neuronRefs: React.RefObject<NeuronRefType>[][]
 }
 
-export type LayerProps = LayerDef & LayerContext
+export type LayerProps = LayerStateful & LayerContext
 
 export const Layer = (props: LayerProps) => {
-  const { visibleIndex, allLayers, ds, layerPosition, tfLayer } = props
-  const { neurons, prevVisibleLayer } = props
-  const colorChannels = numColorChannels(ds)
-  const hasColorChannels = colorChannels > 1
-  const groupCount =
-    hasColorChannels && layerPosition === "input"
-      ? colorChannels
-      : (tfLayer.outputShape?.[3] as number | undefined) ?? 1
+  const { visibleIndex, allLayers, layerPos } = props
+  const { groups, prevVisibleLayer } = props
+  const groupCount = groups.length
 
   const { splitColors } = useContext(UiOptionsContext)
   const hasAdditiveBlending =
-    layerPosition === "input" && groupCount > 1 && !splitColors
+    layerPos === "input" && groupCount > 1 && !splitColors
 
   const visibleLayers = getVisibleLayers(allLayers)
   const position = useMemo(
@@ -61,22 +61,24 @@ export const Layer = (props: LayerProps) => {
     [visibleIndex, visibleLayers.length]
   )
   const ref = useAnimatedPosition(position, 0.1)
-  if (!neurons.length) return null
+  if (!props.neurons.length) return null
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
       <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
-        {Array.from({ length: groupCount }).map((_, i) => {
+        {groups.map(({ nids, nidsStr }, i) => {
           // use reversed index for input layer to get RGB on z-axis
-          const groupIndex = layerPosition === "input" ? groupCount - i - 1 : i
-          const groupedNeurons = neurons.filter(
-            (n) => n.index % groupCount === groupIndex
-          )
+          const groupIndex = layerPos === "input" ? groupCount - i - 1 : i
+          const groupedNeurons = Array.from(nids)
+            .map((nid) => props.neuronsMap?.get(nid))
+            .filter(Boolean) as Neuron[]
           return (
             <NeuronGroup
               key={i}
               groupIndex={groupIndex}
               groupCount={groupCount}
+              nids={nids}
+              nidsStr={nidsStr}
               groupedNeurons={groupedNeurons}
               {...props}
             />

@@ -20,13 +20,12 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
     <group>
       {patchedLayerProps.map((props, i, layers) => {
         const { layerType, neurons } = props
-        const key = `${i}_${layerType}_${neurons.length}_${patchedLayerProps.length}`
+        const key = `${i}_${layerType}_${neurons.length}_${layers.length}`
         return (
           <Layer
             key={key}
             {...props}
             allLayers={layers}
-            model={model}
             neuronRefs={neuronRefs}
           />
         )

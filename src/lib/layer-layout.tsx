@@ -21,10 +21,10 @@ const geometryMap: Record<string, ReactElement> = {
 
 export function getGeometryAndSpacing(
   layer: tf.layers.Layer,
-  layerPosition: LayerPosition,
+  layerPos: LayerPosition,
   units: number
 ): [ReactElement, number] {
-  if (["input", "output"].includes(layerPosition)) {
+  if (["input", "output"].includes(layerPos)) {
     if (units <= 10) return [geometryMap.boxBig, 1.8]
     return [geometryMap.boxSmall, 0.7]
   } else if (layer.getClassName() === "Flatten") {
@@ -45,51 +45,57 @@ export function getOffsetX(visibleIndex: number, totalVisibleLayers: number) {
   )
 }
 
-export function getGridWidth(
-  total: number,
+const MAX_SINGLE_COL_HEIGHT = 10
+
+export function getGridSize(
+  height: number,
+  width: number,
   spacing: number = 1.8 // 0.7
 ) {
-  const gridSize = Math.ceil(Math.sqrt(total))
-  return gridSize * spacing
+  const total = height * width
+  if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
+    // 1D column as 2D grid when > 10 neurons
+    width = Math.ceil(Math.sqrt(total))
+    height = Math.ceil(total / width)
+  }
+  const totalHeight = height * spacing
+  const totalWidth = width * spacing
+  return [totalHeight, totalWidth]
 }
 
 export function getNeuronPosition(
   i: number,
-  total: number,
-  layerPosition: LayerPosition,
+  layerPos: LayerPosition,
+  height: number,
+  width: number,
   spacing: number
 ) {
-  return layerPosition === "output" ||
-    (layerPosition === "input" && total <= 10)
+  const total = height * width
+  return layerPos === "output" || (layerPos === "input" && total <= 10)
     ? getLineXYZ(i, total)
-    : getGroupedGridXYZ(i, total, spacing)
+    : getGroupedGridXYZ(i, height, width, spacing)
 }
 
 export function getGroupedGridXYZ(
-  _i: number,
-  _total: number,
-  spacing: number,
-  groupSize = 1,
-  split = false
+  i: number,
+  height: number,
+  width: number,
+  spacing: number
 ): [number, number, number] {
-  const total = Math.ceil(_total / groupSize)
-  const i = Math.floor(_i / groupSize)
-  const rest = _i % groupSize
-  const gridSize = Math.ceil(Math.sqrt(total))
+  const total = height * width
+  if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
+    // 1D column as 2D grid when > 10 neurons
+    width = Math.ceil(Math.sqrt(total))
+    height = Math.ceil(total / width)
+  }
   const NEURON_SPACING = spacing
-  const offsetY = (gridSize - 1) * NEURON_SPACING * 0.5
-  const offsetZ = (gridSize - 1) * NEURON_SPACING * -0.5
+  const offsetY = (height - 1) * NEURON_SPACING * 0.5
+  const offsetZ = (width - 1) * NEURON_SPACING * -0.5
 
-  const y = -1 * Math.floor(i / gridSize) * NEURON_SPACING + offsetY // row
-  const z = (i % gridSize) * NEURON_SPACING + offsetZ // column
+  const y = -1 * Math.floor(i / width) * NEURON_SPACING + offsetY // row
+  const z = (i % width) * NEURON_SPACING + offsetZ // column
 
-  // shift now done in neuron group
-  const shiftMatrix = split ? [0, 0, 2 * (offsetZ - NEURON_SPACING)] : [0, 0, 0]
-  const [shiftX, shiftY, shiftZ] = shiftMatrix.map(
-    (v) => -v * (rest - (groupSize - 1) / 2)
-  )
-
-  return [shiftX, y + shiftY, z + shiftZ] as const
+  return [0, y, z] as const
 }
 
 function getLineXYZ(

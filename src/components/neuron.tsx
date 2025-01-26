@@ -1,7 +1,7 @@
 import React from "react"
 
 import type { NodeInput } from "@/lib/datasets"
-import { LayerDef } from "./layer"
+import { LayerStateful, LayerStatic } from "./layer"
 import { InstancedMeshRef } from "./neuron-group"
 
 // refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
@@ -22,6 +22,10 @@ export type NeuronDef = {
   visibleLayerIndex: number
   ref: React.RefObject<NeuronRefType>
   hasColorChannels?: boolean
+  inputNids?: Nid[]
+  inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field
+  label?: string
+  layer: LayerStatic
 }
 
 export type NeuronState = {
@@ -31,16 +35,11 @@ export type NeuronState = {
   inputs?: number[]
   weights?: number[]
   bias?: number
-  inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field. TODO: for all
-  label?: string
   highlightValue?: number // [-1, 1] TODO: refactor
 }
 
 type NeuronContext = {
-  layer?: LayerDef
-  prevLayer?: LayerDef
-  prevVisibleLayer?: LayerDef
-  allLayers?: LayerDef[]
+  allLayers?: LayerStateful[]
 }
 
 export type Neuron = NeuronDef & NeuronState & NeuronContext

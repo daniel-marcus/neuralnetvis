@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { Neuron, Nid } from "@/components/neuron"
-import { LayerDef } from "@/components/layer"
+import { LayerStateful } from "@/components/layer"
 import { useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { DEBUG } from "./_debug"
@@ -52,7 +52,7 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
   }
 }
 
-export function useNeuronSelect(layerProps: LayerDef[]) {
+export function useNeuronSelect(layerProps: LayerStateful[]) {
   const highlightProp = "weights" // "weightedInputs"
   const selectedNid = useSelected((s) => s.selectedNid)
   const patchedLayerProps = useMemo(() => {
@@ -60,7 +60,6 @@ export function useNeuronSelect(layerProps: LayerDef[]) {
     const allNeurons = layerProps.flatMap((l) => l.neurons)
     const selN = allNeurons.find(({ nid }) => nid === selectedNid)
     if (!selN) return layerProps
-    if (DEBUG) console.log("selected", selN)
     const isFlat = !!selN.inputs && selN.inputs.length === selN.weights?.length
     const weightedInputs = isFlat
       ? getWeightedInputs(selN.inputs, selN.weights)
@@ -69,35 +68,37 @@ export function useNeuronSelect(layerProps: LayerDef[]) {
       weights: normalizeWithSign(selN.weights),
       weightedInputs: normalizeWithSign(weightedInputs),
     }
+
+    if (DEBUG) console.log("selected", selN, tempObj)
     // TODO: manipulate only affected nodes directly
     return layerProps.map((l) => {
+      const patchdNeurons = l.neurons.map((n, j) => {
+        if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n
+        let highlightValue: number | undefined
+        if (isFlat) highlightValue = tempObj[highlightProp]?.[j]
+        else {
+          // Conv2D
+          const inputNids = selN.inputNids ?? []
+          if (!inputNids.find((nid) => nid === n.nid)) return n
+
+          const idx = inputNids.indexOf(n.nid)
+          // const weight = selN.weights?.[idx] ?? 0
+          // TODO ... calculate normalized weighted input ahead?
+          const weightedInput = selN.weights?.[idx] ?? 0 * (n.activation ?? 0)
+          highlightValue =
+            highlightProp === "weights"
+              ? tempObj[highlightProp]?.[idx]
+              : weightedInput // TODO ...
+        }
+        return {
+          ...n,
+          highlightValue,
+        }
+      })
       return {
         ...l,
-        neurons: l.neurons.map((n, j) => {
-          if (selN.nid === n.nid) return { ...n, isSelected: true }
-          if (n.layer?.visibleIndex !== (selN.layer?.visibleIndex ?? 0) - 1)
-            return n
-          let highlightValue: number | undefined
-          if (isFlat) highlightValue = tempObj[highlightProp]?.[j]
-          else {
-            // Conv2D
-            const inputNeurons = selN.inputNeurons ?? []
-            if (!inputNeurons.find((inpn) => inpn.nid === n.nid)) return n
-            const idx = inputNeurons.findIndex((inpn) => inpn.nid === n.nid)
-            // const weight = selN.weights?.[idx] ?? 0
-            // TODO ... calculate normalized weighted input ahead?
-            const weightedInput = selN.weights?.[idx] ?? 0 * (n.activation ?? 0)
-            highlightValue =
-              highlightProp === "weights"
-                ? tempObj[highlightProp]?.[idx]
-                : weightedInput // TODO ...
-          }
-          return {
-            ...n,
-            highlightValue,
-            isSelected: selN.nid === n.nid,
-          }
-        }),
+        neurons: patchdNeurons,
+        neuronsMap: new Map(patchdNeurons.map((n) => [n.nid, n])),
       }
     })
   }, [layerProps, selectedNid, highlightProp])

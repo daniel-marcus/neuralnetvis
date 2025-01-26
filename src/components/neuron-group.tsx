@@ -6,10 +6,10 @@ import {
   useMemo,
   useRef,
 } from "react"
-import { InstancedMesh, Object3D } from "three"
+import { InstancedMesh } from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import * as THREE from "three"
-import { getGridWidth, getNeuronPosition } from "@/lib/layer-layout"
+import { getGridSize, getNeuronPosition } from "@/lib/layer-layout"
 import { LayerPosition } from "@/components/layer"
 import { NeuronLabels } from "./neuron-label"
 import { UiOptionsContext } from "@/lib/ui-options"
@@ -17,32 +17,37 @@ import { LayerProps } from "./layer"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useStatusText } from "./status-text"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
-import { Neuron } from "./neuron"
+import { Neuron, Nid } from "./neuron"
 import { DEBUG } from "@/lib/_debug"
-
-const temp = new Object3D()
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 
-type NeuronGroupProps = LayerProps & {
-  groupIndex: number
-  groupCount: number
-  groupedNeurons: Neuron[]
+export interface GroupDef {
+  nids: Nid[]
+  nidsStr: string // for deps optimization
 }
 
+type NeuronGroupProps = LayerProps &
+  GroupDef & {
+    groupIndex: number
+    groupCount: number
+    groupedNeurons: Neuron[]
+  }
+
 export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { groupedNeurons, layerPosition, spacing } = props
-  const { groupIndex, index: layerIndex } = props
+  const { groupedNeurons, groupIndex, nidsStr } = props
+  const { index: layerIndex, layerPos, spacing } = props
   const meshRef = useRef<InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
   const position = useGroupPosition(props)
   const groupRef = useAnimatedPosition(position, 0.1)
-  const instances = groupedNeurons.length
-  useNeuronPositions(meshRef, instances, layerPosition, spacing)
+  const outputShape = props.tfLayer.outputShape as number[]
+  const [, height, width = 1] = outputShape
+  useNeuronPositions(meshRef, layerPos, spacing, outputShape)
   useColors(meshRef, groupedNeurons)
   const eventHandlers = useInteractions(groupedNeurons)
   const scaleOnHover = props.tfLayer.getClassName() === "Dense"
-  useScale(scaleOnHover, meshRef, groupedNeurons, layerIndex, groupIndex)
+  useScale(scaleOnHover, meshRef, nidsStr, layerIndex, groupIndex)
   const { splitColors } = useContext(UiOptionsContext)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
@@ -59,9 +64,9 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         {props.geometry}
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
-      {layerPosition === "output" &&
+      {layerPos === "output" &&
         groupedNeurons.map((n, i) => {
-          const pos = getNeuronPosition(i, instances, layerPosition, spacing)
+          const pos = getNeuronPosition(i, layerPos, height, width, spacing)
           return (
             <NeuronLabels
               key={n.nid}
@@ -79,6 +84,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
   const { groupCount, groupIndex, index: layerIndex, neuronRefs } = props
   const instances = props.groupedNeurons.length
   useEffect(() => {
+    if (DEBUG) console.log("upd refs")
     for (let indexInGroup = 0; indexInGroup < instances; indexInGroup++) {
       const neuronFlatIdx = indexInGroup * groupCount + groupIndex
       if (!neuronRefs[layerIndex][neuronFlatIdx]) {
@@ -91,48 +97,51 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
 }
 
 function useGroupPosition(props: NeuronGroupProps) {
-  const { groupIndex, groupCount, layerPosition, spacing } = props
-  const neuronCount = props.groupedNeurons.length
+  const { groupIndex, groupCount, layerPos, spacing } = props
   const { splitColors } = useContext(UiOptionsContext)
+  const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
-    const gridSize = getGridWidth(neuronCount, spacing) + GRID_SPACING
+    const [gridHeight, gridWidth] = getGridSize(height, width, spacing).map(
+      (v) => v + GRID_SPACING
+    )
     const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
     const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
-    const offsetY = (groupsPerColumn - 1) * gridSize * 0.5
-    const offsetZ = (groupsPerRow - 1) * gridSize * -0.5
-    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridSize + offsetY // row
-    const z = (groupIndex % groupsPerRow) * gridSize + offsetZ // column
+    const offsetY = (groupsPerColumn - 1) * gridWidth * 0.5
+    const offsetZ = (groupsPerRow - 1) * gridHeight * -0.5
+    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridHeight + offsetY // row
+    const z = (groupIndex % groupsPerRow) * gridWidth + offsetZ // column
     const SPLIT_COLORS_X_OFFSET = 0.6 // to avoid z-fighting
-    return layerPosition === "input"
+    return layerPos === "input"
       ? splitColors
-        ? [0, 0, groupIndex * gridSize - (groupCount - 1) * gridSize * 0.5] // spread on z-axis
+        ? [0, 0, groupIndex * gridWidth - (groupCount - 1) * gridWidth * 0.5] // spread on z-axis
         : [groupIndex * SPLIT_COLORS_X_OFFSET, 0, 0]
       : [0, y, z]
-  }, [groupIndex, groupCount, neuronCount, layerPosition, spacing, splitColors])
+  }, [groupIndex, groupCount, layerPos, spacing, splitColors, height, width])
   return position
 }
 
 function useNeuronPositions(
   meshRef: InstancedMeshRef,
-  instances: number,
-  layerPosition: LayerPosition,
-  spacing: number
+  // instances: number,
+  layerPos: LayerPosition,
+  spacing: number,
+  outputShape: number[]
 ) {
+  const [, height, width = 1] = outputShape
+  const tempObj = useMemo(() => new THREE.Object3D(), [])
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!meshRef.current) return
-    if (DEBUG) console.log("upd pos", layerPosition, instances)
-    const positions = [] as [number, number, number][]
-    for (let i = 0; i < instances; i++) {
-      const position = getNeuronPosition(i, instances, layerPosition, spacing)
-      positions.push(position)
-      temp.position.set(...position)
-      temp.updateMatrix()
-      meshRef.current?.setMatrixAt(i, temp.matrix)
+    if (DEBUG) console.log("upd pos", layerPos, height, width)
+    for (let i = 0; i < height * width; i++) {
+      const position = getNeuronPosition(i, layerPos, height, width, spacing)
+      tempObj.position.set(...position)
+      tempObj.updateMatrix()
+      meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }
     meshRef.current.instanceMatrix.needsUpdate = true
-  }, [meshRef, instances, layerPosition, spacing])
+  }, [meshRef, tempObj, layerPos, spacing, height, width])
 }
 
 function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
@@ -187,12 +196,11 @@ let counter = 0
 function useScale(
   active: boolean,
   meshRef: InstancedMeshRef,
-  neurons: Neuron[],
+  nidsStr: string,
   layerIndex: number,
   groupIndex: number
 ) {
   // use string to avoid unnecessary updates
-  const nidsStr = neurons.map((n) => `${n.nid}`).join(",")
   const { selectedNid, hoveredNid } = useLocalSelected(layerIndex, groupIndex)
   const { invalidate } = useThree()
   const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
