@@ -75,7 +75,8 @@ export function useNeuronSelect(layerProps: LayerDef[]) {
         ...l,
         neurons: l.neurons.map((n, j) => {
           if (selN.nid === n.nid) return { ...n, isSelected: true }
-          if (n.visibleLayerIndex !== selN.visibleLayerIndex - 1) return n
+          if (n.layer?.visibleIndex !== (selN.layer?.visibleIndex ?? 0) - 1)
+            return n
           let highlightValue: number | undefined
           if (isFlat) highlightValue = tempObj[highlightProp]?.[j]
           else {

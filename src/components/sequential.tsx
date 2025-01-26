@@ -2,8 +2,6 @@ import React from "react"
 import { Layer } from "./layer"
 import * as tf from "@tensorflow/tfjs"
 import type { Dataset, LayerInput } from "@/lib/datasets"
-import { useActivations } from "@/lib/activations"
-import { useLayerLayout } from "@/lib/layer-layout"
 import { useLayerProps } from "@/lib/layer-props"
 import { useNeuronSelect } from "@/lib/neuron-select"
 import { HoverConnections } from "./connections"
@@ -16,28 +14,18 @@ interface SequentialProps {
 }
 
 export const Sequential = ({ model, ds, input }: SequentialProps) => {
-  const layouts = useLayerLayout(model)
-  const activations = useActivations(model, input)
-  const [layerProps, neuronRefs] = useLayerProps(
-    model,
-    ds,
-    layouts,
-    activations
-  )
-  const patchedLayerProps = useNeuronSelect(layerProps)
+  const [layerProps, neuronRefs] = useLayerProps(model, ds, input)
+  const patchedLayerProps = useNeuronSelect(layerProps) // TODO: prefer direct manipulation
   return (
     <group>
-      {patchedLayerProps.map((props, i) => {
-        const layerType = props.tfLayer.getClassName()
-        const { neurons, ...otherProps } = props
-        const neuronCount = props.neurons.length
-        const key = `${i}_${layerType}_${neuronCount}_${patchedLayerProps.length}`
+      {patchedLayerProps.map((props, i, layers) => {
+        const { layerType, neurons } = props
+        const key = `${i}_${layerType}_${neurons.length}_${patchedLayerProps.length}`
         return (
           <Layer
             key={key}
-            neurons={neurons}
-            {...otherProps}
-            allLayers={patchedLayerProps}
+            {...props}
+            allLayers={layers}
             model={model}
             neuronRefs={neuronRefs}
           />

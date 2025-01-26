@@ -1,29 +1,10 @@
-import { getLayerPosition, getUnits, LayerPosition } from "@/lib/layer-props"
+import type { LayerPosition } from "@/components/layer"
 import * as tf from "@tensorflow/tfjs"
-import { ReactElement, useMemo } from "react"
+import { ReactElement } from "react"
 
 export interface LayerLayout {
   geometry: ReactElement
   spacing: number
-  positions: [number, number, number][]
-}
-
-export function useLayerLayout(model?: tf.LayersModel) {
-  const layerLayout: LayerLayout[] = useMemo(
-    () =>
-      model?.layers.map((l) => {
-        const layerPosition = getLayerPosition(l, model)
-        const [geometry, spacing] = getGeometryAndSpacing(
-          l,
-          layerPosition,
-          getUnits(l)
-        )
-        const positions = getNeuronPositions(l, model, spacing)
-        return { geometry, spacing, positions }
-      }) ?? [],
-    [model]
-  )
-  return layerLayout
 }
 
 export const LAYER_SPACING = 11
@@ -38,7 +19,7 @@ const geometryMap: Record<string, ReactElement> = {
   sphere: <sphereGeometry args={[0.6, 32, 32]} />,
 }
 
-function getGeometryAndSpacing(
+export function getGeometryAndSpacing(
   layer: tf.layers.Layer,
   layerPosition: LayerPosition,
   units: number
@@ -62,20 +43,6 @@ export function getOffsetX(visibleIndex: number, totalVisibleLayers: number) {
     visibleIndex * LAYER_SPACING +
     (totalVisibleLayers - 1) * LAYER_SPACING * -0.5
   )
-}
-
-function getNeuronPositions(
-  layer: tf.layers.Layer,
-  model: tf.LayersModel,
-  spacing: number
-) {
-  const units = getUnits(layer)
-  const type = getLayerPosition(layer, model)
-  const positions = Array.from({ length: units }).map((_, i) => {
-    const [x, y, z] = getNeuronPosition(i, units, type, spacing)
-    return [x, y, z] as [number, number, number]
-  })
-  return positions
 }
 
 export function getGridWidth(

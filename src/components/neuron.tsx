@@ -20,7 +20,6 @@ export type NeuronDef = {
   nid: Nid
   layerIndex: number
   visibleLayerIndex: number
-  position: [number, number, number]
   ref: React.RefObject<NeuronRefType>
   hasColorChannels?: boolean
 }
