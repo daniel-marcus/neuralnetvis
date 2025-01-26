@@ -15,13 +15,14 @@ import { useActivations } from "./activations"
 // TODO: fix rawInput
 
 export function useLayerProps(
+  isPending: boolean,
   model: tf.LayersModel | undefined,
   ds: Dataset | undefined,
   input: LayerInput | undefined
   // rawInput?: LayerInput
 ) {
   const statelessLayers = useStatelessLayers(model, ds)
-  const activations = useActivations(model, input)
+  const activations = useActivations(isPending, model, input)
   const statefulLayers = useStatefulLayers(statelessLayers, activations)
   const neuronRefs = useMemo(
     () => statelessLayers.map((layer) => layer.neurons.map((n) => n.ref)),

@@ -4,11 +4,18 @@ import type { LayerInput } from "./datasets"
 import { DEBUG } from "@/lib/_debug"
 import { normalizeTensor } from "./normalization"
 
-export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
+export function useActivations(
+  isPending: boolean,
+  model?: tf.LayersModel,
+  input?: LayerInput
+) {
   return useMemo(() => {
-    if (!model || !input || input.length === 0) return []
+    if (isPending || !model || !input || input.length === 0) return []
     const startTime = Date.now()
     // TODO: handle multi-dimensional input without flattening
+
+    const shape = model.layers[0].batchInputShape
+    const [, ...dims] = shape as number[]
 
     const result = tf.tidy(() => {
       // Define a model that outputs activations for each layer
@@ -18,9 +25,6 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
         inputs: model.input,
         outputs: layerOutputs,
       })
-
-      const shape = model.layers[0].batchInputShape
-      const [, ...dims] = shape as number[]
 
       const tensor = tf.tensor([input], [1, ...dims])
       // Get the activations for each layer
@@ -42,5 +46,5 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
     const endTime = Date.now()
     if (DEBUG) console.log("Activations computed in", endTime - startTime, "ms")
     return result
-  }, [model, input])
+  }, [isPending, model, input])
 }

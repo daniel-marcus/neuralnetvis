@@ -218,13 +218,17 @@ export function useDatasets() {
   })
 
   const setStatusText = useStatusText((s) => s.setStatusText)
+  const [isLoading, setIsLoading] = useState(false)
+
   const [ds, setDataset] = useState<Dataset | undefined>(undefined)
   useEffect(() => {
     setStatusText("Loading dataset ...")
+    setIsLoading(true)
     console.log("loading dataset", datasetId)
     const datasetDef = datasets[datasetId]
     if (!datasetDef) return
     datasetDef.loadData().then((data) => {
+      setIsLoading(false)
       console.log("loaded dataset", datasetId)
       setDataset({
         ...datasetDef,
@@ -234,7 +238,7 @@ export function useDatasets() {
     return () => {
       setDataset(undefined)
     }
-  }, [datasetId, setStatusText])
+  }, [datasetId, setStatusText, setIsLoading])
 
   const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
 
@@ -309,7 +313,7 @@ export function useDatasets() {
     }
   }, [next, totalSamples, setI])
 
-  return [ds, input, trainingY, next] as const
+  return [ds, isLoading, input, trainingY, next] as const
 }
 
 async function fetchNpy(path: string): Promise<ParsedSafe> {

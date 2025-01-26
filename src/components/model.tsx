@@ -1,23 +1,37 @@
-import React, { createContext } from "react"
-import { Sequential } from "./sequential"
-import { useTraining } from "@/lib/training"
-import { useDatasets } from "@/lib/datasets"
-import { useModel } from "@/lib/model"
-import { UiOptionsContext, useUiOptions } from "@/lib/ui-options"
+import React from "react"
+import { Layer } from "./layer"
+import * as tf from "@tensorflow/tfjs"
+import type { Dataset, LayerInput } from "@/lib/datasets"
+import { useLayerProps } from "@/lib/layer-props"
+import { useNeuronSelect } from "@/lib/neuron-select"
+import { HoverConnections } from "./connections"
 
-export const TrainingYContext = createContext<number | undefined>(undefined)
+interface ModelProps {
+  isPending: boolean
+  model?: tf.LayersModel
+  ds?: Dataset
+  input?: LayerInput
+  rawInput?: LayerInput
+}
 
-export const Model = () => {
-  const [ds, input, trainingY, next] = useDatasets()
-  const model = useModel(ds)
-  const uiOptions = useUiOptions(ds)
-  useTraining(model, ds, next)
-  if (!model) return null
+export const Model = ({ model, ds, input, isPending }: ModelProps) => {
+  const [layerProps, neuronRefs] = useLayerProps(isPending, model, ds, input)
+  const patchedLayerProps = useNeuronSelect(layerProps) // TODO: prefer direct manipulation
   return (
-    <UiOptionsContext.Provider value={uiOptions}>
-      <TrainingYContext.Provider value={trainingY}>
-        <Sequential model={model} input={input} ds={ds} />
-      </TrainingYContext.Provider>
-    </UiOptionsContext.Provider>
+    <group>
+      {patchedLayerProps.map((props, i, layers) => {
+        const { layerType, neurons } = props
+        const key = `${i}_${layerType}_${neurons.length}_${layers.length}`
+        return (
+          <Layer
+            key={key}
+            {...props}
+            allLayers={layers}
+            neuronRefs={neuronRefs}
+          />
+        )
+      })}
+      <HoverConnections />
+    </group>
   )
 }

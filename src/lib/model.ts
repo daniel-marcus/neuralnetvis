@@ -1,7 +1,7 @@
 import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { DEBUG } from "@/lib/_debug"
@@ -37,6 +37,8 @@ const defaultModelConfig = {
 
 export function useModel(ds?: Dataset) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
   const modelConfigRef = useRef<Record<string, number>>({})
   const _modelConfig = useControls(
     "model",
@@ -46,7 +48,7 @@ export function useModel(ds?: Dataset) {
         {
           ...config,
           onEditStart: () => setIsEditing(true),
-          onEditEnd: () => setIsEditing(false),
+          onEditEnd: () => startTransition(() => setIsEditing(false)),
         },
       ])
     )
@@ -61,11 +63,15 @@ export function useModel(ds?: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
+  /* const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
   useEffect(() => {
+    setModel(undefined)
+  }, [ds])*/
+  const model = useMemo(() => {
+    // useEffect(() => {
     if (!ds) return
     const startTime = Date.now()
-    const [totalSamples, ...dims] = ds.data.trainX.shape
+    const [, ...dims] = ds.data.trainX.shape
     const inputShape = [null, ...dims]
 
     const hiddenLayerConfig = Object.keys(modelConfig)
@@ -78,30 +84,42 @@ export function useModel(ds?: Dataset) {
     const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
     if (DEBUG) console.log({ _model })
     if (!_model) return
-    const layersStr = _model.layers
+    const endTime = Date.now()
+    if (DEBUG) console.log(`create model took ${endTime - startTime}ms`)
+    return _model
+    /* async function setup() {
+      setStatusText("Generating new model ...")
+      await tf.setBackend("webgl").then((success) => {
+        if (DEBUG) console.info(`WebGL backend set with success: ${success}`)
+      })
+      setModel(_model)
+    } 
+    startTransition(() => setup())
+    return () => {
+      // _model.dispose()
+      // setModel(undefined)
+      // tf.disposeVariables()
+    } */
+  }, [modelConfig, ds])
+
+  useEffect(() => {
+    if (isPending || !model || !ds) return
+    const [totalSamples] = ds.data.trainX.shape
+    const layersStr = model.layers
       .map((l) => {
         const name = l.getClassName()
         const shape = l.outputShape.slice(1).join("x")
         return `${name} (${shape})`
       })
       .join(" | ")
-    const totalParamas = _model.countParams()
-    const text = `New Model: Sequential (${totalParamas.toLocaleString(
+    const totalParamas = model.countParams()
+    const text = `New Model: Model (${totalParamas.toLocaleString(
       "en-US"
     )} params)<br/>
 ${layersStr}<br/>
 Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
     setStatusText(text)
-    const endTime = Date.now()
-    if (DEBUG) console.log(`create model took ${endTime - startTime}ms`)
-    setModel(_model)
-    return () => {
-      _model.dispose()
-    }
-  }, [modelConfig, setStatusText, ds])
 
-  useEffect(() => {
-    if (!model || !ds) return
     if (!isModelCompiled(model)) {
       if (DEBUG) console.log("Model not compiled. Compiling ...")
       model.compile({
@@ -110,8 +128,8 @@ Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
         metrics: ["accuracy"],
       })
     }
-  }, [model, ds])
-  return model
+  }, [model, ds, setStatusText, isPending])
+  return [model, isPending] as const
 }
 
 function createModel(
@@ -124,7 +142,10 @@ function createModel(
   for (const c of layerConfig) {
     if (c.name.startsWith("dense")) {
       // dense layer
-      addDenseWithFlattenIfNeeded(model, { units: c.size, activation: "relu" })
+      addDenseWithFlattenIfNeeded(model, {
+        units: c.size,
+        activation: "relu",
+      })
     } else if (c.name.startsWith("conv")) {
       // conv2d layer + maxpooling
       model.add(

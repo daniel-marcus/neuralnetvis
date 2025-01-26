@@ -258,7 +258,6 @@ async function train(
     const history = await trainingPromise
     return history
   } finally {
-    console.log({ model })
     X.dispose()
     y.dispose()
   }

@@ -146,7 +146,7 @@ function useNeuronPositions(
 
 function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
   const tmpColor = useMemo(() => new THREE.Color(), [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!meshRef.current) return
     if (DEBUG) console.log("upd colors")
     for (const n of neurons) {

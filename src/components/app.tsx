@@ -2,26 +2,43 @@
 
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
-import { Model } from "./model"
 import { Leva } from "leva"
 import { StatusText } from "./status-text"
 import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
+import LoadingSpinner from "./loading-spinner"
+import React, { createContext } from "react"
+import { Model } from "./model"
+import { useTraining } from "@/lib/training"
+import { useDatasets } from "@/lib/datasets"
+import { useModel } from "@/lib/model"
+import { UiOptionsContext, useUiOptions } from "@/lib/ui-options"
 
 const levaTheme: LevaCustomTheme = {
   sizes: { numberInputMinWidth: "46px", controlWidth: "172px" },
 }
 
+export const TrainingYContext = createContext<number | undefined>(undefined)
+
 export const App = () => {
+  const [ds, isLoading, input, trainingY, next] = useDatasets()
+  const [model, isPending] = useModel(ds)
+  const uiOptions = useUiOptions(ds)
+  useTraining(model, ds, next)
   return (
     <div className="w-screen h-screen bg-[#110000]">
       <Canvas frameloop="always">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
         <OrbitControls target={[6, 0, 0]} />
-        <Model />
+        <UiOptionsContext.Provider value={uiOptions}>
+          <TrainingYContext.Provider value={trainingY}>
+            <Model model={model} input={input} ds={ds} isPending={false} />
+          </TrainingYContext.Provider>
+        </UiOptionsContext.Provider>
         <Stats />
       </Canvas>
       <Leva hideCopyButton theme={levaTheme} />
+      <LoadingSpinner isActive={isLoading || isPending} />
       <StatusText />
     </div>
   )

@@ -4,7 +4,7 @@ import { useContext, useRef } from "react"
 import { Mesh } from "three"
 import { Text } from "troika-three-text"
 import { NeuronDef, NeuronState } from "./neuron"
-import { TrainingYContext } from "./model"
+import { TrainingYContext } from "./app"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
