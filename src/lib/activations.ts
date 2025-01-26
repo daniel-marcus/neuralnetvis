@@ -28,13 +28,12 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
       ) as tf.Tensor<tf.Rank>[]
 
       const activations = _activations.map(
-        (activation) => activation.arraySync() as (number | number[])[][]
+        (activation) => activation.reshape([-1]) // flat tensor
       )
-      // TODO: handle multi-dimensional output!!
-      return activations.map((a) => a[0])
+      return activations
     })
     const endTime = Date.now()
     if (DEBUG) console.log("Activations computed in", endTime - startTime, "ms")
-    return result as number[][] // single activations for each layer and neuron
+    return result
   }, [model, input])
 }

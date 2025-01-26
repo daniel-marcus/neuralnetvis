@@ -4,6 +4,7 @@ import { Neuron, Nid } from "@/components/neuron"
 import { LayerDef } from "@/components/layer"
 import { useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
+import { DEBUG } from "./_debug"
 
 export const useSelected = create<{
   selectedNid: Nid | null
@@ -59,6 +60,7 @@ export function useNeuronSelect(layerProps: LayerDef[]) {
     const allNeurons = layerProps.flatMap((l) => l.neurons)
     const selN = allNeurons.find(({ nid }) => nid === selectedNid)
     if (!selN) return layerProps
+    if (DEBUG) console.log("selected", selN)
     const isFlat = !!selN.inputs && selN.inputs.length === selN.weights?.length
     const weightedInputs = isFlat
       ? getWeightedInputs(selN.inputs, selN.weights)

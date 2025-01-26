@@ -1,7 +1,7 @@
 import { ReactElement, useContext, useMemo } from "react"
 import { Neuron, NeuronRefType } from "./neuron"
 import { numColorChannels, type Dataset } from "@/lib/datasets"
-import { getVisibleLayers, type LayerPosition } from "@/lib/layer-props"
+import { getVisibleLayers } from "@/lib/layer-props"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { getOffsetX } from "@/lib/layer-layout"
@@ -9,15 +9,27 @@ import { UiOptionsContext } from "@/lib/ui-options"
 import * as tf from "@tensorflow/tfjs"
 import { NeuronGroup } from "./neuron-group"
 
+export type LayerType =
+  | "InputLayer"
+  | "Conv2D"
+  | "Dense"
+  | "Flatten"
+  | "MaxPooling2D"
+export type LayerPosition = "input" | "hidden" | "output" | "invisible"
+
 export interface LayerDef {
   index: number
   visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
+  layerType: LayerType
   layerPosition: LayerPosition
   tfLayer: tf.layers.Layer
   neurons: Neuron[]
   geometry: ReactElement
   spacing: number
   neuronsMap?: Map<string, Neuron>
+  prevLayer?: LayerDef
+  prevVisibleLayer?: LayerDef
+  maxAbsWeight?: number
 }
 
 interface LayerContext {
@@ -31,7 +43,7 @@ export type LayerProps = LayerDef & LayerContext
 
 export const Layer = (props: LayerProps) => {
   const { visibleIndex, allLayers, ds, layerPosition, tfLayer } = props
-  const { neurons } = props
+  const { neurons, prevVisibleLayer } = props
   const colorChannels = numColorChannels(ds)
   const hasColorChannels = colorChannels > 1
   const groupCount =
@@ -44,7 +56,6 @@ export const Layer = (props: LayerProps) => {
     layerPosition === "input" && groupCount > 1 && !splitColors
 
   const visibleLayers = getVisibleLayers(allLayers)
-  const prevLayer = visibleLayers[visibleIndex - 1]
   const position = useMemo(
     () => [getOffsetX(visibleIndex, visibleLayers.length), 0, 0],
     [visibleIndex, visibleLayers.length]
@@ -72,8 +83,8 @@ export const Layer = (props: LayerProps) => {
           )
         })}
       </group>
-      {!!prevLayer && !!prevLayer.neurons.length && (
-        <Connections layer={props} prevLayer={prevLayer} />
+      {!!prevVisibleLayer && !!prevVisibleLayer.neurons.length && (
+        <Connections layer={props} prevLayer={prevVisibleLayer} />
       )}
     </>
   )

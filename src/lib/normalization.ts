@@ -1,9 +1,17 @@
+import * as tf from "@tensorflow/tfjs"
+
 export function normalize(data: number[] | unknown) {
   // min-max normalization [0, 1]
   if (!Array.isArray(data)) return [] as number[]
   const max = Math.max(...data)
   const min = Math.min(...data)
   return data.map((v) => (v - min) / (max - min))
+}
+
+export function normalizeTensor(tensor: tf.Tensor) {
+  const min = tensor.min()
+  const max = tensor.max()
+  return tensor.sub(min).div(max.sub(min))
 }
 
 export function standardize(column: number[] | undefined) {

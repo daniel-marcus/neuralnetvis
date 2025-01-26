@@ -5,7 +5,6 @@ import type { Dataset, LayerInput } from "@/lib/datasets"
 import { useActivations } from "@/lib/activations"
 import { useLayerLayout } from "@/lib/layer-layout"
 import { useLayerProps } from "@/lib/layer-props"
-import { Neuron } from "./neuron"
 import { useNeuronSelect } from "@/lib/neuron-select"
 import { HoverConnections } from "./connections"
 
@@ -28,23 +27,17 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
   const patchedLayerProps = useNeuronSelect(layerProps)
   return (
     <group>
-      {patchedLayerProps.map((props, i, arr) => {
+      {patchedLayerProps.map((props, i) => {
         const layerType = props.tfLayer.getClassName()
-        const { neurons: _neurons, ...otherProps } = props
-        // enrich neurons with context
-        const neurons: Neuron[] = _neurons.map((n) => ({
-          ...n,
-          layer: props,
-          prevLayer: arr[i - 1],
-        }))
+        const { neurons, ...otherProps } = props
         const neuronCount = props.neurons.length
-        const key = `${i}_${layerType}_${neuronCount}_${layerProps.length}`
+        const key = `${i}_${layerType}_${neuronCount}_${patchedLayerProps.length}`
         return (
           <Layer
             key={key}
             neurons={neurons}
             {...otherProps}
-            allLayers={layerProps}
+            allLayers={patchedLayerProps}
             model={model}
             neuronRefs={neuronRefs}
           />

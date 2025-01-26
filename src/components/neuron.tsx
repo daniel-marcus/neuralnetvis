@@ -40,6 +40,7 @@ export type NeuronState = {
 type NeuronContext = {
   layer?: LayerDef
   prevLayer?: LayerDef
+  prevVisibleLayer?: LayerDef
   allLayers?: LayerDef[]
 }
 
