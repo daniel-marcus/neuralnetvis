@@ -9,7 +9,7 @@ import { useSelected } from "@/lib/neuron-select"
 import { DEBUG } from "@/lib/_debug"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
-const MAX_LINES_PER_LAYER = 100
+const MAX_LINES_PER_LAYER = 50
 const MIN_LINE_WIDTH = 0.1
 
 type NeuronConnectionsProps = {
@@ -17,42 +17,39 @@ type NeuronConnectionsProps = {
   prevLayer: LayerDef
 }
 
+export const HoverConnections = () => {
+  const hovered = useSelected((s) => s.hovered)
+  if (!hovered) return null
+  return (
+    <group name={`hovered_node_connections`}>
+      {hovered.inputNeurons?.map((inputN) => {
+        const prevNeuron = hovered.prevLayer?.neuronsMap?.get(inputN.nid)
+        if (!prevNeuron) return null
+        return (
+          <DynamicLine2
+            key={`${hovered.nid}_${prevNeuron.nid}`}
+            fromRef={prevNeuron.ref}
+            toRef={hovered.ref}
+            width={0.5}
+          />
+        )
+      })}
+    </group>
+  )
+}
+
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const { showLines } = useContext(UiOptionsContext)
-  // TODO: refactor / separate from layer connections
-  const hoveredNid = useSelected((s) => s.hoveredNid)
-  const hovN = hoveredNid
-    ? layer.neurons.find(({ nid }) => nid === hoveredNid)
-    : undefined
   const layerMaxWeight = useMemo(() => {
     const allWeights = layer.neurons.flatMap((n) => n.weights ?? [])
     return allWeights.reduce((max, w) => Math.max(max, w), -Infinity)
   }, [layer])
-  if (!showLines) return null
   let lineCount = 0
   const type = layer.tfLayer.getClassName()
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(type)
   return (
     <Suspense fallback={null}>
-      {isConvOrMaxPool && !!hovN && !!hovN.inputNeurons && (
-        <group name={`hovered_node_connections`}>
-          {hovN.inputNeurons?.map((inputN) => {
-            const prevNeuron = prevLayer.neurons.find(
-              (n) => n.nid === inputN.nid
-            )
-            if (!prevNeuron) return null
-            return (
-              <DynamicLine2
-                key={`${hovN.index}_${prevNeuron.index}`}
-                fromRef={prevNeuron.ref}
-                toRef={hovN.ref}
-                width={0.5}
-              />
-            )
-          })}
-        </group>
-      )}
-      {!isConvOrMaxPool && (
+      {showLines && !isConvOrMaxPool && (
         <group name={`layer_${layer.index}_connections`}>
           {layer.neurons
             .filter(
@@ -64,35 +61,37 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
               if (activation < LINE_ACTIVATION_THRESHOLD) return null
               const { weights } = neuron
               if (!weights) return null
-              const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
-              return weights
-                .map((weight) => ({ weight, index: weights.indexOf(weight) }))
-                .filter(() => {
-                  if (lineCount > MAX_LINES_PER_LAYER) {
-                    if (DEBUG) console.log("Max lines reached")
-                    return false
-                  }
-                  return true
-                })
-                .filter(({ weight }) => weight > layerMaxWeight * 0.5)
-                .sort((a, b) => b.weight - a.weight)
-                .slice(0, maxLinesPerNeuron)
-                .map(({ weight, index }) => {
-                  const prevNeuron = prevLayer.neurons[index]
-                  const prevActivation = prevNeuron?.activation ?? 0
-                  const weightedInput = weight * prevActivation
-                  if (weightedInput < MIN_LINE_WIDTH) return null
-                  const lineWidth = Math.round(weightedInput * 10) / 10
-                  lineCount++
-                  return (
-                    <DynamicLine2
-                      key={`${neuron.index}_${prevNeuron.index}`}
-                      fromRef={prevNeuron.ref}
-                      toRef={neuron.ref}
-                      width={lineWidth}
-                    />
-                  )
-                })
+              // const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
+              return (
+                weights
+                  .map((weight) => ({ weight, index: weights.indexOf(weight) }))
+                  .filter(() => {
+                    if (lineCount > MAX_LINES_PER_LAYER) {
+                      if (DEBUG) console.log("Max lines reached")
+                      return false
+                    }
+                    return true
+                  })
+                  .filter(({ weight }) => weight > layerMaxWeight * 0.5)
+                  .sort((a, b) => b.weight - a.weight)
+                  // .slice(0, maxLinesPerNeuron)
+                  .map(({ weight, index }) => {
+                    const prevNeuron = prevLayer.neurons[index]
+                    const prevActivation = prevNeuron?.activation ?? 0
+                    const weightedInput = weight * prevActivation
+                    if (weightedInput < MIN_LINE_WIDTH) return null
+                    const lineWidth = Math.round(weightedInput * 10) / 10
+                    lineCount++
+                    return (
+                      <DynamicLine2
+                        key={`${neuron.index}_${prevNeuron.index}`}
+                        fromRef={prevNeuron.ref}
+                        toRef={neuron.ref}
+                        width={lineWidth}
+                      />
+                    )
+                  })
+              )
             })}
         </group>
       )}

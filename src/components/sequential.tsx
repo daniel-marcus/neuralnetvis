@@ -6,6 +6,8 @@ import { useActivations } from "@/lib/activations"
 import { useLayerLayout } from "@/lib/layer-layout"
 import { useLayerProps } from "@/lib/layer-props"
 import { Neuron } from "./neuron"
+import { useNeuronSelect } from "@/lib/neuron-select"
+import { HoverConnections } from "./connections"
 
 interface SequentialProps {
   model?: tf.LayersModel
@@ -23,9 +25,10 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
     layouts,
     activations
   )
+  const patchedLayerProps = useNeuronSelect(layerProps)
   return (
     <group>
-      {layerProps.map((props, i, arr) => {
+      {patchedLayerProps.map((props, i, arr) => {
         const layerType = props.tfLayer.getClassName()
         const { neurons: _neurons, ...otherProps } = props
         // enrich neurons with context
@@ -47,6 +50,7 @@ export const Sequential = ({ model, ds, input }: SequentialProps) => {
           />
         )
       })}
+      <HoverConnections />
     </group>
   )
 }

@@ -14,9 +14,10 @@ export interface LayerDef {
   visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerPosition: LayerPosition
   tfLayer: tf.layers.Layer
-  neurons: Neuron[] // with context: T is Neuron type
+  neurons: Neuron[]
   geometry: ReactElement
   spacing: number
+  neuronsMap?: Map<string, Neuron>
 }
 
 interface LayerContext {

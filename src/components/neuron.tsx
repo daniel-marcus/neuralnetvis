@@ -1,6 +1,6 @@
 import React from "react"
 
-import type { Dataset, NodeInput } from "@/lib/datasets"
+import type { NodeInput } from "@/lib/datasets"
 import { LayerDef } from "./layer"
 import { InstancedMeshRef } from "./neuron-group"
 
@@ -41,7 +41,6 @@ type NeuronContext = {
   layer?: LayerDef
   prevLayer?: LayerDef
   allLayers?: LayerDef[]
-  ds?: Dataset
 }
 
 export type Neuron = NeuronDef & NeuronState & NeuronContext

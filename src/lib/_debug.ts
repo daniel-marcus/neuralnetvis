@@ -1,1 +1,4 @@
-export const DEBUG = false
+export let DEBUG = false
+export function toggleDebug() {
+  DEBUG = !DEBUG
+}

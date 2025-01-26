@@ -67,18 +67,15 @@ export function useLayerProps(
         layerPosition === "output"
           ? layerActivations
           : normalize(layerActivations)
-      /* const _inputs = activations?.[i - 1]
+      const _inputs = activations?.[i - 1]
       const inputs = Array.isArray(_inputs?.[0])
         ? _inputs.flat(2) // TODO: make dimensions flexible?
-        : _inputs */
+        : _inputs
       // TODO: use tensors?
       const { weights, biases } = weightsAndBiases[i]
       const flattenedWeights = weights?.flat(2)
       const type = l.getClassName()
       const prevLayer = acc[i - 1]
-      const prevNeuronsLookupMap = new Map(
-        prevLayer?.neurons.map((neuron) => [neuron.nid, neuron])
-      )
       const neurons: Neuron[] = neuronStems[i].map((neuronStem, j) => {
         const activation = layerActivations?.[j]
         let bias: number | undefined = undefined
@@ -118,11 +115,11 @@ export function useLayerProps(
               ? ds?.input?.labels?.[j]
               : undefined,
           inputNeurons: neuronStem._inputNids
-            ?.map((nid) => prevNeuronsLookupMap.get(nid))
+            ?.map((nid) => prevLayer?.neuronsMap?.get(nid))
             .filter(Boolean) as Neuron[],
-          /* 
-          inputs: inputs,
           weights: thisWeights,
+          inputs: inputs,
+          /* 
           prevLayer,
           ds, */
         }
@@ -132,7 +129,9 @@ export function useLayerProps(
         visibleIndex,
         layerPosition,
         tfLayer: l,
+        prevLayer,
         neurons,
+        neuronsMap: new Map(neurons.map((n) => [n.nid, n])),
         geometry,
         spacing,
         ds,
@@ -269,7 +268,7 @@ function getConv2DState(
   biases?: number[],
   flattenedWeights?: (number | number[])[]
 ) {
-  return [undefined, undefined] as const
+  // return [undefined, undefined] as const
 
   let bias: number | undefined = undefined
   let thisWeights: number[] | undefined = undefined

@@ -1,6 +1,8 @@
 import { useControls } from "leva"
 import { Dataset, numColorChannels } from "./datasets"
-import { createContext } from "react"
+import { createContext, useEffect } from "react"
+import { DEBUG, toggleDebug } from "./_debug"
+import { useStatusText } from "@/components/status-text"
 
 interface UiOptions {
   showLines: boolean
@@ -35,6 +37,21 @@ export function useUiOptions(ds?: Dataset) {
     { collapsed: true },
     [hasColorChannels]
   )
+
+  const setStatusText = useStatusText((s) => s.setStatusText)
+
+  useEffect(() => {
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === "d") {
+        toggleDebug()
+        setStatusText(`Debug mode ${DEBUG ? "enabled" : "disabled"}`)
+      }
+    }
+    window.addEventListener("keydown", onKeydown)
+    return () => {
+      window.removeEventListener("keydown", onKeydown)
+    }
+  }, [setStatusText])
 
   return uiOptions
 }

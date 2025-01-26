@@ -41,18 +41,20 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   useNeuronPositions(meshRef, instances, layerPosition, spacing)
   useColors(meshRef, groupedNeurons)
   const eventHandlers = useInteractions(groupedNeurons)
-  useScale(meshRef, groupedNeurons, layerIndex, groupIndex)
+  const scaleOnHover = props.tfLayer.getClassName() === "Dense"
+  useScale(scaleOnHover, meshRef, groupedNeurons, layerIndex, groupIndex)
   const { splitColors } = useContext(UiOptionsContext)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
   )
+  const { onPointerOut, ...otherEventHandlers } = eventHandlers
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} onPointerOut={onPointerOut}>
       <instancedMesh
         ref={meshRef}
         name={`layer_${layerIndex}_group_${groupIndex}`}
         args={[, , groupedNeurons.length]}
-        {...eventHandlers}
+        {...otherEventHandlers}
       >
         {props.geometry}
         <meshStandardMaterial ref={materialRef} />
@@ -120,6 +122,7 @@ function useNeuronPositions(
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!meshRef.current) return
+    if (DEBUG) console.log("upd pos", layerPosition, instances)
     const positions = [] as [number, number, number][]
     for (let i = 0; i < instances; i++) {
       const position = getNeuronPosition(i, instances, layerPosition, spacing)
@@ -182,6 +185,7 @@ function getColorChannelColor(n: Neuron) {
 let counter = 0
 
 function useScale(
+  active: boolean,
   meshRef: InstancedMeshRef,
   neurons: Neuron[],
   layerIndex: number,
@@ -194,6 +198,7 @@ function useScale(
   const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
   const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {
+    if (!active) return
     if (!meshRef.current) return
     const nids = nidsStr.split(",")
     if (nids.length > 256) return
@@ -218,6 +223,7 @@ function useScale(
     meshRef.current.instanceMatrix.needsUpdate = true
     invalidate()
   }, [
+    active,
     meshRef,
     selectedNid,
     hoveredNid,
@@ -277,11 +283,13 @@ function useInteractions(groupedNeurons: Neuron[]) {
         if (selectedNid && neuron.nid === selectedNid)
           showNeuronState(neuron, true)
         else showNeuronState(neuron)
-        toggleHovered(neuron.nid)
+        toggleHovered(neuron)
+        // toggleSelected(neuron.nid)
       },
       onPointerOut: () => {
         showNeuronState(null)
         toggleHovered(null)
+        // toggleSelected(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
         const neuron = groupedNeurons[e.instanceId as number]
