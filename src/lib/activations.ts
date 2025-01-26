@@ -2,6 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useMemo } from "react"
 import type { LayerInput } from "./datasets"
 import { DEBUG } from "@/lib/_debug"
+import { normalizeTensor } from "./normalization"
 
 export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
   return useMemo(() => {
@@ -27,9 +28,15 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
         tensor
       ) as tf.Tensor<tf.Rank>[]
 
-      const activations = _activations.map(
-        (activation) => activation.reshape([-1]) // flat tensor
-      )
+      const activations = _activations.map((layerActivation) => {
+        const reshaped = layerActivation.reshape([-1])
+        return {
+          activations: reshaped.arraySync() as number[],
+          normalizedActivations: normalizeTensor(
+            reshaped
+          ).arraySync() as number[],
+        }
+      })
       return activations
     })
     const endTime = Date.now()

@@ -276,12 +276,15 @@ export function useDatasets() {
       index * valsPerSample,
       (index + 1) * valsPerSample
     )
-    const result = tf
-      .tensor(flatVals as unknown as number[], [...dims]) // valsPerSample
-      .div(255)
-      .arraySync() as LayerInput
+    const result = tf.tidy(() => {
+      const tensor = tf
+        .tensor(flatVals as unknown as number[], [...dims])
+        .div(255)
+      return tensor.arraySync() as LayerInput
+    })
     return result
   }, [i, ds])
+
   const trainingY = useMemo(() => ds?.data.trainY[i - 1], [i, ds])
 
   const next = useCallback(

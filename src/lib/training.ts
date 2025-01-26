@@ -242,26 +242,26 @@ async function train(
     await trainingPromise
     trainingPromise = null
   }
+
   options = { ...defaultOptions, ...options }
 
-  const { data, shape } = ds.data.trainX
-
   // TODO: normalize in normalize layer?
-  const X = tf.tensor(data, shape).div(255)
-  const y = getY(ds.data.trainY, ds.output)
-  if (!isModelCompiled(model)) {
-    model.compile({
-      optimizer: tf.train.adam(),
-      loss: ds.loss,
-      metrics: ["accuracy"],
-    })
-  }
 
-  trainingPromise = model.fit(X, y, options).catch(console.error)
-  const history = await trainingPromise
-  X.dispose()
-  y.dispose()
-  return history
+  const { X, y } = tf.tidy(() => {
+    const { data, shape } = ds.data.trainX
+    const X = tf.tensor(data, shape).div(255)
+    const y = getY(ds.data.trainY, ds.output)
+    return { X, y }
+  })
+  try {
+    trainingPromise = model.fit(X, y, options)
+    const history = await trainingPromise
+    return history
+  } finally {
+    console.log({ model })
+    X.dispose()
+    y.dispose()
+  }
 }
 
 function getY(trainY: number[], output: Dataset["output"]) {
@@ -270,21 +270,18 @@ function getY(trainY: number[], output: Dataset["output"]) {
     : tf.tensor(trainY)
 }
 
-function isModelCompiled(model: tf.LayersModel) {
-  return model.loss !== undefined && model.optimizer !== undefined
-}
-
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
-  if (!ds.data.testX || !ds.data.testY)
-    return { loss: undefined, accuracy: undefined }
-  const { data, shape } = ds.data.testX
+  const { loss, accuracy } = tf.tidy(() => {
+    if (!ds.data.testX || !ds.data.testY)
+      return { loss: undefined, accuracy: undefined }
+    const { data, shape } = ds.data.testX
+    const X = tf.tensor(data, shape).div(255)
+    const y = getY(ds.data.testY, ds.output)
+    const result = model.evaluate(X, y, { batchSize: 64 })
+    const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
+    const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
+    return { loss, accuracy }
+  })
 
-  const X = tf.tensor(data, shape).div(255)
-  const y = getY(ds.data.testY, ds.output)
-  const result = model.evaluate(X, y, { batchSize: 64 })
-  const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
-  const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
-  X.dispose()
-  y.dispose()
   return { loss, accuracy }
 }

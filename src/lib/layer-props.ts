@@ -1,6 +1,5 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { normalizeTensor } from "./normalization"
 import { Index3D, Neuron, NeuronRefType, Nid } from "@/components/neuron"
 import { Dataset, LayerInput } from "./datasets"
 import { getGeometryAndSpacing } from "./layer-layout"
@@ -23,12 +22,7 @@ export function useLayerProps(
 ) {
   const statelessLayers = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
-  const weightsAndBiases = useMemo(() => getWeightsAndBiases(model), [model])
-  const statefulLayers = useStatefulLayers(
-    statelessLayers,
-    activations,
-    weightsAndBiases
-  )
+  const statefulLayers = useStatefulLayers(statelessLayers, activations)
   const neuronRefs = useMemo(
     () => statelessLayers.map((layer) => layer.neurons.map((n) => n.ref)),
     [statelessLayers]
@@ -75,14 +69,6 @@ export function getUnits(layer: tf.layers.Layer) {
   const [, ...dims] = layer.outputShape as number[] // [batch, height, width, channels]
   const flattenedNumber = dims.reduce((a, b) => a * b, 1)
   return flattenedNumber
-}
-
-function getWeightsAndBiases(model?: tf.LayersModel) {
-  if (!model) return []
-  return model.layers.map((layer) => {
-    const [weights, biases] = layer.getWeights()
-    return { biases, weights }
-  })
 }
 
 export function getLayerPosition(
@@ -167,6 +153,7 @@ function useStatelessLayers(
   return useMemo(() => {
     if (!model) return []
     const visibleLayers = model.layers.filter((l) => getUnits(l))
+
     return (
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const layerType = tfLayer.getClassName() as LayerType
@@ -276,10 +263,9 @@ function getLastVisibleLayer(
 
 function useStatefulLayers(
   statelessLayers: LayerStateful[],
-  activations?: tf.Tensor[],
-  weightsAndBiases?: { weights: tf.Tensor; biases: tf.Tensor }[]
+  activations?: { activations: number[]; normalizedActivations: number[] }[]
 ) {
-  return useMemo(() => {
+  const statefulLayers = useMemo(() => {
     const startTime = Date.now()
     if (!activations) return statelessLayers
     const result = statelessLayers.reduce((acc, layer, i) => {
@@ -288,28 +274,33 @@ function useStatefulLayers(
 
       // add state to each neuron
 
-      const layerActivations = activations?.[i]?.dataSync() // as number[] | undefined
+      const layerActivations = activations?.[i]?.activations
       const normalizedActivations =
         layerPos === "output"
           ? layerActivations
           : layerType === "Flatten"
           ? undefined
-          : normalizeTensor(activations?.[i]).dataSync()
+          : activations?.[i]?.normalizedActivations
 
-      const inputs =
-        (activations?.[i - 1]?.arraySync() as number[]) ?? undefined
+      const inputs = activations?.[i - 1]?.activations
 
-      const { biases, weights } = weightsAndBiases?.[i] ?? {}
+      const { transposedWeights, biasesArray, maxAbsWeight } = tf.tidy(() => {
+        const [weights, biases] = tfLayer.getWeights()
+        const transposedWeights = weights
+          ?.transpose()
+          .arraySync() as number[][][]
+        const biasesArray = biases?.arraySync() as number[] | undefined
+
+        const maxAbsWeight = // needed only for dense connections
+          layerType === "Dense"
+            ? (weights?.abs().max().dataSync()[0] as number | undefined)
+            : undefined
+
+        return { transposedWeights, biasesArray, maxAbsWeight }
+      })
       // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
       // for Dense layers we just set "filters" to the number of units to get the right weights and biases with the same code
       const filters = (tfLayer.getConfig().filters as number) ?? units
-      const transposedWeights = weights?.transpose().arraySync() as number[][][]
-      const biasesArray = biases?.arraySync() as number[] | undefined
-
-      const maxAbsWeight = // needed only for dense connections
-        layerType === "Dense"
-          ? (weights?.abs().max().dataSync()[0] as number | undefined)
-          : undefined
 
       const neurons: Neuron[] = statelessLayers[i].neurons.map((neuron, j) => {
         const activation = layerActivations?.[j]
@@ -336,8 +327,11 @@ function useStatefulLayers(
       return [...acc, statefullLayer]
     }, [] as LayerStateful[])
     const endTime = Date.now()
+
     if (DEBUG)
       console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
-  }, [statelessLayers, activations, weightsAndBiases])
+  }, [statelessLayers, activations])
+
+  return statefulLayers
 }
