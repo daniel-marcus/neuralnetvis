@@ -109,7 +109,7 @@ export function useModel(ds?: Dataset) {
       .map((l) => {
         const name = l.getClassName()
         const shape = l.outputShape.slice(1).join("x")
-        return `${name} (${shape})`
+        return `${name}&nbsp;(${shape})`
       })
       .join(" | ")
     const totalParamas = model.countParams()

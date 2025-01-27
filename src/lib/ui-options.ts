@@ -33,7 +33,7 @@ export function useUiOptions(ds?: Dataset) {
       },
       highlightProp: {
         value: defaultOptions.highlightProp as HighlightProp,
-        label: "onHover",
+        label: "onSelect",
         options: {
           "show weights": "weights",
           "show weighted inputs": "weightedInputs",
@@ -53,8 +53,7 @@ export function useUiOptions(ds?: Dataset) {
         toggleDebug()
         const debug = useDebug.getState().debug
         setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
-        if (debug) tf.enableDebugMode()
-        else tf.enableProdMode()
+        //if (debug) tf.enableDebugMode()
       }
       if (e.key === "s") {
         const memoryInfo = tf.memory() as tf.MemoryInfo & {

@@ -61,10 +61,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
     const allNeurons = layerProps.flatMap((l) => l.neurons)
     const selN = allNeurons.find(({ nid }) => nid === selectedNid)
     if (!selN) return layerProps
-    const isFlat = !!selN.inputs && selN.inputs.length === selN.weights?.length
-    const weightedInputs = isFlat
-      ? getWeightedInputs(selN.inputs, selN.weights)
-      : [] // TODO
+    const weightedInputs = getWeightedInputs(selN.inputs, selN.weights)
     const tempObj = {
       weights: normalizeWithSign(selN.weights),
       weightedInputs: normalizeWithSign(weightedInputs),
@@ -73,25 +70,14 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
     if (debug()) console.log("selected", selN, tempObj)
     // TODO: manipulate only affected nodes directly
     return layerProps.map((l) => {
-      const patchdNeurons = l.neurons.map((n, j) => {
+      const patchdNeurons = l.neurons.map((n) => {
         if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n
-        let highlightValue: number | undefined
-        if (isFlat)
-          highlightValue = tempObj[highlightProp as HighlightProp]?.[j]
-        else {
-          // Conv2D
-          const inputNids = selN.inputNids ?? []
-          if (!inputNids.find((nid) => nid === n.nid)) return n
 
-          const idx = inputNids.indexOf(n.nid)
-          // const weight = selN.weights?.[idx] ?? 0
-          // TODO ... calculate normalized weighted input ahead?
-          const weightedInput = selN.weights?.[idx] ?? 0 * (n.activation ?? 0)
-          highlightValue =
-            highlightProp === "weights"
-              ? tempObj[highlightProp]?.[idx]
-              : weightedInput // TODO ...
-        }
+        const inputNids = selN.inputNids ?? []
+        if (!inputNids.find((nid) => nid === n.nid)) return n
+
+        const idx = inputNids.indexOf(n.nid)
+        const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
         return {
           ...n,
           highlightValue,

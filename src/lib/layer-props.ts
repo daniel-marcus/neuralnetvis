@@ -283,7 +283,7 @@ function useStatefulLayers(
           ? undefined
           : activations?.[i]?.normalizedActivations
 
-      const inputs = activations?.[i - 1]?.activations
+      const prevActivations = activations?.[i - 1]?.activations // aka inputs
 
       const { transposedWeights, biasesArray, maxAbsWeight } = tf.tidy(() => {
         const [weights, biases] = tfLayer.getWeights()
@@ -299,6 +299,8 @@ function useStatefulLayers(
 
         return { transposedWeights, biasesArray, maxAbsWeight }
       })
+
+      const prevNeuronsMap = acc[i - 1]?.neuronsMap
       // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
       // for Dense layers we just set "filters" to the number of units to get the right weights and biases with the same code
       const filters = (tfLayer.getConfig().filters as number) ?? units
@@ -308,6 +310,13 @@ function useStatefulLayers(
         const filterIndex = j % filters // for dense layers this would be j
         const bias = biasesArray?.[filterIndex]
         const thisWeights = transposedWeights?.[filterIndex].flat(2)
+        const inputs =
+          layer.layerType === "Dense"
+            ? prevActivations
+            : (neuron.inputNids?.map(
+                // for Conv2D: only inputs from receptive field
+                (nid) => prevNeuronsMap?.get(nid)?.activation
+              ) as number[])
         return {
           ...neuron,
           layerType,
@@ -315,7 +324,7 @@ function useStatefulLayers(
           normalizedActivation: normalizedActivations?.[j],
           bias,
           weights: thisWeights,
-          inputs: inputs,
+          inputs,
         }
       })
       const statefullLayer = {
