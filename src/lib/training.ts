@@ -20,12 +20,17 @@ export function useTraining(
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
-    const onKeydown = (e: KeyboardEvent) => {
+    const onKeydown = async (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "t") toggleTraining()
       if (e.key === "b") {
-        const backend = tf.getBackend()
-        const newBackend = backend === "webgl" ? "webgpu" : "webgl"
+        const currentBackend = tf.getBackend()
+        const availableBackends = Object.entries(tf.engine().registryFactory)
+          .sort(([, a], [, b]) => b.priority - a.priority)
+          .map(([name]) => name)
+        const currIdx = availableBackends.indexOf(currentBackend)
+        const newBackend =
+          availableBackends[(currIdx + 1) % availableBackends.length]
         tf.setBackend(newBackend)
         setStatusText(`Switched backend to ${newBackend}`)
       }

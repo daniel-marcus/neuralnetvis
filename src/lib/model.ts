@@ -193,9 +193,11 @@ function isModelCompiled(model: tf.LayersModel) {
 function useWebGpu() {
   const [isReady, setIsReady] = useState(false)
   useEffect(() => {
-    tf.setBackend("webgpu").then(() => {
+    async function checkReady() {
+      await tf.ready()
       setIsReady(true)
-    })
+    }
+    checkReady()
   }, [])
   return isReady
 }
