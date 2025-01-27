@@ -12,7 +12,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isActive }) => {
       }`}
     >
       <div
-        className="w-12 h-12 border-4 border-t-transparent border-b-transparent border-white rounded-full animate-spin"
+        className="w-10 h-10 border-4 border-t-transparent border-b-transparent border-white rounded-full animate-spin"
         style={{
           animationDuration: "0.8s",
         }}

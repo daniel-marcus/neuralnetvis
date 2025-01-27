@@ -3,6 +3,7 @@ import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
+import "@tensorflow/tfjs-backend-webgpu"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
 
@@ -36,6 +37,7 @@ const defaultModelConfig = {
 }
 
 export function useModel(ds?: Dataset) {
+  const backendReady = useWebGpu()
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -69,7 +71,7 @@ export function useModel(ds?: Dataset) {
   }, [ds])*/
   const model = useMemo(() => {
     // useEffect(() => {
-    if (!ds) return
+    if (!ds || !backendReady) return
     const startTime = Date.now()
     const [, ...dims] = ds.data.trainX.shape
     const inputShape = [null, ...dims]
@@ -100,7 +102,7 @@ export function useModel(ds?: Dataset) {
       // setModel(undefined)
       // tf.disposeVariables()
     } */
-  }, [modelConfig, ds])
+  }, [backendReady, modelConfig, ds])
 
   useEffect(() => {
     if (isPending || !model || !ds) return
@@ -129,7 +131,7 @@ Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
       })
     }
   }, [model, ds, setStatusText, isPending])
-  return [model, isPending] as const
+  return [model, isPending || !backendReady] as const
 }
 
 function createModel(
@@ -184,4 +186,14 @@ function addDenseWithFlattenIfNeeded(
 
 function isModelCompiled(model: tf.LayersModel) {
   return model.loss !== undefined && model.optimizer !== undefined
+}
+
+function useWebGpu() {
+  const [isReady, setIsReady] = useState(false)
+  useEffect(() => {
+    tf.setBackend("webgpu").then(() => {
+      setIsReady(true)
+    })
+  }, [])
+  return isReady
 }

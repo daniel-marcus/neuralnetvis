@@ -12,6 +12,7 @@
     "@react-three/drei": "^9.120.6",
     "@react-three/fiber": "^9.0.0-rc.1",
     "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "jszip": "^3.10.1",
     "leva": "^0.10.0",
     "ndarray": "^1.0.19",

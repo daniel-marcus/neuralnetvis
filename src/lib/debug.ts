@@ -33,6 +33,7 @@ export function useDebug() {
           numBytesInGPUFree: number
         }
         const statusText = `
+Backend: ${tf.getBackend()}<br/>
 Memory: ${(memoryInfo.numBytes / 1024 / 1024).toFixed(2)} MB<br/>
 In GPU: ${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB<br/>
 Tensors: ${memoryInfo.numTensors} / Data Buffers: ${

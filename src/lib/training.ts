@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
+
 import { button, useControls } from "leva"
 
 import { Dataset } from "./datasets"
@@ -26,7 +27,7 @@ export function useTraining(
       if (e.key === "t") toggleTraining()
       if (e.key === "b") {
         const backend = tf.getBackend()
-        const newBackend = backend === "webgl" ? "cpu" : "webgl"
+        const newBackend = backend === "webgl" ? "webgpu" : "webgl"
         tf.setBackend(newBackend)
         setStatusText(`Switched backend to ${newBackend}`)
       }
@@ -145,10 +146,9 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const totalTime = (endTime - startTime) / 1000
           if (silent) next(trainSampleSize - 1) // update view
           const { accuracy, loss } = await getModelEvaluation(model, ds)
-          const backend = tf.getBackend()
           if (!trainingPromise || trainingComplete)
             setStatusText(
-              `Training finished (${backend})<br/>Loss: ${loss?.toFixed(
+              `Training finished<br/>Loss: ${loss?.toFixed(
                 4
               )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
             )
