@@ -4,7 +4,7 @@ import { useStatusText } from "@/components/status-text"
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
-import { debug } from "@/lib/_debug"
+import { debug } from "@/lib/debug"
 
 const defaultUnitConfig = {
   value: 32,

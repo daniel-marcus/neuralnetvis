@@ -223,7 +223,9 @@ Batch ${batchIndex + 1}/${totalBatches}`)
   }, [input, model, next, setLogs, ds])
 } */
 
-const defaultOptions: tf.ModelFitArgs = {
+type FitArgs = tf.ModelFitArgs // tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
+
+const defaultOptions: FitArgs = {
   batchSize: 1,
   epochs: 1,
   validationSplit: 0,
@@ -235,9 +237,7 @@ let trainingPromise: Promise<tf.History | void> | null = null
 async function train(
   model: tf.LayersModel,
   ds: Dataset,
-  options: tf.ModelFitArgs = {}
-  // output: Dataset["output"],
-  // lossFunction: Dataset["loss"] = "categoricalCrossentropy"
+  options: FitArgs = { epochs: 1, batchSize: 1 }
 ) {
   if (trainingPromise) {
     console.log("Changing ongoing training ...")
@@ -247,14 +247,13 @@ async function train(
 
   options = { ...defaultOptions, ...options }
 
-  // TODO: normalize in normalize layer?
-
   const { X, y } = tf.tidy(() => {
     const { data, shape } = ds.data.trainX
-    const X = tf.tensor(data, shape).div(255)
+    const X = tf.tensor(data, shape).div(255) // TODO: normalize somewhere else?
     const y = getY(ds.data.trainY, ds.output)
     return { X, y }
   })
+
   try {
     trainingPromise = model.fit(X, y, options)
     const history = await trainingPromise

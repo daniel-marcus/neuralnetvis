@@ -4,31 +4,25 @@ import { Neuron, Nid } from "@/components/neuron"
 import { LayerStateful } from "@/components/layer"
 import { useContext, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
-import { debug } from "./_debug"
+import { debug } from "./debug"
 import { HighlightProp, UiOptionsContext } from "./ui-options"
 
 export const useSelected = create<{
-  selectedNid: Nid | null
-  selectedNeuron: Neuron | null
   hovered: Neuron | null
+  selected: Neuron | null
   getHoveredNid: () => Nid | null
-  toggleSelectedNeuron: (n: Neuron | null) => void
-  toggleSelected: (Nid: Nid | null) => void
+  getSelectedNid: () => Nid | null
   toggleHovered: (n: Neuron | null) => void
+  toggleSelected: (n: Neuron | null) => void
 }>((set, get) => ({
-  selectedNid: null,
   hovered: null,
-  selectedNeuron: null,
-  toggleSelected: (nid) =>
-    set(({ selectedNid }) => ({
-      selectedNid: selectedNid === nid ? null : nid,
-    })),
-  toggleSelectedNeuron: (n) =>
-    set(({ selectedNeuron }) => ({
-      selectedNeuron:
-        selectedNeuron && n?.nid === selectedNeuron.nid ? null : n,
-    })),
+  selected: null,
   getHoveredNid: () => get().hovered?.nid ?? null,
+  getSelectedNid: () => get().selected?.nid ?? null,
+  toggleSelected: (n) =>
+    set(({ selected }) => ({
+      selected: selected && n?.nid === selected.nid ? null : n,
+    })),
   toggleHovered: (n) =>
     set(({ hovered }) => ({
       hovered: hovered && n?.nid === hovered.nid ? null : n,
@@ -41,7 +35,7 @@ function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
 
 export function useLocalSelected(layerIndex: number, groupIndex: number) {
   // returns values only if they are in the same group avoid unnecessary re-renders
-  const _selectedNid = useSelected((s) => s.selectedNid)
+  const _selectedNid = useSelected((s) => s.getSelectedNid())
   const _hoveredNid = useSelected((s) => s.getHoveredNid())
   return {
     selectedNid: isInGroup(_selectedNid, layerIndex, groupIndex)
@@ -55,7 +49,9 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
   const { highlightProp } = useContext(UiOptionsContext)
-  const selectedNid = useSelected((s) => s.selectedNid)
+  const _selectedNid = useSelected((s) => s.getSelectedNid())
+  const _hoveredNid = useSelected((s) => s.getHoveredNid())
+  const selectedNid = _hoveredNid || _selectedNid
   const patchedLayerProps = useMemo(() => {
     if (!selectedNid) return layerProps
     const allNeurons = layerProps.flatMap((l) => l.neurons)
@@ -68,7 +64,8 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
     }
 
     if (debug()) console.log("selected", selN, tempObj)
-    // TODO: manipulate only affected nodes directly
+
+    // TODO: manipulate only affected nodes directly for faster updates when hovering?
     return layerProps.map((l) => {
       const patchdNeurons = l.neurons.map((n) => {
         if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n

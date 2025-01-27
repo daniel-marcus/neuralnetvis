@@ -6,7 +6,7 @@ import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
 import { UiOptionsContext } from "@/lib/ui-options"
 import { useSelected } from "@/lib/neuron-select"
-import { debug } from "@/lib/_debug"
+import { debug } from "@/lib/debug"
 
 const LINE_ACTIVATION_THRESHOLD = 0.5
 const MAX_LINES_PER_LAYER = 50

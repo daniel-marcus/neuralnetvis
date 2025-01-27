@@ -23,6 +23,7 @@ export interface LayerStatic {
   layerType: LayerType
   layerPos: LayerPosition
   tfLayer: tf.layers.Layer
+  numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   geometry: ReactElement
   spacing: number
   prevLayer?: LayerStatic

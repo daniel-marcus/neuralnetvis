@@ -2,8 +2,9 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "nn3js",
-  description: "",
+  title: "Neuro Vis",
+  description:
+    "Wrap your head around neural networks and watch machines learning",
 }
 
 export default function RootLayout({

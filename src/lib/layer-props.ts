@@ -9,7 +9,7 @@ import {
   LayerStatic,
   LayerType,
 } from "@/components/layer"
-import { debug } from "@/lib/_debug"
+import { debug } from "@/lib/debug"
 import { useActivations } from "./activations"
 
 // TODO: fix rawInput
@@ -104,7 +104,10 @@ function getInputNeurons(
     )
   }
 
-  // the receptive field
+  // Conv2D or MaxPooling2D
+  // TODO: use tf.slice?
+
+  // get the receptive field
   const [filterHeight, filterWidth] =
     (l.getConfig().kernelSize as number[]) ??
     (l.getConfig().poolSize as number[]) ??
@@ -185,12 +188,15 @@ function useStatelessLayers(
           prevVisibleIndex
         )
 
+        const numBiases = (tfLayer.getConfig().filters as number) ?? units
+
         const layerStatic: LayerStatic = {
           index: layerIndex,
           visibleIndex,
           layerType,
           layerPos,
           tfLayer,
+          numBiases,
           prevLayer,
           prevVisibleLayer,
           geometry,
@@ -271,7 +277,6 @@ function useStatefulLayers(
     if (!activations) return statelessLayers
     const result = statelessLayers.reduce((acc, layer, i) => {
       const { tfLayer, layerPos, layerType } = layer
-      const units = layer.neurons.length
 
       // add state to each neuron
 
@@ -300,22 +305,18 @@ function useStatefulLayers(
         return { transposedWeights, biasesArray, maxAbsWeight }
       })
 
-      const prevNeuronsMap = acc[i - 1]?.neuronsMap
-      // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
-      // for Dense layers we just set "filters" to the number of units to get the right weights and biases with the same code
-      const filters = (tfLayer.getConfig().filters as number) ?? units
-
       const neurons: Neuron[] = statelessLayers[i].neurons.map((neuron, j) => {
         const activation = layerActivations?.[j]
-        const filterIndex = j % filters // for dense layers this would be j
+        // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
+        const filterIndex = j % layer.numBiases // for dense layers this would be j
         const bias = biasesArray?.[filterIndex]
         const thisWeights = transposedWeights?.[filterIndex].flat(2)
         const inputs =
           layer.layerType === "Dense"
             ? prevActivations
-            : (neuron.inputNids?.map(
+            : (neuron.inputNeurons?.map(
                 // for Conv2D: only inputs from receptive field
-                (nid) => prevNeuronsMap?.get(nid)?.activation
+                (n) => prevActivations[n.index]
               ) as number[])
         return {
           ...neuron,
