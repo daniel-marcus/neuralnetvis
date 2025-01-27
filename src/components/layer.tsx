@@ -52,14 +52,14 @@ export const Layer = (props: LayerProps) => {
   const { groups, prevVisibleLayer } = props
   const groupCount = groups.length
 
-  const { splitColors } = useContext(UiOptionsContext)
+  const { layerSpacing, splitColors } = useContext(UiOptionsContext)
   const hasAdditiveBlending =
     layerPos === "input" && groupCount > 1 && !splitColors
 
   const visibleLayers = getVisibleLayers(allLayers)
   const position = useMemo(
-    () => [getOffsetX(visibleIndex, visibleLayers.length), 0, 0],
-    [visibleIndex, visibleLayers.length]
+    () => [getOffsetX(visibleIndex, visibleLayers.length, layerSpacing), 0, 0],
+    [visibleIndex, visibleLayers.length, layerSpacing]
   )
   const ref = useAnimatedPosition(position, 0.1)
   if (!props.neurons.length) return null

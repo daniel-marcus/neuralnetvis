@@ -15,11 +15,13 @@ const defaultUnitConfig = {
   optional: true,
 }
 
+const MAX_CONV_SIZE = 32
+
 const defaultModelConfig = {
   conv1: {
     value: 4,
     min: 1,
-    max: 32,
+    max: MAX_CONV_SIZE,
     step: 1,
     optional: true,
     disabled: true,
@@ -27,7 +29,7 @@ const defaultModelConfig = {
   conv2: {
     value: 4,
     min: 1,
-    max: 32,
+    max: MAX_CONV_SIZE,
     step: 1,
     optional: true,
     disabled: true,

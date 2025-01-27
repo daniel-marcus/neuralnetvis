@@ -5,12 +5,14 @@ import { createContext } from "react"
 export type HighlightProp = "weights" | "weightedInputs"
 
 interface UiOptions {
+  layerSpacing: number
   showLines: boolean
   splitColors: boolean
   highlightProp: HighlightProp | string
 }
 
 const defaultOptions = {
+  layerSpacing: 10,
   showLines: true,
   splitColors: false,
   highlightProp: "weightedInputs",
@@ -23,6 +25,13 @@ export function useUiOptions(ds?: Dataset) {
   const uiOptions: UiOptions = useControls(
     "ui",
     {
+      layerSpacing: {
+        label: "spacing",
+        value: defaultOptions.layerSpacing,
+        min: 1,
+        max: 16,
+        step: 1,
+      },
       showLines: defaultOptions.showLines,
       splitColors: {
         value: defaultOptions.splitColors,
