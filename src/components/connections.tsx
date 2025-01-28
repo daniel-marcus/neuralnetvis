@@ -4,7 +4,7 @@ import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
 import { LayerStateful, LayerStateless } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
-import { UiOptionsContext } from "@/lib/ui-options"
+import { VisOptionsContext } from "@/lib/vis-options"
 import { useSelected } from "@/lib/neuron-select"
 import { debug } from "@/lib/debug"
 
@@ -41,7 +41,7 @@ export const HoverConnections = () => {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const { showLines } = useContext(UiOptionsContext)
+  const { showLines } = useContext(VisOptionsContext)
   const layerMaxWeight = layer.maxAbsWeight ?? 1
   let lineCount = 0
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)

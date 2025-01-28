@@ -5,7 +5,7 @@ import { LayerStateful } from "@/components/layer"
 import { useContext, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { debug } from "./debug"
-import { HighlightProp, UiOptionsContext } from "./ui-options"
+import { HighlightProp, VisOptionsContext } from "./vis-options"
 
 export const useSelected = create<{
   hovered: Neuron | null
@@ -48,7 +48,7 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
 }
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
-  const { highlightProp } = useContext(UiOptionsContext)
+  const { highlightProp } = useContext(VisOptionsContext)
   const _selectedNid = useSelected((s) => s.getSelectedNid())
   const _hoveredNid = useSelected((s) => s.getHoveredNid())
   const selectedNid = _hoveredNid || _selectedNid

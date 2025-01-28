@@ -11,7 +11,7 @@ import { Model } from "./model"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
-import { UiOptionsContext, useUiOptions } from "@/lib/ui-options"
+import { VisOptionsContext, useVisOptions } from "@/lib/vis-options"
 import { useDebug } from "@/lib/debug"
 import { Console } from "./console"
 
@@ -24,7 +24,7 @@ export const TrainingYContext = createContext<number | undefined>(undefined)
 export const App = () => {
   const [ds, isLoading, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
-  const uiOptions = useUiOptions(ds)
+  const visOptions = useVisOptions(ds)
   const [isTraining, batchCount] = useTraining(model, ds, next)
   const debug = useDebug()
   return (
@@ -34,7 +34,7 @@ export const App = () => {
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
         <OrbitControls target={[6, 0, 0]} />
-        <UiOptionsContext.Provider value={uiOptions}>
+        <VisOptionsContext.Provider value={visOptions}>
           <TrainingYContext.Provider value={trainingY}>
             <Model
               model={model}
@@ -44,7 +44,7 @@ export const App = () => {
               batchCount={batchCount}
             />
           </TrainingYContext.Provider>
-        </UiOptionsContext.Provider>
+        </VisOptionsContext.Provider>
         {debug && <Stats />}
       </Canvas>
       <Leva hideCopyButton theme={levaTheme} />

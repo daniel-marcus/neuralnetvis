@@ -5,6 +5,7 @@ import { useStatusText } from "@/components/status-text"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
+import { debug } from "./debug"
 
 const n = new npyjs()
 
@@ -75,10 +76,10 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/mnist/x_train.npz"),
-        fetchNpy("/data/mnist/y_train.npz"),
-        fetchNpy("/data/mnist/x_test.npz"),
-        fetchNpy("/data/mnist/y_test.npz"),
+        fetchNpy("/data/mnist_20k/x_train.npz"),
+        fetchNpy("/data/mnist_20k/y_train.npz"),
+        fetchNpy("/data/mnist_20k/x_test.npz"),
+        fetchNpy("/data/mnist_20k/y_test.npz"),
       ])
       const trainX = xTrain
       const testX = xTest
@@ -114,10 +115,10 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/cifar10/x_train.npy"),
-        fetchNpy("/data/cifar10/y_train.npy"),
-        fetchNpy("/data/cifar10/x_test.npy"),
-        fetchNpy("/data/cifar10/y_test.npy"),
+        fetchNpy("/data/cifar10_20k/x_train.npz"),
+        fetchNpy("/data/cifar10_20k/y_train.npz"),
+        fetchNpy("/data/cifar10_20k/x_test.npz"),
+        fetchNpy("/data/cifar10_20k/y_test.npz"),
       ])
       return {
         trainX: xTrain,
@@ -153,10 +154,10 @@ const datasets: DatasetDef[] = [
     },
     loadData: async () => {
       const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/fashion_mnist/x_train.npz"),
-        fetchNpy("/data/fashion_mnist/y_train.npz"),
-        fetchNpy("/data/fashion_mnist/x_test.npz"),
-        fetchNpy("/data/fashion_mnist/y_test.npz"),
+        fetchNpy("/data/fashion_mnist_20k/x_train.npz"),
+        fetchNpy("/data/fashion_mnist_20k/y_train.npz"),
+        fetchNpy("/data/fashion_mnist_20k/x_test.npz"),
+        fetchNpy("/data/fashion_mnist_20k/y_test.npz"),
       ])
       // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
       xTrain.shape = [...xTrain.shape, 1]
@@ -322,15 +323,17 @@ export function useDatasets() {
 
 async function fetchNpy(path: string): Promise<ParsedSafe> {
   const startTime = new Date().getTime()
+  // TODO: error handling
   if (path.endsWith(".npy")) {
     const parsed = await n.load(path)
     const endTime = new Date().getTime()
-    console.log(`Loaded ${path} in ${endTime - startTime}ms`)
+    if (debug()) console.log(`Loaded ${path} in ${endTime - startTime}ms`)
     if (!isSafe(parsed))
       throw new Error("BigUint64Array/BigInt64Array not supported")
     return parsed
   } else if (path.endsWith(".npz")) {
     const response = await fetch(path, {
+      // TODO: cache invalidation when files change?
       cache: "force-cache",
     })
     const arrayBuffer = await response.arrayBuffer()

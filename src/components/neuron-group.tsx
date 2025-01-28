@@ -12,7 +12,7 @@ import * as THREE from "three"
 import { getGridSize, getNeuronPosition } from "@/lib/layer-layout"
 import { LayerPosition } from "@/components/layer"
 import { NeuronLabels } from "./neuron-label"
-import { UiOptionsContext } from "@/lib/ui-options"
+import { VisOptionsContext } from "@/lib/vis-options"
 import { LayerProps } from "./layer"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useStatusText } from "./status-text"
@@ -48,7 +48,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const eventHandlers = useInteractions(groupedNeurons)
   const scaleOnHover = props.tfLayer.getClassName() === "Dense"
   useScale(scaleOnHover, meshRef, nidsStr, layerIndex, groupIndex)
-  const { splitColors } = useContext(UiOptionsContext)
+  const { splitColors } = useContext(VisOptionsContext)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
   )
@@ -98,7 +98,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
 
 function useGroupPosition(props: NeuronGroupProps) {
   const { groupIndex, groupCount, layerPos, spacing } = props
-  const { splitColors } = useContext(UiOptionsContext)
+  const { splitColors } = useContext(VisOptionsContext)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6

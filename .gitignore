@@ -40,6 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-public/model/
-public/data/
-src/data/
+public/_dev/

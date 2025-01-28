@@ -5,7 +5,7 @@ import { getVisibleLayers } from "@/lib/layer-props"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { getOffsetX } from "@/lib/layer-layout"
-import { UiOptionsContext } from "@/lib/ui-options"
+import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
 
@@ -52,7 +52,7 @@ export const Layer = (props: LayerProps) => {
   const { groups, prevVisibleLayer } = props
   const groupCount = groups.length
 
-  const { layerSpacing, splitColors } = useContext(UiOptionsContext)
+  const { layerSpacing, splitColors } = useContext(VisOptionsContext)
   const hasAdditiveBlending =
     layerPos === "input" && groupCount > 1 && !splitColors
 

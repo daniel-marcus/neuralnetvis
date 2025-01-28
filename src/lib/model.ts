@@ -108,7 +108,8 @@ export function useModel(ds?: Dataset) {
       })
       .join(" | ")
     const totalParamas = model.countParams()
-    const text = `New Model: Model (${totalParamas.toLocaleString(
+    const modelName = model.getClassName()
+    const text = `New Model: ${modelName} (${totalParamas.toLocaleString(
       "en-US"
     )} params)<br/>
 ${layersStr}<br/>
