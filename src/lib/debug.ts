@@ -24,7 +24,7 @@ export function useDebug() {
         toggleDebug()
         const debug = useDebugStore.getState().debug
         setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
-        if (debug) tf.enableDebugMode()
+        // if (debug) tf.enableDebugMode()
       }
       if (e.key === "s") {
         const memoryInfo = tf.memory() as tf.MemoryInfo & {

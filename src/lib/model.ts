@@ -67,12 +67,11 @@ export function useModel(ds?: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  /* const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
+  const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
   useEffect(() => {
     setModel(undefined)
-  }, [ds])*/
-  const model = useMemo(() => {
-    // useEffect(() => {
+  }, [ds])
+  useEffect(() => {
     if (!ds || !backendReady) return
     const startTime = Date.now()
     const [, ...dims] = ds.data.trainX.shape
@@ -86,24 +85,15 @@ export function useModel(ds?: Dataset) {
       .filter((l) => l.size)
 
     const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
+
     if (debug()) console.log({ _model })
     if (!_model) return
     const endTime = Date.now()
     if (debug()) console.log(`create model took ${endTime - startTime}ms`)
-    return _model
-    /* async function setup() {
-      setStatusText("Generating new model ...")
-      await tf.setBackend("webgl").then((success) => {
-        if (debug()) console.info(`WebGL backend set with success: ${success}`)
-      })
-      setModel(_model)
-    } 
-    startTransition(() => setup())
+    startTransition(() => setModel(_model))
     return () => {
-      // _model.dispose()
-      // setModel(undefined)
-      // tf.disposeVariables()
-    } */
+      _model.dispose()
+    }
   }, [backendReady, modelConfig, ds])
 
   useEffect(() => {
