@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const appVersion = "" // process.env.APP_VERSION
+const appVersion = process.env.APP_VERSION
 
 export const Console = () => {
   const [entries] = useState<string[]>([])
