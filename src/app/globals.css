@@ -3,6 +3,7 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gray-text: rgb(140, 146, 164);
 }
 
 /*

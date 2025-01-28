@@ -74,7 +74,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
                     }
                     return true
                   })
-                  .filter(({ absWeight }) => absWeight > layerMaxWeight * 0.5)
+                  .filter(({ absWeight }) => absWeight >= layerMaxWeight * 0.3)
                   .sort((a, b) => b.absWeight - a.absWeight) // TODO: optimize
                   // .slice(0, maxLinesPerNeuron)
                   .map(({ absWeight, index }) => {

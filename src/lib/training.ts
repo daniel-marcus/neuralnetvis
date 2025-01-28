@@ -4,6 +4,7 @@ import { button, useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
 import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
+import { useLevaStores } from "@/components/menu"
 
 let epochCount = 0
 let sessionEpochCount = 0
@@ -40,23 +41,29 @@ export function useTraining(
     }
   }, [toggleTraining, setStatusText])
 
-  const trainingConfig = useControls("training", {
-    validationSplit: {
-      label: "validSplit",
-      value: 0.1,
-      min: 0,
-      max: 0.5,
-      step: 0.1,
-      render: () => false,
+  const { trainStore } = useLevaStores()
+  const trainingConfig = useControls(
+    {
+      batchSize: { value: 256, min: 1, max: 512, step: 1 },
+      epochs: { value: 3, min: 1, max: 100, step: 1 },
+      validationSplit: {
+        label: "validSplit",
+        value: 0.1,
+        min: 0,
+        max: 0.5,
+        step: 0.1,
+      },
+      silent: true,
     },
-    batchSize: { value: 256, min: 1, max: 1024, step: 1 },
-    epochs: { value: 3, min: 1, max: 100, step: 1 },
-    silent: true,
-  })
+    { store: trainStore }
+  )
 
-  useControls("training", () => ({
-    logs: logsPlot(),
-  }))
+  useControls(
+    () => ({
+      logs: logsPlot(),
+    }),
+    { store: trainStore }
+  )
 
   const setLogs = useLogStore((s) => s.setLogs)
 
@@ -66,12 +73,12 @@ export function useTraining(
   }, [model, setLogs])
 
   useControls(
-    "training",
     {
       [`${isTraining ? "Stop" : "Start"} training`]: button(() =>
         toggleTraining()
       ),
     },
+    { store: trainStore },
     [isTraining]
   )
 

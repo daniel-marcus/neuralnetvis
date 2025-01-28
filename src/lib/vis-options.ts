@@ -1,6 +1,7 @@
 import { useControls } from "leva"
 import { Dataset, numColorChannels } from "./datasets"
 import { createContext } from "react"
+import { useLevaStores } from "@/components/menu"
 
 export type HighlightProp = "weights" | "weightedInputs"
 
@@ -22,8 +23,8 @@ export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
 
 export function useVisOptions(ds?: Dataset) {
   const hasColorChannels = numColorChannels(ds) > 1
+  const { visStore } = useLevaStores()
   const visOptions: VisOptions = useControls(
-    "vis",
     {
       layerSpacing: {
         label: "spacing",
@@ -46,7 +47,7 @@ export function useVisOptions(ds?: Dataset) {
         },
       },
     },
-    { collapsed: true },
+    { store: visStore },
     [hasColorChannels]
   )
   return visOptions

@@ -13,7 +13,7 @@ import { create } from "zustand"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
-const { Row } = Components
+const { Row, Label } = Components
 
 export type TrainingLog = {
   epoch?: number
@@ -123,8 +123,9 @@ function LogsPlot() {
   )
   return (
     <>
-      <Row>
-        <div className={`flex justify-center space-x-2`}>
+      <Row input>
+        <Label>logs</Label>
+        <div className={`flex justify-center`}>
           {METRICS.map((m) => {
             const isSelected = m === metric
             return (
@@ -147,7 +148,7 @@ function LogsPlot() {
         <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
           <canvas
             ref={canvasRef}
-            className={`w-full h-[80px]`}
+            className={`w-full h-[120px]`}
             onMouseMove={onMouseMove}
           />
           <Dot ref={dotRef} hidden={!tooltip} />

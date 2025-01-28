@@ -6,6 +6,7 @@ import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
 import { debug } from "./debug"
+import { useLevaStores } from "@/components/menu"
 
 const n = new npyjs()
 
@@ -210,13 +211,17 @@ const datasets: DatasetDef[] = [
 ]
 
 export function useDatasets() {
-  const { datasetId } = useControls("data", {
-    datasetId: {
-      value: 0,
-      label: "dataset",
-      options: Object.fromEntries(datasets.map((d, i) => [d.name, i])),
+  const { dataStore } = useLevaStores()
+  const { datasetId } = useControls(
+    {
+      datasetId: {
+        value: 0,
+        label: "dataset",
+        options: Object.fromEntries(datasets.map((d, i) => [d.name, i])),
+      },
     },
-  })
+    { store: dataStore }
+  )
 
   const setStatusText = useStatusText((s) => s.setStatusText)
   const [isLoading, setIsLoading] = useState(false)
@@ -245,7 +250,6 @@ export function useDatasets() {
 
   const initialRandomIndex = Math.floor(Math.random() * totalSamples)
   const [{ i }, set, get] = useControls(
-    "data",
     () => ({
       i: {
         label: "currSample",
@@ -255,6 +259,7 @@ export function useDatasets() {
         step: 1,
       },
     }),
+    { store: dataStore },
     [totalSamples]
   )
   useEffect(() => {
