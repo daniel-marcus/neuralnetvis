@@ -13,6 +13,7 @@ export function useTraining(
   ds: Dataset | undefined,
   next: (step?: number) => void
 ) {
+  const [batchCounter, setBatchCounter] = useState(0)
   const [isTraining, setIsTraining] = useState(false)
 
   const toggleTraining = useCallback(() => setIsTraining((t) => !t), [])
@@ -123,7 +124,10 @@ export function useTraining(
               : isLastBatch(batchIndex)
               ? remainingSamples % batchSize
               : batchSize
-          if (!silent) next(step)
+          if (!silent) {
+            next(step) // trigger view update
+            setBatchCounter((prev) => prev + 1) // trigger model update
+          }
         },
         onBatchEnd: (batchIndex, logs) => {
           if (isLastBatch(batchIndex)) sessionEpochCount++
@@ -179,7 +183,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
 
   // useManualTraining(model, input, next, setLogs, ds)
 
-  return isTraining
+  return [isTraining, batchCounter] as const
 }
 
 /* export function useManualTraining(

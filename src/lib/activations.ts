@@ -9,6 +9,7 @@ export function useActivations(
   model?: tf.LayersModel,
   input?: LayerInput
 ) {
+  // TODO: use async .array() method?
   return useMemo(() => {
     if (isPending || !model || !input || input.length === 0) return []
     const startTime = Date.now()

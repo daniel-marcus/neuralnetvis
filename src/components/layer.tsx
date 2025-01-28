@@ -17,7 +17,7 @@ export type LayerType =
   | "MaxPooling2D"
 export type LayerPosition = "input" | "hidden" | "output" | "invisible"
 
-export interface LayerStatic {
+export interface LayerStateless {
   index: number
   visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerType: LayerType
@@ -26,13 +26,13 @@ export interface LayerStatic {
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   geometry: ReactElement
   spacing: number
-  prevLayer?: LayerStatic
-  prevVisibleLayer?: LayerStatic
+  prevLayer?: LayerStateless
+  prevVisibleLayer?: LayerStateless
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
 }
 
-export interface LayerStateful extends LayerStatic {
+export interface LayerStateful extends LayerStateless {
   neurons: Neuron[]
   neuronsMap?: Map<Nid, Neuron>
   maxAbsWeight?: number

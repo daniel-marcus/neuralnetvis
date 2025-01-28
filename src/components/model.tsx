@@ -12,10 +12,23 @@ interface ModelProps {
   ds?: Dataset
   input?: LayerInput
   rawInput?: LayerInput
+  batchCount?: number
 }
 
-export const Model = ({ model, ds, input, isPending }: ModelProps) => {
-  const [layerProps, neuronRefs] = useLayerProps(isPending, model, ds, input)
+export const Model = ({
+  model,
+  ds,
+  input,
+  isPending,
+  batchCount,
+}: ModelProps) => {
+  const [layerProps, neuronRefs] = useLayerProps(
+    isPending,
+    model,
+    ds,
+    input,
+    batchCount
+  )
   const patchedLayerProps = useNeuronSelect(layerProps) // TODO: prefer direct manipulation
   return (
     <group>

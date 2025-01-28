@@ -1,7 +1,7 @@
 import { Suspense, useContext, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
-import { LayerStateful, LayerStatic } from "./layer"
+import { LayerStateful, LayerStateless } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
 import { NeuronRefType } from "./neuron"
 import { UiOptionsContext } from "@/lib/ui-options"
@@ -14,7 +14,7 @@ const MIN_LINE_WIDTH = 0.1
 
 type NeuronConnectionsProps = {
   layer: LayerStateful
-  prevLayer: LayerStatic
+  prevLayer: LayerStateless
 }
 
 export const HoverConnections = () => {

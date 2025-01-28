@@ -24,7 +24,7 @@ export const App = () => {
   const [ds, isLoading, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const uiOptions = useUiOptions(ds)
-  const isTraining = useTraining(model, ds, next)
+  const [isTraining, batchCount] = useTraining(model, ds, next)
   const debug = useDebug()
   return (
     <div className="w-screen h-screen bg-[#110000]">
@@ -34,7 +34,13 @@ export const App = () => {
         <OrbitControls target={[6, 0, 0]} />
         <UiOptionsContext.Provider value={uiOptions}>
           <TrainingYContext.Provider value={trainingY}>
-            <Model model={model} input={input} ds={ds} isPending={false} />
+            <Model
+              model={model}
+              input={input}
+              ds={ds}
+              isPending={false}
+              batchCount={batchCount}
+            />
           </TrainingYContext.Provider>
         </UiOptionsContext.Provider>
         {debug && <Stats />}
