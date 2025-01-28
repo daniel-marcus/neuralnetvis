@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@react-three/drei": "^9.120.6",
-    "@react-three/fiber": "^9.0.0-rc.1",
+    "@react-three/fiber": "^9.0.0-rc.5",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "jszip": "^3.10.1",

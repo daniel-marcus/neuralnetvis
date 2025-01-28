@@ -142,7 +142,11 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         onTrainEnd: async () => {
           const endTime = Date.now()
           const totalTime = (endTime - startTime) / 1000
-          if (silent) next(trainSampleSize - 1) // update view
+          if (silent) {
+            const processedSamples = trainSampleSize - 1
+            next(processedSamples) // update view
+            setBatchCounter((c) => c + processedSamples) // update weights
+          }
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           if (!trainingPromise || trainingComplete)
             setStatusText(
