@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react"
 import { create } from "zustand"
 
 export const useStatusText = create<{
@@ -10,10 +11,18 @@ export const useStatusText = create<{
 
 export const StatusText = () => {
   const statusText = useStatusText((s) => s.statusText)
+  const keptText = useRef<string>("")
+  useEffect(() => {
+    if (statusText) {
+      keptText.current = statusText
+    }
+  }, [statusText])
   return (
     <div
-      className="fixed z-[2] bottom-0 right-0 text-right text-sm p-4 text-white select-none max-w-[50vh] overflow-auto"
-      dangerouslySetInnerHTML={{ __html: statusText }}
+      className={`fixed z-[2] bottom-0 right-0 text-right p-4 select-none max-w-[50vh] text-white text-sm ${
+        !!statusText ? "opacity-100 duration-0" : "opacity-0 duration-300"
+      } transition-opacity ease-in-out`}
+      dangerouslySetInnerHTML={{ __html: statusText || keptText.current }}
     ></div>
   )
 }

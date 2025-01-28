@@ -298,12 +298,13 @@ function useWeightsAndBiases(
             return [weights, biases, maxAbsWeight]
           })
           try {
+            await tf.ready()
             const weights = await ws?.array()
             const biases = await bs?.array()
             const maxAbsWeight = await maw?.array()
             return { weights, biases, maxAbsWeight } as WeightsBiases
-          } catch {
-            // console.error("error updating weights", { bs, ws, maw, e })
+          } catch (e) {
+            console.error("error updating weights", { bs, ws, maw, e })
             return { weights: undefined, biases: undefined, maxAbsWeight: 0 }
           } finally {
             ws?.dispose()

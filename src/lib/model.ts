@@ -6,6 +6,7 @@ import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
+import { setBackendIfAvailable } from "./training"
 
 const defaultUnitConfig = {
   value: 32,
@@ -39,7 +40,7 @@ const defaultModelConfig = {
 }
 
 export function useModel(ds?: Dataset) {
-  const backendReady = useWebGpu()
+  const backendReady = useBackend()
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -134,6 +135,7 @@ function createModel(
   const model = tf.sequential()
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
   for (const c of layerConfig) {
+    const i = layerConfig.indexOf(c)
     if (c.name.startsWith("dense")) {
       // dense layer
       addDenseWithFlattenIfNeeded(model, {
@@ -149,7 +151,8 @@ function createModel(
           activation: "relu",
         })
       )
-      model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
+      if (layerConfig[i + 1]?.name.startsWith("dense"))
+        model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
     }
   }
   if (!layerConfig.length) {
@@ -180,11 +183,11 @@ function isModelCompiled(model: tf.LayersModel) {
   return model.loss !== undefined && model.optimizer !== undefined
 }
 
-function useWebGpu() {
+function useBackend() {
   const [isReady, setIsReady] = useState(false)
   useEffect(() => {
     async function checkReady() {
-      await tf.ready()
+      await (setBackendIfAvailable("webgl") || tf.ready())
       setIsReady(true)
     }
     checkReady()

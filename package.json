@@ -27,7 +27,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/ndarray": "^1.0.14",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.12.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.172.0",

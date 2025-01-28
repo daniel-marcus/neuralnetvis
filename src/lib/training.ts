@@ -26,9 +26,7 @@ export function useTraining(
       if (e.key === "t") toggleTraining()
       if (e.key === "b") {
         const currentBackend = tf.getBackend()
-        const availableBackends = Object.entries(tf.engine().registryFactory)
-          .sort(([, a], [, b]) => b.priority - a.priority)
-          .map(([name]) => name)
+        const availableBackends = getAvailableBackends()
         const currIdx = availableBackends.indexOf(currentBackend)
         const newBackend =
           availableBackends[(currIdx + 1) % availableBackends.length]
@@ -51,19 +49,10 @@ export function useTraining(
       step: 0.1,
       render: () => false,
     },
-    batchSize: { value: 256, min: 1, max: 512, step: 1 },
+    batchSize: { value: 256, min: 1, max: 1024, step: 1 },
     epochs: { value: 3, min: 1, max: 100, step: 1 },
-    silent: false,
+    silent: true,
   })
-
-  useEffect(() => {
-    if (!trainingPromise)
-      setStatusText(
-        trainingConfig.silent
-          ? "Silent mode activated.<br/>Graphics will upate only after training."
-          : "Silent mode deactivated.<br/>Graphics will update during training."
-      )
-  }, [trainingConfig.silent, setStatusText])
 
   useControls("training", () => ({
     logs: logsPlot(),
@@ -109,6 +98,8 @@ export function useTraining(
     const epochs = initialEpoch + _epochs - sessionEpochCount
     async function startTraining() {
       if (!model || !ds) return
+      // use wegpu for silent training (faster)
+      if (silent) await setBackendIfAvailable("webgpu")
       let startTime = Date.now()
       const totalBatches = Math.ceil(trainSampleSize / batchSize)
       const isLastBatch = (batchIndex: number) =>
@@ -155,7 +146,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
           const { accuracy, loss } = await getModelEvaluation(model, ds)
           if (!trainingPromise || trainingComplete)
             setStatusText(
-              `Training finished<br/>Loss: ${loss?.toFixed(
+              `Training finished (${tf.getBackend()})<br/>Loss: ${loss?.toFixed(
                 4
               )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
             )
@@ -174,6 +165,7 @@ Batch ${batchIndex + 1}/${totalBatches}`)
         initialEpoch,
       }
       await train(model, ds, options)
+      await setBackendIfAvailable("webgl")
     }
     startTraining()
     return () => {
@@ -291,4 +283,15 @@ async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
   })
 
   return { loss, accuracy }
+}
+
+export async function setBackendIfAvailable(backend: string) {
+  return getAvailableBackends().includes(backend) && tf.setBackend(backend)
+}
+
+function getAvailableBackends() {
+  // sort backends by priority: [webgpu, webgl, cpu]
+  return Object.entries(tf.engine().registryFactory)
+    .sort(([, a], [, b]) => b.priority - a.priority)
+    .map(([name]) => name)
 }

@@ -13,6 +13,7 @@ import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
 import { UiOptionsContext, useUiOptions } from "@/lib/ui-options"
 import { useDebug } from "@/lib/debug"
+import { Console } from "./console"
 
 const levaTheme: LevaCustomTheme = {
   sizes: { numberInputMinWidth: "46px", controlWidth: "172px" },
@@ -28,6 +29,7 @@ export const App = () => {
   const debug = useDebug()
   return (
     <div className="w-screen h-screen bg-[#110000]">
+      <Console />
       <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
