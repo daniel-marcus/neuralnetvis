@@ -15,7 +15,7 @@ declare module "@react-three/fiber" {
   }
 }
 
-const FONT_SIZE = 2.5
+const FONT_SIZE = 2
 
 interface NeuronLabelsProps {
   neuron: NeuronDef & NeuronState
@@ -87,6 +87,7 @@ export const NeuronLabel = ({
       text={children}
       position={getTextPos(x, y, z, side)}
       fontSize={FONT_SIZE}
+      font={"/fonts/Menlo-Regular.woff"}
       color={color}
       anchorX={
         OUTPUT_ORIENT === "vertical"

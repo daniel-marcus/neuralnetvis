@@ -23,14 +23,15 @@ export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
 
 export function useVisOptions(ds?: Dataset) {
   const hasColorChannels = numColorChannels(ds) > 1
-  const { visStore } = useLevaStores()
+  const { modelStore } = useLevaStores()
   const visOptions: VisOptions = useControls(
+    "visualization",
     {
       layerSpacing: {
         label: "spacing",
         value: defaultOptions.layerSpacing,
         min: 1,
-        max: 16,
+        max: 20,
         step: 1,
       },
       showLines: defaultOptions.showLines,
@@ -47,7 +48,7 @@ export function useVisOptions(ds?: Dataset) {
         },
       },
     },
-    { store: visStore },
+    { store: modelStore },
     [hasColorChannels]
   )
   return visOptions

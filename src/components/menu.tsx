@@ -23,16 +23,19 @@ const levaTheme: LevaCustomTheme = {
     md: "0.875rem",
     rowGap: "0.875rem",
   },
-  sizes: { numberInputMinWidth: "70px", controlWidth: "246px" },
+  sizes: {
+    numberInputMinWidth: "70px",
+    controlWidth: "246px",
+    folderTitleHeight: "2rem",
+  },
   fontSizes: { root: "0.875rem" },
 }
 
-const tabs = ["data", "model", "vis", "train", "about"]
+const tabs = ["data", "model", "train", "about"]
 
 interface LevaStores {
   dataStore: StoreType
   modelStore: StoreType
-  visStore: StoreType
   trainStore: StoreType
 }
 
@@ -44,12 +47,9 @@ export function withLevaStores<T extends object>(
   const WrappedComponent = (props: T) => {
     const dataStore = useCreateStore()
     const modelStore = useCreateStore()
-    const visStore = useCreateStore()
     const trainStore = useCreateStore()
     return (
-      <LevaStoresContext.Provider
-        value={{ dataStore, modelStore, visStore, trainStore }}
-      >
+      <LevaStoresContext.Provider value={{ dataStore, modelStore, trainStore }}>
         <Component {...props} />
       </LevaStoresContext.Provider>
     )
@@ -128,12 +128,22 @@ export const Menu = () => {
 }
 
 const About = () => (
-  <div className="px-3 py-2 sm:p-4 text-gray-text">
+  <div
+    className="p-4 text-gray-text rounded-[10px] text-left text-sm"
+    style={{
+      backgroundColor: levaTheme.colors?.elevation1,
+    }}
+  >
     Hi, I am Daniel. How are you?
     <br />
     <br />
     Check out my{" "}
-    <a className="text-white" target="_blank" href="https://danielmarcus.de/">
+    <a
+      className="text-white"
+      target="_blank"
+      href="https://danielmarcus.de/"
+      style={{ color: levaTheme.colors?.accent2 }}
+    >
       website
     </a>
     !

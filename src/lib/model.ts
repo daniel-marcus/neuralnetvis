@@ -48,6 +48,7 @@ export function useModel(ds?: Dataset) {
   const { modelStore } = useLevaStores()
   const modelConfigRef = useRef<Record<string, number>>({})
   const _modelConfig = useControls(
+    "layers",
     Object.fromEntries(
       Object.entries(defaultModelConfig).map(([key, config]) => [
         key,

@@ -47,7 +47,7 @@ export const logsPlot = createPlugin({
 
 type TooltipContent = React.ReactNode | null
 
-const TOOLTIP_WIDTH = 120
+const TOOLTIP_WIDTH = 132
 
 const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
 const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
@@ -148,7 +148,7 @@ function LogsPlot() {
         <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
           <canvas
             ref={canvasRef}
-            className={`w-full h-[120px]`}
+            className={`w-full h-[132px]`}
             onMouseMove={onMouseMove}
           />
           <Dot ref={dotRef} hidden={!tooltip} />
@@ -183,7 +183,8 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         ref={ref}
         className={`${
           hidden ? "hidden" : ""
-        } absolute w-[120px] bg-black text-white p-1 rounded transform -translate-x-1/2 -translate-y-full`}
+        } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full`}
+        style={{ width: `${TOOLTIP_WIDTH}px` }}
       >
         {children}
       </div>
@@ -222,7 +223,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
         const x = getX(i)
         ctx.beginPath()
         ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
-        ctx.lineWidth = 0.5
+        ctx.lineWidth = 0.3
         ctx.moveTo(x, 0)
         ctx.lineTo(x, height)
         ctx.stroke()
@@ -232,7 +233,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
     // second: draw loss line
     ctx.beginPath()
     ctx.strokeStyle = "white"
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1.5
     logs.forEach((log, i) => {
       const value = log[metric]
       if (typeof value !== "number") return
