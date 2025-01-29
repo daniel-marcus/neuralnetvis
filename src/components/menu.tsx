@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
+import { create } from "zustand"
 
 type Tab = {
   key: string
   content?: (stores: ControlStores) => React.ReactElement
   isDefault?: boolean
   children?: Tab[]
+  parent?: Tab // will be added in addParent
 }
 
 const _tabs: Tab[] = [
@@ -32,29 +34,51 @@ const _tabs: Tab[] = [
     ],
   },
   {
-    key: "about",
-    content: () => <About />,
+    key: "info",
+    content: () => <Info />,
     isDefault: true,
   },
 ]
 
-interface TabWithParent extends Tab {
-  parent: Tab | null
-  children?: TabWithParent[]
-}
-
-function addParent(tab: Tab, parent: Tab | null): TabWithParent {
+function addParent(tab: Tab, parent?: Tab): Tab {
   const children = tab.children?.map((c) => addParent(c, tab))
   return { ...tab, parent, children }
 }
 
-const tabs = _tabs.map((t) => addParent(t, null))
+const tabs = _tabs.map((t) => addParent(t))
+const defaultTab = tabs.find((t) => t.isDefault)
+
+export const useTabsStore = create<{
+  activeTab: Tab | null
+  clickTab: (tab: Tab | null) => void
+  goHome: () => void
+  goBack: () => void
+  setTab: (key: string) => void
+}>((set) => ({
+  activeTab: defaultTab ?? null,
+  clickTab: (tab) =>
+    set(({ activeTab }) => {
+      if (activeTab === tab) return { activeTab: tab?.parent ?? null }
+      const defaultChild = tab?.children?.find((c) => c.isDefault)
+      return { activeTab: defaultChild ?? tab }
+    }),
+  goHome: () => set({ activeTab: null }),
+  goBack: () =>
+    set(({ activeTab }) => {
+      const { parent } = activeTab ?? {}
+      const parentIsCategory = !parent?.content
+      return { activeTab: parentIsCategory ? parent?.parent : parent }
+    }),
+  setTab: (key) => {
+    const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
+    const tab = allTabs.find((t) => t.key === key)
+    const defaultChild = tab?.children?.find((c) => c.isDefault)
+    if (tab) set({ activeTab: defaultChild ?? tab })
+  },
+}))
 
 export const Menu = () => {
-  const defaultTab = tabs.find((t) => t.isDefault)
-  const [activeTab, setActiveTab] = useState<TabWithParent | null>(
-    defaultTab ?? null
-  )
+  const { activeTab, goHome } = useTabsStore()
   const stores = useControlStores()
   const content = activeTab?.content ? activeTab.content(stores) : null
   const lastContent = useRef<React.ReactElement | null>(null)
@@ -64,14 +88,14 @@ export const Menu = () => {
   return (
     <div className="fixed top-0 left-0 w-[100vw] z-10 flex justify-between items-start  pointer-events-none select-none flex-wrap">
       <button
-        className="p-3 sm:p-4 pointer-events-auto cursor-pointer"
-        onClick={() => setActiveTab(null)}
+        className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer"
+        onClick={goHome}
       >
-        Neural Net Vis
+        NeuralNetVis
       </button>
       <div className="pointer-events-auto flex-1">
         <div className="flex justify-end items-center w-full ">
-          <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <Tabs />
         </div>
         <div
           className={`absolute right-0 w-[380px] max-w-[100vw] ${
@@ -85,14 +109,9 @@ export const Menu = () => {
   )
 }
 
-interface TabsProps {
-  tabs: TabWithParent[]
-  activeTab: TabWithParent | null
-  setActiveTab: React.Dispatch<React.SetStateAction<TabWithParent | null>>
-}
-
-const Tabs = ({ tabs, activeTab, setActiveTab }: TabsProps) => {
-  function renderTabs(tabs: TabWithParent[], parent?: TabWithParent) {
+const Tabs = () => {
+  const { activeTab, clickTab, goBack } = useTabsStore()
+  function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {
       const isActive = activeTab?.key === t.key
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
@@ -105,13 +124,10 @@ const Tabs = ({ tabs, activeTab, setActiveTab }: TabsProps) => {
         (isActive && !isCategory) ||
         isChild ||
         (isSibling && !activeTab?.children)
-      const onTabClick = () => {
-        const defaultChild = !activeTab && t.children?.find((c) => c.isDefault)
-        setActiveTab((a) => (a === t ? parent ?? null : defaultChild || t))
-      }
+      const onClick = () => clickTab(t)
       return (
         <React.Fragment key={t.key}>
-          <TabButton isActive={isActive} isShown={isShown} onClick={onTabClick}>
+          <TabButton isActive={isActive} isShown={isShown} onClick={onClick}>
             {t.key}
           </TabButton>
           {!!t.children && (isActive || isParent) && (
@@ -120,13 +136,6 @@ const Tabs = ({ tabs, activeTab, setActiveTab }: TabsProps) => {
         </React.Fragment>
       )
     })
-  }
-  const goBack = () => {
-    const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
-    const parent = allTabs.find((t) => t.children?.includes(activeTab!))
-    const grandParent = allTabs.find((t) => t.children?.includes(parent!))
-    const dest = activeTab?.content ? grandParent ?? null : parent ?? null
-    setActiveTab(dest)
   }
   return (
     <>
@@ -155,9 +164,9 @@ const TabButton = ({
   children,
 }: TabButtonProps) => (
   <button
-    className={`p-3 sm:p-4 cursor-pointer ${isActive ? "text-white" : ""} ${
-      isShown ? "" : "hidden"
-    }`}
+    className={`p-[10px] sm:p-4 cursor-pointer ${
+      isActive ? "text-white" : ""
+    } ${isShown ? "" : "hidden"}`}
     onClick={onClick}
   >
     {children}
@@ -172,23 +181,47 @@ function Box({ children }: { children: React.ReactNode }) {
   )
 }
 
-function About() {
+function Info() {
+  const setTab = useTabsStore((s) => s.setTab)
   return (
     <Box>
-      Hi, I am Daniel. How are you?
-      <br />
-      <br />
-      Check out my{" "}
-      <a
-        className="text-accent"
-        target="_blank"
-        href="https://danielmarcus.de/"
-      >
-        website
-      </a>
-      !
-      <br />
-      <br />v{process.env.APP_VERSION}
+      <p className="mb-4">
+        Wrap your head around neural networks and watch machines learn!
+      </p>
+      <p className="mb-4">
+        If you are new to the topic, you might want to start with the{" "}
+        <Button onClick={() => setTab("learn")}>learn</Button> section.
+      </p>
+      <p className="mb-8">
+        Otherwise, dive in and{" "}
+        <Button onClick={() => setTab("play")}>play</Button> with NNs right here
+        in your browser!
+      </p>
+      <p>
+        v{process.env.APP_VERSION} | 2025 by{" "}
+        <a
+          className="text-accent"
+          target="_blank"
+          href="https://danielmarcus.de/"
+        >
+          Daniel Marcus
+        </a>
+      </p>
     </Box>
   )
 }
+
+const Button = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+}) => (
+  <button
+    className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
+    onClick={onClick}
+  >
+    {children}
+  </button>
+)

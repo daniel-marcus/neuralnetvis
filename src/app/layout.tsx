@@ -2,9 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Neural Net Vis",
-  description:
-    "Wrap your head around neural networks and watch machines learning",
+  title: "NeuralNetVis",
+  description: "Wrap your head around neural networks and watch machines learn",
   openGraph: {
     images: [{ url: "https://neuralnetvis.app/images/neuralnetvis-og.png" }],
   },

@@ -49,7 +49,7 @@ export type LayerProps = LayerStateful & LayerContext
 
 export const Layer = (props: LayerProps) => {
   const { visibleIndex, allLayers, layerPos } = props
-  const { groups, prevVisibleLayer } = props
+  const { groups } = props
   const groupCount = groups.length
 
   const { layerSpacing, splitColors } = useContext(VisOptionsContext)
@@ -57,6 +57,7 @@ export const Layer = (props: LayerProps) => {
     layerPos === "input" && groupCount > 1 && !splitColors
 
   const visibleLayers = getVisibleLayers(allLayers)
+  const prevVisibleLayer = visibleLayers[visibleIndex - 1]
   const position = useMemo(
     () => [getOffsetX(visibleIndex, visibleLayers.length, layerSpacing), 0, 0],
     [visibleIndex, visibleLayers.length, layerSpacing]

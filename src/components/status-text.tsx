@@ -19,7 +19,7 @@ export const StatusText = () => {
   }, [statusText])
   return (
     <div
-      className={`fixed z-[2] bottom-0 right-0 text-right p-4 select-none max-w-[50vh] text-sm ${
+      className={`fixed z-[2] bottom-0 right-0 text-right p-[10px] sm:p-4 select-none max-w-[50vh] text-sm sm:text-base ${
         !!statusText ? "opacity-100 duration-0" : "opacity-0 duration-300"
       } transition-opacity ease-in-out pointer-events-none`}
       dangerouslySetInnerHTML={{ __html: statusText || keptText.current }}

@@ -36,3 +36,7 @@ body {
   background: var(--background);
   font-family: ui-monospace, SFMono-Regular, Menlo, "Roboto Mono", monospace;
 }
+
+button {
+  cursor: pointer;
+}
