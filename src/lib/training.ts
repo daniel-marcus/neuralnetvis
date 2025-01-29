@@ -58,16 +58,12 @@ export function useTraining(
     { store: trainStore }
   )
 
-  useControls(
-    () => ({
-      logs: logsPlot(),
-    }),
-    { store: trainStore }
-  )
+  useControls({ logs: logsPlot() }, { store: trainStore }, [batchCounter])
 
   const setLogs = useLogStore((s) => s.setLogs)
 
   useEffect(() => {
+    setBatchCounter(0)
     setLogs([] as TrainingLog[])
     setIsTraining(false)
   }, [model, setLogs])
@@ -297,6 +293,7 @@ async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
 }
 
 export async function setBackendIfAvailable(backend: string) {
+  await tf.ready()
   return getAvailableBackends().includes(backend) && tf.setBackend(backend)
 }
 

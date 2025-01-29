@@ -1,15 +1,13 @@
-import { Suspense, useContext, useMemo, useRef } from "react"
+import { useContext, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
 import { LayerStateful, LayerStateless } from "./layer"
 import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
-import { NeuronRefType } from "./neuron"
+import { Neuron, NeuronRefType } from "./neuron"
 import { VisOptionsContext } from "@/lib/vis-options"
 import { useSelected } from "@/lib/neuron-select"
-import { debug } from "@/lib/debug"
 
-const LINE_ACTIVATION_THRESHOLD = 0.5
-const MAX_LINES_PER_LAYER = 50
+const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
 
 type NeuronConnectionsProps = {
@@ -21,6 +19,7 @@ export const HoverConnections = () => {
   const hovered = useSelected((s) => s.hovered)
   if (!hovered) return null
   // too many lines for fully connected layers
+  // TODO: allowDenseHoverLines option
   if (hovered.layer.layerType === "Dense") return null
   return (
     <group name={`hovered_node_connections`}>
@@ -41,63 +40,56 @@ export const HoverConnections = () => {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const { showLines } = useContext(VisOptionsContext)
+  const { showLines, lineActivationThreshold } = useContext(VisOptionsContext)
   const layerMaxWeight = layer.maxAbsWeight ?? 1
-  let lineCount = 0
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
   if (isConvOrMaxPool) return null
+  if (!showLines) return null
+  const connections = layer.neurons
+    .filter((n) => (n.normalizedActivation ?? 0) >= lineActivationThreshold)
+    .sort((a, b) => (b.activation ?? 0) - (a.activation ?? 0))
+    .flatMap((neuron) => {
+      const activation = neuron.normalizedActivation ?? 0
+      if (activation < lineActivationThreshold) return null
+      const { weights } = neuron
+      if (!weights) return null
+      // const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
+      return (
+        weights
+          .map((weight, index) => ({
+            absWeight: Math.abs(weight),
+            index,
+          }))
+          .filter(({ absWeight }) => absWeight >= layerMaxWeight * 0.5)
+          .sort((a, b) => b.absWeight - a.absWeight) // TODO: optimize
+          // .slice(0, maxLinesPerNeuron)
+          .map(({ absWeight, index }) => {
+            const prevNeuron = prevLayer.neurons[index]
+            const input = neuron.inputs?.[index] ?? 0
+            const weightedInput = absWeight * input
+            if (weightedInput < MIN_LINE_WIDTH) return null
+            const lineWidth = Math.round(weightedInput * 10) / 10
+            return { neuron, prevNeuron, lineWidth }
+          })
+      )
+    })
+    .filter(Boolean)
+    .slice(0, MAX_LINES_PER_LAYER) as {
+    neuron: Neuron
+    prevNeuron: Neuron
+    lineWidth: number
+  }[]
   return (
-    <Suspense fallback={null}>
-      {showLines && (
-        <group name={`layer_${layer.index}_connections`}>
-          {layer.neurons
-            .filter(
-              (n) => (n.normalizedActivation ?? 0) > LINE_ACTIVATION_THRESHOLD
-            )
-            .sort((a, b) => (b.activation ?? 0) - (a.activation ?? 0))
-            .map((neuron) => {
-              const activation = neuron.normalizedActivation ?? 0
-              if (activation < LINE_ACTIVATION_THRESHOLD) return null
-              const { weights } = neuron
-              if (!weights) return null
-              // const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
-              return (
-                weights
-                  .map((weight, index) => ({
-                    absWeight: Math.abs(weight),
-                    index,
-                  }))
-                  .filter(() => {
-                    if (lineCount > MAX_LINES_PER_LAYER) {
-                      if (debug()) console.log("Max lines reached")
-                      return false
-                    }
-                    return true
-                  })
-                  .filter(({ absWeight }) => absWeight >= layerMaxWeight * 0.3)
-                  .sort((a, b) => b.absWeight - a.absWeight) // TODO: optimize
-                  // .slice(0, maxLinesPerNeuron)
-                  .map(({ absWeight, index }) => {
-                    const prevNeuron = prevLayer.neurons[index]
-                    const input = neuron.inputs?.[index] ?? 0
-                    const weightedInput = absWeight * input
-                    if (weightedInput < MIN_LINE_WIDTH) return null
-                    const lineWidth = Math.round(weightedInput * 10) / 10
-                    lineCount++
-                    return (
-                      <DynamicLine2
-                        key={`${neuron.nid}_${prevNeuron.nid}`}
-                        fromRef={prevNeuron.ref}
-                        toRef={neuron.ref}
-                        width={lineWidth}
-                      />
-                    )
-                  })
-              )
-            })}
-        </group>
-      )}
-    </Suspense>
+    <group name={`layer_${layer.index}_connections`}>
+      {connections.map(({ neuron, prevNeuron, lineWidth }, i) => (
+        <DynamicLine2
+          key={i}
+          fromRef={prevNeuron.ref}
+          toRef={neuron.ref}
+          width={lineWidth}
+        />
+      ))}
+    </group>
   )
 }
 

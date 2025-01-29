@@ -2,6 +2,7 @@ import { useControls } from "leva"
 import { Dataset, numColorChannels } from "./datasets"
 import { createContext } from "react"
 import { useControlStores } from "@/components/controls"
+import { useDebugStore } from "./debug"
 
 export type HighlightProp = "weights" | "weightedInputs"
 
@@ -10,6 +11,7 @@ interface VisOptions {
   showLines: boolean
   splitColors: boolean
   highlightProp: HighlightProp | string
+  lineActivationThreshold: number
 }
 
 const defaultOptions = {
@@ -17,6 +19,7 @@ const defaultOptions = {
   showLines: true,
   splitColors: false,
   highlightProp: "weightedInputs",
+  lineActivationThreshold: 0.5,
 }
 
 export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
@@ -24,6 +27,7 @@ export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
 export function useVisOptions(ds?: Dataset) {
   const hasColorChannels = numColorChannels(ds) > 1
   const { modelStore } = useControlStores()
+  const debug = useDebugStore((s) => s.debug)
   const visOptions: VisOptions = useControls(
     "visualization",
     {
@@ -35,6 +39,13 @@ export function useVisOptions(ds?: Dataset) {
         step: 1,
       },
       showLines: defaultOptions.showLines,
+      lineActivationThreshold: {
+        value: defaultOptions.lineActivationThreshold,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        render: () => debug,
+      },
       splitColors: {
         value: defaultOptions.splitColors,
         render: () => hasColorChannels,
@@ -49,7 +60,7 @@ export function useVisOptions(ds?: Dataset) {
       },
     },
     { store: modelStore },
-    [hasColorChannels]
+    [hasColorChannels, debug]
   )
   return visOptions
 }
