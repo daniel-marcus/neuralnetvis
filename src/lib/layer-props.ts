@@ -178,11 +178,7 @@ function useStatelessLayers(
             : undefined
 
         const units = getUnits(tfLayer)
-        const [geometry, spacing] = getGeometryAndSpacing(
-          tfLayer,
-          layerPos,
-          units
-        )
+        const geometryParams = getGeometryAndSpacing(tfLayer, layerPos, units)
 
         const layerInputNids = getInputNeurons(
           tfLayer,
@@ -201,8 +197,7 @@ function useStatelessLayers(
           numBiases,
           prevLayer,
           prevVisibleLayer,
-          geometry,
-          spacing,
+          geometryParams,
           neurons: [],
         }
 

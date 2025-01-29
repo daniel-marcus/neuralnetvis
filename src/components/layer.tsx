@@ -1,10 +1,10 @@
-import { ReactElement, useContext, useMemo } from "react"
+import { useContext, useMemo } from "react"
 import { Neuron, NeuronDef, NeuronRefType, Nid } from "./neuron"
 import type { Dataset } from "@/lib/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
-import { getOffsetX } from "@/lib/layer-layout"
+import { GeometryParams, getOffsetX } from "@/lib/layer-layout"
 import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
@@ -25,8 +25,7 @@ export interface LayerStateless {
   layerPos: LayerPosition
   tfLayer: tf.layers.Layer
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
-  geometry: ReactElement
-  spacing: number
+  geometryParams: GeometryParams
   prevLayer?: LayerStateless
   prevVisibleLayer?: LayerStateless
   neurons: NeuronDef[]

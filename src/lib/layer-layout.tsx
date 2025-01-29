@@ -1,6 +1,7 @@
 import type { LayerPosition } from "@/components/layer"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
+import * as THREE from "three"
 
 export interface LayerLayout {
   geometry: ReactElement
@@ -11,28 +12,48 @@ type OutputOrient = "horizontal" | "vertical"
 export const OUTPUT_ORIENT: OutputOrient = "vertical"
 export type SpacingType = "dense" | "normal"
 
-const geometryMap: Record<string, ReactElement> = {
-  sphere: <sphereGeometry args={[0.6, 32, 32]} />,
-  boxSmall: <boxGeometry args={[0.6, 0.6, 0.6]} />,
-  boxBig: <boxGeometry args={[1.8, 1.8, 1.8]} />,
-  boxTiny: <boxGeometry args={[0.2, 0.2, 0.22]} />,
+export type GeometryParams = {
+  geometry: typeof THREE.SphereGeometry | typeof THREE.BoxGeometry
+  size: [number, number, number]
+  spacingFactor?: number
+}
+
+const geometryMap: Record<string, GeometryParams> = {
+  sphere: {
+    geometry: THREE.SphereGeometry,
+    size: [0.6, 32, 32],
+    spacingFactor: 2.7,
+  },
+  boxSmall: {
+    geometry: THREE.BoxGeometry,
+    size: [0.6, 0.6, 0.6],
+  },
+  boxBig: {
+    geometry: THREE.BoxGeometry,
+    size: [1.8, 1.8, 1.8],
+    spacingFactor: 1.5,
+  },
+  boxTiny: {
+    geometry: THREE.BoxGeometry,
+    size: [0.2, 0.2, 0.22],
+  },
 }
 
 export function getGeometryAndSpacing(
   layer: tf.layers.Layer,
   layerPos: LayerPosition,
   units: number
-): [ReactElement, number] {
+): GeometryParams {
   if (["input", "output"].includes(layerPos)) {
-    if (units <= 10) return [geometryMap.boxBig, 1.8]
-    return [geometryMap.boxSmall, 0.66]
+    if (units <= 10) return geometryMap.boxBig
+    return geometryMap.boxSmall
   } else if (
     layer.getClassName() === "Conv2D" ||
     layer.getClassName() === "MaxPooling2D"
   ) {
-    return [geometryMap.boxTiny, 0.22]
+    return geometryMap.boxTiny
   }
-  return [geometryMap.sphere, 1.8]
+  return geometryMap.sphere
 }
 
 export function getOffsetX(
@@ -72,7 +93,7 @@ export function getNeuronPosition(
 ) {
   const total = height * width
   return layerPos === "output" || (layerPos === "input" && total <= 10)
-    ? getLineXYZ(i, total)
+    ? getLineXYZ(i, total, spacing)
     : getGroupedGridXYZ(i, height, width, spacing)
 }
 
@@ -101,9 +122,10 @@ export function getGroupedGridXYZ(
 function getLineXYZ(
   i: number,
   total: number,
+  spacing: number,
   orient: OutputOrient = "vertical"
 ): [number, number, number] {
-  const NEURON_SPACING = 3
+  const NEURON_SPACING = spacing
   const offsetY = (total - 1) * NEURON_SPACING * -0.5
   const factor = orient === "vertical" ? -1 : 1 // reverse
   const y = (i * NEURON_SPACING + offsetY) * factor

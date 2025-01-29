@@ -8,6 +8,7 @@ export type HighlightProp = "weights" | "weightedInputs"
 
 interface VisOptions {
   layerSpacing: number
+  neuronSpacing: number
   showLines: boolean
   splitColors: boolean
   highlightProp: HighlightProp | string
@@ -15,7 +16,8 @@ interface VisOptions {
 }
 
 const defaultOptions = {
-  layerSpacing: 10,
+  layerSpacing: 11,
+  neuronSpacing: 1.1,
   showLines: true,
   splitColors: false,
   highlightProp: "weightedInputs",
@@ -35,8 +37,15 @@ export function useVisOptions(ds?: Dataset) {
         label: "spacing",
         value: defaultOptions.layerSpacing,
         min: 1,
-        max: 20,
+        max: 30,
         step: 1,
+      },
+      neuronSpacing: {
+        value: defaultOptions.neuronSpacing,
+        min: 1,
+        max: 5,
+        step: 0.01,
+        render: () => debug,
       },
       showLines: defaultOptions.showLines,
       lineActivationThreshold: {

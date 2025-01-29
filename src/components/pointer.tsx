@@ -5,13 +5,14 @@ import { Neuron, NeuronRefType } from "./neuron"
 import * as THREE from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { OUTPUT_ORIENT, getNeuronPosition } from "@/lib/layer-layout"
+import { useNeuronSpacing } from "./neuron-group"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const trainingY = useContext(TrainingYContext)
-  if (typeof trainingY === "undefined") return null
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
+  const { layerPos, geometryParams } = outputLayer
+  const spacing = useNeuronSpacing(geometryParams)
   if (!neuron) return null
-  const { layerPos, spacing } = outputLayer
   const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
   const position = getNeuronPosition(
     neuron.index,

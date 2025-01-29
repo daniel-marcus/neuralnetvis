@@ -9,7 +9,11 @@ import {
 import { InstancedMesh } from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import * as THREE from "three"
-import { getGridSize, getNeuronPosition } from "@/lib/layer-layout"
+import {
+  GeometryParams,
+  getGridSize,
+  getNeuronPosition,
+} from "@/lib/layer-layout"
 import { LayerPosition } from "@/components/layer"
 import { NeuronLabels } from "./neuron-label"
 import { VisOptionsContext } from "@/lib/vis-options"
@@ -36,7 +40,9 @@ type NeuronGroupProps = LayerProps &
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, groupIndex, nidsStr } = props
-  const { index: layerIndex, layerPos, spacing } = props
+  const { index: layerIndex, layerPos, geometryParams } = props
+  const { geometry, size } = geometryParams
+  const spacing = useNeuronSpacing(geometryParams)
   const meshRef = useRef<InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
   const position = useGroupPosition(props)
@@ -61,7 +67,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         args={[, , groupedNeurons.length]}
         {...otherEventHandlers}
       >
-        {props.geometry}
+        <primitive object={new geometry(...size)} attach="geometry" />
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
       {layerPos === "output" &&
@@ -78,6 +84,14 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         })}
     </group>
   )
+}
+
+export function useNeuronSpacing(_geometry: GeometryParams) {
+  const { size, spacingFactor } = _geometry
+  const { neuronSpacing } = useContext(VisOptionsContext)
+  const factor = spacingFactor ?? 1
+  const spacing = size[0] * neuronSpacing * factor
+  return spacing
 }
 
 function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
@@ -97,7 +111,8 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
 }
 
 function useGroupPosition(props: NeuronGroupProps) {
-  const { groupIndex, groupCount, layerPos, spacing } = props
+  const { groupIndex, groupCount, layerPos, geometryParams } = props
+  const spacing = useNeuronSpacing(geometryParams)
   const { splitColors } = useContext(VisOptionsContext)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
