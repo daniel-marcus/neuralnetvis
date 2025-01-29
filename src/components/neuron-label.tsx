@@ -1,10 +1,9 @@
 import { OUTPUT_ORIENT } from "@/lib/layer-layout"
 import { useFrame, useThree, extend } from "@react-three/fiber"
-import { useContext, useRef } from "react"
+import { useRef } from "react"
 import { Mesh } from "three"
 import { Text } from "troika-three-text"
 import { NeuronDef, NeuronState } from "./neuron"
-import { TrainingYContext } from "./app"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -24,11 +23,9 @@ interface NeuronLabelsProps {
 }
 
 export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
-  const { label, activation } = neuron
+  const { label } = neuron
   const isClassification = true // TODO
   const showValueLabel = false
-  const trainingY = useContext(TrainingYContext)
-  const showPointer = !!trainingY && trainingY === neuron.index
   if (!position) return null
   return (
     <group>
@@ -49,12 +46,6 @@ export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
             ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
             : "" */}
         </NeuronLabel>
-      )}
-      {showPointer && (
-        <Pointer
-          position={position}
-          color={Number(activation) > 0.5 ? "rgb(0, 200, 80)" : "white"}
-        />
       )}
     </group>
   )
@@ -102,23 +93,6 @@ export const NeuronLabel = ({
   )
 }
 
-interface PointerProps {
-  position: [number, number, number]
-  color: string
-}
-
-export const Pointer = ({ position: [x, y, z], color }: PointerProps) => (
-  <customText
-    position={getPointerPos(x, y, z)}
-    text={"☜"} // ·
-    fontSize={1}
-    color={color}
-    anchorX="center"
-    anchorY="middle"
-    rotation={[0, -Math.PI / 2, 0]}
-  />
-)
-
 function getTextPos(
   x: number,
   y: number,
@@ -128,10 +102,4 @@ function getTextPos(
   const factor = side === "right" ? 1 : -1
   if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5 * factor]
   else return [x, y + 3, z]
-}
-
-function getPointerPos(x: number, y: number, z: number) {
-  if (OUTPUT_ORIENT === "vertical")
-    return [x, y - 0.1, z + 2.2] // [x, y, z + 2.5]
-  else return [x, y + 5, z]
 }

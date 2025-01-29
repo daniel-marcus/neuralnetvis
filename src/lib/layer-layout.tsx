@@ -67,7 +67,7 @@ export function getNeuronPosition(
   i: number,
   layerPos: LayerPosition,
   height: number,
-  width: number,
+  width: number = 1,
   spacing: number
 ) {
   const total = height * width

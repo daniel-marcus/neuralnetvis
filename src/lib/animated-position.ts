@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber"
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Object3D, Vector3 } from "three"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
@@ -7,11 +7,15 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
   const currentPosition = useRef(new Vector3())
   const { invalidate } = useThree()
   const targetPosition = useMemo(() => new Vector3(...position), [position])
+  const [isAnimating, setIsAnimating] = useState(false)
   useFrame(() => {
     if (ref.current) {
       if (!targetPosition.equals(currentPosition.current)) {
         // invalidate the canvas to trigger a re-render
         invalidate()
+        setIsAnimating(true)
+      } else {
+        setIsAnimating(false)
       }
       currentPosition.current.lerp(targetPosition, speed)
       // allow tolerance for floating point errors
@@ -22,5 +26,5 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
       }
     }
   })
-  return ref
+  return [ref, isAnimating] as const
 }

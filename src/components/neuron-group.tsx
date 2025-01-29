@@ -40,7 +40,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const meshRef = useRef<InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
   const position = useGroupPosition(props)
-  const groupRef = useAnimatedPosition(position, 0.1)
+  const [groupRef] = useAnimatedPosition(position, 0.1)
   const outputShape = props.tfLayer.outputShape as number[]
   const [, height, width = 1] = outputShape
   useNeuronPositions(meshRef, layerPos, spacing, outputShape)

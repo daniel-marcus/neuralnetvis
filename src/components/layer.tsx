@@ -8,6 +8,7 @@ import { getOffsetX } from "@/lib/layer-layout"
 import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
+import { YPointer } from "./pointer"
 
 export type LayerType =
   | "InputLayer"
@@ -62,7 +63,7 @@ export const Layer = (props: LayerProps) => {
     () => [getOffsetX(visibleIndex, visibleLayers.length, layerSpacing), 0, 0],
     [visibleIndex, visibleLayers.length, layerSpacing]
   )
-  const ref = useAnimatedPosition(position, 0.1)
+  const [ref] = useAnimatedPosition(position, 0.1)
   if (!props.neurons.length) return null
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
@@ -86,6 +87,7 @@ export const Layer = (props: LayerProps) => {
             />
           )
         })}
+        {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
       {!!prevVisibleLayer && !!prevVisibleLayer.neurons.length && (
         <Connections layer={props} prevLayer={prevVisibleLayer} />
