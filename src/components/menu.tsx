@@ -87,7 +87,7 @@ export const Menu = () => {
     if (currTab) lastTab.current = currTab
   }, [currTab])
   return (
-    <div className="fixed top-0 right-0 z-10 text-right pointer-events-none">
+    <div className="fixed top-0 right-0 z-10 text-right pointer-events-none select-none">
       <button
         className={`sm:hidden text-right px-3 py-2 sm:p-4 z-10 cursor-pointer text-white pointer-events-auto`}
         onClick={() => setMenuOpen((o) => !o)}
