@@ -4,7 +4,7 @@ import { button, useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status-text"
 import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
-import { useLevaStores } from "@/components/menu"
+import { useControlStores } from "@/components/controls"
 
 let epochCount = 0
 let sessionEpochCount = 0
@@ -41,7 +41,7 @@ export function useTraining(
     }
   }, [toggleTraining, setStatusText])
 
-  const { trainStore } = useLevaStores()
+  const { trainStore } = useControlStores()
   const trainingConfig = useControls(
     {
       batchSize: { value: 256, min: 1, max: 512, step: 1 },

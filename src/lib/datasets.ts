@@ -6,7 +6,7 @@ import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
 import { debug } from "./debug"
-import { useLevaStores } from "@/components/menu"
+import { useControlStores } from "@/components/controls"
 
 const n = new npyjs()
 
@@ -211,7 +211,7 @@ const datasets: DatasetDef[] = [
 ]
 
 export function useDatasets() {
-  const { dataStore } = useLevaStores()
+  const { dataStore } = useControlStores()
   const { datasetId } = useControls(
     {
       datasetId: {

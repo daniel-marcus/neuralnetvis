@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Neuro Vis",
+  title: "Neural Net Vis",
   description:
     "Wrap your head around neural networks and watch machines learning",
   openGraph: {
-    images: [{ url: "https://neurovis.app/images/neurovis-og.png" }],
+    images: [{ url: "https://neuralnetvis.app/images/neuralnetvis-og.png" }],
   },
 }
 

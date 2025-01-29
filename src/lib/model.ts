@@ -7,7 +7,7 @@ import "@tensorflow/tfjs-backend-webgpu"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
 import { setBackendIfAvailable } from "./training"
-import { useLevaStores } from "@/components/menu"
+import { useControlStores } from "@/components/controls"
 
 const defaultUnitConfig = {
   value: 32,
@@ -45,7 +45,7 @@ export function useModel(ds?: Dataset) {
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  const { modelStore } = useLevaStores()
+  const { modelStore } = useControlStores()
   const modelConfigRef = useRef<Record<string, number>>({})
   const _modelConfig = useControls(
     "layers",

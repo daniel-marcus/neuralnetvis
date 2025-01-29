@@ -11,8 +11,9 @@ import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
 import { VisOptionsContext, useVisOptions } from "@/lib/vis-options"
 import { useDebug } from "@/lib/debug"
-import { Console } from "./console"
-import { Menu, withLevaStores } from "./menu"
+import { withControlStores } from "./controls"
+import { Leva } from "leva"
+import { Menu } from "./menu"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
@@ -24,7 +25,6 @@ const App_ = () => {
   const debug = useDebug()
   return (
     <div className="w-screen h-screen bg-[#110000]">
-      <Console />
       <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
@@ -43,13 +43,14 @@ const App_ = () => {
         {debug && <Stats />}
       </Canvas>
       <Menu />
+      <Leva hidden />
       <LoadingSpinner isActive={isLoading || isPending || isTraining} />
       <StatusText />
     </div>
   )
 }
 
-export const App = withLevaStores(App_)
+export const App = withControlStores(App_)
 
 const Lights = () => (
   <>
