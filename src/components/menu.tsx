@@ -262,7 +262,11 @@ const Learn = () => {
     <Box className="flex flex-col">
       <Chapter onClick={handleClick}>How can networks learn?</Chapter>
       <Chapter onClick={handleClick}>Exploring the interface</Chapter>
-      {clicked && <p className="mt-4">Coming soon ...</p>}
+      {clicked && (
+        <p className="p-4 mt-4">
+          <em>Coming soon ...</em>
+        </p>
+      )}
     </Box>
   )
 }
