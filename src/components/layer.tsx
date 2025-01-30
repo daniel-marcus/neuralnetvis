@@ -4,7 +4,7 @@ import type { Dataset } from "@/lib/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
-import { GeometryParams, getOffsetX } from "@/lib/layer-layout"
+import { MeshParams, getOffsetX } from "@/lib/layer-layout"
 import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
@@ -25,7 +25,7 @@ export interface LayerStateless {
   layerPos: LayerPosition
   tfLayer: tf.layers.Layer
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
-  geometryParams: GeometryParams
+  meshParams: MeshParams
   prevLayer?: LayerStateless
   prevVisibleLayer?: LayerStateless
   neurons: NeuronDef[]

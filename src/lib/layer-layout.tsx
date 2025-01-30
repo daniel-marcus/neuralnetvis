@@ -1,6 +1,7 @@
 import type { LayerPosition } from "@/components/layer"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
+import * as THREE from "three"
 
 export interface LayerLayout {
   geometry: ReactElement
@@ -11,49 +12,44 @@ type OutputOrient = "horizontal" | "vertical"
 export const OUTPUT_ORIENT: OutputOrient = "vertical"
 export type SpacingType = "dense" | "normal"
 
-export type GeometryParams = {
-  geometry: ReactElement<{ args: number[] }> // TODO: get explicit types
-  size: [number, number, number]
+export type MeshParams = {
+  geometry: THREE.BoxGeometry | THREE.SphereGeometry
   spacingFactor?: number
 }
 
-// TODO: reuse geometry and add scale
-const geometryMap: Record<string, GeometryParams> = {
+// TODO: reuse geometry and add scale?
+const meshMap: Record<string, MeshParams> = {
   sphere: {
-    geometry: <sphereGeometry args={[0.6, 32, 32]} />,
-    size: [0.6, 32, 32],
+    geometry: new THREE.SphereGeometry(0.6, 32, 32),
     spacingFactor: 2.7,
   },
   boxSmall: {
-    geometry: <boxGeometry args={[0.6, 0.6, 0.6]} />,
-    size: [0.6, 0.6, 0.6],
+    geometry: new THREE.BoxGeometry(0.6, 0.6, 0.6),
   },
   boxBig: {
-    geometry: <boxGeometry args={[1.8, 1.8, 1.8]} />,
-    size: [1.8, 1.8, 1.8],
+    geometry: new THREE.BoxGeometry(1.8, 1.8, 1.8),
     spacingFactor: 1.5,
   },
   boxTiny: {
-    geometry: <boxGeometry args={[0.2, 0.2, 0.2]} />,
-    size: [0.2, 0.2, 0.2],
+    geometry: new THREE.BoxGeometry(0.2, 0.2, 0.2),
   },
 }
 
-export function getGeometryAndSpacing(
+export function getMeshParams(
   layer: tf.layers.Layer,
   layerPos: LayerPosition,
   units: number
-): GeometryParams {
+): MeshParams {
   if (["input", "output"].includes(layerPos)) {
-    if (units <= 10) return geometryMap.boxBig
-    return geometryMap.boxSmall
+    if (units <= 10) return meshMap.boxBig
+    return meshMap.boxSmall
   } else if (
     layer.getClassName() === "Conv2D" ||
     layer.getClassName() === "MaxPooling2D"
   ) {
-    return geometryMap.boxTiny
+    return meshMap.boxTiny
   }
-  return geometryMap.sphere
+  return meshMap.sphere
 }
 
 export function getOffsetX(

@@ -35,11 +35,14 @@ export function useDebug() {
           numBytesInGPUFree: number
         }
         const statusText = `
-Backend: ${tf.getBackend()}<br/>
-Memory: ${(memoryInfo.numBytes / 1024 / 1024).toFixed(2)} MB<br/>
-In GPU: ${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB<br/>
-Tensors: ${memoryInfo.numTensors} / Data Buffers: ${
-          memoryInfo.numDataBuffers
+TensorFlow.js Backend: ${tf.getBackend()}<br/>
+Memory: ${(memoryInfo.numBytes / 1024 / 1024).toFixed(2)} MB / GPU: ${(
+          memoryInfo.numBytesInGPU /
+          1024 /
+          1024
+        ).toFixed(2)} MB<br/>
+Tensors: ${memoryInfo.numTensors} / Geometries: ${
+          gl.info.memory.geometries
         }<br/>
       `
         setStatusText(statusText)
@@ -47,11 +50,7 @@ Tensors: ${memoryInfo.numTensors} / Data Buffers: ${
         const tfEngine = tf.engine()
         const glInfo = gl.info
 
-        console.log(
-          statusText.replaceAll("<br/>", ""),
-          `\nThree.js: ${JSON.stringify(glInfo.memory, null, 2)}\n`,
-          { tfEngine, glInfo }
-        )
+        console.log(statusText.replaceAll("<br/>", ""), { tfEngine, glInfo })
       }
     }
     window.addEventListener("keydown", onKeydown)

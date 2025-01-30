@@ -2,7 +2,7 @@ import { createRef, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { Index3D, Neuron, NeuronRefType, Nid } from "@/components/neuron"
 import { Dataset, LayerInput } from "./datasets"
-import { getGeometryAndSpacing } from "./layer-layout"
+import { getMeshParams } from "./layer-layout"
 import {
   LayerStateful,
   LayerPosition,
@@ -178,7 +178,7 @@ function useStatelessLayers(
             : undefined
 
         const units = getUnits(tfLayer)
-        const geometryParams = getGeometryAndSpacing(tfLayer, layerPos, units)
+        const meshParams = getMeshParams(tfLayer, layerPos, units)
 
         const layerInputNids = getInputNeurons(
           tfLayer,
@@ -197,7 +197,7 @@ function useStatelessLayers(
           numBiases,
           prevLayer,
           prevVisibleLayer,
-          geometryParams,
+          meshParams,
           neurons: [],
         }
 

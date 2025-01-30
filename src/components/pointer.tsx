@@ -10,8 +10,8 @@ import { useNeuronSpacing } from "./neuron-group"
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const trainingY = useContext(TrainingYContext)
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
-  const { layerPos, geometryParams } = outputLayer
-  const spacing = useNeuronSpacing(geometryParams)
+  const { layerPos, meshParams } = outputLayer
+  const spacing = useNeuronSpacing(meshParams)
   if (!neuron) return null
   const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
   const position = getNeuronPosition(
