@@ -9,10 +9,11 @@ export type HighlightProp = "weights" | "weightedInputs"
 interface VisOptions {
   layerSpacing: number
   neuronSpacing: number
-  showLines: boolean
   splitColors: boolean
   highlightProp: HighlightProp | string
+  showLines: boolean
   lineActivationThreshold: number
+  allowDenseHoverLines: boolean
 }
 
 const defaultOptions = {
@@ -22,6 +23,7 @@ const defaultOptions = {
   splitColors: false,
   highlightProp: "weightedInputs",
   lineActivationThreshold: 0.5,
+  allowDenseHoverLines: false,
 }
 
 export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
@@ -53,6 +55,10 @@ export function useVisOptions(ds?: Dataset) {
         min: 0,
         max: 1,
         step: 0.01,
+        render: () => debug,
+      },
+      allowDenseHoverLines: {
+        value: defaultOptions.allowDenseHoverLines,
         render: () => debug,
       },
       splitColors: {

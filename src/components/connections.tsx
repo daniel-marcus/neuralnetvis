@@ -17,21 +17,24 @@ type NeuronConnectionsProps = {
 
 export const HoverConnections = () => {
   const hovered = useSelected((s) => s.hovered)
-  if (!hovered) return null
   // too many lines for fully connected layers
-  // TODO: allowDenseHoverLines option
-  if (hovered.layer.layerType === "Dense") return null
+  const { allowDenseHoverLines } = useContext(VisOptionsContext)
+  if (!hovered) return null
+  if (hovered.layer.layerType === "Dense" && !allowDenseHoverLines) return null
   return (
     <group name={`hovered_node_connections`}>
-      {hovered.inputNeurons?.map((inputN, i) => {
-        const prevNeuron = hovered.layer.prevLayer?.neuronsMap?.get(inputN.nid)
+      {hovered.inputNeurons?.map((inputN, i, arr) => {
+        const prevNeuron = hovered.layer.prevVisibleLayer?.neuronsMap?.get(
+          inputN.nid
+        )
         if (!prevNeuron) return null
+        const width = arr.length > 100 ? 0.1 : 0.5
         return (
           <DynamicLine2
             key={i} // ${hovered.nid}_${prevNeuron.nid}
             fromRef={prevNeuron.ref}
             toRef={hovered.ref}
-            width={0.5}
+            width={width}
           />
         )
       })}

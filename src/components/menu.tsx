@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
 
@@ -13,7 +13,7 @@ type Tab = {
 const _tabs: Tab[] = [
   {
     key: "learn",
-    content: () => <Box>Some contents here</Box>,
+    content: () => <Learn />,
   },
   {
     key: "play",
@@ -173,9 +173,17 @@ const TabButton = ({
   </button>
 )
 
-function Box({ children }: { children: React.ReactNode }) {
+function Box({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <div className="p-4 bg-box-bg rounded-[10px] text-left text-sm">
+    <div
+      className={`p-4 bg-box-bg rounded-[10px] text-left text-sm ${className}`}
+    >
       {children}
     </div>
   )
@@ -225,3 +233,32 @@ const Button = ({
     {children}
   </button>
 )
+
+const Chapter = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+}) => (
+  <button
+    className="px-2 py-4 hover:bg-accent hover:text-white text-left rounded-[3px]"
+    onClick={onClick}
+  >
+    {children}
+  </button>
+)
+
+const Learn = () => {
+  const [clicked, setClicked] = useState(false)
+  const handleClick = () => setClicked(true)
+  return (
+    <Box className="flex flex-col">
+      <h2 className="mb-4">Introduction</h2>
+      <Chapter onClick={handleClick}>1. How can networks learn?</Chapter>
+      <Chapter onClick={handleClick}>2. How good do they learn?</Chapter>
+      <Chapter onClick={handleClick}>3. What else can they learn?</Chapter>
+      {clicked && <p className="mt-4">Coming soon ...</p>}
+    </Box>
+  )
+}
