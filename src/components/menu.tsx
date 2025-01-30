@@ -192,7 +192,7 @@ function Box({
 function Info() {
   const setTab = useTabsStore((s) => s.setTab)
   return (
-    <Box>
+    <Box className="select-all">
       <p className="mb-4">
         Wrap your head around neural networks and watch machines learn!
       </p>
@@ -200,20 +200,22 @@ function Info() {
         If you are new to the topic, you might want to start with the{" "}
         <Button onClick={() => setTab("learn")}>learn</Button> section.
       </p>
-      <p className="mb-8">
-        Otherwise, dive in and{" "}
-        <Button onClick={() => setTab("play")}>play</Button> with NNs right here
-        in your browser!
+      <p className="mb-4">
+        Otherwise, dive in, modify or train models, and{" "}
+        <Button onClick={() => setTab("play")}>play</Button> with neural
+        networks – all within your browser!
       </p>
+      <p className="mb-4">--</p>
       <p>
-        v{process.env.APP_VERSION} | 2025 by{" "}
+        © 2025 by{" "}
         <a
           className="text-accent"
           target="_blank"
           href="https://danielmarcus.de/"
         >
           Daniel Marcus
-        </a>
+        </a>{" "}
+        | v{process.env.APP_VERSION}
       </p>
     </Box>
   )
@@ -242,10 +244,10 @@ const Chapter = ({
   onClick?: () => void
 }) => (
   <button
-    className="px-2 py-4 hover:bg-accent hover:text-white text-left rounded-[3px]"
+    className="p-4 hover:bg-accent hover:text-white text-left rounded-[3px]"
     onClick={onClick}
   >
-    {children}
+    &gt; {children}
   </button>
 )
 
@@ -254,10 +256,8 @@ const Learn = () => {
   const handleClick = () => setClicked(true)
   return (
     <Box className="flex flex-col">
-      <h2 className="mb-4">Introduction</h2>
-      <Chapter onClick={handleClick}>1. How can networks learn?</Chapter>
-      <Chapter onClick={handleClick}>2. How good do they learn?</Chapter>
-      <Chapter onClick={handleClick}>3. What else can they learn?</Chapter>
+      <Chapter onClick={handleClick}>How can networks learn?</Chapter>
+      <Chapter onClick={handleClick}>Exploring the interface</Chapter>
       {clicked && <p className="mt-4">Coming soon ...</p>}
     </Box>
   )
