@@ -40,6 +40,8 @@ export const controlTheme: LevaCustomTheme = {
     accent1: "rgb(200,20,100)",
     accent2: "var(--color-accent)",
     accent3: "rgb(255,20,100)",
+    toolTipBackground: "white",
+    toolTipText: "black",
   },
   space: {
     sm: "0.875rem",

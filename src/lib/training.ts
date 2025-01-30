@@ -44,7 +44,12 @@ export function useTraining(
   const { trainStore } = useControlStores()
   const trainingConfig = useControls(
     {
-      batchSize: { value: 256, min: 1, max: 512, step: 1 },
+      batchSize: {
+        value: 256,
+        min: 1,
+        max: 512,
+        step: 1,
+      },
       epochs: { value: 3, min: 1, max: 100, step: 1 },
       validationSplit: {
         label: "validSplit",
@@ -253,43 +258,38 @@ async function train(
 
   options = { ...defaultOptions, ...options }
 
-  const { X, y } = tf.tidy(() => {
-    const { data, shape } = ds.data.trainX
-    const X = tf.tensor(data, shape).div(255) // TODO: normalize somewhere else?
-    const y = getY(ds.data.trainY, ds.output)
-    return { X, y }
-  })
+  const X = ds.data.trainX
+  const y = ds.data.trainY
 
   try {
     trainingPromise = model.fit(X, y, options)
     const history = await trainingPromise
     return history
   } finally {
-    X.dispose()
-    y.dispose()
+    // X.dispose()
+    // y.dispose()
   }
 }
 
-function getY(trainY: number[], output: Dataset["output"]) {
-  return output.activation === "softmax"
-    ? tf.oneHot(trainY, output.size)
-    : tf.tensor(trainY)
-}
-
 async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
-  const { loss, accuracy } = tf.tidy(() => {
-    if (!ds.data.testX || !ds.data.testY)
-      return { loss: undefined, accuracy: undefined }
-    const { data, shape } = ds.data.testX
-    const X = tf.tensor(data, shape).div(255)
-    const y = getY(ds.data.testY, ds.output)
-    const result = model.evaluate(X, y, { batchSize: 64 })
-    const loss = (Array.isArray(result) ? result[0] : result).dataSync()[0]
-    const accuracy = Array.isArray(result) ? result[1].dataSync()[0] : undefined
+  if (!ds.data.testX || !ds.data.testY)
+    return { loss: undefined, accuracy: undefined }
+  const X = ds.data.testX
+  const y = ds.data.testY
+  await tf.ready()
+  const result = model.evaluate(X, y, { batchSize: 64 })
+  const [lossT, accuracyT] = Array.isArray(result) ? result : [result]
+  try {
+    const loss = await lossT.array()
+    const accuracy = await accuracyT?.array()
     return { loss, accuracy }
-  })
-
-  return { loss, accuracy }
+  } catch (e) {
+    console.warn(e)
+    return { loss: undefined, accuracy: undefined }
+  } finally {
+    lossT.dispose()
+    accuracyT?.dispose()
+  }
 }
 
 export async function setBackendIfAvailable(backend: string) {

@@ -218,8 +218,8 @@ function Info() {
           href="https://danielmarcus.de/"
         >
           Daniel Marcus
-        </a>{" "}
-        | v{process.env.APP_VERSION}
+        </a>
+        , v{process.env.APP_VERSION}
       </p>
     </Box>
   )

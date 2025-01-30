@@ -43,7 +43,7 @@ const App_ = () => {
         {debug && <Stats />}
       </Canvas>
       <Menu />
-      <Leva hidden />
+      <Leva />
       <LoadingSpinner isActive={isLoading || isPending || isTraining} />
       <StatusText />
     </div>

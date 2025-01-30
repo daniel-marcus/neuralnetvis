@@ -33,10 +33,10 @@ export type LayerInput = NodeInput[]
 export type NodeInput = number | number[] | number[][] // flat, (width,height), (width,height,channel)
 
 interface DatasetData {
-  trainX: ParsedSafe
-  trainY: number[]
-  testX: ParsedSafe
-  testY?: number[]
+  trainX: tf.Tensor<tf.Rank>
+  trainY: tf.Tensor<tf.Rank>
+  testX?: tf.Tensor<tf.Rank>
+  testY?: tf.Tensor<tf.Rank>
 }
 
 interface DatasetDef {
@@ -82,51 +82,13 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/mnist_20k/x_test.npz"),
         fetchNpy("/data/mnist_20k/y_test.npz"),
       ])
-      const trainX = xTrain
-      const testX = xTest
       // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
-      trainX.shape = [...trainX.shape, 1]
-      testX.shape = [...testX.shape, 1]
-      return {
-        trainX,
-        trainY: Array.from(yTrain.data as Uint8Array),
-        testX,
-        testY: Array.from(yTest.data as Uint8Array),
-      }
-    },
-  },
-  {
-    name: "cifar10",
-    loss: "categoricalCrossentropy",
-    output: {
-      size: 10,
-      activation: "softmax",
-      labels: [
-        "airplane",
-        "automobile",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck",
-      ],
-    },
-    loadData: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/cifar10_20k/x_train.npz"),
-        fetchNpy("/data/cifar10_20k/y_train.npz"),
-        fetchNpy("/data/cifar10_20k/x_test.npz"),
-        fetchNpy("/data/cifar10_20k/y_test.npz"),
-      ])
-      return {
-        trainX: xTrain,
-        trainY: Array.from(yTrain.data as Uint8Array),
-        testX: xTest,
-        testY: Array.from(yTest.data as Uint8Array),
-      }
+      // normalize: vals / 255
+      const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
+      const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
+      const trainY = tf.oneHot(yTrain.data, 10)
+      const testY = tf.oneHot(yTest.data, 10)
+      return { trainX, trainY, testX, testY }
     },
   },
   {
@@ -161,14 +123,46 @@ const datasets: DatasetDef[] = [
         fetchNpy("/data/fashion_mnist_20k/y_test.npz"),
       ])
       // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
-      xTrain.shape = [...xTrain.shape, 1]
-      xTest.shape = [...xTest.shape, 1]
-      return {
-        trainX: xTrain,
-        trainY: Array.from(yTrain.data as Uint8Array),
-        testX: xTest,
-        testY: Array.from(yTest.data as Uint8Array),
-      }
+      // normalize: vals / 255
+      const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
+      const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
+      const trainY = tf.oneHot(yTrain.data, 10)
+      const testY = tf.oneHot(yTest.data, 10)
+      return { trainX, trainY, testX, testY }
+    },
+  },
+  {
+    name: "cifar10",
+    loss: "categoricalCrossentropy",
+    output: {
+      size: 10,
+      activation: "softmax",
+      labels: [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+      ],
+    },
+    loadData: async () => {
+      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
+        fetchNpy("/data/cifar10_20k/x_train.npz"),
+        fetchNpy("/data/cifar10_20k/y_train.npz"),
+        fetchNpy("/data/cifar10_20k/x_test.npz"),
+        fetchNpy("/data/cifar10_20k/y_test.npz"),
+      ])
+      // normalize: vals / 255
+      const trainX = tf.tensor(xTrain.data, xTrain.shape).div(255)
+      const testX = tf.tensor(xTest.data, xTest.shape).div(255)
+      const trainY = tf.oneHot(yTrain.data, 10)
+      const testY = tf.oneHot(yTest.data, 10)
+      return { trainX, trainY, testX, testY }
     },
   },
   /* {
@@ -230,12 +224,12 @@ export function useDatasets() {
   useEffect(() => {
     setStatusText("Loading dataset ...")
     setIsLoading(true)
-    console.log("loading dataset", datasetId)
+    if (debug()) console.log("loading dataset", datasetId)
     const datasetDef = datasets[datasetId]
     if (!datasetDef) return
     datasetDef.loadData().then((data) => {
       setIsLoading(false)
-      console.log("loaded dataset", datasetId)
+      if (debug()) console.log("loaded dataset", datasetId)
       setDataset({
         ...datasetDef,
         data,
@@ -278,24 +272,35 @@ export function useDatasets() {
 
   const input = useMemo(() => {
     if (!ds) return
-    const { data } = ds.data.trainX
-    const [, ...dims] = ds.data.trainX.shape
+    const { trainX } = ds.data
+    const [, ...dims] = trainX.shape
     const valsPerSample = dims.reduce((a, b) => a * b, 1)
     const index = i - 1
-    const flatVals = data.slice(
-      index * valsPerSample,
-      (index + 1) * valsPerSample
+    // todo: read async?
+    const sampleFlat = tf.tidy(
+      () =>
+        trainX
+          .slice([index, 0, 0, 0], [1, ...dims])
+          .reshape([valsPerSample])
+          .arraySync() as number[]
     )
-    const result = tf.tidy(() => {
-      const tensor = tf
-        .tensor(flatVals as unknown as number[], [...dims])
-        .div(255)
-      return tensor.arraySync() as LayerInput
-    })
-    return result
+
+    return sampleFlat
   }, [i, ds])
 
-  const trainingY = useMemo(() => ds?.data.trainY[i - 1], [i, ds])
+  const trainingY = useMemo(() => {
+    // TODO: check if is one-hot or not
+    const y = tf.tidy(() => {
+      const res = ds?.data.trainY
+        .slice([i - 1, 0], [1, ds.output.size])
+        .argMax(-1)
+        .arraySync()
+      return (res && Array.isArray(res) ? res[0] : undefined) as
+        | number
+        | undefined
+    })
+    return y
+  }, [i, ds])
 
   const next = useCallback(
     (step = 1) =>
@@ -349,7 +354,7 @@ async function fetchNpy(path: string): Promise<ParsedSafe> {
     const data = await file.async("arraybuffer")
     const parsed = n.parse(data)
     const endTime = new Date().getTime()
-    console.log(`Loaded ${path} in ${endTime - startTime}ms`)
+    if (debug()) console.log(`Loaded ${path} in ${endTime - startTime}ms`)
     if (!isSafe(parsed))
       throw new Error("BigUint64Array/BigInt64Array not supported")
     return parsed
