@@ -21,7 +21,7 @@ const App_ = () => {
   const [ds, isLoading, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const visOptions = useVisOptions(ds)
-  const [isTraining, batchCount] = useTraining(model, ds, next)
+  const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
   return (
     <div className="w-screen h-screen bg-[#110000]">
@@ -44,7 +44,7 @@ const App_ = () => {
       </Canvas>
       <Menu />
       <Leva />
-      <LoadingSpinner isActive={isLoading || isPending || isTraining} />
+      <LoadingSpinner isActive={isLoading || isPending} />
       <StatusText />
     </div>
   )

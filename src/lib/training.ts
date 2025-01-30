@@ -8,6 +8,7 @@ import { useControlStores } from "@/components/controls"
 
 let epochCount = 0
 let sessionEpochCount = 0
+let sessionBatchCount = 0
 
 export function useTraining(
   model: tf.LayersModel | undefined,
@@ -101,7 +102,10 @@ export function useTraining(
     const totalSamples = ds.data.trainX.shape[0]
     const trainSampleSize = Math.floor(totalSamples * (1 - validationSplit))
     const isNewSession = !trainingPromise
-    if (isNewSession) sessionEpochCount = 0
+    if (isNewSession) {
+      sessionEpochCount = 0
+      sessionBatchCount = 0
+    }
     const initialEpoch = epochCount > 0 ? epochCount : 0
     const epochs = initialEpoch + _epochs - sessionEpochCount
     async function startTraining() {
@@ -109,9 +113,10 @@ export function useTraining(
       // use wegpu for silent training (faster)
       if (silent) await setBackendIfAvailable("webgpu")
       let startTime = Date.now()
-      const totalBatches = Math.ceil(trainSampleSize / batchSize)
+      const epochBatches = Math.ceil(trainSampleSize / batchSize)
+      const totalBatches = _epochs * epochBatches
       const isLastBatch = (batchIndex: number) =>
-        batchIndex === totalBatches - 1
+        batchIndex === epochBatches - 1
       const isLastEpoch = () => epochCount === epochs - 1
       let trainingComplete = false
       const callbacks: tf.ModelFitArgs["callbacks"] = {
@@ -129,13 +134,18 @@ export function useTraining(
           }
         },
         onBatchEnd: (batchIndex, logs) => {
+          sessionBatchCount++
+          const percent = sessionBatchCount / totalBatches
           if (isLastBatch(batchIndex)) sessionEpochCount++
           if (isLastEpoch() && isLastBatch(batchIndex)) trainingComplete = true
           if (typeof logs !== "undefined")
             setLogs((prev) => [...prev, { epoch: epochCount, ...logs }])
-          setStatusText(`Training ...<br/>
+          setStatusText(
+            `Training ...<br/>
 Epoch ${epochCount + 1}/${epochs}<br/>
-Batch ${batchIndex + 1}/${totalBatches}`)
+Batch ${batchIndex + 1}/${epochBatches}`,
+            percent
+          )
         },
         onEpochBegin: (epoch) => {
           epochCount = epoch
