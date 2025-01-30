@@ -176,13 +176,17 @@ const TabButton = ({
 function Box({
   children,
   className,
+  padding,
 }: {
   children: React.ReactNode
   className?: string
+  padding?: boolean
 }) {
   return (
     <div
-      className={`p-4 bg-box-bg rounded-[10px] text-left text-sm ${className}`}
+      className={`${
+        padding ? "p-4" : ""
+      } bg-box-bg rounded-[10px] text-left text-sm ${className}`}
     >
       {children}
     </div>
@@ -192,7 +196,7 @@ function Box({
 function Info() {
   const setTab = useTabsStore((s) => s.setTab)
   return (
-    <Box className="select-all">
+    <Box padding>
       <p className="mb-4">
         Wrap your head around neural networks and watch machines learn!
       </p>
@@ -244,7 +248,7 @@ const Chapter = ({
   onClick?: () => void
 }) => (
   <button
-    className="p-4 hover:bg-accent hover:text-white text-left rounded-[3px]"
+    className="p-4 hover:bg-accent hover:text-white text-left rounded-[10px]"
     onClick={onClick}
   >
     &gt; {children}

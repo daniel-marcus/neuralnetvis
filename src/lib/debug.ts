@@ -2,6 +2,7 @@ import { useStatusText } from "@/components/status-text"
 import { useEffect } from "react"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
+import { useThree } from "@react-three/fiber"
 
 export const useDebugStore = create<{
   debug: boolean
@@ -17,7 +18,7 @@ export function useDebug() {
   const debug = useDebugStore((s) => s.debug)
   const toggleDebug = useDebugStore((s) => s.toggleDebug)
   const setStatusText = useStatusText((s) => s.setStatusText)
-
+  const { gl } = useThree()
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
       if (e.key === "d") {
@@ -27,6 +28,7 @@ export function useDebug() {
         // if (debug) tf.enableDebugMode()
       }
       if (e.key === "s") {
+        // stats
         const memoryInfo = tf.memory() as tf.MemoryInfo & {
           numBytesInGPU: number
           numBytesInGPUAllocated: number
@@ -41,16 +43,22 @@ Tensors: ${memoryInfo.numTensors} / Data Buffers: ${
         }<br/>
       `
         setStatusText(statusText)
-        console.log(statusText.replaceAll("<br/>", ""), { memoryInfo })
-        const engine = tf.engine()
-        console.log({ engine })
+
+        const tfEngine = tf.engine()
+        const glInfo = gl.info
+
+        console.log(
+          statusText.replaceAll("<br/>", ""),
+          `\nThree.js: ${JSON.stringify(glInfo.memory, null, 2)}\n`,
+          { tfEngine, glInfo }
+        )
       }
     }
     window.addEventListener("keydown", onKeydown)
     return () => {
       window.removeEventListener("keydown", onKeydown)
     }
-  }, [setStatusText, toggleDebug])
+  }, [setStatusText, toggleDebug, gl])
 
   return debug
 }

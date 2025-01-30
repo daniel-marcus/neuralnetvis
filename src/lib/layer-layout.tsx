@@ -1,7 +1,6 @@
 import type { LayerPosition } from "@/components/layer"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
-import * as THREE from "three"
 
 export interface LayerLayout {
   geometry: ReactElement
@@ -13,29 +12,30 @@ export const OUTPUT_ORIENT: OutputOrient = "vertical"
 export type SpacingType = "dense" | "normal"
 
 export type GeometryParams = {
-  geometry: typeof THREE.SphereGeometry | typeof THREE.BoxGeometry
+  geometry: ReactElement<{ args: number[] }> // TODO: get explicit types
   size: [number, number, number]
   spacingFactor?: number
 }
 
+// TODO: reuse geometry and add scale
 const geometryMap: Record<string, GeometryParams> = {
   sphere: {
-    geometry: THREE.SphereGeometry,
+    geometry: <sphereGeometry args={[0.6, 32, 32]} />,
     size: [0.6, 32, 32],
     spacingFactor: 2.7,
   },
   boxSmall: {
-    geometry: THREE.BoxGeometry,
+    geometry: <boxGeometry args={[0.6, 0.6, 0.6]} />,
     size: [0.6, 0.6, 0.6],
   },
   boxBig: {
-    geometry: THREE.BoxGeometry,
+    geometry: <boxGeometry args={[1.8, 1.8, 1.8]} />,
     size: [1.8, 1.8, 1.8],
     spacingFactor: 1.5,
   },
   boxTiny: {
-    geometry: THREE.BoxGeometry,
-    size: [0.2, 0.2, 0.22],
+    geometry: <boxGeometry args={[0.2, 0.2, 0.2]} />,
+    size: [0.2, 0.2, 0.2],
   },
 }
 

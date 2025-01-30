@@ -41,7 +41,7 @@ type NeuronGroupProps = LayerProps &
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, groupIndex, nidsStr } = props
   const { index: layerIndex, layerPos, geometryParams } = props
-  const { geometry, size } = geometryParams
+  const { geometry } = geometryParams
   const spacing = useNeuronSpacing(geometryParams)
   const meshRef = useRef<InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
@@ -67,7 +67,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         args={[, , groupedNeurons.length]}
         {...otherEventHandlers}
       >
-        <primitive object={new geometry(...size)} attach="geometry" />
+        {geometry}
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
       {layerPos === "output" &&
@@ -86,11 +86,12 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   )
 }
 
-export function useNeuronSpacing(_geometry: GeometryParams) {
-  const { size, spacingFactor } = _geometry
+export function useNeuronSpacing(geometryParams: GeometryParams) {
+  const { geometry, spacingFactor } = geometryParams
   const { neuronSpacing } = useContext(VisOptionsContext)
+  const size = geometry.props?.args?.[0] ?? 1
   const factor = spacingFactor ?? 1
-  const spacing = size[0] * neuronSpacing * factor
+  const spacing = size * neuronSpacing * factor
   return spacing
 }
 

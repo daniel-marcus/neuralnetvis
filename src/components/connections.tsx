@@ -1,8 +1,12 @@
-import { useContext, useMemo, useRef } from "react"
+import { useContext, useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
 import { LayerStateful, LayerStateless } from "./layer"
-import { Line2, LineGeometry, LineMaterial } from "three/examples/jsm/Addons.js"
+import {
+  LineGeometry,
+  LineMaterial,
+  LineSegments2,
+} from "three/examples/jsm/Addons.js"
 import { Neuron, NeuronRefType } from "./neuron"
 import { VisOptionsContext } from "@/lib/vis-options"
 import { useSelected } from "@/lib/neuron-select"
@@ -31,7 +35,7 @@ export const HoverConnections = () => {
         const width = arr.length > 100 ? 0.1 : 0.5
         return (
           <DynamicLine2
-            key={i} // ${hovered.nid}_${prevNeuron.nid}
+            key={`${hovered.nid}_${prevNeuron.nid}`}
             fromRef={prevNeuron.ref}
             toRef={hovered.ref}
             width={width}
@@ -110,16 +114,22 @@ export const DynamicLine2 = ({
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 
-  const [geometry, material] = useMemo(
-    () => [
-      new LineGeometry(),
+  const geometry = useMemo(() => new LineGeometry(), [])
+
+  const material = useMemo(
+    () =>
       new LineMaterial({
         linewidth: width,
         resolution: new Vector2(size.width, size.height),
       }),
-    ],
     [width, size]
   )
+  useEffect(() => {
+    return () => {
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [geometry, material])
 
   const [fromPosition, toPosition, tempMatrix, tempWorldMatrix] = useMemo(
     () => [new Vector3(), new Vector3(), new Matrix4(), new Matrix4()],
@@ -150,5 +160,10 @@ export const DynamicLine2 = ({
     }
   })
 
-  return <primitive object={new Line2(geometry, material)} ref={lineRef} />
+  const obj = useMemo(
+    () => new LineSegments2(geometry, material),
+    [geometry, material]
+  )
+
+  return <primitive object={obj} ref={lineRef} />
 }

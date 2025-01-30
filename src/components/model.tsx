@@ -5,6 +5,7 @@ import type { Dataset, LayerInput } from "@/lib/datasets"
 import { useLayerProps } from "@/lib/layer-props"
 import { useNeuronSelect } from "@/lib/neuron-select"
 import { HoverConnections } from "./connections"
+import { useDebug } from "@/lib/debug"
 
 interface ModelProps {
   isPending: boolean
@@ -22,6 +23,7 @@ export const Model = ({
   isPending,
   batchCount,
 }: ModelProps) => {
+  useDebug()
   const [layerProps, neuronRefs] = useLayerProps(
     isPending,
     model,

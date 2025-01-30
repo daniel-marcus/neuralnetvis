@@ -10,7 +10,7 @@ import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
 import { VisOptionsContext, useVisOptions } from "@/lib/vis-options"
-import { useDebug } from "@/lib/debug"
+import { useDebugStore } from "@/lib/debug"
 import { withControlStores } from "./controls"
 import { Leva } from "leva"
 import { Menu } from "./menu"
@@ -22,7 +22,7 @@ const App_ = () => {
   const [model, isPending] = useModel(ds)
   const visOptions = useVisOptions(ds)
   const [isTraining, batchCount] = useTraining(model, ds, next)
-  const debug = useDebug()
+  const debug = useDebugStore((s) => s.debug)
   return (
     <div className="w-screen h-screen bg-[#110000]">
       <Canvas frameloop="demand">
