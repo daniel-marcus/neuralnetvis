@@ -10,7 +10,6 @@ import { useModel } from "@/lib/model"
 import { VisOptionsContext, useVisOptions } from "@/lib/vis-options"
 import { useDebugStore } from "@/lib/debug"
 import { withControlStores } from "./controls"
-import { Leva } from "leva"
 import { Menu } from "./menu"
 import { Controller } from "./controller"
 import { Footer } from "./footer"
@@ -45,7 +44,6 @@ const App_ = () => {
       </Canvas>
       <Menu />
       <Footer />
-      <Leva hidden />
     </div>
   )
 }

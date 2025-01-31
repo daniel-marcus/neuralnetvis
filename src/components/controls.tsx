@@ -2,6 +2,7 @@ import { createContext, useContext } from "react"
 import { LevaPanel, useCreateStore } from "leva"
 import { StoreType } from "leva/dist/declarations/src/types"
 import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
+import { Box } from "./menu"
 
 export interface ControlStores {
   dataStore: StoreType
@@ -46,7 +47,7 @@ export const controlTheme: LevaCustomTheme = {
   space: {
     sm: "0.875rem",
     md: "0.875rem",
-    rowGap: "0.875rem",
+    rowGap: "0.5rem",
   },
   sizes: {
     numberInputMinWidth: "70px",
@@ -54,15 +55,20 @@ export const controlTheme: LevaCustomTheme = {
     folderTitleHeight: "2rem",
   },
   fontSizes: { root: "0.875rem" },
+  shadows: {
+    level1: "none",
+  },
 }
 
 export const ControlPanel = ({ store }: { store: StoreType }) => (
-  <LevaPanel
-    store={store}
-    key={store.storeId}
-    fill
-    hideCopyButton
-    titleBar={false}
-    theme={controlTheme}
-  />
+  <Box hasBg={false}>
+    <LevaPanel
+      store={store}
+      key={store.storeId}
+      fill
+      hideCopyButton
+      titleBar={false}
+      theme={controlTheme}
+    />
+  </Box>
 )

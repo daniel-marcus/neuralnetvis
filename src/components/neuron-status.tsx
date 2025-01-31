@@ -1,14 +1,19 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useSelected } from "@/lib/neuron-select"
 import { normalizeWithSign } from "@/lib/normalization"
 import { getHighlightColor } from "./neuron-group"
 import { SphereGeometry } from "three"
 import { Neuron } from "./neuron"
+import { Table } from "./status"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)
   const _hovered = useSelected((s) => s.hovered)
-  const selected = _hovered ?? _selected
+  const hasCurrentSelected = !!_selected || !!_hovered
+  let selected = _hovered ?? _selected
+  const prevSelected = useRef<Neuron | null>(null)
+  if (selected) prevSelected.current = selected
+  else selected = prevSelected.current
   // TODO: normalize in group?
   const normalizedWeights = normalizeWithSign(selected?.weights) ?? []
   const length = normalizedWeights.length
@@ -21,9 +26,13 @@ export const NeuronStatus = () => {
   const isRounded =
     selected?.layer.prevVisibleLayer?.meshParams.geometry instanceof
     SphereGeometry
-  if (!selected) return null
+  if (!selected) return <div />
   return (
-    <div className="flex gap-4 items-end pointer-events-auto">
+    <div
+      className={`flex gap-4 items-end sm:flex-col pointer-events-auto ${
+        hasCurrentSelected ? "" : "opacity-0 max-w-[20%]"
+      } transition-opacity duration-150`}
+    >
       <WeightsViewer
         weights={normalizedWeights}
         cols={cols}
@@ -37,38 +46,18 @@ export const NeuronStatus = () => {
 
 const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
   const { nid, activation, bias, weights } = neuron
-  const weightsName = weights?.length ? "<- Weights" : "Weights"
-  const table = {
+  const data = {
     Neuron: nid,
-    Activation: activation?.toFixed(2),
-    [weightsName]: neuron.weights?.length,
+    Weights: weights?.length,
     Bias: bias?.toFixed(2),
+    Activation: activation?.toFixed(2),
   }
   return (
-    <div>
-      <Table obj={table} />
+    <div className="w-full">
+      <Table data={data} />
     </div>
   )
 }
-
-export const Table = ({
-  obj,
-}: {
-  obj: Record<string, string | number | undefined>
-}) => (
-  <table>
-    <tbody>
-      {Object.entries(obj).map(([key, value]) => (
-        <tr key={key}>
-          <td className={typeof value === "undefined" ? "opacity-50" : ""}>
-            {key}
-          </td>
-          <td className="text-right pl-4">{value}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-)
 
 interface WeightsGridProps {
   weights: number[]
@@ -84,13 +73,25 @@ const WeightsViewer = ({
   groupCount = 1,
 }: WeightsGridProps) => {
   const [currGroup, setCurrGroup] = useState(0)
+  if (!weights.length) return null
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
   const next = () => setCurrGroup((g) => (g + 1) % groupCount)
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640
+  const maxGroupsPerView = isMobile ? 4 : 16
+  const needsShifter = groupCount > maxGroupsPerView
   return (
-    <div className="w-[calc(80px-0.6em)] sm:w-[calc(96px-0.6em)] overflow-hidden">
+    <div
+      className="flex-shrink-0 w-[var(--grid-width)] sm:w-[var(--grid-width-sm)] overflow-hidden mb-[0.3em]"
+      style={
+        {
+          "--grid-width": "calc(80px - 0.6em)",
+          "--grid-width-sm": "199px",
+        } as React.CSSProperties
+      }
+    >
       <div
         className={`${
-          groupCount === 1 ? "hidden" : ""
+          needsShifter ? "block" : "hidden"
         } flex justify-center gap-4`}
       >
         <button
@@ -110,16 +111,26 @@ const WeightsViewer = ({
         </button>
       </div>
       <div
-        className={`grid gap-2 transition-transform duration-100 ease-in-out`}
-        style={{
-          gridTemplateColumns: `repeat(${groupCount}, 1fr)`,
-          transform: `translateX(calc(-${
-            currGroup * 100
-          }% - ${currGroup}*0.5rem))`,
-        }}
+        className={`grid ${
+          needsShifter
+            ? "grid-cols-[var(--cols-shifted)] sm:grid-cols-[var(--cols-shifted-sm)] translate-x-[(var(--current-shift)]"
+            : "grid-cols-[var(--cols-all)]"
+        } gap-2 transition-transform duration-100 ease-in-out`}
+        style={
+          {
+            "--cols-shifted": `repeat(${groupCount}, var(--grid-width))`,
+            "--cols-shifted-sm": `repeat(${groupCount}, var(--grid-width-sm))`,
+            "--cols-all": `repeat(${Math.ceil(Math.sqrt(groupCount))}, 1fr)`,
+            "--current-shift": `translateX(calc(-${
+              currGroup * 100
+            }% - ${currGroup}*0.5rem))`,
+          } as React.CSSProperties
+        }
       >
         {Array.from({ length: groupCount }).map((_, i) => {
           const groupWeights = weights.filter((_, j) => j % groupCount === i)
+          const isInView = needsShifter ? i === currGroup : true
+          if (!isInView) return null
           return (
             <WeightsGrid
               key={i}
@@ -135,12 +146,11 @@ const WeightsViewer = ({
 }
 
 const WeightsGrid = ({ weights, cols, isRounded }: WeightsGridProps) => {
-  if (!weights.length) return null
   return (
     <div
-      className={`grid w-[calc(80px-0.6em)] sm:w-[calc(96px-0.6em)] ${
+      className={`grid ${
         weights.length > 100 ? "gap-0 sm:gap-[1px]" : "gap-1"
-      } py-[0.3em] `}
+      }`}
       style={{
         gridTemplateColumns: `repeat(${cols}, 1fr)`,
       }}

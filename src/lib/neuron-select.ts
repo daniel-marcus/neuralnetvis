@@ -113,6 +113,15 @@ export function getWeightedInputs(
   const weightedInputs = tf.tidy(() => {
     const weightsTensor = tf.tensor1d(neuronWeights)
     const inputsTensor = tf.tensor1d(neuronInput)
+
+    if (
+      !weightsTensor.shape.every(
+        (value, index) => value === inputsTensor.shape[index]
+      )
+    ) {
+      console.log("Tensors have different shapes, skipping mul")
+      return []
+    }
     return tf.mul(weightsTensor, inputsTensor).arraySync() as number[]
   })
   return weightedInputs

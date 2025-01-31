@@ -30,8 +30,8 @@ export const ProgressBar = ({ length }: ProgressBarProps) => {
   return (
     <div
       ref={wrapeprRef}
-      className={`relative w-full overflow-hidden transition-opacity duration-150 ${
-        isHidden ? "opacity-0 h-0!" : ""
+      className={`absolute -bottom-1 left-0 w-[100vw] overflow-hidden transition-all duration-300 ${
+        isHidden ? "opacity-0" : ""
       }`}
     >
       <span

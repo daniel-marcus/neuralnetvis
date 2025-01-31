@@ -141,10 +141,14 @@ export function useTraining(
           if (typeof logs !== "undefined")
             setLogs((prev) => [...prev, { epoch: epochCount, ...logs }])
           setStatusText(
-            `Training ...<br/>
-Epoch ${epochCount + 1}/${epochs}<br/>
-Batch ${batchIndex + 1}/${epochBatches}`,
-            percent
+            {
+              title: "Training ...",
+              data: {
+                Epoch: `${epochCount + 1}/${epochs}`,
+                Batch: `${batchIndex + 1}/${epochBatches}`,
+              },
+            },
+            { percent }
           )
         },
         onEpochBegin: (epoch) => {
@@ -166,13 +170,17 @@ Batch ${batchIndex + 1}/${epochBatches}`,
             setBatchCounter((c) => c + processedSamples) // update weights
           }
           const { accuracy, loss } = await getModelEvaluation(model, ds)
-          if (!trainingPromise || trainingComplete)
+          if (!trainingPromise || trainingComplete) {
+            const data = {
+              Loss: loss?.toFixed(3),
+              Accuracy: accuracy?.toFixed(3),
+              Time: `${totalTime.toFixed(2)}s`,
+            }
             setStatusText(
-              `Training finished (${tf.getBackend()})<br/>Loss: ${loss?.toFixed(
-                4
-              )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`,
-              null
+              { title: "Training finished", data },
+              { percent: null, time: 3 }
             )
+          }
           if (trainingComplete) {
             epochCount++
             trainingPromise = null

@@ -115,19 +115,23 @@ export function useModel(ds?: Dataset) {
     const [totalSamples] = ds.data.trainX.shape
     const layersStr = model.layers
       .map((l) => {
-        const name = l.getClassName()
+        const name = l.getClassName().replace("InputLayer", "Input")
         const shape = l.outputShape.slice(1).join("x")
-        return `${name}&nbsp;(${shape})`
+        return `${name}\u00A0(${shape})`
       })
       .join(" | ")
     const totalParamas = model.countParams()
     const modelName = model.getClassName()
-    const text = `New Model: ${modelName} (${totalParamas.toLocaleString(
-      "en-US"
-    )} params)<br/>
-${layersStr}<br/>
-Dataset: ${ds.name} (${totalSamples.toLocaleString("en-US")} samples)<br/>`
-    setStatusText(text)
+    const data = {
+      " ": `Dataset: ${ds.name} (${totalSamples.toLocaleString(
+        "en-US"
+      )} samples)`,
+      "  ": `Model: ${modelName} (${totalParamas.toLocaleString(
+        "en-US"
+      )} params)`,
+      "   ": layersStr,
+    }
+    setStatusText({ data }, { time: 3 })
 
     if (!isModelCompiled(model)) {
       if (debug()) console.log("Model not compiled. Compiling ...")

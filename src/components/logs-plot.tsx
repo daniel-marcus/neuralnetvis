@@ -148,7 +148,7 @@ function LogsPlot() {
         <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
           <canvas
             ref={canvasRef}
-            className={`w-full h-[132px]`}
+            className={`w-full h-[100px] sm:h-[132px]`}
             onMouseMove={onMouseMove}
           />
           <Dot ref={dotRef} hidden={!tooltip} />

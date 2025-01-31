@@ -74,6 +74,7 @@ export function useVisOptions(ds?: Dataset) {
         },
       },
     },
+    { collapsed: true },
     { store: modelStore },
     [hasColorChannels, debug]
   )

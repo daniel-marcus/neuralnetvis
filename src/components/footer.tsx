@@ -8,14 +8,10 @@ export const Footer = () => {
   const hovered = useSelected((s) => s.hovered)
   const hasSelected = !!selected || !!hovered
   return (
-    <div className="fixed z-[2] bottom-0 right-0 w-[100vw] p-[10px] sm:p-4 select-none text-sm sm:text-base pointer-events-none">
-      <div className="flex justifiy-between items-end">
+    <div className="fixed z-[2] bottom-0 left-0 w-[100vw] p-[10px] sm:p-4 pb-5 sm:pb-6 select-none text-sm sm:text-base pointer-events-none">
+      <div className="flex justify-between items-end">
         <NeuronStatus />
-        <div
-          className={`text-right w-full ${
-            hasSelected ? "hidden sm:block" : ""
-          }`}
-        >
+        <div className={`${hasSelected ? "invisible sm:visible" : ""}`}>
           <Status />
         </div>
       </div>

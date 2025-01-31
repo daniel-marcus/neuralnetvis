@@ -53,6 +53,7 @@ export const useTabsStore = create<{
   clickTab: (tab: Tab | null) => void
   goHome: () => void
   goBack: () => void
+  closeTab: () => void
   setTab: (key: string) => void
 }>((set) => ({
   activeTab: defaultTab ?? null,
@@ -69,6 +70,8 @@ export const useTabsStore = create<{
       const parentIsCategory = !parent?.content
       return { activeTab: parentIsCategory ? parent?.parent : parent }
     }),
+  closeTab: () =>
+    set(({ activeTab }) => ({ activeTab: activeTab?.parent ?? null })),
   setTab: (key) => {
     const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
     const tab = allTabs.find((t) => t.key === key)
@@ -88,18 +91,20 @@ export const Menu = () => {
   return (
     <div className="fixed top-0 left-0 w-[100vw] z-10 flex justify-between items-start pointer-events-none select-none flex-wrap">
       <button
-        className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer"
+        className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer bg-background relative z-10"
         onClick={goHome}
       >
         NeuralNetVis
       </button>
       <div className="pointer-events-auto flex-1">
-        <div className="flex justify-end items-center w-full ">
+        <div className="flex justify-end items-center w-full bg-background relative z-10">
           <Tabs />
         </div>
         <div
           className={`absolute right-0 w-[380px] max-w-[100vw] ${
-            activeTab?.content ? "" : "translate-x-full"
+            activeTab?.content
+              ? ""
+              : "-translate-y-full sm:translate-y-0 sm:translate-x-full pointer-events-none"
           } transition-transform duration-300 ease-in-out`}
         >
           {content || lastContent.current}
@@ -173,20 +178,79 @@ const TabButton = ({
   </button>
 )
 
-function Box({
+export function Box({
   children,
   className,
   padding,
+  hasBg = true,
 }: {
   children: React.ReactNode
   className?: string
   padding?: boolean
+  hasBg?: boolean
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const offsetY = useRef(0)
+  const closeTab = useTabsStore((s) => s.closeTab)
+  useEffect(() => {
+    if (!ref.current) return
+    const el = ref.current
+    let startX: number | null = null
+    let startY: number | null = null
+    let deltaY = 0
+    let startTime = 0
+    let hasFired = false
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX
+      startY = e.touches[0].clientY
+      deltaY = 0
+      startTime = Date.now()
+    }
+    const handleTouchMove = (e: TouchEvent) => {
+      e.stopPropagation()
+      e.preventDefault()
+      if (startX === null || startY === null) return
+      const deltaX = e.touches[0].clientX - startX
+      deltaY = e.touches[0].clientY - startY
+      const isVertial = Math.abs(deltaY) > Math.abs(deltaX)
+      if (isVertial) {
+        const newOffset = offsetY.current + deltaY
+        el.style.setProperty("--translate-y", `${Math.min(newOffset, 0)}px`)
+        const velocity = Math.abs(deltaY) / (Date.now() - startTime)
+        if (deltaY < -50 && velocity > 0.5) {
+          if (!hasFired) closeTab()
+          hasFired = true
+        }
+      }
+    }
+    const handleTouchEnd = () => {
+      if (hasFired) {
+        offsetY.current = 0
+        hasFired = false
+        setTimeout(() => el?.style.setProperty("--translate-y", "0"), 150)
+      } else {
+        const newOffset = offsetY.current + deltaY
+        offsetY.current = Math.min(newOffset, 0)
+        el.style.setProperty("--translate-y", `${offsetY.current}px`)
+      }
+      startX = null
+      startY = null
+    }
+    el.addEventListener("touchstart", handleTouchStart)
+    el.addEventListener("touchmove", handleTouchMove)
+    el.addEventListener("touchend", handleTouchEnd)
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart)
+      el.removeEventListener("touchmove", handleTouchMove)
+      el.removeEventListener("touchend", handleTouchEnd)
+    }
+  }, [ref, closeTab])
   return (
     <div
-      className={`${
-        padding ? "p-4" : ""
-      } bg-box-bg rounded-[10px] text-left text-sm ${className}`}
+      ref={ref}
+      className={`${padding ? "p-4" : ""} ${
+        hasBg ? "bg-box-bg" : ""
+      } rounded-[10px] text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
     >
       {children}
     </div>
