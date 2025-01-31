@@ -44,7 +44,6 @@ interface DatasetDef {
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
-    preprocess?: (data: LayerInput) => LayerInput // TODO: fix typing
   }
   output: {
     size: number
@@ -65,23 +64,20 @@ const datasets: DatasetDef[] = [
   {
     name: "mnist",
     loss: "categoricalCrossentropy",
-    input: {
-      preprocess: (input) => {
-        return (input as number[]).map((v) => v / 255)
-      },
-    },
     output: {
       size: 10,
       activation: "softmax",
       labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
     },
     loadData: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/mnist_20k/x_train.npz"),
-        fetchNpy("/data/mnist_20k/y_train.npz"),
-        fetchNpy("/data/mnist_20k/x_test.npz"),
-        fetchNpy("/data/mnist_20k/y_test.npz"),
-      ])
+      const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+        [
+          "/data/mnist_20k/x_train.npz",
+          "/data/mnist_20k/y_train.npz",
+          "/data/mnist_20k/x_test.npz",
+          "/data/mnist_20k/y_test.npz",
+        ]
+      )
       // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
       // normalize: vals / 255
       const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
@@ -94,11 +90,6 @@ const datasets: DatasetDef[] = [
   {
     name: "fashion mnist",
     loss: "categoricalCrossentropy",
-    input: {
-      preprocess: (input) => {
-        return (input as number[]).map((v) => v / 255)
-      },
-    },
     output: {
       size: 10,
       activation: "softmax",
@@ -116,12 +107,14 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/fashion_mnist_20k/x_train.npz"),
-        fetchNpy("/data/fashion_mnist_20k/y_train.npz"),
-        fetchNpy("/data/fashion_mnist_20k/x_test.npz"),
-        fetchNpy("/data/fashion_mnist_20k/y_test.npz"),
-      ])
+      const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+        [
+          "/data/fashion_mnist_20k/x_train.npz",
+          "/data/fashion_mnist_20k/y_train.npz",
+          "/data/fashion_mnist_20k/x_test.npz",
+          "/data/fashion_mnist_20k/y_test.npz",
+        ]
+      )
       // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
       // normalize: vals / 255
       const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
@@ -151,12 +144,14 @@ const datasets: DatasetDef[] = [
       ],
     },
     loadData: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await Promise.all([
-        fetchNpy("/data/cifar10_20k/x_train.npz"),
-        fetchNpy("/data/cifar10_20k/y_train.npz"),
-        fetchNpy("/data/cifar10_20k/x_test.npz"),
-        fetchNpy("/data/cifar10_20k/y_test.npz"),
-      ])
+      const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+        [
+          "/data/cifar10_20k/x_train.npz",
+          "/data/cifar10_20k/y_train.npz",
+          "/data/cifar10_20k/x_test.npz",
+          "/data/cifar10_20k/y_test.npz",
+        ]
+      )
       // normalize: vals / 255
       const trainX = tf.tensor(xTrain.data, xTrain.shape).div(255)
       const testX = tf.tensor(xTest.data, xTest.shape).div(255)
@@ -222,7 +217,6 @@ export function useDatasets() {
 
   const [ds, setDataset] = useState<Dataset | undefined>(undefined)
   useEffect(() => {
-    setStatusText("Loading dataset ...")
     setIsLoading(true)
     if (debug()) console.log("loading dataset", datasetId)
     const datasetDef = datasets[datasetId]
@@ -328,41 +322,85 @@ export function useDatasets() {
     }
   }, [next, totalSamples, setI])
 
-  return [ds, isLoading, input, trainingY, next] as const
+  return [ds, input, trainingY, next, isLoading] as const
 }
 
-async function fetchNpy(path: string): Promise<ParsedSafe> {
-  const startTime = new Date().getTime()
-  // TODO: error handling
-  if (path.endsWith(".npy")) {
-    const parsed = await n.load(path)
-    const endTime = new Date().getTime()
-    if (debug()) console.log(`Loaded ${path} in ${endTime - startTime}ms`)
-    if (!isSafe(parsed))
-      throw new Error("BigUint64Array/BigInt64Array not supported")
-    return parsed
-  } else if (path.endsWith(".npz")) {
-    const response = await fetch(path, {
-      // TODO: cache invalidation when files change?
-      cache: "force-cache",
-    })
-    const arrayBuffer = await response.arrayBuffer()
-    const zip = await JSZip.loadAsync(arrayBuffer)
-    const file = Object.values(zip.files)[0]
-    if (!file) throw new Error("No files in zip")
-    if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
-    const data = await file.async("arraybuffer")
-    const parsed = n.parse(data)
-    const endTime = new Date().getTime()
-    if (debug()) console.log(`Loaded ${path} in ${endTime - startTime}ms`)
-    if (!isSafe(parsed))
-      throw new Error("BigUint64Array/BigInt64Array not supported")
-    return parsed
-  } else {
-    throw new Error("Invalid file extension")
+async function fetchMutlipleNpzWithProgress(paths: string[]) {
+  const setStatusText = useStatusText.getState().setStatusText
+  const allTotalBytes: number[] = []
+  const allLoadedBytes: number[] = []
+  const onProgress: OnProgressCb = ({ path, loadedBytes, totalBytes }) => {
+    const index = paths.indexOf(path)
+    allTotalBytes[index] = totalBytes
+    allLoadedBytes[index] = loadedBytes
+    const totalLoadedBytes = allLoadedBytes.reduce((a, b) => a + b, 0)
+    const totalTotalBytes = allTotalBytes.reduce((a, b) => a + b, 0)
+    const percent = totalLoadedBytes / totalTotalBytes
+    setStatusText("Loading dataset ...", percent)
   }
+  const allPromises = paths.map((path) =>
+    fetchWithProgress(path, onProgress, { cache: "force-cache" }).then((r) =>
+      r.arrayBuffer()
+    )
+  )
+  const allFiles = await Promise.all(allPromises)
+  const allParsed = await Promise.all(allFiles.map(parseNpz))
+  return allParsed
+}
+
+async function parseNpz(arrayBuffer: ArrayBuffer) {
+  // TODO: skip JZip if file is npy
+  const zip = await JSZip.loadAsync(arrayBuffer)
+  const file = Object.values(zip.files)[0]
+  if (!file) throw new Error("No files in zip")
+  if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
+  const data = await file.async("arraybuffer")
+  const parsed = n.parse(data)
+  if (!isSafe(parsed))
+    throw new Error("BigUint64Array/BigInt64Array not supported")
+  return parsed
 }
 
 export function numColorChannels(ds?: Dataset) {
   return ds?.data.trainX.shape[3] ?? 1
+}
+
+type OnProgressCb = (arg: {
+  path: string
+  percent: number
+  loadedBytes: number
+  totalBytes: number
+}) => void
+
+async function fetchWithProgress(
+  path: string,
+  onProgress?: OnProgressCb,
+  opts?: RequestInit
+) {
+  const response = await fetch(path, opts)
+  const contentLength = response.headers.get("Content-Length")
+  if (!contentLength || !response.body) {
+    console.error("Content-Length header or body not available.")
+    return response
+  }
+  const totalBytes = parseInt(contentLength, 10)
+  onProgress?.({ path, loadedBytes: 0, totalBytes, percent: 0 })
+  const reader = response.body.getReader()
+  let loadedBytes = 0
+  const stream = new ReadableStream({
+    async start(controller) {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        loadedBytes += value.length
+        const percent = loadedBytes / totalBytes
+        onProgress?.({ path, loadedBytes, totalBytes, percent })
+        controller.enqueue(value)
+      }
+      controller.close()
+      reader.releaseLock()
+    },
+  })
+  const newResponse = new Response(stream)
+  return newResponse
 }

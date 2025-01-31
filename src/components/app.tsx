@@ -18,7 +18,7 @@ import { Menu } from "./menu"
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
 const App_ = () => {
-  const [ds, isLoading, input, trainingY, next] = useDatasets()
+  const [ds, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const visOptions = useVisOptions(ds)
   const [, batchCount] = useTraining(model, ds, next)
@@ -44,7 +44,7 @@ const App_ = () => {
       </Canvas>
       <Menu />
       <Leva />
-      <LoadingSpinner isActive={isLoading || isPending} />
+      <LoadingSpinner isActive={isPending} />
       <StatusText />
     </div>
   )
