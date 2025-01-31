@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { button, useControls } from "leva"
 import { Dataset } from "./datasets"
-import { useStatusText } from "@/components/status-text"
+import { useStatusText } from "@/components/status"
 import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
 import { useControlStores } from "@/components/controls"
 

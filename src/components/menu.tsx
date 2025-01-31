@@ -86,7 +86,7 @@ export const Menu = () => {
     if (content) lastContent.current = content
   }, [content])
   return (
-    <div className="fixed top-0 left-0 w-[100vw] z-10 flex justify-between items-start  pointer-events-none select-none flex-wrap">
+    <div className="fixed top-0 left-0 w-[100vw] z-10 flex justify-between items-start pointer-events-none select-none flex-wrap">
       <button
         className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer"
         onClick={goHome}

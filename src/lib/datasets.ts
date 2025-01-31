@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback, useState } from "react"
 import { useControls } from "leva"
-import { useStatusText } from "@/components/status-text"
+import { useStatusText } from "@/components/status"
 // import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"

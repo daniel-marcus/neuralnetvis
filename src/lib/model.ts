@@ -1,6 +1,6 @@
 import { useControls } from "leva"
 import { Dataset } from "./datasets"
-import { useStatusText } from "@/components/status-text"
+import { useStatusText } from "@/components/status"
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
@@ -55,7 +55,7 @@ export function useModel(ds?: Dataset) {
         {
           ...config,
           onEditStart: () => setIsEditing(true),
-          onEditEnd: () => startTransition(() => setIsEditing(false)),
+          onEditEnd: () => setIsEditing(false),
         },
       ])
     ),
@@ -73,7 +73,9 @@ export function useModel(ds?: Dataset) {
 
   const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
   useEffect(() => {
-    setModel(undefined)
+    return () => {
+      setModel(undefined)
+    }
   }, [ds])
   useEffect(() => {
     if (!ds || !backendReady) return

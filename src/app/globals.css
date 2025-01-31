@@ -6,23 +6,18 @@
   --color-gray-text: rgb(140, 146, 164);
   --color-box-bg: rgba(24, 28, 32, 0.75);
   --color-accent: rgb(220, 20, 100);
-}
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+  --animate-move-left-right: move-left-right 2s infinite ease-out;
+  @keyframes move-left-right {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(
+        calc(100vw - 2 * 10px - 8px)
+      ); /* calc(100vw - 2 * 16px - 10px) */
+    }
   }
 }
 

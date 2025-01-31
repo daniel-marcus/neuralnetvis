@@ -8,20 +8,20 @@ import { HoverConnections } from "./connections"
 import { useDebug } from "@/lib/debug"
 
 interface ModelProps {
-  isPending: boolean
   model?: tf.LayersModel
   ds?: Dataset
   input?: LayerInput
   rawInput?: LayerInput
   batchCount?: number
+  isPending: boolean
 }
 
 export const Model = ({
   model,
   ds,
   input,
-  isPending,
   batchCount,
+  isPending,
 }: ModelProps) => {
   useDebug()
   const [layerProps, neuronRefs] = useLayerProps(

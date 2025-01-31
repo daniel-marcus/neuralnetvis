@@ -1,4 +1,4 @@
-import { useStatusText } from "@/components/status-text"
+import { useStatusText } from "@/components/status"
 import { useEffect } from "react"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"

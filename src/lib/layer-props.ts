@@ -23,8 +23,13 @@ export function useLayerProps(
   // rawInput?: LayerInput
 ) {
   const layers = useStatelessLayers(model, ds)
-  const activations = useActivations(isPending, model, input)
-  const weightsBiases = useWeightsAndBiases(layers, model, batchCount)
+  const activations = useActivations(model, input)
+  const weightsBiases = useWeightsAndBiases(
+    isPending,
+    layers,
+    model,
+    batchCount
+  )
   const statefulLayers = useStatefulLayers(layers, weightsBiases, activations)
   const neuronRefs = useMemo(
     () => layers.map((layer) => layer.neurons.map((n) => n.ref)),
@@ -272,25 +277,31 @@ interface WeightsBiases {
 }
 
 function useWeightsAndBiases(
+  isPending: boolean,
   layers: LayerStateless[],
   model?: tf.LayersModel,
   batchCount?: number
 ) {
   const [weightsBiases, setWeightsBiases] = useState<WeightsBiases[]>([])
   useEffect(() => {
-    if (!model) return
+    if (!model || isPending) return
     async function updateWeights() {
       const newStates = await Promise.all(
         layers.map(async (l) => {
           const { layerType, tfLayer } = l
           const [ws, bs, maw] = tf.tidy(() => {
-            const [_weights, biases] = tfLayer.getWeights()
-            const weights = _weights?.transpose()
-            const maxAbsWeight = // needed only for dense connections
-              layerType === "Dense"
-                ? (_weights?.abs().max() as tf.Tensor2D) // .dataSync()[0]
-                : undefined
-            return [weights, biases, maxAbsWeight]
+            try {
+              const [_weights, biases] = tfLayer.getWeights()
+              const weights = _weights?.transpose()
+              const maxAbsWeight = // needed only for dense connections
+                layerType === "Dense"
+                  ? (_weights?.abs().max() as tf.Tensor2D) // .dataSync()[0]
+                  : undefined
+              return [weights, biases, maxAbsWeight]
+            } catch {
+              // console.log("error getting weights", { l, e })
+              return [undefined, undefined, undefined]
+            }
           })
           try {
             await tf.ready()
@@ -299,7 +310,7 @@ function useWeightsAndBiases(
             const maxAbsWeight = await maw?.array()
             return { weights, biases, maxAbsWeight } as WeightsBiases
           } catch (e) {
-            console.error("error updating weights", { bs, ws, maw, e })
+            console.log("error updating weights", { bs, ws, maw, e })
             return { weights: undefined, biases: undefined, maxAbsWeight: 0 }
           } finally {
             ws?.dispose()
@@ -312,7 +323,7 @@ function useWeightsAndBiases(
     }
     updateWeights()
     // TODO: add trigger for update to dependencies
-  }, [layers, model, batchCount])
+  }, [isPending, layers, model, batchCount])
   return weightsBiases
 }
 

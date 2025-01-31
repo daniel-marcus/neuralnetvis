@@ -2,8 +2,7 @@
 
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
-import { StatusText } from "./status-text"
-import LoadingSpinner from "./loading-spinner"
+import { Status } from "./status"
 import React, { createContext } from "react"
 import { Model } from "./model"
 import { useTraining } from "@/lib/training"
@@ -14,6 +13,7 @@ import { useDebugStore } from "@/lib/debug"
 import { withControlStores } from "./controls"
 import { Leva } from "leva"
 import { Menu } from "./menu"
+import { ProgressBar } from "./progress-bar"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
@@ -35,17 +35,18 @@ const App_ = () => {
               model={model}
               input={input}
               ds={ds}
-              isPending={false}
               batchCount={batchCount}
+              isPending={isPending}
             />
           </TrainingYContext.Provider>
         </VisOptionsContext.Provider>
         {debug && <Stats />}
       </Canvas>
       <Menu />
-      <Leva />
-      <LoadingSpinner isActive={isPending} />
-      <StatusText />
+      <Status>
+        <ProgressBar isSpinner={isPending} />
+      </Status>
+      <Leva hidden />
     </div>
   )
 }
@@ -73,7 +74,3 @@ const Lights = () => (
     />
   </>
 )
-
-/* 
-
-*/

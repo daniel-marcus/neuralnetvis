@@ -4,14 +4,10 @@ import type { LayerInput } from "./datasets"
 import { debug } from "@/lib/debug"
 import { normalizeTensor } from "./normalization"
 
-export function useActivations(
-  isPending: boolean,
-  model?: tf.LayersModel,
-  input?: LayerInput
-) {
+export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
   // TODO: use async .array() method?
   return useMemo(() => {
-    if (isPending || !model || !input || input.length === 0) return []
+    if (!model || !input || input.length === 0) return []
     const startTime = Date.now()
 
     const shape = model.layers[0].batchInputShape
@@ -42,5 +38,5 @@ export function useActivations(
     if (debug())
       console.log("Activations computed in", endTime - startTime, "ms")
     return result
-  }, [isPending, model, input])
+  }, [model, input])
 }
