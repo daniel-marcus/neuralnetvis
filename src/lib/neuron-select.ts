@@ -2,7 +2,7 @@ import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { Neuron, Nid } from "@/components/neuron"
 import { LayerStateful } from "@/components/layer"
-import { useContext, useMemo } from "react"
+import { useContext, useEffect, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { debug } from "./debug"
 import { HighlightProp, VisOptionsContext } from "./vis-options"
@@ -14,6 +14,7 @@ export const useSelected = create<{
   getSelectedNid: () => Nid | null
   toggleHovered: (n: Neuron | null) => void
   toggleSelected: (n: Neuron | null) => void
+  setSelected: (n: Neuron | null) => void
 }>((set, get) => ({
   hovered: null,
   selected: null,
@@ -23,6 +24,7 @@ export const useSelected = create<{
     set(({ selected }) => ({
       selected: selected && n?.nid === selected.nid ? null : n,
     })),
+  setSelected: (n) => set({ selected: n }),
   toggleHovered: (n) =>
     set(({ hovered }) => ({
       hovered: hovered && n?.nid === hovered.nid ? null : n,
@@ -49,13 +51,25 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
   const { highlightProp } = useContext(VisOptionsContext)
-  const _selectedNid = useSelected((s) => s.getSelectedNid())
-  const _hoveredNid = useSelected((s) => s.getHoveredNid())
-  const selectedNid = _hoveredNid || _selectedNid
+  const selectedNid = useSelected((s) => s.getSelectedNid())
+  const hoveredNid = useSelected((s) => s.getHoveredNid())
+  const setSelected = useSelected((s) => s.setSelected)
+
+  // TODO: refactor!
+  useEffect(() => {
+    if (!selectedNid) return
+    const selected = layerProps
+      .flatMap((l) => l.neurons)
+      .find(({ nid }) => nid === selectedNid)
+    if (selected) setSelected(selected)
+  }, [layerProps, selectedNid, setSelected])
+
+  const selOrHovNid = selectedNid || hoveredNid
+
   const patchedLayerProps = useMemo(() => {
-    if (!selectedNid) return layerProps
+    if (!selOrHovNid) return layerProps
     const allNeurons = layerProps.flatMap((l) => l.neurons)
-    const selN = allNeurons.find(({ nid }) => nid === selectedNid)
+    const selN = allNeurons.find(({ nid }) => nid === selOrHovNid)
     if (!selN) return layerProps
     const weightedInputs = getWeightedInputs(selN.inputs, selN.weights)
     const tempObj = {
@@ -86,7 +100,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
         neuronsMap: new Map(patchdNeurons.map((n) => [n.nid, n])),
       }
     })
-  }, [layerProps, selectedNid, highlightProp])
+  }, [layerProps, selOrHovNid, highlightProp])
   return patchedLayerProps
 }
 
@@ -95,7 +109,7 @@ export function getWeightedInputs(
   neuronWeights?: number[]
 ) {
   if (!neuronInput || !neuronWeights) return undefined
-  // TODO: Conv2D layer ...
+  // TODO: check shapes
   const weightedInputs = tf.tidy(() => {
     const weightsTensor = tf.tensor1d(neuronWeights)
     const inputsTensor = tf.tensor1d(neuronInput)

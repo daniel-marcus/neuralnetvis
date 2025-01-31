@@ -3,10 +3,9 @@ import { useStatusText } from "./status"
 
 interface ProgressBarProps {
   length?: number
-  isSpinner?: boolean
 }
 
-export const ProgressBar = ({ length, isSpinner }: ProgressBarProps) => {
+export const ProgressBar = ({ length }: ProgressBarProps) => {
   const percent = useStatusText((s) => s.percent)
   const wrapeprRef = useRef<HTMLDivElement>(null)
   const testRef = useRef<HTMLSpanElement>(null)
@@ -26,6 +25,7 @@ export const ProgressBar = ({ length, isSpinner }: ProgressBarProps) => {
   }, [])
   const maxLength = Math.ceil(wrapperWidth / pxPerChar)
   const l = length ? Math.min(length, maxLength) : maxLength
+  const isSpinner = percent === -1
   const isHidden = percent === undefined && !isSpinner
   return (
     <div

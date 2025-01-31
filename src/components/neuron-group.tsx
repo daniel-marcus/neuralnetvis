@@ -190,7 +190,7 @@ function getActivationColor(neuron: Neuron) {
   return `rgb(${Math.ceil(colorValue * 255)},20,100)`
 }
 
-function getHighlightColor(
+export function getHighlightColor(
   value: number, // between -1 and 1
   base: [number, number, number] = [250, 20, 100]
 ) {

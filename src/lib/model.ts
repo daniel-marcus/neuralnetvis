@@ -43,7 +43,15 @@ const defaultModelConfig = {
 export function useModel(ds?: Dataset) {
   const backendReady = useBackend()
   const [isEditing, setIsEditing] = useState(false)
+  const setPercent = useStatusText((s) => s.setPercent)
   const [isPending, startTransition] = useTransition()
+  useEffect(() => {
+    if (!isPending) return
+    setPercent(-1)
+    return () => {
+      setPercent(undefined)
+    }
+  }, [isPending, setPercent])
 
   const { modelStore } = useControlStores()
   const modelConfigRef = useRef<Record<string, number>>({})

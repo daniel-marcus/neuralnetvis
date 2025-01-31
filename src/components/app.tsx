@@ -2,7 +2,6 @@
 
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
-import { Status } from "./status"
 import React, { createContext } from "react"
 import { Model } from "./model"
 import { useTraining } from "@/lib/training"
@@ -13,7 +12,8 @@ import { useDebugStore } from "@/lib/debug"
 import { withControlStores } from "./controls"
 import { Leva } from "leva"
 import { Menu } from "./menu"
-import { ProgressBar } from "./progress-bar"
+import { Controller } from "./controller"
+import { Footer } from "./footer"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
@@ -41,11 +41,10 @@ const App_ = () => {
           </TrainingYContext.Provider>
         </VisOptionsContext.Provider>
         {debug && <Stats />}
+        <Controller />
       </Canvas>
       <Menu />
-      <Status>
-        <ProgressBar isSpinner={isPending} />
-      </Status>
+      <Footer />
       <Leva hidden />
     </div>
   )
