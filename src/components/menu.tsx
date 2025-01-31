@@ -209,9 +209,9 @@ function Info() {
         <Button onClick={() => setTab("play")}>play</Button> with neural
         networks – all within your browser!
       </p>
-      <p className="mb-4">--</p>
-      <p>
-        © 2025 by{" "}
+      <p className="text-right">
+        v{process.env.APP_VERSION}
+        <br />© 2025 by{" "}
         <a
           className="text-accent"
           target="_blank"
@@ -219,7 +219,6 @@ function Info() {
         >
           Daniel Marcus
         </a>
-        , v{process.env.APP_VERSION}
       </p>
     </Box>
   )

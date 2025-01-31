@@ -55,13 +55,13 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
   const hoveredNid = useSelected((s) => s.getHoveredNid())
   const setSelected = useSelected((s) => s.setSelected)
 
-  // TODO: refactor!
+  // TODO: refactor! + reset selected when model changes
   useEffect(() => {
     if (!selectedNid) return
     const selected = layerProps
       .flatMap((l) => l.neurons)
       .find(({ nid }) => nid === selectedNid)
-    if (selected) setSelected(selected)
+    setSelected(selected ?? null)
   }, [layerProps, selectedNid, setSelected])
 
   const selOrHovNid = selectedNid || hoveredNid

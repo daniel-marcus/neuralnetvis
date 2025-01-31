@@ -32,6 +32,6 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, "Roboto Mono", monospace;
 }
 
-button {
+button:not([disabled]) {
   cursor: pointer;
 }

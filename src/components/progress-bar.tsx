@@ -26,7 +26,7 @@ export const ProgressBar = ({ length }: ProgressBarProps) => {
   const maxLength = Math.ceil(wrapperWidth / pxPerChar)
   const l = length ? Math.min(length, maxLength) : maxLength
   const isSpinner = percent === -1
-  const isHidden = percent === undefined && !isSpinner
+  const isHidden = percent === null
   return (
     <div
       ref={wrapeprRef}

@@ -49,7 +49,7 @@ export function useModel(ds?: Dataset) {
     if (!isPending) return
     setPercent(-1)
     return () => {
-      setPercent(undefined)
+      setPercent(null)
     }
   }, [isPending, setPercent])
 

@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from "react"
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { InstancedMesh } from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import * as THREE from "three"
@@ -15,7 +8,6 @@ import { NeuronLabels } from "./neuron-label"
 import { VisOptionsContext } from "@/lib/vis-options"
 import { LayerProps } from "./layer"
 import { ThreeEvent, useThree } from "@react-three/fiber"
-import { useStatusText } from "./status"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "./neuron"
 import { debug } from "@/lib/debug"
@@ -259,30 +251,6 @@ function useScale(
   ]) // neurons
 }
 
-function useHoverStatus() {
-  const setStatusText = useStatusText((s) => s.setStatusText)
-  const showNeuronState = useCallback(
-    (neuron?: Neuron | null, isSelected?: boolean) => {
-      if (neuron === null) setStatusText("")
-      if (!neuron) return
-      const { nid, rawInput, activation: _activation, bias } = neuron
-      // TODO: handle multiple activations?
-      const activation = Array.isArray(_activation)
-        ? undefined // _activation[0]
-        : _activation
-      const hint = !isSelected ? "Click to keep selected" : "Click to unselect"
-      setStatusText(
-        `<strong>Neuron ${nid} (${neuron.index})</strong><br/><br/>
-${rawInput !== undefined ? `Raw Input: ${rawInput}<br/>` : ""}
-Activation: ${activation?.toFixed(4)}<br/>
-${bias !== undefined ? `Bias: ${bias?.toFixed(4)}<br/><br/>${hint}` : ""}`
-      )
-    },
-    [setStatusText]
-  )
-  return showNeuronState
-}
-
 function useAdditiveBlending(active?: boolean) {
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
   useEffect(() => {
@@ -297,38 +265,24 @@ function useAdditiveBlending(active?: boolean) {
 
 function useInteractions(groupedNeurons: Neuron[]) {
   const { toggleSelected, toggleHovered } = useSelected()
-  const selectedNid = useSelected((s) => s.getSelectedNid())
-  const showNeuronState = useHoverStatus()
   const eventHandlers = useMemo(() => {
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         if (e.buttons) return
         const neuron = groupedNeurons[e.instanceId as number]
         if (!neuron) return
-        // TODO: debounce?
-        if (selectedNid && neuron.nid === selectedNid)
-          showNeuronState(neuron, true)
-        else showNeuronState(neuron)
         toggleHovered(neuron)
       },
       onPointerOut: () => {
-        showNeuronState(null)
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
         const neuron = groupedNeurons[e.instanceId as number]
         if (!neuron) return
-        showNeuronState(neuron, true)
         toggleSelected(neuron)
       },
     }
     return result
-  }, [
-    groupedNeurons,
-    showNeuronState,
-    toggleHovered,
-    toggleSelected,
-    selectedNid,
-  ])
+  }, [groupedNeurons, toggleHovered, toggleSelected])
   return eventHandlers
 }

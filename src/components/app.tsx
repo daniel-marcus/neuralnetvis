@@ -24,7 +24,7 @@ const App_ = () => {
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
   return (
-    <div className="w-screen h-screen bg-[#110000]">
+    <div className="w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden">
       <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />

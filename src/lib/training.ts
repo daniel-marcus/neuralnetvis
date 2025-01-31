@@ -170,7 +170,8 @@ Batch ${batchIndex + 1}/${epochBatches}`,
             setStatusText(
               `Training finished (${tf.getBackend()})<br/>Loss: ${loss?.toFixed(
                 4
-              )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`
+              )}<br/>Accuracy: ${accuracy?.toFixed(4)}<br/>Time: ${totalTime}s`,
+              null
             )
           if (trainingComplete) {
             epochCount++
