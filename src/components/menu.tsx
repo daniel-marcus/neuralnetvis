@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
-import { getLessonPath, lessons } from "@/lessons/lessons"
+import { lessonPreviews } from "@/lessons/all-lessons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { datasets } from "@/lib/datasets"
@@ -78,11 +78,12 @@ export const useTabsStore = create<TabStore>((set) => ({
   isShown: true,
   setIsShown: (isShown) => set({ isShown }),
   setTab: (slugs) => {
-    if (!slugs)
+    if (typeof slugs === "undefined")
       return set(({ isFirstLoad }) => ({
         currTab: isFirstLoad ? tabs.find((t) => t.isDefault) ?? null : null,
         isFirstLoad: false,
       }))
+    if (slugs === null) return set({ currTab: null })
     const tab = getTab(slugs, tabs)
     if (tab) set({ currTab: tab })
   },
@@ -96,7 +97,11 @@ function getTab(slugs: string[], tabs: Tab[]): Tab | null {
   return getTab(rest, tab.children ?? [])
 }
 
-export const TabSetter = ({ slugs }: { slugs: string[] | undefined }) => {
+export const TabSetter = ({
+  slugs,
+}: {
+  slugs: string[] | null | undefined
+}) => {
   const setTab = useTabsStore((s) => s.setTab)
   useEffect(() => {
     setTab(slugs)
@@ -393,10 +398,10 @@ const Learn = () => {
   // TODO: get current lesson
   return (
     <Box className="flex flex-col">
-      {lessons.map((l) => (
+      {lessonPreviews.map((l) => (
         <MenuBtn
           key={l.slug}
-          href={getLessonPath(l.slug)}
+          href={l.path}
           // isActive={currLesson?.slug === l.slug}s
         >
           {l.title}

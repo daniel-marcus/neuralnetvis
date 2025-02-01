@@ -14,6 +14,7 @@ import { Menu } from "./menu"
 import { Controller } from "./controller"
 import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
+import { useLessonStore } from "./lesson"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
@@ -23,16 +24,13 @@ const App_ = ({ children }: { children?: ReactNode }) => {
   const visOptions = useVisOptions(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
-
-  // TODO: find a way to determine if is play or learn mode ... + disable orbit controls in learn mode
-  const isLearnMode = false
-
+  const isLearnMode = useLessonStore((s) => s.isLearnMoode())
   return (
     <div className="relative">
       <Menu />
       <div
         className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
-          !isLearnMode ? "pointer-events-none" : ""
+          isLearnMode ? "pointer-events-none opacity-50" : ""
         }`}
       >
         <Canvas frameloop="always">
