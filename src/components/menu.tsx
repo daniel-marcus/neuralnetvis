@@ -1,12 +1,15 @@
-import React, { useEffect, useRef } from "react"
+"use client"
+
+import React, { useCallback, useEffect, useRef } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
-import { lessons } from "@/lessons/lessons"
+import { getLessonPath, lessons } from "@/lessons/lessons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 type Tab = {
-  key: string
+  slug: string
+  label?: string
   content?: (stores: ControlStores) => React.ReactElement
   isDefault?: boolean
   children?: Tab[]
@@ -15,29 +18,38 @@ type Tab = {
 
 const _tabs: Tab[] = [
   {
-    key: "learn",
+    slug: "learn",
     content: () => <Learn />,
   },
   {
-    key: "play",
+    slug: "play",
+    content: () => (
+      <Box padding>
+        <p className="mb-4">
+          Welcome to the playground! Here you can create, modify, and train
+          neural networks.
+        </p>
+        <p className="mb-4">Choose a tab to get started.</p>
+      </Box>
+    ),
     children: [
       {
-        key: "data",
+        slug: "data",
         content: ({ dataStore }) => <ControlPanel store={dataStore} />,
       },
       {
-        key: "model",
+        slug: "model",
         content: ({ modelStore }) => <ControlPanel store={modelStore} />,
       },
       {
-        key: "train",
+        slug: "train",
         content: ({ trainStore }) => <ControlPanel store={trainStore} />,
-        isDefault: true,
       },
     ],
   },
   {
-    key: "i",
+    slug: "info",
+    label: "i",
     content: () => <Info />,
     isDefault: true,
   },
@@ -49,59 +61,54 @@ function addParent(tab: Tab, parent?: Tab): Tab {
 }
 
 const tabs = _tabs.map((t) => addParent(t))
-const defaultTab = tabs.find((t) => t.isDefault)
 
-export const useTabsStore = create<{
-  activeTab: Tab | null
-  clickTab: (tab: Tab | null) => void
-  goHome: () => void
-  goBack: () => void
-  closeTab: () => void
-  setTab: (key: string) => void
-}>((set) => ({
-  activeTab: defaultTab ?? null,
-  clickTab: (tab) =>
-    set(({ activeTab }) => {
-      if (activeTab === tab) return { activeTab: tab?.parent ?? null }
-      const defaultChild = tab?.children?.find((c) => c.isDefault)
-      return { activeTab: defaultChild ?? tab }
-    }),
-  goHome: () => set({ activeTab: null }),
-  goBack: () =>
-    set(({ activeTab }) => {
-      const { parent } = activeTab ?? {}
-      const parentIsCategory = !parent?.content
-      return { activeTab: parentIsCategory ? parent?.parent : parent }
-    }),
-  closeTab: () =>
-    set(({ activeTab }) => ({ activeTab: activeTab?.parent ?? null })),
-  setTab: (key) => {
-    const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
-    const tab = allTabs.find((t) => t.key === key)
-    const defaultChild = tab?.children?.find((c) => c.isDefault)
-    if (tab) set({ activeTab: defaultChild ?? tab })
+interface TabStore {
+  isShown: boolean
+  setIsShown: (isShown: boolean) => void
+  currTab: Tab | null
+  setTab: (slugs: string[] | null | undefined) => void
+}
+
+export const useTabsStore = create<TabStore>((set) => ({
+  currTab: null,
+  isShown: true,
+  setIsShown: (isShown) => set({ isShown }),
+  setTab: (slugs) => {
+    if (!slugs) return set({ currTab: null })
+    const tab = getTab(slugs, tabs)
+    if (tab) set({ currTab: tab })
   },
 }))
 
+function getTab(slugs: string[], tabs: Tab[]): Tab | null {
+  const [slug, ...rest] = slugs
+  const tab = tabs.find((t) => t.slug === slug)
+  if (!tab) return null
+  if (!rest.length) return tab
+  return getTab(rest, tab.children ?? [])
+}
+
+export const TabSetter = ({ slugs }: { slugs: string[] | undefined }) => {
+  const setTab = useTabsStore((s) => s.setTab)
+  useEffect(() => {
+    setTab(slugs)
+  }, [slugs, setTab])
+  return null
+}
+
 export const Menu = () => {
-  const { activeTab, goHome } = useTabsStore()
+  const { currTab, isShown } = useTabsStore()
   const stores = useControlStores()
-  const content = activeTab?.content ? activeTab.content(stores) : null
+  const content = currTab?.content && isShown ? currTab.content(stores) : null
   const lastContent = useRef<React.ReactElement | null>(null)
   useEffect(() => {
     if (content) lastContent.current = content
   }, [content])
-  const pathname = usePathname()
-  useEffect(() => {
-    // close tab on route change
-    if (pathname !== "/") goHome()
-  }, [pathname, goHome])
   return (
-    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap">
+    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap text-sm xs:text-base">
       <Link
         href="/"
-        className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer bg-background relative z-10"
-        onClick={goHome}
+        className="p-main pointer-events-auto cursor-pointer bg-background relative z-10"
       >
         NeuralNetVis
       </Link>
@@ -111,7 +118,7 @@ export const Menu = () => {
         </div>
         <div
           className={`absolute right-0 w-[380px] max-w-[100vw] ${
-            activeTab?.content
+            !!content
               ? ""
               : "-translate-y-full sm:translate-y-0 sm:translate-x-full pointer-events-none"
           } transition-transform duration-300 ease-in-out`}
@@ -124,30 +131,40 @@ export const Menu = () => {
 }
 
 const Tabs = () => {
-  const { activeTab, clickTab, goBack } = useTabsStore()
-  const router = useRouter()
+  const { currTab, setIsShown } = useTabsStore()
+
+  function getPath(tab: Tab): string {
+    if (!tab.parent) return `/${tab.slug}`
+    return `${getPath(tab.parent)}/${tab.slug}`
+  }
+
   function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {
-      const isActive = activeTab?.key === t.key
+      const isActive = currTab?.slug === t.slug
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
       const isParent =
-        !!activeTab && allChildren?.some((c) => c.key === activeTab.key)
-      const isSibling = activeTab?.parent?.key === parent?.key && !isActive
-      const isChild = !!parent && parent.key === activeTab?.key
+        !!currTab && allChildren?.some((c) => c.slug === currTab.slug)
+      const isSibling = currTab?.parent?.slug === parent?.slug && !isActive
+      const isChild = !!parent && parent.slug === currTab?.slug
       const isCategory = !t.content
       const isShown =
-        (isActive && !isCategory) ||
+        (isActive && !isCategory && !currTab?.children) ||
         isChild ||
-        (isSibling && !activeTab?.children)
+        (isSibling && !currTab?.children)
+      const path = getPath(t)
       const onClick = () => {
-        clickTab(t)
-        // TODO ...
-        if (!parent && t.key === "play") router.push(`/`)
+        if (isActive) setIsShown(false)
+        else setIsShown(true)
       }
       return (
-        <React.Fragment key={t.key}>
-          <TabButton isActive={isActive} isShown={isShown} onClick={onClick}>
-            {t.key}
+        <React.Fragment key={t.slug}>
+          <TabButton
+            href={isActive ? (parent ? getPath(parent) : "/") : path}
+            isActive={isActive}
+            isShown={isShown}
+            onClick={onClick}
+          >
+            {t.label ?? t.slug}
           </TabButton>
           {!!t.children && (isActive || isParent) && (
             <>{renderTabs(t.children, t)}</>
@@ -159,8 +176,8 @@ const Tabs = () => {
   return (
     <>
       <TabButton
-        isShown={!!activeTab && (!activeTab.content || !!activeTab.parent)}
-        onClick={goBack}
+        href={currTab?.parent ? getPath(currTab.parent) : "/"}
+        isShown={!!currTab && (!!currTab.children || !!currTab.parent)}
       >
         &lt;
       </TabButton>
@@ -170,6 +187,7 @@ const Tabs = () => {
 }
 
 interface TabButtonProps {
+  href: string
   isActive?: boolean
   onClick?: () => void
   children?: React.ReactNode
@@ -177,19 +195,21 @@ interface TabButtonProps {
 }
 
 const TabButton = ({
+  href,
   isActive,
   isShown = true,
-  onClick,
   children,
+  onClick,
 }: TabButtonProps) => (
-  <button
-    className={`p-[10px] sm:p-4 cursor-pointer ${
-      isActive ? "text-white" : ""
-    } ${isShown ? "" : "hidden"}`}
+  <Link
+    href={href}
+    className={`p-main cursor-pointer ${isActive ? "text-white" : ""} ${
+      isShown ? "" : "hidden"
+    }`}
     onClick={onClick}
   >
     {children}
-  </button>
+  </Link>
 )
 
 export function Box({
@@ -204,7 +224,14 @@ export function Box({
   hasBg?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const closeTab = useTabsStore((s) => s.closeTab)
+  const setIsShown = useTabsStore((s) => s.setIsShown)
+  const pathname = usePathname()
+  const router = useRouter()
+  const closeTab = useCallback(() => {
+    const parentPath = pathname.split("/").slice(0, -1).join("/") || "/"
+    setIsShown(false)
+    router.push(parentPath)
+  }, [setIsShown, pathname, router])
   useSwipeClose(ref, closeTab)
   return (
     <div
@@ -281,7 +308,6 @@ function useSwipeClose(
 }
 
 function Info() {
-  const setTab = useTabsStore((s) => s.setTab)
   return (
     <Box padding>
       <p className="mb-4">
@@ -289,12 +315,12 @@ function Info() {
       </p>
       <p className="mb-4">
         If you are new to the topic, you might want to start with the{" "}
-        <Button onClick={() => setTab("learn")}>learn</Button> section.
+        <Button href="/learn">learn</Button> section.
       </p>
       <p className="mb-4">
         Otherwise, dive in, modify or train models, and{" "}
-        <Button onClick={() => setTab("play")}>play</Button> with neural
-        networks – all within your browser!
+        <Button href="/play">play</Button> with neural networks – all within
+        your browser!
       </p>
       <p className="text-right">
         v{process.env.APP_VERSION}
@@ -312,18 +338,21 @@ function Info() {
 }
 
 const Button = ({
+  href,
   children,
   onClick,
 }: {
+  href: string
   children: React.ReactNode
   onClick?: () => void
 }) => (
-  <button
+  <Link
+    href={href}
     className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
     onClick={onClick}
   >
     {children}
-  </button>
+  </Link>
 )
 
 interface ChapterProps {
@@ -334,7 +363,7 @@ interface ChapterProps {
 
 const Chapter = ({ slug, children, isActive }: ChapterProps) => (
   <Link
-    href={`/en/learn/${slug}`}
+    href={getLessonPath(slug)}
     className={`p-4 ${
       isActive ? "bg-amber-200 text-black" : ""
     } hover:bg-accent hover:text-white text-left rounded-[10px]`}

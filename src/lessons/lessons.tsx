@@ -42,6 +42,6 @@ export const lessons: LessonType[] = [
   },
 ]
 
-export function getLessonPath(slug: string, lang: string = "en") {
-  return `/${lang}/learn/${slug}`
+export function getLessonPath(slug: string) {
+  return `/learn/${slug}`
 }

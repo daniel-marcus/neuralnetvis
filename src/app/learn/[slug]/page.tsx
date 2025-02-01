@@ -1,4 +1,5 @@
-import { lessons, LessonType } from "@/lessons/lessons"
+import { TabSetter } from "@/components/menu"
+import { getLessonPath, lessons, LessonType } from "@/lessons/lessons"
 import Link from "next/link"
 import React from "react"
 
@@ -10,7 +11,8 @@ export default async function LessonPage(props: {
   if (!lesson) return <div className="relative z-10 p-4">404</div>
   const children = React.Children.toArray(lesson.content.props.children)
   return (
-    <div className="relative z-10 p-4 mt-32 pb-[50dvh] w-full">
+    <div className="relative z-10 p-main mt-32 pb-[50dvh] w-full">
+      <TabSetter slugs={undefined} />
       <div className="max-w-[1200px] mx-auto">
         <Title>{lesson.title}</Title>
         {children}
@@ -44,7 +46,7 @@ function Ctas({ lesson }: { lesson: LessonType }) {
     <div className="mt-[50dvh] flex justify-start">
       {!!nextLesson ? (
         <Link
-          href={`/en/learn/${nextLesson.slug}`}
+          href={getLessonPath(nextLesson.slug)}
           className="bg-accent text-white px-4 py-2 rounded"
         >
           Next: {nextLesson.title}

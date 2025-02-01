@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --breakpoint-xs: 361px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-gray-text: rgb(140, 146, 164);
@@ -18,6 +19,12 @@
         calc(100vw - 2 * 10px - 8px)
       ); /* calc(100vw - 2 * 16px - 10px) */
     }
+  }
+}
+
+@layer utilities {
+  .p-main {
+    @apply p-2 xs:p-[10px] sm:p-4;
   }
 }
 
