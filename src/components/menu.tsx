@@ -7,6 +7,7 @@ import { lessonPreviews } from "@/lessons/all-lessons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { datasets } from "@/lib/datasets"
+import { useLessonStore } from "./lesson"
 
 type Tab = {
   key: string
@@ -21,7 +22,7 @@ type Tab = {
 const _tabs: Tab[] = [
   {
     key: "learn",
-    slug: "learn",
+    // slug: "learn",
     content: () => <Learn />,
   },
   {
@@ -97,8 +98,8 @@ export const useTabStore = create<TabStore>((set) => ({
       }))
     if (slugs === null) return set({ currTab: null })
     const tab = getTab(slugs, tabs)
-    const newIsShown = shouldShow ?? true
-    if (tab) set({ currTab: tab, isShown: newIsShown })
+    if (tab)
+      set(({ isShown }) => ({ currTab: tab, isShown: shouldShow ?? isShown }))
   },
   setTabByKey: (key: string | null) => {
     // careful with duplicate keys
@@ -164,7 +165,12 @@ export const Menu = () => {
 }
 
 const Tabs = () => {
-  const { currTab, setTabBySlugs, isShown: isTabShown } = useTabStore()
+  const {
+    currTab,
+    setTabBySlugs,
+    isShown: isTabShown,
+    setIsShown,
+  } = useTabStore()
 
   function getPath(tab: Tab): string {
     if (!tab.parent) return `/${tab.slug}`
@@ -185,6 +191,9 @@ const Tabs = () => {
         isChild ||
         (isSibling && !currTab?.children)
       const path = getPath(t)
+      const onClickAll = () => {
+        setIsShown(isActive ? false : true)
+      }
       const onClickBtnOnly = () => {
         setTabBySlugs([t.key], !isActive || !isTabShown)
       }
@@ -201,7 +210,7 @@ const Tabs = () => {
             href={href}
             isActive={isActive}
             isShown={isShown}
-            onClick={!t.slug ? onClickBtnOnly : undefined}
+            onClick={!t.slug ? onClickBtnOnly : onClickAll}
           >
             {t.label ?? t.key}
           </TabButton>
@@ -407,7 +416,13 @@ interface MenuBtnProps {
   onClick?: () => void
 }
 
-const MenuBtn = ({ href, children, isActive, onClick }: MenuBtnProps) => {
+// TODO: rename, move to separate file
+export const MenuBtn = ({
+  href,
+  children,
+  isActive,
+  onClick,
+}: MenuBtnProps) => {
   const Component = href ? Link : "button"
   return (
     <Component
@@ -424,15 +439,11 @@ const MenuBtn = ({ href, children, isActive, onClick }: MenuBtnProps) => {
 }
 
 const Learn = () => {
-  // TODO: get current lesson
+  const currLesson = useLessonStore((s) => s.currLesson)
   return (
     <Box className="flex flex-col">
       {lessonPreviews.map((l) => (
-        <MenuBtn
-          key={l.slug}
-          href={l.path}
-          // isActive={currLesson?.slug === l.slug}s
-        >
+        <MenuBtn key={l.slug} href={l.path} isActive={currLesson === l.slug}>
           <strong>{l.title}</strong>
           <br />
           {l.description}

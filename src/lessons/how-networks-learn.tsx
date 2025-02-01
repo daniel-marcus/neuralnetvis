@@ -2,13 +2,16 @@
 
 import {
   Block,
+  Button,
   OnBlockEnterLeaveProps,
   OnBlockScrollProps,
 } from "@/components/lesson"
 import { LessonContent } from "./all-lessons"
 import { useEffect } from "react"
+import { useController } from "@/components/controller"
 
 export const IntroNetworks = (): LessonContent => {
+  const controller = useController()
   useEffect(() => {
     console.log("IntroNetworks mounted")
   }, [])
@@ -32,7 +35,12 @@ export const IntroNetworks = (): LessonContent => {
       >
         Changing neuronSpacing
       </Block>
-      <Block onEnter={startTraining}>How about training?</Block>
+      <Block>
+        How about training?
+        <br />
+        <br />
+        <Button onClick={() => startTraining(controller)}>Train!</Button>
+      </Block>
     </main>
   )
 }
