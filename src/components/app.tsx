@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
-import React, { createContext } from "react"
+import React, { createContext, ReactNode } from "react"
 import { Model } from "./model"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
@@ -13,37 +13,46 @@ import { withControlStores } from "./controls"
 import { Menu } from "./menu"
 import { Controller } from "./controller"
 import { Footer } from "./footer"
+import { ThreeStoreSetter } from "@/lib/three-store"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
-const App_ = () => {
+const App_ = ({ children }: { children?: ReactNode }) => {
   const [ds, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const visOptions = useVisOptions(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
   return (
-    <div className="w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden">
-      <Canvas frameloop="demand">
-        <Lights />
-        <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
-        <OrbitControls target={[0, 0, 0]} />
-        <VisOptionsContext.Provider value={visOptions}>
-          <TrainingYContext.Provider value={trainingY}>
-            <Model
-              model={model}
-              input={input}
-              ds={ds}
-              batchCount={batchCount}
-              isPending={isPending}
-            />
-          </TrainingYContext.Provider>
-        </VisOptionsContext.Provider>
-        {debug && <Stats />}
-        <Controller />
-      </Canvas>
+    <div className="relative">
       <Menu />
-      <Footer />
+      <div
+        className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
+          !!children ? "pointer-events-none" : ""
+        }`}
+      >
+        <Canvas frameloop="always">
+          <ThreeStoreSetter />
+          <Lights />
+          <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
+          {!children && <OrbitControls target={[0, 0, 0]} />}
+          <VisOptionsContext.Provider value={visOptions}>
+            <TrainingYContext.Provider value={trainingY}>
+              <Model
+                model={model}
+                input={input}
+                ds={ds}
+                batchCount={batchCount}
+                isPending={isPending}
+              />
+            </TrainingYContext.Provider>
+          </VisOptionsContext.Provider>
+          {debug && <Stats />}
+          <Controller />
+        </Canvas>
+        <Footer />
+      </div>
+      {children}
     </div>
   )
 }

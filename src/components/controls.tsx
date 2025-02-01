@@ -61,10 +61,9 @@ export const controlTheme: LevaCustomTheme = {
 }
 
 export const ControlPanel = ({ store }: { store: StoreType }) => (
-  <Box hasBg={false}>
+  <Box key={store.storeId} hasBg={false}>
     <LevaPanel
       store={store}
-      key={store.storeId}
       fill
       hideCopyButton
       titleBar={false}

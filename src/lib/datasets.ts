@@ -201,12 +201,12 @@ const datasets: DatasetDef[] = [
 
 export function useDatasets() {
   const { dataStore } = useControlStores()
-  const { datasetId } = useControls(
+  const { datasetKey } = useControls(
     {
-      datasetId: {
-        value: 0,
+      datasetKey: {
+        value: datasets[0].name,
         label: "dataset",
-        options: Object.fromEntries(datasets.map((d, i) => [d.name, i])),
+        options: Object.fromEntries(datasets.map((d) => [d.name, d.name])),
       },
     },
     { store: dataStore }
@@ -218,12 +218,12 @@ export function useDatasets() {
   const [ds, setDataset] = useState<Dataset | undefined>(undefined)
   useEffect(() => {
     setIsLoading(true)
-    if (debug()) console.log("loading dataset", datasetId)
-    const datasetDef = datasets[datasetId]
+    if (debug()) console.log("loading dataset", datasetKey)
+    const datasetDef = datasets.find((d) => d.name === datasetKey)
     if (!datasetDef) return
     datasetDef.loadData().then((data) => {
       setIsLoading(false)
-      if (debug()) console.log("loaded dataset", datasetId)
+      if (debug()) console.log("loaded dataset", datasetKey)
       setDataset({
         ...datasetDef,
         data,
@@ -232,7 +232,7 @@ export function useDatasets() {
     return () => {
       setDataset(undefined)
     }
-  }, [datasetId, setStatusText, setIsLoading])
+  }, [datasetKey, setStatusText, setIsLoading])
 
   const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
 

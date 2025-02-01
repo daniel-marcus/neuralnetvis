@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import { App } from "@/components/app"
 
 export const metadata: Metadata = {
   title: "NeuralNetVis",
@@ -22,7 +23,9 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
       </head>
-      <body className={`antialiased`}>{children}</body>
+      <body className={`antialiased`}>
+        <App>{children}</App>
+      </body>
     </html>
   )
 }

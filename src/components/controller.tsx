@@ -1,7 +1,7 @@
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useControlStores } from "./controls"
 import { useTabsStore } from "./menu"
-import { useThree } from "@react-three/fiber"
+import { useThreeStore } from "@/lib/three-store"
 
 declare global {
   interface Window {
@@ -9,15 +9,21 @@ declare global {
   }
 }
 
-// TODO: setDatasetByKey ?
-
-export const Controller = () => {
-  const three = useThree()
+export function useController() {
+  const three = useThreeStore((s) => s.three)
   const stores = useControlStores()
   const tabs = useTabsStore()
+  const controller = useMemo(
+    () => ({ ...stores, tabs, three }),
+    [stores, tabs, three]
+  )
+  return controller
+}
+
+export const Controller = () => {
+  const controller = useController()
   useEffect(() => {
-    const controller = { ...stores, tabs, three }
     window.controller = controller
-  }, [stores, tabs, three])
+  }, [controller])
   return null
 }

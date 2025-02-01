@@ -1,6 +1,9 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
+import { lessons } from "@/lessons/lessons"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 
 type Tab = {
   key: string
@@ -88,14 +91,20 @@ export const Menu = () => {
   useEffect(() => {
     if (content) lastContent.current = content
   }, [content])
+  const pathname = usePathname()
+  useEffect(() => {
+    // close tab on route change
+    if (pathname !== "/") goHome()
+  }, [pathname, goHome])
   return (
-    <div className="fixed top-0 left-0 w-[100vw] z-10 flex justify-between items-start pointer-events-none select-none flex-wrap">
-      <button
+    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap">
+      <Link
+        href="/"
         className="p-[10px] sm:p-4 pointer-events-auto cursor-pointer bg-background relative z-10"
         onClick={goHome}
       >
         NeuralNetVis
-      </button>
+      </Link>
       <div className="pointer-events-auto flex-1">
         <div className="flex justify-end items-center w-full bg-background relative z-10">
           <Tabs />
@@ -116,6 +125,7 @@ export const Menu = () => {
 
 const Tabs = () => {
   const { activeTab, clickTab, goBack } = useTabsStore()
+  const router = useRouter()
   function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {
       const isActive = activeTab?.key === t.key
@@ -129,7 +139,11 @@ const Tabs = () => {
         (isActive && !isCategory) ||
         isChild ||
         (isSibling && !activeTab?.children)
-      const onClick = () => clickTab(t)
+      const onClick = () => {
+        clickTab(t)
+        // TODO ...
+        if (!parent && t.key === "play") router.push(`/`)
+      }
       return (
         <React.Fragment key={t.key}>
           <TabButton isActive={isActive} isShown={isShown} onClick={onClick}>
@@ -190,8 +204,25 @@ export function Box({
   hasBg?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const offsetY = useRef(0)
   const closeTab = useTabsStore((s) => s.closeTab)
+  useSwipeClose(ref, closeTab)
+  return (
+    <div
+      ref={ref}
+      className={`${padding ? "p-4" : ""} ${
+        hasBg ? "bg-box-bg" : ""
+      } rounded-[10px] text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function useSwipeClose(
+  ref: React.RefObject<HTMLDivElement | null>,
+  onClose: () => void
+) {
+  const offsetY = useRef(0)
   useEffect(() => {
     if (!ref.current) return
     const el = ref.current
@@ -215,19 +246,21 @@ export function Box({
       const isVertial = Math.abs(deltaY) > Math.abs(deltaX)
       if (isVertial) {
         const newOffset = offsetY.current + deltaY
+        el.style.setProperty("transition-duration", "0s")
         el.style.setProperty("--translate-y", `${Math.min(newOffset, 0)}px`)
         const velocity = Math.abs(deltaY) / (Date.now() - startTime)
         if (deltaY < -50 && velocity > 0.5) {
-          if (!hasFired) closeTab()
+          if (!hasFired) onClose()
           hasFired = true
         }
       }
     }
     const handleTouchEnd = () => {
+      el.style.setProperty("transition-duration", null)
       if (hasFired) {
         offsetY.current = 0
         hasFired = false
-        setTimeout(() => el?.style.setProperty("--translate-y", "0"), 150)
+        setTimeout(() => el?.style.setProperty("--translate-y", "0"), 300)
       } else {
         const newOffset = offsetY.current + deltaY
         offsetY.current = Math.min(newOffset, 0)
@@ -244,17 +277,7 @@ export function Box({
       el.removeEventListener("touchmove", handleTouchMove)
       el.removeEventListener("touchend", handleTouchEnd)
     }
-  }, [ref, closeTab])
-  return (
-    <div
-      ref={ref}
-      className={`${padding ? "p-4" : ""} ${
-        hasBg ? "bg-box-bg" : ""
-      } rounded-[10px] text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
-    >
-      {children}
-    </div>
-  )
+  }, [ref, onClose])
 }
 
 function Info() {
@@ -303,33 +326,36 @@ const Button = ({
   </button>
 )
 
-const Chapter = ({
-  children,
-  onClick,
-}: {
+interface ChapterProps {
+  slug: string
   children: React.ReactNode
-  onClick?: () => void
-}) => (
-  <button
-    className="p-4 hover:bg-accent hover:text-white text-left rounded-[10px]"
-    onClick={onClick}
+  isActive?: boolean
+}
+
+const Chapter = ({ slug, children, isActive }: ChapterProps) => (
+  <Link
+    href={`/en/learn/${slug}`}
+    className={`p-4 ${
+      isActive ? "bg-amber-200 text-black" : ""
+    } hover:bg-accent hover:text-white text-left rounded-[10px]`}
   >
     &gt; {children}
-  </button>
+  </Link>
 )
 
 const Learn = () => {
-  const [clicked, setClicked] = useState(false)
-  const handleClick = () => setClicked(true)
+  // TODO: get current lesson
   return (
     <Box className="flex flex-col">
-      <Chapter onClick={handleClick}>How can networks learn?</Chapter>
-      <Chapter onClick={handleClick}>Exploring the interface</Chapter>
-      {clicked && (
-        <p className="p-4 mt-4">
-          <em>Coming soon ...</em>
-        </p>
-      )}
+      {lessons.map((l) => (
+        <Chapter
+          key={l.slug}
+          slug={l.slug}
+          // isActive={currLesson?.slug === l.slug}s
+        >
+          {l.title}
+        </Chapter>
+      ))}
     </Box>
   )
 }
