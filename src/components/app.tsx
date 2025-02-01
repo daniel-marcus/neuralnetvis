@@ -23,19 +23,23 @@ const App_ = ({ children }: { children?: ReactNode }) => {
   const visOptions = useVisOptions(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
+
+  // TODO: find a way to determine if is play or learn mode ... + disable orbit controls in learn mode
+  const isLearnMode = false
+
   return (
     <div className="relative">
       <Menu />
       <div
         className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
-          !!children ? "pointer-events-none" : ""
+          !isLearnMode ? "pointer-events-none" : ""
         }`}
       >
         <Canvas frameloop="always">
           <ThreeStoreSetter />
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
-          {!children && <OrbitControls target={[0, 0, 0]} />}
+          <OrbitControls target={[0, 0, 0]} />
           <VisOptionsContext.Provider value={visOptions}>
             <TrainingYContext.Provider value={trainingY}>
               <Model
