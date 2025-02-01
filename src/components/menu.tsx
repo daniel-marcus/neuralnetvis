@@ -65,6 +65,7 @@ function addParent(tab: Tab, parent?: Tab): Tab {
 const tabs = _tabs.map((t) => addParent(t))
 
 interface TabStore {
+  isFirstLoad: boolean
   isShown: boolean
   setIsShown: (isShown: boolean) => void
   currTab: Tab | null
@@ -72,11 +73,16 @@ interface TabStore {
 }
 
 export const useTabsStore = create<TabStore>((set) => ({
+  isFirstLoad: true,
   currTab: null,
   isShown: true,
   setIsShown: (isShown) => set({ isShown }),
   setTab: (slugs) => {
-    if (!slugs) return set({ currTab: null })
+    if (!slugs)
+      return set(({ isFirstLoad }) => ({
+        currTab: isFirstLoad ? tabs.find((t) => t.isDefault) ?? null : null,
+        isFirstLoad: false,
+      }))
     const tab = getTab(slugs, tabs)
     if (tab) set({ currTab: tab })
   },
