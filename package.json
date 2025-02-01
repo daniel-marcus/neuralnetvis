@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -15,6 +15,7 @@
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "jszip": "^3.10.1",
     "leva": "^0.10.0",
+    "lodash.throttle": "^4.1.1",
     "next": "^15.1.5",
     "npyjs": "^0.7.0",
     "react": "^19.0.0",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/lodash.throttle": "^4.1.9",
     "@types/ndarray": "^1.0.14",
     "@types/node": "^22.12.0",
     "@types/react": "^19",

@@ -1,24 +1,50 @@
-import { useState, useCallback, useEffect } from "react"
+import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { button, useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
 import { useControlStores } from "@/components/controls"
+import { create } from "zustand"
 
 let epochCount = 0
 let sessionEpochCount = 0
 let sessionBatchCount = 0
+
+export const useTrainingStore = create<{
+  isTraining: boolean
+  setIsTraining: (val: boolean) => void
+  toggleTraining: () => void
+  batchCounter: number
+  setBatchCounter: (arg: number | ((prev: number) => number)) => void
+}>((set) => ({
+  isTraining: false,
+  setIsTraining: (isTraining) => set({ isTraining }),
+  toggleTraining: () => set((s) => ({ isTraining: !s.isTraining })),
+  batchCounter: 0,
+  setBatchCounter: (arg) =>
+    set(({ batchCounter }) => {
+      const newVal = typeof arg === "function" ? arg(batchCounter) : arg
+      return { batchCounter: newVal }
+    }),
+}))
 
 export function useTraining(
   model: tf.LayersModel | undefined,
   ds: Dataset | undefined,
   next: (step?: number) => void
 ) {
-  const [batchCounter, setBatchCounter] = useState(0)
-  const [isTraining, setIsTraining] = useState(false)
+  const {
+    isTraining,
+    setIsTraining,
+    toggleTraining,
+    batchCounter,
+    setBatchCounter,
+  } = useTrainingStore()
 
-  const toggleTraining = useCallback(() => setIsTraining((t) => !t), [])
+  /* const [batchCounter, setBatchCounter] = useState(0)
+  const [isTraining, setIsTraining] = useState(false)
+  const toggleTraining = useCallback(() => setIsTraining((t) => !t), []) */
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
@@ -42,7 +68,7 @@ export function useTraining(
     }
   }, [toggleTraining, setStatusText])
 
-  const { trainStore } = useControlStores()
+  const { trainConfigStore } = useControlStores()
   const trainingConfig = useControls(
     {
       batchSize: {
@@ -61,10 +87,10 @@ export function useTraining(
       },
       silent: true,
     },
-    { store: trainStore }
+    { store: trainConfigStore }
   )
 
-  useControls({ logs: logsPlot() }, { store: trainStore }, [batchCounter])
+  useControls({ logs: logsPlot() }, { store: trainConfigStore }, [batchCounter])
 
   const setLogs = useLogStore((s) => s.setLogs)
 
@@ -72,7 +98,7 @@ export function useTraining(
     setBatchCounter(0)
     setLogs([] as TrainingLog[])
     setIsTraining(false)
-  }, [model, setLogs])
+  }, [model, setLogs, setBatchCounter, setIsTraining])
 
   useControls(
     {
@@ -80,7 +106,7 @@ export function useTraining(
         toggleTraining()
       ),
     },
-    { store: trainStore },
+    { store: trainConfigStore },
     [isTraining]
   )
 
@@ -202,7 +228,17 @@ export function useTraining(
     return () => {
       model.stopTraining = true
     }
-  }, [model, isTraining, next, setStatusText, trainingConfig, ds, setLogs])
+  }, [
+    model,
+    isTraining,
+    next,
+    setStatusText,
+    trainingConfig,
+    ds,
+    setLogs,
+    setBatchCounter,
+    setIsTraining,
+  ])
 
   // useManualTraining(model, input, next, setLogs, ds)
 

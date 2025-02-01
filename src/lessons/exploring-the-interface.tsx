@@ -1,8 +1,10 @@
-import { Block, Lesson } from "@/components/lesson"
+"use client"
+
+import { Block } from "@/components/lesson"
 
 export const introInterface = (
-  <Lesson slug="exploring-the-interface" title="Exploring the interface">
+  <main>
     <Block>Welcome</Block>
     <Block>Welcome</Block>
-  </Lesson>
+  </main>
 )

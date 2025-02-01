@@ -1,29 +1,16 @@
 "use client"
 
-import { ReactElement, ReactNode, useCallback, useEffect } from "react"
+import { ReactNode, useEffect } from "react"
 import { useController } from "./controller"
 import { useInView } from "@/lib/in-view"
 import { TabSetter } from "./menu"
-import { getLessonPath } from "@/lessons/all-lessons"
+import { getLessonPath, LessonDef, LessonPreview } from "@/lessons/all-lessons"
 import Link from "next/link"
 import { create } from "zustand"
+import throttle from "lodash.throttle"
 
-export type LessonType = ReactElement<LessonProps>
-
-export interface LessonPreview {
-  slug: string
-  path: string
-  title: string
-  // description: string
-}
-
-export interface LessonProps {
-  slug: string
-  title: string
-  children: ReactElement<BlockProps>[]
+interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
-  // lang: Lang
-  // onInit?: () => void
 }
 
 interface LessonStore {
@@ -38,7 +25,13 @@ export const useLessonStore = create<LessonStore>((set, get) => ({
   setCurrLesson: (slug: string | null) => set({ currLesson: slug }),
 }))
 
-export const Lesson = ({ title, slug, children, nextLesson }: LessonProps) => {
+export const Lesson = ({
+  title,
+  description,
+  slug,
+  content,
+  nextLesson,
+}: LessonProps) => {
   const setCurrLesson = useLessonStore((s) => s.setCurrLesson)
   useEffect(() => {
     setCurrLesson(slug)
@@ -47,11 +40,12 @@ export const Lesson = ({ title, slug, children, nextLesson }: LessonProps) => {
     }
   }, [slug, setCurrLesson])
   return (
-    <div className="relative z-10 p-main mt-32 pb-[50dvh] w-full">
+    <div className="relative z-10 p-main mt-32 pb-[50dvh]! w-full">
       <TabSetter slugs={null} />
       <div className="max-w-[1200px] mx-auto">
         <Title>{title}</Title>
-        {children}
+        <div className="mb-[20vh]">{description}</div>
+        {typeof content === "function" ? content() : content}
         <Ctas nextLesson={nextLesson} />
       </div>
     </div>
@@ -71,7 +65,7 @@ function Title({ children }: { children: string }) {
 
 function Ctas({ nextLesson }: { nextLesson?: LessonPreview }) {
   return (
-    <div className="mt-[50dvh] flex justify-start">
+    <div className="mt-[50dvh] flex justify-start translate-y-1/2">
       {!!nextLesson ? (
         <Link
           href={getLessonPath(nextLesson.slug)}
@@ -80,55 +74,54 @@ function Ctas({ nextLesson }: { nextLesson?: LessonPreview }) {
           Next: {nextLesson.title}
         </Link>
       ) : (
-        <Link href="/" className="bg-accent text-white px-4 py-2 rounded">
-          Ready to play!
+        <Link href="/play" className="bg-accent text-white px-4 py-2 rounded">
+          Ready to play?
         </Link>
       )}
     </div>
   )
 }
 
-export interface BlockProps {
-  children: ReactNode
-  onScroll?: (percent: number) => void
+type ControllerProps = ReturnType<typeof useController>
+
+export interface OnBlockScrollProps extends ControllerProps {
+  percent: number
 }
 
-export function Block({ children }: BlockProps) {
-  const { dataStore, three } = useController()
+export type OnBlockEnterLeaveProps = ControllerProps
+
+export interface BlockProps {
+  children: ReactNode
+  onScroll?: (props: OnBlockScrollProps) => void
+  onEnter?: (props: OnBlockEnterLeaveProps) => void
+  onLeave?: (props: OnBlockEnterLeaveProps) => void
+}
+
+export function Block({ children, onScroll, onEnter, onLeave }: BlockProps) {
+  const controller = useController()
   const [ref, inView] = useInView({ rootMargin: "-50% 0px" })
-
-  const calculateScrolledPercentage = useCallback(() => {
-    if (!ref.current) return 0
-    const rect = ref.current.getBoundingClientRect()
-    const windowHeight = window.innerHeight
-    const middleY = windowHeight / 2
-
-    if (rect.bottom <= middleY) return 1
-    if (rect.top >= middleY) return 0
-    return Math.round(((middleY - rect.top) / rect.height) * 1000) / 1000
-  }, [ref])
 
   useEffect(() => {
     if (!inView) return
-    const onScroll = () => {
-      const percent = calculateScrolledPercentage()
-      const newI = Math.round(percent * 100)
-      dataStore.setValueAtPath("i", newI, false)
-
-      if (!three) return
-      const camera = three.camera
-      function rotate(percent: number) {
-        const angle = percent * Math.PI * 2 // Full rotation
-        const radius = Math.sqrt(22.5 * 22.5 + 35 * 35) // Distance from origin
-        camera.position.x = Math.sin(angle) * radius
-        camera.position.z = Math.cos(angle) * radius
-        camera.lookAt(0, 0, 0)
-      }
-      rotate(percent)
+    if (!onScroll) return
+    const onScrollCb = () => {
+      if (!ref.current) return
+      const percent = calculateScrolledPercent(ref)
+      onScroll({ percent, ...controller })
     }
-    window.addEventListener("scroll", onScroll)
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [inView, calculateScrolledPercentage, dataStore, three])
+    const throttledOnScrollCb = throttle(onScrollCb, 10)
+    window.addEventListener("scroll", throttledOnScrollCb)
+    return () => window.removeEventListener("scroll", throttledOnScrollCb)
+  }, [inView, controller, onScroll, ref])
+
+  useEffect(() => {
+    if (!onEnter && !onLeave) return
+    if (!inView) return
+    if (onEnter) onEnter(controller)
+    return () => {
+      if (onLeave) onLeave(controller)
+    }
+  }, [inView, onEnter, onLeave, controller])
 
   return (
     <div
@@ -140,4 +133,17 @@ export function Block({ children }: BlockProps) {
       {children}
     </div>
   )
+}
+
+function calculateScrolledPercent(
+  ref: React.RefObject<HTMLElement | null>
+): number {
+  if (!ref.current) return 0
+  const rect = ref.current.getBoundingClientRect()
+  const windowHeight = window.innerHeight
+  const middleY = windowHeight / 2
+  if (rect.bottom <= middleY) return 1
+  if (rect.top >= middleY) return 0
+  const percent = Math.round(((middleY - rect.top) / rect.height) * 1000) / 1000
+  return percent
 }

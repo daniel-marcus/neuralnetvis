@@ -7,7 +7,7 @@ import { Box } from "./menu"
 export interface ControlStores {
   dataStore: StoreType
   modelStore: StoreType
-  trainStore: StoreType
+  trainConfigStore: StoreType
 }
 
 const ControlStoresContext = createContext<ControlStores>({} as ControlStores)
@@ -22,10 +22,10 @@ export function withControlStores<T extends object>(
   const WrappedComponent = (props: T) => {
     const dataStore = useCreateStore()
     const modelStore = useCreateStore()
-    const trainStore = useCreateStore()
+    const trainConfigStore = useCreateStore()
     return (
       <ControlStoresContext.Provider
-        value={{ dataStore, modelStore, trainStore }}
+        value={{ dataStore, modelStore, trainConfigStore }}
       >
         <Component {...props} />
       </ControlStoresContext.Provider>
@@ -51,7 +51,7 @@ export const controlTheme: LevaCustomTheme = {
   },
   sizes: {
     numberInputMinWidth: "70px",
-    controlWidth: "246px",
+    controlWidth: "240px",
     folderTitleHeight: "2rem",
   },
   fontSizes: { root: "0.875rem" },

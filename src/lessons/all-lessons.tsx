@@ -1,16 +1,47 @@
-import { LessonPreview, LessonType } from "@/components/lesson"
+import { BlockProps } from "@/components/lesson"
 import { introInterface } from "./exploring-the-interface"
-import { introNetworks } from "./how-networks-learn"
+import { IntroNetworks } from "./how-networks-learn"
+import { ReactElement } from "react"
 
-export const lessons: LessonType[] = [introNetworks, introInterface]
+export type LessonContent = ReactElement<{
+  children: ReactElement<BlockProps>[]
+}> // <main> with <Block> children
 
-export const lessonPreviews: LessonPreview[] = lessons.map(
-  ({ props: { title, slug } }) => ({
+export interface LessonDef {
+  title: string
+  slug: string
+  description: string
+  content: LessonContent | (() => LessonContent)
+}
+
+export const lessons: LessonDef[] = [
+  {
+    title: "How can networks learn?",
+    slug: "how-networks-learn",
+    description: "Get some basics about machine learning",
+    content: IntroNetworks,
+  },
+  {
+    title: "Exploring the interface",
+    slug: "exploring-the-interface",
+    description: "Learn what you can see and do here",
+    content: introInterface,
+  },
+]
+
+export type LessonPreview = Omit<LessonDef, "content"> & {
+  path: string
+}
+
+export const lessonPreviews: LessonPreview[] = lessons.map((l) => {
+  const { title, slug, description } = l
+  return {
     title,
     slug,
+    description,
     path: getLessonPath(slug),
-  })
-)
+  }
+})
 
 export function getLessonPath(slug: string) {
   return `/learn/${slug}`

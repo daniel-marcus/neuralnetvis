@@ -7,7 +7,7 @@ import { normalizeWithSign } from "./normalization"
 import { debug } from "./debug"
 import { HighlightProp, VisOptionsContext } from "./vis-options"
 
-export const useSelected = create<{
+interface SelectedStore {
   hovered: Neuron | null
   selected: Neuron | null
   getHoveredNid: () => Nid | null
@@ -15,7 +15,10 @@ export const useSelected = create<{
   toggleHovered: (n: Neuron | null) => void
   toggleSelected: (n: Neuron | null) => void
   setSelected: (n: Neuron | null) => void
-}>((set, get) => ({
+  // TODO: make all neuron accessible by nid?
+}
+
+export const useSelected = create<SelectedStore>((set, get) => ({
   hovered: null,
   selected: null,
   getHoveredNid: () => get().hovered?.nid ?? null,
@@ -36,7 +39,7 @@ function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
 }
 
 export function useLocalSelected(layerIndex: number, groupIndex: number) {
-  // returns values only if they are in the same group avoid unnecessary re-renders
+  // returns values only if they are in the same group to avoid unnecessary re-renders
   const _selectedNid = useSelected((s) => s.getSelectedNid())
   const _hoveredNid = useSelected((s) => s.getHoveredNid())
   return {

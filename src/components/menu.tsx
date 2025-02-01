@@ -51,7 +51,9 @@ const _tabs: Tab[] = [
       {
         key: "train",
         slug: "train",
-        content: ({ trainStore }) => <ControlPanel store={trainStore} />,
+        content: ({ trainConfigStore }) => (
+          <ControlPanel store={trainConfigStore} />
+        ),
       },
     ],
   },
@@ -75,15 +77,19 @@ interface TabStore {
   isShown: boolean
   setIsShown: (isShown: boolean) => void
   currTab: Tab | null
-  setTab: (slugs: string[] | null | undefined, shouldShow?: boolean) => void
+  setTabBySlugs: (
+    slugs: string[] | null | undefined,
+    shouldShow?: boolean
+  ) => void
+  setTabByKey: (key: string | null) => void
 }
 
-export const useTabsStore = create<TabStore>((set) => ({
+export const useTabStore = create<TabStore>((set) => ({
   isFirstLoad: true,
   currTab: null,
   isShown: true,
   setIsShown: (isShown) => set({ isShown }),
-  setTab: (slugs, shouldShow) => {
+  setTabBySlugs: (slugs, shouldShow) => {
     if (typeof slugs === "undefined")
       return set(({ isFirstLoad }) => ({
         currTab: isFirstLoad ? tabs.find((t) => t.isDefault) ?? null : null,
@@ -93,6 +99,13 @@ export const useTabsStore = create<TabStore>((set) => ({
     const tab = getTab(slugs, tabs)
     const newIsShown = shouldShow ?? true
     if (tab) set({ currTab: tab, isShown: newIsShown })
+  },
+  setTabByKey: (key: string | null) => {
+    // careful with duplicate keys
+    if (key === null) return set({ currTab: null })
+    const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
+    const tab = allTabs.find((t) => t.key === key)
+    if (tab) set({ currTab: tab })
   },
 }))
 
@@ -109,15 +122,15 @@ export const TabSetter = ({
 }: {
   slugs: string[] | null | undefined
 }) => {
-  const setTab = useTabsStore((s) => s.setTab)
+  const setTabBySlugs = useTabStore((s) => s.setTabBySlugs)
   useEffect(() => {
-    setTab(slugs)
-  }, [slugs, setTab])
+    setTabBySlugs(slugs)
+  }, [slugs, setTabBySlugs])
   return null
 }
 
 export const Menu = () => {
-  const { currTab, isShown } = useTabsStore()
+  const { currTab, isShown } = useTabStore()
   const stores = useControlStores()
   const content = currTab?.content && isShown ? currTab.content(stores) : null
   const lastContent = useRef<React.ReactElement | null>(null)
@@ -151,7 +164,7 @@ export const Menu = () => {
 }
 
 const Tabs = () => {
-  const { currTab, setTab, isShown: isTabShown } = useTabsStore()
+  const { currTab, setTabBySlugs, isShown: isTabShown } = useTabStore()
 
   function getPath(tab: Tab): string {
     if (!tab.parent) return `/${tab.slug}`
@@ -173,7 +186,7 @@ const Tabs = () => {
         (isSibling && !currTab?.children)
       const path = getPath(t)
       const onClickBtnOnly = () => {
-        setTab([t.key], !isActive || !isTabShown)
+        setTabBySlugs([t.key], !isActive || !isTabShown)
       }
       const href = t.slug
         ? isActive
@@ -253,7 +266,7 @@ export function Box({
   hasBg?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const setIsShown = useTabsStore((s) => s.setIsShown)
+  const setIsShown = useTabStore((s) => s.setIsShown)
   const pathname = usePathname()
   const router = useRouter()
   const closeTab = useCallback(() => {
@@ -420,7 +433,9 @@ const Learn = () => {
           href={l.path}
           // isActive={currLesson?.slug === l.slug}s
         >
-          {l.title}
+          <strong>{l.title}</strong>
+          <br />
+          {l.description}
         </MenuBtn>
       ))}
     </Box>
@@ -430,8 +445,11 @@ const Learn = () => {
 const Data = () => {
   const dataStore = useControlStores().dataStore
   const currDatasetKey = dataStore.get("datasetKey")
-  const handleClick = (key: string) =>
+  const router = useRouter()
+  const handleClick = (key: string) => {
     dataStore.setValueAtPath("datasetKey", key, false)
+    router.push("/play/model")
+  }
   return (
     <ControlPanel store={dataStore}>
       <div className="flex flex-col">
@@ -441,7 +459,7 @@ const Data = () => {
             isActive={currDatasetKey === d.name}
             onClick={() => handleClick(d.name)}
           >
-            {d.name}
+            <strong>{d.name}</strong>
             {!!d.description && (
               <>
                 <br />

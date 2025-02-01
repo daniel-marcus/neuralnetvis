@@ -30,7 +30,7 @@ const App_ = ({ children }: { children?: ReactNode }) => {
       <Menu />
       <div
         className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
-          isLearnMode ? "pointer-events-none opacity-50" : ""
+          isLearnMode ? "pointer-events-none" : ""
         }`}
       >
         <Canvas frameloop="always">

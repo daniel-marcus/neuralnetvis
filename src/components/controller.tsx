@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react"
 import { useControlStores } from "./controls"
-import { useTabsStore } from "./menu"
+import { useTabStore } from "./menu"
 import { useThreeStore } from "@/lib/three-store"
+import { useTrainingStore } from "@/lib/training"
 
 declare global {
   interface Window {
@@ -11,12 +12,14 @@ declare global {
 
 export function useController() {
   const three = useThreeStore((s) => s.three)
-  const stores = useControlStores()
-  const tabs = useTabsStore()
-  const controller = useMemo(
-    () => ({ ...stores, tabs, three }),
-    [stores, tabs, three]
-  )
+  const controlStores = useControlStores()
+  const setTabByKey = useTabStore((s) => s.setTabByKey)
+  const setIsTraining = useTrainingStore((s) => s.setIsTraining)
+  // const selectedStore = useSelected() // TODO: set selected by key
+  const controller = useMemo(() => {
+    console.log("controller changed")
+    return { ...controlStores, setTabByKey, setIsTraining, three }
+  }, [controlStores, setTabByKey, setIsTraining, three])
   return controller
 }
 
