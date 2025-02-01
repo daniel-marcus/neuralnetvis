@@ -6,6 +6,7 @@ import { create } from "zustand"
 import { getLessonPath, lessons } from "@/lessons/lessons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { datasets } from "@/lib/datasets"
 
 type Tab = {
   slug: string
@@ -24,18 +25,19 @@ const _tabs: Tab[] = [
   {
     slug: "play",
     content: () => (
-      <Box padding>
-        <p className="mb-4">
-          Welcome to the playground! Here you can create, modify, and train
-          neural networks.
-        </p>
-        <p className="mb-4">Choose a tab to get started.</p>
+      <Box padding={false}>
+        <p className="p-4">Welcome to the playground!</p>
+        <div className="flex flex-col">
+          <MenuBtn href="/play/data">Choose dataset</MenuBtn>
+          <MenuBtn href="/play/model">Configure model </MenuBtn>
+          <MenuBtn href="/play/train">Train model</MenuBtn>
+        </div>
       </Box>
     ),
     children: [
       {
         slug: "data",
-        content: ({ dataStore }) => <ControlPanel store={dataStore} />,
+        content: () => <Data />,
       },
       {
         slug: "model",
@@ -245,6 +247,9 @@ export function Box({
   )
 }
 
+const DELTA_THRESHOLD = -70 // swipe up
+const VELOCITY_THRESHOLD = 0.5
+
 function useSwipeClose(
   ref: React.RefObject<HTMLDivElement | null>,
   onClose: () => void
@@ -276,7 +281,7 @@ function useSwipeClose(
         el.style.setProperty("transition-duration", "0s")
         el.style.setProperty("--translate-y", `${Math.min(newOffset, 0)}px`)
         const velocity = Math.abs(deltaY) / (Date.now() - startTime)
-        if (deltaY < -50 && velocity > 0.5) {
+        if (deltaY < DELTA_THRESHOLD && velocity > VELOCITY_THRESHOLD) {
           if (!hasFired) onClose()
           hasFired = true
         }
@@ -355,36 +360,70 @@ const Button = ({
   </Link>
 )
 
-interface ChapterProps {
-  slug: string
+interface MenuBtnProps {
+  href?: string
   children: React.ReactNode
   isActive?: boolean
+  onClick?: () => void
 }
 
-const Chapter = ({ slug, children, isActive }: ChapterProps) => (
-  <Link
-    href={getLessonPath(slug)}
-    className={`p-4 ${
-      isActive ? "bg-amber-200 text-black" : ""
-    } hover:bg-accent hover:text-white text-left rounded-[10px]`}
-  >
-    &gt; {children}
-  </Link>
-)
+const MenuBtn = ({ href, children, isActive, onClick }: MenuBtnProps) => {
+  const Component = href ? Link : "button"
+  return (
+    <Component
+      href={href as string}
+      className={`p-4 ${
+        isActive ? "bg-amber-200 text-black" : ""
+      } hover:bg-accent-hover hover:text-white text-left rounded-[10px] flex justify-start items-start`}
+      onClick={onClick}
+    >
+      <div className="pr-2">&gt; </div>
+      <div>{children}</div>
+    </Component>
+  )
+}
 
 const Learn = () => {
   // TODO: get current lesson
   return (
     <Box className="flex flex-col">
       {lessons.map((l) => (
-        <Chapter
+        <MenuBtn
           key={l.slug}
-          slug={l.slug}
+          href={getLessonPath(l.slug)}
           // isActive={currLesson?.slug === l.slug}s
         >
           {l.title}
-        </Chapter>
+        </MenuBtn>
       ))}
     </Box>
+  )
+}
+
+const Data = () => {
+  const dataStore = useControlStores().dataStore
+  const currDatasetKey = dataStore.get("datasetKey")
+  const handleClick = (key: string) =>
+    dataStore.setValueAtPath("datasetKey", key, false)
+  return (
+    <ControlPanel store={dataStore}>
+      <div className="flex flex-col">
+        {datasets.map((d) => (
+          <MenuBtn
+            key={d.name}
+            isActive={currDatasetKey === d.name}
+            onClick={() => handleClick(d.name)}
+          >
+            {d.name}
+            {!!d.description && (
+              <>
+                <br />
+                {d.description}
+              </>
+            )}
+          </MenuBtn>
+        ))}
+      </div>
+    </ControlPanel>
   )
 }

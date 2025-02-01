@@ -41,6 +41,7 @@ interface DatasetData {
 
 interface DatasetDef {
   name: string
+  description?: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
@@ -60,9 +61,10 @@ export type Dataset = Omit<DatasetDef, "loadData"> & {
 
 // TODO: use external sources ?
 
-const datasets: DatasetDef[] = [
+export const datasets: DatasetDef[] = [
   {
     name: "mnist",
+    description: "Handwritten digits (28x28)",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -78,17 +80,20 @@ const datasets: DatasetDef[] = [
           "/data/mnist_20k/y_test.npz",
         ]
       )
-      // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
-      // normalize: vals / 255
-      const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
-      const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
-      const trainY = tf.oneHot(yTrain.data, 10)
-      const testY = tf.oneHot(yTest.data, 10)
-      return { trainX, trainY, testX, testY }
+      return tf.tidy(() => {
+        // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
+        // normalize: vals / 255
+        const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
+        const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
+        const trainY = tf.oneHot(yTrain.data, 10)
+        const testY = tf.oneHot(yTest.data, 10)
+        return { trainX, trainY, testX, testY }
+      })
     },
   },
   {
     name: "fashion mnist",
+    description: "Clothing items (28x28)",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -115,17 +120,20 @@ const datasets: DatasetDef[] = [
           "/data/fashion_mnist_20k/y_test.npz",
         ]
       )
-      // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
-      // normalize: vals / 255
-      const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
-      const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
-      const trainY = tf.oneHot(yTrain.data, 10)
-      const testY = tf.oneHot(yTest.data, 10)
-      return { trainX, trainY, testX, testY }
+      return tf.tidy(() => {
+        // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
+        // normalize: vals / 255
+        const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
+        const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
+        const trainY = tf.oneHot(yTrain.data, 10)
+        const testY = tf.oneHot(yTest.data, 10)
+        return { trainX, trainY, testX, testY }
+      })
     },
   },
   {
     name: "cifar10",
+    description: "Color images (32x32x3)",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -152,12 +160,14 @@ const datasets: DatasetDef[] = [
           "/data/cifar10_20k/y_test.npz",
         ]
       )
-      // normalize: vals / 255
-      const trainX = tf.tensor(xTrain.data, xTrain.shape).div(255)
-      const testX = tf.tensor(xTest.data, xTest.shape).div(255)
-      const trainY = tf.oneHot(yTrain.data, 10)
-      const testY = tf.oneHot(yTest.data, 10)
-      return { trainX, trainY, testX, testY }
+      return tf.tidy(() => {
+        // normalize: vals / 255
+        const trainX = tf.tensor(xTrain.data, xTrain.shape).div(255)
+        const testX = tf.tensor(xTest.data, xTest.shape).div(255)
+        const trainY = tf.oneHot(yTrain.data, 10)
+        const testY = tf.oneHot(yTest.data, 10)
+        return { trainX, trainY, testX, testY }
+      })
     },
   },
   /* {
@@ -207,6 +217,7 @@ export function useDatasets() {
         value: datasets[0].name,
         label: "dataset",
         options: Object.fromEntries(datasets.map((d) => [d.name, d.name])),
+        render: () => false,
       },
     },
     { store: dataStore }
@@ -221,7 +232,9 @@ export function useDatasets() {
     if (debug()) console.log("loading dataset", datasetKey)
     const datasetDef = datasets.find((d) => d.name === datasetKey)
     if (!datasetDef) return
+    let dataRef: DatasetData | undefined = undefined
     datasetDef.loadData().then((data) => {
+      dataRef = data
       setIsLoading(false)
       if (debug()) console.log("loaded dataset", datasetKey)
       setDataset({
@@ -230,6 +243,9 @@ export function useDatasets() {
       })
     })
     return () => {
+      if (dataRef) {
+        Object.values(dataRef).forEach((t) => t?.dispose())
+      }
       setDataset(undefined)
     }
   }, [datasetKey, setStatusText, setIsLoading])

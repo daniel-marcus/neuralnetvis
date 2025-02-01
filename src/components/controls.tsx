@@ -60,8 +60,14 @@ export const controlTheme: LevaCustomTheme = {
   },
 }
 
-export const ControlPanel = ({ store }: { store: StoreType }) => (
-  <Box key={store.storeId} hasBg={false}>
+interface ControlPanelProps {
+  store: StoreType
+  children?: React.ReactNode
+}
+
+export const ControlPanel = ({ store, children }: ControlPanelProps) => (
+  <Box>
+    {children}
     <LevaPanel
       store={store}
       fill
