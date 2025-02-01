@@ -37,7 +37,7 @@ const _tabs: Tab[] = [
     ],
   },
   {
-    key: "info",
+    key: "i",
     content: () => <Info />,
     isDefault: true,
   },
