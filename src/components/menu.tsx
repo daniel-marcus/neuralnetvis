@@ -9,7 +9,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { datasets } from "@/lib/datasets"
 
 type Tab = {
-  slug: string
+  key: string
+  slug?: string // Tabs without slug will be buttons only
   label?: string
   content?: (stores: ControlStores) => React.ReactElement
   isDefault?: boolean
@@ -19,10 +20,12 @@ type Tab = {
 
 const _tabs: Tab[] = [
   {
+    key: "learn",
     slug: "learn",
     content: () => <Learn />,
   },
   {
+    key: "play",
     slug: "play",
     content: () => (
       <Box padding={false}>
@@ -36,21 +39,24 @@ const _tabs: Tab[] = [
     ),
     children: [
       {
+        key: "data",
         slug: "data",
         content: () => <Data />,
       },
       {
+        key: "model",
         slug: "model",
         content: ({ modelStore }) => <ControlPanel store={modelStore} />,
       },
       {
+        key: "train",
         slug: "train",
         content: ({ trainStore }) => <ControlPanel store={trainStore} />,
       },
     ],
   },
   {
-    slug: "info",
+    key: "info",
     label: "i",
     content: () => <Info />,
     isDefault: true,
@@ -69,7 +75,7 @@ interface TabStore {
   isShown: boolean
   setIsShown: (isShown: boolean) => void
   currTab: Tab | null
-  setTab: (slugs: string[] | null | undefined) => void
+  setTab: (slugs: string[] | null | undefined, shouldShow?: boolean) => void
 }
 
 export const useTabsStore = create<TabStore>((set) => ({
@@ -77,7 +83,7 @@ export const useTabsStore = create<TabStore>((set) => ({
   currTab: null,
   isShown: true,
   setIsShown: (isShown) => set({ isShown }),
-  setTab: (slugs) => {
+  setTab: (slugs, shouldShow) => {
     if (typeof slugs === "undefined")
       return set(({ isFirstLoad }) => ({
         currTab: isFirstLoad ? tabs.find((t) => t.isDefault) ?? null : null,
@@ -85,13 +91,14 @@ export const useTabsStore = create<TabStore>((set) => ({
       }))
     if (slugs === null) return set({ currTab: null })
     const tab = getTab(slugs, tabs)
-    if (tab) set({ currTab: tab })
+    const newIsShown = shouldShow ?? true
+    if (tab) set({ currTab: tab, isShown: newIsShown })
   },
 }))
 
 function getTab(slugs: string[], tabs: Tab[]): Tab | null {
   const [slug, ...rest] = slugs
-  const tab = tabs.find((t) => t.slug === slug)
+  const tab = tabs.find((t) => t.slug === slug || t.key === slug)
   if (!tab) return null
   if (!rest.length) return tab
   return getTab(rest, tab.children ?? [])
@@ -144,7 +151,7 @@ export const Menu = () => {
 }
 
 const Tabs = () => {
-  const { currTab, setIsShown } = useTabsStore()
+  const { currTab, setTab, isShown: isTabShown } = useTabsStore()
 
   function getPath(tab: Tab): string {
     if (!tab.parent) return `/${tab.slug}`
@@ -153,7 +160,7 @@ const Tabs = () => {
 
   function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {
-      const isActive = currTab?.slug === t.slug
+      const isActive = currTab?.key === t.key
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
       const isParent =
         !!currTab && allChildren?.some((c) => c.slug === currTab.slug)
@@ -165,19 +172,25 @@ const Tabs = () => {
         isChild ||
         (isSibling && !currTab?.children)
       const path = getPath(t)
-      const onClick = () => {
-        if (isActive) setIsShown(false)
-        else setIsShown(true)
+      const onClickBtnOnly = () => {
+        setTab([t.key], !isActive || !isTabShown)
       }
+      const href = t.slug
+        ? isActive
+          ? parent
+            ? getPath(parent)
+            : "/"
+          : path
+        : undefined
       return (
-        <React.Fragment key={t.slug}>
+        <React.Fragment key={t.key}>
           <TabButton
-            href={isActive ? (parent ? getPath(parent) : "/") : path}
+            href={href}
             isActive={isActive}
             isShown={isShown}
-            onClick={onClick}
+            onClick={!t.slug ? onClickBtnOnly : undefined}
           >
-            {t.label ?? t.slug}
+            {t.label ?? t.key}
           </TabButton>
           {!!t.children && (isActive || isParent) && (
             <>{renderTabs(t.children, t)}</>
@@ -200,7 +213,7 @@ const Tabs = () => {
 }
 
 interface TabButtonProps {
-  href: string
+  href?: string
   isActive?: boolean
   onClick?: () => void
   children?: React.ReactNode
@@ -213,17 +226,20 @@ const TabButton = ({
   isShown = true,
   children,
   onClick,
-}: TabButtonProps) => (
-  <Link
-    href={href}
-    className={`p-main cursor-pointer ${isActive ? "text-white" : ""} ${
-      isShown ? "" : "hidden"
-    }`}
-    onClick={onClick}
-  >
-    {children}
-  </Link>
-)
+}: TabButtonProps) => {
+  const Component = href ? Link : "button"
+  return (
+    <Component
+      href={href as string}
+      className={`p-main cursor-pointer ${isActive ? "text-white" : ""} ${
+        isShown ? "" : "hidden"
+      }`}
+      onClick={onClick}
+    >
+      {children}
+    </Component>
+  )
+}
 
 export function Box({
   children,
