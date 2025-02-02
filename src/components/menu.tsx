@@ -208,7 +208,7 @@ const Tabs = () => {
         <React.Fragment key={t.key}>
           <TabButton
             href={href}
-            isActive={isActive}
+            isActive={isActive && isTabShown}
             isShown={isShown}
             onClick={!t.slug ? onClickBtnOnly : onClickAll}
           >

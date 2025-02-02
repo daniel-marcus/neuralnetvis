@@ -21,20 +21,8 @@ export const IntroNetworks = (): LessonContent => {
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
       </Block>
-      <Block
-        onScroll={changeLayerSpacing}
-        onEnter={showModelTab}
-        onLeave={hideModelTab}
-      >
-        Changing layerSpacing.
-      </Block>
-      <Block
-        onScroll={changeNeuronSpacing}
-        onEnter={showModelTab}
-        onLeave={hideModelTab}
-      >
-        Changing neuronSpacing
-      </Block>
+      <Block onScroll={changeLayerSpacing}>Changing layerSpacing.</Block>
+      <Block onScroll={changeNeuronSpacing}>Changing neuronSpacing</Block>
       <Block>
         How about training?
         <br />
@@ -75,14 +63,6 @@ function changeNeuronSpacing({ modelStore, percent }: OnBlockScrollProps) {
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
   modelStore.setValueAtPath("visualization.neuronSpacing", newSpacing, false)
-}
-
-function showModelTab({ setTabByKey }: OnBlockEnterLeaveProps) {
-  setTabByKey("model")
-}
-
-function hideModelTab({ setTabByKey }: OnBlockEnterLeaveProps) {
-  setTabByKey(null)
 }
 
 function startTraining({

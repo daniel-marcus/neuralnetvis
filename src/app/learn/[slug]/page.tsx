@@ -1,12 +1,29 @@
 import { Lesson } from "@/components/lesson"
 import { lessonPreviews, lessons } from "@/lessons/all-lessons"
 import React from "react"
+import type { Metadata } from "next"
+import { metadata } from "@/app/layout"
 
-export default async function LessonPage(props: {
-  params: Promise<{ slug: string }>
-}) {
+type Params = Promise<{ slug: string }>
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params
+}): Promise<Metadata> {
+  const { slug } = await params
+  const lesson = getLessonFromSlug(slug) ?? { title: "", description: "" }
+  const { title, description } = lesson
+  return {
+    ...metadata,
+    title: `${title} | NeuralNetVis`,
+    description,
+  }
+}
+
+export default async function LessonPage(props: { params: Params }) {
   const { slug } = await props.params
-  const lesson = lessons.find((l) => l.slug === slug)
+  const lesson = getLessonFromSlug(slug)
   if (!lesson) return <div className="relative z-10 p-4">404</div> // TODO: styled 404
   const currIdx = lessonPreviews.findIndex((l) => l.slug === lesson.slug)
   const nextLesson = lessonPreviews[currIdx + 1]
@@ -17,4 +34,8 @@ export async function generateStaticParams() {
   return lessons.map((l) => ({
     slug: l.slug,
   }))
+}
+
+function getLessonFromSlug(slug: string) {
+  return lessons.find((l) => l.slug === slug)
 }
