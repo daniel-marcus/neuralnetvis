@@ -8,10 +8,27 @@ export function normalize(data: number[] | unknown) {
   return data.map((v) => (v - min) / (max - min))
 }
 
-export function normalizeTensor(tensor: tf.Tensor) {
+export function normalizeTensor(tensor: tf.Tensor1D): tf.Tensor1D {
   const min = tensor.min()
   const max = tensor.max()
   return tensor.sub(min).div(max.sub(min))
+}
+
+export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
+  return tf.tidy(() => {
+    const [, height, width, channels] = tensor.shape
+    const reshapedTensor = tensor.reshape([height * width, channels])
+    const min = reshapedTensor.min(0)
+    const max = reshapedTensor.max(0)
+
+    // Handle edge case where min === max
+    const range = max.sub(min)
+    const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
+    const safeRange = range.maximum(epsilon)
+
+    const normalizedTensor = reshapedTensor.sub(min).div(safeRange)
+    return normalizedTensor.reshape([1, height, width, channels])
+  })
 }
 
 export function standardize(column: number[] | undefined) {

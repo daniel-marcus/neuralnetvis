@@ -148,12 +148,14 @@ const WeightsViewer = ({
 const WeightsGrid = ({ weights, cols, isRounded }: WeightsGridProps) => {
   return (
     <div
-      className={`grid ${
-        weights.length > 100 ? "gap-0 sm:gap-[1px]" : "gap-1"
-      }`}
-      style={{
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      }}
+      className={`grid gap-[var(--grid-gap)] sm:gap-[var(--grid-gap-sm)]`}
+      style={
+        {
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          "--grid-gap": weights.length > 100 ? "0" : "2px",
+          "--grid-gap-sm": weights.length > 100 ? "0.2px" : "4px",
+        } as React.CSSProperties
+      }
     >
       {weights.map((w, i) => (
         <Box key={i} color={getHighlightColor(w)} isRounded={isRounded} />

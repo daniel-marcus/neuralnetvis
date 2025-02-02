@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useMemo } from "react"
 import type { LayerInput } from "./datasets"
 import { debug } from "@/lib/debug"
-import { normalizeTensor } from "./normalization"
+import { normalizeConv2DActivations, normalizeTensor } from "./normalization"
 
 export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
   // TODO: use async .array() method?
@@ -24,12 +24,18 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
       const _activations = tmpModel.predict(tensor) as tf.Tensor<tf.Rank>[]
 
       const activations = _activations.map((layerActivation) => {
-        const reshaped = layerActivation.reshape([-1])
+        const { shape } = layerActivation
+        const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
+        const [, , , depth] = shape
+        const hasDepthDim = depth > 1
+        const normalizedFlattened = hasDepthDim // TODO: refactor: one function for all cases
+          ? normalizeConv2DActivations(layerActivation as tf.Tensor4D).reshape([
+              -1,
+            ])
+          : normalizeTensor(flattened)
         return {
-          activations: reshaped.arraySync() as number[],
-          normalizedActivations: normalizeTensor(
-            reshaped
-          ).arraySync() as number[],
+          activations: flattened.arraySync() as number[],
+          normalizedActivations: normalizedFlattened.arraySync() as number[],
         }
       })
       return activations
