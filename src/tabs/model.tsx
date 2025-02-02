@@ -24,7 +24,7 @@ export const Model = () => {
   }
   useEffect(() => {
     updateModelList()
-  }, [])
+  }, [showModels])
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     updateModelConfig(newModel, modelConfigStore)
@@ -34,16 +34,14 @@ export const Model = () => {
   }
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
   useEffect(() => {
-    console.log("MODEL CHANGED", model)
     setModelName(model?.name ?? "")
   }, [model])
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return
     model.name = modelName
-    const result = await model.save(`indexeddb://${modelName}`)
+    await model.save(`indexeddb://${modelName}`)
     updateModelList()
-    console.log({ result })
     setStatusText("Model saved to IndexedDB")
   }
   const exportModel = async (modelKey: string) => {
@@ -54,8 +52,6 @@ export const Model = () => {
     await tf.io.removeModel(`indexeddb://${modelName}`)
     updateModelList()
   }
-
-  // TODO: download/import model from file
   return (
     <Box>
       <div className="flex-col">
@@ -147,7 +143,7 @@ function Import({ onUploadFinished, modelConfigStore }: ImportProps) {
     const newModel = await tf.loadLayersModel(
       tf.io.browserFiles([modelFile, weightsFile])
     )
-    newModel.save(`indexeddb://imported_${newModel.name}`)
+    await newModel.save(`indexeddb://imported_${newModel.name}`)
     updateModelConfig(newModel, modelConfigStore)
     setModel(newModel)
     onUploadFinished()
