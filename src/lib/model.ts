@@ -100,7 +100,7 @@ export function useModel(ds?: Dataset) {
   }, [ds, setModel])
   useEffect(() => {
     if (!ds || !backendReady) return
-    if (model && useModelStore.getState().skipCreation) {
+    if (useModelStore.getState().skipCreation) {
       console.log("skip model creation")
       useModelStore.setState({ skipCreation: false })
       return
