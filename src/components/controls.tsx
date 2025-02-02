@@ -2,11 +2,10 @@ import { createContext, useContext } from "react"
 import { LevaPanel, useCreateStore } from "leva"
 import { StoreType } from "leva/dist/declarations/src/types"
 import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
-import { Box } from "./menu"
 
 export interface ControlStores {
   dataStore: StoreType
-  modelStore: StoreType
+  modelConfigStore: StoreType
   trainConfigStore: StoreType
 }
 
@@ -21,11 +20,11 @@ export function withControlStores<T extends object>(
 ) {
   const WrappedComponent = (props: T) => {
     const dataStore = useCreateStore()
-    const modelStore = useCreateStore()
+    const modelConfigStore = useCreateStore()
     const trainConfigStore = useCreateStore()
     return (
       <ControlStoresContext.Provider
-        value={{ dataStore, modelStore, trainConfigStore }}
+        value={{ dataStore, modelConfigStore, trainConfigStore }}
       >
         <Component {...props} />
       </ControlStoresContext.Provider>
@@ -62,18 +61,14 @@ export const controlTheme: LevaCustomTheme = {
 
 interface ControlPanelProps {
   store: StoreType
-  children?: React.ReactNode
 }
 
-export const ControlPanel = ({ store, children }: ControlPanelProps) => (
-  <Box>
-    {children}
-    <LevaPanel
-      store={store}
-      fill
-      hideCopyButton
-      titleBar={false}
-      theme={controlTheme}
-    />
-  </Box>
+export const ControlPanel = ({ store }: ControlPanelProps) => (
+  <LevaPanel
+    store={store}
+    fill
+    hideCopyButton
+    titleBar={false}
+    theme={controlTheme}
+  />
 )

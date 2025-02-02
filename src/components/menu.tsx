@@ -1,19 +1,21 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef } from "react"
-import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Info } from "@/tabs/info"
 import { Data } from "@/tabs/data"
 import { Learn } from "@/tabs/learn"
+import { Play } from "@/tabs/play"
+import { Model } from "@/tabs/model"
+import { Train } from "@/tabs/train"
 
 type Tab = {
   key: string
   slug?: string // Tabs without slug will be buttons only
   label?: string
-  content?: (stores: ControlStores) => React.ReactElement
+  content?: () => React.ReactElement // TODO: just ReactElement
   isDefault?: boolean
   children?: Tab[]
   parent?: Tab // will be added in addParent
@@ -28,16 +30,7 @@ const _tabs: Tab[] = [
   {
     key: "play",
     slug: "play",
-    content: () => (
-      <Box padding={false}>
-        <p className="p-4">Welcome to the playground!</p>
-        <div className="flex flex-col">
-          <MenuBtn href="/play/data">Choose dataset</MenuBtn>
-          <MenuBtn href="/play/model">Configure model </MenuBtn>
-          <MenuBtn href="/play/train">Train model</MenuBtn>
-        </div>
-      </Box>
-    ),
+    content: () => <Play />,
     children: [
       {
         key: "data",
@@ -47,14 +40,12 @@ const _tabs: Tab[] = [
       {
         key: "model",
         slug: "model",
-        content: ({ modelStore }) => <ControlPanel store={modelStore} />,
+        content: () => <Model />,
       },
       {
         key: "train",
         slug: "train",
-        content: ({ trainConfigStore }) => (
-          <ControlPanel store={trainConfigStore} />
-        ),
+        content: () => <Train />,
       },
     ],
   },
@@ -132,8 +123,7 @@ export const TabSetter = ({
 
 export const Menu = () => {
   const { currTab, isShown } = useTabStore()
-  const stores = useControlStores()
-  const content = currTab?.content && isShown ? currTab.content(stores) : null
+  const content = currTab?.content && isShown ? currTab.content() : null
   const lastContent = useRef<React.ReactElement | null>(null)
   useEffect(() => {
     if (content) lastContent.current = content
@@ -361,23 +351,31 @@ function useSwipeClose(
   }, [ref, onClose])
 }
 
+interface InlineButtonProps {
+  href?: string
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+}
+
 export const InlineButton = ({
   href,
   children,
   onClick,
-}: {
-  href: string
-  children: React.ReactNode
-  onClick?: () => void
-}) => (
-  <Link
-    href={href}
-    className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
-    onClick={onClick}
-  >
-    {children}
-  </Link>
-)
+  disabled,
+}: InlineButtonProps) => {
+  const Comp = href ? Link : "button"
+  return (
+    <Comp
+      href={href as string}
+      className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </Comp>
+  )
+}
 
 interface MenuBtnProps {
   href?: string

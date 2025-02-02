@@ -21,6 +21,7 @@ export function useDebug() {
   const { gl } = useThree()
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === "d") {
         toggleDebug()
         const debug = useDebugStore.getState().debug

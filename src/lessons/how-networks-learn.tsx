@@ -51,18 +51,29 @@ function changeSample({ dataStore, percent }: OnBlockScrollProps) {
   dataStore.setValueAtPath("i", newI, false)
 }
 
-function changeLayerSpacing({ modelStore, percent }: OnBlockScrollProps) {
+function changeLayerSpacing({ modelConfigStore, percent }: OnBlockScrollProps) {
   const defaultSpacing = 11
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  modelStore.setValueAtPath("visualization.layerSpacing", newSpacing, false)
+  modelConfigStore.setValueAtPath(
+    "visualization.layerSpacing",
+    newSpacing,
+    false
+  )
 }
 
-function changeNeuronSpacing({ modelStore, percent }: OnBlockScrollProps) {
+function changeNeuronSpacing({
+  modelConfigStore,
+  percent,
+}: OnBlockScrollProps) {
   const defaultSpacing = 1.1
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  modelStore.setValueAtPath("visualization.neuronSpacing", newSpacing, false)
+  modelConfigStore.setValueAtPath(
+    "visualization.neuronSpacing",
+    newSpacing,
+    false
+  )
 }
 
 function startTraining({

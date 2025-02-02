@@ -1,5 +1,5 @@
 import { ControlPanel, useControlStores } from "@/components/controls"
-import { MenuBtn } from "@/components/menu"
+import { Box, MenuBtn } from "@/components/menu"
 import { datasets } from "@/lib/datasets"
 import { useRouter } from "next/navigation"
 
@@ -12,7 +12,7 @@ export const Data = () => {
     router.push("/play/model")
   }
   return (
-    <ControlPanel store={dataStore}>
+    <Box>
       <div className="flex flex-col">
         {datasets.map((d) => (
           <MenuBtn
@@ -30,6 +30,7 @@ export const Data = () => {
           </MenuBtn>
         ))}
       </div>
-    </ControlPanel>
+      <ControlPanel store={dataStore} />
+    </Box>
   )
 }

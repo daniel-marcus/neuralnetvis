@@ -30,7 +30,7 @@ export const VisOptionsContext = createContext<VisOptions>(defaultOptions)
 
 export function useVisOptions(ds?: Dataset) {
   const hasColorChannels = numColorChannels(ds) > 1
-  const { modelStore } = useControlStores()
+  const { modelConfigStore } = useControlStores()
   const debug = useDebugStore((s) => s.debug)
   const visOptions: VisOptions = useControls(
     "visualization",
@@ -75,7 +75,7 @@ export function useVisOptions(ds?: Dataset) {
       },
     },
     { collapsed: true },
-    { store: modelStore },
+    { store: modelConfigStore },
     [hasColorChannels, debug]
   )
   return visOptions

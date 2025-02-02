@@ -8,6 +8,7 @@ import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
 import { setBackendIfAvailable } from "./training"
 import { useControlStores } from "@/components/controls"
+import { create } from "zustand"
 
 const defaultUnitConfig = {
   value: 32,
@@ -40,6 +41,16 @@ const defaultModelConfig = {
   dense2: { ...defaultUnitConfig, value: 32, disabled: true },
 }
 
+interface ModelStore {
+  model: tf.LayersModel | undefined
+  setModel: (model: tf.LayersModel | undefined) => void
+}
+
+export const useModelStore = create<ModelStore>((set) => ({
+  model: undefined,
+  setModel: (model) => set({ model }),
+}))
+
 export function useModel(ds?: Dataset) {
   const backendReady = useBackend()
   const [isEditing, setIsEditing] = useState(false)
@@ -53,7 +64,7 @@ export function useModel(ds?: Dataset) {
     }
   }, [isPending, setPercent])
 
-  const { modelStore } = useControlStores()
+  const { modelConfigStore } = useControlStores()
   const modelConfigRef = useRef<Record<string, number>>({})
   const _modelConfig = useControls(
     "layers",
@@ -67,7 +78,7 @@ export function useModel(ds?: Dataset) {
         },
       ])
     ),
-    { store: modelStore }
+    { store: modelConfigStore }
   ) as Record<string, number>
 
   const modelConfig = useMemo(() => {
@@ -79,12 +90,12 @@ export function useModel(ds?: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  const [model, setModel] = useState<tf.LayersModel | undefined>(undefined)
+  const { model, setModel } = useModelStore()
   useEffect(() => {
     return () => {
       setModel(undefined)
     }
-  }, [ds])
+  }, [ds, setModel])
   useEffect(() => {
     if (!ds || !backendReady) return
     const startTime = Date.now()
@@ -108,7 +119,7 @@ export function useModel(ds?: Dataset) {
     return () => {
       _model.dispose()
     }
-  }, [backendReady, modelConfig, ds])
+  }, [backendReady, modelConfig, ds, setModel])
 
   useEffect(() => {
     if (isPending || !model || !ds) return
