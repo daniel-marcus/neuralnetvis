@@ -212,6 +212,7 @@ interface DatasetStore {
   datasetKey: string
   setDatasetKey: (key: string) => void
   i: number // TODO: move from Leva to here
+  totalSamples: number
   setI: (arg: number | ((prev: number) => number)) => void
   ds: Dataset | undefined
   setDs: (ds: Dataset | undefined) => void
@@ -221,13 +222,14 @@ export const useDatasetStore = create<DatasetStore>((set) => ({
   datasetKey: datasets[0].name,
   setDatasetKey: (key) => set({ datasetKey: key }),
   i: 1,
+  totalSamples: 0,
   setI: (arg) =>
     set(({ i }) => {
       const newI = typeof arg === "function" ? arg(i) : arg
       return { i: newI }
     }),
   ds: undefined,
-  setDs: (ds) => set({ ds }),
+  setDs: (ds) => set({ ds, totalSamples: ds?.data.trainX.shape[0] ?? 0 }),
 }))
 
 export function useDatasets() {
@@ -262,7 +264,7 @@ export function useDatasets() {
     }
   }, [datasetKey, setStatusText, setIsLoading, setDs])
 
-  const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
+  const totalSamples = useDatasetStore((s) => s.totalSamples)
 
   // TODO?: const initialRandomIndex = Math.floor(Math.random() * totalSamples)
   const i = useDatasetStore((s) => s.i)
@@ -323,11 +325,9 @@ export function useDatasets() {
       if (e.key === "ArrowRight") next()
       if (e.key === "ArrowLeft") prev()
     }
-    const l = 0 // setInterval(next, 1000)
     window.addEventListener("keydown", onKeydown)
     return () => {
       window.removeEventListener("keydown", onKeydown)
-      clearInterval(l)
     }
   }, [next, totalSamples, setI])
 
