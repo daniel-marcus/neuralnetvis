@@ -9,6 +9,7 @@ import {
 import { LessonContent } from "./all-lessons"
 import { useEffect } from "react"
 import { useController } from "@/components/controller"
+import { useDatasetStore } from "@/lib/datasets"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
@@ -46,9 +47,9 @@ function rotate({ three, percent }: OnBlockScrollProps) {
   rotate(percent)
 }
 
-function changeSample({ dataStore, percent }: OnBlockScrollProps) {
+function changeSample({ percent }: OnBlockScrollProps) {
   const newI = Math.round(percent * 100)
-  dataStore.setValueAtPath("i", newI, false)
+  useDatasetStore.setState({ i: newI })
 }
 
 function changeLayerSpacing({ modelConfigStore, percent }: OnBlockScrollProps) {

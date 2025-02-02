@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useCallback, useState } from "react"
-import { useControls } from "leva"
 import { useStatusText } from "@/components/status"
 // import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
 import { debug } from "./debug"
-import { useControlStores } from "@/components/controls"
+import { create } from "zustand"
 
 const n = new npyjs()
 
@@ -209,24 +208,37 @@ export const datasets: DatasetDef[] = [
   }, */
 ]
 
+interface DatasetStore {
+  datasetKey: string
+  setDatasetKey: (key: string) => void
+  i: number // TODO: move from Leva to here
+  setI: (arg: number | ((prev: number) => number)) => void
+  ds: Dataset | undefined
+  setDs: (ds: Dataset | undefined) => void
+}
+
+export const useDatasetStore = create<DatasetStore>((set) => ({
+  datasetKey: datasets[0].name,
+  setDatasetKey: (key) => set({ datasetKey: key }),
+  i: 1,
+  setI: (arg) =>
+    set(({ i }) => {
+      const newI = typeof arg === "function" ? arg(i) : arg
+      return { i: newI }
+    }),
+  ds: undefined,
+  setDs: (ds) => set({ ds }),
+}))
+
 export function useDatasets() {
-  const { dataStore } = useControlStores()
-  const { datasetKey } = useControls(
-    {
-      datasetKey: {
-        value: datasets[0].name,
-        label: "dataset",
-        options: Object.fromEntries(datasets.map((d) => [d.name, d.name])),
-        render: () => false,
-      },
-    },
-    { store: dataStore }
-  )
+  const datasetKey = useDatasetStore((s) => s.datasetKey)
 
   const setStatusText = useStatusText((s) => s.setStatusText)
   const [isLoading, setIsLoading] = useState(false)
 
-  const [ds, setDataset] = useState<Dataset | undefined>(undefined)
+  const ds = useDatasetStore((s) => s.ds)
+  const setDs = useDatasetStore((s) => s.setDs)
+
   useEffect(() => {
     setIsLoading(true)
     if (debug()) console.log("loading dataset", datasetKey)
@@ -237,7 +249,7 @@ export function useDatasets() {
       dataRef = data
       setIsLoading(false)
       if (debug()) console.log("loaded dataset", datasetKey)
-      setDataset({
+      setDs({
         ...datasetDef,
         data,
       })
@@ -246,39 +258,20 @@ export function useDatasets() {
       if (dataRef) {
         Object.values(dataRef).forEach((t) => t?.dispose())
       }
-      setDataset(undefined)
+      setDs(undefined)
     }
-  }, [datasetKey, setStatusText, setIsLoading])
+  }, [datasetKey, setStatusText, setIsLoading, setDs])
 
   const totalSamples = useMemo(() => ds?.data.trainX.shape[0] ?? 0, [ds])
 
-  const initialRandomIndex = Math.floor(Math.random() * totalSamples)
-  const [{ i }, set, get] = useControls(
-    () => ({
-      i: {
-        label: "currSample",
-        value: initialRandomIndex,
-        min: 1,
-        max: Math.max(totalSamples, 1),
-        step: 1,
-      },
-    }),
-    { store: dataStore },
-    [totalSamples]
-  )
-  useEffect(() => {
-    const currI = get("i")
-    if (currI > totalSamples) set({ i: totalSamples })
-  }, [totalSamples, get, set])
+  // TODO?: const initialRandomIndex = Math.floor(Math.random() * totalSamples)
+  const i = useDatasetStore((s) => s.i)
+  const setI = useDatasetStore((s) => s.setI)
 
-  const setI = useCallback(
-    (arg: number | ((prev: number) => number)) => {
-      const currI = get("i")
-      const newI = typeof arg === "function" ? arg(currI) : arg
-      set({ i: newI })
-    },
-    [set, get]
-  )
+  useEffect(() => {
+    if (!totalSamples) return
+    setI((i) => (i > totalSamples ? totalSamples : i))
+  }, [totalSamples, setI])
 
   const input = useMemo(() => {
     if (!ds) return

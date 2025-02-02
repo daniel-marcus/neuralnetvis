@@ -4,7 +4,6 @@ import { StoreType } from "leva/dist/declarations/src/types"
 import { LevaCustomTheme } from "leva/dist/declarations/src/styles"
 
 export interface ControlStores {
-  dataStore: StoreType
   modelConfigStore: StoreType
   trainConfigStore: StoreType
 }
@@ -19,12 +18,11 @@ export function withControlStores<T extends object>(
   Component: React.ComponentType<T>
 ) {
   const WrappedComponent = (props: T) => {
-    const dataStore = useCreateStore()
     const modelConfigStore = useCreateStore()
     const trainConfigStore = useCreateStore()
     return (
       <ControlStoresContext.Provider
-        value={{ dataStore, modelConfigStore, trainConfigStore }}
+        value={{ modelConfigStore, trainConfigStore }}
       >
         <Component {...props} />
       </ControlStoresContext.Provider>

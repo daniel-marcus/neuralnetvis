@@ -314,7 +314,7 @@ async function train(
   }
 }
 
-async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
+export async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
   if (!ds.data.testX || !ds.data.testY)
     return { loss: undefined, accuracy: undefined }
   const X = ds.data.testX

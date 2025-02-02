@@ -1,14 +1,13 @@
-import { ControlPanel, useControlStores } from "@/components/controls"
 import { Box, MenuBtn } from "@/components/menu"
-import { datasets } from "@/lib/datasets"
+import { datasets, useDatasetStore } from "@/lib/datasets"
 import { useRouter } from "next/navigation"
 
 export const Data = () => {
-  const dataStore = useControlStores().dataStore
-  const currDatasetKey = dataStore.get("datasetKey")
+  const currDatasetKey = useDatasetStore((s) => s.datasetKey)
+  const setDatasetKey = useDatasetStore((s) => s.setDatasetKey)
   const router = useRouter()
   const handleClick = (key: string) => {
-    dataStore.setValueAtPath("datasetKey", key, false)
+    setDatasetKey(key)
     router.push("/play/model")
   }
   return (
@@ -30,7 +29,7 @@ export const Data = () => {
           </MenuBtn>
         ))}
       </div>
-      <ControlPanel store={dataStore} />
+      {/* TODO: add slider */}
     </Box>
   )
 }
