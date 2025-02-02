@@ -43,11 +43,13 @@ const defaultModelConfig = {
 
 interface ModelStore {
   model: tf.LayersModel | undefined
+  skipCreation: boolean // flag to skip model creation for loaded models
   setModel: (model: tf.LayersModel | undefined) => void
 }
 
 export const useModelStore = create<ModelStore>((set) => ({
   model: undefined,
+  skipCreation: false,
   setModel: (model) => set({ model }),
 }))
 
@@ -98,6 +100,11 @@ export function useModel(ds?: Dataset) {
   }, [ds, setModel])
   useEffect(() => {
     if (!ds || !backendReady) return
+    if (model && useModelStore.getState().skipCreation) {
+      console.log("skip model creation")
+      useModelStore.setState({ skipCreation: false })
+      return
+    }
     const startTime = Date.now()
     const [, ...dims] = ds.data.trainX.shape
     const inputShape = [null, ...dims]

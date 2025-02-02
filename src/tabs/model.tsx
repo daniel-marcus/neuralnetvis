@@ -98,6 +98,7 @@ function updateModelConfig(
 ) {
   // this is only a temporary solution until we have a model builder
   if (!newModel) return
+  useModelStore.setState({ skipCreation: true })
   const newLayers = newModel.layers.slice(1, -1) // exclude input/output layers
   const currConfig = modelConfigStore.getData()
   console.log({ newLayers, modelConfigStore, currConfig })
