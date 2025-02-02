@@ -356,6 +356,7 @@ interface InlineButtonProps {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
+  type?: "submit"
 }
 
 export const InlineButton = ({
@@ -363,6 +364,7 @@ export const InlineButton = ({
   children,
   onClick,
   disabled,
+  type,
 }: InlineButtonProps) => {
   const Comp = href ? Link : "button"
   return (
@@ -371,6 +373,7 @@ export const InlineButton = ({
       className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
       onClick={onClick}
       disabled={disabled}
+      type={type}
     >
       {children}
     </Comp>

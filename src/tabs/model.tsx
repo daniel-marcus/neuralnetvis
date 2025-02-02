@@ -4,7 +4,7 @@ import { useStatusText } from "@/components/status"
 import { useModelStore } from "@/lib/model"
 import * as tf from "@tensorflow/tfjs"
 import { StoreType } from "leva/dist/declarations/src/types"
-import { useEffect, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 
 export const Model = () => {
   const modelConfigStore = useControlStores().modelConfigStore
@@ -13,6 +13,7 @@ export const Model = () => {
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   const [showModels, setShowModels] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [models, setModels] = useState<string[]>([])
   const updateModelList = async () => {
     const allModels = await tf.io.listModels()
@@ -39,42 +40,81 @@ export const Model = () => {
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return
-    const saveName = modelName || model.name
-    model.name = saveName
-    const result = await model.save(`indexeddb://${saveName}`)
+    model.name = modelName
+    const result = await model.save(`indexeddb://${modelName}`)
     updateModelList()
     console.log({ result })
-    // await model.save(`downloads://${MODEL_NAME}`)
     setStatusText("Model saved to IndexedDB")
+  }
+  const exportModel = async (modelKey: string) => {
+    const exportModel = await tf.loadLayersModel(`indexeddb://${modelKey}`)
+    await exportModel.save(`downloads://${modelKey}`)
   }
   const removeModel = async (modelName: string) => {
     await tf.io.removeModel(`indexeddb://${modelName}`)
     updateModelList()
   }
+
   // TODO: download/import model from file
-  // TODO: update modelConfig when model is loaded
   return (
     <Box>
       <div className="flex-col">
-        {!!models.length && (
-          <button className="p-4" onClick={() => setShowModels(!showModels)}>
-            <Arrow
-              className={`transition-transform ${
-                showModels ? "rotate-0" : "-rotate-90"
-              } duration-150`}
-            />{" "}
-            Saved Models
+        <div
+          className={`flex ${
+            models.length ? "justify-between" : "justify-end"
+          }`}
+        >
+          {!!models.length && (
+            <button
+              className="p-4"
+              onClick={() => {
+                setShowImport(false)
+                setShowModels(!showModels)
+              }}
+            >
+              <Arrow
+                className={`transition-transform ${
+                  showModels ? "rotate-0" : "-rotate-90"
+                } duration-150`}
+              />{" "}
+              saved models
+            </button>
+          )}
+          <button
+            className="p-4"
+            onClick={() => {
+              setShowModels(false)
+              setShowImport(!showImport)
+            }}
+          >
+            import
           </button>
-        )}
+        </div>
         {!!models.length && showModels && (
           <ul className="p-4">
             {models.map((m, i) => (
               <li key={i} className="flex justify-between">
                 <button onClick={() => loadModel(m)}>{m}</button>
-                <button onClick={() => removeModel(m)}>x</button>
+                <div>
+                  <button className="px-2" onClick={() => exportModel(m)}>
+                    export
+                  </button>
+                  <button className="pl-2" onClick={() => removeModel(m)}>
+                    x
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
+        )}
+        {showImport && (
+          <Import
+            modelConfigStore={modelConfigStore}
+            onUploadFinished={() => {
+              setShowImport(false)
+              updateModelList()
+            }}
+          />
         )}
       </div>
       <ControlPanel store={modelConfigStore} />
@@ -85,10 +125,62 @@ export const Model = () => {
           value={modelName}
         />
         <InlineButton onClick={saveModel} disabled={!model}>
-          Save Model
+          save model
         </InlineButton>
       </div>
     </Box>
+  )
+}
+
+interface ImportProps {
+  onUploadFinished: () => void
+  modelConfigStore: StoreType
+}
+
+function Import({ onUploadFinished, modelConfigStore }: ImportProps) {
+  const setModel = useModelStore((s) => s.setModel)
+  const [modelFile, setModelFile] = useState<File | null>(null)
+  const [weightsFile, setWeightsFile] = useState<File | null>(null)
+  const importModel = async (e?: FormEvent<HTMLFormElement>) => {
+    e?.preventDefault()
+    if (!modelFile || !weightsFile) return
+    const newModel = await tf.loadLayersModel(
+      tf.io.browserFiles([modelFile, weightsFile])
+    )
+    newModel.save(`indexeddb://imported_${newModel.name}`)
+    updateModelConfig(newModel, modelConfigStore)
+    setModel(newModel)
+    onUploadFinished()
+  }
+  return (
+    <div className="p-4">
+      <form onSubmit={importModel}>
+        <label className="block">
+          {modelFile ? modelFile.name : "Choose model.json ..."}
+          <input
+            type="file"
+            id="model-file"
+            className="file:hidden text-transparent"
+            onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <label className="block">
+          {weightsFile ? weightsFile.name : "Choose weights.bin ..."}
+          <input
+            type="file"
+            id="weights-file"
+            className="file:hidden text-transparent"
+            placeholder="Choose file"
+            onChange={(e) => setWeightsFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <div className="text-right">
+          {!!modelFile && !!weightsFile && (
+            <InlineButton type="submit">Import</InlineButton>
+          )}
+        </div>
+      </form>
+    </div>
   )
 }
 
