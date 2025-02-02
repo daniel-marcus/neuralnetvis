@@ -68,11 +68,7 @@ export const Model = () => {
                 setShowModels(!showModels)
               }}
             >
-              <Arrow
-                className={`transition-transform ${
-                  showModels ? "rotate-0" : "-rotate-90"
-                } duration-150`}
-              />{" "}
+              <Arrow direction={showModels ? "down" : "right"} />
               saved models
             </button>
           )}
@@ -219,13 +215,20 @@ function updateModelConfig(
   }
 }
 
-const Arrow = ({ className }: { className?: string }) => (
+interface ArrowProps {
+  direction?: "right" | "down"
+  className?: string
+}
+
+export const Arrow = ({ className, direction = "right" }: ArrowProps) => (
   <svg
     width="9"
     height="5"
     viewBox="0 0 9 5"
     xmlns="http://www.w3.org/2000/svg"
-    className={`inline ${className}`}
+    className={`inline transition-transform ${
+      direction === "down" ? "rotate-0" : "-rotate-90"
+    } duration-150 mr-2 ${className}`}
   >
     <path
       d="M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"

@@ -1,9 +1,9 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { button, useControls } from "leva"
+import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
-import { TrainingLog, logsPlot, useLogStore } from "@/components/logs-plot"
+import { TrainingLog, useLogStore } from "@/components/logs-plot"
 import { useControlStores } from "@/components/controls"
 import { create } from "zustand"
 
@@ -90,8 +90,6 @@ export function useTraining(
     { store: trainConfigStore }
   )
 
-  useControls({ logs: logsPlot() }, { store: trainConfigStore }, [batchCounter])
-
   const setLogs = useLogStore((s) => s.setLogs)
 
   useEffect(() => {
@@ -99,16 +97,6 @@ export function useTraining(
     setLogs([] as TrainingLog[])
     setIsTraining(false)
   }, [model, setLogs, setBatchCounter, setIsTraining])
-
-  useControls(
-    {
-      [`${isTraining ? "Stop" : "Start"} training`]: button(() =>
-        toggleTraining()
-      ),
-    },
-    { store: trainConfigStore },
-    [isTraining]
-  )
 
   useEffect(() => {
     epochCount = 0

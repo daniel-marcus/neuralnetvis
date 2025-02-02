@@ -1,4 +1,3 @@
-import { createPlugin, Components } from "leva/plugin"
 import {
   useMemo,
   useCallback,
@@ -9,11 +8,7 @@ import {
 } from "react"
 import { create } from "zustand"
 
-// careful with circular imports!
-
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
-
-const { Row, Label } = Components
 
 export type TrainingLog = {
   epoch?: number
@@ -29,21 +24,21 @@ export type TrainingLogSetter = (
   arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
 ) => void
 
-export const useLogStore = create<{
+interface LogsStore {
   logs: TrainingLog[]
   setLogs: TrainingLogSetter
-}>((set) => ({
+  hasLogs: () => boolean
+}
+
+export const useLogStore = create<LogsStore>((set, get) => ({
   logs: [] as TrainingLog[],
+  hasLogs: () => get().logs.length > 0,
   setLogs: (arg) =>
     set((state) => {
       const newVal = typeof arg === "function" ? arg(state.logs) : arg
       return { logs: newVal }
     }),
 }))
-
-export const logsPlot = createPlugin({
-  component: LogsPlot,
-})
 
 type TooltipContent = React.ReactNode | null
 
@@ -53,7 +48,7 @@ const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
 const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
 const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
 
-function LogsPlot() {
+export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
   const logs = useLogStore((s) => s.logs)
   const [metric, setMetric] = useState<(typeof METRICS)[number]>("loss")
   const isEpochMetric = EPOCH_METRICS.includes(metric)
@@ -121,41 +116,41 @@ function LogsPlot() {
     },
     [filteredLogs, tooltipRef, isEpochMetric, positions, canvasRef]
   )
+  if (!logs.length) return null
   return (
-    <>
-      <Row input>
-        <Label>logs</Label>
-        <div className={`flex justify-center`}>
-          {METRICS.map((m) => {
-            const isSelected = m === metric
-            return (
-              <button
-                key={m}
-                className={`${
-                  isSelected
-                    ? "text-white"
-                    : "hover:bg-[var(--leva-colors-elevation3)] "
-                } rounded px-2 py-1`}
-                onClick={() => setMetric(m)}
-              >
-                {m}
-              </button>
-            )
-          })}
+    <div>
+      {!!isShown && (
+        <div>
+          <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
+            <canvas
+              ref={canvasRef}
+              className={`w-full h-[100px] sm:h-[132px]`}
+              onMouseMove={onMouseMove}
+            />
+            <Dot ref={dotRef} hidden={!tooltip} />
+            <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
+          </div>
         </div>
-      </Row>
-      <Row>
-        <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
-          <canvas
-            ref={canvasRef}
-            className={`w-full h-[100px] sm:h-[132px]`}
-            onMouseMove={onMouseMove}
-          />
-          <Dot ref={dotRef} hidden={!tooltip} />
-          <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
-        </div>
-      </Row>
-    </>
+      )}
+      <div className={`flex justify-end ${isShown ? "" : "hidden"}`}>
+        {METRICS.map((m) => {
+          const isSelected = m === metric
+          return (
+            <button
+              key={m}
+              className={`${
+                isSelected
+                  ? "text-white"
+                  : "hover:bg-[var(--leva-colors-elevation3)] "
+              } rounded px-2 py-1`}
+              onClick={() => setMetric(m)}
+            >
+              {m}
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
