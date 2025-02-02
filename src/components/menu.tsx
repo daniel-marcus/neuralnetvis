@@ -3,11 +3,11 @@
 import React, { useCallback, useEffect, useRef } from "react"
 import { ControlPanel, ControlStores, useControlStores } from "./controls"
 import { create } from "zustand"
-import { lessonPreviews } from "@/lessons/all-lessons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { datasets } from "@/lib/datasets"
-import { useLessonStore } from "./lesson"
+import { Info } from "@/tabs/info"
+import { Data } from "@/tabs/data"
+import { Learn } from "@/tabs/learn"
 
 type Tab = {
   key: string
@@ -361,37 +361,7 @@ function useSwipeClose(
   }, [ref, onClose])
 }
 
-function Info() {
-  return (
-    <Box padding>
-      <p className="mb-4">
-        Wrap your head around neural networks and watch machines learn!
-      </p>
-      <p className="mb-4">
-        If you are new to the topic, you might want to start with the{" "}
-        <Button href="/learn">learn</Button> section.
-      </p>
-      <p className="mb-4">
-        Otherwise, dive in, modify or train models, and{" "}
-        <Button href="/play">play</Button> with neural networks – all within
-        your browser!
-      </p>
-      <p className="text-right">
-        v{process.env.APP_VERSION}
-        <br />© 2025 by{" "}
-        <a
-          className="text-accent"
-          target="_blank"
-          href="https://danielmarcus.de/"
-        >
-          Daniel Marcus
-        </a>
-      </p>
-    </Box>
-  )
-}
-
-const Button = ({
+export const InlineButton = ({
   href,
   children,
   onClick,
@@ -435,51 +405,5 @@ export const MenuBtn = ({
       <div className="pr-2">&gt; </div>
       <div>{children}</div>
     </Component>
-  )
-}
-
-const Learn = () => {
-  const currLesson = useLessonStore((s) => s.currLesson)
-  return (
-    <Box className="flex flex-col">
-      {lessonPreviews.map((l) => (
-        <MenuBtn key={l.slug} href={l.path} isActive={currLesson === l.slug}>
-          <strong>{l.title}</strong>
-          <br />
-          {l.description}
-        </MenuBtn>
-      ))}
-    </Box>
-  )
-}
-
-const Data = () => {
-  const dataStore = useControlStores().dataStore
-  const currDatasetKey = dataStore.get("datasetKey")
-  const router = useRouter()
-  const handleClick = (key: string) => {
-    dataStore.setValueAtPath("datasetKey", key, false)
-    router.push("/play/model")
-  }
-  return (
-    <ControlPanel store={dataStore}>
-      <div className="flex flex-col">
-        {datasets.map((d) => (
-          <MenuBtn
-            key={d.name}
-            isActive={currDatasetKey === d.name}
-            onClick={() => handleClick(d.name)}
-          >
-            <strong>{d.name}</strong>
-            {!!d.description && (
-              <>
-                <br />
-                {d.description}
-              </>
-            )}
-          </MenuBtn>
-        ))}
-      </div>
-    </ControlPanel>
   )
 }
