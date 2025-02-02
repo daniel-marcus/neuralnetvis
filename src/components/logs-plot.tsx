@@ -43,6 +43,7 @@ export const useLogStore = create<LogsStore>((set, get) => ({
 type TooltipContent = React.ReactNode | null
 
 const TOOLTIP_WIDTH = 132
+const TOOLTIP_HEIGHT = 80
 
 const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
 const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
@@ -76,7 +77,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
         Math.min(x, rect.width - TOOLTIP_WIDTH / 2),
         TOOLTIP_WIDTH / 2
       )
-      const tooltipY = Math.max(y, 0)
+      const tooltipY = Math.max(y, rect.height - TOOLTIP_HEIGHT)
       tooltipRef.current.style.left = `${tooltipX}px`
       tooltipRef.current.style.top = `${tooltipY - 10}px`
       const canvas = canvasRef.current
@@ -178,7 +179,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         ref={ref}
         className={`${
           hidden ? "hidden" : ""
-        } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full`}
+        } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full pointer-events-none`}
         style={{ width: `${TOOLTIP_WIDTH}px` }}
       >
         {children}

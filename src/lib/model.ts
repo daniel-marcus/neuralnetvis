@@ -1,7 +1,14 @@
 import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
-import { useEffect, useMemo, useRef, useState, useTransition } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react"
 import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
@@ -44,20 +51,42 @@ const defaultModelConfig = {
 interface ModelStore {
   model: tf.LayersModel | undefined
   skipCreation: boolean // flag to skip model creation for loaded models
-  setModel: (model: tf.LayersModel | undefined) => void
+  isPending: boolean
+  setIsPending: (isPending: boolean) => void
+  _setModel: (model: tf.LayersModel | undefined) => void // use modelTransition instead
 }
 
 export const useModelStore = create<ModelStore>((set) => ({
   model: undefined,
   skipCreation: false,
-  setModel: (model) => set({ model }),
+  isPending: false,
+  setIsPending: (isPending) => set({ isPending }),
+  _setModel: (model) => set({ model }),
 }))
+
+export function useModelTransition() {
+  const [_isPending, startTransition] = useTransition()
+  const _setModel = useModelStore((s) => s._setModel)
+  const isPending = useModelStore((s) => s.isPending)
+  const setIsPending = useModelStore((s) => s.setIsPending)
+  const setModel = useCallback(
+    (model: tf.LayersModel | undefined) => {
+      startTransition(() => _setModel(model))
+    },
+    [startTransition, _setModel]
+  )
+  useEffect(() => {
+    setIsPending(_isPending)
+  }, [_isPending, setIsPending])
+  return [setModel, isPending] as const
+}
 
 export function useModel(ds?: Dataset) {
   const backendReady = useBackend()
   const [isEditing, setIsEditing] = useState(false)
   const setPercent = useStatusText((s) => s.setPercent)
-  const [isPending, startTransition] = useTransition()
+  const model = useModelStore((s) => s.model)
+  const [setModel, isPending] = useModelTransition()
   useEffect(() => {
     if (!isPending) return
     setPercent(-1)
@@ -92,7 +121,6 @@ export function useModel(ds?: Dataset) {
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  const { model, setModel } = useModelStore()
   useEffect(() => {
     return () => {
       setModel(undefined)
@@ -122,11 +150,15 @@ export function useModel(ds?: Dataset) {
     if (!_model) return
     const endTime = Date.now()
     if (debug()) console.log(`create model took ${endTime - startTime}ms`)
-    startTransition(() => setModel(_model))
-    return () => {
-      _model.dispose()
-    }
+    setModel(_model)
   }, [backendReady, modelConfig, ds, setModel])
+
+  useEffect(() => {
+    if (!model) return
+    return () => {
+      model.dispose()
+    }
+  }, [model])
 
   useEffect(() => {
     if (isPending || !model || !ds) return

@@ -1,15 +1,16 @@
 import { ControlPanel, useControlStores } from "@/components/controls"
 import { Box, InlineButton } from "@/components/menu"
 import { useStatusText } from "@/components/status"
-import { useModelStore } from "@/lib/model"
+import { useModelStore, useModelTransition } from "@/lib/model"
 import * as tf from "@tensorflow/tfjs"
 import { StoreType } from "leva/dist/declarations/src/types"
 import { FormEvent, useEffect, useState } from "react"
+import { Collapsible } from "./train"
 
 export const Model = () => {
   const modelConfigStore = useControlStores().modelConfigStore
   const model = useModelStore((s) => s.model)
-  const setModel = useModelStore((s) => s.setModel)
+  const [setModel] = useModelTransition()
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   const [showModels, setShowModels] = useState(false)
@@ -82,7 +83,7 @@ export const Model = () => {
             import
           </button>
         </div>
-        {!!models.length && showModels && (
+        <Collapsible isOpen={!!models.length && showModels} animate={false}>
           <ul className="p-4">
             {models.map((m, i) => (
               <li key={i} className="flex justify-between">
@@ -98,8 +99,8 @@ export const Model = () => {
               </li>
             ))}
           </ul>
-        )}
-        {showImport && (
+        </Collapsible>
+        <Collapsible isOpen={showImport} animate={false}>
           <Import
             modelConfigStore={modelConfigStore}
             onUploadFinished={() => {
@@ -107,7 +108,7 @@ export const Model = () => {
               updateModelList()
             }}
           />
-        )}
+        </Collapsible>
       </div>
       <ControlPanel store={modelConfigStore} />
       <div className="p-4 flex justify-between gap-4">
@@ -130,7 +131,7 @@ interface ImportProps {
 }
 
 function Import({ onUploadFinished, modelConfigStore }: ImportProps) {
-  const setModel = useModelStore((s) => s.setModel)
+  const [setModel] = useModelTransition()
   const [modelFile, setModelFile] = useState<File | null>(null)
   const [weightsFile, setWeightsFile] = useState<File | null>(null)
   const importModel = async (e?: FormEvent<HTMLFormElement>) => {
@@ -183,12 +184,10 @@ function updateModelConfig(
   // this is only a temporary solution until we have a model builder
   if (!newModel) return
   useModelStore.setState({ skipCreation: true })
-  const newLayers = newModel.layers.slice(1, -1) // exclude input/output layers
-  const currConfig = modelConfigStore.getData()
-  console.log({ newLayers, modelConfigStore, currConfig })
   let denseCount = 0
   let convCount = 0
-  for (const layer of newLayers) {
+  for (const layer of newModel.layers.slice(1, -1)) {
+    // exclude input/output layers
     const { units, filters } = layer.getConfig()
     const type = layer.getClassName()
     if (type === "Dense") {
@@ -216,18 +215,24 @@ function updateModelConfig(
 }
 
 interface ArrowProps {
-  direction?: "right" | "down"
+  direction?: "right" | "down" | "left" | "up"
   className?: string
 }
 
-export const Arrow = ({ className, direction = "right" }: ArrowProps) => (
+export const Arrow = ({ className, direction: d = "right" }: ArrowProps) => (
   <svg
     width="9"
     height="5"
     viewBox="0 0 9 5"
     xmlns="http://www.w3.org/2000/svg"
     className={`inline transition-transform ${
-      direction === "down" ? "rotate-0" : "-rotate-90"
+      d === "right"
+        ? "-rotate-90"
+        : d === "up"
+        ? "rotate-180"
+        : d === "left"
+        ? "rotate-90"
+        : ""
     } duration-150 mr-2 ${className}`}
   >
     <path
