@@ -1,23 +1,42 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
-import { useControlStores } from "@/components/controls"
 import { create } from "zustand"
+import { useKeyCommand } from "./key-command"
+import { setBackendIfAvailable } from "./tf-backend"
 
 let epochCount = 0
 let sessionEpochCount = 0
 let sessionBatchCount = 0
+let trainingPromise: Promise<tf.History | void> | null = null
 
-export const useTrainingStore = create<{
+interface TrainingConfig {
+  batchSize: number
+  epochs: number
+  validationSplit: number
+  silent: boolean
+}
+
+const defaultConfig = {
+  batchSize: 256,
+  epochs: 3,
+  validationSplit: 0.1,
+  silent: true,
+}
+
+interface TrainingStore {
   isTraining: boolean
   setIsTraining: (val: boolean) => void
   toggleTraining: () => void
   batchCounter: number
   setBatchCounter: (arg: number | ((prev: number) => number)) => void
-}>((set) => ({
+  config: TrainingConfig
+  setConfig: (newConfig: Partial<TrainingConfig>) => void
+}
+
+export const useTrainingStore = create<TrainingStore>((set) => ({
   isTraining: false,
   setIsTraining: (isTraining) => set({ isTraining }),
   toggleTraining: () => set((s) => ({ isTraining: !s.isTraining })),
@@ -27,6 +46,9 @@ export const useTrainingStore = create<{
       const newVal = typeof arg === "function" ? arg(batchCounter) : arg
       return { batchCounter: newVal }
     }),
+  config: defaultConfig,
+  setConfig: (newConfig) =>
+    set(({ config }) => ({ config: { ...config, ...newConfig } })),
 }))
 
 export function useTraining(
@@ -40,79 +62,29 @@ export function useTraining(
     toggleTraining,
     batchCounter,
     setBatchCounter,
+    config,
   } = useTrainingStore()
-
-  /* const [batchCounter, setBatchCounter] = useState(0)
-  const [isTraining, setIsTraining] = useState(false)
-  const toggleTraining = useCallback(() => setIsTraining((t) => !t), []) */
 
   const setStatusText = useStatusText((s) => s.setStatusText)
 
-  useEffect(() => {
-    const onKeydown = async (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName.toLowerCase() === "input") return
-      if (e.key === "t") toggleTraining()
-      if (e.key === "b") {
-        const currentBackend = tf.getBackend()
-        const availableBackends = getAvailableBackends()
-        const currIdx = availableBackends.indexOf(currentBackend)
-        const newBackend =
-          availableBackends[(currIdx + 1) % availableBackends.length]
-        tf.setBackend(newBackend)
-        setStatusText(`Switched backend to ${newBackend}`)
-      }
-    }
-    window.addEventListener("keydown", onKeydown)
-    return () => {
-      window.removeEventListener("keydown", onKeydown)
-    }
-  }, [toggleTraining, setStatusText])
-
-  const { trainConfigStore } = useControlStores()
-  const trainingConfig = useControls(
-    {
-      batchSize: {
-        value: 256,
-        min: 1,
-        max: 512,
-        step: 1,
-      },
-      epochs: { value: 3, min: 1, max: 100, step: 1 },
-      validationSplit: {
-        label: "validSplit",
-        value: 0.1,
-        min: 0,
-        max: 0.5,
-        step: 0.1,
-      },
-      silent: true,
-    },
-    { store: trainConfigStore }
-  )
+  useKeyCommand("t", toggleTraining)
 
   const setLogs = useLogStore((s) => s.setLogs)
 
   useEffect(() => {
+    // reset training state
+    epochCount = 0
     setBatchCounter(0)
     setLogs([] as TrainingLog[])
     setIsTraining(false)
   }, [model, setLogs, setBatchCounter, setIsTraining])
 
   useEffect(() => {
-    epochCount = 0
-  }, [model])
-
-  useEffect(() => {
     if (!isTraining || !ds || !model) {
       trainingPromise = null
       return
     }
-    const {
-      validationSplit,
-      batchSize,
-      epochs: _epochs,
-      silent,
-    } = trainingConfig
+    const { validationSplit, batchSize, epochs: _epochs, silent } = config
     const totalSamples = ds.data.trainX.shape[0]
     const trainSampleSize = Math.floor(totalSamples * (1 - validationSplit))
     const isNewSession = !trainingPromise
@@ -221,61 +193,15 @@ export function useTraining(
     isTraining,
     next,
     setStatusText,
-    trainingConfig,
+    config,
     ds,
     setLogs,
     setBatchCounter,
     setIsTraining,
   ])
 
-  // useManualTraining(model, input, next, setLogs, ds)
-
   return [isTraining, batchCounter] as const
 }
-
-/* export function useManualTraining(
-  model: tf.LayersModel | null,
-  input: DataType[],
-  next: () => void,
-  setLogs: TrainingLogSetter,
-  ds: Dataset
-) {
-  useEffect(() => {
-    if (!model) return
-    const onKeydown = async (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName.toLowerCase() === "input") return
-      if (e.key >= "0" && e.key <= "9") {
-        const pressedNumber = parseInt(e.key)
-        const callbacks: tf.ModelFitArgs["callbacks"] = {
-          onBatchEnd: (_, logs) => {
-            if (typeof logs !== "undefined")
-              setLogs((prev) => [...prev, { ...logs, epoch: -1, batch: -1 }])
-          },
-        }
-        const options = {
-          batchSize: 1,
-          epochs: 1,
-          validationSplit: 0,
-          callbacks,
-        }
-        // TODO: use tf trainOnBatch method?
-        await train(
-          model,
-          [input],
-          [pressedNumber],
-          options,
-          ds.output,
-          ds.loss
-        )
-        next()
-      }
-    }
-    window.addEventListener("keydown", onKeydown)
-    return () => {
-      window.removeEventListener("keydown", onKeydown)
-    }
-  }, [input, model, next, setLogs, ds])
-} */
 
 type FitArgs = tf.ModelFitArgs // tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
 
@@ -285,8 +211,6 @@ const defaultOptions: FitArgs = {
   validationSplit: 0,
   shuffle: true,
 }
-
-let trainingPromise: Promise<tf.History | void> | null = null
 
 async function train(
   model: tf.LayersModel,
@@ -333,16 +257,4 @@ export async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
     lossT.dispose()
     accuracyT?.dispose()
   }
-}
-
-export async function setBackendIfAvailable(backend: string) {
-  await tf.ready()
-  return getAvailableBackends().includes(backend) && tf.setBackend(backend)
-}
-
-function getAvailableBackends() {
-  // sort backends by priority: [webgpu, webgl, cpu]
-  return Object.entries(tf.engine().registryFactory)
-    .sort(([, a], [, b]) => b.priority - a.priority)
-    .map(([name]) => name)
 }

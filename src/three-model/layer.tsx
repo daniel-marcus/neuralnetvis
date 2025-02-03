@@ -1,14 +1,14 @@
-import { useContext, useMemo } from "react"
+import { useMemo } from "react"
 import { Neuron, NeuronDef, NeuronRefType, Nid } from "@/lib/neuron"
 import type { Dataset } from "@/lib/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { MeshParams, getOffsetX } from "@/lib/layer-layout"
-import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "../three-model/neuron-group"
 import { YPointer } from "../three-model/pointer"
 import { Connections } from "./connections"
+import { useVisConfigStore } from "@/lib/vis-config"
 
 export type LayerType =
   | "InputLayer"
@@ -52,7 +52,9 @@ export const Layer = (props: LayerProps) => {
   const { groups } = props
   const groupCount = groups.length
 
-  const { layerSpacing, splitColors } = useContext(VisOptionsContext)
+  const layerSpacing = useVisConfigStore((s) => s.layerSpacing)
+  const splitColors = useVisConfigStore((s) => s.splitColors)
+
   const hasAdditiveBlending =
     layerPos === "input" && groupCount > 1 && !splitColors
 

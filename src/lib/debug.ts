@@ -3,6 +3,7 @@ import { useEffect } from "react"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { useThree } from "@react-three/fiber"
+import { getAvailableBackends } from "./tf-backend"
 
 export const useDebugStore = create<{
   debug: boolean
@@ -19,6 +20,7 @@ export function useDebug() {
   const toggleDebug = useDebugStore((s) => s.toggleDebug)
   const setStatusText = useStatusText((s) => s.setStatusText)
   const { gl } = useThree()
+  // TODO: useKeyCommand ...
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === "input") return
@@ -47,6 +49,15 @@ export function useDebug() {
         const tfEngine = tf.engine()
         const glInfo = gl.info
         console.log(data, { tfEngine, glInfo })
+      }
+      if (e.key === "b") {
+        const currentBackend = tf.getBackend()
+        const availableBackends = getAvailableBackends()
+        const currIdx = availableBackends.indexOf(currentBackend)
+        const newBackend =
+          availableBackends[(currIdx + 1) % availableBackends.length]
+        tf.setBackend(newBackend)
+        setStatusText(`Switched backend to ${newBackend}`)
       }
     }
     window.addEventListener("keydown", onKeydown)

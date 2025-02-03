@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode, useEffect } from "react"
-import { useController } from "./controller"
+import { useController } from "../lib/controller"
 import { useInView } from "@/lib/in-view"
 import { TabSetter } from "./menu"
 import { getLessonPath, LessonDef, LessonPreview } from "@/lessons/all-lessons"

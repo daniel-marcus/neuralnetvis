@@ -345,7 +345,8 @@ async function fetchMutlipleNpzWithProgress(paths: string[]) {
     const totalLoadedBytes = allLoadedBytes.reduce((a, b) => a + b, 0)
     const totalTotalBytes = allTotalBytes.reduce((a, b) => a + b, 0)
     const percent = totalLoadedBytes / totalTotalBytes
-    setStatusText("Loading dataset ...", { percent })
+    const text = percent < 1 ? "Loading dataset ..." : "Dataset loaded"
+    setStatusText(text, { percent })
   }
   const allPromises = paths.map((path) =>
     fetchWithProgress(path, onProgress, { cache: "force-cache" }).then((r) =>

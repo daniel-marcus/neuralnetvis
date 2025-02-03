@@ -1,15 +1,21 @@
-import { ControlPanel, useControlStores } from "@/components/controls"
 import { LogsPlot, useLogStore } from "@/ui-components/logs-plot"
-import { Box, InlineButton } from "@/ui-components"
+import {
+  Box,
+  InlineButton,
+  Slider,
+  InputRow,
+  Checkbox,
+  Collapsible,
+  ControlPanel,
+  Arrow,
+} from "@/ui-components"
 import { getModelEvaluation, useTrainingStore } from "@/lib/training"
-import { Arrow } from "./model"
 import React, { useEffect, useState } from "react"
 import { useModelStore } from "@/lib/model"
 import { useDatasetStore } from "@/lib/datasets"
 import { useStatusText } from "@/components/status"
 
 export const Train = () => {
-  const trainConfigStore = useControlStores().trainConfigStore
   const isTraining = useTrainingStore((s) => s.isTraining)
   const toggleTraining = useTrainingStore((s) => s.toggleTraining)
   const [showLogs, setShowLogs] = useState(false)
@@ -17,24 +23,10 @@ export const Train = () => {
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
-  const model = useModelStore((s) => s.model)
-  const ds = useDatasetStore((s) => s.ds)
-  const setStatusText = useStatusText((s) => s.setStatusText)
-  async function evaluate() {
-    if (!model || !ds) return
-    const { loss, accuracy } = await getModelEvaluation(model, ds)
-    const data = {
-      Loss: loss?.toFixed(3),
-      Accuracy: accuracy?.toFixed(3),
-    }
-    setStatusText(
-      { title: "Model evaluation", data },
-      { percent: null, time: 3 }
-    )
-  }
+  const evaluate = useEvaluate()
   return (
     <Box>
-      <ControlPanel store={trainConfigStore} />
+      <TrainConfigControl />
       <Collapsible isOpen={showLogs} maxHeight={184}>
         <div className="p-4 pb-0">
           <LogsPlot />
@@ -61,31 +53,64 @@ export const Train = () => {
   )
 }
 
-interface CollapsibleProps {
-  children?: React.ReactNode
-  isOpen?: boolean
-  maxHeight?: number
-  animate?: boolean
+const TrainConfigControl = () => {
+  const config = useTrainingStore((s) => s.config)
+  const setConfig = useTrainingStore((s) => s.setConfig)
+  return (
+    <ControlPanel title="config">
+      <InputRow label="batchSize">
+        <Slider
+          value={config.batchSize}
+          min={1}
+          max={512}
+          onChange={(v) => setConfig({ batchSize: v })}
+          showValue={true}
+        />
+      </InputRow>
+      <InputRow label="epochs">
+        <Slider
+          value={config.epochs}
+          min={1}
+          max={100}
+          onChange={(v) => setConfig({ epochs: v })}
+          showValue={true}
+        />
+      </InputRow>
+      <InputRow label="validSplit">
+        <Slider
+          value={config.validationSplit}
+          min={0}
+          max={0.5}
+          step={0.1}
+          onChange={(v) => setConfig({ validationSplit: v })}
+          showValue={true}
+        />
+      </InputRow>
+      <InputRow label="silent">
+        <Checkbox
+          checked={config.silent}
+          onChange={(v) => setConfig({ silent: v })}
+        />
+      </InputRow>
+    </ControlPanel>
+  )
 }
 
-export function Collapsible({
-  children,
-  isOpen = true,
-  maxHeight = 300,
-  animate = true,
-}: CollapsibleProps) {
-  return (
-    <div
-      className={`transition-height overflow-hidden ${
-        isOpen ? "max-h-[var(--collapsible-max-h)]" : "max-h-0"
-      } ${!animate ? "duration-0" : "duration-300"}`}
-      style={
-        {
-          "--collapsible-max-h": `${maxHeight}px`,
-        } as React.CSSProperties
-      }
-    >
-      {children}
-    </div>
-  )
+function useEvaluate() {
+  const model = useModelStore((s) => s.model)
+  const ds = useDatasetStore((s) => s.ds)
+  const setStatusText = useStatusText((s) => s.setStatusText)
+  async function evaluate() {
+    if (!model || !ds) return
+    const { loss, accuracy } = await getModelEvaluation(model, ds)
+    const data = {
+      Loss: loss?.toFixed(3),
+      Accuracy: accuracy?.toFixed(3),
+    }
+    setStatusText(
+      { title: "Model evaluation", data },
+      { percent: null, time: 3 }
+    )
+  }
+  return evaluate
 }

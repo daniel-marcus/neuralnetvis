@@ -1,15 +1,15 @@
-import { useContext, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { InstancedMesh } from "three"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import * as THREE from "three"
 import { MeshParams, getGridSize, getNeuronPosition } from "@/lib/layer-layout"
 import { LayerPosition, LayerProps } from "./layer"
 import { NeuronLabels } from "./neuron-label"
-import { VisOptionsContext } from "@/lib/vis-options"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "../lib/neuron"
 import { debug } from "@/lib/debug"
+import { useVisConfigStore } from "@/lib/vis-config"
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 
@@ -41,7 +41,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const eventHandlers = useInteractions(groupedNeurons)
   const scaleOnHover = props.tfLayer.getClassName() === "Dense"
   useScale(scaleOnHover, meshRef, nidsStr, layerIndex, groupIndex)
-  const { splitColors } = useContext(VisOptionsContext)
+  const splitColors = useVisConfigStore((s) => s.splitColors)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
   )
@@ -75,7 +75,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
 
 export function useNeuronSpacing(meshParams: MeshParams) {
   const { geometry, spacingFactor } = meshParams
-  const { neuronSpacing } = useContext(VisOptionsContext)
+  const neuronSpacing = useVisConfigStore((s) => s.neuronSpacing)
   const size =
     "width" in geometry.parameters
       ? geometry.parameters.width
@@ -106,7 +106,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
 function useGroupPosition(props: NeuronGroupProps) {
   const { groupIndex, groupCount, layerPos, meshParams } = props
   const spacing = useNeuronSpacing(meshParams)
-  const { splitColors } = useContext(VisOptionsContext)
+  const splitColors = useVisConfigStore((s) => s.splitColors)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6

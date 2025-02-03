@@ -2,10 +2,10 @@ import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { Neuron, Nid } from "@/lib/neuron"
 import { LayerStateful } from "@/three-model/layer"
-import { useContext, useEffect, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { debug } from "./debug"
-import { HighlightProp, VisOptionsContext } from "./vis-options"
+import { HighlightProp, useVisConfigStore } from "./vis-config"
 
 interface SelectedStore {
   hovered: Neuron | null
@@ -53,7 +53,7 @@ export function useLocalSelected(layerIndex: number, groupIndex: number) {
 }
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
-  const { highlightProp } = useContext(VisOptionsContext)
+  const highlightProp = useVisConfigStore((s) => s.highlightProp)
   const selectedNid = useSelected((s) => s.getSelectedNid())
   const hoveredNid = useSelected((s) => s.getHoveredNid())
   const setSelected = useSelected((s) => s.setSelected)

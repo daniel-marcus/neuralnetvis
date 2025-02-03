@@ -1,52 +1,31 @@
-import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react"
+import { useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
-import { DenseLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/core"
+import {
+  DenseLayerArgs,
+  FlattenLayerArgs,
+} from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
-import { setBackendIfAvailable } from "./training"
-import { useControlStores } from "@/components/controls"
 import { create } from "zustand"
+import { useTfBackend } from "./tf-backend"
+import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
+import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
 
-const defaultUnitConfig = {
-  value: 32,
-  min: 16,
-  max: 256,
-  step: 16,
-  optional: true,
+export type LayerConfigMap = {
+  Dense: DenseLayerArgs
+  Conv2D: ConvLayerArgs
+  MaxPooling2D: Pooling2DLayerArgs
+  Flatten: FlattenLayerArgs
 }
 
-const MAX_CONV_SIZE = 64
-
-const defaultModelConfig = {
-  conv1: {
-    value: 4,
-    min: 1,
-    max: MAX_CONV_SIZE,
-    step: 1,
-    optional: true,
-    disabled: true,
-  },
-  conv2: {
-    value: 4,
-    min: 1,
-    max: MAX_CONV_SIZE,
-    step: 1,
-    optional: true,
-    disabled: true,
-  },
-  dense1: { ...defaultUnitConfig, value: 64 },
-  dense2: { ...defaultUnitConfig, value: 32, disabled: true },
+export type HiddenLayerConfig<T extends keyof LayerConfigMap> = {
+  className: T
+  config: LayerConfigMap[T]
 }
+
+export type HiddenLayerConfigArray = HiddenLayerConfig<keyof LayerConfigMap>[]
 
 interface ModelStore {
   model: tf.LayersModel | undefined
@@ -54,6 +33,13 @@ interface ModelStore {
   isPending: boolean
   setIsPending: (isPending: boolean) => void
   _setModel: (model: tf.LayersModel | undefined) => void // use modelTransition instead
+  hiddenLayers: HiddenLayerConfigArray
+  setHiddenLayers: (hiddenLayers: HiddenLayerConfigArray) => void
+}
+
+const defaultLayer: HiddenLayerConfig<"Dense"> = {
+  className: "Dense",
+  config: { units: 64, activation: "relu" },
 }
 
 export const useModelStore = create<ModelStore>((set) => ({
@@ -62,6 +48,8 @@ export const useModelStore = create<ModelStore>((set) => ({
   isPending: false,
   setIsPending: (isPending) => set({ isPending }),
   _setModel: (model) => set({ model }),
+  hiddenLayers: [defaultLayer],
+  setHiddenLayers: (hiddenLayers) => set({ hiddenLayers }),
 }))
 
 export function useModelTransition() {
@@ -82,8 +70,7 @@ export function useModelTransition() {
 }
 
 export function useModel(ds?: Dataset) {
-  const backendReady = useBackend()
-  const [isEditing, setIsEditing] = useState(false)
+  const backendReady = useTfBackend()
   const setPercent = useStatusText((s) => s.setPercent)
   const model = useModelStore((s) => s.model)
   const [setModel, isPending] = useModelTransition()
@@ -95,65 +82,36 @@ export function useModel(ds?: Dataset) {
     }
   }, [isPending, setPercent])
 
-  const { modelConfigStore } = useControlStores()
-  const modelConfigRef = useRef<Record<string, number>>({})
-  const _modelConfig = useControls(
-    "layers",
-    Object.fromEntries(
-      Object.entries(defaultModelConfig).map(([key, config]) => [
-        key,
-        {
-          ...config,
-          onEditStart: () => setIsEditing(true),
-          onEditEnd: () => setIsEditing(false),
-        },
-      ])
-    ),
-    { store: modelConfigStore }
-  ) as Record<string, number>
-
-  const modelConfig = useMemo(() => {
-    // update conv layer only after editing for smoother UI
-    if (isEditing) return modelConfigRef.current
-    modelConfigRef.current = _modelConfig
-    return _modelConfig
-  }, [_modelConfig, isEditing])
-
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
+    // useModelReset (on ds change)
     return () => {
       setModel(undefined)
     }
   }, [ds, setModel])
+
+  const hiddenLayers = useModelStore((s) => s.hiddenLayers)
+
   useEffect(() => {
+    // useModelCreation
     if (!ds || !backendReady) return
     if (useModelStore.getState().skipCreation) {
       console.log("skip model creation")
       useModelStore.setState({ skipCreation: false })
       return
     }
-    const startTime = Date.now()
-    const [, ...dims] = ds.data.trainX.shape
-    const inputShape = [null, ...dims]
 
-    const hiddenLayerConfig = Object.keys(modelConfig)
-      .map((key) => ({
-        name: key,
-        size: modelConfig[key],
-      }))
-      .filter((l) => l.size)
-
-    const _model = createModel(inputShape, hiddenLayerConfig, ds.output)
+    const _model = createModel(ds, hiddenLayers)
 
     if (debug()) console.log({ _model })
     if (!_model) return
-    const endTime = Date.now()
-    if (debug()) console.log(`create model took ${endTime - startTime}ms`)
+
     setModel(_model)
-  }, [backendReady, modelConfig, ds, setModel])
+  }, [backendReady, hiddenLayers, ds, setModel])
 
   useEffect(() => {
+    // useModelDispose
     if (!model) return
     return () => {
       model.dispose()
@@ -161,6 +119,7 @@ export function useModel(ds?: Dataset) {
   }, [model])
 
   useEffect(() => {
+    // useModelStatus
     if (isPending || !model || !ds) return
     const [totalSamples] = ds.data.trainX.shape
     const layersStr = model.layers
@@ -182,55 +141,46 @@ export function useModel(ds?: Dataset) {
       "   ": layersStr,
     }
     setStatusText({ data }, { time: 3 })
+  }, [model, ds, setStatusText, isPending])
 
+  useEffect(() => {
+    // useModelCompile
+    if (isPending || !model || !ds) return
     if (!isModelCompiled(model)) {
-      if (debug()) console.log("Model not compiled. Compiling ...")
+      if (debug()) console.log("Model not compiled. Compiling ...", model)
       model.compile({
         optimizer: tf.train.adam(),
         loss: ds.loss,
         metrics: ["accuracy"],
       })
     }
-  }, [model, ds, setStatusText, isPending])
+  }, [model, ds, isPending])
   return [model, isPending || !backendReady] as const
 }
 
-function createModel(
-  inputShape: (number | null)[],
-  layerConfig: { name: string; size: number }[],
-  output: Dataset["output"]
-) {
+function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
+  const [, ...dims] = ds.data.trainX.shape
+  const inputShape = [null, ...dims] as [null, ...number[]]
+
   const model = tf.sequential()
+
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
-  for (const c of layerConfig) {
-    // const i = layerConfig.indexOf(c)
-    if (c.name.startsWith("dense")) {
-      // dense layer
-      addDenseWithFlattenIfNeeded(model, {
-        units: c.size,
-        activation: "relu",
-      })
-    } else if (c.name.startsWith("conv")) {
-      // conv2d layer + maxpooling
-      model.add(
-        tf.layers.conv2d({
-          filters: c.size,
-          kernelSize: [3, 3],
-          activation: "relu",
-        })
-      )
-      // if (layerConfig[i + 1]?.name.startsWith("dense"))
-      model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
+
+  for (const l of hiddenLayers) {
+    if (l.className === "Dense") {
+      addDenseWithFlattenIfNeeded(model, l.config as DenseLayerArgs)
+    } else if (l.className === "Conv2D") {
+      model.add(tf.layers.conv2d(l.config as ConvLayerArgs))
+    } else if (l.className === "Flatten") {
+      model.add(tf.layers.flatten(l.config as FlattenLayerArgs))
+    } else if (l.className === "MaxPooling2D") {
+      model.add(tf.layers.maxPooling2d(l.config as Pooling2DLayerArgs))
     }
-  }
-  if (!layerConfig.length) {
-    // no hidden layers
-    model.add(tf.layers.flatten())
   }
   // output layer
   addDenseWithFlattenIfNeeded(model, {
-    units: output.size,
-    activation: output.activation,
+    units: ds.output.size,
+    activation: ds.output.activation,
   })
   return model
 }
@@ -249,16 +199,4 @@ function addDenseWithFlattenIfNeeded(
 
 function isModelCompiled(model: tf.LayersModel) {
   return model.loss !== undefined && model.optimizer !== undefined
-}
-
-function useBackend() {
-  const [isReady, setIsReady] = useState(false)
-  useEffect(() => {
-    async function checkReady() {
-      await (setBackendIfAvailable("webgl") || tf.ready())
-      setIsReady(true)
-    }
-    checkReady()
-  }, [])
-  return isReady
 }

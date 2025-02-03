@@ -140,9 +140,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
             <button
               key={m}
               className={`${
-                isSelected
-                  ? "text-white"
-                  : "hover:bg-[var(--leva-colors-elevation3)] "
+                isSelected ? "text-white" : "hover:bg-[var(--color-secondary)] "
               } rounded px-2 py-1`}
               onClick={() => setMetric(m)}
             >
@@ -161,7 +159,7 @@ const Dot = forwardRef<HTMLDivElement, { hidden: boolean }>(
       ref={ref}
       className={`absolute ${
         hidden ? "hidden" : ""
-      } p-0 w-2 h-2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--leva-colors-highlight3)] pointer-events-none`}
+      } p-0 w-2 h-2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pointer-events-none`}
     />
   )
 )

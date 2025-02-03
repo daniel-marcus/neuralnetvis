@@ -7,21 +7,17 @@ import { Model } from "../three-model/model"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"
-import { VisOptionsContext, useVisOptions } from "@/lib/vis-options"
 import { useDebugStore } from "@/lib/debug"
-import { withControlStores } from "./controls"
 import { Menu } from "./menu"
-import { Controller } from "./controller"
 import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLessonStore } from "./lesson"
 
 export const TrainingYContext = createContext<number | undefined>(undefined)
 
-const App_ = ({ children }: { children?: ReactNode }) => {
+export const App = ({ children }: { children?: ReactNode }) => {
   const [ds, input, trainingY, next] = useDatasets()
   const [model, isPending] = useModel(ds)
-  const visOptions = useVisOptions(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
   const isLearnMode = useLessonStore((s) => s.isLearnMoode())
@@ -38,19 +34,16 @@ const App_ = ({ children }: { children?: ReactNode }) => {
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
           <OrbitControls target={[0, 0, 0]} />
-          <VisOptionsContext.Provider value={visOptions}>
-            <TrainingYContext.Provider value={trainingY}>
-              <Model
-                model={model}
-                input={input}
-                ds={ds}
-                batchCount={batchCount}
-                isPending={isPending}
-              />
-            </TrainingYContext.Provider>
-          </VisOptionsContext.Provider>
+          <TrainingYContext.Provider value={trainingY}>
+            <Model
+              model={model}
+              input={input}
+              ds={ds}
+              batchCount={batchCount}
+              isPending={isPending}
+            />
+          </TrainingYContext.Provider>
           {debug && <Stats />}
-          <Controller />
         </Canvas>
         <Footer />
       </div>
@@ -58,8 +51,6 @@ const App_ = ({ children }: { children?: ReactNode }) => {
     </div>
   )
 }
-
-export const App = withControlStores(App_)
 
 const Lights = () => (
   <>

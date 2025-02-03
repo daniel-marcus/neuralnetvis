@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
 import { LayerStateful, LayerStateless } from "./layer"
@@ -8,8 +8,8 @@ import {
   LineSegments2,
 } from "three/examples/jsm/Addons.js"
 import { Neuron, NeuronRefType } from "@/lib/neuron"
-import { VisOptionsContext } from "@/lib/vis-options"
 import { useSelected } from "@/lib/neuron-select"
+import { useVisConfigStore } from "@/lib/vis-config"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
@@ -22,7 +22,7 @@ type NeuronConnectionsProps = {
 export const HoverConnections = () => {
   const hovered = useSelected((s) => s.hovered)
   // too many lines for fully connected layers
-  const { allowDenseHoverLines } = useContext(VisOptionsContext)
+  const allowDenseHoverLines = useVisConfigStore((s) => s.allowDenseHoverLines)
   if (!hovered) return null
   if (hovered.layer.layerType === "Dense" && !allowDenseHoverLines) return null
   return (
@@ -47,7 +47,10 @@ export const HoverConnections = () => {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const { showLines, lineActivationThreshold } = useContext(VisOptionsContext)
+  const showLines = useVisConfigStore((s) => s.showLines)
+  const lineActivationThreshold = useVisConfigStore(
+    (s) => s.lineActivationThreshold
+  )
   const layerMaxWeight = layer.maxAbsWeight ?? 1
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
   if (isConvOrMaxPool) return null

@@ -8,7 +8,7 @@ import {
 } from "@/components/lesson"
 import { LessonContent } from "./all-lessons"
 import { useEffect } from "react"
-import { useController } from "@/components/controller"
+import { useController } from "@/lib/controller"
 import { useDatasetStore } from "@/lib/datasets"
 
 export const IntroNetworks = (): LessonContent => {
