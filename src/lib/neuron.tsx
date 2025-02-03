@@ -2,7 +2,7 @@ import React from "react"
 
 import type { NodeInput } from "@/lib/datasets"
 import { LayerStateful, LayerStateless } from "./layer"
-import { InstancedMeshRef } from "./neuron-group"
+import { InstancedMeshRef } from "../three-model/neuron-group"
 
 // refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
 

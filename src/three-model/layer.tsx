@@ -1,14 +1,14 @@
 import { useContext, useMemo } from "react"
-import { Neuron, NeuronDef, NeuronRefType, Nid } from "./neuron"
+import { Neuron, NeuronDef, NeuronRefType, Nid } from "@/lib/neuron"
 import type { Dataset } from "@/lib/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
-import { Connections } from "./connections"
 import { useAnimatedPosition } from "@/lib/animated-position"
 import { MeshParams, getOffsetX } from "@/lib/layer-layout"
 import { VisOptionsContext } from "@/lib/vis-options"
 import * as tf from "@tensorflow/tfjs"
-import { GroupDef, NeuronGroup } from "./neuron-group"
-import { YPointer } from "./pointer"
+import { GroupDef, NeuronGroup } from "../three-model/neuron-group"
+import { YPointer } from "../three-model/pointer"
+import { Connections } from "./connections"
 
 export type LayerType =
   | "InputLayer"

@@ -1,4 +1,4 @@
-import { Box, InlineButton } from "@/components/menu"
+import { Box, InlineButton } from "@/ui-components"
 
 export function Info() {
   return (

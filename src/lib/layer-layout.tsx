@@ -1,4 +1,4 @@
-import type { LayerPosition } from "@/components/layer"
+import type { LayerPosition } from "@/three-model/layer"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
 import * as THREE from "three"

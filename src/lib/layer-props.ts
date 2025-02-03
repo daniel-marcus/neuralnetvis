@@ -1,6 +1,6 @@
 import { createRef, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Index3D, Neuron, NeuronRefType, Nid } from "@/components/neuron"
+import { Index3D, Neuron, NeuronRefType, Nid } from "@/lib/neuron"
 import { Dataset, LayerInput } from "./datasets"
 import { getMeshParams } from "./layer-layout"
 import {
@@ -8,7 +8,7 @@ import {
   LayerPosition,
   LayerStateless,
   LayerType,
-} from "@/components/layer"
+} from "@/three-model/layer"
 import { debug } from "@/lib/debug"
 import { useActivations } from "./activations"
 

@@ -1,5 +1,5 @@
 import { useLessonStore } from "@/components/lesson"
-import { Box, MenuBtn } from "@/components/menu"
+import { Box, MenuBtn } from "@/ui-components"
 import { lessonPreviews } from "@/lessons/all-lessons"
 
 export const Learn = () => {

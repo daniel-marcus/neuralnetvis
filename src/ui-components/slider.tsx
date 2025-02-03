@@ -7,6 +7,7 @@ interface SliderProps {
   max: number
   onChange: (value: number) => void
   step?: number
+  isOptional?: boolean // TODO: implement
 }
 
 export const Slider = ({

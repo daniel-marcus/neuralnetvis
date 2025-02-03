@@ -1,6 +1,6 @@
 import { ControlPanel, useControlStores } from "@/components/controls"
-import { LogsPlot, useLogStore } from "@/components/logs-plot"
-import { Box, InlineButton } from "@/components/menu"
+import { LogsPlot, useLogStore } from "@/ui-components/logs-plot"
+import { Box, InlineButton } from "@/ui-components"
 import { getModelEvaluation, useTrainingStore } from "@/lib/training"
 import { Arrow } from "./model"
 import React, { useEffect, useState } from "react"

@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
 import React, { createContext, ReactNode } from "react"
-import { Model } from "./model"
+import { Model } from "../three-model/model"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
 import { useModel } from "@/lib/model"

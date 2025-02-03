@@ -1,5 +1,4 @@
-import { Box, MenuBtn } from "@/components/menu"
-import { Slider } from "@/components/slider"
+import { Box, MenuBtn, Slider } from "@/ui-components"
 import { datasets, useDatasetStore } from "@/lib/datasets"
 
 export const Data = () => {

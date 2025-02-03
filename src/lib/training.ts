@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useControls } from "leva"
 import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
-import { TrainingLog, useLogStore } from "@/components/logs-plot"
+import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
 import { useControlStores } from "@/components/controls"
 import { create } from "zustand"
 

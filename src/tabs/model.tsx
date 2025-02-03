@@ -1,11 +1,11 @@
 import { ControlPanel, useControlStores } from "@/components/controls"
-import { Box, InlineButton } from "@/components/menu"
 import { useStatusText } from "@/components/status"
 import { useModelStore, useModelTransition } from "@/lib/model"
 import * as tf from "@tensorflow/tfjs"
 import { StoreType } from "leva/dist/declarations/src/types"
 import { FormEvent, useEffect, useState } from "react"
 import { Collapsible } from "./train"
+import { Box, InlineButton } from "@/ui-components"
 
 export const Model = () => {
   const modelConfigStore = useControlStores().modelConfigStore

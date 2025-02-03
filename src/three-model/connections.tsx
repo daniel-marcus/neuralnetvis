@@ -7,7 +7,7 @@ import {
   LineMaterial,
   LineSegments2,
 } from "three/examples/jsm/Addons.js"
-import { Neuron, NeuronRefType } from "./neuron"
+import { Neuron, NeuronRefType } from "@/lib/neuron"
 import { VisOptionsContext } from "@/lib/vis-options"
 import { useSelected } from "@/lib/neuron-select"
 
@@ -106,11 +106,7 @@ interface DynamicLineProps {
   width?: number
 }
 
-export const DynamicLine2 = ({
-  fromRef,
-  toRef,
-  width = 1,
-}: DynamicLineProps) => {
+const DynamicLine2 = ({ fromRef, toRef, width = 1 }: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 

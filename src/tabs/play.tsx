@@ -1,4 +1,4 @@
-import { Box, MenuBtn } from "@/components/menu"
+import { Box, MenuBtn } from "@/ui-components"
 
 export const Play = () => (
   <Box padding={false}>
