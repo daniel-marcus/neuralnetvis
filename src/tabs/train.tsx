@@ -109,7 +109,7 @@ function useEvaluate() {
     }
     setStatusText(
       { title: "Model evaluation", data },
-      { percent: null, time: 3 }
+      { percent: null, time: 5 }
     )
   }
   return evaluate

@@ -162,9 +162,10 @@ export function useTraining(
               Accuracy: accuracy?.toFixed(3),
               Time: `${totalTime.toFixed(2)}s`,
             }
+            const backend = tf.getBackend()
             setStatusText(
-              { title: "Training finished", data },
-              { percent: null, time: 3 }
+              { title: `Training finished (${backend})`, data },
+              { percent: null, time: 5 }
             )
           }
           if (trainingComplete) {

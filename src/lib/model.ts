@@ -140,7 +140,7 @@ export function useModel(ds?: Dataset) {
       )} params)`,
       "   ": layersStr,
     }
-    setStatusText({ data }, { time: 3 })
+    setStatusText({ data }, { time: 5 })
   }, [model, ds, setStatusText, isPending])
 
   useEffect(() => {

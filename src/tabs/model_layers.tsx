@@ -4,7 +4,13 @@ import {
   LayerConfigMap,
   useModelStore,
 } from "@/lib/model"
-import { ControlPanel, InlineButton, InputRow, Slider } from "@/ui-components"
+import {
+  ControlPanel,
+  InlineButton,
+  InputRow,
+  Select,
+  Slider,
+} from "@/ui-components"
 import { useRef } from "react"
 
 function getSliderProps<T extends keyof LayerConfigMap>(
@@ -116,25 +122,13 @@ export const LayerConfigControl = () => {
             <InlineButton variant="secondary" onClick={handleAdd}>
               add
             </InlineButton>{" "}
-            <div className="relative flex-1">
-              <select
-                ref={selectRef}
-                className="w-full appearance-none bg-transparent"
-              >
-                <option>Dense</option>
-                <option>Conv2D</option>
-                <option>MaxPooling2D</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <svg
-                  className="fill-current h-3 w-3"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
-              </div>
-            </div>
+            <Select
+              ref={selectRef}
+              options={["Dense", "Conv2D", "MaxPooling2D"]}
+              onChange={(val) => {
+                console.log(val, "YO")
+              }}
+            />
           </div>
         </InputRow>
       </div>
