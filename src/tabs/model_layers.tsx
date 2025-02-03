@@ -125,9 +125,6 @@ export const LayerConfigControl = () => {
             <Select
               ref={selectRef}
               options={["Dense", "Conv2D", "MaxPooling2D"]}
-              onChange={(val) => {
-                console.log(val, "YO")
-              }}
             />
           </div>
         </InputRow>
