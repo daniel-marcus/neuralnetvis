@@ -27,7 +27,7 @@ export const Data = () => {
             </MenuBtn>
           ))}
         </div>
-        <div className={"bg-box-bg p-4 rounded-[10px]"}>
+        <div className={"bg-box-bg p-4 rounded-box"}>
           current sample: {i} / {totalSamples}
           <SampleSlider />
         </div>

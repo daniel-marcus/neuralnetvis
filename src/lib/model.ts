@@ -25,7 +25,7 @@ const defaultUnitConfig = {
   optional: true,
 }
 
-const MAX_CONV_SIZE = 32
+const MAX_CONV_SIZE = 64
 
 const defaultModelConfig = {
   conv1: {
@@ -203,7 +203,7 @@ function createModel(
   const model = tf.sequential()
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
   for (const c of layerConfig) {
-    const i = layerConfig.indexOf(c)
+    // const i = layerConfig.indexOf(c)
     if (c.name.startsWith("dense")) {
       // dense layer
       addDenseWithFlattenIfNeeded(model, {
@@ -219,8 +219,8 @@ function createModel(
           activation: "relu",
         })
       )
-      if (layerConfig[i + 1]?.name.startsWith("dense"))
-        model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
+      // if (layerConfig[i + 1]?.name.startsWith("dense"))
+      model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }))
     }
   }
   if (!layerConfig.length) {

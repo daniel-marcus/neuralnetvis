@@ -1,9 +1,12 @@
 import { ControlPanel, useControlStores } from "@/components/controls"
 import { LogsPlot, useLogStore } from "@/components/logs-plot"
 import { Box, InlineButton } from "@/components/menu"
-import { useTrainingStore } from "@/lib/training"
+import { getModelEvaluation, useTrainingStore } from "@/lib/training"
 import { Arrow } from "./model"
 import React, { useEffect, useState } from "react"
+import { useModelStore } from "@/lib/model"
+import { useDatasetStore } from "@/lib/datasets"
+import { useStatusText } from "@/components/status"
 
 export const Train = () => {
   const trainConfigStore = useControlStores().trainConfigStore
@@ -14,6 +17,21 @@ export const Train = () => {
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
+  const model = useModelStore((s) => s.model)
+  const ds = useDatasetStore((s) => s.ds)
+  const setStatusText = useStatusText((s) => s.setStatusText)
+  async function evaluate() {
+    if (!model || !ds) return
+    const { loss, accuracy } = await getModelEvaluation(model, ds)
+    const data = {
+      Loss: loss?.toFixed(3),
+      Accuracy: accuracy?.toFixed(3),
+    }
+    setStatusText(
+      { title: "Model evaluation", data },
+      { percent: null, time: 3 }
+    )
+  }
   return (
     <Box>
       <ControlPanel store={trainConfigStore} />
@@ -30,9 +48,14 @@ export const Train = () => {
           <Arrow direction={showLogs ? "up" : "right"} />
           logs
         </button>
-        <InlineButton onClick={toggleTraining}>
-          {isTraining ? "Stop" : "Start"} training
-        </InlineButton>
+        <div className="flex gap-2">
+          <InlineButton variant="secondary" onClick={evaluate}>
+            evaluate
+          </InlineButton>
+          <InlineButton onClick={toggleTraining}>
+            {isTraining ? "stop" : "start"} training
+          </InlineButton>
+        </div>
       </div>
     </Box>
   )

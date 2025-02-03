@@ -279,7 +279,7 @@ export function Box({
       ref={ref}
       className={`${padding ? "p-4" : ""} ${
         hasBg ? "bg-box-bg" : ""
-      } rounded-[10px] text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
+      } rounded-box text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
     >
       {children}
     </div>
@@ -357,6 +357,7 @@ interface InlineButtonProps {
   onClick?: () => void
   disabled?: boolean
   type?: "submit"
+  variant?: "primary" | "secondary"
 }
 
 export const InlineButton = ({
@@ -365,12 +366,15 @@ export const InlineButton = ({
   onClick,
   disabled,
   type,
+  variant = "primary",
 }: InlineButtonProps) => {
   const Comp = href ? Link : "button"
   return (
     <Comp
       href={href as string}
-      className="px-2 h-[24px] bg-accent text-white rounded-[3px]"
+      className={`px-2 h-[24px] ${
+        variant === "primary" ? "bg-accent text-white" : "bg-secondary"
+      } rounded-[3px]`}
       onClick={onClick}
       disabled={disabled}
       type={type}
@@ -400,7 +404,7 @@ export const MenuBtn = ({
       href={href as string}
       className={`p-4 ${
         isActive ? "bg-amber-200 text-black" : ""
-      } hover:bg-accent-hover hover:text-white text-left rounded-[10px] flex justify-start items-start`}
+      } hover:bg-accent-hover hover:text-white text-left rounded-box flex justify-start items-start`}
       onClick={onClick}
     >
       <div className="pr-2">&gt; </div>

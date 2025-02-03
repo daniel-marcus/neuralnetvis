@@ -48,7 +48,7 @@ function rotate({ three, percent }: OnBlockScrollProps) {
 }
 
 function changeSample({ percent }: OnBlockScrollProps) {
-  const newI = Math.round(percent * 100)
+  const newI = Math.round(percent * 100 + 1)
   useDatasetStore.setState({ i: newI })
 }
 

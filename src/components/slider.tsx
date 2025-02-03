@@ -38,7 +38,7 @@ export const Slider = ({
     <div
       ref={sliderRef}
       {...bind()}
-      className="overflow-hidden select-none relative text-base touch-none"
+      className="overflow-hidden select-none relative text-base cursor-pointer touch-none"
     >
       <span
         className={`absolute top-0 left-0 text-accent`}

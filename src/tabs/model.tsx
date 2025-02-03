@@ -148,7 +148,7 @@ function Import({ onUploadFinished, modelConfigStore }: ImportProps) {
   return (
     <div className="p-4">
       <form onSubmit={importModel}>
-        <label className="block">
+        <label className="block cursor-pointer">
           {modelFile ? modelFile.name : "Choose model.json ..."}
           <input
             type="file"
@@ -157,7 +157,7 @@ function Import({ onUploadFinished, modelConfigStore }: ImportProps) {
             onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
           />
         </label>
-        <label className="block">
+        <label className="block cursor-pointer">
           {weightsFile ? weightsFile.name : "Choose weights.bin ..."}
           <input
             type="file"

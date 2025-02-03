@@ -8,6 +8,7 @@
   --color-box-bg: rgba(24, 28, 32, 0.6);
   --color-accent: rgb(220, 20, 100);
   --color-accent-hover: rgb(220, 20, 100, 0.8);
+  --color-secondary: #373c4b;
 
   --animate-move-left-right: move-left-right 2s infinite ease-out;
   @keyframes move-left-right {
@@ -26,6 +27,9 @@
 @layer utilities {
   .p-main {
     @apply p-2 xs:p-[10px] sm:p-4;
+  }
+  .rounded-box {
+    @apply rounded-[10px];
   }
 }
 
