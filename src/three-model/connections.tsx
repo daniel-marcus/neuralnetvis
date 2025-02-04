@@ -55,7 +55,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   )
   const layerMaxWeight = layer.maxAbsWeight ?? 1
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
-  const isRegression = useDatasetStore((s) => s.isRegression())
+  const isRegression = useDatasetStore((s) => s.isRegression)
   if (isRegression) return null
   if (isConvOrMaxPool) return null
   if (!showLines) return null

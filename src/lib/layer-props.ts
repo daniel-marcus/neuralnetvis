@@ -1,7 +1,7 @@
 import { createRef, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { Index3D, Neuron, NeuronRefType, Nid } from "@/lib/neuron"
-import { Dataset, LayerInput } from "./datasets"
+import { Dataset, LayerInput, useDatasetStore } from "./datasets"
 import { getMeshParams } from "./layer-layout"
 import {
   LayerStateful,
@@ -17,11 +17,12 @@ import { useActivations } from "./activations"
 export function useLayerProps(
   isPending: boolean,
   model: tf.LayersModel | undefined,
-  ds: Dataset | undefined,
-  input: LayerInput | undefined,
-  rawInput?: LayerInput,
   batchCount?: number
 ) {
+  const ds = useDatasetStore((s) => s.ds)
+  const input = useDatasetStore((s) => s.input)
+  const rawInput = useDatasetStore((s) => s.rawInput)
+
   const layers = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
   const weightsBiases = useWeightsAndBiases(

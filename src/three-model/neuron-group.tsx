@@ -39,7 +39,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const [, height, width = 1] = outputShape
   useNeuronPositions(meshRef, layerPos, spacing, outputShape)
   const isRegression =
-    useDatasetStore((s) => s.isRegression()) && layerPos === "output"
+    useDatasetStore((s) => s.isRegression) && layerPos === "output"
   useColors(meshRef, groupedNeurons, isRegression)
   const eventHandlers = useInteractions(groupedNeurons)
   useScale(meshRef, nidsStr, layerIndex, groupIndex)

@@ -1,7 +1,6 @@
 import React from "react"
 import { Layer } from "./layer"
 import * as tf from "@tensorflow/tfjs"
-import type { Dataset, LayerInput } from "@/lib/datasets"
 import { useLayerProps } from "@/lib/layer-props"
 import { useNeuronSelect } from "@/lib/neuron-select"
 import { HoverConnections } from "./connections"
@@ -9,30 +8,13 @@ import { useDebug } from "@/lib/debug"
 
 interface ModelProps {
   model?: tf.LayersModel
-  ds?: Dataset
-  input?: LayerInput
-  rawInput?: LayerInput
   batchCount?: number
   isPending: boolean
 }
 
-export const Model = ({
-  model,
-  ds,
-  input,
-  rawInput,
-  batchCount,
-  isPending,
-}: ModelProps) => {
+export const Model = ({ model, batchCount, isPending }: ModelProps) => {
   useDebug()
-  const [layerProps, neuronRefs] = useLayerProps(
-    isPending,
-    model,
-    ds,
-    input,
-    rawInput,
-    batchCount
-  )
+  const [layerProps, neuronRefs] = useLayerProps(isPending, model, batchCount)
   const patchedLayerProps = useNeuronSelect(layerProps) // TODO: prefer direct manipulation
   return (
     <group>

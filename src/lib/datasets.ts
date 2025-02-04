@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useCallback, useState } from "react"
+import { useEffect, useCallback, useState } from "react"
 import { useStatusText } from "@/components/status"
-// import { applyStandardScaler } from "./normalization"
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
@@ -238,10 +237,10 @@ interface DatasetStore {
   input: number[] | undefined
   rawInput: number[] | undefined
   trainingY: number | undefined
-  isRegression: () => boolean
+  isRegression: boolean
 }
 
-export const useDatasetStore = create<DatasetStore>((set, get) => ({
+export const useDatasetStore = create<DatasetStore>((set) => ({
   datasetKey: datasets[0].name,
   setDatasetKey: (key) => set({ datasetKey: key }),
   ds: undefined,
@@ -252,6 +251,7 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
         ds,
         totalSamples,
         i: Math.floor(Math.random() * totalSamples) || 1,
+        isRegression: ds?.output.activation === "linear",
       }
     }),
   i: 1,
@@ -261,13 +261,11 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
       return { i: newI }
     }),
   totalSamples: 0,
+  isRegression: false,
+  // maybe move to separate store (current state + activations ...)
   input: undefined,
   rawInput: undefined,
   trainingY: undefined,
-  isRegression: () => {
-    const ds = get().ds
-    return ds?.output.activation === "linear"
-  },
 }))
 
 export function useDatasets() {
@@ -312,40 +310,47 @@ export function useDatasets() {
     setI((i) => (i > totalSamples ? totalSamples : i))
   }, [totalSamples, setI])
 
-  // TODO: merge memo store setter effect
-  const [input, rawInput, trainingY] = useMemo(() => {
-    if (!ds) return [undefined, undefined, undefined] as const
-    const { trainX, trainXRaw, trainY } = ds.data
-    const [, ...dims] = trainX.shape
-    const valsPerSample = dims.reduce((a, b) => a * b, 1)
-    const index = i - 1
-    // todo: read async?
-    return tf.tidy(() => {
-      const isOneHot = ds?.output.activation === "softmax"
-      const inp = trainX
-        .slice([index, 0], [1, ...dims])
-        .reshape([valsPerSample])
-        .arraySync() as number[]
-      const inpRaw = trainXRaw
-        ?.slice([index, 0], [1, ...dims])
-        .reshape([valsPerSample])
-        .arraySync() as number[]
-      const yArr = isOneHot
-        ? trainY
-            .slice([i - 1, 0], [1, ds.output.size])
-            .argMax(-1)
-            .arraySync()
-        : trainY.slice([i - 1], [1]).arraySync()
-      const trainingY = (Array.isArray(yArr) ? yArr[0] : yArr) as
-        | number
-        | undefined
-      return [inp, inpRaw, trainingY] as const
-    })
-  }, [i, ds])
-
   useEffect(() => {
-    useDatasetStore.setState({ input, rawInput, trainingY })
-  }, [input, rawInput, trainingY])
+    if (!ds) return
+    async function getInput() {
+      if (!ds) return [undefined, undefined, undefined] as const
+      const { trainX, trainXRaw, trainY } = ds.data
+      const [, ...dims] = trainX.shape
+      const valsPerSample = dims.reduce((a, b) => a * b, 1)
+      const index = i - 1
+      const [inp, inpRaw, y] = tf.tidy(() => {
+        const isOneHot = ds?.output.activation === "softmax"
+        const inp = trainX
+          .slice([index, 0], [1, ...dims])
+          .reshape([valsPerSample]) as tf.Tensor1D
+        const inpRaw = trainXRaw
+          ?.slice([index, 0], [1, ...dims])
+          .reshape([valsPerSample]) as tf.Tensor1D
+        const y = isOneHot
+          ? (trainY
+              .slice([i - 1, 0], [1, ds.output.size])
+              .argMax(-1) as tf.Tensor1D)
+          : (trainY.slice([i - 1], [1]) as tf.Tensor1D)
+        return [inp, inpRaw, y] as const
+      })
+      try {
+        const input = await inp.array()
+        const rawInput = await inpRaw?.array()
+        const yArr = await y.array()
+        const trainingY = Array.isArray(yArr)
+          ? yArr[0]
+          : (yArr as number | undefined)
+        useDatasetStore.setState({ input, rawInput, trainingY })
+      } catch (e) {
+        console.log("Error getting input", e)
+      } finally {
+        inp.dispose()
+        inpRaw?.dispose()
+        y.dispose()
+      }
+    }
+    getInput()
+  }, [i, ds])
 
   // TODO: write store getter for next
   const next = useCallback(
@@ -372,7 +377,7 @@ export function useDatasets() {
     }
   }, [next, totalSamples, setI])
 
-  return [ds, input, rawInput, next, isLoading] as const
+  return [ds, next, isLoading] as const
 }
 
 async function fetchMutlipleNpzWithProgress(paths: string[]) {

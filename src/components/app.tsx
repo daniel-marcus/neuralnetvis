@@ -14,7 +14,7 @@ import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLessonStore } from "./lesson"
 
 export const App = ({ children }: { children?: ReactNode }) => {
-  const [ds, input, rawInput, next] = useDatasets()
+  const [ds, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
@@ -32,14 +32,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
           <OrbitControls target={[0, 0, 0]} />
-          <Model
-            model={model}
-            input={input}
-            rawInput={rawInput}
-            ds={ds}
-            batchCount={batchCount}
-            isPending={isPending}
-          />
+          <Model model={model} batchCount={batchCount} isPending={isPending} />
           {debug && <Stats />}
         </Canvas>
       </div>
