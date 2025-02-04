@@ -42,8 +42,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
     useDatasetStore((s) => s.isRegression()) && layerPos === "output"
   useColors(meshRef, groupedNeurons, isRegression)
   const eventHandlers = useInteractions(groupedNeurons)
-  const scaleOnHover = props.tfLayer.getClassName() === "Dense"
-  useScale(scaleOnHover, meshRef, nidsStr, layerIndex, groupIndex)
+  useScale(meshRef, nidsStr, layerIndex, groupIndex)
   const splitColors = useVisConfigStore((s) => s.splitColors)
   const materialRef = useAdditiveBlending(
     groupedNeurons[0]?.hasColorChannels && !splitColors
@@ -220,22 +219,20 @@ function getColorChannelColor(n: Neuron) {
 let counter = 0
 
 function useScale(
-  active: boolean,
   meshRef: InstancedMeshRef,
   nidsStr: string,
   layerIndex: number,
   groupIndex: number
 ) {
   // use string to avoid unnecessary updates
-  const { selectedNid, hoveredNid } = useLocalSelected(layerIndex, groupIndex)
+  const { selectedNid } = useLocalSelected(layerIndex, groupIndex)
   const { invalidate } = useThree()
   const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
   const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {
-    if (!active) return
     if (!meshRef.current) return
     const nids = nidsStr.split(",")
-    if (nids.length > 256) return
+    // if (nids.length > 256) return
     if (debug()) console.log("upd scale", counter++, { nids })
     const baseScale = 1
     const highlightScale = 1.5
@@ -246,9 +243,7 @@ function useScale(
       const elements = tempMatrix.elements
       const currentScale = Math.cbrt(elements[0] * elements[5] * elements[10])
       const targetScale =
-        nid === selectedNid || nid === hoveredNid
-          ? baseScale * highlightScale
-          : baseScale
+        nid === selectedNid ? baseScale * highlightScale : baseScale
       const scaleFactor = targetScale / currentScale
       tempScale.makeScale(scaleFactor, scaleFactor, scaleFactor)
       tempMatrix.multiply(tempScale)
@@ -256,16 +251,7 @@ function useScale(
     }
     meshRef.current.instanceMatrix.needsUpdate = true
     invalidate()
-  }, [
-    active,
-    meshRef,
-    selectedNid,
-    hoveredNid,
-    invalidate,
-    nidsStr,
-    tempMatrix,
-    tempScale,
-  ]) // neurons
+  }, [meshRef, selectedNid, invalidate, nidsStr, tempMatrix, tempScale]) // neurons
 }
 
 function useAdditiveBlending(active?: boolean) {
@@ -288,9 +274,11 @@ function useInteractions(groupedNeurons: Neuron[]) {
         if (e.buttons) return
         const neuron = groupedNeurons[e.instanceId as number]
         if (!neuron) return
+        document.body.style.cursor = "pointer"
         toggleHovered(neuron)
       },
       onPointerOut: () => {
+        document.body.style.cursor = "default"
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
