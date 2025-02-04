@@ -30,6 +30,7 @@ export interface LayerStateless {
   prevVisibleLayer?: LayerStateless
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
+  hasLabels?: boolean
 }
 
 export interface LayerStateful extends LayerStateless {

@@ -6,6 +6,7 @@ import JSZip from "jszip"
 import * as tf from "@tensorflow/tfjs"
 import { debug } from "./debug"
 import { create } from "zustand"
+import { StandardScaler } from "./normalization"
 
 const n = new npyjs()
 
@@ -28,19 +29,23 @@ function isSafe(parsed: Parsed): parsed is ParsedSafe {
   )
 }
 
-export type LayerInput = NodeInput[]
-export type NodeInput = number | number[] | number[][] // flat, (width,height), (width,height,channel)
+export type LayerInput = number[]
 
 interface DatasetData {
   trainX: tf.Tensor<tf.Rank>
   trainY: tf.Tensor<tf.Rank>
   testX?: tf.Tensor<tf.Rank>
   testY?: tf.Tensor<tf.Rank>
+  trainXRaw?: tf.Tensor<tf.Rank>
 }
+
+type Task = "classification" | "regression"
 
 interface DatasetDef {
   name: string
-  description?: string
+  task: Task
+  description: string
+  aboutUrl: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
@@ -63,7 +68,9 @@ export type Dataset = Omit<DatasetDef, "loadData"> & {
 export const datasets: DatasetDef[] = [
   {
     name: "mnist",
+    task: "classification",
     description: "Handwritten digits (28x28)",
+    aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -92,7 +99,9 @@ export const datasets: DatasetDef[] = [
   },
   {
     name: "fashion mnist",
+    task: "classification",
     description: "Clothing items (28x28)",
+    aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -132,7 +141,9 @@ export const datasets: DatasetDef[] = [
   },
   {
     name: "cifar10",
+    task: "classification",
     description: "Color images (32x32x3)",
+    aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
     loss: "categoricalCrossentropy",
     output: {
       size: 10,
@@ -169,8 +180,11 @@ export const datasets: DatasetDef[] = [
       })
     },
   },
-  /* {
+  {
     name: "california housing",
+    task: "regression",
+    description: "Predict housing prices (8 features)",
+    aboutUrl: "https://keras.io/api/datasets/california_housing/",
     loss: "meanSquaredError",
     input: {
       // TODO ...
@@ -192,44 +206,61 @@ export const datasets: DatasetDef[] = [
       labels: ["median_house_value"],
     },
     loadData: async () => {
-      const [trainX, trainY, testX, testY] = await Promise.all([
-        import("@/data/california_housing/train_X.json"),
-        import("@/data/california_housing/train_y.json"),
-        import("@/data/california_housing/test_X.json"),
-        import("@/data/california_housing/test_y.json"),
-      ])
-      return {
-        trainX: trainX.default,
-        trainY: trainY.default,
-        testX: testX.default,
-        testY: testY.default,
-      }
+      const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+        [
+          "/data/california_housing/x_train.npz",
+          "/data/california_housing/y_train.npz",
+          "/data/california_housing/x_test.npz",
+          "/data/california_housing/y_test.npz",
+        ]
+      )
+      // TODO: scale data
+      return tf.tidy(() => {
+        const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
+        const scaler = new StandardScaler()
+        const trainX = scaler.fitTransform(trainXRaw)
+        const testX = scaler.transform(tf.tensor(xTest.data, xTest.shape))
+        const trainY = tf.tensor(yTrain.data)
+        const testY = tf.tensor(yTest.data)
+        return { trainXRaw, trainX, trainY, testX, testY }
+      })
     },
-  }, */
+  },
 ]
 
 interface DatasetStore {
   datasetKey: string
   setDatasetKey: (key: string) => void
-  i: number // TODO: move from Leva to here
-  totalSamples: number
-  setI: (arg: number | ((prev: number) => number)) => void
   ds: Dataset | undefined
   setDs: (ds: Dataset | undefined) => void
+  i: number // currentSampleIndex
+  setI: (arg: number | ((prev: number) => number)) => void
+  totalSamples: number
+  input: number[] | undefined
+  rawInput: number[] | undefined
+  trainingY: number | undefined
+  isRegression: () => boolean
 }
 
-export const useDatasetStore = create<DatasetStore>((set) => ({
+export const useDatasetStore = create<DatasetStore>((set, get) => ({
   datasetKey: datasets[0].name,
   setDatasetKey: (key) => set({ datasetKey: key }),
+  ds: undefined,
+  setDs: (ds) => set({ ds, totalSamples: ds?.data.trainX.shape[0] ?? 0 }),
   i: 1,
-  totalSamples: 0,
   setI: (arg) =>
     set(({ i }) => {
       const newI = typeof arg === "function" ? arg(i) : arg
       return { i: newI }
     }),
-  ds: undefined,
-  setDs: (ds) => set({ ds, totalSamples: ds?.data.trainX.shape[0] ?? 0 }),
+  totalSamples: 0,
+  input: undefined,
+  rawInput: undefined,
+  trainingY: undefined,
+  isRegression: () => {
+    const ds = get().ds
+    return ds?.output.activation === "linear"
+  },
 }))
 
 export function useDatasets() {
@@ -275,38 +306,42 @@ export function useDatasets() {
     setI((i) => (i > totalSamples ? totalSamples : i))
   }, [totalSamples, setI])
 
-  const input = useMemo(() => {
-    if (!ds) return
-    const { trainX } = ds.data
+  // TODO: merge memo store setter effect
+  const [input, rawInput, trainingY] = useMemo(() => {
+    if (!ds) return [undefined, undefined, undefined] as const
+    const { trainX, trainXRaw, trainY } = ds.data
     const [, ...dims] = trainX.shape
     const valsPerSample = dims.reduce((a, b) => a * b, 1)
     const index = i - 1
     // todo: read async?
-    const sampleFlat = tf.tidy(
-      () =>
-        trainX
-          .slice([index, 0, 0, 0], [1, ...dims])
-          .reshape([valsPerSample])
-          .arraySync() as number[]
-    )
-
-    return sampleFlat
-  }, [i, ds])
-
-  const trainingY = useMemo(() => {
-    // TODO: check if is one-hot or not
-    const y = tf.tidy(() => {
-      const res = ds?.data.trainY
-        .slice([i - 1, 0], [1, ds.output.size])
-        .argMax(-1)
-        .arraySync()
-      return (res && Array.isArray(res) ? res[0] : undefined) as
+    return tf.tidy(() => {
+      const isOneHot = ds?.output.activation === "softmax"
+      const inp = trainX
+        .slice([index, 0], [1, ...dims])
+        .reshape([valsPerSample])
+        .arraySync() as number[]
+      const inpRaw = trainXRaw
+        ?.slice([index, 0], [1, ...dims])
+        .reshape([valsPerSample])
+        .arraySync() as number[]
+      const yArr = isOneHot
+        ? trainY
+            .slice([i - 1, 0], [1, ds.output.size])
+            .argMax(-1)
+            .arraySync()
+        : trainY.slice([i - 1], [1]).arraySync()
+      const trainingY = (Array.isArray(yArr) ? yArr[0] : yArr) as
         | number
         | undefined
+      return [inp, inpRaw, trainingY] as const
     })
-    return y
   }, [i, ds])
 
+  useEffect(() => {
+    useDatasetStore.setState({ input, rawInput, trainingY })
+  }, [input, rawInput, trainingY])
+
+  // TODO: write store getter for next
   const next = useCallback(
     (step = 1) =>
       setI((i) =>
@@ -331,7 +366,7 @@ export function useDatasets() {
     }
   }, [next, totalSamples, setI])
 
-  return [ds, input, trainingY, next, isLoading] as const
+  return [ds, input, rawInput, next, isLoading] as const
 }
 
 async function fetchMutlipleNpzWithProgress(paths: string[]) {

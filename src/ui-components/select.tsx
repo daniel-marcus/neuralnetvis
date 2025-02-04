@@ -1,6 +1,8 @@
+type Option = { label: string; disabled?: boolean }
+
 interface SelectProps {
   ref: React.RefObject<HTMLSelectElement | null>
-  options: string[]
+  options: Option[]
   onChange?: (val: string, e?: React.ChangeEvent<HTMLSelectElement>) => void
 }
 
@@ -14,8 +16,10 @@ export const Select = ({ ref, options, onChange }: SelectProps) => {
           if (onChange) onChange(e.target.value, e)
         }}
       >
-        {options.map((option) => (
-          <option key={option}>{option}</option>
+        {options.map((o) => (
+          <option key={o.label} disabled={o.disabled}>
+            {o.label}
+          </option>
         ))}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">

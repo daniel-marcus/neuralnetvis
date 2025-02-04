@@ -87,6 +87,14 @@ export const LayerConfigControl = () => {
   const handleRemove = (i: number) => {
     setHiddenLayers(hiddenLayers.filter((_, j) => j !== i))
   }
+  const hasMutliDimInput =
+    model?.layers[0].batchInputShape &&
+    model?.layers[0].batchInputShape.length > 2
+  const selectOptions = [
+    { label: "Dense" },
+    { label: "Conv2D", disabled: !hasMutliDimInput },
+    { label: "MaxPooling2D", disabled: !hasMutliDimInput },
+  ]
   return (
     <ControlPanel title={"hidden layers"}>
       <div className="flex flex-col gap-4">
@@ -122,10 +130,7 @@ export const LayerConfigControl = () => {
             <InlineButton variant="secondary" onClick={handleAdd}>
               add
             </InlineButton>{" "}
-            <Select
-              ref={selectRef}
-              options={["Dense", "Conv2D", "MaxPooling2D"]}
-            />
+            <Select ref={selectRef} options={selectOptions} />
           </div>
         </InputRow>
       </div>

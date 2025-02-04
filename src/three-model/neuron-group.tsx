@@ -10,6 +10,7 @@ import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "../lib/neuron"
 import { debug } from "@/lib/debug"
 import { useVisConfigStore } from "@/lib/vis-config"
+import { useDatasetStore } from "@/lib/datasets"
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 
@@ -27,7 +28,7 @@ type NeuronGroupProps = LayerProps &
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, groupIndex, nidsStr } = props
-  const { index: layerIndex, layerPos, meshParams } = props
+  const { index: layerIndex, layerPos, meshParams, hasLabels } = props
   const { geometry } = meshParams
   const spacing = useNeuronSpacing(meshParams)
   const meshRef = useRef<InstancedMesh | null>(null!)
@@ -37,7 +38,9 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const outputShape = props.tfLayer.outputShape as number[]
   const [, height, width = 1] = outputShape
   useNeuronPositions(meshRef, layerPos, spacing, outputShape)
-  useColors(meshRef, groupedNeurons)
+  const isRegression =
+    useDatasetStore((s) => s.isRegression()) && layerPos === "output"
+  useColors(meshRef, groupedNeurons, isRegression)
   const eventHandlers = useInteractions(groupedNeurons)
   const scaleOnHover = props.tfLayer.getClassName() === "Dense"
   useScale(scaleOnHover, meshRef, nidsStr, layerIndex, groupIndex)
@@ -46,6 +49,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
     groupedNeurons[0]?.hasColorChannels && !splitColors
   )
   const { onPointerOut, ...otherEventHandlers } = eventHandlers
+
   return (
     <group ref={groupRef} onPointerOut={onPointerOut}>
       <instancedMesh
@@ -57,14 +61,14 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         <primitive object={geometry} attach={"geometry"} />
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
-      {layerPos === "output" &&
+      {hasLabels &&
         groupedNeurons.map((n, i) => {
           const pos = getNeuronPosition(i, layerPos, height, width, spacing)
           return (
             <NeuronLabels
               key={n.nid}
               neuron={n}
-              color={getNeuronColor(n)}
+              color={getNeuronColor(n, isRegression)}
               position={pos}
             />
           )
@@ -152,28 +156,42 @@ function useNeuronPositions(
   }, [meshRef, tempObj, layerPos, spacing, height, width])
 }
 
-function useColors(meshRef: InstancedMeshRef, neurons: Neuron[]) {
+function useColors(
+  meshRef: InstancedMeshRef,
+  neurons: Neuron[],
+  isRegression: boolean
+) {
   const tmpColor = useMemo(() => new THREE.Color(), [])
   useLayoutEffect(() => {
     if (!meshRef.current) return
     if (debug()) console.log("upd colors")
     for (const n of neurons) {
       const i = neurons.indexOf(n)
-      const colorStr = getNeuronColor(n)
+      const colorStr = getNeuronColor(n, isRegression)
       const color = tmpColor.set(colorStr)
       meshRef.current.setColorAt(i, color)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, neurons, tmpColor])
+  }, [meshRef, neurons, tmpColor, isRegression])
 }
 
-function getNeuronColor(n: Neuron) {
+function getPredictionQualityColor(n: Neuron) {
+  const trainingY = useDatasetStore.getState().trainingY ?? 1
+  const percentualError = Math.abs((n.activation ?? 1) - trainingY) / trainingY
+  const quality = 1 - Math.min(percentualError, 1)
+  return `rgb(${Math.ceil(quality * 255)},20,100)`
+}
+
+function getNeuronColor(n: Neuron, isRegression = false) {
   return typeof n.highlightValue !== "undefined"
     ? getHighlightColor(n.highlightValue)
+    : isRegression
+    ? getPredictionQualityColor(n)
     : n.hasColorChannels
     ? getColorChannelColor(n)
     : getActivationColor(n)
+  // getPredictionQualityColor(n)
 }
 
 function getActivationColor(neuron: Neuron) {

@@ -10,6 +10,8 @@ import { LessonContent } from "./all-lessons"
 import { useEffect } from "react"
 import { useController } from "@/lib/controller"
 import { useDatasetStore } from "@/lib/datasets"
+import { useVisConfigStore } from "@/lib/vis-config"
+import { useTrainingStore } from "@/lib/training"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
@@ -52,37 +54,22 @@ function changeSample({ percent }: OnBlockScrollProps) {
   useDatasetStore.setState({ i: newI })
 }
 
-function changeLayerSpacing({ modelConfigStore, percent }: OnBlockScrollProps) {
+function changeLayerSpacing({ percent }: OnBlockScrollProps) {
   const defaultSpacing = 11
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  modelConfigStore.setValueAtPath(
-    "visualization.layerSpacing",
-    newSpacing,
-    false
-  )
+  useVisConfigStore.setState({ layerSpacing: newSpacing })
 }
 
-function changeNeuronSpacing({
-  modelConfigStore,
-  percent,
-}: OnBlockScrollProps) {
+function changeNeuronSpacing({ percent }: OnBlockScrollProps) {
   const defaultSpacing = 1.1
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  modelConfigStore.setValueAtPath(
-    "visualization.neuronSpacing",
-    newSpacing,
-    false
-  )
+  useVisConfigStore.setState({ neuronSpacing: newSpacing })
 }
 
-function startTraining({
-  trainConfigStore,
-  setIsTraining,
-  setTabByKey,
-}: OnBlockEnterLeaveProps) {
-  trainConfigStore.setValueAtPath("silent", false, false)
+function startTraining({ setIsTraining, setTabByKey }: OnBlockEnterLeaveProps) {
+  useTrainingStore.getState().setConfig({ silent: false })
   setTabByKey("training")
   setIsTraining(true)
 }

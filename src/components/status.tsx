@@ -3,8 +3,9 @@ import { create } from "zustand"
 
 type StatusOpts = {
   percent?: number | null
-  time?: number
 }
+
+const DISPLAY_TIME = 5 // seconds
 
 export const useStatusText = create<{
   percent: number | null
@@ -16,11 +17,9 @@ export const useStatusText = create<{
   setPercent: (percent: number | null) => set({ percent }),
   statusText: null,
   setStatusText: (newText: TableProps | ReactNode, opts?: StatusOpts) => {
-    if (opts?.time) {
-      setTimeout(() => {
-        set(() => ({ statusText: null }))
-      }, opts.time * 1000)
-    }
+    setTimeout(() => {
+      set(() => ({ statusText: null }))
+    }, DISPLAY_TIME * 1000)
     set(({ percent }) => {
       return {
         statusText: newText,
@@ -45,7 +44,7 @@ export const Status = () => {
   }, [parsedText])
   return (
     <div
-      className={`max-w-[max(50vh,50vw)] ml-auto ${
+      className={`sm:max-w-[33vw] ml-auto ${
         !!statusText ? "opacity-100 duration-0" : "opacity-0 duration-300"
       } transition-opacity ease-in-out text-right`}
     >

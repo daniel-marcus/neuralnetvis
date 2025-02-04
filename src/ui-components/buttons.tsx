@@ -5,6 +5,7 @@ interface MenuBtnProps {
   children: React.ReactNode
   isActive?: boolean
   onClick?: () => void
+  className?: string
 }
 
 // TODO: rename
@@ -13,18 +14,19 @@ export const MenuBtn = ({
   children,
   isActive,
   onClick,
+  className = "",
 }: MenuBtnProps) => {
   const Component = href ? Link : "button"
   return (
     <Component
       href={href as string}
       className={`p-4 ${
-        isActive ? "bg-amber-200 text-black" : ""
-      } hover:bg-accent-hover hover:text-white text-left rounded-box flex justify-start items-start`}
+        isActive ? "text-white" : ""
+      } hover:bg-accent-hover text-left rounded-box flex justify-start items-start ${className}`}
       onClick={onClick}
     >
       <div className="pr-2">&gt; </div>
-      <div>{children}</div>
+      <div className="flex-1">{children}</div>
     </Component>
   )
 }

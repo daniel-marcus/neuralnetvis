@@ -19,8 +19,8 @@ export function useLayerProps(
   model: tf.LayersModel | undefined,
   ds: Dataset | undefined,
   input: LayerInput | undefined,
+  rawInput?: LayerInput,
   batchCount?: number
-  // rawInput?: LayerInput
 ) {
   const layers = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
@@ -30,7 +30,12 @@ export function useLayerProps(
     model,
     batchCount
   )
-  const statefulLayers = useStatefulLayers(layers, weightsBiases, activations)
+  const statefulLayers = useStatefulLayers(
+    layers,
+    weightsBiases,
+    activations,
+    rawInput
+  )
   const neuronRefs = useMemo(
     () => layers.map((layer) => layer.neurons.map((n) => n.ref)),
     [layers]
@@ -193,7 +198,7 @@ function useStatelessLayers(
 
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
 
-        const LayerStateless: LayerStateless = {
+        const layerStateless: LayerStateless = {
           index: layerIndex,
           visibleIndex,
           layerType,
@@ -204,6 +209,9 @@ function useStatelessLayers(
           prevVisibleLayer,
           meshParams,
           neurons: [],
+          hasLabels:
+            (layerPos === "input" && !!ds?.input?.labels?.length) ||
+            (layerPos === "output" && !!ds?.output.labels?.length),
         }
 
         const neurons =
@@ -231,7 +239,7 @@ function useStatelessLayers(
                   : layerPos === "input"
                   ? ds?.input?.labels?.[neuronIndex]
                   : undefined,
-              layer: LayerStateless,
+              layer: layerStateless,
             }
           }) ?? []
         const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
@@ -248,7 +256,7 @@ function useStatelessLayers(
           }
         })
         const layer = {
-          ...LayerStateless,
+          ...layerStateless,
           neurons,
           neuronsMap,
           groups,
@@ -328,9 +336,10 @@ function useWeightsAndBiases(
 }
 
 function useStatefulLayers(
-  statelessLayers: LayerStateful[],
+  statelessLayers: LayerStateful[], // ??
   weightsBiases: WeightsBiases[],
-  activations?: { activations: number[]; normalizedActivations: number[] }[]
+  activations?: { activations: number[]; normalizedActivations: number[] }[],
+  rawInput?: LayerInput
 ) {
   const statefulLayers = useMemo(() => {
     const startTime = Date.now()
@@ -385,6 +394,7 @@ function useStatefulLayers(
           ...neuron,
           layerType,
           activation,
+          rawInput: layer.layerPos === "input" ? rawInput?.[j] : undefined,
           normalizedActivation: normalizedActivations?.[j],
           bias,
           weights: thisWeights,
@@ -405,7 +415,7 @@ function useStatefulLayers(
     if (debug())
       console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
-  }, [statelessLayers, activations, weightsBiases])
+  }, [statelessLayers, activations, weightsBiases, rawInput])
 
   return statefulLayers
 }

@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei"
-import React, { createContext, ReactNode } from "react"
+import React, { ReactNode } from "react"
 import { Model } from "../three-model/model"
 import { useTraining } from "@/lib/training"
 import { useDatasets } from "@/lib/datasets"
@@ -13,10 +13,8 @@ import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLessonStore } from "./lesson"
 
-export const TrainingYContext = createContext<number | undefined>(undefined)
-
 export const App = ({ children }: { children?: ReactNode }) => {
-  const [ds, input, trainingY, next] = useDatasets()
+  const [ds, input, rawInput, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
@@ -34,15 +32,14 @@ export const App = ({ children }: { children?: ReactNode }) => {
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
           <OrbitControls target={[0, 0, 0]} />
-          <TrainingYContext.Provider value={trainingY}>
-            <Model
-              model={model}
-              input={input}
-              ds={ds}
-              batchCount={batchCount}
-              isPending={isPending}
-            />
-          </TrainingYContext.Provider>
+          <Model
+            model={model}
+            input={input}
+            rawInput={rawInput}
+            ds={ds}
+            batchCount={batchCount}
+            isPending={isPending}
+          />
           {debug && <Stats />}
         </Canvas>
         <Footer />

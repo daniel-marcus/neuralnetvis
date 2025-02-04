@@ -45,13 +45,16 @@ export const NeuronStatus = () => {
 }
 
 const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
-  const { nid, activation, bias, weights } = neuron
-  const data = {
+  const { nid, activation, bias, weights, rawInput } = neuron
+  const _data = {
     Neuron: nid,
     Weights: weights?.length,
     Bias: bias?.toFixed(2),
     Activation: activation?.toFixed(2),
   }
+  const data = rawInput
+    ? { ..._data, "Raw input": Math.round(rawInput * 100) / 100 }
+    : _data
   return (
     <div className="w-full">
       <Table data={data} />

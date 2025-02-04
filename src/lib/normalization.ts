@@ -31,24 +31,6 @@ export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
   })
 }
 
-export function standardize(column: number[] | undefined) {
-  if (!column) return [] as number[]
-  const mean = column.reduce((acc, v) => acc + v, 0) / column.length
-  const stdDev = Math.sqrt(
-    column.reduce((acc, v) => acc + (v - mean) ** 2, 0) / column.length
-  )
-  const zScaled = column.map((v) => (v - mean) / stdDev)
-  return zScaled
-}
-
-export function applyStandardScaler(data: number[][]) {
-  const colums = data[0].map((_, j) => data.map((row) => row[j]))
-  const scaledCols = colums.map((col) => standardize(col))
-  const returnData = data.map((_, i) => scaledCols.map((col) => col[i]))
-  // TODO: collect and reuse means and stdDevs for test data
-  return returnData
-}
-
 export function normalizeWithSign(values: number[] | undefined) {
   // returns values between -1 and 1 and keeps the sign
   if (typeof values === "undefined") return values
@@ -61,4 +43,28 @@ export function normalizeWithSign(values: number[] | undefined) {
   }
 
   return values.map((v) => v / maxAbs)
+}
+
+export class StandardScaler {
+  private mean: tf.Tensor | null = null
+  private std: tf.Tensor | null = null
+
+  fit(tensor: tf.Tensor): void {
+    const { mean, variance } = tf.moments(tensor, 0)
+    this.mean = mean
+    this.std = variance.sqrt().add(1e-7)
+  }
+
+  transform(tensor: tf.Tensor): tf.Tensor {
+    if (this.mean === null || this.std === null) {
+      throw new Error("Scaler has not been fitted. Call fit() first.")
+    }
+    // returns z-scaled values
+    return tensor.sub(this.mean).div(this.std)
+  }
+
+  fitTransform(tensor: tf.Tensor): tf.Tensor {
+    this.fit(tensor)
+    return this.transform(tensor)
+  }
 }

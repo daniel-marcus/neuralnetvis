@@ -165,7 +165,7 @@ export function useTraining(
             const backend = tf.getBackend()
             setStatusText(
               { title: `Training finished (${backend})`, data },
-              { percent: null, time: 5 }
+              { percent: null }
             )
           }
           if (trainingComplete) {

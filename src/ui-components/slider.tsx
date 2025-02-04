@@ -53,6 +53,7 @@ export const Slider = ({
         ref={sliderRef}
         {...bind()}
         className="flex-1 overflow-hidden select-none relative cursor-pointer touch-none"
+        aria-label={`${value}/${max}`}
       >
         <span
           className={`absolute top-0 left-0 text-accent`}

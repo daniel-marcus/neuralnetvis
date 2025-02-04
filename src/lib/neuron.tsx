@@ -1,7 +1,6 @@
 import React from "react"
 
-import type { NodeInput } from "@/lib/datasets"
-import { LayerStateful, LayerStateless } from "./layer"
+import { LayerStateful, LayerStateless } from "@/three-model/layer"
 import { InstancedMeshRef } from "../three-model/neuron-group"
 
 // refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
@@ -29,7 +28,7 @@ export type NeuronDef = {
 }
 
 export type NeuronState = {
-  rawInput?: NodeInput // maybe element of ... ?
+  rawInput?: number
   activation?: number
   normalizedActivation?: number
   inputs?: number[]

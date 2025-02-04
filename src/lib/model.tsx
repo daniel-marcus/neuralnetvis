@@ -131,16 +131,28 @@ export function useModel(ds?: Dataset) {
       .join(" | ")
     const totalParamas = model.countParams()
     const modelName = model.getClassName()
+    const datasetInfo = (
+      <>
+        Dataset:{" "}
+        <a
+          href={ds.aboutUrl}
+          rel="noopener noreferrer"
+          className="text-accent pointer-events-auto"
+          target="_blank"
+        >
+          {ds.name}
+        </a>{" "}
+        ({totalSamples.toLocaleString("en-US")} samples)
+      </>
+    )
     const data = {
-      " ": `Dataset: ${ds.name} (${totalSamples.toLocaleString(
-        "en-US"
-      )} samples)`,
+      " ": datasetInfo,
       "  ": `Model: ${modelName} (${totalParamas.toLocaleString(
         "en-US"
       )} params)`,
       "   ": layersStr,
     }
-    setStatusText({ data }, { time: 5 })
+    setStatusText({ data })
   }, [model, ds, setStatusText, isPending])
 
   useEffect(() => {

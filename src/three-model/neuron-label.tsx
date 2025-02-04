@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { Mesh } from "three"
 import { Text } from "troika-three-text"
 import { NeuronDef, NeuronState } from "@/lib/neuron"
+import { useDatasetStore } from "@/lib/datasets"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -23,15 +24,16 @@ interface NeuronLabelsProps {
 }
 
 export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
-  const { label } = neuron
-  const isClassification = true // TODO
-  const showValueLabel = false
+  const { label, rawInput, activation } = neuron
+  const trainingY = useDatasetStore((s) => s.trainingY)
+  const isRegression = useDatasetStore((s) => s.isRegression())
+  const showValueLabel = !!label && isRegression
   if (!position) return null
   return (
     <group>
       {!!label && (
         <NeuronLabel
-          side={isClassification ? "right" : "left"}
+          side={isRegression ? "left" : "right"}
           position={position}
           color={color}
         >
@@ -40,11 +42,11 @@ export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
       )}
       {showValueLabel && (
         <NeuronLabel side={"right"} position={position} color={color}>
-          {/* rawInput
-            ? String(rawInput)
+          {rawInput
+            ? String(Math.round(rawInput * 100) / 100)
             : activation
             ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
-            : "" */}
+            : ""}
         </NeuronLabel>
       )}
     </group>

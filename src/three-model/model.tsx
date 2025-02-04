@@ -20,6 +20,7 @@ export const Model = ({
   model,
   ds,
   input,
+  rawInput,
   batchCount,
   isPending,
 }: ModelProps) => {
@@ -29,6 +30,7 @@ export const Model = ({
     model,
     ds,
     input,
+    rawInput,
     batchCount
   )
   const patchedLayerProps = useNeuronSelect(layerProps) // TODO: prefer direct manipulation

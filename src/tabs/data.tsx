@@ -8,7 +8,7 @@ export const Data = () => {
   const totalSamples = useDatasetStore((s) => s.totalSamples)
   return (
     <Box>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <div className="flex flex-col">
           {datasets.map((d) => (
             <MenuBtn
@@ -16,13 +16,8 @@ export const Data = () => {
               isActive={currDatasetKey === d.name}
               onClick={() => setDatasetKey(d.name)}
             >
-              <strong>{d.name}</strong>
-              {!!d.description && (
-                <>
-                  <br />
-                  {d.description}
-                </>
-              )}
+              <strong>{d.name}</strong> ({d.task})<br />
+              {d.description}
             </MenuBtn>
           ))}
         </div>
@@ -35,7 +30,7 @@ export const Data = () => {
   )
 }
 
-function SampleSlider() {
+export function SampleSlider() {
   const i = useDatasetStore((s) => s.i)
   const setI = useDatasetStore((s) => s.setI)
   const totalSamples = useDatasetStore((s) => s.totalSamples)

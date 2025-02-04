@@ -10,9 +10,11 @@ import {
 import { Neuron, NeuronRefType } from "@/lib/neuron"
 import { useSelected } from "@/lib/neuron-select"
 import { useVisConfigStore } from "@/lib/vis-config"
+import { useDatasetStore } from "@/lib/datasets"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
+const MAX_LINE_WIDTH = 3
 
 type NeuronConnectionsProps = {
   layer: LayerStateful
@@ -53,6 +55,8 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   )
   const layerMaxWeight = layer.maxAbsWeight ?? 1
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
+  const isRegression = useDatasetStore((s) => s.isRegression())
+  if (isRegression) return null
   if (isConvOrMaxPool) return null
   if (!showLines) return null
   const connections = layer.neurons
@@ -78,7 +82,10 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
             const input = neuron.inputs?.[index] ?? 0
             const weightedInput = absWeight * input
             if (weightedInput < MIN_LINE_WIDTH) return null
-            const lineWidth = Math.round(weightedInput * 10) / 10
+            const lineWidth = Math.min(
+              Math.round(weightedInput * 10) / 10,
+              MAX_LINE_WIDTH
+            )
             return { neuron, prevNeuron, lineWidth }
           })
       )
