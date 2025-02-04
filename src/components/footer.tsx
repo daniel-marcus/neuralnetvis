@@ -33,9 +33,15 @@ export const MainSampleSlider = () => {
           hasProgressBar
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
-            ? "opacity-0 pointer-events-none lg:opacity-30 lg:pointer-events-auto lg:hover:opacity-50 lg:active:opacity-50"
-            : "opacity-30 hover:opacity-50 active:opacity-50"
+            ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
+            : "opacity-[var(--opacity-inactive)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
         } transition-opacity duration-200 `}
+        style={
+          {
+            "--opacity-active": "80%",
+            "--opacity-inactive": "40%",
+          } as React.CSSProperties
+        }
       >
         <div className="label absolute -top-2 pointer-events-none">
           {i} / {totalSamples}
