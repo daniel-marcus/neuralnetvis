@@ -188,8 +188,11 @@ const Tabs = () => {
         setIsShown(isActive ? false : true)
       }
       const onClickBtnOnly = () => {
-        setIsShown(isActive ? false : true)
-        if (!isActive) setTabByKey(t.key)
+        if (isActive) setIsShown(!isTabShown)
+        else {
+          setTabByKey(t.key)
+          setIsShown(true)
+        }
         // setTabBySlugs([t.key], !isActive || !isTabShown)
       }
       const href = t.slug
