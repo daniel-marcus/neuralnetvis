@@ -52,7 +52,7 @@ const _tabs: Tab[] = [
     key: "info",
     label: "i",
     content: () => <Info />,
-    isDefault: true,
+    // isDefault: true,
   },
 ]
 
