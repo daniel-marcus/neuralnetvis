@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@react-three/drei": "^9.120.6",
-    "@react-three/fiber": "^9.0.0-rc.5",
+    "@react-three/fiber": "^9.0.0-rc.6",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@use-gesture/react": "^10.3.1",
@@ -29,7 +29,7 @@
     "@tailwindcss/postcss": "^4.0.0",
     "@types/lodash.throttle": "^4.1.9",
     "@types/ndarray": "^1.0.14",
-    "@types/node": "^22.12.0",
+    "@types/node": "^22.13.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.173.0",
