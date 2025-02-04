@@ -107,10 +107,7 @@ function useEvaluate() {
       Loss: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
     }
-    setStatusText(
-      { title: "Model evaluation", data },
-      { percent: null, time: 5 }
-    )
+    setStatusText({ title: "Model evaluation", data }, { percent: null })
   }
   return evaluate
 }
