@@ -48,7 +48,9 @@ export const Status = () => {
   return (
     <div
       className={`absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto ${
-        !!statusText ? "opacity-100 duration-0" : "opacity-0 duration-300"
+        !!statusText
+          ? "opacity-100 duration-0"
+          : "opacity-0 duration-300 pointer-events-none"
       } transition-opacity ease-in-out text-right`}
     >
       {parsedText || keptText.current}

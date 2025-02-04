@@ -28,12 +28,16 @@ export const NeuronStatus = () => {
     SphereGeometry
 
   const hasStatus = !!useStatusText((s) => s.statusText)
+  const setSelected = useSelected((s) => s.setSelected)
   if (!selected) return <div />
   return (
     <div
-      className={`flex gap-4 items-end sm:flex-col pointer-events-auto ${
-        hasCurrentSelected ? "" : "opacity-0 max-w-[20%]"
+      className={`flex gap-4 items-end sm:flex-col ${
+        hasCurrentSelected
+          ? "pointer-events-auto cursor-pointer"
+          : "opacity-0 max-w-[20%] pointer-events-none"
       } ${hasStatus ? "hidden sm:flex" : ""} transition-opacity duration-150`}
+      onClick={() => setSelected(null)}
     >
       <WeightsViewer
         weights={normalizedWeights}
@@ -138,7 +142,7 @@ const WeightsViewer = ({
           if (!isInView) return null
           return (
             <WeightsGrid
-              key={i}
+              key={`${i}_${groupWeights.length}`}
               weights={groupWeights}
               cols={cols}
               isRounded={isRounded}

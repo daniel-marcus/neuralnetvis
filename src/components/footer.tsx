@@ -30,15 +30,15 @@ export const MainSampleSlider = () => {
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
         className={`w-full max-w-[380px] pointer-events-auto ${
-          hasProgressBar
+          hasProgressBar || !totalSamples
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
             : "opacity-[var(--opacity-inactive)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
-        } transition-opacity duration-200 `}
+        } transition-opacity duration-200`}
         style={
           {
-            "--opacity-active": "80%",
+            "--opacity-active": "100%",
             "--opacity-inactive": "40%",
           } as React.CSSProperties
         }
