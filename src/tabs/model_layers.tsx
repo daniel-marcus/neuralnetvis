@@ -4,13 +4,7 @@ import {
   LayerConfigMap,
   useModelStore,
 } from "@/lib/model"
-import {
-  ControlPanel,
-  InlineButton,
-  InputRow,
-  Select,
-  Slider,
-} from "@/ui-components"
+import { ControlPanel, InputRow, Select, Slider } from "@/ui-components"
 import { useRef } from "react"
 
 function getSliderProps<T extends keyof LayerConfigMap>(
@@ -91,9 +85,14 @@ export const LayerConfigControl = () => {
     model?.layers[0].batchInputShape &&
     model?.layers[0].batchInputShape.length > 2
   const selectOptions = [
-    { label: "Dense" },
-    { label: "Conv2D", disabled: !hasMutliDimInput },
-    { label: "MaxPooling2D", disabled: !hasMutliDimInput },
+    {
+      value: "",
+      label: "add",
+      disabled: true,
+    },
+    { value: "Dense" },
+    { value: "Conv2D", disabled: !hasMutliDimInput },
+    { value: "MaxPooling2D", disabled: !hasMutliDimInput },
   ]
   return (
     <ControlPanel title={"hidden layers"}>
@@ -108,7 +107,9 @@ export const LayerConfigControl = () => {
                     .replace("MaxPooling", "MaxPool")
                     .replace("Flatten", "(Flatten)")}
                 </div>
-                <button onClick={() => handleRemove(i)}>x</button>
+                <button onClick={() => handleRemove(i)} className="px-2">
+                  x
+                </button>
               </div>
             )
             return (
@@ -125,13 +126,17 @@ export const LayerConfigControl = () => {
             )
           })}
         </div>
-        <InputRow label=" ">
-          <div className="flex justify-start items-center gap-4">
-            <InlineButton variant="secondary" onClick={handleAdd}>
-              add
-            </InlineButton>{" "}
-            <Select ref={selectRef} options={selectOptions} />
-          </div>
+        <InputRow
+          label={
+            <Select
+              ref={selectRef}
+              options={selectOptions}
+              onChange={handleAdd}
+              value={""}
+            />
+          }
+        >
+          <div className="flex justify-start items-center gap-4"></div>
         </InputRow>
       </div>
     </ControlPanel>
