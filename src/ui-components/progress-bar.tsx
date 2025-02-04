@@ -30,19 +30,19 @@ export const ProgressBar = ({ length }: ProgressBarProps) => {
   return (
     <div
       ref={wrapeprRef}
-      className={`absolute -bottom-1 left-0 w-[100vw] overflow-hidden transition-all duration-300 ${
+      className={`w-full leading-none overflow-hidden transition-all duration-300 ${
         isHidden ? "opacity-0" : ""
       }`}
     >
       <span
         ref={testRef}
-        className={`${
-          isSpinner ? "absolute animate-move-left-right" : "absolute opacity-0"
+        className={`absolute ${
+          isSpinner ? "animate-move-left-right" : "opacity-0"
         }`}
       >
         █
       </span>
-      <div className={isSpinner ? "opacity-0" : ""}>
+      <div className={isSpinner ? "opacity-30" : ""}>
         {Array.from({ length: l }).map((_, i) => (
           <span key={i} style={{ width: pxPerChar + "px" }}>
             {(percent ?? 0) >= i / (l - 1) ? "█" : "░"}

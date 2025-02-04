@@ -4,7 +4,7 @@ import { normalizeWithSign } from "@/lib/normalization"
 import { getHighlightColor } from "../three-model/neuron-group"
 import { SphereGeometry } from "three"
 import { Neuron } from "../lib/neuron"
-import { Table } from "./status"
+import { Table, useStatusText } from "./status"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)
@@ -26,12 +26,14 @@ export const NeuronStatus = () => {
   const isRounded =
     selected?.layer.prevVisibleLayer?.meshParams.geometry instanceof
     SphereGeometry
+
+  const hasStatus = !!useStatusText((s) => s.statusText)
   if (!selected) return <div />
   return (
     <div
       className={`flex gap-4 items-end sm:flex-col pointer-events-auto ${
         hasCurrentSelected ? "" : "opacity-0 max-w-[20%]"
-      } transition-opacity duration-150`}
+      } ${hasStatus ? "hidden sm:flex" : ""} transition-opacity duration-150`}
     >
       <WeightsViewer
         weights={normalizedWeights}

@@ -42,8 +42,8 @@ export const App = ({ children }: { children?: ReactNode }) => {
           />
           {debug && <Stats />}
         </Canvas>
-        <Footer />
       </div>
+      <Footer />
       {children}
     </div>
   )

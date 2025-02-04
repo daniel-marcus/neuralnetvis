@@ -15,6 +15,7 @@ interface SelectedStore {
   toggleHovered: (n: Neuron | null) => void
   toggleSelected: (n: Neuron | null) => void
   setSelected: (n: Neuron | null) => void
+  hasHoveredOrSelected: () => boolean
   // TODO: make all neuron accessible by nid?
 }
 
@@ -32,6 +33,7 @@ export const useSelected = create<SelectedStore>((set, get) => ({
     set(({ hovered }) => ({
       hovered: hovered && n?.nid === hovered.nid ? null : n,
     })),
+  hasHoveredOrSelected: () => Boolean(get().hovered || get().selected),
 }))
 
 function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
