@@ -214,7 +214,6 @@ export const datasets: DatasetDef[] = [
           "/data/california_housing/y_test.npz",
         ]
       )
-      // TODO: scale data
       return tf.tidy(() => {
         const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
         const scaler = new StandardScaler()
@@ -246,7 +245,15 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
   datasetKey: datasets[0].name,
   setDatasetKey: (key) => set({ datasetKey: key }),
   ds: undefined,
-  setDs: (ds) => set({ ds, totalSamples: ds?.data.trainX.shape[0] ?? 0 }),
+  setDs: (ds) =>
+    set(() => {
+      const totalSamples = ds?.data.trainX.shape[0] ?? 0
+      return {
+        ds,
+        totalSamples,
+        i: Math.floor(Math.random() * totalSamples) || 1,
+      }
+    }),
   i: 1,
   setI: (arg) =>
     set(({ i }) => {
@@ -297,7 +304,6 @@ export function useDatasets() {
 
   const totalSamples = useDatasetStore((s) => s.totalSamples)
 
-  // TODO?: const initialRandomIndex = Math.floor(Math.random() * totalSamples)
   const i = useDatasetStore((s) => s.i)
   const setI = useDatasetStore((s) => s.setI)
 
