@@ -25,7 +25,7 @@ export function Box({ children, className, padding, hasBg = true }: BoxProps) {
       ref={ref}
       className={`${padding ? "p-4" : ""} ${
         hasBg ? "bg-box-bg" : ""
-      } rounded-box text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out ${className}`}
+      } rounded-box text-left text-sm shadow-sm _backdrop-blur-xs translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out pointer-events-auto ${className}`}
     >
       {children}
     </div>

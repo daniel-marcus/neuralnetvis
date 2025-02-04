@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useLayoutEffect, useRef } from "react"
 import { create } from "zustand"
 import Link from "next/link"
 import { Info } from "@/tabs/info"
@@ -28,22 +28,22 @@ const _tabs: Tab[] = [
   },
   {
     key: "play",
-    slug: "play",
+    // slug: "play",
     content: () => <Play />,
     children: [
       {
         key: "data",
-        slug: "data",
+        // slug: "data",
         content: () => <Data />,
       },
       {
         key: "model",
-        slug: "model",
+        // slug: "model",
         content: () => <Model />,
       },
       {
         key: "train",
-        slug: "train",
+        // slug: "train",
         content: () => <Train />,
       },
     ],
@@ -114,7 +114,7 @@ export const TabSetter = ({
   slugs: string[] | null | undefined
 }) => {
   const setTabBySlugs = useTabStore((s) => s.setTabBySlugs)
-  useEffect(() => {
+  useLayoutEffect(() => {
     setTabBySlugs(slugs)
   }, [slugs, setTabBySlugs])
   return null
@@ -131,22 +131,26 @@ export const Menu = () => {
     <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap text-sm xs:text-base">
       <Link
         href="/"
-        className="p-main pointer-events-auto cursor-pointer bg-background relative z-10"
+        className="p-main pointer-events-auto cursor-pointer relative z-10"
       >
         NeuralNetVis
       </Link>
       <div className="pointer-events-auto flex-1">
-        <div className="flex justify-end items-center w-full bg-background relative z-10">
+        <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
           <Tabs />
         </div>
         <div
-          className={`absolute right-0 w-[380px] max-w-[100vw] ${
-            !!content
-              ? ""
-              : "-translate-y-full sm:translate-y-0 sm:translate-x-full pointer-events-none"
-          } transition-transform duration-300 ease-in-out`}
+          className={`overflow-hidden pointer-events-none absolute right-0 w-[380px] max-w-[100vw]`}
         >
-          {content || lastContent.current}
+          <div
+            className={`${
+              !!content
+                ? ""
+                : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
+            } transition-transform duration-300 ease-in-out`}
+          >
+            {content || lastContent.current}
+          </div>
         </div>
       </div>
     </div>
@@ -156,7 +160,7 @@ export const Menu = () => {
 const Tabs = () => {
   const {
     currTab,
-    setTabBySlugs,
+    setTabByKey,
     isShown: isTabShown,
     setIsShown,
   } = useTabStore()
@@ -171,9 +175,9 @@ const Tabs = () => {
       const isActive = currTab?.key === t.key
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
       const isParent =
-        !!currTab && allChildren?.some((c) => c.slug === currTab.slug)
-      const isSibling = currTab?.parent?.slug === parent?.slug && !isActive
-      const isChild = !!parent && parent.slug === currTab?.slug
+        !!currTab && allChildren?.some((c) => c.key === currTab.key)
+      const isSibling = currTab?.parent?.key === parent?.key && !isActive
+      const isChild = !!parent && parent.key === currTab?.key
       const isCategory = !t.content
       const isShown =
         (isActive && !isCategory && !currTab?.children) ||
@@ -184,7 +188,9 @@ const Tabs = () => {
         setIsShown(isActive ? false : true)
       }
       const onClickBtnOnly = () => {
-        setTabBySlugs([t.key], !isActive || !isTabShown)
+        setIsShown(isActive ? false : true)
+        if (!isActive) setTabByKey(t.key)
+        // setTabBySlugs([t.key], !isActive || !isTabShown)
       }
       const href = t.slug
         ? isActive
@@ -213,8 +219,9 @@ const Tabs = () => {
   return (
     <>
       <TabButton
-        href={currTab?.parent ? getPath(currTab.parent) : "/"}
+        // href={currTab?.parent ? getPath(currTab.parent) : "/"}
         isShown={!!currTab && (!!currTab.children || !!currTab.parent)}
+        onClick={() => setTabByKey(currTab?.parent?.key ?? null)}
       >
         &lt;
       </TabButton>
