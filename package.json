@@ -21,7 +21,6 @@
     "npyjs": "^0.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-use-measure": "^2.1.7",
     "three": "^0.173.0",
     "zustand": "^5.0.3"
   },
