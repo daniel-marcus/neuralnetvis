@@ -44,6 +44,7 @@ interface DatasetDef {
   name: string
   task: Task
   description: string
+  disabled?: boolean
   aboutUrl: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
@@ -142,6 +143,7 @@ export const datasets: DatasetDef[] = [
     name: "cifar10",
     task: "classification",
     description: "Color images (32x32x3)",
+    disabled: true,
     aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
     loss: "categoricalCrossentropy",
     output: {

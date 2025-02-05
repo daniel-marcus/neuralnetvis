@@ -1,6 +1,8 @@
 import { Box, MenuBtn, Slider } from "@/ui-components"
 import { datasets, useDatasetStore } from "@/lib/datasets"
 
+const datasetsFiltered = datasets.filter((d) => !d.disabled)
+
 export const Data = () => {
   const currDatasetKey = useDatasetStore((s) => s.datasetKey)
   const setDatasetKey = useDatasetStore((s) => s.setDatasetKey)
@@ -8,7 +10,7 @@ export const Data = () => {
     <Box>
       <div className="flex flex-col gap-2">
         <div className="flex flex-col">
-          {datasets.map((d) => (
+          {datasetsFiltered.map((d) => (
             <MenuBtn
               key={d.name}
               isActive={currDatasetKey === d.name}
