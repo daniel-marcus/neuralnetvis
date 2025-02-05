@@ -137,10 +137,12 @@ export const Menu = () => {
   const [showGradient, setShowGradient] = useState(false)
   return (
     <div
-      className={`relative xl:sticky xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none text-base`}
+      className={`${
+        hasLesson ? "relative xl:sticky" : "fixed"
+      } xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none text-base`}
     >
       <Headroom
-        disable={isScreenXl}
+        disable={!hasLesson || isScreenXl}
         onPin={() => setShowGradient(true)}
         onUnpin={() => setShowGradient(false)}
         onUnfix={() => setShowGradient(false)}
