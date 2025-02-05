@@ -6,3 +6,7 @@ export default async function Page(props: {
   const { slugs } = await props.params
   return <TabSetter slugs={slugs} />
 }
+
+export async function generateStaticParams() {
+  return [{ slugs: [] }]
+}

@@ -3,12 +3,17 @@ import { useEffect, useState } from "react"
 type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 
 export function useIsScreen(bp: Breakpoint) {
+  const [isScreen, setIsScreen] = useState(false)
   const windowWidth = useWindowWidth()
-  if (typeof window === "undefined") return false
-  const styles = getComputedStyle(document.documentElement)
-  const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
-  const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
-  return windowWidth >= bpPx
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const styles = getComputedStyle(document.documentElement)
+      const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
+      const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
+      setIsScreen(windowWidth >= bpPx)
+    }
+  }, [bp, windowWidth])
+  return isScreen
 }
 
 export function useWindowWidth() {
