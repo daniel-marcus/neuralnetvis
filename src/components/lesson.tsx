@@ -8,6 +8,7 @@ import { getLessonPath, LessonDef, LessonPreview } from "@/lessons/all-lessons"
 import Link from "next/link"
 import { create } from "zustand"
 import throttle from "lodash.throttle"
+import { useAsciiText } from "@/lib/ascii-text"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
@@ -53,12 +54,10 @@ export const Lesson = ({
 }
 
 function Title({ children }: { children: string }) {
-  const length = children.length
-  const underline = "=".repeat(length)
+  const title = useAsciiText(children)
   return (
-    <div className="mb-8">
-      <h1>{children}</h1>
-      <div>{underline}</div>
+    <div className="mb-12">
+      <pre className="text-xs">{title}</pre>
     </div>
   )
 }

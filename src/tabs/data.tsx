@@ -4,8 +4,6 @@ import { datasets, useDatasetStore } from "@/lib/datasets"
 export const Data = () => {
   const currDatasetKey = useDatasetStore((s) => s.datasetKey)
   const setDatasetKey = useDatasetStore((s) => s.setDatasetKey)
-  const i = useDatasetStore((s) => s.i)
-  const totalSamples = useDatasetStore((s) => s.totalSamples)
   return (
     <Box>
       <div className="flex flex-col gap-2">
@@ -20,10 +18,6 @@ export const Data = () => {
               {d.description}
             </MenuBtn>
           ))}
-        </div>
-        <div className={"bg-box-bg p-4 rounded-box"}>
-          current sample: {i} / {totalSamples}
-          <SampleSlider />
         </div>
       </div>
     </Box>

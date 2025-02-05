@@ -9,6 +9,7 @@ import { Learn } from "@/tabs/learn"
 import { Play } from "@/tabs/play"
 import { Model } from "@/tabs/model"
 import { Train } from "@/tabs/train"
+import { Logo } from "./logo"
 
 type Tab = {
   key: string
@@ -124,6 +125,7 @@ export const Menu = () => {
   const { currTab, isShown } = useTabStore()
   const content = currTab?.content && isShown ? currTab.content() : null
   const lastContent = useRef<React.ReactElement | null>(null)
+  const setTabBySlugs = useTabStore((s) => s.setTabBySlugs)
   useEffect(() => {
     if (content) lastContent.current = content
   }, [content])
@@ -131,11 +133,12 @@ export const Menu = () => {
     <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap text-sm xs:text-base">
       <Link
         href="/"
-        className="p-main pointer-events-auto cursor-pointer relative z-10"
+        className="p-main pointer-events-auto"
+        onClick={() => setTabBySlugs(null)}
       >
-        NeuralNetVis
+        <Logo />
       </Link>
-      <div className="pointer-events-auto flex-1">
+      <div className="pointer-events-auto">
         <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
           <Tabs />
         </div>
@@ -219,12 +222,15 @@ const Tabs = () => {
       )
     })
   }
+  const backKey = isTabShown
+    ? currTab?.parent?.key
+    : currTab?.parent?.parent?.key
   return (
     <>
       <TabButton
         // href={currTab?.parent ? getPath(currTab.parent) : "/"}
         isShown={!!currTab && (!!currTab.children || !!currTab.parent)}
-        onClick={() => setTabByKey(currTab?.parent?.key ?? null)}
+        onClick={() => setTabByKey(backKey ?? null)}
       >
         &lt;
       </TabButton>
@@ -252,9 +258,11 @@ const TabButton = ({
   return (
     <Component
       href={href as string}
-      className={`p-main cursor-pointer ${isActive ? "text-white" : ""} ${
+      className={`p-main cursor-pointer ${
+        isActive ? "text-white" : ""
+      } hover:text-white ${
         isShown ? "" : "hidden"
-      }`}
+      } transition-colors duration-100`}
       onClick={onClick}
     >
       {children}

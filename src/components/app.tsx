@@ -12,6 +12,7 @@ import { Menu } from "./menu"
 import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLessonStore } from "./lesson"
+import { Logo } from "./logo"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   const [ds, next] = useDatasets()
@@ -22,6 +23,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
   return (
     <div className="relative">
       <Menu />
+      <Logo />
       <div
         className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
           isLearnMode ? "pointer-events-none" : ""
