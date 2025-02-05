@@ -1,0 +1,23 @@
+{
+  "name": "Neural Net Vis",
+  "short_name": "NeuralNetVis",
+  "description": "Wrap your head around neural networks and watch machines learn",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#110000",
+  "theme_color": "#dc1464",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
