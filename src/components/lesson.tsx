@@ -41,9 +41,9 @@ export const Lesson = ({
     }
   }, [slug, setCurrLesson])
   return (
-    <div className="relative z-10 p-main mt-32 pb-[50dvh]! w-full">
+    <div className="relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-hidden">
       <TabSetter slugs={null} />
-      <div className="max-w-[1200px] mx-auto">
+      <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
         <Title>{title}</Title>
         <div className="mb-[20vh]">{description}</div>
         {typeof content === "function" ? content() : content}
@@ -57,7 +57,8 @@ function Title({ children }: { children: string }) {
   const title = useAsciiText(children)
   return (
     <div className="mb-12">
-      <pre className="text-xs">{title}</pre>
+      <h1 className="hidden">{children}</h1>
+      <pre className="text-[min(1.25vw,0.75rem)]/[1.2]">{title}</pre>
     </div>
   )
 }

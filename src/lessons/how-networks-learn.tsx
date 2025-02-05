@@ -45,6 +45,7 @@ function rotate({ three, percent }: OnBlockScrollProps) {
     camera.position.x = Math.sin(angle) * radius
     camera.position.z = Math.cos(angle) * radius
     camera.lookAt(0, 0, 0)
+    three?.invalidate()
   }
   rotate(percent)
 }

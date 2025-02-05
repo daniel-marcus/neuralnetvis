@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.19",
+  "version": "1.0.0-alpha.20",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -21,6 +21,7 @@
     "npyjs": "^0.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-headroom": "^3.2.1",
     "three": "^0.173.0",
     "zustand": "^5.0.3"
   },
@@ -29,10 +30,10 @@
     "@tailwindcss/postcss": "^4.0.0",
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/ndarray": "^1.0.14",
     "@types/node": "^22.13.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.173.0",
     "eslint": "^9.19.0",
     "eslint-config-next": "^15.1.5",

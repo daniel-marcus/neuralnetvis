@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { create } from "zustand"
+import { useLessonStore } from "./lesson"
 
 type StatusOpts = {
   percent?: number | null
@@ -45,10 +46,11 @@ export const Status = () => {
       keptText.current = parsedText
     }
   }, [parsedText])
+  const hasLesson = useLessonStore((s) => !!s.currLesson)
   return (
     <div
       className={`absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto ${
-        !!statusText
+        !!statusText && !hasLesson
           ? "opacity-100 duration-0"
           : "opacity-0 duration-300 pointer-events-none"
       } transition-opacity ease-in-out text-right`}

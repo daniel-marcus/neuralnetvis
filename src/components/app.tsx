@@ -12,7 +12,6 @@ import { Menu } from "./menu"
 import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLessonStore } from "./lesson"
-import { Logo } from "./logo"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   const [ds, next] = useDatasets()
@@ -22,23 +21,27 @@ export const App = ({ children }: { children?: ReactNode }) => {
   const isLearnMode = useLessonStore((s) => s.isLearnMoode())
   return (
     <div className="relative">
-      <Menu />
-      <Logo />
       <div
-        className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-[#110000] select-none overflow-hidden ${
+        className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-background select-none overflow-hidden ${
           isLearnMode ? "pointer-events-none" : ""
         }`}
       >
-        <Canvas frameloop="always">
+        <Canvas frameloop="demand">
           <ThreeStoreSetter />
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
-          <OrbitControls target={[0, 0, 0]} />
+          <OrbitControls target={[0, 0, 0]} enabled={!isLearnMode} />
           <Model model={model} batchCount={batchCount} isPending={isPending} />
           {debug && <Stats />}
         </Canvas>
+        <Footer />
       </div>
-      <Footer />
+      <div
+        className={`absolute top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
+          isLearnMode ? "opacity-70" : "opacity-0"
+        } transition-opacity duration-700`}
+      />
+      <Menu />
       {children}
     </div>
   )

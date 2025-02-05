@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useLayoutEffect, useRef } from "react"
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { create } from "zustand"
 import Link from "next/link"
 import { Info } from "@/tabs/info"
@@ -10,6 +10,9 @@ import { Play } from "@/tabs/play"
 import { Model } from "@/tabs/model"
 import { Train } from "@/tabs/train"
 import { Logo } from "./logo"
+import Headroom from "react-headroom"
+import { useIsScreen } from "@/lib/utils"
+import { useLessonStore } from "./lesson"
 
 type Tab = {
   key: string
@@ -129,33 +132,53 @@ export const Menu = () => {
   useEffect(() => {
     if (content) lastContent.current = content
   }, [content])
+  const isScreenXl = useIsScreen("xl")
+  const hasLesson = !!useLessonStore((s) => s.currLesson)
+  const [showGradient, setShowGradient] = useState(false)
   return (
-    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none text-base">
-      <Link
-        href="/"
-        className="pointer-events-auto"
-        onClick={() => setTabBySlugs(null)}
+    <div
+      className={`relative xl:sticky xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none text-base`}
+    >
+      <Headroom
+        disable={isScreenXl}
+        onPin={() => setShowGradient(true)}
+        onUnpin={() => setShowGradient(false)}
+        onUnfix={() => setShowGradient(false)}
       >
-        <Logo />
-      </Link>
-      <div className="pointer-events-auto">
-        <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
-          <Tabs />
-        </div>
-        <div
-          className={`overflow-hidden pointer-events-none absolute right-0 w-[380px] max-w-[100vw]`}
-        >
+        <div className={`flex justify-between items-start`}>
           <div
             className={`${
-              !!content
-                ? ""
-                : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
-            } transition-transform duration-300 ease-in-out`}
+              !hasLesson || !showGradient ? "hidden" : ""
+            } xl:hidden absolute h-[30vh] inset-0 bg-gradient-to-b from-background
+           to-transparent z-[-1]`}
+          />
+          <Link
+            href="/"
+            className={`pointer-events-auto`}
+            onClick={() => setTabBySlugs(null)}
           >
-            {content || lastContent.current}
+            <Logo />
+          </Link>
+          <div className="pointer-events-auto">
+            <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
+              <Tabs />
+            </div>
+            <div
+              className={`overflow-hidden pointer-events-none absolute right-0 w-[380px] max-w-[100vw]`}
+            >
+              <div
+                className={`${
+                  !!content
+                    ? ""
+                    : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
+                } transition-transform duration-300 ease-in-out`}
+              >
+                {content || lastContent.current}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </Headroom>
     </div>
   )
 }

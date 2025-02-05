@@ -16,9 +16,9 @@ export interface LessonDef {
 
 export const lessons: LessonDef[] = [
   {
-    title: "How can networks learn?",
+    title: "How do networks learn?",
     slug: "how-networks-learn",
-    description: "Get some basics about machine learning",
+    description: "Some basics about machine learning",
     content: IntroNetworks,
   },
   {
