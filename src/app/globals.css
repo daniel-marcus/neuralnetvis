@@ -63,12 +63,6 @@ body {
   font-family: var(--font-mono);
 }
 
-.logo {
-  span {
-    opacity: 0.4;
-  }
-}
-
 button:not([disabled]) {
   cursor: pointer;
 }
