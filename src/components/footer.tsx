@@ -31,7 +31,7 @@ export const MainSampleSlider = () => {
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
-        className={`w-full max-w-[380px] pointer-events-auto ${
+        className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
           hasProgressBar || !totalSamples || hasLesson
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
