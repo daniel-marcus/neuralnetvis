@@ -9,7 +9,6 @@ export function useController() {
   const setIsTraining = useTrainingStore((s) => s.setIsTraining)
   // const selectedStore = useSelected() // TODO: set selected by key
   const controller = useMemo(() => {
-    console.log("controller changed")
     return { setTabByKey, setIsTraining, three }
   }, [setTabByKey, setIsTraining, three])
   return controller

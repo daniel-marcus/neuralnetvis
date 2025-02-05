@@ -5,14 +5,22 @@ export const Logo = () => {
   const currTab = useTabStore((s) => s.currTab)
   const isShown = useTabStore((s) => s.isShown)
   const hasTab = currTab && isShown
-  const text = useAsciiText("Neural Net Vis")
+  const neural = useAsciiText("Neural")
+  const net = useAsciiText("Net")
+  const vis = useAsciiText("Vis")
   return (
-    <pre
-      className={`text-logo ${
-        hasTab ? "opacity-30 sm:opacity-100" : ""
-      } hover:text-white transition duration-100 origin-top-left`}
+    <div
+      className={`text-logo hover:text-white transition-colors duration-100`}
     >
-      {text}
-    </pre>
+      <pre>{neural}</pre>
+      <div
+        className={`transition-opacity duration-100 ${
+          hasTab ? "opacity-0 sm:opacity-100" : ""
+        }`}
+      >
+        <pre>{net}</pre>
+        <pre>{vis}</pre>
+      </div>
+    </div>
   )
 }

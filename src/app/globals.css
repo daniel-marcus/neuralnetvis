@@ -2,11 +2,6 @@
 
 @theme {
   --breakpoint-xs: 361px;
-  --padding-main: calc(var(--spacing) * 2);
-  --padding-main-xs: calc(var(--spacing) * 2.5);
-  --padding-main-sm: calc(var(--spacing) * 4);
-  --text-logo: 0.12rem;
-  --text-logo--line-height: 1.75;
   --font-mono: Menlo, ui-monospace, SFMono-Regular, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 
@@ -32,16 +27,33 @@
 
 @layer utilities {
   .p-main {
-    @apply p-[var(--padding-main)] xs:p-[var(--padding-main-xs)] sm:p-[var(--padding-main-sm)];
+    @apply p-[var(--padding-main)];
   }
   .rounded-box {
     @apply rounded-[10px];
+  }
+  .text-logo {
+    --menu-lh: 1.5em; /* for text base in menu */
+    --logo-lh: 1.75em;
+    --menu-btn-height: var(--menu-lh);
+    /* make logo match menu btn height: 
+        button height / height for row in ascii art */
+    font-size: calc((var(--menu-btn-height)) / (7 * 1.75));
+    line-height: var(--logo-lh);
+    padding: var(--padding-main);
   }
 }
 
 :root {
   --background: #110000;
   --foreground: var(--color-gray-text);
+  --padding-main: calc(var(--spacing) * 1.75);
+  @media (width >= theme(--breakpoint-xs)) {
+    --padding-main: calc(var(--spacing) * 2.5);
+  }
+  @media (width >= theme(--breakpoint-sm)) {
+    --padding-main: calc(var(--spacing) * 4);
+  }
 }
 
 body {

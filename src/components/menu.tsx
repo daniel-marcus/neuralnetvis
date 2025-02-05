@@ -130,10 +130,10 @@ export const Menu = () => {
     if (content) lastContent.current = content
   }, [content])
   return (
-    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none flex-wrap text-sm xs:text-base">
+    <div className="fixed top-0 left-0 w-[100vw] z-20 flex justify-between items-start pointer-events-none select-none text-base">
       <Link
         href="/"
-        className="p-main pointer-events-auto"
+        className="pointer-events-auto"
         onClick={() => setTabBySlugs(null)}
       >
         <Logo />

@@ -11,5 +11,6 @@ export const useAsciiText = (input: string) => {
         font: "Blur Vision ASCII" as Fonts,
       })
       .replaceAll("░", " ") // reduce blur
+    // .replaceAll(" ", ".") // debug
   }, [input])
 }
