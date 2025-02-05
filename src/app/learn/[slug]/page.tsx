@@ -3,6 +3,7 @@ import { lessonPreviews, lessons } from "@/lessons/all-lessons"
 import React from "react"
 import type { Metadata } from "next"
 import { metadata } from "@/app/layout"
+import { siteMeta } from "../../../../metadata"
 
 type Params = Promise<{ slug: string }>
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
   const { title, description } = lesson
   return {
     ...metadata,
-    title: `${title} | NeuralNetVis`,
+    title: `${title} | ${siteMeta.title}`,
     description,
   }
 }

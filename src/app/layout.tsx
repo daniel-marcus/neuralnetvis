@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { App } from "@/components/app"
+import { siteMeta } from "../../metadata"
 
 export const metadata: Metadata = {
-  title: "NeuralNetVis",
-  description: "Wrap your head around neural networks and watch machines learn",
+  title: siteMeta.title,
+  description: siteMeta.description,
   openGraph: {
-    images: [{ url: "https://neuralnetvis.app/images/neuralnetvis-og.png" }],
+    images: [{ url: siteMeta.defaultOgImg }],
   },
 }
 
@@ -22,6 +23,7 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+        <meta name="apple-mobile-web-app-title" content={siteMeta.title} />
       </head>
       <body className={`antialiased`}>
         <App>{children}</App>
