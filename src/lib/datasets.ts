@@ -234,7 +234,7 @@ export const datasets: DatasetDef[] = [
 ]
 
 interface DatasetStore {
-  datasetKey: string
+  datasetKey: string | undefined
   setDatasetKey: (key: string) => void
   ds: Dataset | undefined
   setDs: (ds: Dataset | undefined) => void
@@ -248,7 +248,7 @@ interface DatasetStore {
 }
 
 export const useDatasetStore = create<DatasetStore>((set) => ({
-  datasetKey: datasets[0].name,
+  datasetKey: undefined, // datasets[0].name, //
   setDatasetKey: (key) => set({ datasetKey: key }),
   ds: undefined,
   setDs: (ds) =>

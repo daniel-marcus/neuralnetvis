@@ -14,11 +14,12 @@ import { useDatasetStore } from "@/lib/datasets"
 import { useVisConfigStore } from "@/lib/vis-config"
 import { useTrainingStore } from "@/lib/training"
 import { LockButton } from "@/components/lock"
+import { setInitialState } from "@/components/initial-state"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
   useEffect(() => {
-    console.log("IntroNetworks mounted")
+    setInitialState({ datasetKey: "fashion mnist", hiddenLayers: [] })
   }, [])
   return (
     <main>

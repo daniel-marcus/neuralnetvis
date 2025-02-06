@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect } from "react"
+import { ReactNode, useEffect, useLayoutEffect } from "react"
 import { useController } from "../lib/controller"
 import { useInView } from "@/lib/in-view"
 import { TabSetter } from "./menu"
@@ -40,7 +40,7 @@ export const Lesson = ({
 }: LessonProps) => {
   const setCurrLesson = useLessonStore((s) => s.setCurrLesson)
   const setVisualizationLocked = useLockStore((s) => s.setVisualizationLocked)
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCurrLesson(slug)
     setVisualizationLocked(true)
     return () => {
