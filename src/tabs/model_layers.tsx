@@ -1,3 +1,4 @@
+import { useStatusText } from "@/components/status"
 import {
   HiddenLayerConfig,
   HiddenLayerConfigArray,
@@ -11,6 +12,7 @@ import {
   Select,
   Slider,
 } from "@/ui-components"
+import { DraggableList } from "@/ui-components/draggable-list"
 import { ReactNode, useRef } from "react"
 
 function getInputComp<T extends keyof LayerConfigMap>(
@@ -51,8 +53,9 @@ function getInputComp<T extends keyof LayerConfigMap>(
     return (
       <Slider
         {...sharedSliderProps}
-        min={1}
-        max={32}
+        min={0}
+        max={0.95}
+        step={0.05}
         value={config.rate}
         onChange={(rate) => updateLayerConfig({ ...config, rate })}
       />
@@ -116,10 +119,32 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
+  const setStatusText = useStatusText((s) => s.setStatusText)
   return (
     <ControlPanel title={"hidden layers"}>
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
+        <DraggableList
+          rowHeight={32}
+          onOrderChange={(newOrder) => {
+            const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
+            setHiddenLayers([...newHiddenLayers])
+          }}
+          checkValidChange={(newOrder) => {
+            const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
+            const firstDenseIdx = newHiddenLayers.findIndex(
+              (l) => l.className === "Dense"
+            )
+            const firstMultiDimIdx = newHiddenLayers.findIndex((l) =>
+              ["Conv2D", "MaxPooling2D"].includes(l.className)
+            )
+            const isValdid =
+              firstDenseIdx < 0 || firstMultiDimIdx < firstDenseIdx
+            if (!isValdid) {
+              setStatusText("Conv2 and MaxPooling must come before Dense")
+            }
+            return isValdid
+          }}
+        >
           {hiddenLayers.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
               newConfig: HiddenLayerConfig<T>["config"]
@@ -141,12 +166,12 @@ export const LayerConfigControl = () => {
               </div>
             )
             return (
-              <InputRow key={i} label={label}>
+              <InputRow key={`${i}_${layer.className}`} label={label}>
                 {inputComp}
               </InputRow>
             )
           })}
-        </div>
+        </DraggableList>
         <InputRow
           label={
             <Select

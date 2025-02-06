@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.22",
+  "version": "1.0.0-alpha.23",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-spring/web": "^9.7.5",
     "@react-three/drei": "^9.120.6",
     "@react-three/fiber": "^9.0.0-rc.6",
     "@tensorflow/tfjs": "^4.22.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@react-spring/types": "^9.7.5",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",

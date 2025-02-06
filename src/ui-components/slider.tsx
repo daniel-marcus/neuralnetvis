@@ -29,18 +29,17 @@ export const Slider = ({
   }, [value])
 
   // TODO: add spring (e.g. when space between options is big as with validationSplit)
-  const bind = useDrag(({ active, xy: [clientX] }) => {
+  const bind = useDrag(({ event, active, xy: [clientX] }) => {
     if (sliderRef.current) {
-      if (sliderRef.current) {
-        const rect = sliderRef.current.getBoundingClientRect()
-        const percentage = (clientX - rect.left) / rect.width
-        const newValue =
-          Math.round((percentage * (max - min) + min) * (1 / step)) / (1 / step)
-        const clampedValue = Math.min(Math.max(newValue, min), max)
-        setCurrVal(clampedValue)
-        if (lazyUpdate && active) return
-        else onChange?.(clampedValue)
-      }
+      event.stopPropagation()
+      const rect = sliderRef.current.getBoundingClientRect()
+      const percentage = (clientX - rect.left) / rect.width
+      const newValue =
+        Math.round((percentage * (max - min) + min) * (1 / step)) / (1 / step)
+      const clampedValue = Math.min(Math.max(newValue, min), max)
+      setCurrVal(clampedValue)
+      if (lazyUpdate && active) return
+      else onChange?.(clampedValue)
     }
   })
 
