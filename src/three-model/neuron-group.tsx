@@ -122,11 +122,19 @@ function useGroupPosition(props: NeuronGroupProps) {
     const offsetZ = (groupsPerRow - 1) * gridHeight * -0.5
     const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridHeight + offsetY // row
     const z = (groupIndex % groupsPerRow) * gridWidth + offsetZ // column
-    const SPLIT_COLORS_X_OFFSET = 0.6 // to avoid z-fighting
+    const SPLIT_COLORS_OFFSET = 0.05 // to avoid z-fighting
     return layerPos === "input"
       ? splitColors
-        ? [0, 0, groupIndex * gridWidth - (groupCount - 1) * gridWidth * 0.5] // spread on z-axis
-        : [groupIndex * SPLIT_COLORS_X_OFFSET, 0, 0]
+        ? [
+            groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * gridWidth + (groupCount - 1) * gridWidth * 0.5,
+          ] // spread on z-axis
+        : [
+            groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * SPLIT_COLORS_OFFSET,
+          ]
       : [0, y, z]
   }, [groupIndex, groupCount, layerPos, spacing, splitColors, height, width])
   return position
