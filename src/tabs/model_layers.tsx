@@ -30,7 +30,19 @@ function getSliderProps<T extends keyof LayerConfigMap>(
     return null
   } else if (layerConfig.className === "Flatten") {
     return null
+  } else if (layerConfig.className === "Dropout") {
+    const config = layerConfig.config as LayerConfigMap["Dropout"]
+    return {
+      min: 0,
+      max: 0.95,
+      step: 0.05,
+      value: config.rate,
+      // label: "Rate",
+    }
+  } else {
+    console.log("Unknown layer type", layerConfig)
   }
+
   return null
 }
 
@@ -39,6 +51,7 @@ const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
   Conv2D: { filters: 4, kernelSize: 3, activation: "relu" },
   MaxPooling2D: { poolSize: 2 },
   Flatten: {},
+  Dropout: { rate: 0.2 },
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
@@ -62,6 +75,10 @@ export const LayerConfigControl = () => {
       ;(layer.config as LayerConfigMap["Dense"]).units = val
     } else if (layer.className === "Conv2D") {
       ;(layer.config as LayerConfigMap["Conv2D"]).filters = val
+    } else if (layer.className === "Dropout") {
+      ;(layer.config as LayerConfigMap["Dropout"]).rate = val
+    } else {
+      console.log("unhandled layer type", layer)
     }
     setHiddenLayers([...hiddenLayers])
   }
@@ -93,6 +110,7 @@ export const LayerConfigControl = () => {
     { value: "Dense" },
     { value: "Conv2D", disabled: !hasMutliDimInput },
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
+    { value: "Dropout" },
   ]
   return (
     <ControlPanel title={"hidden layers"}>

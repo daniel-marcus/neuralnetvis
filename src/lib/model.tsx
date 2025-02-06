@@ -5,6 +5,7 @@ import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import {
   DenseLayerArgs,
+  DropoutLayerArgs,
   FlattenLayerArgs,
 } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
@@ -18,6 +19,7 @@ export type LayerConfigMap = {
   Conv2D: ConvLayerArgs
   MaxPooling2D: Pooling2DLayerArgs
   Flatten: FlattenLayerArgs
+  Dropout: DropoutLayerArgs
 }
 
 export type HiddenLayerConfig<T extends keyof LayerConfigMap> = {
@@ -187,6 +189,10 @@ function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
       model.add(tf.layers.flatten(l.config as FlattenLayerArgs))
     } else if (l.className === "MaxPooling2D") {
       model.add(tf.layers.maxPooling2d(l.config as Pooling2DLayerArgs))
+    } else if (l.className === "Dropout") {
+      model.add(tf.layers.dropout(l.config as DropoutLayerArgs))
+    } else {
+      console.log("Unknown layer", l)
     }
   }
   // output layer

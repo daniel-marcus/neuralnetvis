@@ -65,6 +65,7 @@ export function getVisibleLayers(allLayers: LayerStateful[]) {
 }
 
 export function getUnits(layer: tf.layers.Layer) {
+  const className = layer.getClassName()
   const unitsFromConfig = layer.getConfig().units as number
   if (unitsFromConfig) {
     // dense
@@ -74,15 +75,21 @@ export function getUnits(layer: tf.layers.Layer) {
     const [, ...dims] = layer.batchInputShape
     const flattenedNumber = (dims as number[]).reduce((a, b) => a * b, 1)
     return flattenedNumber
-  } else if (layer.getClassName() === "Flatten") {
+  } else if (className === "Flatten") {
     // flatten layer
     // eturn typeof layer.outputShape[1] === "number" ? layer.outputShape[1] : 0
     return 0
+  } else if (["Conv2D", "MaxPooling2D"].includes(className)) {
+    // Conv2D, MaxPooling2D, etc.
+    const [, ...dims] = layer.outputShape as number[] // [batch, height, width, channels]
+    const flattenedNumber = dims.reduce((a, b) => a * b, 1)
+    return flattenedNumber
+  } else if (className === "Dropout") {
+    return 0
+  } else {
+    console.log("unknown layer", { className })
+    return 0
   }
-  // Conv2D, MaxPooling2D, etc.
-  const [, ...dims] = layer.outputShape as number[] // [batch, height, width, channels]
-  const flattenedNumber = dims.reduce((a, b) => a * b, 1)
-  return flattenedNumber
 }
 
 export function getLayerPosition(
