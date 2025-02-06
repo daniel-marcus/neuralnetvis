@@ -13,6 +13,7 @@ import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
 import { useLockStore } from "./lock"
 import { Gradient } from "./gradient"
+import { CameraLogger } from "@/three-model/_debug-utils"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   const [ds, next] = useDatasets()
@@ -34,6 +35,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
           <OrbitControls target={[0, 0, 0]} enabled={!visualizationLocked} />
           <Model model={model} batchCount={batchCount} isPending={isPending} />
           {debug && <Stats />}
+          {debug && <CameraLogger />}
         </Canvas>
         <Footer />
       </div>

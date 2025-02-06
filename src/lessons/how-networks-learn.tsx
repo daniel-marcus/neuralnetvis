@@ -15,12 +15,19 @@ import { useVisConfigStore } from "@/lib/vis-config"
 import { useTrainingStore } from "@/lib/training"
 import { LockButton } from "@/components/lock"
 import { setInitialState } from "@/components/initial-state"
+import { Controller } from "@react-spring/web"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
   useEffect(() => {
-    setInitialState({ datasetKey: "fashion mnist", hiddenLayers: [] })
+    setInitialState({
+      datasetKey: "fashion mnist",
+      hiddenLayers: [
+        { className: "Dense", config: { units: 64, activation: "relu" } },
+      ],
+    })
   }, [])
+
   return (
     <main>
       <LessonHead
@@ -32,7 +39,19 @@ export const IntroNetworks = (): LessonContent => {
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
       </Block>
-      <Block onScroll={changeLayerSpacing}>Changing layerSpacing.</Block>
+      <Block
+        onEnter={moveCameraTo([-15, 0.5, 17], 1000)}
+        onLeave={moveCameraTo([0, 0, 30])}
+      >
+        Move camera to a specific position
+      </Block>
+      <Block
+        onEnter={moveCameraTo([-25, 24, 23])}
+        onLeave={moveCameraTo([0, 0, 30])}
+      >
+        Another one!
+      </Block>
+      <Block onScroll={changeLayerSpacing}>Changing layerSpacing</Block>
       <Block onScroll={changeNeuronSpacing}>Changing neuronSpacing</Block>
       <Block>
         Try out!
@@ -48,6 +67,33 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
     </main>
   )
+}
+
+function moveCameraTo(
+  targetPosition: [number, number, number],
+  duration = 500
+) {
+  return ({ three }: OnBlockEnterLeaveProps) => {
+    if (!three) return
+    const initialPosition = three.camera.position.toArray() as [
+      number,
+      number,
+      number
+    ]
+    const api = new Controller<{ position: [number, number, number] }>({
+      position: initialPosition,
+    })
+    api.start({
+      config: { duration },
+      position: targetPosition,
+      from: { position: initialPosition },
+      onChange: ({ value }) => {
+        three.camera.position.set(...value.position)
+        three.camera.lookAt(0, 0, 0)
+        three.invalidate()
+      },
+    })
+  }
 }
 
 function rotate({ three, percent }: OnBlockScrollProps) {

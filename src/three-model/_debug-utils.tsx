@@ -37,3 +37,17 @@ export const Raycaster = () => {
 
   return null
 }
+
+export function CameraLogger() {
+  const { camera } = useThree()
+  const prevPosition = useRef(camera.position.clone())
+
+  useFrame(() => {
+    if (!camera.position.equals(prevPosition.current)) {
+      console.log("Camera position:", camera.position.toArray())
+      prevPosition.current.copy(camera.position)
+    }
+  })
+
+  return null
+}
