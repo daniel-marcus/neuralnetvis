@@ -7,7 +7,7 @@ interface InputRow {
 }
 
 export const InputRow = ({ label, children }: InputRow) => (
-  <div className="flex gap-2 w-full py-0.5 sm:py-0">
+  <div className="flex gap-2 w-full leading-[1.5]">
     <div className="flex-none w-[7.5em]">{label ?? ""}</div>
     <div className="flex-1 min-w-0">{children}</div>
   </div>

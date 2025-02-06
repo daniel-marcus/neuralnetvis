@@ -13,6 +13,7 @@
   --color-accent: rgb(220, 20, 100);
   --color-accent-hover: rgb(220, 20, 100, 0.2);
   --color-secondary: #373c4b;
+  --color-menu-border: #373c4b80;
 
   --animate-move-left-right: move-left-right 3s infinite ease-in-out;
   @keyframes move-left-right {

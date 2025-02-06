@@ -139,7 +139,7 @@ export const Menu = () => {
     <div
       className={`${
         hasLesson ? "relative xl:sticky" : "fixed"
-      } xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none text-base`}
+      } xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
         disable={!hasLesson || isScreenXl}
@@ -166,7 +166,7 @@ export const Menu = () => {
               <Tabs />
             </div>
             <div
-              className={`overflow-hidden pointer-events-none absolute right-0 w-[380px] max-w-[100vw]`}
+              className={`overflow-hidden pointer-events-none absolute right-0 w-[25rem] max-w-[100vw]`}
             >
               <div
                 className={`${

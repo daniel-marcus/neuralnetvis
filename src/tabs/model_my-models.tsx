@@ -91,7 +91,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }
   if (!savedModels.length) return null
   return (
-    <ul className="pl-4 border-l border-gray-700 mb-4">
+    <ul className="pl-4 border-l border-menu-border mb-4">
       {savedModels.map((m, i) => (
         <li key={i} className="flex justify-between">
           <button onClick={() => loadModel(m)}>{m}</button>
@@ -137,7 +137,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
   }, [modelFile, weightsFile, importModel])
   return (
     <form onSubmit={importModel}>
-      <div className="pl-4 border-l border-gray-700 flex flex-col gap-2">
+      <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
         <label className="block cursor-pointer">
           {modelFile ? modelFile.name : "Choose model.json ..."}
           <input

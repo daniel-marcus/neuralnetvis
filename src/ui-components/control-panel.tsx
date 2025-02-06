@@ -27,7 +27,11 @@ export const ControlPanel = ({
         </div>
       )}
       <Collapsible isOpen={isOpen}>
-        <div className="flex flex-col gap-2 p-4 pt-2">{children}</div>
+        <div className="p-4 pt-0">
+          <div className="pl-4 border-l border-menu-border flex flex-col gap-2 ">
+            {children}
+          </div>
+        </div>
       </Collapsible>
     </div>
   )

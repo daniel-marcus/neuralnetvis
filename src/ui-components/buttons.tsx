@@ -52,7 +52,7 @@ export const InlineButton = ({
   return (
     <Comp
       href={href as string}
-      className={`px-2 h-[24px] ${
+      className={`px-2 ${
         variant === "primary" ? "bg-accent text-white" : "bg-secondary"
       } rounded-[3px]`}
       onClick={onClick}

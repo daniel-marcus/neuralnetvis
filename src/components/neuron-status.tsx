@@ -93,7 +93,7 @@ const WeightsViewer = ({
       className="flex-shrink-0 w-[var(--grid-width)] sm:w-[var(--grid-width-sm)] overflow-hidden mb-[0.3em]"
       style={
         {
-          "--grid-width": "calc(80px - 0.6em)",
+          "--grid-width": "calc(4 * 1em * 1.5 - 0.6em)",
           "--grid-width-sm": "199px",
         } as React.CSSProperties
       }

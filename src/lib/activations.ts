@@ -37,7 +37,7 @@ export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
           outputs: model.layers.flatMap((layer) => layer.output),
         })
         const tensor = tf.tensor([input], [1, ...dims])
-        // TODO: predictAsync
+        // note: predictAsync method not available for tf.LayersModel
         const _activations = tmpModel.predict(tensor) as tf.Tensor<tf.Rank>[]
         const activations = _activations.map((layerActivation) => {
           const { shape } = layerActivation
