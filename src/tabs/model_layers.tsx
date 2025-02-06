@@ -11,44 +11,55 @@ import {
   Select,
   Slider,
 } from "@/ui-components"
-import { useRef } from "react"
+import { ReactNode, useRef } from "react"
 
-function getSliderProps<T extends keyof LayerConfigMap>(
-  layerConfig: HiddenLayerConfig<T>
-) {
+function getInputComp<T extends keyof LayerConfigMap>(
+  layerConfig: HiddenLayerConfig<T>,
+  updateLayerConfig: <C extends keyof LayerConfigMap>(
+    config: HiddenLayerConfig<C>["config"]
+  ) => void
+): ReactNode {
+  const sharedSliderProps = { showValue: true, lazyUpdate: true }
   if (layerConfig.className === "Dense") {
     const config = layerConfig.config as LayerConfigMap["Dense"]
-    return {
-      min: 1,
-      max: 256,
-      value: config.units,
-      // label: "Units",
-    }
+    return (
+      <Slider
+        {...sharedSliderProps}
+        min={1}
+        max={256}
+        value={config.units}
+        onChange={(units) => updateLayerConfig({ ...config, units })}
+      />
+    )
   } else if (layerConfig.className === "Conv2D") {
     const config = layerConfig.config as LayerConfigMap["Conv2D"]
-    return {
-      min: 1,
-      max: 32,
-      value: config.filters,
-      // label: "Filters",
-    }
+    return (
+      <Slider
+        {...sharedSliderProps}
+        min={1}
+        max={32}
+        value={config.filters}
+        onChange={(filters) => updateLayerConfig({ ...config, filters })}
+      />
+    )
   } else if (layerConfig.className === "MaxPooling2D") {
     return null
   } else if (layerConfig.className === "Flatten") {
     return null
   } else if (layerConfig.className === "Dropout") {
     const config = layerConfig.config as LayerConfigMap["Dropout"]
-    return {
-      min: 0,
-      max: 0.95,
-      step: 0.05,
-      value: config.rate,
-      // label: "Rate",
-    }
+    return (
+      <Slider
+        {...sharedSliderProps}
+        min={1}
+        max={32}
+        value={config.rate}
+        onChange={(rate) => updateLayerConfig({ ...config, rate })}
+      />
+    )
   } else {
     console.log("Unknown layer type", layerConfig)
   }
-
   return null
 }
 
@@ -75,19 +86,6 @@ export const LayerConfigControl = () => {
   const hiddenLayers = _hiddenLayers.filter((l) => l.className !== "Flatten")
   const setHiddenLayers = useModelStore((s) => s.setHiddenLayers)
 
-  const handleLayerChange = (i: number, val: number) => {
-    const layer = hiddenLayers[i]
-    if (layer.className === "Dense") {
-      ;(layer.config as LayerConfigMap["Dense"]).units = val
-    } else if (layer.className === "Conv2D") {
-      ;(layer.config as LayerConfigMap["Conv2D"]).filters = val
-    } else if (layer.className === "Dropout") {
-      ;(layer.config as LayerConfigMap["Dropout"]).rate = val
-    } else {
-      console.log("unhandled layer type", layer)
-    }
-    setHiddenLayers([...hiddenLayers])
-  }
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
     if (!selectRef.current) return
@@ -123,7 +121,13 @@ export const LayerConfigControl = () => {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           {hiddenLayers.map((layer, i) => {
-            const sliderProps = getSliderProps(layer)
+            function updateLayerConfig<T extends keyof LayerConfigMap>(
+              newConfig: HiddenLayerConfig<T>["config"]
+            ) {
+              hiddenLayers[i].config = newConfig
+              setHiddenLayers([...hiddenLayers])
+            }
+            const inputComp = getInputComp(layer, updateLayerConfig)
             const label = (
               <div className="flex justify-between">
                 <div>
@@ -138,14 +142,7 @@ export const LayerConfigControl = () => {
             )
             return (
               <InputRow key={i} label={label}>
-                {sliderProps !== null && (
-                  <Slider
-                    {...sliderProps}
-                    onChange={(val) => handleLayerChange(i, val)}
-                    showValue={true}
-                    lazyUpdate={true}
-                  />
-                )}
+                {inputComp}
               </InputRow>
             )
           })}
