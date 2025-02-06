@@ -7,6 +7,7 @@ import {
   forwardRef,
 } from "react"
 import { create } from "zustand"
+import { InlineButton } from "./buttons"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
@@ -122,7 +123,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
     <div>
       {!!isShown && (
         <div>
-          <div className="relative mt-2" onMouseLeave={() => setTooltip(null)}>
+          <div className="relative" onMouseLeave={() => setTooltip(null)}>
             <canvas
               ref={canvasRef}
               className={`w-full h-[100px] sm:h-[132px]`}
@@ -133,19 +134,18 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
           </div>
         </div>
       )}
-      <div className={`flex justify-end ${isShown ? "" : "hidden"}`}>
+      <div className={`flex mt-2 justify-end ${isShown ? "" : "hidden"}`}>
         {METRICS.map((m) => {
           const isSelected = m === metric
           return (
-            <button
+            <InlineButton
               key={m}
-              className={`${
-                isSelected ? "text-white" : "hover:bg-[var(--color-secondary)] "
-              } rounded px-2 py-1`}
+              variant="transparent"
+              className={isSelected ? "text-white" : ""}
               onClick={() => setMetric(m)}
             >
               {m}
-            </button>
+            </InlineButton>
           )
         })}
       </div>
