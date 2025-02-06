@@ -4,7 +4,13 @@ import {
   LayerConfigMap,
   useModelStore,
 } from "@/lib/model"
-import { ControlPanel, InputRow, Select, Slider } from "@/ui-components"
+import {
+  ControlPanel,
+  InlineButton,
+  InputRow,
+  Select,
+  Slider,
+} from "@/ui-components"
 import { useRef } from "react"
 
 function getSliderProps<T extends keyof LayerConfigMap>(
@@ -154,7 +160,14 @@ export const LayerConfigControl = () => {
             />
           }
         >
-          <div className="flex justify-start items-center gap-4"></div>
+          <div className="flex justify-end items-center gap-4">
+            <InlineButton
+              variant="secondary"
+              onClick={() => setHiddenLayers([])}
+            >
+              reset
+            </InlineButton>
+          </div>
         </InputRow>
       </div>
     </ControlPanel>
