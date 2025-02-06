@@ -12,7 +12,7 @@ import { Train } from "@/tabs/train"
 import { Logo } from "./logo"
 import Headroom from "react-headroom"
 import { useIsScreen } from "@/lib/utils"
-import { useLessonStore } from "./lesson"
+import { useHasLesson } from "./lesson"
 
 type Tab = {
   key: string
@@ -133,7 +133,7 @@ export const Menu = () => {
     if (content) lastContent.current = content
   }, [content])
   const isScreenXl = useIsScreen("xl")
-  const hasLesson = !!useLessonStore((s) => s.currLesson)
+  const hasLesson = useHasLesson()
   const [showGradient, setShowGradient] = useState(false)
   return (
     <div

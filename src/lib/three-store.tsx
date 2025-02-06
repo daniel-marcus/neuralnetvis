@@ -21,7 +21,7 @@ export const ThreeStoreSetter = () => {
   const three = useThree()
   const setThree = useThreeStore((s) => s.setThree)
   useEffect(() => {
-    console.log("three changed", three?.camera)
+    // console.log("three changed", three?.camera)
     setThree({ camera: three?.camera, invalidate: three?.invalidate })
   }, [three?.camera, three?.invalidate, setThree])
   return null

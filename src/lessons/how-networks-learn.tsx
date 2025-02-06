@@ -13,6 +13,7 @@ import { useController } from "@/lib/controller"
 import { useDatasetStore } from "@/lib/datasets"
 import { useVisConfigStore } from "@/lib/vis-config"
 import { useTrainingStore } from "@/lib/training"
+import { LockButton } from "@/components/lock"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
@@ -32,6 +33,12 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
       <Block onScroll={changeLayerSpacing}>Changing layerSpacing.</Block>
       <Block onScroll={changeNeuronSpacing}>Changing neuronSpacing</Block>
+      <Block>
+        Try out!
+        <br />
+        <br />
+        <LockButton />
+      </Block>
       <Block>
         How about training?
         <br />

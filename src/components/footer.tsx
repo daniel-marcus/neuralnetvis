@@ -4,7 +4,7 @@ import { NeuronStatus } from "./neuron-status"
 import { useSelected } from "@/lib/neuron-select"
 import { SampleSlider } from "@/tabs/data"
 import { useDatasetStore } from "@/lib/datasets"
-import { useLessonStore } from "./lesson"
+import { useLockStore } from "./lock"
 
 export const Footer = () => {
   return (
@@ -27,12 +27,12 @@ export const MainSampleSlider = () => {
   const hasProgressBar = typeof useStatusText((s) => s.percent) === "number"
   const i = useDatasetStore((s) => s.i)
   const totalSamples = useDatasetStore((s) => s.totalSamples)
-  const hasLesson = !!useLessonStore((s) => s.currLesson)
+  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
         className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
-          hasProgressBar || !totalSamples || hasLesson
+          hasProgressBar || !totalSamples || visualizationLocked
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"

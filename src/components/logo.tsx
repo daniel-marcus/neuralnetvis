@@ -10,7 +10,7 @@ export const Logo = () => {
   const vis = useAsciiText("Vis")
   return (
     <div
-      className={`text-logo hover:text-white transition-colors duration-100`}
+      className={`text-logo hover:text-white transition-colors duration-100 h-[112px]`}
     >
       <pre>{neural}</pre>
       <div

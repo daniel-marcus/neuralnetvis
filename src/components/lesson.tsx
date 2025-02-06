@@ -9,6 +9,8 @@ import Link from "next/link"
 import { create } from "zustand"
 import throttle from "lodash.throttle"
 import { useAsciiText } from "@/lib/ascii-text"
+import { useLockStore } from "./lock"
+import { usePathname } from "next/navigation"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
@@ -16,15 +18,18 @@ interface LessonProps extends LessonDef {
 
 interface LessonStore {
   currLesson: LessonProps["slug"] | null
-  isLearnMoode: () => boolean
   setCurrLesson: (slug: string | null) => void
 }
 
-export const useLessonStore = create<LessonStore>((set, get) => ({
+export const useLessonStore = create<LessonStore>((set) => ({
   currLesson: null,
-  isLearnMoode: () => !!get().currLesson,
   setCurrLesson: (slug: string | null) => set({ currLesson: slug }),
 }))
+
+export function useHasLesson() {
+  const pathname = usePathname()
+  return pathname.startsWith("/learn/")
+}
 
 export const Lesson = ({
   title,
@@ -34,16 +39,24 @@ export const Lesson = ({
   nextLesson,
 }: LessonProps) => {
   const setCurrLesson = useLessonStore((s) => s.setCurrLesson)
+  const setVisualizationLocked = useLockStore((s) => s.setVisualizationLocked)
   useEffect(() => {
     setCurrLesson(slug)
+    setVisualizationLocked(true)
     return () => {
       setCurrLesson(null)
+      setVisualizationLocked(false)
     }
-  }, [slug, setCurrLesson])
+  }, [slug, setCurrLesson, setVisualizationLocked])
   const children = typeof content === "function" ? content() : content
   const hasHead = !!children.props.children.find((c) => c.type === LessonHead)
+  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
   return (
-    <div className="relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-hidden">
+    <div
+      className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-hidden ${
+        visualizationLocked ? "" : "pointer-events-none"
+      }`}
+    >
       <TabSetter slugs={null} />
       <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
         {!hasHead && <LessonHead title={title} description={description} />}
@@ -87,11 +100,16 @@ function Teaser({ children }: { children: ReactNode }) {
 export const Button = ({
   children,
   onClick,
+  className = "",
 }: {
   children: string
   onClick: () => void
+  className?: string
 }) => (
-  <button className="bg-accent text-white px-4 py-2 rounded" onClick={onClick}>
+  <button
+    className={`bg-accent text-white px-4 py-2 rounded ${className}`}
+    onClick={onClick}
+  >
     {children}
   </button>
 )
