@@ -27,6 +27,12 @@
   }
 }
 
+@custom-variant scroll-zero {
+  body.scroll-zero & {
+    @slot;
+  }
+}
+
 @layer utilities {
   .p-main {
     @apply p-[var(--padding-main)];

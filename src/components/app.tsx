@@ -11,15 +11,14 @@ import { useDebugStore } from "@/lib/debug"
 import { Menu } from "./menu"
 import { Footer } from "./footer"
 import { ThreeStoreSetter } from "@/lib/three-store"
-import { useHasLesson } from "./lesson"
 import { useLockStore } from "./lock"
+import { Gradient } from "./gradient"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   const [ds, next] = useDatasets()
   const [model, isPending] = useModel(ds)
   const [, batchCount] = useTraining(model, ds, next)
   const debug = useDebugStore((s) => s.debug)
-  const hasLesson = useHasLesson()
   const visualizationLocked = useLockStore((s) => s.visualizationLocked)
   return (
     <div className="relative">
@@ -38,11 +37,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
         </Canvas>
         <Footer />
       </div>
-      <div
-        className={`absolute top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
-          hasLesson ? "opacity-70" : "opacity-0"
-        } transition-opacity duration-700`}
-      />
+      <Gradient />
       <Menu />
       {children}
     </div>
