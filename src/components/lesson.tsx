@@ -40,15 +40,32 @@ export const Lesson = ({
       setCurrLesson(null)
     }
   }, [slug, setCurrLesson])
+  const children = typeof content === "function" ? content() : content
+  const hasHead = !!children.props.children.find((c) => c.type === LessonHead)
   return (
     <div className="relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-hidden">
       <TabSetter slugs={null} />
       <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
-        <Title>{title}</Title>
-        <div className="mb-[20vh]">{description}</div>
-        {typeof content === "function" ? content() : content}
+        {!hasHead && <LessonHead title={title} description={description} />}
+        {children}
         <Ctas nextLesson={nextLesson} />
       </div>
+    </div>
+  )
+}
+
+type LessonHeadProps = { title: string; description: string } & ScrollCallbacks
+
+export function LessonHead({
+  title,
+  description,
+  ...callbacks
+}: LessonHeadProps) {
+  const [ref] = useScrollCallbacks(callbacks)
+  return (
+    <div ref={ref}>
+      <Title>{title}</Title>
+      <Teaser>{description}</Teaser>
     </div>
   )
 }
@@ -61,6 +78,10 @@ function Title({ children }: { children: string }) {
       <pre className="text-[min(1.25vw,0.75rem)]/[1.2]">{title}</pre>
     </div>
   )
+}
+
+function Teaser({ children }: { children: ReactNode }) {
+  return <div className="pb-[50dvh]">{children}</div>
 }
 
 export const Button = ({
@@ -102,14 +123,30 @@ export interface OnBlockScrollProps extends ControllerProps {
 
 export type OnBlockEnterLeaveProps = ControllerProps
 
-export interface BlockProps {
-  children: ReactNode
+export type ScrollBlockProps = React.PropsWithChildren<ScrollCallbacks>
+
+interface ScrollCallbacks {
   onScroll?: (props: OnBlockScrollProps) => void
   onEnter?: (props: OnBlockEnterLeaveProps) => void
   onLeave?: (props: OnBlockEnterLeaveProps) => void
 }
 
-export function Block({ children, onScroll, onEnter, onLeave }: BlockProps) {
+export function Block({ children, ...callbacks }: ScrollBlockProps) {
+  const [ref, inView] = useScrollCallbacks(callbacks)
+  return (
+    <div
+      ref={ref}
+      className={`pb-[50dvh] ${
+        inView ? "opacity-100 " : "opacity-50"
+      } transition-opacity duration-100`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function useScrollCallbacks(callbacks: ScrollCallbacks) {
+  const { onScroll, onEnter, onLeave } = callbacks
   const controller = useController()
   const [ref, inView] = useInView({ rootMargin: "-50% 0px" })
 
@@ -135,16 +172,7 @@ export function Block({ children, onScroll, onEnter, onLeave }: BlockProps) {
     }
   }, [inView, onEnter, onLeave, controller])
 
-  return (
-    <div
-      ref={ref}
-      className={`pb-[50dvh] ${
-        inView ? "opacity-100 " : "opacity-50"
-      } transition-opacity duration-100`}
-    >
-      {children}
-    </div>
-  )
+  return [ref, inView] as const
 }
 
 function calculateScrolledPercent(

@@ -3,6 +3,7 @@
 import {
   Block,
   Button,
+  LessonHead,
   OnBlockEnterLeaveProps,
   OnBlockScrollProps,
 } from "@/components/lesson"
@@ -20,6 +21,11 @@ export const IntroNetworks = (): LessonContent => {
   }, [])
   return (
     <main>
+      <LessonHead
+        title="How do networks learn?"
+        description="Some basics about machine learning"
+        onScroll={rotate}
+      />
       <Block onScroll={rotate}>Just scroll and see what happens.</Block>
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.

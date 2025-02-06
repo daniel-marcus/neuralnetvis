@@ -1,10 +1,10 @@
-import { BlockProps } from "@/components/lesson"
+import { ScrollBlockProps } from "@/components/lesson"
 import { introInterface } from "./exploring-the-interface"
 import { IntroNetworks } from "./how-networks-learn"
 import { ReactElement } from "react"
 
 export type LessonContent = ReactElement<{
-  children: ReactElement<BlockProps>[]
+  children: ReactElement<ScrollBlockProps>[]
 }> // <main> with <Block> children
 
 export interface LessonDef {
