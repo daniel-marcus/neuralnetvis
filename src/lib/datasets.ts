@@ -283,6 +283,8 @@ export function useDatasets() {
 
   const ds = useDatasetStore((s) => s.ds)
   const setDs = useDatasetStore((s) => s.setDs)
+  const i = useDatasetStore((s) => s.i)
+  const setI = useDatasetStore((s) => s.setI)
 
   useEffect(() => {
     setIsLoading(true)
@@ -304,23 +306,21 @@ export function useDatasets() {
         Object.values(dataRef).forEach((t) => t?.dispose())
       }
       setDs(undefined)
+      useDatasetStore.setState({ input: undefined, rawInput: undefined })
     }
-  }, [datasetKey, setStatusText, setIsLoading, setDs])
+  }, [datasetKey, setStatusText, setIsLoading, setDs, setI])
 
   const totalSamples = useDatasetStore((s) => s.totalSamples)
 
-  const i = useDatasetStore((s) => s.i)
-  const setI = useDatasetStore((s) => s.setI)
-
   useEffect(() => {
     if (!totalSamples) return
-    setI((i) => (i > totalSamples ? totalSamples : i))
+    setI((i) => (Number(i) > totalSamples ? totalSamples : i))
   }, [totalSamples, setI])
 
   useEffect(() => {
     if (!ds) return
     async function getInput() {
-      if (!ds) return [undefined, undefined, undefined] as const
+      if (!ds || !i) return [undefined, undefined, undefined] as const
       const { trainX, trainXRaw, trainY } = ds.data
       const [, ...dims] = trainX.shape
       const valsPerSample = dims.reduce((a, b) => a * b, 1)
