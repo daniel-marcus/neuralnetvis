@@ -98,14 +98,17 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   }[]
   return (
     <group name={`layer_${layer.index}_connections`}>
-      {connections.map(({ neuron, prevNeuron, lineWidth }, i) => (
-        <DynamicLine2
-          key={i}
-          fromRef={prevNeuron.ref}
-          toRef={neuron.ref}
-          width={lineWidth}
-        />
-      ))}
+      {connections.map(({ neuron, prevNeuron, lineWidth }, i) => {
+        if (!neuron?.ref || !prevNeuron?.ref) return null
+        return (
+          <DynamicLine2
+            key={i}
+            fromRef={prevNeuron.ref}
+            toRef={neuron.ref}
+            width={lineWidth}
+          />
+        )
+      })}
     </group>
   )
 }
