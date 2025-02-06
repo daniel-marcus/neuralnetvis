@@ -46,10 +46,10 @@ export const MainSampleSlider = () => {
           } as React.CSSProperties
         }
       >
-        <div className="label absolute -top-3 sm:-top-2 pointer-events-none text-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
+        <SampleSlider />
+        <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
           {i} / {totalSamples}
         </div>
-        <SampleSlider />
       </div>
     </div>
   )
