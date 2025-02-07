@@ -1,7 +1,7 @@
 import React from "react"
 
-import { LayerStateful, LayerStateless } from "@/three-model/layer"
-import { InstancedMeshRef } from "../three-model/neuron-group"
+import { LayerStateful, LayerStateless } from "@/three/layer"
+import { InstancedMeshRef } from "../three/neuron-group"
 
 // refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
 

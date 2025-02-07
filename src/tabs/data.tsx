@@ -1,6 +1,7 @@
 import { Box, MenuBtn, Slider } from "@/ui-components"
-import { datasets, useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/lib/datasets"
 import { useDebugStore } from "@/lib/debug"
+import { datasets } from "@/datasets"
 
 export const Data = () => {
   const currDatasetKey = useDatasetStore((s) => s.datasetKey)

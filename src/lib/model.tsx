@@ -139,7 +139,7 @@ export function useModel(ds?: Dataset) {
         <a
           href={ds.aboutUrl}
           rel="noopener noreferrer"
-          className="text-accent pointer-events-auto"
+          className="text-accent"
           target="_blank"
         >
           {ds.name}

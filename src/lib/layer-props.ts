@@ -1,14 +1,14 @@
 import { createRef, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { Index3D, Neuron, NeuronRefType, Nid } from "@/lib/neuron"
-import { Dataset, LayerInput, useDatasetStore } from "./datasets"
+import { Dataset, useDatasetStore } from "./datasets"
 import { getMeshParams } from "./layer-layout"
 import {
   LayerStateful,
   LayerPosition,
   LayerStateless,
   LayerType,
-} from "@/three-model/layer"
+} from "@/three/layer"
 import { debug } from "@/lib/debug"
 import { useActivations } from "./activations"
 
@@ -347,7 +347,7 @@ function useStatefulLayers(
   statelessLayers: LayerStateful[], // ??
   weightsBiases: WeightsBiases[],
   activations?: { activations: number[]; normalizedActivations: number[] }[],
-  rawInput?: LayerInput
+  rawInput?: number[]
 ) {
   const statefulLayers = useMemo(() => {
     const startTime = Date.now()

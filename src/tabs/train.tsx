@@ -104,10 +104,11 @@ function useEvaluate() {
     if (!model || !ds) return
     const { loss, accuracy } = await getModelEvaluation(model, ds)
     const data = {
+      "Test samples": ds.data.testX?.shape[0],
       Loss: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
     }
-    setStatusText({ title: "Model evaluation", data }, { percent: null })
+    setStatusText({ data }, { percent: null })
   }
   return evaluate
 }

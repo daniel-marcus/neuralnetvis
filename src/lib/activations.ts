@@ -1,6 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect } from "react"
-import type { LayerInput } from "./datasets"
 import { debug } from "@/lib/debug"
 import { normalizeConv2DActivations, normalizeTensor } from "./normalization"
 import { create } from "zustand"
@@ -20,7 +19,7 @@ export const useActivationStore = create<ActivationStore>((set) => ({
   setLayerActivations: (layerActivations) => set(() => ({ layerActivations })),
 }))
 
-export function useActivations(model?: tf.LayersModel, input?: LayerInput) {
+export function useActivations(model?: tf.LayersModel, input?: number[]) {
   const layerActivations = useActivationStore((s) => s.layerActivations)
   const setLayerActivations = useActivationStore((s) => s.setLayerActivations)
   useEffect(() => {

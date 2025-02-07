@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { InstancedMesh } from "three"
-import { useAnimatedPosition } from "@/lib/animated-position"
+import { useAnimatedPosition } from "@/three/animated-position"
 import * as THREE from "three"
 import { MeshParams, getGridSize, getNeuronPosition } from "@/lib/layer-layout"
 import { LayerPosition, LayerProps } from "./layer"

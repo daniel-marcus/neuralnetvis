@@ -46,7 +46,6 @@ export const DraggableList = ({
       const newOrder = swap(order, currIdx, currRow)
       const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
       if (isValidChange) {
-        // && dragY <= maxHeight - rowHeight && dragY >= 0)
         const min = -currIdx * rowHeight
         const max = maxHeight - currIdx * rowHeight - rowHeight
         const constrainedY = rubberbandIfOutOfBounds(y, min, max)

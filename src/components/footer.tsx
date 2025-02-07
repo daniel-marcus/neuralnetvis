@@ -41,7 +41,7 @@ export const MainSampleSlider = () => {
         style={
           {
             "--opacity-active": "1",
-            "--opacity-inactive": "0.7",
+            "--opacity-inactive": "0.5",
             "--opacity-inactive-lg": "0.3",
           } as React.CSSProperties
         }

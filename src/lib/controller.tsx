@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useTabStore } from "../components/menu"
-import { useThreeStore } from "@/lib/three-store"
+import { useThreeStore } from "@/three/three-store"
 import { useTrainingStore } from "@/lib/training"
 
 export function useController() {

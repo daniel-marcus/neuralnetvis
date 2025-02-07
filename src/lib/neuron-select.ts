@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { Neuron, Nid } from "@/lib/neuron"
-import { LayerStateful } from "@/three-model/layer"
+import { LayerStateful } from "@/three/layer"
 import { useEffect, useMemo } from "react"
 import { normalizeWithSign } from "./normalization"
 import { debug } from "./debug"

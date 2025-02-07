@@ -1,8 +1,35 @@
+import { useDebugStore } from "@/lib/debug"
+import { Stats } from "@react-three/drei"
 import { useThree, useFrame } from "@react-three/fiber"
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 
 // use for debug purposes
+
+export const DebugUtils = () => {
+  const debug = useDebugStore((s) => s.debug)
+  if (!debug) return null
+  return (
+    <>
+      <Stats />
+      <CameraLogger />
+    </>
+  )
+}
+
+function CameraLogger() {
+  const { camera } = useThree()
+  const prevPosition = useRef(camera.position.clone())
+
+  useFrame(() => {
+    if (!camera.position.equals(prevPosition.current)) {
+      console.log("Camera position:", camera.position.toArray())
+      prevPosition.current.copy(camera.position)
+    }
+  })
+
+  return null
+}
 
 export const Raycaster = () => {
   const three = useThree()
@@ -34,20 +61,6 @@ export const Raycaster = () => {
       gl.domElement.removeEventListener("pointermove", handlePointerMove)
     }
   }, [gl.domElement])
-
-  return null
-}
-
-export function CameraLogger() {
-  const { camera } = useThree()
-  const prevPosition = useRef(camera.position.clone())
-
-  useFrame(() => {
-    if (!camera.position.equals(prevPosition.current)) {
-      console.log("Camera position:", camera.position.toArray())
-      prevPosition.current.copy(camera.position)
-    }
-  })
 
   return null
 }
