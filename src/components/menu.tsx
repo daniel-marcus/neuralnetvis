@@ -166,7 +166,7 @@ export const Menu = () => {
               <Tabs />
             </div>
             <div
-              className={`overflow-hidden pointer-events-none absolute right-0 w-[25rem] max-w-[100vw]`}
+              className={`overflow-hidden pb-4 pointer-events-none absolute right-0 w-[25rem] max-w-[100vw]`}
             >
               <div
                 className={`${
