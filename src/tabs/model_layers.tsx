@@ -119,7 +119,6 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
-  const setStatusText = useStatusText((s) => s.setStatusText)
   return (
     <ControlPanel title={"hidden layers"}>
       <div className="flex flex-col gap-4">
@@ -129,21 +128,9 @@ export const LayerConfigControl = () => {
             const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
             setHiddenLayers([...newHiddenLayers])
           }}
-          checkValidChange={(newOrder) => {
-            const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
-            const firstDenseIdx = newHiddenLayers.findIndex(
-              (l) => l.className === "Dense"
-            )
-            const firstMultiDimIdx = newHiddenLayers.findIndex((l) =>
-              ["Conv2D", "MaxPooling2D"].includes(l.className)
-            )
-            const isValdid =
-              firstDenseIdx < 0 || firstMultiDimIdx < firstDenseIdx
-            if (!isValdid) {
-              setStatusText("Conv2 and MaxPooling must come before Dense")
-            }
-            return isValdid
-          }}
+          checkValidChange={(newOrder) =>
+            checkVaildOrder(newOrder, hiddenLayers)
+          }
         >
           {hiddenLayers.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
@@ -156,9 +143,10 @@ export const LayerConfigControl = () => {
             const label = (
               <div className="flex justify-between">
                 <div>
+                  ⋮{" "}
                   {layer.className
-                    .replace("MaxPooling", "MaxPool")
-                    .replace("Flatten", "(Flatten)")}
+                    .replace("MaxPooling2D", "MaxPool")
+                    .replace("Flatten", "[Flatten]")}
                 </div>
                 <button onClick={() => handleRemove(i)} className="px-2">
                   x
@@ -194,4 +182,24 @@ export const LayerConfigControl = () => {
       </div>
     </ControlPanel>
   )
+}
+
+function checkVaildOrder(
+  newOrder: number[],
+  hiddenLayers: HiddenLayerConfigArray
+) {
+  const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
+  const firstDenseIdx = newHiddenLayers.findIndex(
+    (l) => l.className === "Dense"
+  )
+  const lastMultiDimIdx = newHiddenLayers.findLastIndex((l) =>
+    ["Conv2D", "MaxPooling2D"].includes(l.className)
+  )
+  const isValdid = firstDenseIdx < 0 || lastMultiDimIdx < firstDenseIdx
+  if (!isValdid) {
+    useStatusText
+      .getState()
+      .setStatusText("Conv2D and MaxPooling2D must come before Dense")
+  }
+  return isValdid
 }

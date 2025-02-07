@@ -1,6 +1,6 @@
 import { ReactElement, useEffect, useMemo } from "react"
 import { useSprings, animated } from "@react-spring/web"
-import { useDrag } from "@use-gesture/react"
+import { rubberbandIfOutOfBounds, useDrag } from "@use-gesture/react"
 
 // reference: https://codesandbox.io/p/sandbox/zfy9p
 
@@ -45,8 +45,15 @@ export const DraggableList = ({
       )
       const newOrder = swap(order, currIdx, currRow)
       const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
-      if (isValidChange && dragY <= maxHeight - rowHeight && dragY >= 0)
-        api.start(fn(newOrder, active, originalIdx, currIdx, y, rowHeight))
+      if (isValidChange) {
+        // && dragY <= maxHeight - rowHeight && dragY >= 0)
+        const min = -currIdx * rowHeight
+        const max = maxHeight - currIdx * rowHeight - rowHeight
+        const constrainedY = rubberbandIfOutOfBounds(y, min, max)
+        api.start(
+          fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight)
+        )
+      }
       if (!active) {
         if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
         else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
