@@ -58,6 +58,10 @@ export const Status = () => {
   )
 }
 
+export function setStatus(text: TableProps | ReactNode, opts?: StatusOpts) {
+  useStatusText.getState().setStatusText(text, opts)
+}
+
 function isValidReactNode(node: unknown): node is ReactNode {
   return (
     node === null ||

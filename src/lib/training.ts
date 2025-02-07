@@ -4,7 +4,7 @@ import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
 import { create } from "zustand"
-import { useKeyCommand } from "./key-command"
+import { useKeyCommand } from "./utils"
 import { setBackendIfAvailable } from "./tf-backend"
 
 let epochCount = 0

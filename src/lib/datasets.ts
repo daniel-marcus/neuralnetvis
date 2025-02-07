@@ -3,7 +3,7 @@ import { useStatusText } from "@/components/status"
 import * as tf from "@tensorflow/tfjs"
 import { debug } from "./debug"
 import { create } from "zustand"
-import { useKeyCommand } from "./key-command"
+import { useKeyCommand } from "./utils"
 import { datasets } from "@/datasets"
 
 interface DatasetData {

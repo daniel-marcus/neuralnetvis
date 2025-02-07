@@ -5,6 +5,7 @@ import { create } from "zustand"
 interface ReducedThree {
   camera: RootState["camera"]
   invalidate: RootState["invalidate"]
+  gl: RootState["gl"]
 }
 
 interface ThreeStore {
@@ -18,11 +19,11 @@ export const useThreeStore = create<ThreeStore>((set) => ({
 }))
 
 export const ThreeStoreSetter = () => {
-  const three = useThree()
+  const { camera, invalidate, gl } = useThree()
   const setThree = useThreeStore((s) => s.setThree)
   useEffect(() => {
-    // console.log("three changed", three?.camera)
-    setThree({ camera: three?.camera, invalidate: three?.invalidate })
-  }, [three?.camera, three?.invalidate, setThree])
+    // console.log("three changed")
+    setThree({ camera, invalidate, gl })
+  }, [camera, invalidate, gl, setThree])
   return null
 }
