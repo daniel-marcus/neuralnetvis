@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset } from "./datasets"
+import { Dataset, DbBatch } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
 import { create } from "zustand"
@@ -244,16 +244,15 @@ async function train(
 }
 
 async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
-  const samples = await getAll<{ data: number[]; label: number }>(ds.key, type)
+  const batches = await getAll<DbBatch>(ds.key, type)
   return tf.tidy(() => {
-    const _X = tf.tensor(
-      samples.map((s) => s.data),
-      ds[type].shapeX
-    )
-    const X = ds.input?.preprocess ? ds.input.preprocess(_X) : _X
+    const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
+    const XRaw = tf.concat(xBatchTensors).reshape(ds[type].shapeX)
+
+    const X = ds.input?.preprocess ? ds.input.preprocess(XRaw) : XRaw
     // TODO: regression ...
     const y = tf.oneHot(
-      samples.map((s) => s.label),
+      batches.flatMap((b) => Array.from(b.ys)),
       ds.output.size
     )
     return [X, y] as const

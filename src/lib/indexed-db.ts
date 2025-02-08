@@ -6,7 +6,7 @@ dbName: ds.key
 storeName: "train" | "test" | "meta
 */
 
-const DB_PREFIX = "nnv_"
+const DB_PREFIX = "nnv_dev_"
 const KEY_PATH = "index"
 const STORE_NAMES = ["train", "test", "meta"] as const
 
@@ -25,7 +25,7 @@ export function getDb(dbName: DatasetKey) {
   })
 }
 
-export async function putDataBatch<T>(
+export async function putDataBatches<T>(
   dbName: DatasetKey,
   storeName: StoreName,
   batches: T[]

@@ -4,7 +4,7 @@ import { useStatusText } from "@/components/status"
 
 const n = new npyjs()
 
-type SupportedTypedArray =
+export type SupportedTypedArray =
   | Int8Array
   | Uint8Array
   | Int16Array

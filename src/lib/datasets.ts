@@ -5,12 +5,12 @@ import { debug } from "./debug"
 import { create } from "zustand"
 import { useKeyCommand } from "./utils"
 import { datasets } from "@/datasets"
-import { Parsed } from "npyjs"
-import { getData, putData, putDataBatch, storeHasEntries } from "./indexed-db"
+import { getData, putData, putDataBatches, storeHasEntries } from "./indexed-db"
+import { SupportedTypedArray } from "./npy-loader"
 
 // ParsedLike
 interface ParsedLike {
-  data: Parsed["data"]
+  data: SupportedTypedArray
   shape: number[]
 }
 
@@ -53,6 +53,8 @@ interface StoreMeta {
   version: number
   shapeX: number[]
   shapeY: number[]
+  storeBatchSize: number
+  valsPerSample: number
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
@@ -115,6 +117,8 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
   trainingY: undefined,
 }))
 
+let currBatchCache: DbBatch | null = null
+
 export function useDatasets() {
   const datasetKey = useDatasetStore((s) => s.datasetKey)
   const ds = useDatasetStore((s) => s.ds)
@@ -165,6 +169,7 @@ export function useDatasets() {
     loadData()
 
     return () => {
+      currBatchCache = null
       setDs(undefined)
       useDatasetStore.setState({ input: undefined, rawInput: undefined })
     }
@@ -175,13 +180,19 @@ export function useDatasets() {
     if (!ds) return
     async function getInput() {
       if (!ds) return
-      // TODO: add types (TypedArary, Float32Array, ...)
-      const sample = await getData<{
-        data: number[] | Uint8Array | Float32Array
-        label: number | undefined
-      }>(ds.key, "train", i)
-      if (!sample) return
-      const { data, label } = sample
+      const { storeBatchSize, valsPerSample } = ds.train
+      const batchIdx = Math.floor(i / storeBatchSize)
+      const batch =
+        currBatchCache?.index === batchIdx
+          ? currBatchCache
+          : await getData<DbBatch>(ds.key, "train", batchIdx)
+      if (!batch) return
+      const sampleIdx = i % storeBatchSize
+      const data = batch?.xs.slice(
+        sampleIdx * valsPerSample,
+        (sampleIdx + 1) * valsPerSample
+      )
+      const label = batch?.ys[sampleIdx]
       const rawInput = Array.from(data)
       const input = tf.tidy(() =>
         ds.input?.preprocess
@@ -203,35 +214,48 @@ export function useDatasets() {
   return [ds, next] as const
 }
 
+export interface DbBatch {
+  index: number
+  xs: ParsedLike["data"]
+  ys: ParsedLike["data"]
+}
+
 async function putSamplesToDb(
   dbName: DatasetKey,
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
   version: number,
-  batchSize = 1000
+  storeBatchSize = 100
 ) {
-  const [length, ...dims] = xs.shape
+  const [totalSamples, ...dims] = xs.shape
   const valsPerSample = dims.reduce((a, b) => a * b)
-  const samples = Array.from({ length }).map((_, index) => {
-    const data = xs.data.slice(
-      index * valsPerSample,
-      (index + 1) * valsPerSample
-    )
-    const label = ys.data[index]
-    return { index, data, label }
-  })
+
   const startTime = Date.now()
-  for (let i = 0; i < samples.length; i += batchSize) {
-    const batch = samples.slice(i, i + batchSize)
-    const promise = putDataBatch(dbName, storeName, batch)
-    if (i === 0) await promise // await only first batch to speed up initial load
+  const batches: DbBatch[] = []
+  for (let i = 0; i < totalSamples; i += storeBatchSize) {
+    const batchIdx = Math.floor(i / storeBatchSize)
+    const batchXs = xs.data.slice(
+      i * valsPerSample,
+      (i + storeBatchSize) * valsPerSample
+    )
+    const batchYs = ys.data.slice(i, i + storeBatchSize)
+    const batch = {
+      index: batchIdx,
+      xs: batchXs,
+      ys: batchYs,
+    }
+    batches.push(batch)
   }
+  await putDataBatches(dbName, storeName, batches)
+  console.log("batches", batches.length)
   await putData<StoreMeta>(dbName, "meta", {
     index: storeName,
     version,
     shapeX: xs.shape,
     shapeY: ys.shape,
+    storeBatchSize,
+    valsPerSample,
   })
   console.log("IndexedDB putDataBatch time:", Date.now() - startTime)
 }

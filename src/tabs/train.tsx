@@ -45,7 +45,7 @@ export const Train = () => {
             evaluate
           </InlineButton>
           <InlineButton onClick={toggleTraining}>
-            {isTraining ? "stop" : "start"} training
+            {isTraining ? "stop" : "train"}
           </InlineButton>
         </div>
       </div>
