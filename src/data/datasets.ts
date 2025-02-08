@@ -1,9 +1,9 @@
 import { useCallback, useEffect } from "react"
 import { useStatusText } from "@/components/status"
 import * as tf from "@tensorflow/tfjs"
-import { debug } from "./debug"
+import { debug } from "@/lib/debug"
 import { create } from "zustand"
-import { useKeyCommand } from "./utils"
+import { useKeyCommand } from "@/lib/utils"
 import { datasets } from "@/datasets"
 import { getData, putData, putDataBatches } from "./indexed-db"
 import { SupportedTypedArray } from "./npy-loader"
@@ -123,9 +123,6 @@ export function useDatasets() {
   const datasetKey = useDatasetStore((s) => s.datasetKey)
   const ds = useDatasetStore((s) => s.ds)
   const setDs = useDatasetStore((s) => s.setDs)
-  const i = useDatasetStore((s) => s.i)
-  const setI = useDatasetStore((s) => s.setI)
-
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
@@ -133,6 +130,7 @@ export function useDatasets() {
     const dsDef = datasets.find((d) => d.name === datasetKey)
     if (!dsDef) return
 
+    loadData()
     async function loadData() {
       if (!dsDef) return
       const existingTrain = await getData<StoreMeta>(dsDef.key, "meta", "train")
@@ -171,15 +169,21 @@ export function useDatasets() {
         })
       }
     }
-    loadData()
 
     return () => {
       currBatchCache = null
       setDs(undefined)
       useDatasetStore.setState({ input: undefined, rawInput: undefined })
     }
-  }, [datasetKey, setStatusText, setDs, setI])
+  }, [datasetKey, setStatusText, setDs])
 
+  useInput(ds)
+
+  return ds
+}
+
+function useInput(ds?: Dataset) {
+  const i = useDatasetStore((s) => s.i)
   useEffect(() => {
     // useInput
     if (!ds) return
@@ -215,8 +219,6 @@ export function useDatasets() {
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowLeft", prev)
   useKeyCommand("ArrowRight", next)
-
-  return [ds, next] as const
 }
 
 export interface DbBatch {

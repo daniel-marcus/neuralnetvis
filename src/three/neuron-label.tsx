@@ -4,7 +4,7 @@ import { useRef } from "react"
 import { Mesh } from "three"
 import { Text } from "troika-three-text"
 import { NeuronDef, NeuronState } from "@/lib/neuron"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}

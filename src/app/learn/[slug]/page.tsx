@@ -1,25 +1,21 @@
 import { Lesson } from "@/components/lesson"
 import { lessonPreviews, lessons } from "@/lessons/all-lessons"
 import React from "react"
-import type { Metadata } from "next"
 import { metadata } from "@/app/layout"
 import manifest from "@/app/manifest.json"
+import { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params
-}): Promise<Metadata> {
-  const { slug } = await params
+export async function generateMetadata(props: { params: Params }) {
+  const { slug } = await props.params
   const lesson = getLessonFromSlug(slug) ?? { title: "", description: "" }
   const { title, description } = lesson
   return {
     ...metadata,
     title: `${title} | ${manifest.name}`,
     description,
-  }
+  } as Metadata
 }
 
 export default async function LessonPage(props: { params: Params }) {
@@ -32,9 +28,7 @@ export default async function LessonPage(props: { params: Params }) {
 }
 
 export async function generateStaticParams() {
-  return lessons.map((l) => ({
-    slug: l.slug,
-  }))
+  return lessons.map((l) => ({ slug: l.slug }))
 }
 
 function getLessonFromSlug(slug: string) {

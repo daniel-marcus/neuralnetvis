@@ -1,4 +1,4 @@
-import { Dataset } from "./datasets"
+import { Dataset } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
 import { useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
@@ -10,7 +10,7 @@ import {
 } from "@tensorflow/tfjs-layers/dist/layers/core"
 import { debug } from "@/lib/debug"
 import { create } from "zustand"
-import { useTfBackend } from "./tf-backend"
+import { useTfBackend } from "../tf/tf-backend"
 import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
 import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
 

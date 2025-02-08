@@ -1,7 +1,7 @@
 import { createRef, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { Index3D, Neuron, NeuronRefType, Nid } from "@/lib/neuron"
-import { Dataset, useDatasetStore } from "./datasets"
+import { Dataset, useDatasetStore } from "@/data/datasets"
 import { getMeshParams } from "./layer-layout"
 import {
   LayerStateful,
@@ -10,7 +10,7 @@ import {
   LayerType,
 } from "@/three/layer"
 import { debug } from "@/lib/debug"
-import { useActivations } from "./activations"
+import { useActivations } from "../tf/activations"
 
 // TODO: fix rawInput
 

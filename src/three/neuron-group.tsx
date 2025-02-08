@@ -10,7 +10,7 @@ import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "../lib/neuron"
 import { debug } from "@/lib/debug"
 import { useVisConfigStore } from "@/lib/vis-config"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 

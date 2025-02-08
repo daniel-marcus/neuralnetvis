@@ -1,11 +1,11 @@
 import { RefObject } from "react"
 import { LayerStateful } from "./layer"
-import { Neuron, NeuronRefType } from "../lib/neuron"
+import { Neuron, NeuronRefType } from "@/lib/neuron"
 import * as THREE from "three"
 import { useAnimatedPosition } from "@/three/animated-position"
 import { OUTPUT_ORIENT, getNeuronPosition } from "@/lib/layer-layout"
 import { useNeuronSpacing } from "./neuron-group"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const trainingY = useDatasetStore((s) => s.trainingY)

@@ -10,7 +10,7 @@ import {
 import { Neuron, NeuronRefType } from "@/lib/neuron"
 import { useSelected } from "@/lib/neuron-select"
 import { useVisConfigStore } from "@/lib/vis-config"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1

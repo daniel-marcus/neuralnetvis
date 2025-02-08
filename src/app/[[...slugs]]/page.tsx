@@ -1,9 +1,9 @@
-import { DefaultInitialStateSetter } from "@/components/initial-state"
+import { DefaultInitialStateSetter } from "@/lib/initial-state"
 import { TabSetter } from "@/components/menu"
 
-export default async function Page(props: {
-  params: Promise<{ slugs: string[] | undefined }>
-}) {
+type Params = Promise<{ slugs: string[] | undefined }>
+
+export default async function Page(props: { params: Params }) {
   const { slugs } = await props.params
   return (
     <>

@@ -9,9 +9,9 @@ import {
   ControlPanel,
   Arrow,
 } from "@/ui-components"
-import { getModelEvaluation, useTrainingStore } from "@/lib/training"
+import { getModelEvaluation, useTrainingStore } from "@/tf/training"
 import React, { useEffect, useState } from "react"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
 
 export const Train = () => {
@@ -106,7 +106,7 @@ function useEvaluate() {
       Loss: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
     }
-    setStatusText({ data }, { percent: null })
+    setStatusText({ data }, null)
   }
   return evaluate
 }

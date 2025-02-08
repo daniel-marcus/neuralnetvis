@@ -1,7 +1,7 @@
 import { useMemo } from "react"
-import { useTabStore } from "../components/menu"
+import { useTabStore } from "@/components/menu"
 import { useThreeStore } from "@/three/three-store"
-import { useTrainingStore } from "@/lib/training"
+import { useTrainingStore } from "@/tf/training"
 
 export function useController() {
   const three = useThreeStore((s) => s.three)

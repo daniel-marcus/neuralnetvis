@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useSelected } from "@/lib/neuron-select"
-import { normalizeWithSign } from "@/lib/normalization"
+import { normalizeWithSign } from "@/data/normalization"
 import { getHighlightColor } from "../three/neuron-group"
 import { SphereGeometry } from "three"
 import { Neuron } from "../lib/neuron"

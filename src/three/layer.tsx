@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { Neuron, NeuronDef, NeuronRefType, Nid } from "@/lib/neuron"
-import type { Dataset } from "@/lib/datasets"
+import type { Dataset } from "@/data/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { useAnimatedPosition } from "@/three/animated-position"
 import { MeshParams, getOffsetX } from "@/lib/layer-layout"

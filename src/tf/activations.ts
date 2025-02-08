@@ -1,7 +1,10 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect } from "react"
 import { debug } from "@/lib/debug"
-import { normalizeConv2DActivations, normalizeTensor } from "./normalization"
+import {
+  normalizeConv2DActivations,
+  normalizeTensor,
+} from "../data/normalization"
 import { create } from "zustand"
 
 interface LayerActivations {

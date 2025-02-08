@@ -1,5 +1,5 @@
 import { useStatusText } from "@/components/status"
-import { useModelStore, useModelTransition } from "@/lib/model"
+import { useModelStore, useModelTransition } from "@/tf/model"
 import {
   FormEvent,
   useCallback,

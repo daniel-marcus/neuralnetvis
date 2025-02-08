@@ -1,7 +1,7 @@
 "use client"
 
-import { useDatasetStore } from "@/lib/datasets"
-import { HiddenLayerConfigArray, useModelStore } from "@/lib/model"
+import { useDatasetStore } from "@/data/datasets"
+import { HiddenLayerConfigArray, useModelStore } from "@/tf/model"
 import { useEffect } from "react"
 
 export interface InitialState {

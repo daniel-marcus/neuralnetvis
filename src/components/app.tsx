@@ -1,32 +1,26 @@
 "use client"
 
+import React, { ReactNode } from "react"
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
-import React, { ReactNode } from "react"
-import { Model } from "../three/model"
-import { useTraining } from "@/lib/training"
-import { useDatasets } from "@/lib/datasets"
-import { useModel } from "@/lib/model"
+import { useTraining } from "@/tf/training"
+import { useDatasets } from "@/data/datasets"
+import { useModel } from "@/tf/model"
+import { useLockStore } from "./lock"
+import { Model, Lights, DebugUtils, ThreeStoreSetter } from "@/three"
+import { VisWrapper } from "./vis-wrapper"
 import { Menu } from "./menu"
 import { Footer } from "./footer"
-import { ThreeStoreSetter } from "@/three/three-store"
-import { useLockStore } from "./lock"
 import { Gradient } from "./gradient"
-import { DebugUtils } from "@/three/debug-utils"
-import { Lights } from "@/three/lights"
 
 export const App = ({ children }: { children?: ReactNode }) => {
-  const [ds, next] = useDatasets()
+  const ds = useDatasets()
   const [model, isPending] = useModel(ds)
-  const [, batchCount] = useTraining(model, ds, next)
+  const [, batchCount] = useTraining(model, ds)
   const visualizationLocked = useLockStore((s) => s.visualizationLocked)
   return (
-    <div className="relative">
-      <div
-        className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-background select-none overflow-hidden ${
-          visualizationLocked ? "pointer-events-none" : ""
-        }`}
-      >
+    <div>
+      <VisWrapper>
         <Canvas frameloop="demand">
           <Lights />
           <PerspectiveCamera makeDefault position={[-22.5, 0, 35]} />
@@ -36,7 +30,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
           <DebugUtils />
         </Canvas>
         <Footer />
-      </div>
+      </VisWrapper>
       <Gradient />
       <Menu />
       {children}

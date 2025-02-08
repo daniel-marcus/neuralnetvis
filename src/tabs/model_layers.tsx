@@ -4,7 +4,7 @@ import {
   HiddenLayerConfigArray,
   LayerConfigMap,
   useModelStore,
-} from "@/lib/model"
+} from "@/tf/model"
 import {
   ControlPanel,
   InlineButton,

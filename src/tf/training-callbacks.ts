@@ -1,6 +1,6 @@
 import { CustomCallback, getBackend } from "@tensorflow/tfjs"
 import { useTrainingStore, getModelEvaluation } from "./training"
-import { useDatasetStore } from "./datasets"
+import { useDatasetStore } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"

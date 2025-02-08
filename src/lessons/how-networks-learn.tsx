@@ -10,11 +10,11 @@ import {
 import { LessonContent } from "./all-lessons"
 import { useEffect } from "react"
 import { useController } from "@/lib/controller"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 import { useVisConfigStore } from "@/lib/vis-config"
-import { useTrainingStore } from "@/lib/training"
+import { useTrainingStore } from "@/tf/training"
 import { LockButton } from "@/components/lock"
-import { setInitialState } from "@/components/initial-state"
+import { setInitialState } from "@/lib/initial-state"
 import { Controller } from "@react-spring/web"
 
 export const IntroNetworks = (): LessonContent => {

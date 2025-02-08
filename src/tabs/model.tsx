@@ -1,6 +1,6 @@
 import { Box, ControlPanel, InputRow, Slider, Checkbox } from "@/ui-components"
 import { useVisConfigStore } from "@/lib/vis-config"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 import { MyModels } from "./model_my-models"
 import { LayerConfigControl } from "./model_layers"
 

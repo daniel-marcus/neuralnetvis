@@ -1,5 +1,5 @@
 import { Box, MenuBtn, Slider } from "@/ui-components"
-import { useDatasetStore } from "@/lib/datasets"
+import { useDatasetStore } from "@/data/datasets"
 import { useDebugStore } from "@/lib/debug"
 import { datasets } from "@/datasets"
 

@@ -1,7 +1,7 @@
 import { useStatusText } from "@/components/status"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
-import { getAvailableBackends } from "./tf-backend"
+import { getAvailableBackends } from "../tf/tf-backend"
 import { useKeyCommand } from "./utils"
 import { useThreeStore } from "@/three/three-store"
 
