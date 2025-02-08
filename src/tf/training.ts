@@ -117,16 +117,13 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
 
 async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
   const batches = await getAll<DbBatch>(ds.key, type)
+  const isRegression = useDatasetStore.getState().isRegression
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
     const XRaw = tf.concat(xBatchTensors).reshape(ds[type].shapeX)
-
     const X = ds.input?.preprocess ? ds.input.preprocess(XRaw) : XRaw
-    // TODO: regression ...
-    const y = tf.oneHot(
-      batches.flatMap((b) => Array.from(b.ys)),
-      ds.output.size
-    )
+    const yArr = batches.flatMap((b) => Array.from(b.ys))
+    const y = isRegression ? tf.tensor(yArr) : tf.oneHot(yArr, ds.output.size)
     return [X, y] as const
   })
 }

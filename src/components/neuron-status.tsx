@@ -58,9 +58,10 @@ const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
     Bias: bias?.toFixed(2),
     Activation: activation?.toFixed(2),
   }
-  const data = rawInput
-    ? { ..._data, "Raw input": Math.round(rawInput * 100) / 100 }
-    : _data
+  const data =
+    typeof rawInput === "number"
+      ? { ..._data, "Raw input": Math.round(rawInput * 100) / 100 }
+      : _data
   return (
     <div className="w-full">
       <Table data={data} />

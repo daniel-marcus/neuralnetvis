@@ -1,8 +1,7 @@
-import { useCallback, useEffect } from "react"
+import { useEffect } from "react"
 import { useStatusText } from "@/components/status"
 import * as tf from "@tensorflow/tfjs"
 import { create } from "zustand"
-import { useKeyCommand } from "@/lib/utils"
 import { datasets } from "@/datasets"
 import { getData, putData, putDataBatches } from "./indexed-db"
 import { SupportedTypedArray } from "./npy-loader"
@@ -18,6 +17,8 @@ interface DatasetData {
   yTrain: ParsedLike
   xTest: ParsedLike
   yTest: ParsedLike
+  xTrainRaw?: ParsedLike
+  xTestRaw?: ParsedLike
 }
 
 export type DatasetKey =
@@ -57,8 +58,6 @@ interface StoreMeta {
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
-  dataRaw?: DatasetData
-  data?: DatasetData
   train: StoreMeta
   test: StoreMeta
 }
@@ -80,7 +79,7 @@ interface DatasetStore {
   trainingY: number | undefined
 }
 
-export const useDatasetStore = create<DatasetStore>((set, get) => ({
+export const useDatasetStore = create<DatasetStore>((set) => ({
   datasetKey: undefined, // datasets[0].name, //
   setDatasetKey: (key) => set({ datasetKey: key }),
   ds: undefined,
@@ -89,13 +88,11 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
       const totalSamples = ds?.train.shapeX[0] ?? 0
       const max = Math.min(totalSamples, 1000) // first load is triggered with first 1000 samples only
       const i = Math.floor(Math.random() * max) || 1
-      return { ds, i, totalSamples }
+      const isRegression = ds?.task === "regression"
+      return { ds, i, totalSamples, isRegression }
     }),
   totalSamples: 0,
-  get isRegression() {
-    // TODO: getter not working
-    return get().ds?.output.activation === "linear"
-  },
+  isRegression: false,
 
   i: 1,
   setI: (arg) =>
@@ -115,8 +112,6 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
   rawInput: undefined,
   trainingY: undefined,
 }))
-
-let currBatchCache: DbBatch | null = null
 
 export function useDatasets() {
   const datasetKey = useDatasetStore((s) => s.datasetKey)
@@ -152,9 +147,10 @@ export function useDatasets() {
       } else {
         console.log("loading new data into indexedDB ...")
         const { version } = dsDef
-        const { xTrain, yTrain, xTest, yTest } = await dsDef.loadData()
-        await putSamplesToDb(dsDef.key, "train", xTrain, yTrain, version)
-        await putSamplesToDb(dsDef.key, "test", xTest, yTest, version)
+        const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
+          await dsDef.loadData()
+        await saveData(dsDef.key, "train", xTrain, yTrain, xTrainRaw, version)
+        await saveData(dsDef.key, "test", xTest, yTest, xTestRaw, version)
         const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
         const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
         if (!train || !test) {
@@ -169,67 +165,27 @@ export function useDatasets() {
     }
 
     return () => {
-      currBatchCache = null
       setDs(undefined)
       useDatasetStore.setState({ input: undefined, rawInput: undefined })
     }
   }, [datasetKey, setStatusText, setDs])
 
-  useInput(ds)
-
   return ds
-}
-
-function useInput(ds?: Dataset) {
-  const i = useDatasetStore((s) => s.i)
-  useEffect(() => {
-    // useInput
-    if (!ds) return
-    async function getInput() {
-      if (!ds) return
-      const { storeBatchSize, valsPerSample } = ds.train
-      const batchIdx = Math.floor(i / storeBatchSize)
-      const batch =
-        currBatchCache?.index === batchIdx
-          ? currBatchCache
-          : await getData<DbBatch>(ds.key, "train", batchIdx)
-      if (!batch) return
-      const sampleIdx = i % storeBatchSize
-      const data = batch?.xs.slice(
-        sampleIdx * valsPerSample,
-        (sampleIdx + 1) * valsPerSample
-      )
-      const label = batch?.ys[sampleIdx]
-      const rawInput = Array.from(data)
-      const input = tf.tidy(() =>
-        ds.input?.preprocess
-          ? (ds.input.preprocess(tf.tensor(data)).arraySync() as number[])
-          : rawInput
-      )
-      const trainingY = label
-      useDatasetStore.setState({ input, rawInput, trainingY })
-    }
-    getInput()
-    return
-  }, [i, ds])
-
-  const next = useDatasetStore((s) => s.next)
-  const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowLeft", prev)
-  useKeyCommand("ArrowRight", next)
 }
 
 export interface DbBatch {
   index: number
   xs: ParsedLike["data"]
   ys: ParsedLike["data"]
+  xsRaw?: ParsedLike["data"]
 }
 
-async function putSamplesToDb(
+async function saveData(
   dbName: DatasetKey,
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
+  xsRaw: ParsedLike | undefined,
   version: Date,
   storeBatchSize = 100
 ) {
@@ -244,11 +200,16 @@ async function putSamplesToDb(
       i * valsPerSample,
       (i + storeBatchSize) * valsPerSample
     )
+    const batchXsRaw = xsRaw?.data.slice(
+      i * valsPerSample,
+      (i + storeBatchSize) * valsPerSample
+    )
     const batchYs = ys.data.slice(i, i + storeBatchSize)
     const batch = {
       index: batchIdx,
       xs: batchXs,
       ys: batchYs,
+      xsRaw: batchXsRaw,
     }
     batches.push(batch)
   }

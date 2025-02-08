@@ -1,6 +1,6 @@
 import { DatasetDef } from "@/data/datasets"
-// import * as tf from "@tensorflow/tfjs"
-// import { StandardScaler } from "@/lib/normalization"
+import * as tf from "@tensorflow/tfjs"
+import { StandardScaler } from "@/data/normalization"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
 
 export const californiaHousing: DatasetDef = {
@@ -12,8 +12,6 @@ export const californiaHousing: DatasetDef = {
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
   loss: "meanSquaredError",
   input: {
-    // TODO ...
-    // preprocess: (data) => applyStandardScaler(data as number[][]),
     labels: [
       "longitude",
       "latitude",
@@ -37,21 +35,22 @@ export const californiaHousing: DatasetDef = {
       "/data/california_housing/x_test.npz",
       "/data/california_housing/y_test.npz",
     ])
-    // TODO: apply standard scaler
-    return {
-      xTrain,
-      yTrain,
-      xTest,
-      yTest,
-    }
-    /* return tf.tidy(() => {
+    const [xTrainScaled, xTestScaled] = tf.tidy(() => {
       const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
       const scaler = new StandardScaler()
       const trainX = scaler.fitTransform(trainXRaw)
       const testX = scaler.transform(tf.tensor(xTest.data, xTest.shape))
-      const trainY = tf.tensor(yTrain.data)
-      const testY = tf.tensor(yTest.data)
-      return { trainXRaw, trainX, trainY, testX, testY }
-    }) */
+      const xTrainScaled = trainX.reshape([-1]).dataSync() as Float32Array
+      const xTestScaled = testX.reshape([-1]).dataSync() as Float32Array
+      return [xTrainScaled, xTestScaled] as const
+    })
+    return {
+      xTrain: { data: xTrainScaled, shape: xTrain.shape },
+      xTrainRaw: xTrain,
+      yTrain,
+      xTest: { data: xTestScaled, shape: xTest.shape },
+      xTestRaw: xTest,
+      yTest,
+    }
   },
 }
