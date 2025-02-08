@@ -2,6 +2,7 @@ import { DatasetDef } from "@/lib/datasets"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const cifar10: DatasetDef = {
+  key: "cifar10",
   name: "cifar10",
   task: "classification",
   description: "Color images (32x32x3)",

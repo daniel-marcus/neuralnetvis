@@ -2,6 +2,7 @@ import { DatasetDef } from "@/lib/datasets"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const mnist: DatasetDef = {
+  key: "mnist",
   name: "mnist",
   task: "classification",
   description: "Handwritten digits (28x28)",

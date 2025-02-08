@@ -4,6 +4,7 @@ import { StandardScaler } from "@/lib/normalization"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const californiaHousing: DatasetDef = {
+  key: "california_housing",
   name: "california housing",
   task: "regression",
   description: "Predict housing prices (8 features)",

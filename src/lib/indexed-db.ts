@@ -1,28 +1,36 @@
 import { openDB } from "idb"
+import { DatasetKey } from "./datasets"
 
-const DB_NAME = "neuralnetvis_datasets_test" // TODO: change to "neuralnetvis_datasets"
+/* 
+dbName: ds.key
+storeName: "train" | "test" | "meta
+*/
+
+const DB_PREFIX = "nnv_"
 const KEY_PATH = "index"
+const STORE_NAMES = ["train", "test", "meta"] as const
 
-export async function getDb(storeName: string) {
-  const dbInfo = await indexedDB.databases()
-  const existingDb = dbInfo.find((db) => db.name === DB_NAME)
-  const currentVersion = existingDb?.version || 1
-  let db = await openDB(DB_NAME, currentVersion)
-  if (db.objectStoreNames.contains(storeName)) {
-    return db
-  } else {
-    db.close()
-    db = await openDB(DB_NAME, currentVersion + 1, {
-      upgrade(db) {
-        db.createObjectStore(storeName, { keyPath: KEY_PATH })
-      },
-    })
-    return db
-  }
+// TODO: dbName: DatasetDef.name
+type StoreName = (typeof STORE_NAMES)[number]
+
+export function getDb(dbName: DatasetKey) {
+  return openDB(`${DB_PREFIX}${dbName}`, 1, {
+    upgrade(db) {
+      STORE_NAMES.forEach((storeName) => {
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: KEY_PATH })
+        }
+      })
+    },
+  })
 }
 
-export async function putDataBatch<T>(storeName: string, batches: T[]) {
-  const db = await getDb(storeName)
+export async function putDataBatch<T>(
+  dbName: DatasetKey,
+  storeName: StoreName,
+  batches: T[]
+) {
+  const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
   const store = tx.objectStore(storeName)
   batches.forEach((batch) => {
@@ -31,8 +39,12 @@ export async function putDataBatch<T>(storeName: string, batches: T[]) {
   await tx.done
 }
 
-export async function putData<T>(storeName: string, key: string, value: T) {
-  const db = await getDb(storeName)
+export async function putData<T>(
+  dbName: DatasetKey,
+  storeName: StoreName,
+  value: T
+) {
+  const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
   const store = tx.objectStore(storeName)
   await store.put(value)
@@ -40,10 +52,11 @@ export async function putData<T>(storeName: string, key: string, value: T) {
 }
 
 export async function getData<T>(
-  storeName: string,
+  dbName: DatasetKey,
+  storeName: StoreName,
   key: string | number
 ): Promise<T | undefined> {
-  const db = await getDb(storeName)
+  const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readonly")
   const store = tx.objectStore(storeName)
   const res = await store.get(key)
@@ -51,8 +64,11 @@ export async function getData<T>(
   return res
 }
 
-export async function getAll<T>(storeName: string): Promise<T[]> {
-  const db = await getDb(storeName)
+export async function getAll<T>(
+  dbName: DatasetKey,
+  storeName: StoreName
+): Promise<T[]> {
+  const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readonly")
   const store = tx.objectStore(storeName)
   const res = await store.getAll()
@@ -60,12 +76,11 @@ export async function getAll<T>(storeName: string): Promise<T[]> {
   return res
 }
 
-export async function storeExistsAndHasEntries(storeName: string) {
-  const db = await getDb(storeName)
-  if (!db.objectStoreNames.contains(storeName)) {
-    db.close()
-    return false
-  }
+export async function storeHasEntries(
+  dbName: DatasetKey,
+  storeName: StoreName
+) {
+  const db = await getDb(dbName)
   const count = await db.count(storeName)
   db.close()
   return count > 0

@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset, getStoreName } from "./datasets"
+import { Dataset } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
 import { create } from "zustand"
@@ -244,9 +244,7 @@ async function train(
 }
 
 async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
-  const storeName = getStoreName(ds, type)
-  const samples = await getAll<{ data: number[]; label: number }>(storeName)
-  // TODO: normalization ...
+  const samples = await getAll<{ data: number[]; label: number }>(ds.key, type)
   return tf.tidy(() => {
     const _X = tf.tensor(
       samples.map((s) => s.data),
