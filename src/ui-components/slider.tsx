@@ -9,6 +9,7 @@ interface SliderProps {
   step?: number
   showValue?: boolean
   lazyUpdate?: boolean
+  transform?: (v: number) => number
   // isOptiona?: boolean
 }
 
@@ -20,6 +21,7 @@ export const Slider = ({
   onChange,
   showValue,
   lazyUpdate,
+  transform,
 }: SliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -39,7 +41,7 @@ export const Slider = ({
       const clampedValue = Math.min(Math.max(newValue, min), max)
       setCurrVal(clampedValue)
       if (lazyUpdate && active) return
-      else onChange?.(clampedValue)
+      else onChange?.(transform?.(clampedValue) ?? clampedValue)
     }
   })
 
@@ -66,7 +68,9 @@ export const Slider = ({
         {bgContent}
       </div>
       {!!showValue && ( // maybe use input?
-        <div className="flex-none w-[2.5em] text-right">{currVal}</div>
+        <div className="flex-none w-[2.5em] text-right">
+          {transform?.(currVal) ?? currVal}
+        </div>
       )}
     </div>
   )

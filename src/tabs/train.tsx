@@ -59,10 +59,11 @@ const TrainConfigControl = () => {
     <ControlPanel title="config">
       <InputRow label="batchSize">
         <Slider
-          value={config.batchSize}
-          min={1}
-          max={512}
-          onChange={(v) => setConfig({ batchSize: v })}
+          value={Math.log2(config.batchSize)}
+          min={0} // 2^0 = 1
+          max={10} // 2^10 = 1024
+          transform={(v) => 2 ** v}
+          onChange={(batchSize) => setConfig({ batchSize })}
           showValue={true}
         />
       </InputRow>

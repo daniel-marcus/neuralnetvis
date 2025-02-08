@@ -32,7 +32,7 @@ interface TrainingStore {
 
 export const useTrainingStore = create<TrainingStore>((set) => ({
   config: {
-    batchSize: 256,
+    batchSize: 128,
     epochs: 3,
     validationSplit: 0.1,
     silent: true,
