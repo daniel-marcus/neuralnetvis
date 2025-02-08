@@ -11,7 +11,6 @@ import {
 } from "@/ui-components"
 import { getModelEvaluation, useTrainingStore } from "@/lib/training"
 import React, { useEffect, useState } from "react"
-import { useModelStore } from "@/lib/model"
 import { useDatasetStore } from "@/lib/datasets"
 import { useStatusText } from "@/components/status"
 
@@ -97,12 +96,11 @@ const TrainConfigControl = () => {
 }
 
 function useEvaluate() {
-  const model = useModelStore((s) => s.model)
   const ds = useDatasetStore((s) => s.ds)
   const setStatusText = useStatusText((s) => s.setStatusText)
   async function evaluate() {
-    if (!model || !ds) return
-    const { loss, accuracy } = await getModelEvaluation(model, ds)
+    if (!ds) return
+    const { loss, accuracy } = await getModelEvaluation()
     const data = {
       "Test samples": ds.test.shapeX[0],
       Loss: loss?.toFixed(3),

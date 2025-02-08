@@ -1,4 +1,4 @@
-import { setStatus } from "@/components/status"
+import { useStatusText } from "@/components/status"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
 import { getAvailableBackends } from "./tf-backend"
@@ -21,10 +21,12 @@ export function useDebug() {
   useKeyCommand("s", showStats)
 }
 
+const { setStatusText } = useStatusText.getState()
+
 function toggleDebug() {
   useDebugStore.getState().toggleDebug()
   const debug = useDebugStore.getState().debug
-  setStatus(`Debug mode ${debug ? "enabled" : "disabled"}`)
+  setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
   // if (debug) tf.enableDebugMode()
 }
 
@@ -34,7 +36,7 @@ function switchBackend() {
   const currIdx = availableBackends.indexOf(currentBackend)
   const newBackend = availableBackends[(currIdx + 1) % availableBackends.length]
   tf.setBackend(newBackend)
-  setStatus(`Switched backend to ${newBackend}`)
+  setStatusText(`Switched backend to ${newBackend}`)
 }
 
 function showStats() {
@@ -52,7 +54,7 @@ function showStats() {
     Tensors: memoryInfo.numTensors,
     Geometries: gl?.info.memory.geometries,
   }
-  setStatus({ data })
+  setStatusText({ data })
 
   const tfEngine = tf.engine()
   const glInfo = gl?.info

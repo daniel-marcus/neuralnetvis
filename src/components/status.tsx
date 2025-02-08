@@ -1,34 +1,30 @@
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { create } from "zustand"
 
-type StatusOpts = {
-  percent?: number | null
-}
-
 const DISPLAY_TIME = 5 // seconds
 let timeout: NodeJS.Timeout
 
-export const useStatusText = create<{
+interface StatusTextStore {
   percent: number | null
   setPercent: (p: number | null) => void
   statusText: TableProps | ReactNode
-  setStatusText: (t: TableProps | ReactNode, opts?: StatusOpts) => void
-}>((set) => ({
+  setStatusText: (t: TableProps | ReactNode, percent?: number | null) => void
+}
+
+export const useStatusText = create<StatusTextStore>((set) => ({
   percent: null, // -1 for spinner mode
   setPercent: (percent: number | null) => set({ percent }),
   statusText: null,
-  setStatusText: (newText: TableProps | ReactNode, opts?: StatusOpts) => {
+  setStatusText: (newText: TableProps | ReactNode, percent?: number | null) => {
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
       set(() => ({ statusText: null }))
       clearTimeout(timeout)
     }, DISPLAY_TIME * 1000)
-    set(({ percent }) => {
-      return {
-        statusText: newText,
-        percent: typeof opts?.percent !== "undefined" ? opts.percent : percent,
-      }
-    })
+    set(({ percent: oldPercent }) => ({
+      statusText: newText,
+      percent: typeof percent !== "undefined" ? percent : oldPercent,
+    }))
   },
 }))
 
@@ -56,10 +52,6 @@ export const Status = () => {
       {parsedText || keptText.current}
     </div>
   )
-}
-
-export function setStatus(text: TableProps | ReactNode, opts?: StatusOpts) {
-  useStatusText.getState().setStatusText(text, opts)
 }
 
 function isValidReactNode(node: unknown): node is ReactNode {
