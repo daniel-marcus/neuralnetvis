@@ -1,6 +1,6 @@
 import { DatasetDef } from "@/lib/datasets"
-import * as tf from "@tensorflow/tfjs"
-import { StandardScaler } from "@/lib/normalization"
+// import * as tf from "@tensorflow/tfjs"
+// import { StandardScaler } from "@/lib/normalization"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const californiaHousing: DatasetDef = {
@@ -37,7 +37,14 @@ export const californiaHousing: DatasetDef = {
       "/data/california_housing/x_test.npz",
       "/data/california_housing/y_test.npz",
     ])
-    return tf.tidy(() => {
+    // TODO: apply standard scaler
+    return {
+      xTrain,
+      yTrain,
+      xTest,
+      yTest,
+    }
+    /* return tf.tidy(() => {
       const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
       const scaler = new StandardScaler()
       const trainX = scaler.fitTransform(trainXRaw)
@@ -45,6 +52,6 @@ export const californiaHousing: DatasetDef = {
       const trainY = tf.tensor(yTrain.data)
       const testY = tf.tensor(yTest.data)
       return { trainXRaw, trainX, trainY, testX, testY }
-    })
+    }) */
   },
 }
