@@ -27,9 +27,10 @@ function getInputComp<T extends keyof LayerConfigMap>(
     return (
       <Slider
         {...sharedSliderProps}
-        min={1}
-        max={256}
-        value={config.units}
+        min={0}
+        max={10} // 2^10 = 1024
+        value={Math.log2(config.units)}
+        transform={(v) => 2 ** v}
         onChange={(units) => updateLayerConfig({ ...config, units })}
       />
     )
