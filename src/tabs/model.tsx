@@ -15,7 +15,7 @@ export const Model = () => (
 const VisConfigControl = () => {
   const { setVisConfig, ...config } = useVisConfigStore()
   const ds = useDatasetStore((s) => s.ds)
-  const hasColorChannels = (ds?.data.trainX.shape[3] ?? 0) > 1
+  const hasColorChannels = (ds?.train.shapeX[3] ?? 0) > 1
   return (
     <ControlPanel title="visualization" variant="no-bg" collapsed>
       <InputRow label="layerSpacing">

@@ -5,13 +5,25 @@ import { debug } from "./debug"
 import { create } from "zustand"
 import { useKeyCommand } from "./utils"
 import { datasets } from "@/datasets"
+import { Parsed } from "npyjs"
+import {
+  getData,
+  putData,
+  putDataBatch,
+  storeExistsAndHasEntries,
+} from "./indexed-db"
+
+// ParsedLike
+interface ParsedLike {
+  data: Parsed["data"]
+  shape: number[]
+}
 
 interface DatasetData {
-  trainX: tf.Tensor<tf.Rank>
-  trainY: tf.Tensor<tf.Rank>
-  testX?: tf.Tensor<tf.Rank>
-  testY?: tf.Tensor<tf.Rank>
-  trainXRaw?: tf.Tensor<tf.Rank>
+  xTrain: ParsedLike
+  yTrain: ParsedLike
+  xTest: ParsedLike
+  yTest: ParsedLike
 }
 
 export interface DatasetDef {
@@ -24,6 +36,7 @@ export interface DatasetDef {
   loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
+    preprocess?: <T extends tf.Tensor<tf.Rank>>(X: T) => T
   }
   output: {
     size: number
@@ -33,9 +46,18 @@ export interface DatasetDef {
   loadData: () => Promise<DatasetData>
 }
 
+interface StoreMeta {
+  index: string // storeName: mnist_1_train
+  version: number
+  shapeX: number[]
+  shapeY: number[]
+}
+
 export type Dataset = Omit<DatasetDef, "loadData"> & {
   dataRaw?: DatasetData
-  data: DatasetData
+  data?: DatasetData
+  train: StoreMeta
+  test: StoreMeta
 }
 
 interface DatasetStore {
@@ -55,20 +77,21 @@ interface DatasetStore {
   trainingY: number | undefined
 }
 
+const DS_META_STORE = "_ds_meta"
+
 export const useDatasetStore = create<DatasetStore>((set, get) => ({
   datasetKey: undefined, // datasets[0].name, //
   setDatasetKey: (key) => set({ datasetKey: key }),
   ds: undefined,
   setDs: (ds) =>
     set(() => {
-      const totalSamples = ds?.data.trainX.shape[0] ?? 0
+      const totalSamples = ds?.train.shapeX[0] ?? 0
       const i = Math.floor(Math.random() * totalSamples) || 1
-      return { ds, i }
+      return { ds, i, totalSamples }
     }),
-  get totalSamples() {
-    return get().ds?.data.trainX.shape[0] || 0
-  },
+  totalSamples: 0,
   get isRegression() {
+    // TODO: getter not working
     return get().ds?.output.activation === "linear"
   },
 
@@ -79,9 +102,11 @@ export const useDatasetStore = create<DatasetStore>((set, get) => ({
       return { i: newI }
     }),
   next: (step = 1) =>
-    set(({ i, totalSamples }) => ({
-      i: ((i - 1 + step + totalSamples) % totalSamples) + 1,
-    })),
+    set(({ i, totalSamples }) => {
+      return {
+        i: ((i - 1 + step + totalSamples) % totalSamples) + 1,
+      }
+    }),
 
   // maybe move to separate store (current state + activations ...)
   input: undefined,
@@ -100,21 +125,64 @@ export function useDatasets() {
 
   useEffect(() => {
     if (debug()) console.log("loading dataset", datasetKey)
-    const datasetDef = datasets.find((d) => d.name === datasetKey)
-    if (!datasetDef) return
-    let dataRef: DatasetData | undefined = undefined
-    datasetDef.loadData().then((data) => {
-      dataRef = data
-      if (debug()) console.log("loaded dataset", datasetKey)
-      setDs({
-        ...datasetDef,
-        data,
+    const dsDef = datasets.find((d) => d.name === datasetKey)
+    if (!dsDef) return
+
+    async function loadData() {
+      if (!dsDef) return
+      const trainStoreName = getStoreName(dsDef, "train")
+      const testStoreName = getStoreName(dsDef, "test")
+      const trainStoreMeta = await getData<StoreMeta>(
+        DS_META_STORE,
+        trainStoreName
+      )
+      const testStoreMeta = await getData<StoreMeta>(
+        DS_META_STORE,
+        testStoreName
+      )
+      const hasData = await storeExistsAndHasEntries(trainStoreName)
+      console.log({
+        trainStoreMeta,
+        testStoreMeta,
+        hasData,
+        trainStoreName,
+        testStoreName,
       })
-    })
-    return () => {
-      if (dataRef) {
-        Object.values(dataRef).forEach((t) => t?.dispose())
+      // TODO: add version check
+      if (trainStoreMeta && testStoreMeta && hasData) {
+        console.log("found data in indexedDB")
+        setDs({
+          ...dsDef,
+          train: trainStoreMeta,
+          test: testStoreMeta,
+        })
+      } else {
+        console.log("creating new indexedDB store ...")
+        const { version } = dsDef
+        const { xTrain, yTrain, xTest, yTest } = await dsDef.loadData()
+        await putSamplesToDb(trainStoreName, xTrain, yTrain, version)
+        await putSamplesToDb(testStoreName, xTest, yTest, version)
+        const trainStoreMeta = await getData<StoreMeta>(
+          DS_META_STORE,
+          trainStoreName
+        )
+        const testStoreMeta = await getData<StoreMeta>(
+          DS_META_STORE,
+          testStoreName
+        )
+        if (!trainStoreMeta || !testStoreMeta) {
+          throw new Error("Failed to create indexedDB store")
+        }
+        setDs({
+          ...dsDef,
+          train: trainStoreMeta,
+          test: testStoreMeta,
+        })
       }
+    }
+    loadData()
+
+    return () => {
       setDs(undefined)
       useDatasetStore.setState({ input: undefined, rawInput: undefined })
     }
@@ -123,43 +191,26 @@ export function useDatasets() {
   useEffect(() => {
     if (!ds) return
     async function getInput() {
-      if (!ds || !i) return [undefined, undefined, undefined] as const
-      const { trainX, trainXRaw, trainY } = ds.data
-      const [, ...dims] = trainX.shape
-      const valsPerSample = dims.reduce((a, b) => a * b, 1)
-      const index = i - 1
-      const [inp, inpRaw, y] = tf.tidy(() => {
-        const isOneHot = ds?.output.activation === "softmax"
-        const inp = trainX
-          .slice([index, 0], [1, ...dims])
-          .reshape([valsPerSample]) as tf.Tensor1D
-        const inpRaw = trainXRaw
-          ?.slice([index, 0], [1, ...dims])
-          .reshape([valsPerSample]) as tf.Tensor1D
-        const y = isOneHot
-          ? (trainY
-              .slice([i - 1, 0], [1, ds.output.size])
-              .argMax(-1) as tf.Tensor1D)
-          : (trainY.slice([i - 1], [1]) as tf.Tensor1D)
-        return [inp, inpRaw, y] as const
-      })
-      try {
-        const input = await inp.array()
-        const rawInput = await inpRaw?.array()
-        const yArr = await y.array()
-        const trainingY = Array.isArray(yArr)
-          ? yArr[0]
-          : (yArr as number | undefined)
-        useDatasetStore.setState({ input, rawInput, trainingY })
-      } catch (e) {
-        console.log("Error getting input", e)
-      } finally {
-        inp.dispose()
-        inpRaw?.dispose()
-        y.dispose()
-      }
+      if (!ds) return
+      const storeName = getStoreName(ds, "train")
+      // TODO: add types (TypedArary, Float32Array, ...)
+      const sample = await getData<{
+        data: number[] | Uint8Array | Float32Array
+        label: number | undefined
+      }>(storeName, i)
+      if (!sample) return
+      const { data, label } = sample
+      const rawInput = Array.from(data)
+      const input = tf.tidy(() =>
+        ds.input?.preprocess
+          ? (ds.input.preprocess(tf.tensor(data)).arraySync() as number[])
+          : rawInput
+      )
+      const trainingY = label
+      useDatasetStore.setState({ input, rawInput, trainingY })
     }
     getInput()
+    return
   }, [i, ds])
 
   const next = useDatasetStore((s) => s.next)
@@ -168,4 +219,39 @@ export function useDatasets() {
   useKeyCommand("ArrowRight", next)
 
   return [ds, next] as const
+}
+
+export function getStoreName(ds: DatasetDef | Dataset, type: "train" | "test") {
+  return `${ds.name}_${type}`
+}
+
+async function putSamplesToDb(
+  storeName: string,
+  xs: ParsedLike,
+  ys: ParsedLike,
+  version: number,
+  batchSize = 500
+) {
+  const [length, ...dims] = xs.shape
+  const valsPerSample = dims.reduce((a, b) => a * b)
+  const samples = Array.from({ length }).map((_, index) => {
+    const data = xs.data.slice(
+      index * valsPerSample,
+      (index + 1) * valsPerSample
+    )
+    const label = ys.data[index]
+    return { index, data, label }
+  })
+  const startTime = Date.now()
+  for (let i = 0; i < samples.length; i += batchSize) {
+    const batch = samples.slice(i, i + batchSize)
+    await putDataBatch(storeName, batch)
+  }
+  await putData<StoreMeta>(DS_META_STORE, storeName, {
+    index: storeName,
+    version,
+    shapeX: xs.shape,
+    shapeY: ys.shape,
+  })
+  console.log("IndexedDB putDataBatch time:", Date.now() - startTime)
 }

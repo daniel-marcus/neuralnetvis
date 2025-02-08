@@ -1,11 +1,12 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset } from "./datasets"
+import { Dataset, getStoreName } from "./datasets"
 import { useStatusText } from "@/components/status"
 import { TrainingLog, useLogStore } from "@/ui-components/logs-plot"
 import { create } from "zustand"
 import { useKeyCommand } from "./utils"
 import { setBackendIfAvailable } from "./tf-backend"
+import { getAll } from "./indexed-db"
 
 let epochCount = 0
 let sessionEpochCount = 0
@@ -85,7 +86,7 @@ export function useTraining(
       return
     }
     const { validationSplit, batchSize, epochs: _epochs, silent } = config
-    const totalSamples = ds.data.trainX.shape[0]
+    const totalSamples = ds.train.shapeX[0]
     const trainSampleSize = Math.floor(totalSamples * (1 - validationSplit))
     const isNewSession = !trainingPromise
     if (isNewSession) {
@@ -226,24 +227,46 @@ async function train(
 
   options = { ...defaultOptions, ...options }
 
-  const X = ds.data.trainX
-  const y = ds.data.trainY
+  // const X = ds.data.trainX
+  // const y = ds.data.trainY
+  const [X, y] = await getDbDataAsTensors(ds, "train")
 
   try {
+    // TODO: fitDataset ...
     trainingPromise = model.fit(X, y, options)
     const history = await trainingPromise
     return history
   } finally {
-    // X.dispose()
-    // y.dispose()
+    // TODO: maybe cache?
+    X.dispose()
+    y.dispose()
   }
 }
 
+async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
+  const storeName = getStoreName(ds, type)
+  const samples = await getAll<{ data: number[]; label: number }>(storeName)
+  // TODO: normalization ...
+  return tf.tidy(() => {
+    const _X = tf.tensor(
+      samples.map((s) => s.data),
+      ds[type].shapeX
+    )
+    const X = ds.input?.preprocess ? ds.input.preprocess(_X) : _X
+    // TODO: regression ...
+    const y = tf.oneHot(
+      samples.map((s) => s.label),
+      ds.output.size
+    )
+    return [X, y] as const
+  })
+}
+
 export async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
-  if (!ds.data.testX || !ds.data.testY)
-    return { loss: undefined, accuracy: undefined }
-  const X = ds.data.testX
-  const y = ds.data.testY
+  if (!ds) return { loss: undefined, accuracy: undefined }
+
+  const [X, y] = await getDbDataAsTensors(ds, "test")
+
   await tf.ready()
   const result = model.evaluate(X, y, { batchSize: 64 })
   const [lossT, accuracyT] = Array.isArray(result) ? result : [result]
@@ -255,6 +278,8 @@ export async function getModelEvaluation(model: tf.LayersModel, ds: Dataset) {
     console.warn(e)
     return { loss: undefined, accuracy: undefined }
   } finally {
+    X.dispose()
+    y.dispose()
     lossT.dispose()
     accuracyT?.dispose()
   }

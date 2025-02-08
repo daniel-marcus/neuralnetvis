@@ -1,5 +1,4 @@
 import { DatasetDef } from "@/lib/datasets"
-import * as tf from "@tensorflow/tfjs"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const cifar10: DatasetDef = {
@@ -9,6 +8,9 @@ export const cifar10: DatasetDef = {
   version: 1,
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   loss: "categoricalCrossentropy",
+  input: {
+    preprocess: (inputTensor) => inputTensor.div(255),
+  },
   output: {
     size: 10,
     activation: "softmax",
@@ -35,18 +37,23 @@ export const cifar10: DatasetDef = {
         "/data/cifar10_20k/x_test.npz",
         "/data/cifar10_20k/y_test.npz",
       ])
-    return tf.tidy(() => {
-      const combinedTrainX = tf.concat([
-        tf.tensor(xTrain1.data, xTrain1.shape),
-        tf.tensor(xTrain2.data, xTrain2.shape),
-        tf.tensor(xTrain3.data, xTrain3.shape),
-      ])
-      // normalize: vals / 255
-      const trainX = combinedTrainX.div(255)
-      const testX = tf.tensor(xTest.data, xTest.shape).div(255)
-      const trainY = tf.oneHot(yTrain.data, 10)
-      const testY = tf.oneHot(yTest.data, 10)
-      return { trainX, trainY, testX, testY }
-    })
+    const [, ...dims] = xTrain1.shape
+    const length = xTrain1.shape[0] + xTrain2.shape[0] + xTrain3.shape[0]
+    const xTrainData = new Uint8Array(length * dims.reduce((a, b) => a * b, 1))
+
+    // concat xTrain1, xTrain2, xTrain3
+    let offset = 0
+    for (const arr of [xTrain1.data, xTrain2.data, xTrain3.data]) {
+      xTrainData.set(arr, offset)
+      offset += arr.length
+    }
+
+    const xTrain = {
+      shape: [length, ...dims],
+      data: xTrainData,
+      dtype: xTrain1.dtype,
+      fortranOrder: xTrain1.fortranOrder,
+    }
+    return { xTrain, yTrain, xTest, yTest }
   },
 }

@@ -123,7 +123,7 @@ export function useModel(ds?: Dataset) {
   useEffect(() => {
     // useModelStatus
     if (isPending || !model || !ds) return
-    const [totalSamples] = ds.data.trainX.shape
+    const totalSamples = ds.train.shapeX[0]
     const layersStr = model.layers
       .map((l) => {
         const name = l.getClassName().replace("InputLayer", "Input")
@@ -173,7 +173,7 @@ export function useModel(ds?: Dataset) {
 }
 
 function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
-  const [, ...dims] = ds.data.trainX.shape
+  const [, ...dims] = ds.train.shapeX
   const inputShape = [null, ...dims] as [null, ...number[]]
 
   const model = tf.sequential()

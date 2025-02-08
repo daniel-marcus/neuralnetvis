@@ -1,5 +1,4 @@
 import { DatasetDef } from "@/lib/datasets"
-import * as tf from "@tensorflow/tfjs"
 import { fetchMutlipleNpzWithProgress } from "@/lib/npy-loader"
 
 export const fashionMnist: DatasetDef = {
@@ -9,6 +8,9 @@ export const fashionMnist: DatasetDef = {
   version: 1,
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   loss: "categoricalCrossentropy",
+  input: {
+    preprocess: (inputTensor) => inputTensor.div(255),
+  },
   output: {
     size: 10,
     activation: "softmax",
@@ -32,14 +34,14 @@ export const fashionMnist: DatasetDef = {
       "/data/fashion_mnist_20k/x_test.npz",
       "/data/fashion_mnist_20k/y_test.npz",
     ])
-    return tf.tidy(() => {
-      // add channel dimension [,28,28] -> [,28,28,1], needed for Conv2D
-      // normalize: vals / 255
-      const trainX = tf.tensor(xTrain.data, [...xTrain.shape, 1]).div(255)
-      const testX = tf.tensor(xTest.data, [...xTest.shape, 1]).div(255)
-      const trainY = tf.oneHot(yTrain.data, 10)
-      const testY = tf.oneHot(yTest.data, 10)
-      return { trainX, trainY, testX, testY }
-    })
+    // add depth dim for Conv2D layers
+    xTrain.shape = [...xTrain.shape, 1]
+    xTest.shape = [...xTest.shape, 1]
+    return {
+      xTrain,
+      yTrain,
+      xTest,
+      yTest,
+    }
   },
 }
