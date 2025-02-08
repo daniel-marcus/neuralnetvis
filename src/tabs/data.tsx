@@ -1,7 +1,8 @@
-import { Box, MenuBtn, Slider } from "@/ui-components"
+import { Box, ControlPanel, MenuBtn, Slider } from "@/ui-components"
 import { useDatasetStore } from "@/data/datasets"
 import { useDebugStore } from "@/lib/debug"
 import { datasets } from "@/datasets"
+import { MyDatasets } from "./data_my-datasets"
 
 export const Data = () => {
   const currDatasetKey = useDatasetStore((s) => s.datasetKey)
@@ -10,14 +11,17 @@ export const Data = () => {
   return (
     <Box>
       <div className="flex flex-col gap-2">
+        <ControlPanel title="my datasets" collapsed>
+          <MyDatasets />
+        </ControlPanel>
         <div className="flex flex-col">
           {datasets
             .filter((d) => isDebug || !d.disabled)
             .map((d) => (
               <MenuBtn
                 key={d.name}
-                isActive={currDatasetKey === d.name}
-                onClick={() => setDatasetKey(d.name)}
+                isActive={currDatasetKey === d.key}
+                onClick={() => setDatasetKey(d.key)}
               >
                 <strong>{d.name}</strong> ({d.task})<br />
                 {d.description}

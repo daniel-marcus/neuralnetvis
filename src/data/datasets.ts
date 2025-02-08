@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { useStatusText } from "@/components/status"
 import * as tf from "@tensorflow/tfjs"
-import { debug } from "@/lib/debug"
 import { create } from "zustand"
 import { useKeyCommand } from "@/lib/utils"
 import { datasets } from "@/datasets"
@@ -126,8 +125,7 @@ export function useDatasets() {
   const setStatusText = useStatusText((s) => s.setStatusText)
 
   useEffect(() => {
-    if (debug()) console.log("loading dataset", datasetKey)
-    const dsDef = datasets.find((d) => d.name === datasetKey)
+    const dsDef = datasets.find((d) => d.key === datasetKey)
     if (!dsDef) return
 
     loadData()
