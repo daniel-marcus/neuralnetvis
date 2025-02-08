@@ -5,7 +5,7 @@ import { debug } from "./debug"
 import { create } from "zustand"
 import { useKeyCommand } from "./utils"
 import { datasets } from "@/datasets"
-import { getData, putData, putDataBatches, storeHasEntries } from "./indexed-db"
+import { getData, putData, putDataBatches } from "./indexed-db"
 import { SupportedTypedArray } from "./npy-loader"
 
 // ParsedLike
@@ -32,7 +32,7 @@ export interface DatasetDef {
   name: string
   task: "classification" | "regression"
   description: string
-  version: number
+  version: Date
   disabled?: boolean
   aboutUrl: string
   loss: "categoricalCrossentropy" | "meanSquaredError"
@@ -50,7 +50,7 @@ export interface DatasetDef {
 
 interface StoreMeta {
   index: string // storeName: mnist_1_train
-  version: number
+  version: Date
   shapeX: number[]
   shapeY: number[]
   storeBatchSize: number
@@ -135,8 +135,13 @@ export function useDatasets() {
 
     async function loadData() {
       if (!dsDef) return
-      const exists = await storeHasEntries(dsDef.key, "meta")
-      if (exists) {
+      const existingTrain = await getData<StoreMeta>(dsDef.key, "meta", "train")
+      const hasLatestData =
+        existingTrain?.version.getTime() === dsDef.version.getTime()
+      if (existingTrain && !hasLatestData) {
+        console.log("old data in indexedDB, updating ...")
+      }
+      if (existingTrain && hasLatestData) {
         console.log("found data in indexedDB")
         const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
         const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
@@ -149,7 +154,7 @@ export function useDatasets() {
           test,
         })
       } else {
-        console.log("creating new indexedDB store ...")
+        console.log("loading new data into indexedDB ...")
         const { version } = dsDef
         const { xTrain, yTrain, xTest, yTest } = await dsDef.loadData()
         await putSamplesToDb(dsDef.key, "train", xTrain, yTrain, version)
@@ -225,7 +230,7 @@ async function putSamplesToDb(
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
-  version: number,
+  version: Date,
   storeBatchSize = 100
 ) {
   const [totalSamples, ...dims] = xs.shape
@@ -257,5 +262,5 @@ async function putSamplesToDb(
     storeBatchSize,
     valsPerSample,
   })
-  console.log("IndexedDB putDataBatch time:", Date.now() - startTime)
+  console.log("IndexedDB putDataBatches time:", Date.now() - startTime)
 }

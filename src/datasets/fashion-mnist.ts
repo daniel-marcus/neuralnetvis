@@ -6,7 +6,7 @@ export const fashionMnist: DatasetDef = {
   name: "fashion mnist",
   task: "classification",
   description: "Clothing items (28x28)",
-  version: 1,
+  version: new Date("2025-02-08"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   loss: "categoricalCrossentropy",
   input: {

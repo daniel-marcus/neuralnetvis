@@ -6,7 +6,7 @@ export const mnist: DatasetDef = {
   name: "mnist",
   task: "classification",
   description: "Handwritten digits (28x28)",
-  version: 1,
+  version: new Date("2025-02-08"),
   aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
   loss: "categoricalCrossentropy",
   input: {

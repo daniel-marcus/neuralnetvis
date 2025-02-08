@@ -6,7 +6,7 @@ export const cifar10: DatasetDef = {
   name: "cifar10",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: 1,
+  version: new Date("2025-02-08"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   loss: "categoricalCrossentropy",
   input: {

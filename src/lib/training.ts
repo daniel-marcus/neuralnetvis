@@ -227,8 +227,6 @@ async function train(
 
   options = { ...defaultOptions, ...options }
 
-  // const X = ds.data.trainX
-  // const y = ds.data.trainY
   const [X, y] = await getDbDataAsTensors(ds, "train")
 
   try {
