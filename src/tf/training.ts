@@ -127,7 +127,6 @@ export async function getSamplesAsBatch(
   const firstIdxInStoreBatch = firstSampleIdx % storeBatchSize
 
   return tf.tidy(() => {
-    const allXs = dbBatches.flatMap((b) => Array.from(b.xs))
     const allYs = dbBatches.flatMap((b) => Array.from(b.ys))
     const slicedYs = allYs.slice(
       firstIdxInStoreBatch,
@@ -135,8 +134,10 @@ export async function getSamplesAsBatch(
     )
     const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
     const shapeX = [currBatchSize, ...ds[type].shapeX.slice(1)]
+    const xTensors = dbBatches.map((b) => tf.tensor(b.xs))
     const _xs = tf
-      .tensor(allXs)
+      .concat(xTensors)
+      .flatten()
       .slice(
         firstIdxInStoreBatch * valsPerSample,
         currBatchSize * valsPerSample
