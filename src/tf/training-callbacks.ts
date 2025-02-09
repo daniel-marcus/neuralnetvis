@@ -5,6 +5,10 @@ import { useStatusText } from "@/components/status"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 import throttle from "lodash.throttle"
+import {
+  resolveScalarsInLogs,
+  UnresolvedLogs,
+} from "@tensorflow/tfjs-layers/dist/logs"
 
 const THROTTLE = 30
 
@@ -125,18 +129,27 @@ export class ProgressCb extends CustomCallback {
 }
 
 export class LogsPlotCb extends CustomCallback {
+  private epoch = 0
   private addLogs = throttle(useLogStore.getState().addLogs, THROTTLE)
   constructor() {
     super({
+      onEpochBegin: (epoch) => {
+        this.epoch = epoch
+      },
       onEpochEnd: (epoch, logs) => {
         if (!logs) return
         this.addLogs([{ epoch, ...logs }])
       },
-      onYield: async (epoch, _, logs) => {
-        if (!logs) return
-        this.addLogs([{ epoch, ...logs }])
-      },
     })
+  }
+  async onBatchEnd(batchIndex: number, logs: UnresolvedLogs) {
+    if (!logs) return
+    if (batchIndex % 10 === 0) {
+      // log every 10th batch
+      // logging onYield might be slightly faster, but looks less smooth
+      await resolveScalarsInLogs(logs)
+      this.addLogs([{ epoch: this.epoch, ...logs }])
+    }
   }
 }
 

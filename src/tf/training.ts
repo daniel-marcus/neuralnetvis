@@ -35,7 +35,7 @@ export const useTrainingStore = create<TrainingStore>((set) => ({
   config: {
     batchSize: 256,
     epochs: 10,
-    validationSplit: 0.1,
+    validationSplit: 0.0,
     silent: true,
     fitDataset: true,
   },
@@ -81,7 +81,6 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         new ProgressCb(),
         new LogsPlotCb(),
       ]
-      // const callbacks = [new DebugCb()]
       await train(model, ds, {
         batchSize,
         epochs,
