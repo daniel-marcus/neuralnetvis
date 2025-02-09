@@ -105,15 +105,18 @@ type FitArgs = {
 // type FitArgs = tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
 
 async function* dataGenerator(ds: Dataset, type: "train" | "test") {
+  const isRegression = useDatasetStore.getState().isRegression
   const totalSamples = ds[type].shapeX[0]
   let i = 0
   while (i < totalSamples) {
     const [_X, y] = await getSample(ds, type, i)
-    const shape = [1, ...ds[type].shapeX.slice(1)]
-    yield {
-      xs: ds.input?.preprocess?.(tf.tensor(_X, shape)) ?? tf.tensor(_X, shape),
-      ys: tf.oneHot(y, ds.output.size), // TODO: regression
-    }
+    yield tf.tidy(() => {
+      const shape = [1, ...ds[type].shapeX.slice(1)]
+      const xs =
+        ds.input?.preprocess?.(tf.tensor(_X, shape)) ?? tf.tensor(_X, shape)
+      const ys = isRegression ? tf.tensor(y) : tf.oneHot(y, ds.output.size)
+      return { xs, ys }
+    })
     i++
   }
 }
@@ -128,13 +131,15 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
 
   const isFitDataset = useTrainingStore.getState().config.fitDataset
 
-  let X: tf.Tensor | null = null
-  let y: tf.Tensor | null = null
-
-  let promise: Promise<tf.History | void> | null = null
+  let history: tf.History | void | undefined = undefined
   if (!isFitDataset) {
-    ;[X, y] = await getDbDataAsTensors(ds, "train")
-    promise = model.fit(X, y, options)
+    const [X, y] = await getDbDataAsTensors(ds, "train")
+    const trainingPromise = model.fit(X, y, options)
+    useTrainingStore.setState({ trainingPromise })
+    history = await trainingPromise.then(() => {
+      X.dispose()
+      y.dispose()
+    })
   } else {
     // test: with fitDataset ...
     const { batchSize, validationSplit, ...otherOptions } = options
@@ -146,17 +151,13 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const trainDataset = dataset.take(trainSize).batch(batchSize)
     const validationDataset = dataset.skip(trainSize).batch(batchSize)
 
-    promise = model.fitDataset(trainDataset, {
+    const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
       validationData: validationDataset,
     })
+    // TODO: dispose tensors ?
+    history = await trainingPromise
   }
-
-  useTrainingStore.setState({ trainingPromise: promise })
-  const history = await promise.then(() => {
-    X?.dispose()
-    y?.dispose()
-  })
 
   return history
 }

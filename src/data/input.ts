@@ -50,12 +50,12 @@ export async function getSample(
   const { storeBatchSize, valsPerSample } = ds[type]
   const batchIdx = Math.floor(i / storeBatchSize)
   const batchCacheKey: BatchCacheKey = `${ds.key}_${type}`
-  const batch =
-    currBatchCache[batchCacheKey]?.index === batchIdx
-      ? currBatchCache[batchCacheKey]
-      : await getData<DbBatch>(ds.key, type, batchIdx)
+  const hasCached = currBatchCache[batchCacheKey]?.index === batchIdx
+  const batch = hasCached
+    ? currBatchCache[batchCacheKey]
+    : await getData<DbBatch>(ds.key, type, batchIdx)
   if (!batch) return []
-  currBatchCache = { [batchCacheKey]: batch }
+  if (!hasCached) currBatchCache = { [batchCacheKey]: batch }
   const sampleIdx = i % storeBatchSize
   const sliceIdxs = [sampleIdx * valsPerSample, (sampleIdx + 1) * valsPerSample]
   const X = batch.xs.slice(...sliceIdxs)
