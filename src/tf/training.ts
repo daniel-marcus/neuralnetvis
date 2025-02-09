@@ -7,7 +7,7 @@ import { useKeyCommand } from "@/lib/utils"
 import { setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/indexed-db"
 import { useModelStore } from "./model"
-import { LogsPlotCb, ProgressCb, UpdateCb } from "./training-callbacks"
+import { UpdateCb, ProgressCb, LogsPlotCb } from "./training-callbacks"
 
 interface TrainingConfig {
   batchSize: number
@@ -34,10 +34,10 @@ interface TrainingStore {
 export const useTrainingStore = create<TrainingStore>((set) => ({
   config: {
     batchSize: 256,
-    epochs: 3,
+    epochs: 10,
     validationSplit: 0.1,
     silent: true,
-    fitDataset: false,
+    fitDataset: true,
   },
   setConfig: (newConfig) =>
     set(({ config }) => ({ config: { ...config, ...newConfig } })),
@@ -55,7 +55,7 @@ export const useTrainingStore = create<TrainingStore>((set) => ({
   epochCount: 0,
   setEpochCount: (epochCount) => set({ epochCount }),
   reset: () => {
-    useLogStore.getState().setLogs([])
+    useLogStore.getState().resetLogs()
     set({ isTraining: false, batchCount: 0, epochCount: 0 })
   },
 }))
@@ -75,7 +75,13 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
     async function startTraining() {
       if (!model || !ds) return
       if (silent) await setBackendIfAvailable("webgpu") // use webgpu for silent training (faster)
-      const callbacks = [new UpdateCb(), new ProgressCb(), new LogsPlotCb()]
+      const callbacks = [
+        // new DebugCb(),
+        new UpdateCb(),
+        new ProgressCb(),
+        new LogsPlotCb(),
+      ]
+      // const callbacks = [new DebugCb()]
       await train(model, ds, {
         batchSize,
         epochs,

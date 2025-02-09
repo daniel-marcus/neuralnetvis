@@ -21,24 +21,18 @@ export type TrainingLog = {
   val_acc?: number // for epoch only
 }
 
-export type TrainingLogSetter = (
-  arg: TrainingLog[] | ((prev: TrainingLog[]) => TrainingLog[])
-) => void
-
 interface LogsStore {
   logs: TrainingLog[]
-  setLogs: TrainingLogSetter
   hasLogs: () => boolean
+  resetLogs: () => void
+  addLogs: (logs: TrainingLog[]) => void
 }
 
 export const useLogStore = create<LogsStore>((set, get) => ({
   logs: [] as TrainingLog[],
   hasLogs: () => get().logs.length > 0,
-  setLogs: (arg) =>
-    set((state) => {
-      const newVal = typeof arg === "function" ? arg(state.logs) : arg
-      return { logs: newVal }
-    }),
+  resetLogs: () => set({ logs: [] }),
+  addLogs: (logs) => set((state) => ({ logs: [...state.logs, ...logs] })),
 }))
 
 type TooltipContent = React.ReactNode | null

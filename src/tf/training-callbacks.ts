@@ -4,6 +4,9 @@ import { useDatasetStore } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
+import throttle from "lodash.throttle"
+
+const THROTTLE = 30
 
 type FitParams = {
   // passed in model.fit()
@@ -64,11 +67,12 @@ export class UpdateCb extends CustomCallback {
 export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
-  private setStatus = useStatusText.getState().setStatusText
+  private setStatus = throttle(useStatusText.getState().setStatusText, THROTTLE)
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0
   declare params: TypedParams
+
   constructor() {
     super({
       onTrainBegin: () => {
@@ -81,22 +85,6 @@ export class ProgressCb extends CustomCallback {
           this.firstRun = false
           this.initialEpoch = epoch
         }
-      },
-      onBatchEnd: (batchIndex: number) => {
-        this.prochessedBatches++
-        const epochs = this.params.epochs - this.initialEpoch
-        const sessionEpoch = this.epoch - this.initialEpoch
-        const totalPercent =
-          this.prochessedBatches / (epochs * this.epochBatches)
-        const epochPercent = (batchIndex + 1) / this.epochBatches
-        const elapsedTime = performance.now() - this.startTime
-        const secPerEpoch = elapsedTime / (sessionEpoch + epochPercent) / 1000
-        const data = {
-          Epoch: `${this.epoch + 1}/${this.params.epochs}`,
-          Batch: `${batchIndex + 1}/${this.epochBatches}`,
-          "": `${secPerEpoch.toFixed(1)}s/epoch`,
-        }
-        this.setStatus({ title: "Training ...", data }, totalPercent)
       },
       onTrainEnd: async () => {
         const { accuracy, loss } = await getModelEvaluation()
@@ -111,28 +99,57 @@ export class ProgressCb extends CustomCallback {
       },
     })
   }
+
   get epochBatches() {
     return (
       this.params.steps ??
       Math.ceil(this.params.samples / this.params.batchSize)
     )
   }
+
+  async onBatchEnd(batchIndex: number) {
+    this.prochessedBatches++
+    const epochs = this.params.epochs - this.initialEpoch
+    const sessionEpoch = this.epoch - this.initialEpoch
+    const totalPercent = this.prochessedBatches / (epochs * this.epochBatches)
+    const epochPercent = (batchIndex + 1) / this.epochBatches
+    const elapsedTime = performance.now() - this.startTime
+    const secPerEpoch = elapsedTime / (sessionEpoch + epochPercent) / 1000
+    const data = {
+      Epoch: `${this.epoch + 1}/${this.params.epochs}`,
+      Batch: `${batchIndex + 1}/${this.epochBatches}`,
+      "": `${secPerEpoch.toFixed(1)}s/epoch`,
+    }
+    this.setStatus({ title: "Training ...", data }, totalPercent)
+  }
 }
 
 export class LogsPlotCb extends CustomCallback {
-  private epoch = 0
-  private setLogs = useLogStore.getState().setLogs
+  private addLogs = throttle(useLogStore.getState().addLogs, THROTTLE)
   constructor() {
     super({
-      onEpochBegin: (epoch) => {
-        this.epoch = epoch
+      onEpochEnd: (epoch, logs) => {
+        if (!logs) return
+        this.addLogs([{ epoch, ...logs }])
       },
-      onBatchEnd: (_, log) => {
-        const { epoch } = this
-        if (log) this.setLogs((prev) => [...prev, { epoch, ...log }])
+      onYield: async (epoch, _, logs) => {
+        if (!logs) return
+        this.addLogs([{ epoch, ...logs }])
       },
-      onEpochEnd: (epoch, log) => {
-        if (log) this.setLogs((prev) => [...prev, { epoch, ...log }])
+    })
+  }
+}
+
+export class DebugCb extends CustomCallback {
+  private startTime = 0
+  constructor() {
+    super({
+      onTrainBegin: () => {
+        this.startTime = performance.now()
+      },
+      onTrainEnd: () => {
+        console.log(performance.now() - this.startTime)
+        useTrainingStore.getState().setIsTraining(false)
       },
     })
   }
