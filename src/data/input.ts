@@ -4,39 +4,20 @@ import { useKeyCommand } from "@/lib/utils"
 import { getData } from "./indexed-db"
 import * as tf from "@tensorflow/tfjs"
 
-let currBatchCache: DbBatch | null = null
-
 export function useInput(ds?: Dataset) {
   const i = useDatasetStore((s) => s.i)
 
   useEffect(() => {
-    // useInput
     if (!ds) return
     async function getInput() {
       if (!ds) return
-      const { storeBatchSize, valsPerSample } = ds.train
-      const batchIdx = Math.floor(i / storeBatchSize)
-      const batch =
-        currBatchCache?.index === batchIdx
-          ? currBatchCache
-          : await getData<DbBatch>(ds.key, "train", batchIdx)
-      if (!batch) return
-      const sampleIdx = i % storeBatchSize
-      const data = batch.xs.slice(
-        sampleIdx * valsPerSample,
-        (sampleIdx + 1) * valsPerSample
-      )
-      const dataRaw = batch.xsRaw?.slice(
-        sampleIdx * valsPerSample,
-        (sampleIdx + 1) * valsPerSample
-      )
-      const label = batch.ys[sampleIdx]
+      const [data, label, dataRaw] = await getSample(ds, "train", i, true)
       const _input = Array.from(data)
       const rawInput = dataRaw ? Array.from(dataRaw) : _input
-      const input = tf.tidy(() =>
-        ds.input?.preprocess
-          ? (ds.input.preprocess(tf.tensor(data)).arraySync() as number[])
-          : _input
+      const input = tf.tidy(
+        () =>
+          (ds.input?.preprocess?.(tf.tensor(data)).arraySync() as number[]) ??
+          _input
       )
       const trainingY = label
       useDatasetStore.setState({ input, rawInput, trainingY })
@@ -47,7 +28,7 @@ export function useInput(ds?: Dataset) {
 
   useEffect(() => {
     return () => {
-      currBatchCache = null
+      currBatchCache = {}
     }
   }, [ds])
 
@@ -55,4 +36,30 @@ export function useInput(ds?: Dataset) {
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowLeft", prev)
   useKeyCommand("ArrowRight", next)
+}
+
+type BatchCacheKey = string // `${ds.key}_${type}`
+let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
+
+export async function getSample(
+  ds: Dataset,
+  type: "train" | "test",
+  i: number,
+  returnRaw = false
+) {
+  const { storeBatchSize, valsPerSample } = ds[type]
+  const batchIdx = Math.floor(i / storeBatchSize)
+  const batchCacheKey: BatchCacheKey = `${ds.key}_${type}`
+  const batch =
+    currBatchCache[batchCacheKey]?.index === batchIdx
+      ? currBatchCache[batchCacheKey]
+      : await getData<DbBatch>(ds.key, type, batchIdx)
+  if (!batch) return []
+  currBatchCache = { [batchCacheKey]: batch }
+  const sampleIdx = i % storeBatchSize
+  const sliceIdxs = [sampleIdx * valsPerSample, (sampleIdx + 1) * valsPerSample]
+  const X = batch.xs.slice(...sliceIdxs)
+  const XRaw = batch.xsRaw?.slice(...sliceIdxs)
+  const y = batch.ys[sampleIdx]
+  return returnRaw ? ([X, y, XRaw] as const) : ([X, y] as const)
 }

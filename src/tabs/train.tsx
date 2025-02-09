@@ -72,7 +72,7 @@ const TrainConfigControl = () => {
           value={config.epochs}
           min={1}
           max={100}
-          onChange={(v) => setConfig({ epochs: v })}
+          onChange={(epochs) => setConfig({ epochs })}
           showValue={true}
         />
       </InputRow>
@@ -82,14 +82,21 @@ const TrainConfigControl = () => {
           min={0}
           max={0.5}
           step={0.1}
-          onChange={(v) => setConfig({ validationSplit: v })}
+          onChange={(validationSplit) => setConfig({ validationSplit })}
           showValue={true}
         />
       </InputRow>
       <InputRow label="silent">
         <Checkbox
           checked={config.silent}
-          onChange={(v) => setConfig({ silent: v })}
+          onChange={(silent) => setConfig({ silent: silent })}
+        />
+      </InputRow>
+
+      <InputRow label="fitDataset">
+        <Checkbox
+          checked={config.fitDataset}
+          onChange={(fitDataset) => setConfig({ fitDataset })}
         />
       </InputRow>
     </ControlPanel>

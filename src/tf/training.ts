@@ -8,12 +8,14 @@ import { setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/indexed-db"
 import { useModelStore } from "./model"
 import { LogsPlotCb, ProgressCb, UpdateCb } from "./training-callbacks"
+import { getSample } from "@/data/input"
 
 interface TrainingConfig {
   batchSize: number
   epochs: number
   validationSplit: number
   silent: boolean
+  fitDataset: boolean // TODO: find a better name
 }
 
 interface TrainingStore {
@@ -36,6 +38,7 @@ export const useTrainingStore = create<TrainingStore>((set) => ({
     epochs: 3,
     validationSplit: 0.1,
     silent: true,
+    fitDataset: false,
   },
   setConfig: (newConfig) =>
     set(({ config }) => ({ config: { ...config, ...newConfig } })),
@@ -91,7 +94,29 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   return [isTraining, batchCount] as const
 }
 
-type FitArgs = tf.ModelFitArgs // tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
+type FitArgs = {
+  batchSize: number
+  epochs: number
+  initialEpoch: number
+  validationSplit: number
+  callbacks: tf.ModelFitArgs["callbacks"]
+}
+// type FitArgs = tf.ModelFitArgs
+// type FitArgs = tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
+
+async function* dataGenerator(ds: Dataset, type: "train" | "test") {
+  const totalSamples = ds[type].shapeX[0]
+  let i = 0
+  while (i < totalSamples) {
+    const [_X, y] = await getSample(ds, type, i)
+    const shape = [1, ...ds[type].shapeX.slice(1)]
+    yield {
+      xs: ds.input?.preprocess?.(tf.tensor(_X, shape)) ?? tf.tensor(_X, shape),
+      ys: tf.oneHot(y, ds.output.size), // TODO: regression
+    }
+    i++
+  }
+}
 
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   const ongoingTraining = useTrainingStore.getState().trainingPromise
@@ -100,19 +125,40 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     await ongoingTraining
     useTrainingStore.setState({ trainingPromise: null })
   }
-  const [X, y] = await getDbDataAsTensors(ds, "train")
 
-  try {
-    // TODO: fitDataset ...
-    const trainingPromise = model.fit(X, y, options)
-    useTrainingStore.setState({ trainingPromise })
-    const history = await trainingPromise
-    return history
-  } finally {
-    // TODO: maybe cache?
-    X.dispose()
-    y.dispose()
+  const isFitDataset = useTrainingStore.getState().config.fitDataset
+
+  let X: tf.Tensor | null = null
+  let y: tf.Tensor | null = null
+
+  let promise: Promise<tf.History | void> | null = null
+  if (!isFitDataset) {
+    ;[X, y] = await getDbDataAsTensors(ds, "train")
+    promise = model.fit(X, y, options)
+  } else {
+    // test: with fitDataset ...
+    const { batchSize, validationSplit, ...otherOptions } = options
+    const dataset = tf.data.generator(() => dataGenerator(ds, "train"))
+
+    const totalSamples = ds.train.shapeX[0]
+    const validationSize = Math.floor(totalSamples * validationSplit)
+    const trainSize = totalSamples - validationSize
+    const trainDataset = dataset.take(trainSize).batch(batchSize)
+    const validationDataset = dataset.skip(trainSize).batch(batchSize)
+
+    promise = model.fitDataset(trainDataset, {
+      ...otherOptions,
+      validationData: validationDataset,
+    })
   }
+
+  useTrainingStore.setState({ trainingPromise: promise })
+  const history = await promise.then(() => {
+    X?.dispose()
+    y?.dispose()
+  })
+
+  return history
 }
 
 async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
@@ -121,7 +167,7 @@ async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
     const XRaw = tf.concat(xBatchTensors).reshape(ds[type].shapeX)
-    const X = ds.input?.preprocess ? ds.input.preprocess(XRaw) : XRaw
+    const X = ds.input?.preprocess?.(XRaw) ?? XRaw
     const yArr = batches.flatMap((b) => Array.from(b.ys))
     const y = isRegression ? tf.tensor(yArr) : tf.oneHot(yArr, ds.output.size)
     return [X, y] as const
