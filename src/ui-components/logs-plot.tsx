@@ -8,6 +8,7 @@ import {
 } from "react"
 import { create } from "zustand"
 import { InlineButton } from "./buttons"
+import { useTrainingStore } from "@/tf/training"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
@@ -112,6 +113,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
     },
     [filteredLogs, tooltipRef, isEpochMetric, positions, canvasRef]
   )
+  const validationSplit = useTrainingStore((s) => s.config.validationSplit)
   if (!logs.length) return null
   return (
     <div>
@@ -131,12 +133,16 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
       <div className={`flex mt-2 justify-end ${isShown ? "" : "hidden"}`}>
         {METRICS.map((m) => {
           const isSelected = m === metric
+          const isDisabled = !validationSplit && EPOCH_METRICS.includes(m)
           return (
             <InlineButton
               key={m}
               variant="transparent"
-              className={isSelected ? "text-white" : ""}
+              className={`${isSelected ? "text-white" : ""} ${
+                isDisabled ? "opacity-50" : ""
+              }`}
               onClick={() => setMetric(m)}
+              disabled={isDisabled}
             >
               {m}
             </InlineButton>

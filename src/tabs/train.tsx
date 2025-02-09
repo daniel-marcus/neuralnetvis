@@ -94,7 +94,7 @@ const TrainConfigControl = () => {
         />
       </InputRow>
 
-      <InputRow label="lowMemory">
+      <InputRow label="lazyLoading">
         <Checkbox
           checked={config.fitDataset}
           onChange={(fitDataset) => setConfig({ fitDataset })}
