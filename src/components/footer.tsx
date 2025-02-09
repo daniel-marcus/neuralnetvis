@@ -1,4 +1,4 @@
-import { ProgressBar } from "../ui-components/progress-bar"
+import { ProgressBar } from "./progress-bar"
 import { Status, useStatusText } from "./status"
 import { NeuronStatus } from "./neuron-status"
 import { useSelected } from "@/lib/neuron-select"

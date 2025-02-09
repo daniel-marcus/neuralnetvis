@@ -5,6 +5,7 @@ import { create } from "zustand"
 import { datasets } from "@/datasets"
 import { getData, putData, putDataBatches } from "./indexed-db"
 import { SupportedTypedArray } from "./npy-loader"
+import { useDebugStore } from "@/lib/debug"
 
 // ParsedLike
 interface ParsedLike {
@@ -145,11 +146,7 @@ export function useDatasets() {
         })
       } else {
         console.log("loading new data into indexedDB ...")
-        const { version } = dsDef
-        const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
-          await dsDef.loadData()
-        await saveData(dsDef.key, "train", xTrain, yTrain, xTrainRaw, version)
-        await saveData(dsDef.key, "test", xTest, yTest, xTestRaw, version)
+        await loadAndSaveDsData(dsDef)
         const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
         const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
         if (!train || !test) {
@@ -170,6 +167,14 @@ export function useDatasets() {
   }, [datasetKey, setStatusText, setDs])
 
   return ds
+}
+
+export async function loadAndSaveDsData(dsDef: DatasetDef) {
+  const { version } = dsDef
+  const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
+    await dsDef.loadData()
+  await saveData(dsDef.key, "train", xTrain, yTrain, xTrainRaw, version)
+  await saveData(dsDef.key, "test", xTest, yTest, xTestRaw, version)
 }
 
 export interface DbBatch {
@@ -213,7 +218,6 @@ async function saveData(
     batches.push(batch)
   }
   await putDataBatches(dbName, storeName, batches)
-  console.log("batches", batches.length)
   await putData<StoreMeta>(dbName, "meta", {
     index: storeName,
     version,
@@ -222,5 +226,6 @@ async function saveData(
     storeBatchSize,
     valsPerSample,
   })
-  console.log("IndexedDB putDataBatches time:", Date.now() - startTime)
+  if (useDebugStore.getState().debug)
+    console.log("IndexedDB putDataBatches time:", Date.now() - startTime)
 }

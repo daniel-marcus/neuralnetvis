@@ -8,7 +8,6 @@ import { setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/indexed-db"
 import { useModelStore } from "./model"
 import { LogsPlotCb, ProgressCb, UpdateCb } from "./training-callbacks"
-import { getSample } from "@/data/input"
 
 interface TrainingConfig {
   batchSize: number
@@ -34,7 +33,7 @@ interface TrainingStore {
 
 export const useTrainingStore = create<TrainingStore>((set) => ({
   config: {
-    batchSize: 128,
+    batchSize: 256,
     epochs: 3,
     validationSplit: 0.1,
     silent: true,
@@ -104,20 +103,67 @@ type FitArgs = {
 // type FitArgs = tf.ModelFitArgs
 // type FitArgs = tf.ModelFitDatasetArgs<tf.Tensor<tf.Rank>[]>
 
-async function* dataGenerator(ds: Dataset, type: "train" | "test") {
-  const isRegression = useDatasetStore.getState().isRegression
-  const totalSamples = ds[type].shapeX[0]
-  let i = 0
-  while (i < totalSamples) {
-    const [_X, y] = await getSample(ds, type, i)
-    yield tf.tidy(() => {
-      const shape = [1, ...ds[type].shapeX.slice(1)]
-      const xs =
-        ds.input?.preprocess?.(tf.tensor(_X, shape)) ?? tf.tensor(_X, shape)
-      const ys = isRegression ? tf.tensor(y) : tf.oneHot(y, ds.output.size)
-      return { xs, ys }
-    })
-    i++
+export interface TensorBatch {
+  xs: tf.Tensor
+  ys: tf.Tensor
+  [key: string]: tf.Tensor
+}
+
+export async function getSamplesAsBatch(
+  ds: Dataset,
+  newBatchSize: number,
+  newBatchIdx: number
+): Promise<TensorBatch> {
+  const type = "train"
+  const { storeBatchSize, valsPerSample } = ds[type]
+
+  const firstSampleIdx = newBatchIdx * newBatchSize
+  const lastSampleIdx = firstSampleIdx + newBatchSize - 1 // add range check (trainSamples)?
+  const storeStartIdx = Math.floor(firstSampleIdx / storeBatchSize)
+  const storeEndIdx = Math.floor(lastSampleIdx / storeBatchSize)
+  const keyRange = IDBKeyRange.bound(storeStartIdx, storeEndIdx)
+  const dbBatches = await getAll<DbBatch>(ds.key, type, keyRange)
+
+  const firstIdxInStoreBatch = firstSampleIdx % storeBatchSize
+
+  return tf.tidy(() => {
+    const allXs = dbBatches.flatMap((b) => Array.from(b.xs))
+    const allYs = dbBatches.flatMap((b) => Array.from(b.ys))
+    const slicedYs = allYs.slice(
+      firstIdxInStoreBatch,
+      firstIdxInStoreBatch + newBatchSize
+    )
+    const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
+    const shapeX = [currBatchSize, ...ds[type].shapeX.slice(1)]
+    const _xs = tf
+      .tensor(allXs)
+      .slice(
+        firstIdxInStoreBatch * valsPerSample,
+        currBatchSize * valsPerSample
+      )
+      .reshape(shapeX)
+    const xs = ds.input?.preprocess?.(_xs) ?? _xs
+    const ys =
+      ds.task === "classification"
+        ? tf.oneHot(slicedYs, ds.output.size)
+        : tf.tensor(slicedYs) // regression
+    return { xs, ys }
+  })
+}
+
+function makeGenerator(
+  ds: Dataset,
+  trainBatchSize: number,
+  totalSamples: number
+) {
+  const totalBatches = Math.ceil(totalSamples / trainBatchSize)
+
+  return async function* dataGenerator() {
+    let trainBatchIdx = 0
+    while (trainBatchIdx < totalBatches) {
+      yield getSamplesAsBatch(ds, trainBatchSize, trainBatchIdx)
+      trainBatchIdx++
+    }
   }
 }
 
@@ -143,19 +189,24 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   } else {
     // test: with fitDataset ...
     const { batchSize, validationSplit, ...otherOptions } = options
-    const dataset = tf.data.generator(() => dataGenerator(ds, "train"))
 
+    // TODO splitDataset as function // validationData as tensor (faster)
     const totalSamples = ds.train.shapeX[0]
-    const validationSize = Math.floor(totalSamples * validationSplit)
-    const trainSize = totalSamples - validationSize
-    const trainDataset = dataset.take(trainSize).batch(batchSize)
-    const validationDataset = dataset.skip(trainSize).batch(batchSize)
+    const validationSamples = Math.floor(totalSamples * validationSplit)
+    const trainSamples = totalSamples - validationSamples
+
+    const generator = makeGenerator(ds, batchSize, totalSamples)
+    const dataset = tf.data.generator(generator)
+
+    const trainSteps = Math.ceil(trainSamples / batchSize)
+    const trainDataset = dataset.take(trainSteps).repeat(otherOptions.epochs)
+    const validationDataset = dataset.skip(trainSteps)
 
     const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
-      validationData: validationDataset,
+      batchesPerEpoch: Math.ceil(trainSamples / batchSize),
+      validationData: validationSamples ? validationDataset : undefined,
     })
-    // TODO: dispose tensors ?
     history = await trainingPromise
   }
 

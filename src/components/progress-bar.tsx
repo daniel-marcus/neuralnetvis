@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useStatusText } from "../components/status"
+import { useStatusText } from "./status"
 
 interface ProgressBarProps {
   length?: number

@@ -66,12 +66,13 @@ export async function getData<T>(
 
 export async function getAll<T>(
   dbName: DatasetKey,
-  storeName: StoreName
+  storeName: StoreName,
+  range?: IDBKeyRange
 ): Promise<T[]> {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readonly")
   const store = tx.objectStore(storeName)
-  const res = await store.getAll()
+  const res = await store.getAll(range)
   await tx.done
   return res
 }

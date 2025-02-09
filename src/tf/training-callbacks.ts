@@ -5,15 +5,28 @@ import { useStatusText } from "@/components/status"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 
-interface TypedParams extends Params {
-  batchSize: number
+type FitParams = {
+  // passed in model.fit()
   epochs: number
   samples: number
+  batchSize: number
   initialEpoch: number
+  steps: null
 }
+type FitDatasetParams = {
+  // passed in model.fitDataset()
+  epochs: number
+  samples: null
+  batchSize: null
+  initialEpoch: null
+  steps: number // batchesPerEpoch has to be set
+}
+
+type TypedParams = Params & (FitParams | FitDatasetParams)
 
 export class UpdateCb extends CustomCallback {
   private silent = useTrainingStore.getState().config.silent
+  private batchSize = useTrainingStore.getState().config.batchSize
   private next = useDatasetStore.getState().next
   private trainingComplete = false // will be set only if all epochs ran fully without interruption
   declare params: TypedParams
@@ -21,7 +34,7 @@ export class UpdateCb extends CustomCallback {
     super({
       onBatchBegin: () => {
         if (this.silent) return
-        this.next(this.params.batchSize) // trigger view update
+        this.next(this.batchSize) // trigger view update
         useTrainingStore.getState().setBatchCount((prev) => prev + 1) // trigger model update
       },
       onEpochEnd: (epoch) => {
@@ -38,7 +51,7 @@ export class UpdateCb extends CustomCallback {
           })
           if (this.silent) {
             const { setBatchCount } = useTrainingStore.getState()
-            const processedSamples = this.params.samples - 1
+            const processedSamples = (this.params.samples ?? 0) - 1
             this.next(processedSamples) // update view
             setBatchCount((c) => c + processedSamples) // update weights
           }
@@ -52,29 +65,42 @@ export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
   private setStatus = useStatusText.getState().setStatusText
-  private startTime = Date.now()
+  private startTime = 0
+  private firstRun = true
+  private initialEpoch = 0
   declare params: TypedParams
   constructor() {
     super({
       onTrainBegin: () => {
-        this.startTime = Date.now()
+        this.startTime = performance.now()
+        // console.log(this.params)
       },
       onEpochBegin: (epoch) => {
         this.epoch = epoch
+        if (this.firstRun) {
+          this.firstRun = false
+          this.initialEpoch = epoch
+        }
       },
       onBatchEnd: (batchIndex: number) => {
         this.prochessedBatches++
-        const epochs = this.params.epochs - this.params.initialEpoch
-        const percent = this.prochessedBatches / (epochs * this.epochBatches)
+        const epochs = this.params.epochs - this.initialEpoch
+        const sessionEpoch = this.epoch - this.initialEpoch
+        const totalPercent =
+          this.prochessedBatches / (epochs * this.epochBatches)
+        const epochPercent = (batchIndex + 1) / this.epochBatches
+        const elapsedTime = performance.now() - this.startTime
+        const secPerEpoch = elapsedTime / (sessionEpoch + epochPercent) / 1000
         const data = {
           Epoch: `${this.epoch + 1}/${this.params.epochs}`,
           Batch: `${batchIndex + 1}/${this.epochBatches}`,
+          "": `${secPerEpoch.toFixed(1)}s/epoch`,
         }
-        this.setStatus({ title: "Training ...", data }, percent)
+        this.setStatus({ title: "Training ...", data }, totalPercent)
       },
       onTrainEnd: async () => {
         const { accuracy, loss } = await getModelEvaluation()
-        const totalTime = (Date.now() - this.startTime) / 1000
+        const totalTime = (performance.now() - this.startTime) / 1000
         const title = `Training finished (${getBackend()})`
         const data = {
           Loss: loss?.toFixed(3),
@@ -86,7 +112,10 @@ export class ProgressCb extends CustomCallback {
     })
   }
   get epochBatches() {
-    return Math.ceil(this.params.samples / this.params.batchSize)
+    return (
+      this.params.steps ??
+      Math.ceil(this.params.samples / this.params.batchSize)
+    )
   }
 }
 

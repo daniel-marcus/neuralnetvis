@@ -59,6 +59,7 @@ const TrainConfigControl = () => {
     <ControlPanel title="config">
       <InputRow label="batchSize">
         <Slider
+          // value={config.batchSize}
           value={Math.log2(config.batchSize)}
           min={0} // 2^0 = 1
           max={10} // 2^10 = 1024
@@ -93,7 +94,7 @@ const TrainConfigControl = () => {
         />
       </InputRow>
 
-      <InputRow label="fitDataset">
+      <InputRow label="lowMemory">
         <Checkbox
           checked={config.fitDataset}
           onChange={(fitDataset) => setConfig({ fitDataset })}
