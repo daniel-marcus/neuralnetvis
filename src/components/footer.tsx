@@ -48,7 +48,7 @@ export const MainSampleSlider = () => {
       >
         <SampleSlider />
         <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
-          {i} / {totalSamples}
+          {i + 1} / {totalSamples}
         </div>
       </div>
     </div>

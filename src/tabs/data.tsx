@@ -38,6 +38,11 @@ export function SampleSlider() {
   const setI = useDatasetStore((s) => s.setI)
   const totalSamples = useDatasetStore((s) => s.totalSamples)
   return (
-    <Slider value={i} onChange={(v) => setI(v)} min={1} max={totalSamples} />
+    <Slider
+      value={i}
+      onChange={(v) => setI(v)}
+      min={0}
+      max={totalSamples - 1}
+    />
   )
 }

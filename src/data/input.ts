@@ -39,7 +39,6 @@ export function useInput(ds?: Dataset) {
           : _input
       )
       const trainingY = label
-      console.log({ input, dataRaw, _input, rawInput, trainingY })
       useDatasetStore.setState({ input, rawInput, trainingY })
     }
     getInput()

@@ -86,15 +86,14 @@ export const useDatasetStore = create<DatasetStore>((set) => ({
   setDs: (ds) =>
     set(() => {
       const totalSamples = ds?.train.shapeX[0] ?? 0
-      const max = Math.min(totalSamples, 1000) // first load is triggered with first 1000 samples only
-      const i = Math.floor(Math.random() * max) || 1
+      const i = Math.floor(Math.random() * totalSamples - 1)
       const isRegression = ds?.task === "regression"
       return { ds, i, totalSamples, isRegression }
     }),
   totalSamples: 0,
   isRegression: false,
 
-  i: 1,
+  i: 0,
   setI: (arg) =>
     set(({ i }) => {
       const newI = typeof arg === "function" ? arg(i) : arg
@@ -103,7 +102,7 @@ export const useDatasetStore = create<DatasetStore>((set) => ({
   next: (step = 1) =>
     set(({ i, totalSamples }) => {
       return {
-        i: ((i - 1 + step + totalSamples) % totalSamples) + 1,
+        i: (i + step + totalSamples) % totalSamples,
       }
     }),
 
