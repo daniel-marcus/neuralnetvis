@@ -114,6 +114,10 @@ export interface TensorBatch {
   [key: string]: tf.Tensor
 }
 
+function getStoreBatchIdx(sampleIdx: number, storeBatchSize: number) {
+  return Math.floor(sampleIdx / storeBatchSize)
+}
+
 export async function getSamplesAsBatch(
   ds: Dataset,
   newBatchSize: number,
@@ -124,8 +128,8 @@ export async function getSamplesAsBatch(
 
   const firstSampleIdx = newBatchIdx * newBatchSize
   const lastSampleIdx = firstSampleIdx + newBatchSize - 1 // add range check (trainSamples)?
-  const storeStartIdx = Math.floor(firstSampleIdx / storeBatchSize)
-  const storeEndIdx = Math.floor(lastSampleIdx / storeBatchSize)
+  const storeStartIdx = getStoreBatchIdx(firstSampleIdx, storeBatchSize)
+  const storeEndIdx = getStoreBatchIdx(lastSampleIdx, storeBatchSize)
   const keyRange = IDBKeyRange.bound(storeStartIdx, storeEndIdx)
   const dbBatches = await getAll<DbBatch>(ds.key, type, keyRange)
 
@@ -206,12 +210,22 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
 
     const trainSteps = Math.ceil(trainSamples / batchSize)
     const trainDataset = dataset.take(trainSteps).repeat(otherOptions.epochs)
-    const validationDataset = dataset.skip(trainSteps)
+
+    const firstValidationIdx = trainSamples
+    const validStoreBatchIdx = getStoreBatchIdx(
+      firstValidationIdx,
+      ds.train.storeBatchSize
+    )
+    const range = IDBKeyRange.lowerBound(validStoreBatchIdx)
+    const validationData = validationSamples
+      ? await getDbDataAsTensors(ds, "train", range)
+      : undefined
+    // const validationDataset = dataset.skip(trainSteps) <- slow
 
     const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
       batchesPerEpoch: Math.ceil(trainSamples / batchSize),
-      validationData: validationSamples ? validationDataset : undefined,
+      validationData,
     })
     history = await trainingPromise
   }
@@ -219,15 +233,22 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   return history
 }
 
-async function getDbDataAsTensors(ds: Dataset, type: "train" | "test") {
-  const batches = await getAll<DbBatch>(ds.key, type)
-  const isRegression = useDatasetStore.getState().isRegression
+async function getDbDataAsTensors(
+  ds: Dataset,
+  type: "train" | "test",
+  range?: IDBKeyRange
+) {
+  const batches = await getAll<DbBatch>(ds.key, type, range)
+  const isClassification = ds.task === "classification"
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
-    const XRaw = tf.concat(xBatchTensors).reshape(ds[type].shapeX)
+    const shapeX = [-1, ...ds[type].shapeX.slice(1)] // -1 for unknown batch size
+    const XRaw = tf.concat(xBatchTensors).reshape(shapeX)
     const X = ds.input?.preprocess?.(XRaw) ?? XRaw
     const yArr = batches.flatMap((b) => Array.from(b.ys))
-    const y = isRegression ? tf.tensor(yArr) : tf.oneHot(yArr, ds.output.size)
+    const y = isClassification
+      ? tf.oneHot(yArr, ds.output.size)
+      : tf.tensor(yArr)
     return [X, y] as const
   })
 }
