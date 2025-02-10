@@ -133,7 +133,7 @@ function GroupWithTexture(props: NeuronGroupProps) {
 
   return (
     <mesh ref={ref} material={materials}>
-      <boxGeometry args={[0.6, width * 0.2, width * 0.2]} />
+      <boxGeometry args={[0.2, width * 0.2, width * 0.2]} />
     </mesh>
   )
 }

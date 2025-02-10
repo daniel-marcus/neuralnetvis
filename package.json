@@ -16,6 +16,7 @@
     "@react-three/drei": "^9.120.6",
     "@react-three/fiber": "^9.0.0-rc.6",
     "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@use-gesture/react": "^10.3.1",
     "figlet": "^1.8.0",

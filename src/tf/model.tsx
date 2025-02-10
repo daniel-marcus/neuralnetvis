@@ -2,7 +2,6 @@ import { Dataset } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
 import { useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
-import "@tensorflow/tfjs-backend-webgpu"
 import {
   DenseLayerArgs,
   DropoutLayerArgs,

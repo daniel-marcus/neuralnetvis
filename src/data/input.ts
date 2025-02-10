@@ -14,6 +14,7 @@ export function useInput(ds?: Dataset) {
       const [data, label, dataRaw] = await getSample(ds, "train", i, true)
       const _input = Array.from(data)
       const rawInput = dataRaw ? Array.from(dataRaw) : _input
+      await tf.ready()
       const input = tf.tidy(
         () =>
           (ds.input?.preprocess?.(tf.tensor(data)).arraySync() as number[]) ??
