@@ -1,6 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect } from "react"
-import { debug } from "@/lib/debug"
 import {
   normalizeConv2DActivations,
   normalizeTensor,
@@ -28,7 +27,6 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
   useEffect(() => {
     async function getActivations() {
       if (!model || !input || input.length === 0) return
-      const startTime = Date.now()
 
       const shape = model.layers[0].batchInputShape
       const [, ...dims] = shape as number[]
@@ -75,10 +73,6 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
       } finally {
         activationTensors.flat().forEach((t) => t.dispose())
       }
-
-      const endTime = Date.now()
-      if (debug())
-        console.log("Activations computed in", endTime - startTime, "ms")
     }
     getActivations()
   }, [model, input, setLayerActivations])

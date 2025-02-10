@@ -5,6 +5,7 @@ import { getHighlightColor } from "../three/neuron-group"
 import { SphereGeometry } from "three"
 import { Neuron } from "../lib/neuron"
 import { Table, useStatusText } from "./status"
+import { useVisConfigStore } from "@/lib/vis-config"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)
@@ -83,6 +84,8 @@ const WeightsViewer = ({
   groupCount = 1,
 }: WeightsGridProps) => {
   const [currGroup, setCurrGroup] = useState(0)
+  const highlightProp = useVisConfigStore((s) => s.highlightProp)
+  if (highlightProp === "weights") return null // will be duplication
   if (!weights.length) return null
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
   const next = () => setCurrGroup((g) => (g + 1) % groupCount)

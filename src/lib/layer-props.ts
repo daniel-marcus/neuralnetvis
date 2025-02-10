@@ -9,7 +9,6 @@ import {
   LayerStateless,
   LayerType,
 } from "@/three/layer"
-import { debug } from "@/lib/debug"
 import { useActivations } from "../tf/activations"
 
 // TODO: fix rawInput
@@ -302,43 +301,40 @@ function useWeightsAndBiases(
   useEffect(() => {
     if (!model || isPending) return
     async function updateWeights() {
-      const newStates = await Promise.all(
-        layers.map(async (l) => {
-          const { layerType, tfLayer } = l
-          const [ws, bs, maw] = tf.tidy(() => {
-            try {
-              const [_weights, biases] = tfLayer.getWeights()
-              const weights = _weights?.transpose()
-              const maxAbsWeight = // needed only for dense connections
-                layerType === "Dense"
-                  ? (_weights?.abs().max() as tf.Tensor2D) // .dataSync()[0]
-                  : undefined
-              return [weights, biases, maxAbsWeight]
-            } catch {
-              // console.log("error getting weights", { l, e })
-              return [undefined, undefined, undefined]
-            }
-          })
-          try {
-            await tf.ready()
-            const weights = await ws?.array()
-            const biases = await bs?.array()
-            const maxAbsWeight = await maw?.array()
-            return { weights, biases, maxAbsWeight } as WeightsBiases
-          } catch (e) {
-            console.log("error updating weights", { bs, ws, maw, e })
-            return { weights: undefined, biases: undefined, maxAbsWeight: 0 }
-          } finally {
-            ws?.dispose()
-            maw?.dispose()
-          }
+      const _newStates = layers.map((l) => {
+        const { layerType, tfLayer } = l
+        return tf.tidy(() => {
+          const [_weights, biases] = tfLayer.getWeights()
+          const weights = _weights?.transpose()
+          const maxAbsWeight = // needed only for dense connections
+            layerType === "Dense" ? _weights?.abs().max() : undefined
+          return { weights, biases, maxAbsWeight } as const
         })
-      )
-      if (debug()) console.log("newStates", newStates)
-      setWeightsBiases(newStates)
+      })
+
+      try {
+        const newStates = await Promise.all(
+          _newStates.map(async (l) => ({
+            weights: (await l.weights?.array()) as
+              | number[][]
+              | number[][][]
+              | undefined,
+            biases: (await l.biases?.array()) as number[] | undefined,
+            maxAbsWeight: (await l.maxAbsWeight?.array()) as number | undefined,
+          }))
+        )
+        setWeightsBiases(newStates)
+      } catch {
+        // console.log("Error updating weights", e)
+      } finally {
+        _newStates.forEach((l) => {
+          l.weights?.dispose()
+          // l.biases?.dispose()
+          l.maxAbsWeight?.dispose()
+        })
+      }
     }
     updateWeights()
-    // TODO: add trigger for update to dependencies
   }, [isPending, layers, model, batchCount])
   return weightsBiases
 }
@@ -350,14 +346,11 @@ function useStatefulLayers(
   rawInput?: number[]
 ) {
   const statefulLayers = useMemo(() => {
-    const startTime = Date.now()
-    // if (!activations) return statelessLayers
     if (!weightsBiases.length) return statelessLayers
     const result = statelessLayers.reduce((acc, layer, i) => {
       const { layerPos, layerType } = layer
 
       // add state to each neuron
-
       const layerActivations = activations?.[i]?.activations
       const normalizedActivations =
         layerPos === "output"
@@ -369,21 +362,6 @@ function useStatefulLayers(
       const prevActivations = activations?.[i - 1]?.activations // aka inputs
 
       const { weights, biases, maxAbsWeight } = weightsBiases[i] ?? {}
-
-      /* const { transposedWeights, biasesArray, maxAbsWeight } = tf.tidy(() => {
-        const [weights, biases] = tfLayer.getWeights()
-        const transposedWeights = weights
-          ?.transpose()
-          .arraySync() as number[][][]
-        const biasesArray = biases?.arraySync() as number[] | undefined
-
-        const maxAbsWeight = // needed only for dense connections
-          layerType === "Dense"
-            ? (weights?.abs().max().dataSync()[0] as number | undefined)
-            : undefined
-
-        return { transposedWeights, biasesArray, maxAbsWeight }
-      }) */
 
       const neurons: Neuron[] = statelessLayers[i].neurons.map((neuron, j) => {
         const activation = layerActivations?.[j]
@@ -418,10 +396,6 @@ function useStatefulLayers(
       }
       return [...acc, statefullLayer]
     }, [] as LayerStateful[])
-    const endTime = Date.now()
-
-    if (debug())
-      console.log(`LayerProps took ${endTime - startTime}ms`, { result })
     return result
   }, [statelessLayers, activations, weightsBiases, rawInput])
 

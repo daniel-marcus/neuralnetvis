@@ -9,15 +9,10 @@ import * as THREE from "three"
 export const DebugUtils = () => {
   const debug = useDebugStore((s) => s.debug)
   if (!debug) return null
-  return (
-    <>
-      <Stats />
-      <CameraLogger />
-    </>
-  )
+  return <Stats />
 }
 
-function CameraLogger() {
+export function CameraLogger() {
   const { camera } = useThree()
   const prevPosition = useRef(camera.position.clone())
 

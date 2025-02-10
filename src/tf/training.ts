@@ -68,14 +68,14 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
 
   useEffect(() => {
     if (!isTraining || !ds || !model) return
-    const { validationSplit, batchSize, epochs: _epochs } = config
+    const { validationSplit, batchSize, epochs: _epochs, silent } = config
     const initialEpoch = useTrainingStore.getState().epochCount
     const epochs = initialEpoch + _epochs
 
     startTraining()
     async function startTraining() {
       if (!model || !ds) return
-      if (!debug()) await setBackendIfAvailable("webgpu") // use webgpu (faster)
+      if (!debug() && silent) await setBackendIfAvailable("webgpu") // use webgpu (faster)
       const callbacks = [
         new DebugCb(),
         new UpdateCb(),
@@ -89,7 +89,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         validationSplit,
         callbacks,
       })
-      if (!debug()) await setBackendIfAvailable(DEFAULT_BACKEND)
+      if (!debug() && !silent) await setBackendIfAvailable(DEFAULT_BACKEND)
     }
     return () => {
       model.stopTraining = true

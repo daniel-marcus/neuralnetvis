@@ -1,4 +1,11 @@
-import { Box, ControlPanel, InputRow, Slider, Checkbox } from "@/ui-components"
+import {
+  Box,
+  ControlPanel,
+  InputRow,
+  Slider,
+  Checkbox,
+  Select,
+} from "@/ui-components"
 import { useVisConfigStore } from "@/lib/vis-config"
 import { useDatasetStore } from "@/data/datasets"
 import { MyModels } from "./model_my-models"
@@ -49,6 +56,16 @@ const VisConfigControl = () => {
           />
         </InputRow>
       )}
+      <InputRow label="onSelect">
+        <Select
+          value={config.highlightProp}
+          options={[
+            { value: "weights", label: "show weights" },
+            { value: "weightedInputs", label: "show weighted inputs" },
+          ]}
+          onChange={(val) => setVisConfig({ highlightProp: val })}
+        />
+      </InputRow>
     </ControlPanel>
   )
 }

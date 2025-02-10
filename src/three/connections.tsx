@@ -36,7 +36,6 @@ export const HoverConnections = () => {
         )
         if (!prevNeuron) return null
         const width = arr.length > 100 ? 0.1 : 0.5
-        console.log(hovered.ref)
         return (
           <DynamicLine2
             key={`${hovered.nid}_${prevNeuron.nid}`}

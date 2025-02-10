@@ -9,7 +9,7 @@ type Option = {
 }
 
 interface SelectProps {
-  ref: React.RefObject<HTMLSelectElement | null>
+  ref?: React.RefObject<HTMLSelectElement | null>
   options: Option[]
   onChange?: (val: string, e?: React.ChangeEvent<HTMLSelectElement>) => void
   value?: string | number
@@ -37,7 +37,7 @@ export const Select = ({
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>
-            {o.value || o.label}
+            {o.label || o.value}
           </option>
         ))}
       </select>

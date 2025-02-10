@@ -4,7 +4,6 @@ import { Neuron, Nid } from "@/lib/neuron"
 import { LayerStateful } from "@/three/layer"
 import { useEffect, useMemo } from "react"
 import { normalizeWithSign } from "../data/normalization"
-import { debug } from "./debug"
 import { HighlightProp, useVisConfigStore } from "./vis-config"
 import { Vector3 } from "three"
 
@@ -86,17 +85,14 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       weightedInputs: normalizeWithSign(weightedInputs),
     }
 
-    if (debug()) console.log("selected", selN, tempObj)
-
     // TODO: manipulate only affected nodes directly for faster updates when hovering?
     return layerProps.map((l) => {
       const patchdNeurons = l.neurons.map((n) => {
         if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n
 
-        const inputNids = selN.inputNids ?? []
-        if (!inputNids.find((nid) => nid === n.nid)) return n
+        const idx = selN.inputNids?.indexOf(n.nid)
+        if (typeof idx === "undefined" || idx === -1) return n
 
-        const idx = inputNids.indexOf(n.nid)
         const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
         return {
           ...n,
