@@ -19,7 +19,7 @@ export interface GroupDef {
   nidsStr: string // for deps optimization
 }
 
-type NeuronGroupProps = LayerProps &
+export type NeuronGroupProps = LayerProps &
   GroupDef & {
     groupIndex: number
     groupCount: number
@@ -106,7 +106,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
   }, [meshRef, neuronRefs, layerIndex, groupCount, groupIndex, instances])
 }
 
-function useGroupPosition(props: NeuronGroupProps) {
+export function useGroupPosition(props: NeuronGroupProps) {
   const { groupIndex, groupCount, layerPos, meshParams } = props
   const spacing = useNeuronSpacing(meshParams)
   const splitColors = useVisConfigStore((s) => s.splitColors)
@@ -197,12 +197,11 @@ function getNeuronColor(n: Neuron, isRegression = false) {
     ? getPredictionQualityColor(n)
     : n.hasColorChannels
     ? getColorChannelColor(n)
-    : getActivationColor(n)
+    : getActivationColor(n.normalizedActivation ?? 0)
   // getPredictionQualityColor(n)
 }
 
-function getActivationColor(neuron: Neuron) {
-  const colorValue = neuron.normalizedActivation ?? 0
+function getActivationColor(colorValue: number) {
   return `rgb(${Math.ceil(colorValue * 255)},20,100)`
 }
 
