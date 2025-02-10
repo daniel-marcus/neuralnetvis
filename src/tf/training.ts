@@ -8,6 +8,7 @@ import { DEFAULT_BACKEND, setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/indexed-db"
 import { useModelStore } from "./model"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
+import { debug } from "@/lib/debug"
 
 interface TrainingConfig {
   batchSize: number
@@ -74,7 +75,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
     startTraining()
     async function startTraining() {
       if (!model || !ds) return
-      await setBackendIfAvailable("webgpu") // use webgpu (faster)
+      if (!debug()) await setBackendIfAvailable("webgpu") // use webgpu (faster)
       const callbacks = [
         new DebugCb(),
         new UpdateCb(),
@@ -88,7 +89,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         validationSplit,
         callbacks,
       })
-      await setBackendIfAvailable(DEFAULT_BACKEND)
+      if (!debug()) await setBackendIfAvailable(DEFAULT_BACKEND)
     }
     return () => {
       model.stopTraining = true
