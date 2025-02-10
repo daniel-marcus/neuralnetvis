@@ -6,6 +6,7 @@ import { useEffect, useMemo } from "react"
 import { normalizeWithSign } from "../data/normalization"
 import { debug } from "./debug"
 import { HighlightProp, useVisConfigStore } from "./vis-config"
+import { Vector3 } from "three"
 
 interface SelectedStore {
   hovered: Neuron | null
@@ -15,6 +16,8 @@ interface SelectedStore {
   toggleHovered: (n: Neuron | null) => void
   toggleSelected: (n: Neuron | null) => void
   setSelected: (n: Neuron | null) => void
+  hoverOrigin?: Vector3
+  setHovered: (n: Neuron | null, origin?: Vector3) => void
   hasHoveredOrSelected: () => boolean
   // TODO: make all neuron accessible by nid?
 }
@@ -28,7 +31,8 @@ export const useSelected = create<SelectedStore>((set, get) => ({
     set(({ selected }) => ({
       selected: selected && n?.nid === selected.nid ? null : n,
     })),
-  setSelected: (n) => set({ selected: n }),
+  setSelected: (selected) => set({ selected }),
+  setHovered: (hovered, hoverOrigin) => set({ hovered, hoverOrigin }),
   toggleHovered: (n) =>
     set(({ hovered }) => ({
       hovered: hovered && n?.nid === hovered.nid ? null : n,

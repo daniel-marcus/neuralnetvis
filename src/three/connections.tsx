@@ -23,6 +23,7 @@ type NeuronConnectionsProps = {
 
 export const HoverConnections = () => {
   const hovered = useSelected((s) => s.hovered)
+  const hoverOrigin = useSelected((s) => s.hoverOrigin)
   // too many lines for fully connected layers
   const allowDenseHoverLines = useVisConfigStore((s) => s.allowDenseHoverLines)
   if (!hovered) return null
@@ -35,11 +36,13 @@ export const HoverConnections = () => {
         )
         if (!prevNeuron) return null
         const width = arr.length > 100 ? 0.1 : 0.5
+        console.log(hovered.ref)
         return (
           <DynamicLine2
             key={`${hovered.nid}_${prevNeuron.nid}`}
             fromRef={prevNeuron.ref}
             toRef={hovered.ref}
+            toPoint={hoverOrigin}
             width={width}
           />
         )
@@ -116,10 +119,16 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
 interface DynamicLineProps {
   fromRef: React.RefObject<NeuronRefType>
   toRef: React.RefObject<NeuronRefType>
+  toPoint?: Vector3 // alternatvie to toRef
   width?: number
 }
 
-const DynamicLine2 = ({ fromRef, toRef, width = 1 }: DynamicLineProps) => {
+const DynamicLine2 = ({
+  fromRef,
+  toRef,
+  toPoint,
+  width = 1,
+}: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 
@@ -145,11 +154,10 @@ const DynamicLine2 = ({ fromRef, toRef, width = 1 }: DynamicLineProps) => {
     []
   )
   useFrame(() => {
-    if (lineRef.current && fromRef.current && toRef.current) {
+    if (lineRef.current && fromRef.current && (toRef.current || toPoint)) {
       const { meshRef: fromMeshRef, indexInGroup: fromIndex } = fromRef.current
-      const { meshRef: toMeshRef, indexInGroup: toIndex } = toRef.current
-      if (!fromMeshRef?.current || !toMeshRef?.current) return
-      // console.log(fromMeshRef.current, toMeshRef.current, fromIndex, toIndex)
+      if (!fromMeshRef?.current) return
+
       fromMeshRef.current.getMatrixAt(fromIndex, tempMatrix)
       tempWorldMatrix.multiplyMatrices(
         fromMeshRef.current.matrixWorld,
@@ -157,12 +165,18 @@ const DynamicLine2 = ({ fromRef, toRef, width = 1 }: DynamicLineProps) => {
       )
       tempWorldMatrix.decompose(fromPosition, new Quaternion(), new Vector3())
 
-      toMeshRef.current.getMatrixAt(toIndex, tempMatrix)
-      tempWorldMatrix.multiplyMatrices(
-        toMeshRef.current.matrixWorld,
-        tempMatrix
-      )
-      tempWorldMatrix.decompose(toPosition, new Quaternion(), new Vector3())
+      if (toRef.current) {
+        const { meshRef: toMeshRef, indexInGroup: toIndex } = toRef.current
+        if (!toMeshRef?.current) return
+        toMeshRef.current.getMatrixAt(toIndex, tempMatrix)
+        tempWorldMatrix.multiplyMatrices(
+          toMeshRef.current.matrixWorld,
+          tempMatrix
+        )
+        tempWorldMatrix.decompose(toPosition, new Quaternion(), new Vector3())
+      } else if (toPoint) {
+        toPosition.copy(toPoint)
+      }
 
       geometry.setPositions([...fromPosition, ...toPosition])
       lineRef.current.computeLineDistances()

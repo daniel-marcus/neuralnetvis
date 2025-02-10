@@ -1,9 +1,9 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useMemo, useRef, useState } from "react"
-import { Object3D, Vector3 } from "three"
+import { Mesh, Vector3 } from "three"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
-  const ref = useRef<Object3D>(null)
+  const ref = useRef<Mesh>(null)
   const currentPosition = useRef(new Vector3())
   const { invalidate } = useThree()
   const targetPosition = useMemo(() => new Vector3(...position), [position])
