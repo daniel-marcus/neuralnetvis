@@ -202,6 +202,13 @@ function calculateScrolledPercent(
   const middleY = windowHeight / 2
   if (rect.bottom <= middleY) return 1
   if (rect.top >= middleY) return 0
-  const percent = Math.round(((middleY - rect.top) / rect.height) * 1000) / 1000
+  const isFirst = ref.current === ref.current.parentElement?.firstElementChild
+  const offset = isFirst
+    ? rect.top + document.scrollingElement!.scrollTop - middleY
+    : 0
+  const percent =
+    Math.round(
+      ((middleY + offset - rect.top) / (rect.height + offset)) * 1000
+    ) / 1000
   return percent
 }
