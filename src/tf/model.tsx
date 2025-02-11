@@ -24,6 +24,7 @@ export type LayerConfigMap = {
 export type HiddenLayerConfig<T extends keyof LayerConfigMap> = {
   className: T
   config: LayerConfigMap[T]
+  isInvisible?: boolean
 }
 
 export type HiddenLayerConfigArray = HiddenLayerConfig<keyof LayerConfigMap>[]
@@ -41,6 +42,7 @@ interface ModelStore {
 const defaultLayer: HiddenLayerConfig<"Dense"> = {
   className: "Dense",
   config: { units: 64, activation: "relu" },
+  isInvisible: false,
 }
 
 export const useModelStore = create<ModelStore>((set) => ({
@@ -52,6 +54,15 @@ export const useModelStore = create<ModelStore>((set) => ({
   hiddenLayers: [defaultLayer],
   setHiddenLayers: (hiddenLayers) => set({ hiddenLayers }),
 }))
+
+export function useModel(ds?: Dataset) {
+  const model = useModelStore((s) => s.model)
+  useModelReset(model, ds)
+  const isPending = useModelCreation(ds)
+  useModelStatus(model, ds)
+  useModelCompile(model, ds)
+  return [model, isPending] as const
+}
 
 export function useModelTransition() {
   const [_isPending, startTransition] = useTransition()
@@ -67,33 +78,40 @@ export function useModelTransition() {
   useEffect(() => {
     setIsPending(_isPending)
   }, [_isPending, setIsPending])
-  return [setModel, isPending] as const
-}
 
-export function useModel(ds?: Dataset) {
-  const backendReady = useTfBackend()
+  // set progressbar to spinner mode
   const setPercent = useStatusText((s) => s.setPercent)
-  const model = useModelStore((s) => s.model)
-  const [setModel, isPending] = useModelTransition()
   useEffect(() => {
-    if (!isPending) return
+    if (!_isPending) return
     setPercent(-1)
     return () => {
       setPercent(null)
     }
-  }, [isPending, setPercent])
+  }, [_isPending, setPercent])
 
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  return [setModel, isPending] as const
+}
 
+function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
-    // useModelReset (on ds change)
+    // unset on ds change
     return () => {
-      setModel(undefined)
+      useModelStore.getState()._setModel(undefined)
     }
-  }, [ds, setModel])
+  }, [ds])
+  useEffect(() => {
+    // dispose model on unmount
+    if (!model) return
+    return () => {
+      model.dispose()
+    }
+  }, [model])
+}
 
+function useModelCreation(ds?: Dataset) {
+  const backendReady = useTfBackend()
+  const [setModel, isPending] = useModelTransition()
   const hiddenLayers = useModelStore((s) => s.hiddenLayers)
-
   useEffect(() => {
     // useModelCreation
     if (!ds || !backendReady) return
@@ -110,18 +128,13 @@ export function useModel(ds?: Dataset) {
 
     setModel(_model)
   }, [backendReady, hiddenLayers, ds, setModel])
+  return isPending || !backendReady
+}
 
+function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
+  const setStatusText = useStatusText((s) => s.setStatusText)
   useEffect(() => {
-    // useModelDispose
-    if (!model) return
-    return () => {
-      model.dispose()
-    }
-  }, [model])
-
-  useEffect(() => {
-    // useModelStatus
-    if (isPending || !model || !ds) return
+    if (!model || !ds) return
     const totalSamples = ds.train.shapeX[0]
     const layersStr = model.layers
       .map((l) => {
@@ -154,11 +167,13 @@ export function useModel(ds?: Dataset) {
       "   ": layersStr,
     }
     setStatusText({ data })
-  }, [model, ds, setStatusText, isPending])
+  }, [model, ds, setStatusText])
+}
 
+function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
     // useModelCompile
-    if (isPending || !model || !ds) return
+    if (!model || !ds) return
     if (!isModelCompiled(model)) {
       if (debug()) console.log("Model not compiled. Compiling ...", model)
       model.compile({
@@ -167,8 +182,7 @@ export function useModel(ds?: Dataset) {
         metrics: ["accuracy"],
       })
     }
-  }, [model, ds, isPending])
-  return [model, isPending || !backendReady] as const
+  }, [model, ds])
 }
 
 function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
