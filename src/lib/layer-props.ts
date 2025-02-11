@@ -305,8 +305,8 @@ function useWeightsAndBiases(
         const { layerType, tfLayer } = l
         return tf.tidy(() => {
           const [_weights, biases] = tfLayer.getWeights()
-          const weights = _weights?.transpose()
-          console.log({ weights })
+          const numWeights = _weights?.shape[_weights?.shape.length - 1]
+          const weights = _weights?.transpose().reshape([numWeights, -1])
           const maxAbsWeight = // needed only for dense connections
             layerType === "Dense" ? _weights?.abs().max() : undefined
           return { weights, biases, maxAbsWeight } as const
@@ -316,17 +316,14 @@ function useWeightsAndBiases(
       try {
         const newStates = await Promise.all(
           _newStates.map(async (l) => ({
-            weights: (await l.weights
-              ?.reshape([l.weights.shape[0], -1]) // flattened weights per neuron / filter
-              .array()) as number[][] | undefined,
+            weights: (await l.weights?.array()) as number[][] | undefined,
             biases: (await l.biases?.array()) as number[] | undefined,
             maxAbsWeight: (await l.maxAbsWeight?.array()) as number | undefined,
           }))
         )
-        console.log({ newStates })
         setWeightsBiases(newStates)
-      } catch {
-        // console.log("Error updating weights", e)
+      } catch (e) {
+        console.log("Error updating weights", e)
       } finally {
         _newStates.forEach((l) => {
           l.weights?.dispose()

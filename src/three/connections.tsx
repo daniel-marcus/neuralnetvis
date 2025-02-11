@@ -85,9 +85,12 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
       const absWeight = Math.abs(weight)
       if (absWeight < layerMaxWeight * 0.5) continue
       const input = neuron.inputs[index] ?? 0
-      const weightedInput = Math.round(absWeight * input * 10) / 10
+      const weightedInput = absWeight * input
       if (weightedInput < MIN_LINE_WIDTH) continue
-      const width = Math.min(weightedInput, MAX_LINE_WIDTH)
+      const width = Math.min(
+        Math.round(weightedInput * 10) / 10,
+        MAX_LINE_WIDTH
+      )
       const connection = { fromRef: prevNeuron.ref, toRef: neuron.ref, width }
       connections.push(connection)
     }

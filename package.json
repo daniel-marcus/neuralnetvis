@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "serve": "npx serve out",
     "lint": "next lint",
     "test": "vitest",
     "test:verbose": "vitest --reporter=verbose"
