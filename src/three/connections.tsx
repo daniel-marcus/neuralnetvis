@@ -52,67 +52,51 @@ export const HoverConnections = () => {
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const showLines = useVisConfigStore((s) => s.showLines)
-  const lineActivationThreshold = useVisConfigStore(
-    (s) => s.lineActivationThreshold
-  )
-  const layerMaxWeight = layer.maxAbsWeight ?? 1
   const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
   const isRegression = useDatasetStore((s) => s.isRegression)
   if (isRegression) return null
   if (isConvOrMaxPool) return null
   if (!showLines) return null
-  const connections = layer.neurons
-    .filter((n) => (n.normalizedActivation ?? 0) >= lineActivationThreshold)
-    .sort((a, b) => (b.activation ?? 0) - (a.activation ?? 0))
-    .flatMap((neuron) => {
-      const activation = neuron.normalizedActivation ?? 0
-      if (activation < lineActivationThreshold) return null
-      const { weights } = neuron
-      if (!weights) return null
-      // const maxLinesPerNeuron = Math.ceil(weights.length / 20) // max 5% of all weights
-      return (
-        weights
-          .map((weight, index) => ({
-            absWeight: Math.abs(weight),
-            index,
-          }))
-          .filter(({ absWeight }) => absWeight >= layerMaxWeight * 0.5)
-          .sort((a, b) => b.absWeight - a.absWeight) // TODO: optimize
-          // .slice(0, maxLinesPerNeuron)
-          .map(({ absWeight, index }) => {
-            const prevNeuron = prevLayer.neurons[index]
-            const input = neuron.inputs?.[index] ?? 0
-            const weightedInput = absWeight * input
-            if (weightedInput < MIN_LINE_WIDTH) return null
-            const lineWidth = Math.min(
-              Math.round(weightedInput * 10) / 10,
-              MAX_LINE_WIDTH
-            )
-            return { neuron, prevNeuron, lineWidth }
-          })
-      )
-    })
-    .filter(Boolean)
-    .slice(0, MAX_LINES_PER_LAYER) as {
-    neuron: Neuron
-    prevNeuron: Neuron
-    lineWidth: number
-  }[]
+
+  const connections = getConnections(layer, prevLayer.neurons)
   return (
     <group name={`layer_${layer.index}_connections`}>
-      {connections.map(({ neuron, prevNeuron, lineWidth }, i) => {
-        if (!neuron?.ref || !prevNeuron?.ref) return null
-        return (
-          <DynamicLine2
-            key={i}
-            fromRef={prevNeuron.ref}
-            toRef={neuron.ref}
-            width={lineWidth}
-          />
-        )
+      {connections.map((connectionProps, i) => {
+        return <DynamicLine2 key={i} {...connectionProps} />
       })}
     </group>
   )
+}
+
+function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
+  const lineActivationThreshold =
+    useVisConfigStore.getState().lineActivationThreshold
+  const layerMaxWeight = layer.maxAbsWeight ?? 1
+
+  const connections: DynamicLineProps[] = []
+  for (const neuron of layer.neurons) {
+    const { weights, normalizedActivation: activation = 0 } = neuron
+    if (!weights || !neuron.inputs) continue
+    if (activation < lineActivationThreshold) continue
+
+    for (const [index, weight] of weights.entries()) {
+      const prevNeuron = prevNeurons[index]
+      if (!neuron?.ref || !prevNeuron?.ref) continue
+      const absWeight = Math.abs(weight)
+      if (absWeight < layerMaxWeight * 0.5) continue
+      const input = neuron.inputs[index] ?? 0
+      const weightedInput = Math.round(absWeight * input * 10) / 10
+      if (weightedInput < MIN_LINE_WIDTH) continue
+      const width = Math.min(weightedInput, MAX_LINE_WIDTH)
+      const connection = { fromRef: prevNeuron.ref, toRef: neuron.ref, width }
+      connections.push(connection)
+    }
+  }
+  return connections.length > MAX_LINES_PER_LAYER
+    ? connections
+        .sort((a, b) => b.width! - a.width!)
+        .slice(0, MAX_LINES_PER_LAYER)
+    : connections
 }
 
 interface DynamicLineProps {
