@@ -3,7 +3,7 @@ import { Neuron, NeuronDef, NeuronRefType, Nid } from "@/lib/neuron"
 import type { Dataset } from "@/data/datasets"
 import { getVisibleLayers } from "@/lib/layer-props"
 import { useAnimatedPosition } from "@/three/animated-position"
-import { MeshParams, getOffsetX } from "@/lib/layer-layout"
+import { MeshParams } from "@/lib/layer-layout"
 import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
@@ -53,7 +53,9 @@ export const Layer = (props: LayerProps) => {
   const { groups } = props
   const groupCount = groups.length
 
-  const layerSpacing = useVisConfigStore((s) => s.layerSpacing)
+  const xShift = useVisConfigStore((s) => s.xShift)
+  const yShift = useVisConfigStore((s) => s.yShift)
+  const zShift = useVisConfigStore((s) => s.zShift)
   const splitColors = useVisConfigStore((s) => s.splitColors)
 
   const hasAdditiveBlending =
@@ -62,8 +64,12 @@ export const Layer = (props: LayerProps) => {
   const visibleLayers = getVisibleLayers(allLayers)
   const prevVisibleLayer = visibleLayers[visibleIndex - 1]
   const position = useMemo(
-    () => [getOffsetX(visibleIndex, visibleLayers.length, layerSpacing), 0, 0],
-    [visibleIndex, visibleLayers.length, layerSpacing]
+    () => [
+      visibleIndex * xShift + (visibleLayers.length - 1) * xShift * -0.5,
+      visibleIndex * yShift + (visibleLayers.length - 1) * yShift * -0.5,
+      visibleIndex * zShift + (visibleLayers.length - 1) * zShift * -0.5,
+    ],
+    [visibleIndex, visibleLayers.length, xShift, yShift, zShift]
   )
   const [ref] = useAnimatedPosition(position, 0.1)
   if (!props.neurons.length) return null

@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.27",
+  "version": "1.0.0-alpha.28",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,8 +8,7 @@
     "start": "next start",
     "serve": "npx serve out",
     "lint": "next lint",
-    "test": "vitest",
-    "test:verbose": "vitest --reporter=verbose"
+    "test": "vitest"
   },
   "dependencies": {
     "@react-spring/three": "^9.7.5",

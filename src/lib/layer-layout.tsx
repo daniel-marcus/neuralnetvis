@@ -23,6 +23,10 @@ const meshMap: Record<string, MeshParams> = {
     geometry: new THREE.SphereGeometry(0.6, 32, 32),
     spacingFactor: 2.7,
   },
+  sphereSmall: {
+    geometry: new THREE.SphereGeometry(0.35, 32, 32),
+    spacingFactor: 2.3,
+  },
   boxSmall: {
     geometry: new THREE.BoxGeometry(0.6, 0.6, 0.6),
   },
@@ -31,7 +35,7 @@ const meshMap: Record<string, MeshParams> = {
     spacingFactor: 1.5,
   },
   boxTiny: {
-    geometry: new THREE.BoxGeometry(0.2, 0.2, 0.2),
+    geometry: new THREE.BoxGeometry(0.18, 0.18, 0.18),
   },
 }
 
@@ -48,18 +52,10 @@ export function getMeshParams(
     layer.getClassName() === "MaxPooling2D"
   ) {
     return meshMap.boxTiny
+  } else {
+    if (units <= 128) return meshMap.sphere
+    else return meshMap.sphereSmall
   }
-  return meshMap.sphere
-}
-
-export function getOffsetX(
-  visibleIndex: number,
-  totalVisibleLayers: number,
-  layerSpacing: number = 10
-) {
-  return (
-    visibleIndex * layerSpacing + (totalVisibleLayers - 1) * layerSpacing * -0.5
-  )
 }
 
 const MAX_SINGLE_COL_HEIGHT = 10

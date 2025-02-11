@@ -3,7 +3,9 @@ import { create } from "zustand"
 export type HighlightProp = "weights" | "weightedInputs"
 
 interface VisConfig {
-  layerSpacing: number
+  xShift: number
+  yShift: number
+  zShift: number
   neuronSpacing: number
   splitColors: boolean
   highlightProp: HighlightProp | string
@@ -13,7 +15,9 @@ interface VisConfig {
 }
 
 const defaultOptions = {
-  layerSpacing: 11,
+  xShift: 11,
+  yShift: 0,
+  zShift: 0,
   neuronSpacing: 1.1,
   showLines: true,
   splitColors: false,

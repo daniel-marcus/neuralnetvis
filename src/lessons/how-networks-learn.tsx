@@ -51,7 +51,7 @@ export const IntroNetworks = (): LessonContent => {
       >
         Another one!
       </Block>
-      <Block onScroll={changeLayerSpacing}>Changing layerSpacing</Block>
+      <Block onScroll={changeLayerSpacing}>Changing xShift</Block>
       <Block onScroll={changeNeuronSpacing}>Changing neuronSpacing</Block>
       <Block>
         Try out!
@@ -119,7 +119,7 @@ function changeLayerSpacing({ percent }: OnBlockScrollProps) {
   const defaultSpacing = 11
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  useVisConfigStore.setState({ layerSpacing: newSpacing })
+  useVisConfigStore.setState({ xShift: newSpacing })
 }
 
 function changeNeuronSpacing({ percent }: OnBlockScrollProps) {

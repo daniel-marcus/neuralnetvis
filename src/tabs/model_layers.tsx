@@ -28,7 +28,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
       <Slider
         {...sharedSliderProps}
         min={0}
-        max={10} // 2^10 = 1024
+        max={9} // 2^9 = 512
         value={Math.log2(config.units)}
         transform={(v) => 2 ** v}
         onChange={(units) => updateLayerConfig({ ...config, units })}
@@ -39,9 +39,10 @@ function getInputComp<T extends keyof LayerConfigMap>(
     return (
       <Slider
         {...sharedSliderProps}
-        min={1}
-        max={64}
-        value={config.filters}
+        min={0}
+        max={6} // 2^6 = 64
+        value={Math.log2(config.filters)}
+        transform={(v) => 2 ** v}
         onChange={(filters) => updateLayerConfig({ ...config, filters })}
       />
     )
