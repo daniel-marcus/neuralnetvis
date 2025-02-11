@@ -1,4 +1,4 @@
-import { Box, ControlPanel, MenuBtn, Slider } from "@/ui-components"
+import { Box, ControlPanel, MenuBtn } from "@/ui-components"
 import { useDatasetStore } from "@/data/datasets"
 import { useDebugStore } from "@/lib/debug"
 import { datasets } from "@/datasets"
@@ -30,19 +30,5 @@ export const Data = () => {
         </div>
       </div>
     </Box>
-  )
-}
-
-export function SampleSlider() {
-  const i = useDatasetStore((s) => s.i)
-  const setI = useDatasetStore((s) => s.setI)
-  const totalSamples = useDatasetStore((s) => s.totalSamples)
-  return (
-    <Slider
-      value={i}
-      onChange={(v) => setI(v)}
-      min={0}
-      max={totalSamples - 1}
-    />
   )
 }
