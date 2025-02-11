@@ -40,7 +40,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
       <Slider
         {...sharedSliderProps}
         min={1}
-        max={32}
+        max={64}
         value={config.filters}
         onChange={(filters) => updateLayerConfig({ ...config, filters })}
       />

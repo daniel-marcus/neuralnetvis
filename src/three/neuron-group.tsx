@@ -172,11 +172,9 @@ function useColors(
   useLayoutEffect(() => {
     if (!meshRef.current) return
     if (debug()) console.log("upd colors")
-    for (const n of neurons) {
-      const i = neurons.indexOf(n)
-      const colorStr = getNeuronColor(n, isRegression)
-      const color = tmpColor.set(colorStr)
-      meshRef.current.setColorAt(i, color)
+    for (const [i, n] of neurons.entries()) {
+      tmpColor.set(getNeuronColor(n, isRegression))
+      meshRef.current.setColorAt(i, tmpColor)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
@@ -198,7 +196,6 @@ function getNeuronColor(n: Neuron, isRegression = false) {
     : n.hasColorChannels
     ? getColorChannelColor(n)
     : getActivationColor(n.normalizedActivation ?? 0)
-  // getPredictionQualityColor(n)
 }
 
 function getActivationColor(colorValue: number) {
