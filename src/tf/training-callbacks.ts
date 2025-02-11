@@ -1,4 +1,4 @@
-import { CustomCallback, getBackend } from "@tensorflow/tfjs"
+import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import { useTrainingStore, getModelEvaluation } from "./training"
 import { useDatasetStore } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
@@ -80,7 +80,7 @@ export class ProgressCb extends CustomCallback {
   constructor() {
     super({
       onTrainBegin: () => {
-        this.startTime = performance.now()
+        this.startTime = Date.now()
         // console.log(this.params)
       },
       onEpochBegin: (epoch) => {
@@ -92,7 +92,7 @@ export class ProgressCb extends CustomCallback {
       },
       onTrainEnd: async () => {
         const { accuracy, loss } = await getModelEvaluation()
-        const totalTime = (performance.now() - this.startTime) / 1000
+        const totalTime = (Date.now() - this.startTime) / 1000
         const title = `Training finished (${getBackend()})`
         const data = {
           Loss: loss?.toFixed(3),
@@ -117,7 +117,7 @@ export class ProgressCb extends CustomCallback {
     const sessionEpoch = this.epoch - this.initialEpoch
     const totalPercent = this.prochessedBatches / (epochs * this.epochBatches)
     const epochPercent = (batchIndex + 1) / this.epochBatches
-    const elapsedTime = performance.now() - this.startTime
+    const elapsedTime = Date.now() - this.startTime
     const secPerEpoch = elapsedTime / (sessionEpoch + epochPercent) / 1000
     const data = {
       Epoch: `${this.epoch + 1}/${this.params.epochs}`,
@@ -131,6 +131,8 @@ export class ProgressCb extends CustomCallback {
 export class LogsPlotCb extends CustomCallback {
   private epoch = 0
   private addLogs = throttle(useLogStore.getState().addLogs, THROTTLE)
+  private lastLogTime = 0
+  private updEvery = 50 // ms
   constructor() {
     super({
       onEpochBegin: (epoch) => {
@@ -144,9 +146,9 @@ export class LogsPlotCb extends CustomCallback {
   }
   async onBatchEnd(batchIndex: number, logs: UnresolvedLogs) {
     if (!logs) return
-    if (batchIndex % 10 === 0) {
-      // log every 10th batch
-      // logging onYield might be slightly faster, but looks less smooth
+    if (Date.now() - this.lastLogTime > this.updEvery) {
+      this.lastLogTime = Date.now()
+      await nextFrame()
       await resolveScalarsInLogs(logs)
       this.addLogs([{ epoch: this.epoch, ...logs }])
     }
@@ -158,10 +160,10 @@ export class DebugCb extends CustomCallback {
   constructor() {
     super({
       onTrainBegin: () => {
-        this.startTime = performance.now()
+        this.startTime = Date.now()
       },
       onTrainEnd: () => {
-        console.log(performance.now() - this.startTime)
+        console.log(Date.now() - this.startTime)
         useTrainingStore.getState().setIsTraining(false)
       },
     })

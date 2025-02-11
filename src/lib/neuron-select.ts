@@ -85,25 +85,19 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       weightedInputs: normalizeWithSign(weightedInputs),
     }
 
-    // TODO: manipulate only affected nodes directly for faster updates when hovering?
+    if (!selN.inputNids) return layerProps
+    const inputNidMap = new Map(selN.inputNids.map((nid, idx) => [nid, idx]))
+
     return layerProps.map((l) => {
-      const patchdNeurons = l.neurons.map((n) => {
-        if (n.layerIndex !== (selN.layer.prevVisibleLayer?.index ?? 0)) return n
-
-        const idx = selN.inputNids?.indexOf(n.nid)
-        if (typeof idx === "undefined" || idx === -1) return n
-
+      if (l.index !== (selN.layer.prevVisibleLayer?.index ?? 0)) return l
+      const neurons = l.neurons.map((n) => {
+        const idx = inputNidMap.get(n.nid)
+        if (typeof idx === "undefined") return n
         const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
-        return {
-          ...n,
-          highlightValue,
-        }
+        return { ...n, highlightValue }
       })
-      return {
-        ...l,
-        neurons: patchdNeurons,
-        neuronsMap: new Map(patchdNeurons.map((n) => [n.nid, n])),
-      }
+      const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
+      return { ...l, neurons, neuronsMap }
     })
   }, [layerProps, selOrHovNid, highlightProp])
   return patchedLayerProps

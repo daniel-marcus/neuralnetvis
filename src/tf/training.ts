@@ -4,7 +4,11 @@ import { Dataset, DbBatch, useDatasetStore } from "@/data/datasets"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { create } from "zustand"
 import { useKeyCommand } from "@/lib/utils"
-import { DEFAULT_BACKEND, setBackendIfAvailable } from "./tf-backend"
+import {
+  backendForTraining,
+  DEFAULT_BACKEND,
+  setBackendIfAvailable,
+} from "./tf-backend"
 import { getAll } from "@/data/indexed-db"
 import { useModelStore } from "./model"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
@@ -68,14 +72,14 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
 
   useEffect(() => {
     if (!isTraining || !ds || !model) return
-    const { validationSplit, batchSize, epochs: _epochs, silent } = config
+    const { validationSplit, batchSize, epochs: _epochs } = config
     const initialEpoch = useTrainingStore.getState().epochCount
     const epochs = initialEpoch + _epochs
 
     startTraining()
     async function startTraining() {
       if (!model || !ds) return
-      if (!debug() && silent) await setBackendIfAvailable("webgpu") // use webgpu (faster)
+      if (!debug()) await backendForTraining()
       const callbacks = [
         new DebugCb(),
         new UpdateCb(),
@@ -89,7 +93,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         validationSplit,
         callbacks,
       })
-      if (!debug() && !silent) await setBackendIfAvailable(DEFAULT_BACKEND)
+      if (!debug()) await setBackendIfAvailable(DEFAULT_BACKEND)
     }
     return () => {
       model.stopTraining = true

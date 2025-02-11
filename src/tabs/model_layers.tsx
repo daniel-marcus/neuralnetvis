@@ -111,9 +111,9 @@ export const LayerConfigControl = () => {
     model?.layers[0].batchInputShape.length > 2
   const selectOptions = [
     {
-      value: "",
+      value: "empty",
       label: "add",
-      disabled: true,
+      // disabled: true,
     },
     { value: "Dense" },
     { value: "Conv2D", disabled: !hasMutliDimInput },
@@ -164,10 +164,11 @@ export const LayerConfigControl = () => {
         <InputRow
           label={
             <Select
+              key={`select_${hiddenLayers.length}`}
               ref={selectRef}
               options={selectOptions}
               onChange={handleAdd}
-              value={""}
+              value={selectOptions[0].value}
             />
           }
         >

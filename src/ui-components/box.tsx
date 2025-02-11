@@ -43,7 +43,15 @@ function useSwipeClose(onClose: () => void, isShown: boolean) {
     api.start({ y: 0 })
   }, [isShown, api])
   const bind = useDrag(
-    ({ offset: [, oy], movement: [, my], velocity: [, vy], down, first }) => {
+    ({
+      event,
+      offset: [, oy],
+      movement: [, my],
+      velocity: [, vy],
+      down,
+      first,
+    }) => {
+      if (!("pointerType" in event) || event.pointerType === "mouse") return
       const newY = first ? y.get() : oy
       api.start({ y: newY, immediate: down })
       if (my < DELTA_THRESHOLD && vy > VELOCITY_THRESHOLD) {
@@ -55,10 +63,6 @@ function useSwipeClose(onClose: () => void, isShown: boolean) {
       bounds: { bottom: 0 },
       rubberband: [0, 0.1],
       filterTaps: true,
-      pointer: {
-        touch: true,
-        mouse: false,
-      },
     }
   )
   const style = {

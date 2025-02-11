@@ -3,6 +3,8 @@ import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import "@tensorflow/tfjs-backend-wasm"
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm"
+import { useTrainingStore } from "./training"
+import { useModelStore } from "./model"
 
 setWasmPaths({
   "tfjs-backend-wasm.wasm": "/tfjs-backend-wasm.wasm",
@@ -35,4 +37,15 @@ export function getAvailableBackends() {
   return Object.entries(tf.engine().registryFactory)
     .sort(([, a], [, b]) => b.priority - a.priority)
     .map(([name]) => name)
+}
+
+export async function backendForTraining() {
+  const backends = getAvailableBackends()
+  const model = useModelStore.getState().model
+  const silent = useTrainingStore.getState().config.silent
+  if (silent && backends.includes("webgpu")) {
+    await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
+  } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {
+    await setBackendIfAvailable("webgl") // Conv2D is not yet supported by wasm
+  }
 }
