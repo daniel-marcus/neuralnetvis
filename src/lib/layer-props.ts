@@ -286,7 +286,7 @@ function getLastVisibleLayer(
 }
 
 interface WeightsBiases {
-  weights?: number[][] | number[][][] // Dense vs Conv2D
+  weights?: number[][] // weights per neuron / filter
   biases?: number[]
   maxAbsWeight?: number
 }
@@ -306,6 +306,7 @@ function useWeightsAndBiases(
         return tf.tidy(() => {
           const [_weights, biases] = tfLayer.getWeights()
           const weights = _weights?.transpose()
+          console.log({ weights })
           const maxAbsWeight = // needed only for dense connections
             layerType === "Dense" ? _weights?.abs().max() : undefined
           return { weights, biases, maxAbsWeight } as const
@@ -315,14 +316,14 @@ function useWeightsAndBiases(
       try {
         const newStates = await Promise.all(
           _newStates.map(async (l) => ({
-            weights: (await l.weights?.array()) as
-              | number[][]
-              | number[][][]
-              | undefined,
+            weights: (await l.weights
+              ?.reshape([l.weights.shape[0], -1]) // flattened weights per neuron / filter
+              .array()) as number[][] | undefined,
             biases: (await l.biases?.array()) as number[] | undefined,
             maxAbsWeight: (await l.maxAbsWeight?.array()) as number | undefined,
           }))
         )
+        console.log({ newStates })
         setWeightsBiases(newStates)
       } catch {
         // console.log("Error updating weights", e)
@@ -347,46 +348,48 @@ function useStatefulLayers(
 ) {
   const statefulLayers = useMemo(() => {
     if (!weightsBiases.length) return statelessLayers
-    const result = statelessLayers.reduce((acc, layer, i) => {
+    const result = statelessLayers.reduce((acc, layer, lIdx) => {
       const { layerPos, layerType } = layer
 
       // add state to each neuron
-      const layerActivations = activations?.[i]?.activations
+      const layerActivations = activations?.[lIdx]?.activations
       const normalizedActivations =
         layerPos === "output"
           ? layerActivations
           : layerType === "Flatten"
           ? undefined
-          : activations?.[i]?.normalizedActivations
+          : activations?.[lIdx]?.normalizedActivations
 
-      const prevActivations = activations?.[i - 1]?.activations // aka inputs
+      const prevActivations = activations?.[lIdx - 1]?.activations // aka inputs
 
-      const { weights, biases, maxAbsWeight } = weightsBiases[i] ?? {}
+      const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
 
-      const neurons: Neuron[] = statelessLayers[i].neurons.map((neuron, j) => {
-        const activation = layerActivations?.[j]
-        // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
-        const filterIndex = j % layer.numBiases // for dense layers this would be j
-        const bias = biases?.[filterIndex]
-        const thisWeights = weights?.[filterIndex]?.flat(2)
-        const inputs =
-          layer.layerType === "Dense"
-            ? prevActivations
-            : (neuron.inputNeurons?.map(
-                // for Conv2D: only inputs from receptive field
-                (n) => prevActivations?.[n.index]
-              ) as number[])
-        return {
-          ...neuron,
-          layerType,
-          activation,
-          rawInput: layer.layerPos === "input" ? rawInput?.[j] : undefined,
-          normalizedActivation: normalizedActivations?.[j],
-          bias,
-          weights: thisWeights,
-          inputs,
+      const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
+        (neuron, nIdx) => {
+          const activation = layerActivations?.[nIdx]
+          // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
+          const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
+          const bias = biases?.[filterIndex]
+          const thisWeights = weights?.[filterIndex]
+          const inputs =
+            layer.layerType === "Dense"
+              ? prevActivations
+              : (neuron.inputNeurons?.map(
+                  // for Conv2D: only inputs from receptive field
+                  (n) => prevActivations?.[n.index]
+                ) as number[])
+          return {
+            ...neuron,
+            layerType,
+            activation,
+            rawInput: layer.layerPos === "input" ? rawInput?.[nIdx] : undefined,
+            normalizedActivation: normalizedActivations?.[nIdx],
+            bias,
+            weights: thisWeights,
+            inputs,
+          }
         }
-      })
+      )
       const statefullLayer = {
         ...layer,
         neurons,
