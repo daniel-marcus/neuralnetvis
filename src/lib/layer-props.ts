@@ -180,7 +180,7 @@ function useStatelessLayers(
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const layerType = tfLayer.getClassName() as LayerType
 
-        const visibleIndex = visibleLayers?.indexOf(tfLayer) // no ...
+        const visibleIdx = visibleLayers?.indexOf(tfLayer) // no ...
         const layerPos = getLayerPosition(tfLayer, model)
 
         const prevLayer = acc[layerIndex - 1]
@@ -206,7 +206,7 @@ function useStatelessLayers(
 
         const layerStateless: LayerStateless = {
           index: layerIndex,
-          visibleIndex,
+          visibleIdx,
           layerType,
           layerPos,
           tfLayer,
@@ -234,7 +234,7 @@ function useStatelessLayers(
               index3d,
               layerIndex,
               groupIndex: neuronIndex % groupCount,
-              visibleLayerIndex: visibleIndex,
+              visibleLayerIndex: visibleIdx,
               inputNids,
               inputNeurons: prevVisibleLayer
                 ? (inputNids

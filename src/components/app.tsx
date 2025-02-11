@@ -25,7 +25,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
       <VisWrapper>
         <Canvas frameloop="demand">
           <Lights />
-          <PerspectiveCamera makeDefault position={[-23.5, 0, 35]} />
+          <PerspectiveCamera makeDefault position={[-23, 0, 35]} />
           <OrbitControls target={[0, 0, 0]} enabled={!visualizationLocked} />
           <Model model={model} batchCount={batchCount} isPending={isPending} />
           <ThreeStoreSetter />

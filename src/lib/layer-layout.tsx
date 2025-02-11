@@ -31,8 +31,8 @@ const meshMap: Record<string, MeshParams> = {
     geometry: new THREE.BoxGeometry(0.6, 0.6, 0.6),
   },
   boxBig: {
-    geometry: new THREE.BoxGeometry(1.8, 1.8, 1.8),
-    spacingFactor: 1.5,
+    geometry: new THREE.BoxGeometry(2, 2, 2),
+    spacingFactor: 1.4,
   },
   boxTiny: {
     geometry: new THREE.BoxGeometry(0.18, 0.18, 0.18),

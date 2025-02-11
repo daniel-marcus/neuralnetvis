@@ -9,6 +9,7 @@ import { GroupDef, NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import { useVisConfigStore } from "@/lib/vis-config"
+import { useOrientation } from "@/lib/utils"
 // import { GroupWithTexture } from "./group-texture"
 
 export type LayerType =
@@ -21,7 +22,7 @@ export type LayerPosition = "input" | "hidden" | "output" | "invisible"
 
 export interface LayerStateless {
   index: number
-  visibleIndex: number // to find neighbours throu "invisible" layers (e.g. Flatten)
+  visibleIdx: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerType: LayerType
   layerPos: LayerPosition
   tfLayer: tf.layers.Layer
@@ -49,29 +50,16 @@ interface LayerContext {
 export type LayerProps = LayerStateful & LayerContext
 
 export const Layer = (props: LayerProps) => {
-  const { visibleIndex, allLayers, layerPos } = props
-  const { groups } = props
+  const { layerPos, groups, allLayers } = props
   const groupCount = groups.length
+  const prevVisibleLayer = getVisibleLayers(allLayers)[props.visibleIdx - 1]
 
-  const xShift = useVisConfigStore((s) => s.xShift)
-  const yShift = useVisConfigStore((s) => s.yShift)
-  const zShift = useVisConfigStore((s) => s.zShift)
+  const ref = useLayerPosition(props)
+
   const splitColors = useVisConfigStore((s) => s.splitColors)
-
   const hasAdditiveBlending =
     layerPos === "input" && groupCount > 1 && !splitColors
 
-  const visibleLayers = getVisibleLayers(allLayers)
-  const prevVisibleLayer = visibleLayers[visibleIndex - 1]
-  const position = useMemo(
-    () => [
-      visibleIndex * xShift + (visibleLayers.length - 1) * xShift * -0.5,
-      visibleIndex * yShift + (visibleLayers.length - 1) * yShift * -0.5,
-      visibleIndex * zShift + (visibleLayers.length - 1) * zShift * -0.5,
-    ],
-    [visibleIndex, visibleLayers.length, xShift, yShift, zShift]
-  )
-  const [ref] = useAnimatedPosition(position, 0.1)
   if (!props.neurons.length) return null
   const neuronsByGroup = groupNeuronsByGroupIndex(props)
   return (
@@ -113,4 +101,25 @@ function groupNeuronsByGroupIndex(layer: LayerProps) {
     neuronsByGroup[neuron.groupIndex].push(neuron)
   }
   return neuronsByGroup
+}
+
+function useLayerPosition(layer: LayerProps) {
+  const { visibleIdx, allLayers } = layer
+  const visibleLayers = getVisibleLayers(allLayers)
+  const orientation = useOrientation()
+
+  const _xShift = useVisConfigStore((s) => s.xShift)
+  const yShift = useVisConfigStore((s) => s.yShift)
+  const zShift = useVisConfigStore((s) => s.zShift)
+
+  const position = useMemo(() => {
+    const xShift = orientation === "landscape" ? _xShift * 1.1 : _xShift
+    return [
+      visibleIdx * xShift + (visibleLayers.length - 1) * xShift * -0.5,
+      visibleIdx * yShift + (visibleLayers.length - 1) * yShift * -0.5,
+      visibleIdx * zShift + (visibleLayers.length - 1) * zShift * -0.5,
+    ]
+  }, [visibleIdx, visibleLayers.length, _xShift, yShift, zShift, orientation])
+  const [ref] = useAnimatedPosition(position, 0.1)
+  return ref
 }

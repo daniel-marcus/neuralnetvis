@@ -16,6 +16,29 @@ export function useIsScreen(bp: Breakpoint) {
   return isScreen
 }
 
+export function useOrientation() {
+  const [orientation, setOrientation] = useState<"landscape" | "portrait">(
+    "landscape"
+  )
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      setOrientation(
+        window.matchMedia("(orientation: landscape)").matches
+          ? "landscape"
+          : "portrait"
+      )
+    }
+    handleOrientationChange()
+    window.addEventListener("orientationchange", handleOrientationChange)
+    window.addEventListener("resize", handleOrientationChange)
+    return () => {
+      window.removeEventListener("orientationchange", handleOrientationChange)
+      window.removeEventListener("resize", handleOrientationChange)
+    }
+  }, [])
+  return orientation
+}
+
 export function useWindowWidth() {
   const [width, setWidth] = useState(0)
   useEffect(() => {

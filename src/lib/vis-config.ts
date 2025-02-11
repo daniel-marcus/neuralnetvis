@@ -15,7 +15,7 @@ interface VisConfig {
 }
 
 const defaultOptions = {
-  xShift: 11,
+  xShift: 10,
   yShift: 0,
   zShift: 0,
   neuronSpacing: 1.1,
