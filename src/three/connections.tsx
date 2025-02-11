@@ -31,15 +31,11 @@ export const HoverConnections = () => {
   return (
     <group name={`hovered_node_connections`}>
       {hovered.inputNeurons?.map((inputN, i, arr) => {
-        const prevNeuron = hovered.layer.prevVisibleLayer?.neuronsMap?.get(
-          inputN.nid
-        )
-        if (!prevNeuron) return null
         const width = arr.length > 100 ? 0.1 : 0.5
         return (
           <DynamicLine2
-            key={`${hovered.nid}_${prevNeuron.nid}`}
-            fromRef={prevNeuron.ref}
+            key={`${hovered.nid}_${inputN.nid}`}
+            fromRef={inputN.ref}
             toRef={hovered.ref}
             toPoint={hoverOrigin}
             width={width}
@@ -52,7 +48,9 @@ export const HoverConnections = () => {
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const showLines = useVisConfigStore((s) => s.showLines)
-  const isConvOrMaxPool = ["Conv2D", "MaxPooling2D"].includes(layer.layerType)
+  const isConvOrMaxPool =
+    ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
+    ["Conv2D", "MaxPooling2D"].includes(prevLayer.layerType)
   const isRegression = useDatasetStore((s) => s.isRegression)
   if (isRegression) return null
   if (isConvOrMaxPool) return null
@@ -76,7 +74,7 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
   const connections: DynamicLineProps[] = []
   for (const neuron of layer.neurons) {
     const { weights, normalizedActivation: activation = 0 } = neuron
-    if (!weights || !neuron.inputs) continue
+    if (!weights || !neuron.inputNeurons?.length) continue
     if (activation < lineActivationThreshold) continue
 
     for (const [index, weight] of weights.entries()) {
@@ -84,8 +82,7 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
       if (!neuron?.ref || !prevNeuron?.ref) continue
       const absWeight = Math.abs(weight)
       if (absWeight < layerMaxWeight * 0.5) continue
-      const input = neuron.inputs[index] ?? 0
-      const weightedInput = absWeight * input
+      const weightedInput = absWeight * (prevNeuron.activation ?? 0)
       if (weightedInput < MIN_LINE_WIDTH) continue
       const width = Math.min(
         Math.round(weightedInput * 10) / 10,

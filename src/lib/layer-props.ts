@@ -76,7 +76,6 @@ export function getUnits(layer: tf.layers.Layer) {
     return flattenedNumber
   } else if (className === "Flatten") {
     // flatten layer
-    // eturn typeof layer.outputShape[1] === "number" ? layer.outputShape[1] : 0
     return 0
   } else if (["Conv2D", "MaxPooling2D"].includes(className)) {
     // Conv2D, MaxPooling2D, etc.
@@ -215,11 +214,14 @@ function useStatelessLayers(
           prevLayer,
           prevVisibleLayer,
           meshParams,
-          neurons: [],
           hasLabels:
             (layerPos === "input" && !!ds?.input?.labels?.length) ||
             (layerPos === "output" && !!ds?.output.labels?.length),
+          neurons: [],
+          groups: [],
         }
+
+        const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
 
         const neurons =
           Array.from({ length: units }).map((_, neuronIndex) => {
@@ -231,6 +233,7 @@ function useStatelessLayers(
               index: neuronIndex,
               index3d,
               layerIndex,
+              groupIndex: neuronIndex % groupCount,
               visibleLayerIndex: visibleIndex,
               inputNids,
               inputNeurons: prevVisibleLayer
@@ -250,11 +253,8 @@ function useStatelessLayers(
             }
           }) ?? []
         const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
-        const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
         const groups = Array.from({ length: groupCount }).map((_, i) => {
-          const groupedNeurons = neurons.filter(
-            (n) => n.index % groupCount === i
-          )
+          const groupedNeurons = neurons.filter((n) => n.groupIndex === i)
           const nids = groupedNeurons.map((n) => n.nid)
           const nidsStr = nids.join(",")
           return {
@@ -357,8 +357,6 @@ function useStatefulLayers(
           ? undefined
           : activations?.[lIdx]?.normalizedActivations
 
-      const prevActivations = activations?.[lIdx - 1]?.activations // aka inputs
-
       const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
 
       const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
@@ -366,38 +364,25 @@ function useStatefulLayers(
           const activation = layerActivations?.[nIdx]
           // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
           const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
-          const bias = biases?.[filterIndex]
-          const thisWeights = weights?.[filterIndex]
-          const inputs =
-            layer.layerType === "Dense"
-              ? prevActivations
-              : (neuron.inputNeurons?.map(
-                  // for Conv2D: only inputs from receptive field
-                  (n) => prevActivations?.[n.index]
-                ) as number[])
-          return {
+          const updatedNeuron = {
             ...neuron,
-            layerType,
             activation,
             rawInput: layer.layerPos === "input" ? rawInput?.[nIdx] : undefined,
             normalizedActivation: normalizedActivations?.[nIdx],
-            bias,
-            weights: thisWeights,
-            inputs,
+            weights: weights?.[filterIndex],
+            bias: biases?.[filterIndex],
           }
+          return updatedNeuron
         }
       )
       const statefullLayer = {
         ...layer,
         neurons,
-        neuronsMap: new Map(neurons.map((n) => [n.nid, n])),
-        // ds, // replace with shape or whatever is needed
         maxAbsWeight,
       }
       return [...acc, statefullLayer]
     }, [] as LayerStateful[])
     return result
   }, [statelessLayers, activations, weightsBiases, rawInput])
-
   return statefulLayers
 }

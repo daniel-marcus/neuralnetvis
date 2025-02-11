@@ -32,13 +32,12 @@ export interface LayerStateless {
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
   hasLabels?: boolean
+  groups: GroupDef[]
 }
 
 export interface LayerStateful extends LayerStateless {
   neurons: Neuron[]
-  neuronsMap?: Map<Nid, Neuron>
   maxAbsWeight?: number
-  groups: GroupDef[]
 }
 
 interface LayerContext {
@@ -68,6 +67,7 @@ export const Layer = (props: LayerProps) => {
   )
   const [ref] = useAnimatedPosition(position, 0.1)
   if (!props.neurons.length) return null
+  const neuronsByGroup = groupNeuronsByGroupIndex(props)
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
@@ -75,9 +75,9 @@ export const Layer = (props: LayerProps) => {
         {groups.map(({ nids, nidsStr }, i) => {
           // use reversed index for input layer to get RGB on z-axis
           const groupIndex = layerPos === "input" ? groupCount - i - 1 : i
-          const groupedNeurons = Array.from(nids)
-            .map((nid) => props.neuronsMap?.get(nid))
-            .filter(Boolean) as Neuron[]
+
+          const groupedNeurons = neuronsByGroup[groupIndex]
+
           const allProps = {
             ...props,
             groupIndex,
@@ -96,4 +96,15 @@ export const Layer = (props: LayerProps) => {
       )}
     </>
   )
+}
+
+function groupNeuronsByGroupIndex(layer: LayerProps) {
+  const neuronsByGroup = {} as { [key: number]: Neuron[] }
+  for (let i = 0; i < layer.groups.length; i++) {
+    neuronsByGroup[i] = []
+  }
+  for (const neuron of layer.neurons) {
+    neuronsByGroup[neuron.groupIndex].push(neuron)
+  }
+  return neuronsByGroup
 }

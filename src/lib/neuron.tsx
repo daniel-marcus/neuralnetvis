@@ -18,11 +18,12 @@ export type NeuronDef = {
   index3d: Index3D
   nid: Nid
   layerIndex: number
+  groupIndex: number
   visibleLayerIndex: number
   ref: React.RefObject<NeuronRefType>
   hasColorChannels?: boolean
   inputNids?: Nid[]
-  inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field
+  inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
   label?: string
   layer: LayerStateless
 }
@@ -31,7 +32,6 @@ export type NeuronState = {
   rawInput?: number
   activation?: number
   normalizedActivation?: number
-  inputs?: number[]
   weights?: number[]
   bias?: number
   highlightValue?: number // [-1, 1] TODO: refactor

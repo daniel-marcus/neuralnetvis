@@ -9,21 +9,7 @@ export function useInput(ds?: Dataset) {
 
   useEffect(() => {
     if (!ds) return
-    async function getInput() {
-      if (!ds) return
-      const [data, label, dataRaw] = await getSample(ds, "train", i, true)
-      const _input = Array.from(data)
-      const rawInput = dataRaw ? Array.from(dataRaw) : _input
-      await tf.ready()
-      const input = tf.tidy(
-        () =>
-          (ds.input?.preprocess?.(tf.tensor(data)).arraySync() as number[]) ??
-          _input
-      )
-      const trainingY = label
-      useDatasetStore.setState({ input, rawInput, trainingY })
-    }
-    getInput()
+    getInput(i, ds)
     return
   }, [i, ds])
 
@@ -37,6 +23,21 @@ export function useInput(ds?: Dataset) {
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowLeft", prev)
   useKeyCommand("ArrowRight", next)
+}
+
+async function getInput(i: number, ds?: Dataset) {
+  if (!ds) return
+  const [data, label, dataRaw] = await getSample(ds, "train", i, true)
+  const _input = Array.from(data)
+  const rawInput = dataRaw ? Array.from(dataRaw) : _input
+  await tf.ready()
+  const input = tf.tidy(
+    () =>
+      (ds.input?.preprocess?.(tf.tensor(data)).arraySync() as number[]) ??
+      _input
+  )
+  const trainingY = label
+  useDatasetStore.setState({ input, rawInput, trainingY })
 }
 
 type BatchCacheKey = string // `${ds.key}_${type}`

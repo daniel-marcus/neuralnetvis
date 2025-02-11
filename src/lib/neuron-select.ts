@@ -76,10 +76,15 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
 
   const patchedLayerProps = useMemo(() => {
     if (!selOrHovNid) return layerProps
-    const allNeurons = layerProps.flatMap((l) => l.neurons)
-    const selN = allNeurons.find(({ nid }) => nid === selOrHovNid)
+    const allNeuronsMap = new Map(
+      layerProps.flatMap((l) => l.neurons).map((n) => [n.nid, n])
+    )
+    const selN = allNeuronsMap.get(selOrHovNid)
     if (!selN) return layerProps
-    const weightedInputs = getWeightedInputs(selN.inputs, selN.weights)
+    const selNInputs = (selN.inputNeurons?.map(
+      (n) => allNeuronsMap.get(n.nid)?.activation
+    ) ?? []) as number[]
+    const weightedInputs = getWeightedInputs(selNInputs, selN.weights)
     const tempObj = {
       weights: normalizeWithSign(selN.weights),
       weightedInputs: normalizeWithSign(weightedInputs),
@@ -96,8 +101,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
         const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
         return { ...n, highlightValue }
       })
-      const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
-      return { ...l, neurons, neuronsMap }
+      return { ...l, neurons }
     })
   }, [layerProps, selOrHovNid, highlightProp])
   return patchedLayerProps
