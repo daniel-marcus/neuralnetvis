@@ -116,25 +116,25 @@ interface ImportFormProps {
 function ImportForm({ onUploadFinished }: ImportFormProps) {
   const [setModel] = useModelTransition()
   const [modelFile, setModelFile] = useState<File | null>(null)
-  const [weightsFile, setWeightsFile] = useState<File | null>(null)
+  const [weightsFiles, setWeightsFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
     async (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault()
-      if (!modelFile || !weightsFile) return
+      if (!modelFile || !weightsFiles) return
       const newModel = await tf.loadLayersModel(
-        tf.io.browserFiles([modelFile, weightsFile])
+        tf.io.browserFiles([modelFile, ...weightsFiles])
       )
       await newModel.save(`indexeddb://imported_${newModel.name}`)
       setModel(newModel)
       onUploadFinished()
     },
-    [modelFile, weightsFile, onUploadFinished, setModel]
+    [modelFile, weightsFiles, onUploadFinished, setModel]
   )
   const [isPending, startTransition] = useTransition()
   useEffect(() => {
-    if (!modelFile || !weightsFile) return
+    if (!modelFile || !weightsFiles) return
     startTransition(importModel)
-  }, [modelFile, weightsFile, importModel])
+  }, [modelFile, weightsFiles, importModel])
   return (
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
@@ -148,13 +148,16 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
           />
         </label>
         <label className="block cursor-pointer">
-          {weightsFile ? weightsFile.name : "Choose weights.bin ..."}
+          {weightsFiles
+            ? weightsFiles.length + " weight file(s) selected"
+            : "Choose weights.bin ..."}
           <input
             type="file"
+            multiple
             id="weights-file"
             className="hidden text-transparent"
             placeholder="Choose file"
-            onChange={(e) => setWeightsFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => setWeightsFiles(e.target.files ?? null)}
           />
         </label>
       </div>
