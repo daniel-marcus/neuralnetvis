@@ -21,7 +21,7 @@ export const IntroNetworks = (): LessonContent => {
   const controller = useController()
   useEffect(() => {
     setInitialState({
-      datasetKey: "fashion mnist",
+      datasetKey: "fashion_mnist",
       hiddenLayers: [
         { className: "Dense", config: { units: 64, activation: "relu" } },
       ],

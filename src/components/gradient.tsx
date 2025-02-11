@@ -16,7 +16,7 @@ export const Gradient = () => {
 function useScrollZero() {
   const [scollZero, setScrollZero] = useState(true)
   useEffect(() => {
-    const onScroll = () => setScrollZero(window.scrollY === 0)
+    const onScroll = () => setScrollZero(window.scrollY <= 0)
     window.addEventListener("scroll", onScroll)
     onScroll()
     return () => {
