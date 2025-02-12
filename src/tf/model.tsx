@@ -179,7 +179,7 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
 
   for (const [i, l] of layerConfigs.entries()) {
-    const isOutput = i === layerConfigs.length - 1 && layerConfigs.length > 1
+    const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
     if (l.className === "Dense") {
       const configNew = isOutput // use config from ds for output layer

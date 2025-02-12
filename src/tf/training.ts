@@ -258,6 +258,26 @@ async function getDbDataAsTensors(
   })
 }
 
+export async function trainOnBatch(xs: number[][], ys: number[]) {
+  const ds = useDatasetStore.getState().ds
+  const setBatchCount = useTrainingStore.getState().setBatchCount
+  const model = useModelStore.getState().model
+  if (!ds || !model) return
+  const isClassification = ds?.task === "classification"
+  const trainShape = ds.train.shapeX
+  const [X, y] = tf.tidy(() => {
+    const XRaw = tf.tensor(xs, [xs.length, ...trainShape.slice(1)])
+    const X = ds.input?.preprocess?.(XRaw) ?? XRaw
+    const y = isClassification ? tf.oneHot(ys, ds.output.size) : tf.tensor(ys)
+    return [X, y]
+  })
+  const metrics = await model.trainOnBatch(X, y)
+  setBatchCount((prev) => prev + 1)
+  X.dispose()
+  y.dispose()
+  return metrics
+}
+
 export async function getModelEvaluation() {
   const model = useModelStore.getState().model
   const ds = useDatasetStore.getState().ds

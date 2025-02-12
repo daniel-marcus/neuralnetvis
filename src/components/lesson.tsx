@@ -161,7 +161,9 @@ export interface OnBlockScrollProps extends ControllerProps {
 
 export type OnBlockEnterLeaveProps = ControllerProps
 
-export type ScrollBlockProps = React.PropsWithChildren<ScrollCallbacks>
+export type ScrollBlockProps = React.PropsWithChildren<ScrollCallbacks> & {
+  className?: string
+}
 
 interface ScrollCallbacks {
   onScroll?: (props: OnBlockScrollProps) => void
@@ -169,14 +171,14 @@ interface ScrollCallbacks {
   onLeave?: (props: OnBlockEnterLeaveProps) => void
 }
 
-export function Block({ children, ...callbacks }: ScrollBlockProps) {
+export function Block({ children, className, ...callbacks }: ScrollBlockProps) {
   const [ref, inView] = useScrollCallbacks(callbacks)
   return (
     <div
       ref={ref}
       className={`pb-[50dvh] ${
         inView ? "opacity-100 " : "opacity-50"
-      } transition-opacity duration-100`}
+      } transition-opacity duration-100 ${className ?? ""}`}
     >
       {children}
     </div>

@@ -13,18 +13,19 @@ import { useEffect } from "react"
 import { useController } from "@/lib/controller"
 import { useDatasetStore } from "@/data/datasets"
 import { useVisConfigStore } from "@/three/vis-config"
-import { useTrainingStore } from "@/tf/training"
+import { trainOnBatch, useTrainingStore } from "@/tf/training"
 import { LockButton } from "@/components/lock"
 import { setInitialState } from "@/lib/initial-state"
 import { Controller } from "@react-spring/web"
+import { useStatusText } from "@/components/status"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
   useEffect(() => {
     setInitialState({
-      datasetKey: "fashion_mnist",
+      datasetKey: "mnist",
       layerConfigs: [
-        { className: "Dense", config: { units: 64, activation: "relu" } },
+        // { className: "Dense", config: { units: 64, activation: "relu" } },
         { className: "Dense", config: {} },
       ],
     })
@@ -40,6 +41,13 @@ export const IntroNetworks = (): LessonContent => {
       <Block onScroll={rotate}>Just scroll and see what happens.</Block>
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
+      </Block>
+      <Block
+        onScroll={scrollTrain}
+        onLeave={() => useStatusText.getState().setStatusText("", null)}
+        className="pb-[100vh]"
+      >
+        We can even train the model as we scroll.
       </Block>
       <Block
         onEnter={moveCameraTo([-15, 0.5, 17], 1000)}
@@ -132,6 +140,22 @@ function rotate({ three, percent }: OnBlockScrollProps) {
 function changeSample({ percent }: OnBlockScrollProps) {
   const newI = Math.round(percent * 100 + 1)
   useDatasetStore.setState({ i: newI })
+}
+
+let lastI = 0
+async function scrollTrain({ percent }: OnBlockScrollProps) {
+  const newI = 100 + Math.round(percent * 1000 + 1)
+  useDatasetStore.setState({ i: newI })
+  // if (newI <= lastI) return
+  lastI = newI
+  const input = useDatasetStore.getState().input
+  const trainingY = useDatasetStore.getState().trainingY
+  const setStatusText = useStatusText.getState().setStatusText
+  if (!input || !trainingY) return
+  console.log({ input, trainingY, newI, lastI })
+  const metrics = await trainOnBatch([input], [trainingY])
+  const loss = Array.isArray(metrics) ? metrics[0] : metrics
+  setStatusText(`Training loss: ${loss?.toFixed(2)}`, percent)
 }
 
 function changeLayerSpacing({ percent }: OnBlockScrollProps) {
