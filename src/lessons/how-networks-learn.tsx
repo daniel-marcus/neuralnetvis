@@ -3,6 +3,7 @@
 import {
   Block,
   Button,
+  Details,
   LessonHead,
   OnBlockEnterLeaveProps,
   OnBlockScrollProps,
@@ -59,6 +60,23 @@ export const IntroNetworks = (): LessonContent => {
         <br />
         <br />
         <LockButton />
+      </Block>
+      <Block>
+        What do you think?
+        <br />
+        <Details title="How does that work?">
+          <p>Here is some extra content.</p>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
+            scelerisque ligula nec orci tincidunt, non venenatis ligula posuere.
+            Integer facilisis, tortor eget lobortis gravida, felis justo
+            tristique elit, sit amet tempor dui purus sed justo. Vivamus in
+            mauris ut sem vehicula viverra. Ut et arcu ac tortor malesuada
+            mollis. Morbi sed nunc gravida, cursus felis nec, iaculis eros. Sed
+            euismod bibendum sem, ac gravida velit facilisis ut. Nulla facilisi.
+            Sed feugiat varius quam, in volutpat ante eleifend nec.
+          </p>
+        </Details>
       </Block>
       <Block>
         How about training?

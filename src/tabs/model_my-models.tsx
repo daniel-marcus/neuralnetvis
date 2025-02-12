@@ -8,7 +8,7 @@ import {
   useTransition,
 } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { ControlPanel, InlineButton } from "@/ui-components"
+import { CollapsibleWithTitle, InlineButton } from "@/ui-components"
 
 export function MyModels() {
   const model = useModelStore((s) => s.model)
@@ -29,7 +29,7 @@ export function MyModels() {
     updateList()
   }
   return (
-    <ControlPanel title="my models" variant="no-bg" collapsed>
+    <CollapsibleWithTitle title="my models" variant="no-bg" collapsed>
       <SavedModels updTrigger={updTrigger} />
       <div className="flex justify-between gap-2">
         <input
@@ -57,7 +57,7 @@ export function MyModels() {
           }}
         />
       )}
-    </ControlPanel>
+    </CollapsibleWithTitle>
   )
 }
 

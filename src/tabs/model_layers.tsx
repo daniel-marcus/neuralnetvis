@@ -7,7 +7,7 @@ import {
   useModelStore,
 } from "@/tf/model"
 import {
-  ControlPanel,
+  CollapsibleWithTitle,
   InlineButton,
   InputRow,
   Select,
@@ -137,7 +137,7 @@ export const LayerConfigControl = () => {
   )
   const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
   return (
-    <ControlPanel title={"layers"}>
+    <CollapsibleWithTitle title={"layers"}>
       <div className="flex flex-col gap-4">
         <DraggableList
           rowHeight={32}
@@ -218,7 +218,7 @@ export const LayerConfigControl = () => {
           </div>
         </InputRow>
       </div>
-    </ControlPanel>
+    </CollapsibleWithTitle>
   )
 }
 

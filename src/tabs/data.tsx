@@ -1,4 +1,4 @@
-import { Box, ControlPanel, MenuBtn } from "@/ui-components"
+import { Box, CollapsibleWithTitle, MenuBtn } from "@/ui-components"
 import { useDatasetStore } from "@/data/datasets"
 import { useDebugStore } from "@/lib/debug"
 import { datasets } from "@/datasets"
@@ -11,9 +11,9 @@ export const Data = () => {
   return (
     <Box>
       <div className="flex flex-col gap-2">
-        <ControlPanel title="my datasets" collapsed>
+        <CollapsibleWithTitle title="my datasets" collapsed>
           <MyDatasets />
-        </ControlPanel>
+        </CollapsibleWithTitle>
         <div className="flex flex-col">
           {datasets
             .filter((d) => isDebug || !d.disabled)

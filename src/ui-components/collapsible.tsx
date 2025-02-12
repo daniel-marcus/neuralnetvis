@@ -1,4 +1,49 @@
-import { useEffect, useRef, useState } from "react"
+import { ReactNode, useEffect, useRef, useState } from "react"
+import { Arrow } from "./buttons"
+
+interface CollapsibleWithTitleProps {
+  children?: ReactNode
+  title?: string
+  variant?: "has-bg" | "no-bg"
+  collapsed?: boolean
+  className?: string
+}
+
+export const CollapsibleWithTitle = ({
+  children,
+  title,
+  variant = "has-bg",
+  collapsed,
+  className = "",
+}: CollapsibleWithTitleProps) => {
+  const [isOpen, setIsOpen] = useState(!collapsed)
+  return (
+    <div
+      className={`${
+        variant === "has-bg" ? "bg-box-bg" : ""
+      } rounded-box ${className}`}
+    >
+      {title && (
+        <div className={`${isOpen ? "text-white" : ""}`}>
+          <button
+            onClick={() => setIsOpen((o) => !o)}
+            className="w-full text-left p-4"
+          >
+            <Arrow direction={isOpen ? "down" : "right"} />
+            {title}
+          </button>
+        </div>
+      )}
+      <Collapsible isOpen={isOpen}>
+        <div className="p-4 pt-0">
+          <div className="pl-4 border-l border-menu-border flex flex-col gap-2 ">
+            {children}
+          </div>
+        </div>
+      </Collapsible>
+    </div>
+  )
+}
 
 interface CollapsibleProps {
   children?: React.ReactNode

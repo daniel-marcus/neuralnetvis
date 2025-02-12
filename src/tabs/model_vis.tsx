@@ -2,7 +2,7 @@ import { useDatasetStore } from "@/data/datasets"
 import { useVisConfigStore } from "@/three/vis-config"
 import {
   Checkbox,
-  ControlPanel,
+  CollapsibleWithTitle,
   InputRow,
   Select,
   Slider,
@@ -15,7 +15,7 @@ export const VisConfigControl = () => {
   const ds = useDatasetStore((s) => s.ds)
   const hasColorChannels = (ds?.train.shapeX[3] ?? 0) > 1
   return (
-    <ControlPanel title="visualization" variant="no-bg" collapsed>
+    <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
       {SHIFT_PROPS.map((prop) => {
         const value = config[prop]
         const isDefault = getDefault(prop) === value
@@ -87,6 +87,6 @@ export const VisConfigControl = () => {
           onChange={(highlightProp) => setVisConfig({ highlightProp })}
         />
       </InputRow>
-    </ControlPanel>
+    </CollapsibleWithTitle>
   )
 }

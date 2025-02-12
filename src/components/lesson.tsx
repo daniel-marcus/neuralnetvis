@@ -11,6 +11,7 @@ import throttle from "lodash.throttle"
 import { useAsciiText } from "@/lib/ascii-text"
 import { useLockStore } from "./lock"
 import { usePathname } from "next/navigation"
+import { CollapsibleWithTitle } from "@/ui-components"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
@@ -130,6 +131,25 @@ function Ctas({ nextLesson }: { nextLesson?: LessonPreview }) {
         </Link>
       )}
     </div>
+  )
+}
+
+export function Details({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <CollapsibleWithTitle
+      title={title}
+      variant="has-bg"
+      collapsed
+      className="inline-block mt-8 max-w-[32rem]"
+    >
+      {children}
+    </CollapsibleWithTitle>
   )
 }
 

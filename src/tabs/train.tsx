@@ -6,7 +6,7 @@ import {
   InputRow,
   Checkbox,
   Collapsible,
-  ControlPanel,
+  CollapsibleWithTitle,
   Arrow,
 } from "@/ui-components"
 import { getModelEvaluation, useTrainingStore } from "@/tf/training"
@@ -56,7 +56,7 @@ const TrainConfigControl = () => {
   const config = useTrainingStore((s) => s.config)
   const setConfig = useTrainingStore((s) => s.setConfig)
   return (
-    <ControlPanel title="config">
+    <CollapsibleWithTitle title="config">
       <InputRow
         label="batchSize"
         hint="How many samples should be processed at once?"
@@ -115,7 +115,7 @@ const TrainConfigControl = () => {
           onChange={(fitDataset) => setConfig({ fitDataset })}
         />
       </InputRow>
-    </ControlPanel>
+    </CollapsibleWithTitle>
   )
 }
 
