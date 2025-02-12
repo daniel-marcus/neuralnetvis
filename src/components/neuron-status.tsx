@@ -173,7 +173,7 @@ const WeightsGrid = ({ weights, cols, isRounded }: WeightsGridProps) => {
       {weights.map((w, i) => (
         <Box
           key={i}
-          color={getHighlightColor(w).getHexString()}
+          color={getHighlightColor(w).getStyle()}
           isRounded={isRounded}
         />
       ))}

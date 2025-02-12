@@ -30,9 +30,10 @@ const NEG_HIGHLIGHT_COLORS = Array.from({ length: 256 }, (_, i) => {
   return new THREE.Color(`rgb(${c},${b},${a})`)
 })
 const POS_HIGHLIGHT_COLORS = Array.from({ length: 256 }, (_, i) => {
-  const a = Math.ceil(i * HIGHLIGHT_BASE[0])
-  const b = Math.ceil(i * HIGHLIGHT_BASE[1])
-  const c = Math.ceil(i * HIGHLIGHT_BASE[2])
+  const val = i / 255
+  const a = Math.ceil(val * HIGHLIGHT_BASE[0])
+  const b = Math.ceil(val * HIGHLIGHT_BASE[1])
+  const c = Math.ceil(val * HIGHLIGHT_BASE[2])
   return new THREE.Color(`rgb(${a}, ${b}, ${c})`)
 })
 
@@ -54,7 +55,7 @@ export function getNeuronColor(
 export function getHighlightColor(
   value: number // between -1 and 1
 ) {
-  const absVal = Math.round(Math.abs(value) * 255)
+  const absVal = Math.ceil(Math.abs(value) * 255)
   return value > 0 ? POS_HIGHLIGHT_COLORS[absVal] : NEG_HIGHLIGHT_COLORS[absVal]
 }
 
