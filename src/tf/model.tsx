@@ -113,7 +113,6 @@ function useModelCreation(ds?: Dataset) {
   const [setModel, isPending] = useModelTransition()
   const hiddenLayers = useModelStore((s) => s.hiddenLayers)
   useEffect(() => {
-    // useModelCreation
     if (!ds || !backendReady) return
     if (useModelStore.getState().skipCreation) {
       console.log("skip model creation")
@@ -193,17 +192,18 @@ function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
 
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
 
-  for (const l of hiddenLayers) {
+  for (const [i, l] of hiddenLayers.entries()) {
+    const config = { ...l.config, name: `nnv_${l.className}_${i}` }
     if (l.className === "Dense") {
-      addDenseWithFlattenIfNeeded(model, l.config as DenseLayerArgs)
+      addDenseWithFlattenIfNeeded(model, config as DenseLayerArgs)
     } else if (l.className === "Conv2D") {
-      model.add(tf.layers.conv2d(l.config as ConvLayerArgs))
+      model.add(tf.layers.conv2d(config as ConvLayerArgs))
     } else if (l.className === "Flatten") {
-      model.add(tf.layers.flatten(l.config as FlattenLayerArgs))
+      model.add(tf.layers.flatten(config as FlattenLayerArgs))
     } else if (l.className === "MaxPooling2D") {
-      model.add(tf.layers.maxPooling2d(l.config as Pooling2DLayerArgs))
+      model.add(tf.layers.maxPooling2d(config as Pooling2DLayerArgs))
     } else if (l.className === "Dropout") {
-      model.add(tf.layers.dropout(l.config as DropoutLayerArgs))
+      model.add(tf.layers.dropout(config as DropoutLayerArgs))
     } else {
       console.log("Unknown layer", l)
     }
