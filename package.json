@@ -11,9 +11,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@react-spring/three": "^9.7.5",
     "@react-spring/web": "^9.7.5",
-    "@react-three/drei": "^9.120.6",
+    "@react-three/drei": "^10.0.0-rc.2",
     "@react-three/fiber": "^9.0.0-rc.6",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",

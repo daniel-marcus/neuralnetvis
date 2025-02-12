@@ -27,7 +27,6 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
   useEffect(() => {
     async function getActivations() {
       if (!model || !input || input.length === 0) return
-      console.log({ model })
 
       const shape = model.layers[0].batchInputShape
       const [, ...dims] = shape as number[]
@@ -42,7 +41,6 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
         const _activations = tmpModel.predict(tensor) as
           | tf.Tensor<tf.Rank>[]
           | tf.Tensor<tf.Rank>
-        console.log({ _activations })
         const layerActivations = Array.isArray(_activations)
           ? _activations
           : [_activations]
@@ -56,10 +54,7 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
                 layerActivation as tf.Tensor4D
               ).reshape([-1])
             : normalizeTensor(flattened)
-          return [
-            flattened, // .arraySync() as number[],
-            normalizedFlattened, // .arraySync() as number[],
-          ]
+          return [flattened, normalizedFlattened]
         })
         return activations
       })

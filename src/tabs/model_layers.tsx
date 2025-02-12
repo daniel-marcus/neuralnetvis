@@ -125,7 +125,7 @@ export const LayerConfigControl = () => {
     {
       value: "empty",
       label: "add",
-      // disabled: true,
+      disabled: true,
     },
     { value: "Dense" },
     { value: "Conv2D", disabled: !hasMutliDimInput },

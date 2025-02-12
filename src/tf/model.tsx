@@ -31,6 +31,14 @@ export type LayerConfig<T extends keyof LayerConfigMap> = {
 
 export type LayerConfigArray = LayerConfig<keyof LayerConfigMap>[]
 
+const defaultLayerConfigs: LayerConfig<"Dense">[] = [
+  {
+    className: "Dense",
+    config: { units: 64, activation: "relu" },
+  },
+  { className: "Dense", config: { units: 10, activation: "softmax" } },
+]
+
 interface ModelStore {
   model: tf.LayersModel | undefined
   skipCreation: boolean // flag to skip model creation for loaded models
@@ -41,14 +49,6 @@ interface ModelStore {
   setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
 }
-
-const defaultLayerConfigs: LayerConfig<"Dense">[] = [
-  {
-    className: "Dense",
-    config: { units: 64, activation: "relu" },
-  },
-  { className: "Dense", config: { units: 10, activation: "softmax" } },
-]
 
 export const useModelStore = create<ModelStore>((set) => ({
   model: undefined,
@@ -194,6 +194,8 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
       model.add(tf.layers.maxPooling2d(config as Pooling2DLayerArgs))
     } else if (l.className === "Dropout") {
       model.add(tf.layers.dropout(config as DropoutLayerArgs))
+    } else if (l.className === "InputLayer") {
+      continue // InputLayer is already added w/ config from ds
     } else {
       console.log("Unknown layer", l)
     }
