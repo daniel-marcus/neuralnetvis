@@ -1,5 +1,5 @@
 import { useStatusText } from "@/components/status"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 import {
   LayerConfig,
   LayerConfigArray,

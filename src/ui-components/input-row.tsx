@@ -1,10 +1,12 @@
 import { ReactNode, useId } from "react"
 import { create } from "zustand"
 
-const useHintStore = create<{
+interface HintStore {
   currHint: string
   setCurrHint: (id: string) => void
-}>((set) => ({
+}
+
+const useHintStore = create<HintStore>((set) => ({
   currHint: "",
   setCurrHint: (id) =>
     set((state) => ({ currHint: state.currHint === id ? "" : id })),
@@ -20,10 +22,10 @@ interface InputRowProps {
 
 export const InputRow = (props: InputRowProps) => {
   const { label, children, className = "", hint } = props
-  const { currHint, setCurrHint } = useHintStore()
   const uid = useId()
-  const onLabelClick = !!hint ? () => setCurrHint(uid) : undefined
+  const { currHint, setCurrHint } = useHintStore()
   const showHint = currHint === uid
+  const onLabelClick = !!hint ? () => setCurrHint(uid) : undefined
   return (
     <div className={`relative flex gap-2 w-full leading-[1.5] ${className}`}>
       <div

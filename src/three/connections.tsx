@@ -9,7 +9,7 @@ import {
 } from "three/examples/jsm/Addons.js"
 import { Neuron, NeuronRefType } from "@/lib/neuron"
 import { useSelected } from "@/lib/neuron-select"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 import { useDatasetStore } from "@/data/datasets"
 
 const MAX_LINES_PER_LAYER = 1000

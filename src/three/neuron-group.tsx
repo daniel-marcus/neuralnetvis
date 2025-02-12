@@ -3,14 +3,15 @@ import { InstancedMesh } from "three"
 import { useAnimatedPosition } from "@/three/animated-position"
 import * as THREE from "three"
 import { MeshParams, getGridSize, getNeuronPosition } from "@/lib/layer-layout"
-import { LayerPosition, LayerProps } from "./layer"
+import { LayerPos, LayerProps } from "./layer"
 import { NeuronLabels } from "./neuron-label"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
 import { Neuron, Nid } from "../lib/neuron"
 import { debug } from "@/lib/debug"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 import { useDatasetStore } from "@/data/datasets"
+import { getNeuronColor } from "./colors"
 
 export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
 
@@ -28,7 +29,8 @@ export type NeuronGroupProps = LayerProps &
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, groupIndex, nidsStr } = props
-  const { index: layerIndex, layerPos, meshParams, hasLabels } = props
+  const { index: layerIndex, layerPos, meshParams } = props
+  const { hasLabels, hasColorChannels } = props
   const { geometry } = meshParams
   const spacing = useNeuronSpacing(meshParams)
   const meshRef = useRef<InstancedMesh | null>(null!)
@@ -40,13 +42,11 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   useNeuronPositions(meshRef, layerPos, spacing, outputShape)
   const isRegression =
     useDatasetStore((s) => s.isRegression) && layerPos === "output"
-  useColors(meshRef, groupedNeurons, isRegression)
+  useColors(meshRef, groupedNeurons, hasColorChannels, isRegression)
   const eventHandlers = useInteractions(groupedNeurons)
   useScale(meshRef, nidsStr, layerIndex, groupIndex)
   const splitColors = useVisConfigStore((s) => s.splitColors)
-  const materialRef = useAdditiveBlending(
-    groupedNeurons[0]?.hasColorChannels && !splitColors
-  )
+  const materialRef = useAdditiveBlending(hasColorChannels && !splitColors)
   const { onPointerOut, ...otherEventHandlers } = eventHandlers
 
   return (
@@ -61,17 +61,14 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
       {hasLabels &&
-        groupedNeurons.map((n, i) => {
-          const pos = getNeuronPosition(i, layerPos, height, width, spacing)
-          return (
-            <NeuronLabels
-              key={n.nid}
-              neuron={n}
-              color={getNeuronColor(n, isRegression)}
-              position={pos}
-            />
-          )
-        })}
+        groupedNeurons.map((n, i) => (
+          <NeuronLabels
+            key={n.nid}
+            neuron={n}
+            color={getNeuronColor(n, hasColorChannels, isRegression)}
+            position={getNeuronPosition(i, layerPos, height, width, spacing)}
+          />
+        ))}
     </group>
   )
 }
@@ -97,10 +94,7 @@ function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
     if (debug()) console.log("upd refs")
     for (let indexInGroup = 0; indexInGroup < instances; indexInGroup++) {
       const neuronFlatIdx = indexInGroup * groupCount + groupIndex
-      if (!neuronRefs[layerIndex][neuronFlatIdx]) {
-        console.log("No ref found", { layerIndex, neuronFlatIdx })
-        continue
-      }
+      if (!neuronRefs[layerIndex][neuronFlatIdx]) continue
       neuronRefs[layerIndex][neuronFlatIdx].current = { meshRef, indexInGroup }
     }
   }, [meshRef, neuronRefs, layerIndex, groupCount, groupIndex, instances])
@@ -142,8 +136,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
 
 function useNeuronPositions(
   meshRef: InstancedMeshRef,
-  // instances: number,
-  layerPos: LayerPosition,
+  layerPos: LayerPos,
   spacing: number,
   outputShape: number[]
 ) {
@@ -166,61 +159,20 @@ function useNeuronPositions(
 function useColors(
   meshRef: InstancedMeshRef,
   neurons: Neuron[],
+  hasColorChannels: boolean,
   isRegression: boolean
 ) {
-  const tmpColor = useMemo(() => new THREE.Color(), [])
   useLayoutEffect(() => {
     if (!meshRef.current) return
     if (debug()) console.log("upd colors")
     for (const [i, n] of neurons.entries()) {
-      tmpColor.set(getNeuronColor(n, isRegression))
-      meshRef.current.setColorAt(i, tmpColor)
+      const color = getNeuronColor(n, hasColorChannels, isRegression)
+      meshRef.current.setColorAt(i, color)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, neurons, tmpColor, isRegression])
+  }, [meshRef, neurons, hasColorChannels, isRegression])
 }
-
-function getPredictionQualityColor(n: Neuron) {
-  const trainingY = useDatasetStore.getState().trainingY ?? 1
-  const percentualError = Math.abs((n.activation ?? 1) - trainingY) / trainingY
-  const quality = 1 - Math.min(percentualError, 1)
-  return `rgb(${Math.ceil(quality * 255)},20,100)`
-}
-
-function getNeuronColor(n: Neuron, isRegression = false) {
-  return typeof n.highlightValue !== "undefined"
-    ? getHighlightColor(n.highlightValue)
-    : isRegression
-    ? getPredictionQualityColor(n)
-    : n.hasColorChannels
-    ? getColorChannelColor(n)
-    : getActivationColor(n.normalizedActivation ?? 0)
-}
-
-function getActivationColor(colorValue: number) {
-  return `rgb(${Math.ceil(colorValue * 255)},20,100)`
-}
-
-export function getHighlightColor(
-  value: number, // between -1 and 1
-  base: [number, number, number] = [250, 20, 100]
-) {
-  const absVal = Math.abs(value)
-  const a = Math.ceil(absVal * base[0])
-  const b = Math.ceil(absVal * base[1])
-  const c = Math.ceil(absVal * base[2])
-  return value > 0 ? `rgb(${a}, ${b}, ${c})` : `rgb(${c}, ${b}, ${a})` // `rgb(${b}, ${a}, ${c})` //
-}
-
-function getColorChannelColor(n: Neuron) {
-  const rest = n.index % 3
-  const colorArr = [0, 0, 0]
-  colorArr[rest] = Math.ceil((n.normalizedActivation ?? 0) * 255)
-  return `rgb(${colorArr.join(", ")})`
-}
-
-let counter = 0
 
 function useScale(
   meshRef: InstancedMeshRef,
@@ -236,13 +188,10 @@ function useScale(
   useEffect(() => {
     if (!meshRef.current) return
     const nids = nidsStr.split(",")
-    // if (nids.length > 256) return
-    if (debug()) console.log("upd scale", counter++, { nids })
+    if (debug()) console.log("upd scale")
     const baseScale = 1
     const highlightScale = 1.5
-    for (const nid of nids) {
-      const i = nids.indexOf(nid)
-
+    for (const [i, nid] of nids.entries()) {
       meshRef.current.getMatrixAt(i, tempMatrix)
       const elements = tempMatrix.elements
       const currentScale = Math.cbrt(elements[0] * elements[5] * elements[10])
@@ -262,9 +211,8 @@ function useAdditiveBlending(active?: boolean) {
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
   useEffect(() => {
     if (!materialRef.current) return
-    materialRef.current.blending = active
-      ? THREE.AdditiveBlending
-      : THREE.NormalBlending
+    const blending = active ? THREE.AdditiveBlending : THREE.NormalBlending
+    materialRef.current.blending = blending
     materialRef.current.needsUpdate = true
   }, [active])
   return materialRef

@@ -1,4 +1,4 @@
-import type { LayerPosition } from "@/three/layer"
+import type { LayerPos } from "@/three/layer"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
 import * as THREE from "three"
@@ -17,7 +17,6 @@ export type MeshParams = {
   spacingFactor?: number
 }
 
-// TODO: reuse geometry and add scale?
 const meshMap: Record<string, MeshParams> = {
   sphere: {
     geometry: new THREE.SphereGeometry(0.6, 32, 32),
@@ -41,7 +40,7 @@ const meshMap: Record<string, MeshParams> = {
 
 export function getMeshParams(
   layer: tf.layers.Layer,
-  layerPos: LayerPosition,
+  layerPos: LayerPos,
   units: number
 ): MeshParams {
   if (["input", "output"].includes(layerPos)) {
@@ -63,7 +62,7 @@ const MAX_SINGLE_COL_HEIGHT = 10
 export function getGridSize(
   height: number,
   width: number,
-  spacing: number = 1.8 // 0.7
+  spacing: number = 1.8
 ) {
   const total = height * width
   if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
@@ -78,7 +77,7 @@ export function getGridSize(
 
 export function getNeuronPosition(
   i: number,
-  layerPos: LayerPosition,
+  layerPos: LayerPos,
   height: number,
   width: number = 1,
   spacing: number

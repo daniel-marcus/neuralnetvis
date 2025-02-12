@@ -5,17 +5,15 @@ import { Dataset, useDatasetStore } from "@/data/datasets"
 import { getMeshParams } from "./layer-layout"
 import {
   LayerStateful,
-  LayerPosition,
+  LayerPos,
   LayerStateless,
   LayerType,
 } from "@/three/layer"
 import { useActivations } from "../tf/activations"
 
-// TODO: fix rawInput
-
 export function useLayerProps(
   isPending: boolean,
-  model: tf.LayersModel | undefined,
+  model?: tf.LayersModel,
   batchCount?: number
 ) {
   const ds = useDatasetStore((s) => s.ds)
@@ -24,12 +22,7 @@ export function useLayerProps(
 
   const layers = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
-  const weightsBiases = useWeightsAndBiases(
-    isPending,
-    layers,
-    model,
-    batchCount
-  )
+  const weightsBiases = useWeightsAndBiases(isPending, model, batchCount)
   const statefulLayers = useStatefulLayers(
     layers,
     weightsBiases,
@@ -64,48 +57,21 @@ export function getVisibleLayers(allLayers: LayerStateful[]) {
 }
 
 export function getUnits(layer: tf.layers.Layer) {
-  const className = layer.getClassName()
-  const unitsFromConfig = layer.getConfig().units as number
-  if (unitsFromConfig) {
-    // dense
-    return unitsFromConfig
-  } else if (layer.batchInputShape) {
-    // input layer
-    const [, ...dims] = layer.batchInputShape
-    const flattenedNumber = (dims as number[]).reduce((a, b) => a * b, 1)
-    return flattenedNumber
-  } else if (className === "Flatten") {
-    // flatten layer
-    return 0
-  } else if (["Conv2D", "MaxPooling2D"].includes(className)) {
-    // Conv2D, MaxPooling2D, etc.
-    const [, ...dims] = layer.outputShape as number[] // [batch, height, width, channels]
-    const flattenedNumber = dims.reduce((a, b) => a * b, 1)
-    return flattenedNumber
-  } else if (className === "Dropout") {
-    return 0
-  } else {
-    console.log("unknown layer", { className })
-    return 0
-  }
+  if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
+  const [, ...dims] = layer.outputShape as number[]
+  return dims.reduce((a, b) => a * b, 1)
 }
 
-export function getLayerPosition(
-  layer: tf.layers.Layer,
-  model: tf.LayersModel
-): LayerPosition {
-  const index = model.layers.indexOf(layer)
-  const totalLayers = model.layers.length
-  if (index === 0) return "input"
-  if (index === totalLayers - 1) return "output"
-  if (getUnits(layer) === 0) return "invisible"
-  return "hidden"
+function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
+  if (layerIndex === 0) return "input"
+  else if (layerIndex === model.layers.length - 1) return "output"
+  else return "hidden"
 }
 
 function getInputNeurons(
   l: tf.layers.Layer,
-  prevVisibleLayer: tf.layers.Layer | undefined,
-  prevVisibleIndex: number | undefined
+  prevVisibleLayer?: tf.layers.Layer,
+  prevVisibleIndex?: number
 ): Nid[][] {
   if (!prevVisibleLayer || typeof prevVisibleIndex !== "number") return []
   if (l.getClassName() !== "Conv2D" && l.getClassName() !== "MaxPooling2D") {
@@ -142,7 +108,7 @@ function getInputNeurons(
   const units = getUnits(l)
 
   const inputNids: Nid[][] = []
-  // TODO: padding? use tensors to calculate the receptive field?
+  // TODO: padding? use tf to calculate the receptive field?
   for (let j = 0; j < units; j++) {
     const unitInputNids: Nid[] = []
     for (let k = 0; k < filterSize * depth; k++) {
@@ -170,7 +136,7 @@ function getInputNeurons(
 function useStatelessLayers(
   model: tf.LayersModel | undefined,
   ds?: Dataset
-): LayerStateful[] {
+): LayerStateless[] {
   // here is all data that doesn't change for a given model
   return useMemo(() => {
     if (!model) return []
@@ -181,7 +147,7 @@ function useStatelessLayers(
         const layerType = tfLayer.getClassName() as LayerType
 
         const visibleIdx = visibleLayers?.indexOf(tfLayer) // no ...
-        const layerPos = getLayerPosition(tfLayer, model)
+        const layerPos = getLayerPos(layerIndex, model)
 
         const prevLayer = acc[layerIndex - 1]
         const prevVisibleTfLayer = getLastVisibleLayer(tfLayer, model)
@@ -204,6 +170,8 @@ function useStatelessLayers(
 
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
 
+        const outputShape = tfLayer.outputShape as number[]
+
         const layerStateless: LayerStateless = {
           index: layerIndex,
           visibleIdx,
@@ -217,6 +185,7 @@ function useStatelessLayers(
           hasLabels:
             (layerPos === "input" && !!ds?.input?.labels?.length) ||
             (layerPos === "output" && !!ds?.output.labels?.length),
+          hasColorChannels: layerPos === "input" && outputShape[3] > 1,
           neurons: [],
           groups: [],
         }
@@ -225,7 +194,6 @@ function useStatelessLayers(
 
         const neurons =
           Array.from({ length: units }).map((_, neuronIndex) => {
-            const outputShape = tfLayer.outputShape as number[]
             const index3d = getNeuronIndex3d(neuronIndex, outputShape)
             const inputNids = layerInputNids?.[neuronIndex] ?? []
             return {
@@ -242,7 +210,6 @@ function useStatelessLayers(
                     .filter(Boolean) as Neuron[])
                 : [],
               ref: createRef<NeuronRefType>(),
-              hasColorChannels: layerPos === "input" && outputShape[3] > 1,
               label:
                 layerPos === "output"
                   ? ds?.output.labels?.[neuronIndex]
@@ -293,7 +260,6 @@ interface WeightsBiases {
 
 function useWeightsAndBiases(
   isPending: boolean,
-  layers: LayerStateless[],
   model?: tf.LayersModel,
   batchCount?: number
 ) {
@@ -301,14 +267,14 @@ function useWeightsAndBiases(
   useEffect(() => {
     if (!model || isPending) return
     async function updateWeights() {
-      const _newStates = layers.map((l) => {
-        const { layerType, tfLayer } = l
+      if (!model) return
+      const _newStates = model.layers.map((l) => {
         return tf.tidy(() => {
-          const [_weights, biases] = tfLayer.getWeights()
+          const [_weights, biases] = l.getWeights()
           const numWeights = _weights?.shape[_weights?.shape.length - 1]
           const weights = _weights?.transpose().reshape([numWeights, -1])
           const maxAbsWeight = // needed only for dense connections
-            layerType === "Dense" ? _weights?.abs().max() : undefined
+            l.getClassName() === "Dense" ? _weights?.abs().max() : undefined
           return { weights, biases, maxAbsWeight } as const
         })
       })
@@ -333,56 +299,57 @@ function useWeightsAndBiases(
       }
     }
     updateWeights()
-  }, [isPending, layers, model, batchCount])
+  }, [isPending, model, batchCount])
   return weightsBiases
 }
 
 function useStatefulLayers(
-  statelessLayers: LayerStateful[], // ??
+  statelessLayers: LayerStateless[],
   weightsBiases: WeightsBiases[],
   activations?: { activations: number[]; normalizedActivations: number[] }[],
   rawInput?: number[]
 ) {
-  const statefulLayers = useMemo(() => {
-    if (!weightsBiases.length) return statelessLayers
-    const result = statelessLayers.reduce((acc, layer, lIdx) => {
-      const { layerPos, layerType } = layer
+  const statefulLayers = useMemo(
+    () =>
+      statelessLayers.reduce((acc, layer, lIdx) => {
+        const { layerPos, layerType } = layer
 
-      // add state to each neuron
-      const layerActivations = activations?.[lIdx]?.activations
-      const normalizedActivations =
-        layerPos === "output"
-          ? layerActivations
-          : layerType === "Flatten"
-          ? undefined
-          : activations?.[lIdx]?.normalizedActivations
+        // add state to each neuron
+        const layerActivations = activations?.[lIdx]?.activations
+        const normalizedActivations =
+          layerPos === "output"
+            ? layerActivations
+            : layerType === "Flatten"
+            ? undefined
+            : activations?.[lIdx]?.normalizedActivations
 
-      const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
+        const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
 
-      const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
-        (neuron, nIdx) => {
-          const activation = layerActivations?.[nIdx]
-          // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
-          const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
-          const updatedNeuron = {
-            ...neuron,
-            activation,
-            rawInput: layer.layerPos === "input" ? rawInput?.[nIdx] : undefined,
-            normalizedActivation: normalizedActivations?.[nIdx],
-            weights: weights?.[filterIndex],
-            bias: biases?.[filterIndex],
+        const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
+          (neuron, nIdx) => {
+            const activation = layerActivations?.[nIdx]
+            // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
+            const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
+            const statefulNeuron = {
+              ...neuron,
+              activation,
+              rawInput:
+                layer.layerPos === "input" ? rawInput?.[nIdx] : undefined,
+              normalizedActivation: normalizedActivations?.[nIdx],
+              weights: weights?.[filterIndex],
+              bias: biases?.[filterIndex],
+            }
+            return statefulNeuron
           }
-          return updatedNeuron
+        )
+        const statefulLayer = {
+          ...layer,
+          neurons,
+          maxAbsWeight,
         }
-      )
-      const statefullLayer = {
-        ...layer,
-        neurons,
-        maxAbsWeight,
-      }
-      return [...acc, statefullLayer]
-    }, [] as LayerStateful[])
-    return result
-  }, [statelessLayers, activations, weightsBiases, rawInput])
+        return [...acc, statefulLayer]
+      }, [] as LayerStateful[]),
+    [statelessLayers, activations, weightsBiases, rawInput]
+  )
   return statefulLayers
 }

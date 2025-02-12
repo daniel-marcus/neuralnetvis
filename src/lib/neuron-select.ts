@@ -4,7 +4,7 @@ import { Neuron, Nid } from "@/lib/neuron"
 import { LayerStateful } from "@/three/layer"
 import { useEffect, useMemo } from "react"
 import { normalizeWithSign } from "../data/normalization"
-import { HighlightProp, useVisConfigStore } from "./vis-config"
+import { HighlightProp, useVisConfigStore } from "../three/vis-config"
 import { Vector3 } from "three"
 
 interface SelectedStore {

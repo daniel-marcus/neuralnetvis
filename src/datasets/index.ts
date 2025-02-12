@@ -9,4 +9,4 @@ export const datasets: DatasetDef[] = [
   fashionMnist,
   cifar10,
   californiaHousing,
-]
+] as const

@@ -7,7 +7,6 @@ import { getData, putData, putDataBatches } from "./indexed-db"
 import { SupportedTypedArray } from "./npy-loader"
 import { useDebugStore } from "@/lib/debug"
 
-// ParsedLike
 interface ParsedLike {
   data: SupportedTypedArray
   shape: number[]

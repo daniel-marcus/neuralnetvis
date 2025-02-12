@@ -1,11 +1,11 @@
 import { useRef, useState } from "react"
 import { useSelected } from "@/lib/neuron-select"
 import { normalizeWithSign } from "@/data/normalization"
-import { getHighlightColor } from "../three/neuron-group"
+import { getHighlightColor } from "@/three/colors"
 import { SphereGeometry } from "three"
 import { Neuron } from "../lib/neuron"
 import { Table, useStatusText } from "./status"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)
@@ -171,7 +171,11 @@ const WeightsGrid = ({ weights, cols, isRounded }: WeightsGridProps) => {
       }
     >
       {weights.map((w, i) => (
-        <Box key={i} color={getHighlightColor(w)} isRounded={isRounded} />
+        <Box
+          key={i}
+          color={getHighlightColor(w).getHexString()}
+          isRounded={isRounded}
+        />
       ))}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useDatasetStore } from "@/data/datasets"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 import {
   Checkbox,
   ControlPanel,

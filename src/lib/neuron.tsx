@@ -1,15 +1,13 @@
 import React from "react"
 
 import { LayerStateful, LayerStateless } from "@/three/layer"
-import { InstancedMeshRef } from "../three/neuron-group"
-
-// refactoring in progress, kept only for type definitions, all logic is handled in NeuronGroupInstanced now
+import { InstancedMeshRef } from "@/three/neuron-group"
 
 export type Nid = string // layerIndex_{index3d.join(".")}
 export type NeuronRefType = {
   meshRef: InstancedMeshRef
   indexInGroup: number
-} | null // Object3D | null
+} | null
 
 export type Index3D = [number, number, number] // height, width, depth
 
@@ -21,7 +19,6 @@ export type NeuronDef = {
   groupIndex: number
   visibleLayerIndex: number
   ref: React.RefObject<NeuronRefType>
-  hasColorChannels?: boolean
   inputNids?: Nid[]
   inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
   label?: string
@@ -34,7 +31,7 @@ export type NeuronState = {
   normalizedActivation?: number
   weights?: number[]
   bias?: number
-  highlightValue?: number // [-1, 1] TODO: refactor
+  highlightValue?: number // [-1, 1]
 }
 
 type NeuronContext = {

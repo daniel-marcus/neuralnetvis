@@ -8,7 +8,7 @@ import * as tf from "@tensorflow/tfjs"
 import { GroupDef, NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
-import { useVisConfigStore } from "@/lib/vis-config"
+import { useVisConfigStore } from "@/three/vis-config"
 import { useOrientation } from "@/lib/utils"
 import { useSpring } from "@react-spring/web"
 import { useThree } from "@react-three/fiber"
@@ -21,13 +21,13 @@ export type LayerType =
   | "Dense"
   | "Flatten"
   | "MaxPooling2D"
-export type LayerPosition = "input" | "hidden" | "output" | "invisible"
+export type LayerPos = "input" | "hidden" | "output"
 
 export interface LayerStateless {
   index: number
   visibleIdx: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerType: LayerType
-  layerPos: LayerPosition
+  layerPos: LayerPos
   tfLayer: tf.layers.Layer
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
@@ -36,6 +36,7 @@ export interface LayerStateless {
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
   hasLabels?: boolean
+  hasColorChannels: boolean
   groups: GroupDef[]
 }
 
@@ -57,7 +58,7 @@ export const Layer = (props: LayerProps) => {
   const groupCount = groups.length
   const prevVisibleLayer = getVisibleLayers(allLayers)[props.visibleIdx - 1]
 
-  const ref = useLayerPosition(props)
+  const ref = useLayerPos(props)
   const isInvisible = useIsInvisible(props)
   const prevIsInvisible = useIsInvisible(prevVisibleLayer)
   useDynamicScale(ref, isInvisible ? 0.001 : 1)
@@ -116,7 +117,7 @@ function groupNeuronsByGroupIndex(layer: LayerProps) {
   return neuronsByGroup
 }
 
-function useLayerPosition(layer: LayerProps) {
+function useLayerPos(layer: LayerProps) {
   const { visibleIdx, allLayers } = layer
   const visibleLayers = getVisibleLayers(allLayers)
   const orientation = useOrientation()

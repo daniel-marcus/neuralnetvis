@@ -1,7 +1,7 @@
 import { OUTPUT_ORIENT } from "@/lib/layer-layout"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import { useRef } from "react"
-import { Mesh } from "three"
+import { Color, Mesh } from "three"
 import { Text } from "troika-three-text"
 import { NeuronDef, NeuronState } from "@/lib/neuron"
 import { useDatasetStore } from "@/data/datasets"
@@ -20,7 +20,7 @@ const FONT_SIZE = 2
 interface NeuronLabelsProps {
   neuron: NeuronDef & NeuronState
   position?: [number, number, number]
-  color?: string
+  color?: Color
 }
 
 export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
@@ -56,7 +56,7 @@ export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
 interface NeuronLabelProps {
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: string
+  color?: Color
   children?: string | number // React.ReactNode
 }
 
