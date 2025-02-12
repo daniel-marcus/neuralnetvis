@@ -27,10 +27,13 @@ const defaultOptions = {
   allowDenseHoverLines: false,
   invisibleLayers: [],
 }
+type GetDefaultReturnType = VisConfig[keyof VisConfig]
 
 interface VisConfigStore extends VisConfig {
   setVisConfig: (newConfig: Partial<VisConfig>) => void
   toggleLayerVisibility: (layerName: string) => void
+  reset: (prop: keyof VisConfig) => void
+  getDefault: (prop: keyof VisConfig) => GetDefaultReturnType
 }
 
 export const useVisConfigStore = create<VisConfigStore>((set) => ({
@@ -42,4 +45,6 @@ export const useVisConfigStore = create<VisConfigStore>((set) => ({
         ? invisibleLayers.filter((l) => l !== layerName)
         : invisibleLayers.concat(layerName),
     })),
+  getDefault: (prop) => defaultOptions[prop],
+  reset: (prop) => set((state) => ({ ...state, [prop]: defaultOptions[prop] })),
 }))

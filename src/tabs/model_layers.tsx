@@ -153,24 +153,22 @@ export const LayerConfigControl = () => {
             )
             const label = (
               <div className="flex justify-between">
-                <div>
-                  {layer.className
-                    .replace("MaxPooling2D", "MaxPool")
-                    .replace("Flatten", "[Flatten]")}
-                </div>
-                {!!layer.config.name && (
-                  <div className="flex">
-                    <button
-                      onClick={() => toggleLayerVisibility(layer.config.name!)}
-                      className="px-2"
-                    >
-                      {isInvisible ? "⍉" : "⌾"}
-                    </button>
-                    <button onClick={() => handleRemove(i)} className="px-2">
-                      x
-                    </button>
+                <div className="flex">
+                  <button
+                    onClick={() => toggleLayerVisibility(layer.config.name!)}
+                    className="pr-3"
+                  >
+                    {isInvisible ? "⍉" : "⌾"}
+                  </button>
+                  <div>
+                    {layer.className
+                      .replace("MaxPooling2D", "MaxPool")
+                      .replace("Flatten", "[Flatten]")}
                   </div>
-                )}
+                </div>
+                <button onClick={() => handleRemove(i)} className="px-2">
+                  x
+                </button>
               </div>
             )
             return (

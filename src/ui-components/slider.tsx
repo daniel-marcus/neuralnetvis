@@ -10,6 +10,7 @@ interface SliderProps {
   showValue?: boolean
   lazyUpdate?: boolean
   transform?: (v: number) => number
+  markers?: number[]
   // isOptiona?: boolean
 }
 
@@ -22,6 +23,7 @@ export const Slider = ({
   showValue,
   lazyUpdate,
   transform,
+  markers = [],
 }: SliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +48,8 @@ export const Slider = ({
   })
 
   const bgContent = "░".repeat(100)
-  const percent = ((currVal - min) / (max - min)) * 100
+  const getPercent = (val: number) => ((val - min) / (max - min)) * 100
+  const currPercent = getPercent(currVal)
 
   return (
     <div className="flex gap-2">
@@ -56,16 +59,28 @@ export const Slider = ({
         className="flex-1 overflow-hidden select-none relative cursor-pointer touch-none"
         aria-label={`${value}/${max}`}
       >
+        {bgContent}
+        {markers.map((mVal, i) => (
+          <span
+            key={i}
+            className="absolute top-0 left-0"
+            style={{
+              left: `${getPercent(mVal)}%`,
+              transform: `translateX(-${getPercent(mVal)}%)`,
+            }}
+          >
+            |
+          </span>
+        ))}
         <span
           className={`absolute top-0 left-0 text-accent`}
           style={{
-            left: `${percent}%`,
-            transform: `translateX(-${percent}%)`,
+            left: `${currPercent}%`,
+            transform: `translateX(-${currPercent}%)`,
           }}
         >
           █
         </span>
-        {bgContent}
       </div>
       {!!showValue && ( // maybe use input?
         <div className="flex-none w-[2.5em] text-right">

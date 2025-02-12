@@ -8,39 +8,40 @@ import {
   Slider,
 } from "@/ui-components"
 
+const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
+
 export const VisConfigControl = () => {
-  const { setVisConfig, ...config } = useVisConfigStore()
+  const { setVisConfig, getDefault, reset, ...config } = useVisConfigStore()
   const ds = useDatasetStore((s) => s.ds)
   const hasColorChannels = (ds?.train.shapeX[3] ?? 0) > 1
   return (
     <ControlPanel title="visualization" variant="no-bg" collapsed>
-      <InputRow label="xShift">
-        <Slider
-          value={config.xShift}
-          min={-30}
-          max={30}
-          onChange={(xShift) => setVisConfig({ xShift })}
-          showValue
-        />
-      </InputRow>
-      <InputRow label="yShift">
-        <Slider
-          value={config.yShift}
-          min={-30}
-          max={30}
-          onChange={(yShift) => setVisConfig({ yShift })}
-          showValue
-        />
-      </InputRow>
-      <InputRow label="zShift">
-        <Slider
-          value={config.zShift}
-          min={-30}
-          max={30}
-          onChange={(zShift) => setVisConfig({ zShift })}
-          showValue
-        />
-      </InputRow>
+      {SHIFT_PROPS.map((prop) => {
+        const value = config[prop]
+        const isDefault = getDefault(prop) === value
+        const label = isDefault ? (
+          prop
+        ) : (
+          <div className="flex justify-between">
+            <div>{prop}</div>
+            <button onClick={() => reset(prop)} className="px-2">
+              ↺
+            </button>
+          </div>
+        )
+        return (
+          <InputRow key={prop} label={label}>
+            <Slider
+              value={value}
+              min={-30}
+              max={30}
+              onChange={(v) => setVisConfig({ [prop]: v })}
+              showValue
+              markers={[0]}
+            />
+          </InputRow>
+        )
+      })}
       {/* <InputRow label="nodeSpacing">
         <Slider
           value={config.neuronSpacing}
