@@ -20,11 +20,18 @@ function getInputComp<T extends keyof LayerConfigMap>(
   layerConfig: HiddenLayerConfig<T>,
   updateLayerConfig: <C extends keyof LayerConfigMap>(
     config: HiddenLayerConfig<C>["config"]
-  ) => void
+  ) => void,
+  isLast: boolean
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
-  if (layerConfig.className === "Dense") {
+  if (layerConfig.className === "InputLayer") {
+    const config = layerConfig.config as LayerConfigMap["InputLayer"]
+
+    const [, ...dims] = config.batchInputShape as number[]
+    return <div className="text-right">{dims.join(" x ")}</div>
+  } else if (layerConfig.className === "Dense") {
     const config = layerConfig.config as LayerConfigMap["Dense"]
+    if (isLast) return <div className="text-right">{config.units}</div>
     return (
       <Slider
         {...sharedSliderProps}
@@ -75,6 +82,7 @@ const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
   MaxPooling2D: { poolSize: 2 },
   Flatten: {},
   Dropout: { rate: 0.2 },
+  InputLayer: {}, // will be set from ds shape
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
@@ -88,25 +96,27 @@ export const LayerConfigControl = () => {
   const model = useModelStore((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
     []) as unknown as HiddenLayerConfigArray
-  const _hiddenLayers = layerConfigs.slice(1, -1)
-  const hiddenLayers = _hiddenLayers.filter((l) => l.className !== "Flatten")
-  const setHiddenLayers = useModelStore((s) => s.setHiddenLayers)
+  const setLayerConfigs = useModelStore((s) => s.setLayerConfigs)
+  const resetLayerConfigs = useModelStore((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
     if (!selectRef.current) return
     const className = selectRef.current.value
     const newLayer = newDefaultLayer(className as keyof LayerConfigMap)
-    // always insert Conv2D and MaxPooling2D before Dense (which comes with Flatten)
-    const firstDenseIdx = hiddenLayers.findIndex((l) => l.className === "Dense")
-    const newHiddenLayers =
-      ["MaxPooling2D", "Conv2D"].includes(className) && firstDenseIdx > -1
-        ? hiddenLayers.toSpliced(firstDenseIdx, 0, newLayer)
-        : [...hiddenLayers, newLayer]
-    setHiddenLayers(newHiddenLayers)
+    // always insert Conv2D and MaxPooling2D before Flatten
+    const flattenIdx =
+      layerConfigs.findIndex((l) => l.className === "Flatten") ||
+      layerConfigs.findIndex((l) => l.className === "Dense")
+    const beforeOutputIdx = Math.max(layerConfigs.length - 1, 1)
+    const newLayerConfigs =
+      ["MaxPooling2D", "Conv2D"].includes(className) && flattenIdx > -1
+        ? layerConfigs.toSpliced(flattenIdx, 0, newLayer)
+        : layerConfigs.toSpliced(beforeOutputIdx, 0, newLayer)
+    setLayerConfigs(newLayerConfigs)
   }
   const handleRemove = (i: number) => {
-    setHiddenLayers(hiddenLayers.filter((_, j) => j !== i))
+    setLayerConfigs(layerConfigs.filter((_, j) => j !== i))
   }
   const hasMutliDimInput =
     model?.layers[0].batchInputShape &&
@@ -127,30 +137,35 @@ export const LayerConfigControl = () => {
   )
   const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
   return (
-    <ControlPanel title={"hidden layers"}>
+    <ControlPanel title={"layers"}>
       <div className="flex flex-col gap-4">
         <DraggableList
           rowHeight={32}
           onOrderChange={(newOrder) => {
-            const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
-            setHiddenLayers([...newHiddenLayers])
+            const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
+            setLayerConfigs([...newLayerConfigs])
           }}
           checkValidChange={(newOrder) =>
-            checkVaildOrder(newOrder, hiddenLayers)
+            checkVaildOrder(newOrder, layerConfigs)
           }
         >
-          {hiddenLayers.map((layer, i) => {
+          {layerConfigs.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
               newConfig: HiddenLayerConfig<T>["config"]
             ) {
-              hiddenLayers[i].config = newConfig
-              setHiddenLayers([...hiddenLayers])
+              layerConfigs[i].config = newConfig
+              setLayerConfigs([...layerConfigs])
             }
-            const inputComp = getInputComp(layer, updateLayerConfig)
+            const isLast = i === layerConfigs.length - 1
+            const inputComp = getInputComp(layer, updateLayerConfig, isLast)
 
-            const isInvisible = invisibleLayers.includes(
-              layer.config.name ?? ""
-            )
+            const isInvisible =
+              invisibleLayers.includes(layer.config.name ?? "") ||
+              layer.className === "Flatten"
+            const mustBe =
+              i === 0 ||
+              i === layerConfigs.length - 1 ||
+              layer.className === "Flatten"
             const label = (
               <div className="flex justify-between">
                 <div className="flex">
@@ -162,13 +177,16 @@ export const LayerConfigControl = () => {
                   </button>
                   <div>
                     {layer.className
+                      .replace("InputLayer", "Input")
                       .replace("MaxPooling2D", "MaxPool")
-                      .replace("Flatten", "[Flatten]")}
+                      .replace("Flatten", "Flatten")}
                   </div>
                 </div>
-                <button onClick={() => handleRemove(i)} className="px-2">
-                  x
-                </button>
+                {!mustBe && (
+                  <button onClick={() => handleRemove(i)} className="px-2">
+                    x
+                  </button>
+                )}
               </div>
             )
             return (
@@ -185,7 +203,7 @@ export const LayerConfigControl = () => {
         <InputRow
           label={
             <Select
-              key={`select_${hiddenLayers.length}`}
+              key={`select_${layerConfigs.length}`}
               ref={selectRef}
               options={selectOptions}
               onChange={handleAdd}
@@ -194,10 +212,7 @@ export const LayerConfigControl = () => {
           }
         >
           <div className="flex justify-end items-center gap-4">
-            <InlineButton
-              variant="secondary"
-              onClick={() => setHiddenLayers([])}
-            >
+            <InlineButton variant="secondary" onClick={resetLayerConfigs}>
               reset
             </InlineButton>
           </div>
@@ -209,20 +224,31 @@ export const LayerConfigControl = () => {
 
 function checkVaildOrder(
   newOrder: number[],
-  hiddenLayers: HiddenLayerConfigArray
+  layerConfigs: HiddenLayerConfigArray
 ) {
-  const newHiddenLayers = newOrder.map((i) => hiddenLayers[i])
-  const firstDenseIdx = newHiddenLayers.findIndex(
+  const setStatusText = useStatusText.getState().setStatusText
+  const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
+
+  const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")
+  const firstDenseIdx = newLayerConfigs.findIndex(
     (l) => l.className === "Dense"
   )
-  const lastMultiDimIdx = newHiddenLayers.findLastIndex((l) =>
+  const lastMultiDimIdx = newLayerConfigs.findLastIndex((l) =>
     ["Conv2D", "MaxPooling2D"].includes(l.className)
   )
-  const isValdid = firstDenseIdx < 0 || lastMultiDimIdx < firstDenseIdx
-  if (!isValdid) {
-    useStatusText
-      .getState()
-      .setStatusText("Conv2D and MaxPooling2D must come before Dense")
+
+  if (newOrder[0] !== 0) {
+    setStatusText("Input layer must be the first layer")
+    return false
+  } else if (newOrder[newOrder.length - 1] !== layerConfigs.length - 1) {
+    setStatusText("Output layer must be the last layer")
+    return false
+  } else if (lastMultiDimIdx > 0 && flattenIdx < lastMultiDimIdx) {
+    setStatusText("Conv2D and MaxPooling2D must come before Flatten")
+    return false
+  } else if (firstDenseIdx > 0 && flattenIdx > firstDenseIdx) {
+    setStatusText("Dense must come after Flatten")
+    return false
   }
-  return isValdid
+  return true
 }

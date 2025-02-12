@@ -27,6 +27,7 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
   useEffect(() => {
     async function getActivations() {
       if (!model || !input || input.length === 0) return
+      console.log({ model })
 
       const shape = model.layers[0].batchInputShape
       const [, ...dims] = shape as number[]
@@ -38,8 +39,14 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
         })
         const tensor = tf.tensor([input], [1, ...dims])
         // note: predictAsync method not available for tf.LayersModel
-        const _activations = tmpModel.predict(tensor) as tf.Tensor<tf.Rank>[]
-        const activations = _activations.map((layerActivation) => {
+        const _activations = tmpModel.predict(tensor) as
+          | tf.Tensor<tf.Rank>[]
+          | tf.Tensor<tf.Rank>
+        console.log({ _activations })
+        const layerActivations = Array.isArray(_activations)
+          ? _activations
+          : [_activations]
+        const activations = layerActivations.map((layerActivation) => {
           const { shape } = layerActivation
           const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
           const [, , , depth] = shape

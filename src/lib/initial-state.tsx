@@ -6,16 +6,16 @@ import { useEffect } from "react"
 
 export interface InitialState {
   datasetKey?: string
-  hiddenLayers?: HiddenLayerConfigArray
+  layerConfigs?: HiddenLayerConfigArray
 }
 
 export function setInitialState(initialState: InitialState) {
-  const { datasetKey, hiddenLayers } = initialState
+  const { datasetKey, layerConfigs } = initialState
   if (datasetKey) {
     useDatasetStore.getState().setDatasetKey(datasetKey)
   }
-  if (hiddenLayers) {
-    useModelStore.getState().setHiddenLayers(hiddenLayers)
+  if (layerConfigs) {
+    useModelStore.getState().setLayerConfigs(layerConfigs)
   }
 }
 

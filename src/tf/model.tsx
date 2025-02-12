@@ -12,6 +12,7 @@ import { create } from "zustand"
 import { useTfBackend } from "../tf/tf-backend"
 import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
 import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
+import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
 
 export type LayerConfigMap = {
   Dense: DenseLayerArgs
@@ -19,6 +20,7 @@ export type LayerConfigMap = {
   MaxPooling2D: Pooling2DLayerArgs
   Flatten: FlattenLayerArgs
   Dropout: DropoutLayerArgs
+  InputLayer: InputLayerArgs
 }
 
 export type HiddenLayerConfig<T extends keyof LayerConfigMap> = {
@@ -35,15 +37,18 @@ interface ModelStore {
   isPending: boolean
   setIsPending: (isPending: boolean) => void
   _setModel: (model: tf.LayersModel | undefined) => void // use modelTransition instead
-  hiddenLayers: HiddenLayerConfigArray
-  setHiddenLayers: (hiddenLayers: HiddenLayerConfigArray) => void
+  layerConfigs: HiddenLayerConfigArray
+  setLayerConfigs: (layerConfigs: HiddenLayerConfigArray) => void
+  resetLayerConfigs: () => void
 }
 
-const defaultLayer: HiddenLayerConfig<"Dense"> = {
-  className: "Dense",
-  config: { units: 64, activation: "relu" },
-  isInvisible: false,
-}
+const defaultLayerConfigs: HiddenLayerConfig<"Dense">[] = [
+  {
+    className: "Dense",
+    config: { units: 64, activation: "relu" },
+  },
+  { className: "Dense", config: { units: 10, activation: "softmax" } },
+]
 
 export const useModelStore = create<ModelStore>((set) => ({
   model: undefined,
@@ -51,8 +56,9 @@ export const useModelStore = create<ModelStore>((set) => ({
   isPending: false,
   setIsPending: (isPending) => set({ isPending }),
   _setModel: (model) => set({ model }),
-  hiddenLayers: [defaultLayer],
-  setHiddenLayers: (hiddenLayers) => set({ hiddenLayers }),
+  layerConfigs: defaultLayerConfigs,
+  setLayerConfigs: (layerConfigs) => set({ layerConfigs }),
+  resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
 }))
 
 export function useModel(ds?: Dataset) {
@@ -111,7 +117,7 @@ function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
 function useModelCreation(ds?: Dataset) {
   const backendReady = useTfBackend()
   const [setModel, isPending] = useModelTransition()
-  const hiddenLayers = useModelStore((s) => s.hiddenLayers)
+  const layerConfigs = useModelStore((s) => s.layerConfigs)
   useEffect(() => {
     if (!ds || !backendReady) return
     if (useModelStore.getState().skipCreation) {
@@ -120,13 +126,13 @@ function useModelCreation(ds?: Dataset) {
       return
     }
 
-    const _model = createModel(ds, hiddenLayers)
+    const _model = createModel(ds, layerConfigs)
 
     if (debug()) console.log({ _model })
     if (!_model) return
 
     setModel(_model)
-  }, [backendReady, hiddenLayers, ds, setModel])
+  }, [backendReady, layerConfigs, ds, setModel])
   return isPending || !backendReady
 }
 
@@ -135,13 +141,6 @@ function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
     if (!model || !ds) return
     const totalSamples = ds.train.shapeX[0]
-    const layersStr = model.layers
-      .map((l) => {
-        const name = l.getClassName().replace("InputLayer", "Input")
-        const shape = l.outputShape.slice(1).join("x")
-        return `${name}\u00A0(${shape})`
-      })
-      .join(" | ")
     const totalParamas = model.countParams()
     const modelName = model.getClassName()
     const datasetInfo = (
@@ -163,7 +162,6 @@ function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
       "  ": `Model: ${modelName} (${totalParamas.toLocaleString(
         "en-US"
       )} params)`,
-      "   ": layersStr,
     }
     setStatusText({ data })
   }, [model, ds, setStatusText])
@@ -184,7 +182,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   }, [model, ds])
 }
 
-function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
+function createModel(ds: Dataset, layerConfigs: HiddenLayerConfigArray) {
   const [, ...dims] = ds.train.shapeX
   const inputShape = [null, ...dims] as [null, ...number[]]
 
@@ -192,10 +190,14 @@ function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
 
   model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
 
-  for (const [i, l] of hiddenLayers.entries()) {
+  for (const [i, l] of layerConfigs.entries()) {
+    const isOutput = i === layerConfigs.length - 1 && layerConfigs.length > 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
     if (l.className === "Dense") {
-      addDenseWithFlattenIfNeeded(model, config as DenseLayerArgs)
+      const configNew = isOutput // use config from ds for output layer
+        ? { ...config, units: ds.output.size, activation: ds.output.activation }
+        : config
+      addDenseWithFlattenIfNeeded(model, configNew as DenseLayerArgs)
     } else if (l.className === "Conv2D") {
       model.add(tf.layers.conv2d(config as ConvLayerArgs))
     } else if (l.className === "Flatten") {
@@ -208,11 +210,7 @@ function createModel(ds: Dataset, hiddenLayers: HiddenLayerConfigArray) {
       console.log("Unknown layer", l)
     }
   }
-  // output layer
-  addDenseWithFlattenIfNeeded(model, {
-    units: ds.output.size,
-    activation: ds.output.activation,
-  })
+
   return model
 }
 

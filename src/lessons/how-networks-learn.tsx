@@ -22,7 +22,7 @@ export const IntroNetworks = (): LessonContent => {
   useEffect(() => {
     setInitialState({
       datasetKey: "fashion_mnist",
-      hiddenLayers: [
+      layerConfigs: [
         { className: "Dense", config: { units: 64, activation: "relu" } },
       ],
     })
