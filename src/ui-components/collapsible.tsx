@@ -20,8 +20,8 @@ export function Collapsible({
   return (
     <div
       ref={ref}
-      className={`transition-height overflow-hidden ${
-        isOpen ? "max-h-[var(--collapsible-max-h)]" : "max-h-0"
+      className={`transition-height ${
+        isOpen ? "max-h-[var(--collapsible-max-h)]" : "max-h-0 overflow-hidden"
       } ${!animate ? "duration-0" : "duration-200"} ${className} ease-linear`}
       style={
         {

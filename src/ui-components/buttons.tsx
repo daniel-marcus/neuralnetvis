@@ -60,7 +60,7 @@ export const InlineButton = ({
           : variant === "secondary"
           ? "bg-secondary"
           : "hover:bg-secondary"
-      } rounded-[3px] ${className}`}
+      } rounded-btn ${className}`}
       onClick={onClick}
       disabled={disabled}
       type={type}

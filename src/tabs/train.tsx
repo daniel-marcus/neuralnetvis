@@ -57,7 +57,10 @@ const TrainConfigControl = () => {
   const setConfig = useTrainingStore((s) => s.setConfig)
   return (
     <ControlPanel title="config">
-      <InputRow label="batchSize">
+      <InputRow
+        label="batchSize"
+        hint="How many samples should be processed at once?"
+      >
         <Slider
           // value={config.batchSize}
           value={Math.log2(config.batchSize)}
@@ -68,7 +71,10 @@ const TrainConfigControl = () => {
           showValue={true}
         />
       </InputRow>
-      <InputRow label="epochs">
+      <InputRow
+        label="epochs"
+        hint={"How often should the model see the entire dataset?"}
+      >
         <Slider
           value={config.epochs}
           min={1}
@@ -77,7 +83,10 @@ const TrainConfigControl = () => {
           showValue={true}
         />
       </InputRow>
-      <InputRow label="validSplit">
+      <InputRow
+        label="validSplit"
+        hint="How much of the data should be used for validation?"
+      >
         <Slider
           value={config.validationSplit}
           min={0}
@@ -87,14 +96,20 @@ const TrainConfigControl = () => {
           showValue={true}
         />
       </InputRow>
-      <InputRow label="silent">
+      <InputRow
+        label="silent"
+        hint="Update visualization only after training (faster)"
+      >
         <Checkbox
           checked={config.silent}
           onChange={(silent) => setConfig({ silent: silent })}
         />
       </InputRow>
 
-      <InputRow label="lazyLoading">
+      <InputRow
+        label="lazyLoading"
+        hint="Load data on the fly (could be slower, but saves memory)"
+      >
         <Checkbox
           checked={config.fitDataset}
           onChange={(fitDataset) => setConfig({ fitDataset })}

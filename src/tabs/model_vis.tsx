@@ -29,8 +29,13 @@ export const VisConfigControl = () => {
             </button>
           </div>
         )
+        const axis = prop.slice(0, 1)
         return (
-          <InputRow key={prop} label={label}>
+          <InputRow
+            key={prop}
+            label={label}
+            hint={`layer spacing along the ${axis} axis`}
+          >
             <Slider
               value={value}
               min={-30}
@@ -52,21 +57,27 @@ export const VisConfigControl = () => {
           showValue
         />
       </InputRow> */}
-      <InputRow label="showLines">
+      <InputRow
+        label="showLines"
+        hint="show (strongest) connections between neurons"
+      >
         <Checkbox
           checked={config.showLines}
           onChange={(showLines) => setVisConfig({ showLines })}
         />
       </InputRow>
       {hasColorChannels && (
-        <InputRow label="splitColors">
+        <InputRow label="splitColors" hint="show color channels separately">
           <Checkbox
             checked={config.splitColors}
             onChange={(splitColors) => setVisConfig({ splitColors })}
           />
         </InputRow>
       )}
-      <InputRow label="onSelect">
+      <InputRow
+        label="onSelect"
+        hint="What should be shown when you hover or click on a neuron?"
+      >
         <Select
           value={config.highlightProp}
           options={[
