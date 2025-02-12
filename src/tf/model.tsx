@@ -1,6 +1,6 @@
 import { Dataset } from "@/data/datasets"
 import { useStatusText } from "@/components/status"
-import { useCallback, useEffect, useTransition } from "react"
+import { ReactNode, useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   DenseLayerArgs,
@@ -23,13 +23,13 @@ export type LayerConfigMap = {
   InputLayer: InputLayerArgs
 }
 
-export type HiddenLayerConfig<T extends keyof LayerConfigMap> = {
+export type LayerConfig<T extends keyof LayerConfigMap> = {
   className: T
   config: LayerConfigMap[T]
   isInvisible?: boolean
 }
 
-export type HiddenLayerConfigArray = HiddenLayerConfig<keyof LayerConfigMap>[]
+export type LayerConfigArray = LayerConfig<keyof LayerConfigMap>[]
 
 interface ModelStore {
   model: tf.LayersModel | undefined
@@ -37,12 +37,12 @@ interface ModelStore {
   isPending: boolean
   setIsPending: (isPending: boolean) => void
   _setModel: (model: tf.LayersModel | undefined) => void // use modelTransition instead
-  layerConfigs: HiddenLayerConfigArray
-  setLayerConfigs: (layerConfigs: HiddenLayerConfigArray) => void
+  layerConfigs: LayerConfigArray
+  setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
 }
 
-const defaultLayerConfigs: HiddenLayerConfig<"Dense">[] = [
+const defaultLayerConfigs: LayerConfig<"Dense">[] = [
   {
     className: "Dense",
     config: { units: 64, activation: "relu" },
@@ -140,36 +140,24 @@ function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
   const setStatusText = useStatusText((s) => s.setStatusText)
   useEffect(() => {
     if (!model || !ds) return
-    const totalSamples = ds.train.shapeX[0]
-    const totalParamas = model.countParams()
-    const modelName = model.getClassName()
-    const datasetInfo = (
-      <>
-        Dataset:{" "}
-        <a
-          href={ds.aboutUrl}
-          rel="noopener noreferrer"
-          className="text-accent"
-          target="_blank"
-        >
-          {ds.name}
-        </a>{" "}
-        ({totalSamples.toLocaleString("en-US")} samples)
-      </>
-    )
     const data = {
-      " ": datasetInfo,
-      "  ": `Model: ${modelName} (${totalParamas.toLocaleString(
-        "en-US"
-      )} params)`,
+      Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
+      Samples: ds.train.shapeX[0].toLocaleString("en-US"),
+      Model: model.getClassName(),
+      Params: model.countParams().toLocaleString("en-US"),
     }
     setStatusText({ data })
   }, [model, ds, setStatusText])
 }
 
+const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (
+  <a href={href} rel="noopener" className="text-accent" target="_blank">
+    {children}
+  </a>
+)
+
 function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
-    // useModelCompile
     if (!model || !ds) return
     if (!isModelCompiled(model)) {
       if (debug()) console.log("Model not compiled. Compiling ...", model)
@@ -182,7 +170,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   }, [model, ds])
 }
 
-function createModel(ds: Dataset, layerConfigs: HiddenLayerConfigArray) {
+function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
   const [, ...dims] = ds.train.shapeX
   const inputShape = [null, ...dims] as [null, ...number[]]
 

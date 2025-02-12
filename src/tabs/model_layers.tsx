@@ -1,8 +1,8 @@
 import { useStatusText } from "@/components/status"
 import { useVisConfigStore } from "@/lib/vis-config"
 import {
-  HiddenLayerConfig,
-  HiddenLayerConfigArray,
+  LayerConfig,
+  LayerConfigArray,
   LayerConfigMap,
   useModelStore,
 } from "@/tf/model"
@@ -17,9 +17,9 @@ import { DraggableList } from "@/ui-components/draggable-list"
 import { ReactNode, useRef } from "react"
 
 function getInputComp<T extends keyof LayerConfigMap>(
-  layerConfig: HiddenLayerConfig<T>,
+  layerConfig: LayerConfig<T>,
   updateLayerConfig: <C extends keyof LayerConfigMap>(
-    config: HiddenLayerConfig<C>["config"]
+    config: LayerConfig<C>["config"]
   ) => void,
   isLast: boolean
 ): ReactNode {
@@ -87,15 +87,15 @@ const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
   className: T
-): HiddenLayerConfig<T> {
+): LayerConfig<T> {
   const layer = { className, config: { ...defaultConfigMap[className] } }
-  return layer as HiddenLayerConfig<T>
+  return layer as LayerConfig<T>
 }
 
 export const LayerConfigControl = () => {
   const model = useModelStore((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
-    []) as unknown as HiddenLayerConfigArray
+    []) as unknown as LayerConfigArray
   const setLayerConfigs = useModelStore((s) => s.setLayerConfigs)
   const resetLayerConfigs = useModelStore((s) => s.resetLayerConfigs)
 
@@ -151,7 +151,7 @@ export const LayerConfigControl = () => {
         >
           {layerConfigs.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
-              newConfig: HiddenLayerConfig<T>["config"]
+              newConfig: LayerConfig<T>["config"]
             ) {
               layerConfigs[i].config = newConfig
               setLayerConfigs([...layerConfigs])
@@ -222,10 +222,7 @@ export const LayerConfigControl = () => {
   )
 }
 
-function checkVaildOrder(
-  newOrder: number[],
-  layerConfigs: HiddenLayerConfigArray
-) {
+function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
   const setStatusText = useStatusText.getState().setStatusText
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 

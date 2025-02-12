@@ -1,12 +1,12 @@
 "use client"
 
 import { useDatasetStore } from "@/data/datasets"
-import { HiddenLayerConfigArray, useModelStore } from "@/tf/model"
+import { LayerConfigArray, useModelStore } from "@/tf/model"
 import { useEffect } from "react"
 
 export interface InitialState {
   datasetKey?: string
-  layerConfigs?: HiddenLayerConfigArray
+  layerConfigs?: LayerConfigArray
 }
 
 export function setInitialState(initialState: InitialState) {

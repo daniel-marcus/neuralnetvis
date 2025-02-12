@@ -24,6 +24,7 @@ export const IntroNetworks = (): LessonContent => {
       datasetKey: "fashion_mnist",
       layerConfigs: [
         { className: "Dense", config: { units: 64, activation: "relu" } },
+        { className: "Dense", config: {} },
       ],
     })
   }, [])
