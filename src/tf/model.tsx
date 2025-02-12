@@ -57,8 +57,8 @@ export const useModelStore = create<ModelStore>((set) => ({
 
 export function useModel(ds?: Dataset) {
   const model = useModelStore((s) => s.model)
-  useModelReset(model, ds)
   const isPending = useModelCreation(ds)
+  useModelReset(model, ds)
   useModelStatus(model, ds)
   useModelCompile(model, ds)
   return [model, isPending] as const
