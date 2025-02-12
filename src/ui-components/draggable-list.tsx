@@ -53,6 +53,8 @@ export const DraggableList = ({
     }
   })
 
+  console.log({ springs })
+
   return (
     <div
       className="relative h-[var(--height)]"

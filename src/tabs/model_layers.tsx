@@ -1,4 +1,5 @@
 import { useStatusText } from "@/components/status"
+import { useVisConfigStore } from "@/lib/vis-config"
 import {
   HiddenLayerConfig,
   HiddenLayerConfigArray,
@@ -121,6 +122,10 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
+  const toggleLayerVisibility = useVisConfigStore(
+    (s) => s.toggleLayerVisibility
+  )
+  const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
   return (
     <ControlPanel title={"hidden layers"}>
       <div className="flex flex-col gap-4">
@@ -142,21 +147,38 @@ export const LayerConfigControl = () => {
               setHiddenLayers([...hiddenLayers])
             }
             const inputComp = getInputComp(layer, updateLayerConfig)
+
+            const isInvisible = invisibleLayers.includes(
+              layer.config.name ?? ""
+            )
             const label = (
               <div className="flex justify-between">
                 <div>
-                  ⋮{" "}
                   {layer.className
                     .replace("MaxPooling2D", "MaxPool")
                     .replace("Flatten", "[Flatten]")}
                 </div>
-                <button onClick={() => handleRemove(i)} className="px-2">
-                  x
-                </button>
+                {!!layer.config.name && (
+                  <div className="flex">
+                    <button
+                      onClick={() => toggleLayerVisibility(layer.config.name!)}
+                      className="px-2"
+                    >
+                      {isInvisible ? "⍉" : "⌾"}
+                    </button>
+                    <button onClick={() => handleRemove(i)} className="px-2">
+                      x
+                    </button>
+                  </div>
+                )}
               </div>
             )
             return (
-              <InputRow key={`${i}_${layer.className}`} label={label}>
+              <InputRow
+                key={`${i}_${layer.className}`}
+                label={label}
+                className={isInvisible ? "opacity-50" : ""}
+              >
                 {inputComp}
               </InputRow>
             )

@@ -10,6 +10,9 @@ import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import { useVisConfigStore } from "@/lib/vis-config"
 import { useOrientation } from "@/lib/utils"
+import { useSpring } from "@react-spring/web"
+import { useThree } from "@react-three/fiber"
+import * as THREE from "three"
 // import { GroupWithTexture } from "./group-texture"
 
 export type LayerType =
@@ -55,13 +58,23 @@ export const Layer = (props: LayerProps) => {
   const prevVisibleLayer = getVisibleLayers(allLayers)[props.visibleIdx - 1]
 
   const ref = useLayerPosition(props)
+  const isInvisible = useIsInvisible(props)
+  const prevIsInvisible = useIsInvisible(prevVisibleLayer)
+  useDynamicScale(ref, isInvisible ? 0.001 : 1)
 
   const splitColors = useVisConfigStore((s) => s.splitColors)
   const hasAdditiveBlending =
     layerPos === "input" && groupCount > 1 && !splitColors
 
   if (!props.neurons.length) return null
+
   const neuronsByGroup = groupNeuronsByGroupIndex(props)
+
+  const showConnections =
+    !!prevVisibleLayer &&
+    !!prevVisibleLayer.neurons.length &&
+    !isInvisible &&
+    !prevIsInvisible
   return (
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
@@ -85,7 +98,7 @@ export const Layer = (props: LayerProps) => {
         })}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
-      {!!prevVisibleLayer && !!prevVisibleLayer.neurons.length && (
+      {showConnections && (
         <Connections layer={props} prevLayer={prevVisibleLayer} />
       )}
     </>
@@ -122,4 +135,28 @@ function useLayerPosition(layer: LayerProps) {
   }, [visibleIdx, visibleLayers.length, _xShift, yShift, zShift, orientation])
   const [ref] = useAnimatedPosition(position, 0.1)
   return ref
+}
+
+function useIsInvisible(layer?: LayerStateful) {
+  const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
+  if (!layer) return true
+  return invisibleLayers.includes(layer.tfLayer.name)
+}
+
+function useDynamicScale(
+  ref: React.RefObject<THREE.Mesh | null>,
+  scale: number = 1
+) {
+  const { invalidate } = useThree()
+  // would use @react-spring/three, but that breaks @react-spring/web:
+  // https://github.com/pmndrs/react-spring/issues/1586
+  useSpring({
+    scale,
+    config: { duration: 150 },
+    onChange: ({ value }) => {
+      const val = value.scale
+      ref.current?.scale.set(val, val, val)
+      invalidate()
+    },
+  })
 }

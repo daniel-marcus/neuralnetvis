@@ -12,6 +12,7 @@ interface VisConfig {
   showLines: boolean
   lineActivationThreshold: number
   allowDenseHoverLines: boolean
+  invisibleLayers: string[]
 }
 
 const defaultOptions = {
@@ -24,13 +25,21 @@ const defaultOptions = {
   highlightProp: "weightedInputs",
   lineActivationThreshold: 0.5,
   allowDenseHoverLines: false,
+  invisibleLayers: [],
 }
 
 interface VisConfigStore extends VisConfig {
   setVisConfig: (newConfig: Partial<VisConfig>) => void
+  toggleLayerVisibility: (layerName: string) => void
 }
 
 export const useVisConfigStore = create<VisConfigStore>((set) => ({
   ...defaultOptions,
   setVisConfig: (newConfig) => set((state) => ({ ...state, ...newConfig })),
+  toggleLayerVisibility: (layerName) =>
+    set(({ invisibleLayers }) => ({
+      invisibleLayers: invisibleLayers.includes(layerName)
+        ? invisibleLayers.filter((l) => l !== layerName)
+        : invisibleLayers.concat(layerName),
+    })),
 }))

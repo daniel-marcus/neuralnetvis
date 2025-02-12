@@ -50,7 +50,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const showLines = useVisConfigStore((s) => s.showLines)
   const isConvOrMaxPool =
     ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
-    ["Conv2D", "MaxPooling2D"].includes(prevLayer.layerType)
+    ["Conv2D"].includes(prevLayer.layerType)
   const isRegression = useDatasetStore((s) => s.isRegression)
   const { invalidate } = useThree()
   useEffect(() => {
