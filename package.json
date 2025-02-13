@@ -60,6 +60,7 @@
   "prettier": {
     "semi": false
   },
+  "packageManager": "pnpm@9.10.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@tensorflow/tfjs-node",
