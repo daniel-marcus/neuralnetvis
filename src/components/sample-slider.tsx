@@ -1,8 +1,8 @@
 import { useStatusStore } from "./status"
-import { useSelected } from "@/lib/neuron-select"
-import { useDatasetStore } from "@/data/datasets"
-import { useLockStore } from "./lock"
-import { Slider } from "@/ui-components"
+import { useSelected } from "@/neuron-layers/neuron-select"
+import { useDatasetStore } from "@/data/data"
+import { useLockStore } from "@/scene/lock"
+import { Slider } from "@/components/ui-elements"
 
 export const MainSampleSlider = () => {
   const hasSelected = useSelected((s) => s.hasHoveredOrSelected())

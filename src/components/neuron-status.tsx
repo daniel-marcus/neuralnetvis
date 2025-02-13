@@ -1,12 +1,12 @@
 import { useRef, useState } from "react"
-import { useSelected } from "@/lib/neuron-select"
+import { useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/normalization"
-import { getHighlightColor } from "@/three/colors"
+import { getHighlightColor } from "@/scene/colors"
 import { SphereGeometry } from "three"
-import { Neuron } from "@/lib/neuron"
+import { Neuron } from "@/neuron-layers/neuron"
 import { Table, useStatusStore } from "./status"
-import { useVisConfigStore } from "@/three/vis-config"
-import { useIsScreen } from "@/lib/utils"
+import { useVisConfigStore } from "@/scene/vis-config"
+import { useIsScreen } from "@/utils/utils"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)

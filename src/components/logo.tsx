@@ -1,4 +1,4 @@
-import { useAsciiText } from "@/lib/ascii-text"
+import { useAsciiText } from "@/utils/ascii-text"
 import { useTabStore } from "./menu"
 
 export const Logo = () => {

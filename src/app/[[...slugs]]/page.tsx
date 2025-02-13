@@ -1,4 +1,4 @@
-import { DefaultInitialStateSetter } from "@/lib/initial-state"
+import { DefaultInitialStateSetter } from "@/utils/initial-state"
 import { TabSetter } from "@/components/menu"
 
 type Params = Promise<{ slugs: string[] | undefined }>

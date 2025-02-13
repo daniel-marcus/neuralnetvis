@@ -1,5 +1,5 @@
 import { Lesson } from "@/components/lesson"
-import { lessonPreviews, lessons } from "@/lessons/all-lessons"
+import { lessonPreviews, lessons } from "../../../../lessons"
 import React from "react"
 import { metadata } from "@/app/layout"
 import manifest from "@/app/manifest.json"

@@ -1,17 +1,17 @@
 "use client"
 
 import { ReactNode, useEffect, useLayoutEffect } from "react"
-import { useController } from "../lib/controller"
-import { useInView } from "@/lib/utils"
+import { useController } from "../utils/controller"
+import { useInView } from "@/utils/utils"
 import { TabSetter } from "./menu"
-import { getLessonPath, LessonDef, LessonPreview } from "@/lessons/all-lessons"
+import { getLessonPath, LessonDef, LessonPreview } from "@/contents"
 import Link from "next/link"
 import { create } from "zustand"
 import throttle from "lodash.throttle"
-import { useAsciiText } from "@/lib/ascii-text"
-import { useLockStore } from "./lock"
+import { useAsciiText } from "@/utils/ascii-text"
+import { useLockStore } from "@/scene/lock"
 import { usePathname } from "next/navigation"
-import { CollapsibleWithTitle } from "@/ui-components"
+import { CollapsibleWithTitle } from "@/components/ui-elements"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
