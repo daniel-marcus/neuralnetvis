@@ -1,14 +1,8 @@
-import { RefObject } from "react"
-import * as THREE from "three"
-import { useAnimatedPosition } from "@/scene/animated-position"
+import { useAnimatedPosition, getWorldPos } from "@/scene/utils"
 import { OUTPUT_ORIENT, getNeuronPosition } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
 import { useDatasetStore } from "@/data/data"
-import type {
-  LayerStateful,
-  Neuron,
-  NeuronRefType,
-} from "@/neuron-layers/types"
+import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const trainingY = useDatasetStore((s) => s.trainingY)
@@ -31,7 +25,7 @@ export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
 export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
   // can be used for custom pointing later
   if (!pointedNeuron) return null
-  const v = getWorldPosFromRef(pointedNeuron.ref)
+  const v = getWorldPos(pointedNeuron)
   if (!v) return null
   const position = [v.x, v.y, v.z] as [number, number, number]
   return <Pointer position={position} color="white" />
@@ -64,21 +58,4 @@ function getPointerPos(x: number, y: number, z: number) {
   if (OUTPUT_ORIENT === "vertical")
     return [x, y - 0.1, z + 2.2] // [x, y, z + 2.5]
   else return [x, y + 5, z]
-}
-
-function getWorldPosFromRef(ref: RefObject<NeuronRefType>) {
-  if (!ref.current) return null
-  const { meshRef, indexInGroup } = ref.current
-  if (!meshRef?.current) return null
-  const worldPos = new THREE.Vector3()
-  const tempMatrix = new THREE.Matrix4()
-  const tempWorldMatrix = new THREE.Matrix4()
-  meshRef.current.getMatrixAt(indexInGroup, tempMatrix)
-  tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
-  tempWorldMatrix.decompose(
-    worldPos,
-    new THREE.Quaternion(),
-    new THREE.Vector3()
-  )
-  return worldPos
 }

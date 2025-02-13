@@ -9,10 +9,10 @@ import { useNeuronSelect } from "./neuron-select"
 export function useLayers() {
   const { ds, input, rawInput } = useDatasetStore()
   const model = useModelStore((s) => s.model)
-  const [__layers, neuronRefs] = useStatelessLayers(model, ds)
+  const __layers = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
   const weights = useWeights(model)
   const _layers = useStatefulLayers(__layers, activations, weights, rawInput)
   const layers = useNeuronSelect(_layers)
-  return [layers, neuronRefs] as const
+  return layers
 }

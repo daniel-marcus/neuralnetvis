@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
+import { Line, Vector2, Vector3 } from "three"
 import {
   LineGeometry,
   LineMaterial,
@@ -13,8 +13,8 @@ import type {
   LayerStateful,
   LayerStateless,
   Neuron,
-  NeuronRefType,
 } from "@/neuron-layers/types"
+import { getWorldPos } from "./utils"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
@@ -39,8 +39,8 @@ export const HoverConnections = () => {
         return (
           <DynamicLine2
             key={`${hovered.nid}_${inputN.nid}`}
-            fromRef={inputN.ref}
-            toRef={hovered.ref}
+            from={inputN}
+            to={hovered}
             toPoint={hoverOrigin}
             width={width}
           />
@@ -87,7 +87,6 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
 
     for (const [index, weight] of weights.entries()) {
       const prevNeuron = prevNeurons[index]
-      if (!neuron?.ref || !prevNeuron?.ref) continue
       const absWeight = Math.abs(weight)
       if (absWeight < layerMaxWeight * 0.5) continue
       const weightedInput = absWeight * (prevNeuron.activation ?? 0)
@@ -96,7 +95,7 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
         Math.round(weightedInput * 10) / 10,
         MAX_LINE_WIDTH
       )
-      const connection = { fromRef: prevNeuron.ref, toRef: neuron.ref, width }
+      const connection = { from: prevNeuron, to: neuron, width }
       connections.push(connection)
     }
   }
@@ -108,18 +107,13 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
 }
 
 interface DynamicLineProps {
-  fromRef: React.RefObject<NeuronRefType>
-  toRef: React.RefObject<NeuronRefType>
+  from: Neuron
+  to: Neuron
   toPoint?: Vector3 // alternatvie to toRef
   width?: number
 }
 
-const DynamicLine2 = ({
-  fromRef,
-  toRef,
-  toPoint,
-  width = 1,
-}: DynamicLineProps) => {
+const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
   const { size } = useThree()
 
@@ -140,35 +134,11 @@ const DynamicLine2 = ({
     }
   }, [geometry, material])
 
-  const [fromPosition, toPosition, tempMatrix, tempWorldMatrix] = useMemo(
-    () => [new Vector3(), new Vector3(), new Matrix4(), new Matrix4()],
-    []
-  )
   useFrame(() => {
-    if (lineRef.current && fromRef.current && (toRef.current || toPoint)) {
-      const { meshRef: fromMeshRef, indexInGroup: fromIndex } = fromRef.current
-      if (!fromMeshRef?.current) return
-
-      fromMeshRef.current.getMatrixAt(fromIndex, tempMatrix)
-      tempWorldMatrix.multiplyMatrices(
-        fromMeshRef.current.matrixWorld,
-        tempMatrix
-      )
-      tempWorldMatrix.decompose(fromPosition, new Quaternion(), new Vector3())
-
-      if (toRef.current) {
-        const { meshRef: toMeshRef, indexInGroup: toIndex } = toRef.current
-        if (!toMeshRef?.current) return
-        toMeshRef.current.getMatrixAt(toIndex, tempMatrix)
-        tempWorldMatrix.multiplyMatrices(
-          toMeshRef.current.matrixWorld,
-          tempMatrix
-        )
-        tempWorldMatrix.decompose(toPosition, new Quaternion(), new Vector3())
-      } else if (toPoint) {
-        toPosition.copy(toPoint)
-      }
-
+    if (lineRef.current && from && (to || toPoint)) {
+      const fromPosition = getWorldPos(from)
+      const toPosition = toPoint ? new Vector3(...toPoint) : getWorldPos(to)
+      if (!fromPosition || !toPosition) return
       geometry.setPositions([...fromPosition, ...toPosition])
       lineRef.current.computeLineDistances()
     }

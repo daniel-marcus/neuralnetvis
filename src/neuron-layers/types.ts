@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
-import { RefObject } from "react"
-import { MeshParams } from "@/neuron-layers/layout"
-import { InstancedMeshRef } from "@/scene/neuron-group"
+import type { InstancedMesh } from "three"
+import type { RefObject } from "react"
+import type { MeshParams } from "@/neuron-layers/layout"
 
 // Types for Layers
 
@@ -35,19 +35,25 @@ export interface LayerStateful extends LayerStateless {
   maxAbsWeight?: number
 }
 
+// Types for Groups
+
+export type InstancedMeshRef = RefObject<InstancedMesh | null>
+
 export interface GroupDef {
+  index: number
   nids: Nid[]
   nidsStr: string // for deps optimization
+  meshRef: InstancedMeshRef
+}
+
+export type NeuronGroupProps = LayerStateful & {
+  group: GroupDef
+  groupedNeurons: Neuron[]
 }
 
 // Types for Neurons
 
 export type Nid = string // layerIndex_{index3d.join(".")}
-
-export type NeuronRefType = {
-  meshRef: InstancedMeshRef
-  indexInGroup: number
-} | null
 
 export type Index3D = [number, number, number] // height, width, depth
 
@@ -57,8 +63,9 @@ export type NeuronDef = {
   nid: Nid
   layerIndex: number
   groupIndex: number
+  indexInGroup: number
+  meshRef: InstancedMeshRef
   visibleLayerIndex: number
-  ref: RefObject<NeuronRefType>
   inputNids?: Nid[]
   inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
   label?: string

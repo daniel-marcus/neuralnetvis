@@ -3,11 +3,11 @@ import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
 
 export const Model = () => {
-  const [layers, neuronRefs] = useLayers()
+  const layers = useLayers()
   return (
     <group>
       {layers.map((l, i) => (
-        <Layer key={i} {...l} allLayers={layers} neuronRefs={neuronRefs} />
+        <Layer key={i} {...l} allLayers={layers} />
       ))}
       <HoverConnections />
     </group>

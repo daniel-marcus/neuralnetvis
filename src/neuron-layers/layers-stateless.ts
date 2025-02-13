@@ -9,9 +9,9 @@ import type {
   LayerType,
   Index3D,
   Neuron,
-  NeuronRefType,
   Nid,
 } from "./types"
+import { InstancedMesh } from "three"
 
 // here is all data that doesn't change for a given model
 
@@ -73,16 +73,23 @@ export function useStatelessLayers(
 
         const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
 
+        const meshRefs = Array.from({ length: groupCount }).map(() =>
+          createRef<InstancedMesh>()
+        )
+
         const neurons =
           Array.from({ length: units }).map((_, neuronIndex) => {
             const index3d = getNeuronIndex3d(neuronIndex, outputShape)
             const inputNids = layerInputNids?.[neuronIndex] ?? []
+            const groupIndex = neuronIndex % groupCount
             return {
               nid: getNid(layerIndex, index3d),
               index: neuronIndex,
               index3d,
               layerIndex,
-              groupIndex: neuronIndex % groupCount,
+              groupIndex,
+              indexInGroup: Math.floor(neuronIndex / groupCount),
+              meshRef: meshRefs[groupIndex],
               visibleLayerIndex: visibleIdx,
               inputNids,
               inputNeurons: prevVisibleLayer
@@ -90,7 +97,6 @@ export function useStatelessLayers(
                     .map((nid) => prevVisibleLayer.neuronsMap?.get(nid))
                     .filter(Boolean) as Neuron[])
                 : [],
-              ref: createRef<NeuronRefType>(),
               label:
                 layerPos === "output"
                   ? ds?.output.labels?.[neuronIndex]
@@ -106,8 +112,10 @@ export function useStatelessLayers(
           const nids = groupedNeurons.map((n) => n.nid)
           const nidsStr = nids.join(",")
           return {
+            index: i,
             nids,
             nidsStr,
+            meshRef: meshRefs[i],
           }
         })
         const layer = {
@@ -121,12 +129,7 @@ export function useStatelessLayers(
     )
   }, [model, ds])
 
-  const neuronRefs = useMemo(
-    () => layers.map((layer) => layer.neurons.map((n) => n.ref)),
-    [layers]
-  )
-
-  return [layers, neuronRefs] as const
+  return layers
 }
 
 function getNid(layerIndex: number, index3d: Index3D) {

@@ -2,38 +2,31 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 
-import { useAnimatedPosition } from "@/scene/animated-position"
+import { useAnimatedPosition, getNeuronColor } from "@/scene/utils"
+import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
+import { debug } from "@/utils/debug"
+import { useVisConfigStore } from "@/scene/vis-config"
+import { useDatasetStore } from "@/data/data"
 import {
   getGridSize,
   getNeuronPosition,
   type MeshParams,
 } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
-import { debug } from "@/utils/debug"
-import { useVisConfigStore } from "@/scene/vis-config"
-import { useDatasetStore } from "@/data/data"
-import { getNeuronColor } from "./colors"
 
-import type { LayerProps } from "./layer"
-import type { LayerPos, GroupDef, Neuron } from "@/neuron-layers/types"
-
-export type InstancedMeshRef = React.RefObject<THREE.InstancedMesh | null>
-
-export type NeuronGroupProps = LayerProps &
-  GroupDef & {
-    groupIndex: number
-    groupCount: number
-    groupedNeurons: Neuron[]
-  }
+import type {
+  LayerPos,
+  Neuron,
+  InstancedMeshRef,
+  NeuronGroupProps,
+} from "@/neuron-layers/types"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { groupedNeurons, groupIndex, nidsStr } = props
   const { index: layerIndex, layerPos, meshParams } = props
   const { hasLabels, hasColorChannels } = props
+  const { group, groupedNeurons } = props
+  const { index: groupIndex, nidsStr, meshRef } = group
   const spacing = useNeuronSpacing(meshParams)
-  const meshRef = useRef<THREE.InstancedMesh | null>(null!)
-  useNeuronRefs(props, meshRef)
   const groupRef = useGroupPosition(props)
   const outputShape = props.tfLayer.outputShape as number[]
   const [, height, width = 1] = outputShape
@@ -83,21 +76,10 @@ export function useNeuronSpacing(meshParams: MeshParams) {
   return spacing
 }
 
-function useNeuronRefs(props: NeuronGroupProps, meshRef: InstancedMeshRef) {
-  const { groupCount, groupIndex, index: layerIndex, neuronRefs } = props
-  const instances = props.groupedNeurons.length
-  useEffect(() => {
-    if (debug()) console.log("upd refs")
-    for (let indexInGroup = 0; indexInGroup < instances; indexInGroup++) {
-      const neuronFlatIdx = indexInGroup * groupCount + groupIndex
-      if (!neuronRefs[layerIndex][neuronFlatIdx]) continue
-      neuronRefs[layerIndex][neuronFlatIdx].current = { meshRef, indexInGroup }
-    }
-  }, [meshRef, neuronRefs, layerIndex, groupCount, groupIndex, instances])
-}
-
 export function useGroupPosition(props: NeuronGroupProps) {
-  const { groupIndex, groupCount, layerPos, meshParams } = props
+  const { group, layerPos, meshParams } = props
+  const groupIndex = group.index
+  const groupCount = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
   const splitColors = useVisConfigStore((s) => s.splitColors)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]

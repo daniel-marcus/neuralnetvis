@@ -5,6 +5,7 @@ import { Vector3 } from "three"
 import { normalizeWithSign } from "@/data/normalization"
 import { useVisConfigStore, type HighlightProp } from "@/scene/vis-config"
 import type { LayerStateful, Neuron, Nid } from "@/neuron-layers/types"
+import { useDebugStore } from "@/utils/debug"
 
 interface SelectedStore {
   hovered: Neuron | null
@@ -69,6 +70,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       .flatMap((l) => l.neurons)
       .find(({ nid }) => nid === selectedNid)
     setSelected(selected ?? null)
+    if (useDebugStore.getState().debug) console.log(selected)
   }, [layerProps, selectedNid, setSelected])
 
   const selOrHovNid = selectedNid || hoveredNid

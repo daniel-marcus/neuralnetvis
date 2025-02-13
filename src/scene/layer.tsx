@@ -3,27 +3,16 @@ import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 
-import { useAnimatedPosition } from "@/scene/animated-position"
+import { useAnimatedPosition } from "@/scene/utils"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { useOrientation } from "@/utils/utils"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 
-import type { Dataset } from "@/data/data"
-import type {
-  LayerStateful,
-  Neuron,
-  NeuronRefType,
-} from "@/neuron-layers/types"
+import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 
-interface LayerContext {
-  allLayers: LayerStateful[]
-  ds?: Dataset
-  neuronRefs: React.RefObject<NeuronRefType>[][]
-}
-
-export type LayerProps = LayerStateful & LayerContext
+type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 
 export const Layer = (props: LayerProps) => {
   const { layerPos, groups, allLayers } = props
@@ -52,7 +41,7 @@ export const Layer = (props: LayerProps) => {
     // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
       <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
-        {groups.map(({ nids, nidsStr }, i) => {
+        {groups.map((group, i) => {
           // use reversed index for input layer to get RGB on z-axis
           const groupIndex = layerPos === "input" ? groupCount - i - 1 : i
 
@@ -60,13 +49,9 @@ export const Layer = (props: LayerProps) => {
 
           const allProps = {
             ...props,
-            groupIndex,
-            groupCount,
-            nids,
-            nidsStr,
+            group,
             groupedNeurons,
           }
-          // if (props.layerType === "Conv2D") return <GroupWithTexture key={i} {...allProps} />
           return <NeuronGroup key={i} {...allProps} />
         })}
         {layerPos === "output" && <YPointer outputLayer={props} />}

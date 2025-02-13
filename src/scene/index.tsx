@@ -1,7 +1,6 @@
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { useLockStore } from "@/scene/lock"
-import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store"
 import { DebugUtils } from "./debug-utils"
 import { Model } from "./model"
@@ -25,3 +24,25 @@ export const Scene = () => {
     </div>
   )
 }
+
+const Lights = () => (
+  <>
+    <ambientLight intensity={Math.PI * 0.7} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+    <spotLight
+      position={[-100, 10, -10]}
+      angle={Math.PI / 3}
+      penumbra={1}
+      decay={0}
+      intensity={Math.PI}
+    />
+    <spotLight
+      position={[30, 10, 15]}
+      angle={Math.PI / 3}
+      penumbra={1}
+      decay={0}
+      intensity={(Math.PI / 3) * 2}
+      color="#ff0000"
+    />
+  </>
+)
