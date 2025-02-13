@@ -4,6 +4,7 @@ import { useLockStore } from "@/scene/lock"
 import { ThreeStoreSetter } from "./three-store"
 import { DebugUtils } from "./debug-utils"
 import { Model } from "./model"
+import { defaultState } from "@/utils/initial-state"
 
 export const Scene = () => {
   const isLocked = useLockStore((s) => s.visualizationLocked)
@@ -15,7 +16,7 @@ export const Scene = () => {
     >
       <Canvas frameloop="demand">
         <Lights />
-        <PerspectiveCamera makeDefault position={[-23, 0, 35]} />
+        <PerspectiveCamera makeDefault position={defaultState.cameraPos} />
         <OrbitControls target={[0, 0, 0]} enabled={!isLocked} />
         <ThreeStoreSetter />
         <DebugUtils />

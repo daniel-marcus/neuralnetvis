@@ -1,12 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
-import { Controller } from "@react-spring/web"
 import { useController } from "@/utils/controller"
 import { useDatasetStore } from "@/data/data"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { trainOnBatch, useTrainingStore } from "@/model/training"
-import { setInitialState } from "@/utils/initial-state"
+import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { useStatusStore } from "@/components/status"
 import { LockButton } from "@/scene/lock"
 import { Block, Button, Details, Head } from "@/contents/elements"
@@ -15,19 +13,20 @@ import type {
   OnBlockScrollProps,
 } from "@/contents/elements/types"
 import type { LessonContent } from "."
+import { interpolateCamera, moveCameraTo } from "@/scene/utils"
+
+const initialState: InitialState = {
+  datasetKey: "mnist",
+  layerConfigs: [
+    { className: "Dense", config: { units: 64, activation: "relu" } },
+    { className: "Dense", config: {} },
+  ],
+  cameraPos: [0, 0, 35],
+}
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
-  useEffect(() => {
-    setInitialState({
-      datasetKey: "mnist",
-      layerConfigs: [
-        { className: "Dense", config: { units: 64, activation: "relu" } },
-        { className: "Dense", config: {} },
-      ],
-    })
-  }, [])
-
+  useInitialState(initialState)
   return (
     <main>
       <Head
@@ -35,7 +34,13 @@ export const IntroNetworks = (): LessonContent => {
         description="Some basics about machine learning"
         onScroll={rotate}
       />
-      <Block onScroll={rotate}>Just scroll and see what happens.</Block>
+      <Block
+        onScroll={({ percent }) =>
+          interpolateCamera([0, 0, 41.6], [-30, 20, 50], percent)
+        }
+      >
+        Just scroll and see what happens.
+      </Block>
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
       </Block>
@@ -47,14 +52,14 @@ export const IntroNetworks = (): LessonContent => {
         We can even train the model as we scroll.
       </Block>
       <Block
-        onEnter={moveCameraTo([-15, 0.5, 17], 1000)}
-        onLeave={moveCameraTo([0, 0, 30])}
+        onEnter={() => moveCameraTo([-15, 0.5, 17], 1000)}
+        onLeave={() => moveCameraTo([0, 0, 30])}
       >
         Move camera to a specific position
       </Block>
       <Block
-        onEnter={moveCameraTo([-25, 24, 23])}
-        onLeave={moveCameraTo([0, 0, 30])}
+        onEnter={() => moveCameraTo([-25, 24, 23])}
+        onLeave={() => moveCameraTo([0, 0, 30])}
       >
         Another one!
       </Block>
@@ -91,33 +96,6 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
     </main>
   )
-}
-
-function moveCameraTo(
-  targetPosition: [number, number, number],
-  duration = 500
-) {
-  return ({ three }: OnBlockEnterLeaveProps) => {
-    if (!three) return
-    const initialPosition = three.camera.position.toArray() as [
-      number,
-      number,
-      number
-    ]
-    const api = new Controller<{ position: [number, number, number] }>({
-      position: initialPosition,
-    })
-    api.start({
-      config: { duration },
-      position: targetPosition,
-      from: { position: initialPosition },
-      onChange: ({ value }) => {
-        three.camera.position.set(...value.position)
-        three.camera.lookAt(0, 0, 0)
-        three.invalidate()
-      },
-    })
-  }
 }
 
 function rotate({ three, percent }: OnBlockScrollProps) {

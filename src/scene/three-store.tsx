@@ -9,12 +9,12 @@ interface ReducedThree {
 }
 
 interface ThreeStore {
-  three: ReducedThree | null
+  three?: ReducedThree
   setThree: (three: ReducedThree) => void
 }
 
 export const useThreeStore = create<ThreeStore>((set) => ({
-  three: null,
+  three: undefined,
   setThree: (three) => set({ three }),
 }))
 
