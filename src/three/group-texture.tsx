@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react"
-import { useAnimatedPosition } from "@/three/animated-position"
 import { NeuronGroupProps, useGroupPosition } from "./neuron-group"
 
 import * as THREE from "three"
@@ -9,8 +8,7 @@ const BOX_SIZE = 5 // 4x4 +1 gap
 
 export function GroupWithTexture(props: NeuronGroupProps) {
   const { groupedNeurons } = props
-  const position = useGroupPosition(props)
-  const [ref] = useAnimatedPosition(position, 0.1)
+  const ref = useGroupPosition(props)
 
   const activations = groupedNeurons.map((n) => n.normalizedActivation)
   const width = Math.ceil(Math.sqrt(activations.length))
