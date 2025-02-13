@@ -46,14 +46,33 @@ export function useStatefulLayers(
             return n
           }
         )
+
         const statefulLayer = {
           ...layer,
+          prevLayer: acc.find((l) => l.visibleIdx === layer.visibleIdx - 1),
           neurons,
           maxAbsWeight,
-        }
+        } as LayerStateful
+
+        const groupedNeurons = groupNeuronsByGroupIndex(statefulLayer)
+        statefulLayer.groups = statefulLayer.groups.map((group) => ({
+          ...group,
+          neurons: groupedNeurons[group.index],
+        }))
         return [...acc, statefulLayer]
       }, [] as LayerStateful[]),
     [statelessLayers, activations, weightsBiases, rawInputs]
   )
   return statefulLayers
+}
+
+function groupNeuronsByGroupIndex(layer: LayerStateful) {
+  const neuronsByGroup = {} as { [key: number]: Neuron[] }
+  for (let i = 0; i < layer.groups.length; i++) {
+    neuronsByGroup[i] = []
+  }
+  for (const neuron of layer.neurons) {
+    neuronsByGroup[neuron.groupIndex].push(neuron)
+  }
+  return neuronsByGroup
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { Dataset, DbBatch, useDatasetStore } from "./data"
-import { useKeyCommand } from "@/utils/utils"
+import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./indexed-db"
 import * as tf from "@tensorflow/tfjs"
 

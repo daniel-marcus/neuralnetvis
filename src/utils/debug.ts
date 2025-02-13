@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useStatusStore } from "@/components/status"
 import { getAvailableBackends } from "@/model/tf-backend"
 import { useThreeStore } from "@/scene/three-store"
-import { useKeyCommand } from "./utils"
+import { useKeyCommand } from "./key-command"
 
 interface DebugStore {
   debug: boolean

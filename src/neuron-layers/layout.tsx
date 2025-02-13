@@ -61,7 +61,8 @@ const MAX_SINGLE_COL_HEIGHT = 10
 export function getGridSize(
   height: number,
   width: number,
-  spacing: number = 1.8
+  neuronSpacing: number = 1.8,
+  additionalSpacing = 0
 ) {
   const total = height * width
   if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
@@ -69,8 +70,8 @@ export function getGridSize(
     width = Math.ceil(Math.sqrt(total))
     height = Math.ceil(total / width)
   }
-  const totalHeight = height * spacing
-  const totalWidth = width * spacing
+  const totalHeight = height * neuronSpacing + additionalSpacing
+  const totalWidth = width * neuronSpacing + additionalSpacing
   return [totalHeight, totalWidth]
 }
 

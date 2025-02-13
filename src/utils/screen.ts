@@ -90,20 +90,3 @@ export function useInView(
   }, [ref, root, rootMargin, threshold])
   return [ref, state.inView, state.direction] as const
 }
-
-type Callback = () => void | Promise<void>
-
-export function useKeyCommand(key: string, callback: Callback) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName.toLowerCase() === "input") return
-      if (e.key === key) {
-        callback()
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [key, callback])
-}

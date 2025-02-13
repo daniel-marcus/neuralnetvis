@@ -22,7 +22,6 @@ export interface LayerStateless {
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
   prevLayer?: LayerStateless
-  prevVisibleLayer?: LayerStateless
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
   hasLabels?: boolean
@@ -33,6 +32,8 @@ export interface LayerStateless {
 export interface LayerStateful extends LayerStateless {
   neurons: Neuron[]
   maxAbsWeight?: number
+  prevLayer?: LayerStateful
+  groups: GroupStateful[]
 }
 
 // Types for Groups
@@ -46,9 +47,13 @@ export interface GroupDef {
   meshRef: MeshRef
 }
 
+export interface GroupStateful extends GroupDef {
+  neurons: Neuron[]
+}
+
 export type NeuronGroupProps = LayerStateful & {
-  group: GroupDef
-  groupedNeurons: Neuron[]
+  group: GroupStateful
+  material: THREE.Material
 }
 
 // Types for Neurons

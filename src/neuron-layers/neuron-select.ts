@@ -96,7 +96,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
     const inputNidMap = new Map(selN.inputNids.map((nid, idx) => [nid, idx]))
 
     return layerProps.map((l) => {
-      if (l.index !== (selN.layer.prevVisibleLayer?.index ?? 0)) return l
+      if (l.visibleIdx !== selN.layer.visibleIdx - 1) return l
       const neurons = l.neurons.map((n) => {
         const idx = inputNidMap.get(n.nid)
         if (typeof idx === "undefined") return n

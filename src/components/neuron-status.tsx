@@ -4,7 +4,7 @@ import { useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/normalization"
 import { getHighlightColor } from "@/neuron-layers/colors"
 import { useVisConfigStore } from "@/scene/vis-config"
-import { useIsScreen } from "@/utils/utils"
+import { useIsScreen } from "@/utils/screen"
 import { Table, useStatusStore } from "./status"
 import type { Neuron } from "@/neuron-layers/types"
 
@@ -21,13 +21,12 @@ export const NeuronStatus = () => {
   const length = normalizedWeights.length
   const kernelSize = selected?.layer.tfLayer.getConfig().kernelSize
   const [, , prevHeight, prevDepth] =
-    (selected?.layer.prevVisibleLayer?.tfLayer.outputShape as number[]) ?? []
+    (selected?.layer.prevLayer?.tfLayer.outputShape as number[]) ?? []
   const cols = Array.isArray(kernelSize)
     ? (kernelSize[0] as number)
     : prevHeight ?? Math.ceil(Math.sqrt(length)) // 1D Dense to square
   const isRounded =
-    selected?.layer.prevVisibleLayer?.meshParams.geometry instanceof
-    SphereGeometry
+    selected?.layer.prevLayer?.meshParams.geometry instanceof SphereGeometry
 
   const hasStatus = !!useStatusStore((s) => s.statusText)
   const setSelected = useSelected((s) => s.setSelected)

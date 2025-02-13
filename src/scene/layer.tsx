@@ -1,86 +1,42 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
-
 import { useAnimatedPosition } from "@/scene/utils"
 import { useVisConfigStore } from "@/scene/vis-config"
-import { useOrientation } from "@/utils/utils"
+import { useOrientation } from "@/utils/screen"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
-
-import type { LayerStateful, Neuron } from "@/neuron-layers/types"
+import type { LayerStateful } from "@/neuron-layers/types"
 
 type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 
 export const Layer = (props: LayerProps) => {
-  const { layerPos, groups, allLayers } = props
-  const groupCount = groups.length
-  const prevVisibleLayer = getVisibleLayers(allLayers)[props.visibleIdx - 1]
-
+  const { layerPos, groups, prevLayer } = props
   const ref = useLayerPos(props)
-  const isInvisible = useIsInvisible(props)
-  const prevIsInvisible = useIsInvisible(prevVisibleLayer)
-  useDynamicScale(ref, isInvisible ? 0.001 : 1)
-
-  const splitColors = useVisConfigStore((s) => s.splitColors)
-  const hasAdditiveBlending =
-    layerPos === "input" && groupCount > 1 && !splitColors
-
+  const invisible = isInvisible(props)
+  useDynamicScale(ref, invisible ? 0.001 : 1)
+  const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
+  const showConnections = !invisible && !!prevLayer && !isInvisible(prevLayer)
   if (!props.neurons.length) return null
-
-  const neuronsByGroup = groupNeuronsByGroupIndex(props)
-
-  const showConnections =
-    !!prevVisibleLayer &&
-    !!prevVisibleLayer.neurons.length &&
-    !isInvisible &&
-    !prevIsInvisible
   return (
-    // render layer w/ additive blending first (mixed colors) to avoid transparency to other objects
     <>
-      <group ref={ref} renderOrder={hasAdditiveBlending ? -1 : undefined}>
-        {groups.map((group, i) => {
-          // use reversed index for input layer to get RGB on z-axis
-          const groupIndex = layerPos === "input" ? groupCount - i - 1 : i
-
-          const groupedNeurons = neuronsByGroup[groupIndex]
-
-          const allProps = {
-            ...props,
-            group,
-            groupedNeurons,
-          }
-          return <NeuronGroup key={i} {...allProps} />
-        })}
+      <group ref={ref} renderOrder={addBlend ? -1 : undefined}>
+        {/* render layer w/ additive blending first (mixed colors) to avoid transparency to other objects */}
+        {groups.map((group, i) => (
+          <NeuronGroup key={i} {...props} group={group} material={material} />
+        ))}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
-      {showConnections && (
-        <Connections layer={props} prevLayer={prevVisibleLayer} />
-      )}
+      {showConnections && <Connections layer={props} prevLayer={prevLayer} />}
     </>
   )
 }
 
-function getVisibleLayers(allLayers: LayerStateful[]) {
-  return allLayers.filter((l) => l.neurons.length)
-}
-
-function groupNeuronsByGroupIndex(layer: LayerProps) {
-  const neuronsByGroup = {} as { [key: number]: Neuron[] }
-  for (let i = 0; i < layer.groups.length; i++) {
-    neuronsByGroup[i] = []
-  }
-  for (const neuron of layer.neurons) {
-    neuronsByGroup[neuron.groupIndex].push(neuron)
-  }
-  return neuronsByGroup
-}
-
 function useLayerPos(layer: LayerProps) {
   const { visibleIdx, allLayers } = layer
-  const visibleLayers = getVisibleLayers(allLayers)
+  const visibleLayers = allLayers.filter((l) => l.neurons.length)
   const orientation = useOrientation()
 
   const _xShift = useVisConfigStore((s) => s.xShift)
@@ -99,11 +55,10 @@ function useLayerPos(layer: LayerProps) {
   return ref
 }
 
-function useIsInvisible(layer?: LayerStateful) {
-  const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
-  if (!layer) return true
-  return invisibleLayers.includes(layer.tfLayer.name)
-}
+const isInvisible = (layer?: LayerStateful) =>
+  useVisConfigStore
+    .getState()
+    .invisibleLayers.includes(layer?.tfLayer.name ?? "")
 
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
@@ -121,4 +76,16 @@ function useDynamicScale(
       invalidate()
     },
   })
+}
+
+export function useAdditiveBlending(hasColorChannels: boolean) {
+  const splitColors = useVisConfigStore((s) => s.splitColors)
+  const active = hasColorChannels && !splitColors
+  const material = useMemo(() => new THREE.MeshStandardMaterial(), [])
+  useEffect(() => {
+    const blending = active ? THREE.AdditiveBlending : THREE.NormalBlending
+    material.blending = blending
+    material.needsUpdate = true
+  }, [material, active])
+  return [material, active] as const
 }

@@ -1,37 +1,35 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
-
 import { useAnimatedPosition } from "@/scene/utils"
 import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
 import { debug } from "@/utils/debug"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { meshParams, group, groupedNeurons } = props
+  const { meshParams, groups, group, material } = props
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
-  useColors(group.meshRef, groupedNeurons)
+  useColors(group.meshRef, group.neurons)
   useScale(group.meshRef, group.nidsStr, props.index, group.index)
-  const materialRef = useAdditiveBlending(props.hasColorChannels)
-  const { onPointerOut, ...otherEvHandlers } = useInteractions(groupedNeurons)
+  const { onPointerOut, ...otherEvHandlers } = useInteractions(group.neurons)
+  const renderOrder = groups.length - group.index // reversed order for color blending
   return (
-    <group ref={groupRef} onPointerOut={onPointerOut}>
+    <group ref={groupRef} onPointerOut={onPointerOut} renderOrder={renderOrder}>
       <instancedMesh
         ref={group.meshRef}
         name={`layer_${props.index}_group_${group.index}`}
-        args={[, , groupedNeurons.length]}
+        args={[, , group.neurons.length]}
         {...otherEvHandlers}
       >
         <primitive object={meshParams.geometry} attach={"geometry"} />
-        <meshStandardMaterial ref={materialRef} />
+        <primitive object={material} attach={"material"} />
       </instancedMesh>
       {props.hasLabels &&
-        groupedNeurons.map((n, i) => (
+        group.neurons.map((n, i) => (
           <NeuronLabels key={n.nid} neuron={n} position={positions[i]} />
         ))}
     </group>
@@ -56,27 +54,25 @@ export function useGroupPosition(props: NeuronGroupProps) {
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
-    const [gridHeight, gridWidth] = getGridSize(height, width, spacing).map(
-      (v) => v + GRID_SPACING
-    )
+    const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
     const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
     const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
-    const offsetY = (groupsPerColumn - 1) * gridWidth * 0.5
-    const offsetZ = (groupsPerRow - 1) * gridHeight * -0.5
-    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gridHeight + offsetY // row
-    const z = (groupIndex % groupsPerRow) * gridWidth + offsetZ // column
+    const offsetY = (groupsPerColumn - 1) * gHeight * 0.5
+    const offsetZ = (groupsPerRow - 1) * gHeight * -0.5
+    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gHeight + offsetY // row
+    const z = (groupIndex % groupsPerRow) * gWidth + offsetZ // column
     const SPLIT_COLORS_OFFSET = 0.05 // to avoid z-fighting
     return layerPos === "input"
       ? splitColors
         ? [
-            groupIndex * SPLIT_COLORS_OFFSET,
             -groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * gridWidth + (groupCount - 1) * gridWidth * 0.5,
+            groupIndex * SPLIT_COLORS_OFFSET,
+            groupIndex * gWidth + (groupCount - 1) * gWidth * -0.5,
           ] // spread on z-axis
         : [
             groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * SPLIT_COLORS_OFFSET,
+            groupIndex * SPLIT_COLORS_OFFSET,
+            groupIndex * SPLIT_COLORS_OFFSET,
           ]
       : [0, y, z]
   }, [groupIndex, groupCount, layerPos, spacing, splitColors, height, width])
@@ -124,29 +120,22 @@ function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   }, [meshRef, neurons])
 }
 
-function useScale(
-  meshRef: MeshRef,
-  nidsStr: string,
-  layerIndex: number,
-  groupIndex: number
-) {
+function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
   // use string to avoid unnecessary updates
-  const { selectedNid } = useLocalSelected(layerIndex, groupIndex)
+  const { selectedNid } = useLocalSelected(lIdx, gIdx)
   const { invalidate } = useThree()
   const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
   const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {
     if (!meshRef.current) return
-    const nids = nidsStr.split(",")
     if (debug()) console.log("upd scale")
-    const baseScale = 1
-    const highlightScale = 1.5
-    for (const [i, nid] of nids.entries()) {
+    const base = 1
+    const highlight = 1.5
+    for (const [i, nid] of nids.split(",").entries()) {
       meshRef.current.getMatrixAt(i, tempMatrix)
       const elements = tempMatrix.elements
       const currentScale = Math.cbrt(elements[0] * elements[5] * elements[10])
-      const targetScale =
-        nid === selectedNid ? baseScale * highlightScale : baseScale
+      const targetScale = nid === selectedNid ? base * highlight : base
       const scaleFactor = targetScale / currentScale
       tempScale.makeScale(scaleFactor, scaleFactor, scaleFactor)
       tempMatrix.multiply(tempScale)
@@ -154,20 +143,7 @@ function useScale(
     }
     meshRef.current.instanceMatrix.needsUpdate = true
     invalidate()
-  }, [meshRef, selectedNid, invalidate, nidsStr, tempMatrix, tempScale]) // neurons
-}
-
-function useAdditiveBlending(hasColorChannels: boolean) {
-  const splitColors = useVisConfigStore((s) => s.splitColors)
-  const active = hasColorChannels && !splitColors
-  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
-  useEffect(() => {
-    if (!materialRef.current) return
-    const blending = active ? THREE.AdditiveBlending : THREE.NormalBlending
-    materialRef.current.blending = blending
-    materialRef.current.needsUpdate = true
-  }, [active])
-  return materialRef
+  }, [meshRef, selectedNid, invalidate, nids, tempMatrix, tempScale])
 }
 
 function useInteractions(groupedNeurons: Neuron[]) {
@@ -176,19 +152,15 @@ function useInteractions(groupedNeurons: Neuron[]) {
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         if (e.buttons) return
-        const neuron = groupedNeurons[e.instanceId as number]
-        if (!neuron) return
         document.body.style.cursor = "pointer"
-        toggleHovered(neuron)
+        toggleHovered(groupedNeurons[e.instanceId as number])
       },
       onPointerOut: () => {
         document.body.style.cursor = "default"
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
-        const neuron = groupedNeurons[e.instanceId as number]
-        if (!neuron) return
-        toggleSelected(neuron)
+        toggleSelected(groupedNeurons[e.instanceId as number])
       },
     }
     return result

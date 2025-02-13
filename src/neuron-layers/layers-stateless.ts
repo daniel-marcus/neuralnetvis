@@ -17,35 +17,19 @@ import { InstancedMesh } from "three"
 export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
   const layers = useMemo(() => {
     if (!model) return []
-    const visibleLayers = model.layers.filter((l) => getUnits(l))
+    const visibleIdxMap = getVisibleIdxMap(model)
     return (
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const layerType = tfLayer.getClassName() as LayerType
-
-        const visibleIdx = visibleLayers?.indexOf(tfLayer)
         const layerPos = getLayerPos(layerIndex, model)
 
-        const prevLayer = acc.at(-1)
-        const prevVisibleTfLayer = getLastVisibleLayer(model, tfLayer)
-        const prevVisibleIndex = prevVisibleTfLayer
-          ? model.layers.indexOf(prevVisibleTfLayer)
-          : undefined
-        const prevVisibleLayer =
-          typeof prevVisibleIndex !== "undefined"
-            ? acc[prevVisibleIndex]
-            : undefined
+        const visibleIdx = visibleIdxMap.get(layerIndex) ?? 0
+        const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
+        const layerInputNids = getInputNeurons(tfLayer, prevLayer)
 
         const units = getUnits(tfLayer)
         const meshParams = getMeshParams(tfLayer, layerPos, units)
-
-        const layerInputNids = getInputNeurons(
-          tfLayer,
-          prevVisibleTfLayer,
-          prevVisibleIndex
-        )
-
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
-
         const outputShape = tfLayer.outputShape as number[]
 
         const layerStateless: LayerStateless = {
@@ -54,9 +38,8 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
           layerType,
           layerPos,
           tfLayer,
-          numBiases,
           prevLayer,
-          prevVisibleLayer,
+          numBiases,
           meshParams,
           hasLabels:
             (layerPos === "input" && !!ds?.input?.labels?.length) ||
@@ -87,9 +70,9 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
               meshRef: meshRefs[groupIndex],
               visibleLayerIndex: visibleIdx,
               inputNids,
-              inputNeurons: prevVisibleLayer
+              inputNeurons: prevLayer
                 ? (inputNids
-                    .map((nid) => prevVisibleLayer.neuronsMap?.get(nid))
+                    .map((nid) => prevLayer.neuronsMap?.get(nid))
                     .filter(Boolean) as NeuronDef[])
                 : [],
               label:
@@ -127,6 +110,12 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
   return layers
 }
 
+const getVisibleIdxMap = (model: tf.LayersModel) =>
+  model.layers.reduce(
+    (map, layer, index) => (getUnits(layer) ? map.set(index, map.size) : map),
+    new Map<number, number>()
+  )
+
 function getNid(layerIndex: number, index3d: Index3D) {
   return `${layerIndex}_${index3d.join(".")}` as Nid
 }
@@ -145,34 +134,22 @@ function getUnits(layer: tf.layers.Layer) {
   return dims.reduce((a, b) => a * b, 1)
 }
 
-function getLastVisibleLayer(model: tf.LayersModel, l?: tf.layers.Layer) {
-  if (!l) return
-  const prev = model.layers[model.layers.indexOf(l) - 1]
-  if (!prev) return
-  else if (getUnits(prev)) return prev
-  else return getLastVisibleLayer(model, prev)
-}
-
 function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
   if (layerIndex === 0) return "input"
   else if (layerIndex === model.layers.length - 1) return "output"
   else return "hidden"
 }
 
-function getInputNeurons(
-  l: tf.layers.Layer,
-  prevVisibleLayer?: tf.layers.Layer,
-  prevVisibleIndex?: number
-): Nid[][] {
-  if (!prevVisibleLayer || typeof prevVisibleIndex !== "number") return []
+function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
+  if (!prev) return []
   if (l.getClassName() !== "Conv2D" && l.getClassName() !== "MaxPooling2D") {
     // fully connected layer / Dense
-    const shape = prevVisibleLayer.outputShape as number[]
-    const prevUnits = getUnits(prevVisibleLayer)
+    const shape = prev.tfLayer.outputShape as number[]
+    const prevUnits = getUnits(prev.tfLayer)
     return Array.from({ length: getUnits(l) }).map(() =>
       Array.from({ length: prevUnits }).map((_, i) => {
         const index3d = getNeuronIndex3d(i, shape)
-        return getNid(prevVisibleIndex, index3d)
+        return getNid(prev.index, index3d)
       })
     )
   }
@@ -191,7 +168,7 @@ function getInputNeurons(
   const filterSize = filterHeight * filterWidth
 
   const outputShape = l.outputShape as number[]
-  const prevOutputShape = prevVisibleLayer.outputShape as number[]
+  const prevOutputShape = prev.tfLayer.outputShape as number[]
   const depth = prevOutputShape[3]
 
   const units = getUnits(l)
@@ -210,7 +187,7 @@ function getInputNeurons(
       const heightIndex =
         thisY * strideHeight + Math.floor(k / (depth * filterWidth))
       const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
-      const inputNid = getNid(prevVisibleIndex, index3d)
+      const inputNid = getNid(prev.index, index3d)
       if (!inputNid) {
         console.warn("no inputNid", { index3d })
         continue

@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { Dataset, DbBatch, useDatasetStore } from "@/data/data"
 import { useLogStore } from "@/components/ui-elements/logs-plot"
 import { create } from "zustand"
-import { useKeyCommand } from "@/utils/utils"
+import { useKeyCommand } from "@/utils/key-command"
 import {
   backendForTraining,
   DEFAULT_BACKEND,

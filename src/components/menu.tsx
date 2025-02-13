@@ -11,7 +11,7 @@ import { Model } from "@/components/tabs/model"
 import { Train } from "@/components/tabs/train"
 import { Logo } from "./logo"
 import Headroom from "react-headroom"
-import { useIsScreen } from "@/utils/utils"
+import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 
 type Tab = {

@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useLayoutEffect } from "react"
 import { useController } from "../utils/controller"
-import { useInView } from "@/utils/utils"
+import { useInView } from "@/utils/screen"
 import { TabSetter } from "./menu"
 import { getLessonPath, LessonDef, LessonPreview } from "@/contents"
 import Link from "next/link"
