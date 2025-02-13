@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { NeuronDef } from "@/neuron-layers/types"
@@ -10,6 +10,9 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
   const { invalidate } = useThree()
   const targetPos = useMemo(() => new THREE.Vector3(...position), [position])
   const [isAnimating, setIsAnimating] = useState(false)
+  useEffect(() => {
+    requestAnimationFrame(invalidate)
+  }, [targetPos, invalidate])
   useFrame(() => {
     if (ref.current) {
       if (!targetPos.equals(currentPosition.current)) {

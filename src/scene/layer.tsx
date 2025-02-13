@@ -51,6 +51,7 @@ function useLayerPos(layer: LayerProps) {
       visibleIdx * zShift + (visibleLayers.length - 1) * zShift * -0.5,
     ]
   }, [visibleIdx, visibleLayers.length, _xShift, yShift, zShift, orientation])
+
   const [ref] = useAnimatedPosition(position, 0.1)
   return ref
 }
