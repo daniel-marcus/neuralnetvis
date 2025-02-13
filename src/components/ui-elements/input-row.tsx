@@ -1,4 +1,4 @@
-import { ReactNode, useId } from "react"
+import { MouseEvent, ReactNode, useId } from "react"
 import { create } from "zustand"
 
 interface HintStore {
@@ -25,12 +25,16 @@ export const InputRow = (props: InputRowProps) => {
   const uid = useId()
   const { currHint, setCurrHint } = useHintStore()
   const showHint = currHint === uid
-  const onLabelClick = !!hint ? () => setCurrHint(uid) : undefined
+  const handleLabelClick = (e: MouseEvent) => {
+    if (!hint) return
+    if ("tagName" in e.target && e.target.tagName === "BUTTON") return
+    setCurrHint(uid)
+  }
   return (
     <div className={`relative flex gap-2 w-full leading-[1.5] ${className}`}>
       <div
         className={`flex-none w-[7.5em] ${!!hint ? "cursor-pointer" : ""}`}
-        onClick={onLabelClick}
+        onClick={handleLabelClick}
       >
         {label ?? ""}
       </div>
