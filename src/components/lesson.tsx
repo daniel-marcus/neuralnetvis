@@ -70,11 +70,8 @@ export const Lesson = ({
 
 type LessonHeadProps = { title: string; description: string } & ScrollCallbacks
 
-export function LessonHead({
-  title,
-  description,
-  ...callbacks
-}: LessonHeadProps) {
+export function LessonHead(props: LessonHeadProps) {
+  const { title, description, ...callbacks } = props
   const [ref] = useScrollCallbacks(callbacks)
   return (
     <div ref={ref}>

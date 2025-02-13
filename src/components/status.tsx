@@ -4,14 +4,14 @@ import { create } from "zustand"
 const DISPLAY_TIME = 5 // seconds
 let timeout: NodeJS.Timeout
 
-interface StatusTextStore {
+interface StatusStore {
   percent: number | null
   setPercent: (p: number | null) => void
   statusText: TableProps | ReactNode
   setStatusText: (t: TableProps | ReactNode, percent?: number | null) => void
 }
 
-export const useStatusText = create<StatusTextStore>((set) => ({
+export const useStatusStore = create<StatusStore>((set) => ({
   percent: null, // -1 for spinner mode
   setPercent: (percent: number | null) => set({ percent }),
   statusText: null,
@@ -29,7 +29,7 @@ export const useStatusText = create<StatusTextStore>((set) => ({
 }))
 
 export const Status = () => {
-  const statusText = useStatusText((s) => s.statusText)
+  const statusText = useStatusStore((s) => s.statusText)
   const parsedText = useMemo(
     () =>
       isValidReactNode(statusText) ? statusText : <Table {...statusText} />,
@@ -98,33 +98,3 @@ export const Table = ({
     </tbody>
   </table>
 )
-
-export const DotTable = ({ data, width }: TableProps & { width?: number }) => {
-  return (
-    <div>
-      {Object.entries(data).map(([key, value], i) => (
-        <DotLine key={i} name={key} value={value} width={width} />
-      ))}
-    </div>
-  )
-}
-
-const DotLine = ({
-  name,
-  value,
-  width = 30,
-}: {
-  name: string
-  value: ReactNode
-  width?: number
-}) => {
-  const dotsCount = Math.max(0, width - name.length - String(value).length)
-  const dots = ".".repeat(dotsCount)
-  return (
-    <div className="flex">
-      <div className="whitespace-nowrap">{name}</div>
-      <div className="">{dots}</div>
-      <div className="text-right whitespace-nowrap">{value}</div>
-    </div>
-  )
-}

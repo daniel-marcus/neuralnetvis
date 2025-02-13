@@ -1,5 +1,5 @@
 import { Dataset } from "@/data/datasets"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 import { ReactNode, useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
@@ -86,7 +86,7 @@ export function useModelTransition() {
   }, [_isPending, setIsPending])
 
   // set progressbar to spinner mode
-  const setPercent = useStatusText((s) => s.setPercent)
+  const setPercent = useStatusStore((s) => s.setPercent)
   useEffect(() => {
     if (!_isPending) return
     setPercent(-1)
@@ -137,7 +137,7 @@ function useModelCreation(ds?: Dataset) {
 }
 
 function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  const setStatusText = useStatusStore((s) => s.setStatusText)
   useEffect(() => {
     if (!model || !ds) return
     const data = {

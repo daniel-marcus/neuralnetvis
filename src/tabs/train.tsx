@@ -12,7 +12,7 @@ import {
 import { getModelEvaluation, useTrainingStore } from "@/tf/training"
 import React, { useEffect, useState } from "react"
 import { useDatasetStore } from "@/data/datasets"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 
 export const Train = () => {
   const isTraining = useTrainingStore((s) => s.isTraining)
@@ -121,7 +121,7 @@ const TrainConfigControl = () => {
 
 function useEvaluate() {
   const ds = useDatasetStore((s) => s.ds)
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  const setStatusText = useStatusStore((s) => s.setStatusText)
   async function evaluate() {
     if (!ds) return
     const { loss, accuracy } = await getModelEvaluation()

@@ -3,9 +3,10 @@ import { useSelected } from "@/lib/neuron-select"
 import { normalizeWithSign } from "@/data/normalization"
 import { getHighlightColor } from "@/three/colors"
 import { SphereGeometry } from "three"
-import { Neuron } from "../lib/neuron"
-import { Table, useStatusText } from "./status"
+import { Neuron } from "@/lib/neuron"
+import { Table, useStatusStore } from "./status"
 import { useVisConfigStore } from "@/three/vis-config"
+import { useIsScreen } from "@/lib/utils"
 
 export const NeuronStatus = () => {
   const _selected = useSelected((s) => s.selected)
@@ -28,7 +29,7 @@ export const NeuronStatus = () => {
     selected?.layer.prevVisibleLayer?.meshParams.geometry instanceof
     SphereGeometry
 
-  const hasStatus = !!useStatusText((s) => s.statusText)
+  const hasStatus = !!useStatusStore((s) => s.statusText)
   const setSelected = useSelected((s) => s.setSelected)
   if (!selected) return <div />
   return (
@@ -85,12 +86,12 @@ const WeightsViewer = ({
 }: WeightsGridProps) => {
   const [currGroup, setCurrGroup] = useState(0)
   const highlightProp = useVisConfigStore((s) => s.highlightProp)
+  const isScreenSm = useIsScreen("sm")
   if (highlightProp === "weights") return null // will be duplication
   if (!weights.length) return null
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
   const next = () => setCurrGroup((g) => (g + 1) % groupCount)
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640
-  const maxGroupsPerView = isMobile ? 4 : 16
+  const maxGroupsPerView = isScreenSm ? 16 : 4
   const needsShifter = groupCount > maxGroupsPerView
   return (
     <div

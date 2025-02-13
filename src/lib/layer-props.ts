@@ -16,24 +16,12 @@ export function useLayerProps(
   model?: tf.LayersModel,
   batchCount?: number
 ) {
-  const ds = useDatasetStore((s) => s.ds)
-  const input = useDatasetStore((s) => s.input)
-  const rawInput = useDatasetStore((s) => s.rawInput)
-
-  const layers = useStatelessLayers(model, ds)
+  const { ds, input, rawInput } = useDatasetStore()
+  const [_layers, neuronRefs] = useStatelessLayers(model, ds)
   const activations = useActivations(model, input)
-  const weightsBiases = useWeightsAndBiases(isPending, model, batchCount)
-  const statefulLayers = useStatefulLayers(
-    layers,
-    weightsBiases,
-    activations,
-    rawInput
-  )
-  const neuronRefs = useMemo(
-    () => layers.map((layer) => layer.neurons.map((n) => n.ref)),
-    [layers]
-  )
-  return [statefulLayers, neuronRefs] as const
+  const weights = useWeights(isPending, model, batchCount)
+  const layers = useStatefulLayers(_layers, weights, activations, rawInput)
+  return [layers, neuronRefs] as const
 }
 
 function getNid(layerIndex: number, index3d: Index3D) {
@@ -133,12 +121,9 @@ function getInputNeurons(
   return inputNids
 }
 
-function useStatelessLayers(
-  model: tf.LayersModel | undefined,
-  ds?: Dataset
-): LayerStateless[] {
+function useStatelessLayers(model: tf.LayersModel | undefined, ds?: Dataset) {
   // here is all data that doesn't change for a given model
-  return useMemo(() => {
+  const layers = useMemo(() => {
     if (!model) return []
     const visibleLayers = model.layers.filter((l) => getUnits(l))
 
@@ -239,6 +224,13 @@ function useStatelessLayers(
       }, [] as LayerStateful[]) ?? []
     )
   }, [model, ds])
+
+  const neuronRefs = useMemo(
+    () => layers.map((layer) => layer.neurons.map((n) => n.ref)),
+    [layers]
+  )
+
+  return [layers, neuronRefs] as const
 }
 
 function getLastVisibleLayer(
@@ -258,7 +250,7 @@ interface WeightsBiases {
   maxAbsWeight?: number
 }
 
-function useWeightsAndBiases(
+function useWeights(
   isPending: boolean,
   model?: tf.LayersModel,
   batchCount?: number

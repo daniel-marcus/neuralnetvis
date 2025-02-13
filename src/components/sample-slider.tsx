@@ -1,4 +1,4 @@
-import { useStatusText } from "./status"
+import { useStatusStore } from "./status"
 import { useSelected } from "@/lib/neuron-select"
 import { useDatasetStore } from "@/data/datasets"
 import { useLockStore } from "./lock"
@@ -6,10 +6,9 @@ import { Slider } from "@/ui-components"
 
 export const MainSampleSlider = () => {
   const hasSelected = useSelected((s) => s.hasHoveredOrSelected())
-  const hasStatus = !!useStatusText((s) => s.statusText)
-  const hasProgressBar = typeof useStatusText((s) => s.percent) === "number"
-  const i = useDatasetStore((s) => s.i)
-  const totalSamples = useDatasetStore((s) => s.totalSamples)
+  const hasStatus = !!useStatusStore((s) => s.statusText)
+  const hasProgressBar = typeof useStatusStore((s) => s.percent) === "number"
+  const { i, totalSamples } = useDatasetStore()
   const visualizationLocked = useLockStore((s) => s.visualizationLocked)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
@@ -39,8 +38,6 @@ export const MainSampleSlider = () => {
 }
 
 function SampleSlider() {
-  const i = useDatasetStore((s) => s.i)
-  const setI = useDatasetStore((s) => s.setI)
-  const totalSamples = useDatasetStore((s) => s.totalSamples)
+  const { i, setI, totalSamples } = useDatasetStore()
   return <Slider value={i} onChange={setI} min={0} max={totalSamples - 1} />
 }

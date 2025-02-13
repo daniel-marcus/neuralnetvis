@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest"
 import { getSamplesAsBatch, TensorBatch } from "./training"
-import { dsMnistMock } from "@/mocks/dataset"
+import { dsMnistMock } from "@/datasets/_mocks"
 import { getSample } from "@/data/input"
 import * as tf from "@tensorflow/tfjs"
 

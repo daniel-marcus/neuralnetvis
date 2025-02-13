@@ -7,7 +7,7 @@ import { LayerPos, LayerProps } from "./layer"
 import { NeuronLabels } from "./neuron-label"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useLocalSelected, useSelected } from "@/lib/neuron-select"
-import { Neuron, Nid } from "../lib/neuron"
+import { Neuron, Nid } from "@/lib/neuron"
 import { debug } from "@/lib/debug"
 import { useVisConfigStore } from "@/three/vis-config"
 import { useDatasetStore } from "@/data/datasets"
@@ -31,23 +31,19 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const { groupedNeurons, groupIndex, nidsStr } = props
   const { index: layerIndex, layerPos, meshParams } = props
   const { hasLabels, hasColorChannels } = props
-  const { geometry } = meshParams
   const spacing = useNeuronSpacing(meshParams)
   const meshRef = useRef<InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
-  const position = useGroupPosition(props)
-  const [groupRef] = useAnimatedPosition(position, 0.1)
+  const groupRef = useGroupPosition(props)
   const outputShape = props.tfLayer.outputShape as number[]
   const [, height, width = 1] = outputShape
   useNeuronPositions(meshRef, layerPos, spacing, outputShape)
   const isRegression =
     useDatasetStore((s) => s.isRegression) && layerPos === "output"
   useColors(meshRef, groupedNeurons, hasColorChannels, isRegression)
-  const eventHandlers = useInteractions(groupedNeurons)
+  const { onPointerOut, ...otherEvHandlers } = useInteractions(groupedNeurons)
   useScale(meshRef, nidsStr, layerIndex, groupIndex)
-  const splitColors = useVisConfigStore((s) => s.splitColors)
-  const materialRef = useAdditiveBlending(hasColorChannels && !splitColors)
-  const { onPointerOut, ...otherEventHandlers } = eventHandlers
+  const materialRef = useAdditiveBlending(hasColorChannels)
 
   return (
     <group ref={groupRef} onPointerOut={onPointerOut}>
@@ -55,9 +51,9 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         ref={meshRef}
         name={`layer_${layerIndex}_group_${groupIndex}`}
         args={[, , groupedNeurons.length]}
-        {...otherEventHandlers}
+        {...otherEvHandlers}
       >
-        <primitive object={geometry} attach={"geometry"} />
+        <primitive object={meshParams.geometry} attach={"geometry"} />
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
       {hasLabels &&
@@ -131,7 +127,8 @@ export function useGroupPosition(props: NeuronGroupProps) {
           ]
       : [0, y, z]
   }, [groupIndex, groupCount, layerPos, spacing, splitColors, height, width])
-  return position
+  const [groupRef] = useAnimatedPosition(position, 0.1)
+  return groupRef
 }
 
 function useNeuronPositions(
@@ -167,7 +164,8 @@ function useColors(
     if (debug()) console.log("upd colors")
     for (const [i, n] of neurons.entries()) {
       const color = getNeuronColor(n, hasColorChannels, isRegression)
-      meshRef.current.setColorAt(i, color)
+      if (color) meshRef.current.setColorAt(i, color)
+      else console.warn("no color", n, color)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
@@ -207,7 +205,9 @@ function useScale(
   }, [meshRef, selectedNid, invalidate, nidsStr, tempMatrix, tempScale]) // neurons
 }
 
-function useAdditiveBlending(active?: boolean) {
+function useAdditiveBlending(hasColorChannels: boolean) {
+  const splitColors = useVisConfigStore((s) => s.splitColors)
+  const active = hasColorChannels && !splitColors
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
   useEffect(() => {
     if (!materialRef.current) return

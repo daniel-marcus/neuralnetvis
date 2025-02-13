@@ -1,14 +1,16 @@
-import { useStatusText } from "@/components/status"
 import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
-import { getAvailableBackends } from "../tf/tf-backend"
-import { useKeyCommand } from "./utils"
+import { useStatusStore } from "@/components/status"
+import { getAvailableBackends } from "@/tf/tf-backend"
 import { useThreeStore } from "@/three/three-store"
+import { useKeyCommand } from "./utils"
 
-export const useDebugStore = create<{
+interface DebugStore {
   debug: boolean
   toggleDebug: () => void
-}>((set) => ({
+}
+
+export const useDebugStore = create<DebugStore>((set) => ({
   debug: false,
   toggleDebug: () => set((s) => ({ debug: !s.debug })),
 }))
@@ -21,7 +23,7 @@ export function useDebug() {
   useKeyCommand("s", showStats)
 }
 
-const { setStatusText } = useStatusText.getState()
+const { setStatusText } = useStatusStore.getState()
 
 function toggleDebug() {
   useDebugStore.getState().toggleDebug()

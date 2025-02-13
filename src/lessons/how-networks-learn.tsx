@@ -17,7 +17,7 @@ import { trainOnBatch, useTrainingStore } from "@/tf/training"
 import { LockButton } from "@/components/lock"
 import { setInitialState } from "@/lib/initial-state"
 import { Controller } from "@react-spring/web"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
@@ -25,7 +25,7 @@ export const IntroNetworks = (): LessonContent => {
     setInitialState({
       datasetKey: "mnist",
       layerConfigs: [
-        // { className: "Dense", config: { units: 64, activation: "relu" } },
+        { className: "Dense", config: { units: 64, activation: "relu" } },
         { className: "Dense", config: {} },
       ],
     })
@@ -44,7 +44,7 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
       <Block
         onScroll={scrollTrain}
-        onLeave={() => useStatusText.getState().setStatusText("", null)}
+        onLeave={() => useStatusStore.getState().setStatusText("", null)}
         className="pb-[100vh]"
       >
         We can even train the model as we scroll.
@@ -142,17 +142,15 @@ function changeSample({ percent }: OnBlockScrollProps) {
   useDatasetStore.setState({ i: newI })
 }
 
-let lastI = 0
 async function scrollTrain({ percent }: OnBlockScrollProps) {
-  const newI = 100 + Math.round(percent * 1000 + 1)
+  const totalSamples = useDatasetStore.getState().totalSamples
+  const newI = Math.round(Math.random() * totalSamples - 1)
   useDatasetStore.setState({ i: newI })
-  // if (newI <= lastI) return
-  lastI = newI
+
   const input = useDatasetStore.getState().input
   const trainingY = useDatasetStore.getState().trainingY
-  const setStatusText = useStatusText.getState().setStatusText
+  const setStatusText = useStatusStore.getState().setStatusText
   if (!input || !trainingY) return
-  console.log({ input, trainingY, newI, lastI })
   const metrics = await trainOnBatch([input], [trainingY])
   const loss = Array.isArray(metrics) ? metrics[0] : metrics
   setStatusText(`Training loss: ${loss?.toFixed(2)}`, percent)

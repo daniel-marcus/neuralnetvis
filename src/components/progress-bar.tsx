@@ -1,35 +1,22 @@
-import { useEffect, useRef, useState } from "react"
-import { useStatusText } from "./status"
+import { useEffect, useRef, useState, RefObject } from "react"
+import { useStatusStore } from "./status"
 
 interface ProgressBarProps {
   length?: number
 }
 
 export const ProgressBar = ({ length }: ProgressBarProps) => {
-  const percent = useStatusText((s) => s.percent)
-  const wrapeprRef = useRef<HTMLDivElement>(null)
+  const percent = useStatusStore((s) => s.percent)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const testRef = useRef<HTMLSpanElement>(null)
-  const [wrapperWidth, setWrapperWidth] = useState(0)
-  const [pxPerChar, setPxPerChar] = useState(10)
-  useEffect(() => {
-    const handleResize = () => {
-      if (wrapeprRef.current) setWrapperWidth(wrapeprRef.current.clientWidth)
-      if (testRef.current)
-        setPxPerChar(testRef.current.getBoundingClientRect().width)
-    }
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
+  const [wrapperWidth, pxPerChar] = useResponsiveSize(wrapperRef, testRef)
   const maxLength = Math.ceil(wrapperWidth / pxPerChar)
   const l = length ? Math.min(length, maxLength) : maxLength
   const isSpinner = percent === -1
   const isHidden = percent === null
   return (
     <div
-      ref={wrapeprRef}
+      ref={wrapperRef}
       className={`w-full leading-none overflow-hidden transition-all duration-300 ${
         isHidden ? "opacity-0" : ""
       }`}
@@ -51,4 +38,25 @@ export const ProgressBar = ({ length }: ProgressBarProps) => {
       </div>
     </div>
   )
+}
+
+function useResponsiveSize(
+  wrapperRef: RefObject<HTMLDivElement | null>,
+  testRef: RefObject<HTMLSpanElement | null>
+) {
+  const [wrapperWidth, setWrapperWidth] = useState(0)
+  const [pxPerChar, setPxPerChar] = useState(10)
+  useEffect(() => {
+    const handleResize = () => {
+      if (wrapperRef.current) setWrapperWidth(wrapperRef.current.clientWidth)
+      if (testRef.current)
+        setPxPerChar(testRef.current.getBoundingClientRect().width)
+    }
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [wrapperRef, testRef])
+  return [wrapperWidth, pxPerChar] as const
 }

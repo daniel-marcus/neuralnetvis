@@ -1,4 +1,4 @@
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 import { useVisConfigStore } from "@/three/vis-config"
 import {
   LayerConfig,
@@ -223,7 +223,7 @@ export const LayerConfigControl = () => {
 }
 
 function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
-  const setStatusText = useStatusText.getState().setStatusText
+  const setStatusText = useStatusStore.getState().setStatusText
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")

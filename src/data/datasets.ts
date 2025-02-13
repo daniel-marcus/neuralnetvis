@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 import * as tf from "@tensorflow/tfjs"
 import { create } from "zustand"
 import { datasets } from "@/datasets"
@@ -116,7 +116,7 @@ export function useDatasets() {
   const datasetKey = useDatasetStore((s) => s.datasetKey)
   const ds = useDatasetStore((s) => s.ds)
   const setDs = useDatasetStore((s) => s.setDs)
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  const setStatusText = useStatusStore((s) => s.setStatusText)
 
   useEffect(() => {
     const dsDef = datasets.find((d) => d.key === datasetKey)

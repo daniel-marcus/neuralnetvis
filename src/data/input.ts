@@ -8,9 +8,7 @@ export function useInput(ds?: Dataset) {
   const i = useDatasetStore((s) => s.i)
 
   useEffect(() => {
-    if (!ds) return
-    getInput(i, ds)
-    return
+    if (ds) updateInput(i, ds)
   }, [i, ds])
 
   useEffect(() => {
@@ -25,7 +23,7 @@ export function useInput(ds?: Dataset) {
   useKeyCommand("ArrowRight", next)
 }
 
-async function getInput(i: number, ds?: Dataset) {
+async function updateInput(i: number, ds?: Dataset) {
   if (!ds) return
   const [data, label, dataRaw] = await getSample(ds, "train", i, true)
   const _input = Array.from(data)

@@ -9,9 +9,11 @@ export function normalize(data: number[] | unknown) {
 }
 
 export function normalizeTensor(tensor: tf.Tensor1D): tf.Tensor1D {
-  const min = tensor.min()
-  const max = tensor.max()
-  return tensor.sub(min).div(max.sub(min))
+  return tf.tidy(() => {
+    const min = tensor.min()
+    const max = tensor.max()
+    return tensor.sub(min).div(max.sub(min))
+  })
 }
 
 export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
@@ -35,13 +37,8 @@ export function normalizeWithSign(values: number[] | undefined) {
   // returns values between -1 and 1 and keeps the sign
   if (typeof values === "undefined") return values
   if (values.length === 0) return []
-
   const maxAbs = Math.max(...values.map(Math.abs))
-
-  if (maxAbs === 0) {
-    return values.map(() => 0)
-  }
-
+  if (maxAbs === 0) return values.map(() => 0)
   return values.map((v) => v / maxAbs)
 }
 

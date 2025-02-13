@@ -1,7 +1,7 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import { useTrainingStore, getModelEvaluation } from "./training"
 import { useDatasetStore } from "@/data/datasets"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 import { useLogStore } from "@/ui-components/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 import throttle from "lodash.throttle"
@@ -71,7 +71,10 @@ export class UpdateCb extends CustomCallback {
 export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
-  private setStatus = throttle(useStatusText.getState().setStatusText, THROTTLE)
+  private setStatus = throttle(
+    useStatusStore.getState().setStatusText,
+    THROTTLE
+  )
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0

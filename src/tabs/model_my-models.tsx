@@ -1,4 +1,4 @@
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 import { useModelStore, useModelTransition } from "@/tf/model"
 import {
   FormEvent,
@@ -15,7 +15,7 @@ export function MyModels() {
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = () => setUpdTrigger((t) => t + 1)
   const [showImportForm, setShowImportForm] = useState(false)
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  const setStatusText = useStatusStore((s) => s.setStatusText)
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
   useEffect(() => {
     setModelName(model?.name ?? "")
@@ -75,7 +75,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const [setModel] = useModelTransition()
-  const setStatusText = useStatusText((s) => s.setStatusText)
+  const setStatusText = useStatusStore((s) => s.setStatusText)
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)

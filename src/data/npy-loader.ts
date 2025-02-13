@@ -1,6 +1,6 @@
 import npyjs, { Parsed } from "npyjs"
 import JSZip from "jszip"
-import { useStatusText } from "@/components/status"
+import { useStatusStore } from "@/components/status"
 
 const n = new npyjs()
 
@@ -47,7 +47,7 @@ export async function fetchMutlipleNpzWithProgress(paths: string[]) {
     const totalTotalBytes = allTotalBytes.reduce((a, b) => a + b, 0)
     const percent = totalLoadedBytes / totalTotalBytes
     const text = percent < 1 ? "Loading dataset ..." : "Dataset loaded"
-    useStatusText.getState().setStatusText(text, percent)
+    useStatusStore.getState().setStatusText(text, percent)
   }
   const allPromises = paths.map(
     (path) => fetchWithProgress(path, onProgress).then((r) => r.arrayBuffer()) // , { cache: "force-cache" }
