@@ -6,6 +6,7 @@ import { normalizeWithSign } from "@/data/normalization"
 import { useVisConfigStore, type HighlightProp } from "@/scene/vis-config"
 import type { LayerStateful, Neuron, Nid } from "@/neuron-layers/types"
 import { useDebugStore } from "@/utils/debug"
+import { getHighlightColor } from "./colors"
 
 interface SelectedStore {
   hovered: Neuron | null
@@ -100,7 +101,8 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
         const idx = inputNidMap.get(n.nid)
         if (typeof idx === "undefined") return n
         const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
-        return { ...n, highlightValue }
+        const color = getHighlightColor(highlightValue ?? 0)
+        return { ...n, color }
       })
       return { ...l, neurons }
     })

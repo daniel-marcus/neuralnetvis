@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import type { LayerActivations } from "@/model/activations"
 import type { WeightsBiases } from "@/model/weights"
+import { getNeuronColor } from "./colors"
 import type { LayerStateful, LayerStateless, Neuron } from "./types"
 
 // add state to each neuron
@@ -33,15 +34,16 @@ export function useStatefulLayers(
             const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
             const rawInput =
               layer.layerPos === "input" ? rawInputs?.[nIdx] : undefined
-            const statefulNeuron = {
+            const n = {
               ...neuron,
               activation,
               rawInput,
               normalizedActivation: normalizedActivations?.[nIdx],
               weights: weights?.[filterIndex],
               bias: biases?.[filterIndex],
-            }
-            return statefulNeuron
+            } as Neuron
+            n.color = getNeuronColor(n)
+            return n
           }
         )
         const statefulLayer = {

@@ -20,10 +20,9 @@ const FONT_SIZE = 2
 interface NeuronLabelsProps {
   neuron: NeuronDef & NeuronState
   position?: [number, number, number]
-  color?: Color
 }
 
-export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
+export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
   const trainingY = useDatasetStore((s) => s.trainingY)
   const isRegression = useDatasetStore((s) => s.isRegression)
@@ -35,13 +34,13 @@ export function NeuronLabels({ neuron, position, color }: NeuronLabelsProps) {
         <NeuronLabel
           side={isRegression ? "left" : "right"}
           position={position}
-          color={color}
+          color={neuron.color}
         >
           {label}
         </NeuronLabel>
       )}
       {showValueLabel && (
-        <NeuronLabel side={"right"} position={position} color={color}>
+        <NeuronLabel side={"right"} position={position} color={neuron.color}>
           {rawInput
             ? String(Math.round(rawInput * 100) / 100)
             : activation

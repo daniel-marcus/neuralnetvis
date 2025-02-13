@@ -74,7 +74,7 @@ export function getGridSize(
   return [totalHeight, totalWidth]
 }
 
-export function getNeuronPosition(
+export function getNeuronPos(
   i: number,
   layerPos: LayerPos,
   height: number,

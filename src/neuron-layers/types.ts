@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import type { InstancedMesh } from "three"
+import * as THREE from "three"
 import type { RefObject } from "react"
 import type { MeshParams } from "@/neuron-layers/layout"
 
@@ -37,13 +37,13 @@ export interface LayerStateful extends LayerStateless {
 
 // Types for Groups
 
-export type InstancedMeshRef = RefObject<InstancedMesh | null>
+export type MeshRef = RefObject<THREE.InstancedMesh | null>
 
 export interface GroupDef {
   index: number
   nids: Nid[]
   nidsStr: string // for deps optimization
-  meshRef: InstancedMeshRef
+  meshRef: MeshRef
 }
 
 export type NeuronGroupProps = LayerStateful & {
@@ -64,7 +64,7 @@ export type NeuronDef = {
   layerIndex: number
   groupIndex: number
   indexInGroup: number
-  meshRef: InstancedMeshRef
+  meshRef: MeshRef
   visibleLayerIndex: number
   inputNids?: Nid[]
   inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
@@ -78,7 +78,7 @@ export type NeuronState = {
   normalizedActivation?: number
   weights?: number[]
   bias?: number
-  highlightValue?: number // [-1, 1]
+  color: THREE.Color
 }
 
 export type Neuron = NeuronDef & NeuronState

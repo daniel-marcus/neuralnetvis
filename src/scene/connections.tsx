@@ -9,11 +9,7 @@ import {
 import { useSelected } from "@/neuron-layers/neuron-select"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { useDatasetStore } from "@/data/data"
-import type {
-  LayerStateful,
-  LayerStateless,
-  Neuron,
-} from "@/neuron-layers/types"
+import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
 import { getWorldPos } from "./utils"
 
 const MAX_LINES_PER_LAYER = 1000
@@ -22,7 +18,7 @@ const MAX_LINE_WIDTH = 3
 
 type NeuronConnectionsProps = {
   layer: LayerStateful
-  prevLayer: LayerStateless
+  prevLayer: LayerStateful
 }
 
 export const HoverConnections = () => {
@@ -107,8 +103,8 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
 }
 
 interface DynamicLineProps {
-  from: Neuron
-  to: Neuron
+  from: NeuronDef
+  to: NeuronDef
   toPoint?: Vector3 // alternatvie to toRef
   width?: number
 }

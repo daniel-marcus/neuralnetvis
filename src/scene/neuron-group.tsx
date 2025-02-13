@@ -2,75 +2,46 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 
-import { useAnimatedPosition, getNeuronColor } from "@/scene/utils"
+import { useAnimatedPosition } from "@/scene/utils"
 import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
 import { debug } from "@/utils/debug"
 import { useVisConfigStore } from "@/scene/vis-config"
-import { useDatasetStore } from "@/data/data"
-import {
-  getGridSize,
-  getNeuronPosition,
-  type MeshParams,
-} from "@/neuron-layers/layout"
+import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 
-import type {
-  LayerPos,
-  Neuron,
-  InstancedMeshRef,
-  NeuronGroupProps,
-} from "@/neuron-layers/types"
+import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { index: layerIndex, layerPos, meshParams } = props
-  const { hasLabels, hasColorChannels } = props
-  const { group, groupedNeurons } = props
-  const { index: groupIndex, nidsStr, meshRef } = group
-  const spacing = useNeuronSpacing(meshParams)
+  const { meshParams, group, groupedNeurons } = props
   const groupRef = useGroupPosition(props)
-  const outputShape = props.tfLayer.outputShape as number[]
-  const [, height, width = 1] = outputShape
-  useNeuronPositions(meshRef, layerPos, spacing, outputShape)
-  const isRegression =
-    useDatasetStore((s) => s.isRegression) && layerPos === "output"
-  useColors(meshRef, groupedNeurons, hasColorChannels, isRegression)
+  const positions = useNeuronPositions(props)
+  useColors(group.meshRef, groupedNeurons)
+  useScale(group.meshRef, group.nidsStr, props.index, group.index)
+  const materialRef = useAdditiveBlending(props.hasColorChannels)
   const { onPointerOut, ...otherEvHandlers } = useInteractions(groupedNeurons)
-  useScale(meshRef, nidsStr, layerIndex, groupIndex)
-  const materialRef = useAdditiveBlending(hasColorChannels)
-
   return (
     <group ref={groupRef} onPointerOut={onPointerOut}>
       <instancedMesh
-        ref={meshRef}
-        name={`layer_${layerIndex}_group_${groupIndex}`}
+        ref={group.meshRef}
+        name={`layer_${props.index}_group_${group.index}`}
         args={[, , groupedNeurons.length]}
         {...otherEvHandlers}
       >
         <primitive object={meshParams.geometry} attach={"geometry"} />
         <meshStandardMaterial ref={materialRef} />
       </instancedMesh>
-      {hasLabels &&
+      {props.hasLabels &&
         groupedNeurons.map((n, i) => (
-          <NeuronLabels
-            key={n.nid}
-            neuron={n}
-            color={getNeuronColor(n, hasColorChannels, isRegression)}
-            position={getNeuronPosition(i, layerPos, height, width, spacing)}
-          />
+          <NeuronLabels key={n.nid} neuron={n} position={positions[i]} />
         ))}
     </group>
   )
 }
 
-export function useNeuronSpacing(meshParams: MeshParams) {
-  const { geometry, spacingFactor } = meshParams
+export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
   const neuronSpacing = useVisConfigStore((s) => s.neuronSpacing)
-  const size =
-    "width" in geometry.parameters
-      ? geometry.parameters.width
-      : "radius" in geometry.parameters
-      ? geometry.parameters.radius
-      : 1
+  const p = geometry.parameters as { width?: number; radius?: number }
+  const size = p.width ?? p.radius ?? 1
   const factor = spacingFactor ?? 1
   const spacing = size * neuronSpacing * factor
   return spacing
@@ -113,49 +84,48 @@ export function useGroupPosition(props: NeuronGroupProps) {
   return groupRef
 }
 
-function useNeuronPositions(
-  meshRef: InstancedMeshRef,
-  layerPos: LayerPos,
-  spacing: number,
-  outputShape: number[]
-) {
-  const [, height, width = 1] = outputShape
+function useNeuronPositions(props: NeuronGroupProps) {
+  const { layerPos, group, meshParams, tfLayer } = props
+  const spacing = useNeuronSpacing(meshParams)
+  const [, height, width = 1] = tfLayer.outputShape as number[]
   const tempObj = useMemo(() => new THREE.Object3D(), [])
+
+  const positions = useMemo(() => {
+    return Array.from({ length: height * width }, (_, i) =>
+      getNeuronPos(i, layerPos, height, width, spacing)
+    )
+  }, [layerPos, spacing, height, width])
+
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
-    if (!meshRef.current) return
-    if (debug()) console.log("upd pos", layerPos, height, width)
-    for (let i = 0; i < height * width; i++) {
-      const position = getNeuronPosition(i, layerPos, height, width, spacing)
+    if (!group.meshRef.current) return
+    if (debug()) console.log("upd pos")
+    for (const [i, position] of positions.entries()) {
       tempObj.position.set(...position)
       tempObj.updateMatrix()
-      meshRef.current?.setMatrixAt(i, tempObj.matrix)
+      group.meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }
-    meshRef.current.instanceMatrix.needsUpdate = true
-  }, [meshRef, tempObj, layerPos, spacing, height, width])
+    group.meshRef.current.instanceMatrix.needsUpdate = true
+  }, [group.meshRef, tempObj, positions])
+
+  return positions
 }
 
-function useColors(
-  meshRef: InstancedMeshRef,
-  neurons: Neuron[],
-  hasColorChannels: boolean,
-  isRegression: boolean
-) {
+function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
     if (debug()) console.log("upd colors")
     for (const [i, n] of neurons.entries()) {
-      const color = getNeuronColor(n, hasColorChannels, isRegression)
-      if (color) meshRef.current.setColorAt(i, color)
-      else console.warn("no color", n, color)
+      if (n.color) meshRef.current.setColorAt(i, n.color)
+      else console.warn("no color", n)
     }
     if (!meshRef.current.instanceColor) return
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, neurons, hasColorChannels, isRegression])
+  }, [meshRef, neurons])
 }
 
 function useScale(
-  meshRef: InstancedMeshRef,
+  meshRef: MeshRef,
   nidsStr: string,
   layerIndex: number,
   groupIndex: number

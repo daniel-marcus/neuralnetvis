@@ -4,34 +4,29 @@ import { getMeshParams } from "./layout"
 import type { Dataset } from "@/data/data"
 import type {
   LayerPos,
-  LayerStateful,
   LayerStateless,
   LayerType,
   Index3D,
-  Neuron,
   Nid,
+  NeuronDef,
 } from "./types"
 import { InstancedMesh } from "three"
 
 // here is all data that doesn't change for a given model
 
-export function useStatelessLayers(
-  model: tf.LayersModel | undefined,
-  ds?: Dataset
-) {
+export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
   const layers = useMemo(() => {
     if (!model) return []
     const visibleLayers = model.layers.filter((l) => getUnits(l))
-
     return (
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const layerType = tfLayer.getClassName() as LayerType
 
-        const visibleIdx = visibleLayers?.indexOf(tfLayer) // no ...
+        const visibleIdx = visibleLayers?.indexOf(tfLayer)
         const layerPos = getLayerPos(layerIndex, model)
 
-        const prevLayer = acc[layerIndex - 1]
-        const prevVisibleTfLayer = getLastVisibleLayer(tfLayer, model)
+        const prevLayer = acc.at(-1)
+        const prevVisibleTfLayer = getLastVisibleLayer(model, tfLayer)
         const prevVisibleIndex = prevVisibleTfLayer
           ? model.layers.indexOf(prevVisibleTfLayer)
           : undefined
@@ -95,7 +90,7 @@ export function useStatelessLayers(
               inputNeurons: prevVisibleLayer
                 ? (inputNids
                     .map((nid) => prevVisibleLayer.neuronsMap?.get(nid))
-                    .filter(Boolean) as Neuron[])
+                    .filter(Boolean) as NeuronDef[])
                 : [],
               label:
                 layerPos === "output"
@@ -125,7 +120,7 @@ export function useStatelessLayers(
           groups,
         }
         return [...acc, layer]
-      }, [] as LayerStateful[]) ?? []
+      }, [] as LayerStateless[]) ?? []
     )
   }, [model, ds])
 
@@ -150,15 +145,12 @@ function getUnits(layer: tf.layers.Layer) {
   return dims.reduce((a, b) => a * b, 1)
 }
 
-function getLastVisibleLayer(
-  l: tf.layers.Layer | undefined,
-  model: tf.LayersModel
-) {
+function getLastVisibleLayer(model: tf.LayersModel, l?: tf.layers.Layer) {
   if (!l) return
   const prev = model.layers[model.layers.indexOf(l) - 1]
   if (!prev) return
   else if (getUnits(prev)) return prev
-  else return getLastVisibleLayer(prev, model)
+  else return getLastVisibleLayer(model, prev)
 }
 
 function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
@@ -175,13 +167,11 @@ function getInputNeurons(
   if (!prevVisibleLayer || typeof prevVisibleIndex !== "number") return []
   if (l.getClassName() !== "Conv2D" && l.getClassName() !== "MaxPooling2D") {
     // fully connected layer / Dense
+    const shape = prevVisibleLayer.outputShape as number[]
     const prevUnits = getUnits(prevVisibleLayer)
     return Array.from({ length: getUnits(l) }).map(() =>
       Array.from({ length: prevUnits }).map((_, i) => {
-        const index3d = getNeuronIndex3d(
-          i,
-          prevVisibleLayer.outputShape as number[]
-        )
+        const index3d = getNeuronIndex3d(i, shape)
         return getNid(prevVisibleIndex, index3d)
       })
     )
