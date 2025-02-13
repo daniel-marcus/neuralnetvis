@@ -1,6 +1,5 @@
 "use client"
 
-import { useController } from "@/utils/controller"
 import { useDatasetStore } from "@/data/data"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { trainOnBatch, useTrainingStore } from "@/model/training"
@@ -8,12 +7,10 @@ import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { useStatusStore } from "@/components/status"
 import { LockButton } from "@/scene/lock"
 import { Block, Button, Details, Head } from "@/contents/elements"
-import type {
-  OnBlockEnterLeaveProps,
-  OnBlockScrollProps,
-} from "@/contents/elements/types"
-import type { LessonContent } from "."
 import { interpolateCamera, moveCameraTo } from "@/scene/utils"
+import type { OnScrollProps } from "@/contents/elements/types"
+import type { LessonContent } from "."
+import { getThree } from "@/scene/three-store"
 
 const initialState: InitialState = {
   datasetKey: "mnist",
@@ -25,7 +22,6 @@ const initialState: InitialState = {
 }
 
 export const IntroNetworks = (): LessonContent => {
-  const controller = useController()
   useInitialState(initialState)
   return (
     <main>
@@ -92,13 +88,14 @@ export const IntroNetworks = (): LessonContent => {
         How about training?
         <br />
         <br />
-        <Button onClick={() => startTraining(controller)}>Train!</Button>
+        <Button onClick={startTraining}>Train!</Button>
       </Block>
     </main>
   )
 }
 
-function rotate({ three, percent }: OnBlockScrollProps) {
+function rotate({ percent }: OnScrollProps) {
+  const three = getThree()
   if (!three) return
   const camera = three.camera
   function rotate(percent: number) {
@@ -112,12 +109,12 @@ function rotate({ three, percent }: OnBlockScrollProps) {
   rotate(percent)
 }
 
-function changeSample({ percent }: OnBlockScrollProps) {
+function changeSample({ percent }: OnScrollProps) {
   const newI = Math.round(percent * 100 + 1)
   useDatasetStore.setState({ i: newI })
 }
 
-async function scrollTrain({ percent }: OnBlockScrollProps) {
+async function scrollTrain({ percent }: OnScrollProps) {
   const totalSamples = useDatasetStore.getState().totalSamples
   const newI = Math.round(Math.random() * totalSamples - 1)
   useDatasetStore.setState({ i: newI })
@@ -131,22 +128,22 @@ async function scrollTrain({ percent }: OnBlockScrollProps) {
   setStatusText(`Training loss: ${loss?.toFixed(2)}`, percent)
 }
 
-function changeLayerSpacing({ percent }: OnBlockScrollProps) {
+function changeLayerSpacing({ percent }: OnScrollProps) {
   const defaultSpacing = 11
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
   useVisConfigStore.setState({ xShift: newSpacing })
 }
 
-function changeNeuronSpacing({ percent }: OnBlockScrollProps) {
+function changeNeuronSpacing({ percent }: OnScrollProps) {
   const defaultSpacing = 1.1
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
   useVisConfigStore.setState({ neuronSpacing: newSpacing })
 }
 
-function startTraining({ setIsTraining, setTabByKey }: OnBlockEnterLeaveProps) {
+function startTraining() {
+  const setIsTraining = useTrainingStore.getState().setIsTraining
   useTrainingStore.getState().setConfig({ silent: false })
-  setTabByKey("training")
   setIsTraining(true)
 }

@@ -27,3 +27,7 @@ export const ThreeStoreSetter = () => {
   }, [camera, invalidate, gl, setThree])
   return null
 }
+
+export function getThree() {
+  return useThreeStore.getState().three
+}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { NeuronDef } from "@/neuron-layers/types"
-import { useThreeStore } from "./three-store"
+import { getThree } from "./three-store"
 import { Controller } from "@react-spring/web"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
@@ -55,7 +55,7 @@ export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
 export type Position = [number, number, number]
 
 export function moveCameraTo(targetPosition: Position, duration = 500) {
-  const three = useThreeStore.getState().three
+  const three = getThree()
   if (!three) return
   const initialPosition = three.camera.position.toArray() as Position
   const api = new Controller<{ position: Position }>({
@@ -78,7 +78,7 @@ export function interpolateCamera(
   toPos: Position,
   percent: number
 ) {
-  const three = useThreeStore.getState().three
+  const three = getThree()
   if (!three) return
   const camera = three.camera
   const position = new THREE.Vector3()

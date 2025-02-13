@@ -1,6 +1,5 @@
 import { useEffect } from "react"
 import throttle from "lodash.throttle"
-import { useController } from "@/utils/controller"
 import { useInView } from "@/utils/screen"
 import type { ScrollBlockProps, ScrollCallbacks } from "./types"
 
@@ -20,7 +19,6 @@ export function Block({ children, className, ...callbacks }: ScrollBlockProps) {
 
 export function useScrollCallbacks(callbacks: ScrollCallbacks) {
   const { onScroll, onEnter, onLeave } = callbacks
-  const controller = useController()
   const [ref, inView] = useInView({ rootMargin: "-50% 0px" })
 
   useEffect(() => {
@@ -29,21 +27,21 @@ export function useScrollCallbacks(callbacks: ScrollCallbacks) {
     const onScrollCb = () => {
       if (!ref.current) return
       const percent = calculateScrolledPercent(ref)
-      onScroll({ percent, ...controller })
+      onScroll({ percent })
     }
     const throttledOnScrollCb = throttle(onScrollCb, 10)
     window.addEventListener("scroll", throttledOnScrollCb)
     return () => window.removeEventListener("scroll", throttledOnScrollCb)
-  }, [inView, controller, onScroll, ref])
+  }, [inView, onScroll, ref])
 
   useEffect(() => {
     if (!onEnter && !onLeave) return
     if (!inView) return
-    if (onEnter) onEnter(controller)
+    if (onEnter) onEnter()
     return () => {
-      if (onLeave) onLeave(controller)
+      if (onLeave) onLeave()
     }
-  }, [inView, onEnter, onLeave, controller])
+  }, [inView, onEnter, onLeave])
 
   return [ref, inView] as const
 }
