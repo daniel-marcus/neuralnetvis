@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react"
-import { NeuronGroupProps, useGroupPosition } from "./neuron-group"
+import { useGroupPosition } from "./neuron-group"
+import type { NeuronGroupProps } from "@/neuron-layers/types"
 
 import * as THREE from "three"
 import { useSelected } from "@/neuron-layers/neuron-select"
@@ -7,10 +8,10 @@ import { useSelected } from "@/neuron-layers/neuron-select"
 const BOX_SIZE = 5 // 4x4 +1 gap
 
 export function GroupWithTexture(props: NeuronGroupProps) {
-  const { groupedNeurons } = props
+  const { group } = props
   const ref = useGroupPosition(props)
 
-  const activations = groupedNeurons.map((n) => n.normalizedActivation)
+  const activations = group.neurons.map((n) => n.normalizedActivation)
   const width = Math.ceil(Math.sqrt(activations.length))
 
   const texture = useMemo(() => {
@@ -50,7 +51,7 @@ export function GroupWithTexture(props: NeuronGroupProps) {
 
         const idx = row * width + col
 
-        const neuron = groupedNeurons[idx]
+        const neuron = group.neurons[idx]
         setHovered(neuron, intersectionPoint)
       }}
       onPointerOut={() => {
