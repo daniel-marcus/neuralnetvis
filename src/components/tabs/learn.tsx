@@ -1,9 +1,10 @@
-import { useLessonStore } from "@/components/lesson"
 import { Box, MenuBtn } from "@/components/ui-elements"
 import { lessonPreviews } from "@/contents"
+import { usePathname } from "next/navigation"
 
 export const Learn = () => {
-  const currLesson = useLessonStore((s) => s.currLesson)
+  const pathname = usePathname()
+  const currLesson = pathname.replace(/^\/learn\//, "")
   return (
     <Box className="flex flex-col">
       {lessonPreviews.map((l) => (

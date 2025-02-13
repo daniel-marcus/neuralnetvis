@@ -1,23 +1,20 @@
 "use client"
 
-import {
-  Block,
-  Button,
-  Details,
-  LessonHead,
-  OnBlockEnterLeaveProps,
-  OnBlockScrollProps,
-} from "@/components/lesson"
-import { LessonContent } from "."
 import { useEffect } from "react"
+import { Controller } from "@react-spring/web"
 import { useController } from "@/utils/controller"
 import { useDatasetStore } from "@/data/data"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { trainOnBatch, useTrainingStore } from "@/model/training"
-import { LockButton } from "@/scene/lock"
 import { setInitialState } from "@/utils/initial-state"
-import { Controller } from "@react-spring/web"
 import { useStatusStore } from "@/components/status"
+import { LockButton } from "@/scene/lock"
+import { Block, Button, Details, Head } from "@/contents/elements"
+import type {
+  OnBlockEnterLeaveProps,
+  OnBlockScrollProps,
+} from "@/contents/elements/types"
+import type { LessonContent } from "."
 
 export const IntroNetworks = (): LessonContent => {
   const controller = useController()
@@ -33,7 +30,7 @@ export const IntroNetworks = (): LessonContent => {
 
   return (
     <main>
-      <LessonHead
+      <Head
         title="How do networks learn?"
         description="Some basics about machine learning"
         onScroll={rotate}

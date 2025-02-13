@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import { Button } from "@/components/lesson"
+import { useLayoutEffect } from "react"
+import { Button } from "@/contents/elements"
 
 interface LockStore {
   visualizationLocked: boolean
@@ -24,4 +25,16 @@ export const LockButton = () => {
       {visualizationLocked ? "Unlock visualization" : "Back to scrolling"}
     </Button>
   )
+}
+
+export function useLock() {
+  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
+  const setVisualizationLocked = useLockStore((s) => s.setVisualizationLocked)
+  useLayoutEffect(() => {
+    setVisualizationLocked(true)
+    return () => {
+      setVisualizationLocked(false)
+    }
+  }, [setVisualizationLocked])
+  return visualizationLocked
 }

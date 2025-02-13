@@ -1,7 +1,7 @@
-import { ScrollBlockProps } from "@/components/lesson"
 import { introInterface } from "./exploring-the-interface"
 import { IntroNetworks } from "./how-networks-learn"
-import { ReactElement } from "react"
+import type { ReactElement } from "react"
+import type { ScrollBlockProps } from "@/contents/elements/types"
 
 export type LessonContent = ReactElement<{
   children: ReactElement<ScrollBlockProps>[]

@@ -1,6 +1,6 @@
 "use client"
 
-import { Block } from "@/components/lesson"
+import { Block } from "@/contents/elements/block"
 
 export const introInterface = (
   <main>
