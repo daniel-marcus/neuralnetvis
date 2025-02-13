@@ -2,6 +2,10 @@
   "name": "neuralnetvis",
   "version": "1.0.0-alpha.31",
   "private": true,
+  "description": "Wrap your head around neural networks and watch machines learn",
+  "author": "Daniel Marcus (https://danielmarcus.de)",
+  "homepage": "https://neuralnetvis.app",
+  "repository": "https://github.com/daniel-marcus/neuralnetvis",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -41,7 +45,7 @@
     "@testing-library/react": "^16.2.0",
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^22.13.2",
+    "@types/node": "^22.13.4",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@types/react-headroom": "^3.2.3",
@@ -57,6 +61,14 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.5"
   },
+  "keywords": [
+    "data-visualization",
+    "machine-learning",
+    "neural-networks",
+    "tensorflow",
+    "threejs",
+    "react"
+  ],
   "prettier": {
     "semi": false
   },
