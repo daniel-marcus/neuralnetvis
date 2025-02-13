@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Line, Matrix4, Quaternion, Vector2, Vector3 } from "three"
-import { LayerStateful, LayerStateless } from "./layer"
 import {
   LineGeometry,
   LineMaterial,
   LineSegments2,
 } from "three/examples/jsm/Addons.js"
-import { Neuron, NeuronRefType } from "@/neuron-layers/neuron"
 import { useSelected } from "@/neuron-layers/neuron-select"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { useDatasetStore } from "@/data/data"
+import type {
+  LayerStateful,
+  LayerStateless,
+  Neuron,
+  NeuronRefType,
+} from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1

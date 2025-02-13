@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import { useDatasetStore } from "@/data/data"
-import { Neuron } from "@/neuron-layers/neuron"
+import type { Neuron } from "@/neuron-layers/types"
 
 const ACTIVATION_COLORS = Array.from(
   { length: 256 },

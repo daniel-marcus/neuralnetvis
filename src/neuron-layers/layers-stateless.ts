@@ -1,24 +1,24 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { getMeshParams } from "./layout"
+import type { Dataset } from "@/data/data"
+import type {
+  LayerPos,
+  LayerStateful,
+  LayerStateless,
+  LayerType,
+  Index3D,
+  Neuron,
+  NeuronRefType,
+  Nid,
+} from "./types"
 
-import { Index3D, Neuron, NeuronRefType, Nid } from "@/neuron-layers/neuron"
-import { Dataset, useDatasetStore } from "@/data/data"
-import { getMeshParams } from "./layer-layout"
-import { LayerStateful, LayerPos, LayerStateless, LayerType } from "./layer"
-import { useActivations } from "@/model/activations"
-import { useWeights, WeightsBiases } from "@/model/weights"
+// here is all data that doesn't change for a given model
 
-export function useLayerProps(model?: tf.LayersModel) {
-  const { ds, input, rawInput } = useDatasetStore()
-  const [_layers, neuronRefs] = useStatelessLayers(model, ds)
-  const activations = useActivations(model, input)
-  const weights = useWeights(model)
-  const layers = useStatefulLayers(_layers, weights, activations, rawInput)
-  return [layers, neuronRefs] as const
-}
-
-function useStatelessLayers(model: tf.LayersModel | undefined, ds?: Dataset) {
-  // here is all data that doesn't change for a given model
+export function useStatelessLayers(
+  model: tf.LayersModel | undefined,
+  ds?: Dataset
+) {
   const layers = useMemo(() => {
     if (!model) return []
     const visibleLayers = model.layers.filter((l) => getUnits(l))
@@ -129,74 +129,8 @@ function useStatelessLayers(model: tf.LayersModel | undefined, ds?: Dataset) {
   return [layers, neuronRefs] as const
 }
 
-function getLastVisibleLayer(
-  l: tf.layers.Layer | undefined,
-  model: tf.LayersModel
-) {
-  if (!l) return
-  const prev = model.layers[model.layers.indexOf(l) - 1]
-  if (!prev) return
-  else if (getUnits(prev)) return prev
-  else return getLastVisibleLayer(prev, model)
-}
-
-function useStatefulLayers(
-  statelessLayers: LayerStateless[],
-  weightsBiases: WeightsBiases[],
-  activations?: { activations: number[]; normalizedActivations: number[] }[],
-  rawInput?: number[]
-) {
-  const statefulLayers = useMemo(
-    () =>
-      statelessLayers.reduce((acc, layer, lIdx) => {
-        const { layerPos, layerType } = layer
-
-        // add state to each neuron
-        const layerActivations = activations?.[lIdx]?.activations
-        const normalizedActivations =
-          layerPos === "output"
-            ? layerActivations
-            : layerType === "Flatten"
-            ? undefined
-            : activations?.[lIdx]?.normalizedActivations
-
-        const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
-
-        const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
-          (neuron, nIdx) => {
-            const activation = layerActivations?.[nIdx]
-            // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
-            const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
-            const statefulNeuron = {
-              ...neuron,
-              activation,
-              rawInput:
-                layer.layerPos === "input" ? rawInput?.[nIdx] : undefined,
-              normalizedActivation: normalizedActivations?.[nIdx],
-              weights: weights?.[filterIndex],
-              bias: biases?.[filterIndex],
-            }
-            return statefulNeuron
-          }
-        )
-        const statefulLayer = {
-          ...layer,
-          neurons,
-          maxAbsWeight,
-        }
-        return [...acc, statefulLayer]
-      }, [] as LayerStateful[]),
-    [statelessLayers, activations, weightsBiases, rawInput]
-  )
-  return statefulLayers
-}
-
 function getNid(layerIndex: number, index3d: Index3D) {
   return `${layerIndex}_${index3d.join(".")}` as Nid
-}
-
-export function getNeuronFromNidInLayer(nid: Nid, layer?: LayerStateful) {
-  return layer?.neurons.find((n) => n.nid === nid)
 }
 
 function getNeuronIndex3d(flatIndex: number, outputShape: number[]) {
@@ -207,14 +141,21 @@ function getNeuronIndex3d(flatIndex: number, outputShape: number[]) {
   return [heightIndex, widthIndex, depthIndex] as Index3D
 }
 
-export function getVisibleLayers(allLayers: LayerStateful[]) {
-  return allLayers.filter((l) => l.neurons.length)
-}
-
-export function getUnits(layer: tf.layers.Layer) {
+function getUnits(layer: tf.layers.Layer) {
   if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
   const [, ...dims] = layer.outputShape as number[]
   return dims.reduce((a, b) => a * b, 1)
+}
+
+function getLastVisibleLayer(
+  l: tf.layers.Layer | undefined,
+  model: tf.LayersModel
+) {
+  if (!l) return
+  const prev = model.layers[model.layers.indexOf(l) - 1]
+  if (!prev) return
+  else if (getUnits(prev)) return prev
+  else return getLastVisibleLayer(prev, model)
 }
 
 function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {

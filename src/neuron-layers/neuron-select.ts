@@ -1,11 +1,10 @@
-import { create } from "zustand"
-import * as tf from "@tensorflow/tfjs"
-import { Neuron, Nid } from "@/neuron-layers/neuron"
-import { LayerStateful } from "@/scene/layer"
 import { useEffect, useMemo } from "react"
-import { normalizeWithSign } from "@/data/normalization"
-import { HighlightProp, useVisConfigStore } from "@/scene/vis-config"
+import * as tf from "@tensorflow/tfjs"
+import { create } from "zustand"
 import { Vector3 } from "three"
+import { normalizeWithSign } from "@/data/normalization"
+import { useVisConfigStore, type HighlightProp } from "@/scene/vis-config"
+import type { LayerStateful, Neuron, Nid } from "@/neuron-layers/types"
 
 interface SelectedStore {
   hovered: Neuron | null

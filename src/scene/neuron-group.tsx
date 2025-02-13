@@ -1,25 +1,24 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
-import { InstancedMesh } from "three"
+import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 
 import { useAnimatedPosition } from "@/scene/animated-position"
-import * as THREE from "three"
 import {
-  MeshParams,
   getGridSize,
   getNeuronPosition,
-} from "@/neuron-layers/layer-layout"
-import { LayerPos, GroupDef } from "@/neuron-layers/layer"
-import { Neuron } from "@/neuron-layers/neuron"
+  type MeshParams,
+} from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
 import { debug } from "@/utils/debug"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { useDatasetStore } from "@/data/data"
 import { getNeuronColor } from "./colors"
-import { LayerProps } from "./layer"
 
-export type InstancedMeshRef = React.RefObject<InstancedMesh | null>
+import type { LayerProps } from "./layer"
+import type { LayerPos, GroupDef, Neuron } from "@/neuron-layers/types"
+
+export type InstancedMeshRef = React.RefObject<THREE.InstancedMesh | null>
 
 export type NeuronGroupProps = LayerProps &
   GroupDef & {
@@ -33,7 +32,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const { index: layerIndex, layerPos, meshParams } = props
   const { hasLabels, hasColorChannels } = props
   const spacing = useNeuronSpacing(meshParams)
-  const meshRef = useRef<InstancedMesh | null>(null!)
+  const meshRef = useRef<THREE.InstancedMesh | null>(null!)
   useNeuronRefs(props, meshRef)
   const groupRef = useGroupPosition(props)
   const outputShape = props.tfLayer.outputShape as number[]

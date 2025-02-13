@@ -6,7 +6,7 @@ import {
 } from "@/data/normalization"
 import { create } from "zustand"
 
-interface LayerActivations {
+export interface LayerActivations {
   activations: number[] // [neuronIdx]
   normalizedActivations: number[]
 }

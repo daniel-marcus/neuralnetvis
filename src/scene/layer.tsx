@@ -3,17 +3,19 @@ import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 
-import { Neuron, NeuronRefType } from "@/neuron-layers/neuron"
-import { getVisibleLayers } from "@/neuron-layers/layer-props"
 import { useAnimatedPosition } from "@/scene/animated-position"
+import { useVisConfigStore } from "@/scene/vis-config"
+import { useOrientation } from "@/utils/utils"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
-import { useVisConfigStore } from "@/scene/vis-config"
-import { useOrientation } from "@/utils/utils"
-import { LayerStateful } from "@/neuron-layers/layer"
-import { Dataset } from "@/data/data"
-// import { GroupWithTexture } from "./group-texture"
+
+import type { Dataset } from "@/data/data"
+import type {
+  LayerStateful,
+  Neuron,
+  NeuronRefType,
+} from "@/neuron-layers/types"
 
 interface LayerContext {
   allLayers: LayerStateful[]
@@ -74,6 +76,10 @@ export const Layer = (props: LayerProps) => {
       )}
     </>
   )
+}
+
+function getVisibleLayers(allLayers: LayerStateful[]) {
+  return allLayers.filter((l) => l.neurons.length)
 }
 
 function groupNeuronsByGroupIndex(layer: LayerProps) {

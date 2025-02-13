@@ -1,10 +1,10 @@
-import { OUTPUT_ORIENT } from "@/neuron-layers/layer-layout"
-import { useFrame, useThree, extend } from "@react-three/fiber"
 import { useRef } from "react"
+import { useFrame, useThree, extend } from "@react-three/fiber"
 import { Color, Mesh } from "three"
 import { Text } from "troika-three-text"
-import { NeuronDef, NeuronState } from "@/neuron-layers/neuron"
 import { useDatasetStore } from "@/data/data"
+import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
+import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}

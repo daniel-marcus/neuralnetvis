@@ -1,4 +1,4 @@
-import type { LayerPos } from "./layer"
+import type { LayerPos } from "./types"
 import * as tf from "@tensorflow/tfjs"
 import { ReactElement } from "react"
 import * as THREE from "three"
@@ -10,7 +10,6 @@ export interface LayerLayout {
 
 type OutputOrient = "horizontal" | "vertical"
 export const OUTPUT_ORIENT: OutputOrient = "vertical"
-export type SpacingType = "dense" | "normal"
 
 export type MeshParams = {
   geometry: THREE.BoxGeometry | THREE.SphereGeometry
