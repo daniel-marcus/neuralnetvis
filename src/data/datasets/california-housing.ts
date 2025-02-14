@@ -1,4 +1,4 @@
-import { DatasetDef } from "@/data/dataset"
+import { DatasetDef } from "@/data"
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"

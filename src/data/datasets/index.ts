@@ -1,4 +1,4 @@
-import { DatasetDef } from "@/data/dataset"
+import { DatasetDef } from "@/data"
 import { mnist } from "./mnist"
 import { fashionMnist } from "./fashion-mnist"
 import { cifar10 } from "./cifar10"

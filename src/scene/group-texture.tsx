@@ -1,9 +1,8 @@
 import { useEffect, useMemo } from "react"
+import { useStore } from "@/store"
+import * as THREE from "three"
 import { useGroupPosition } from "./neuron-group"
 import type { NeuronGroupProps } from "@/neuron-layers/types"
-
-import * as THREE from "three"
-import { useSelected } from "@/neuron-layers/neuron-select"
 
 const BOX_SIZE = 5 // 4x4 +1 gap
 
@@ -25,7 +24,7 @@ export function GroupWithTexture(props: NeuronGroupProps) {
 
   useUvMapping(geometry, width)
 
-  const setHovered = useSelected((s) => s.setHovered)
+  const setHovered = useStore((s) => s.setHovered)
 
   return (
     <mesh

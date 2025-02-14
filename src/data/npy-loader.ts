@@ -1,7 +1,7 @@
 import npyjs from "npyjs"
 import JSZip from "jszip"
 import { setStatus } from "@/store"
-import { isSafe } from "@/data/types"
+import { isSafe } from "./types"
 
 const n = new npyjs()
 
