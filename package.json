@@ -64,10 +64,12 @@
   "keywords": [
     "data-visualization",
     "machine-learning",
-    "neural-networks",
+    "neural-network",
     "tensorflow",
     "threejs",
-    "react"
+    "react",
+    "webgl",
+    "webgpu"
   ],
   "prettier": {
     "semi": false

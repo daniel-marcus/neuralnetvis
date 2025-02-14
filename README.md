@@ -1,6 +1,6 @@
 # NeuralNetVis
 
-Wrap your head around neural networks and watch machines learning: NeuralNetVis is a platform for visualizing and exploring neural networks in your browser with TensorFlow.js and three.js.
+Wrap your head around neural networks and watch machines learning: NeuralNetVis is a platform for visualizing and exploring neural networks in your browser with [TensorFlow.js](https://github.com/tensorflow/tfjs) and [three.js](https://github.com/mrdoob/three.js).
 
 Live here: [https://neuralnetvis.app](https://neuralnetvis.app)
 
