@@ -13,22 +13,16 @@ const defaultLayerConfigs: LayerConfig<"Dense">[] = [
 interface TfModelSlice {
   model?: LayersModel
   skipModelCreation: boolean // flag to skip model creation for loaded models
-  isPending: boolean
-  setIsPending: (isPending: boolean) => void
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
   layerConfigs: LayerConfigArray
-  setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
 }
 
 export const createTfModelSlice: StateCreator<TfModelSlice> = (set) => ({
   model: undefined,
   skipModelCreation: false,
-  isPending: false,
-  setIsPending: (isPending) => set({ isPending }),
   _setModel: (model) => set({ model }),
   layerConfigs: defaultLayerConfigs,
-  setLayerConfigs: (layerConfigs) => set({ layerConfigs }),
   resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
 })
 

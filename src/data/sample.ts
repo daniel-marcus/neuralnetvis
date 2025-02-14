@@ -20,7 +20,7 @@ export function useSample(ds?: Dataset) {
     }
   }, [ds, resetSample])
 
-  const next = useStore((s) => s.next)
+  const next = useStore((s) => s.nextSample)
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowLeft", prev)
   useKeyCommand("ArrowRight", next)

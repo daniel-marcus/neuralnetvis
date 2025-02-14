@@ -86,7 +86,6 @@ export const LayerConfigControl = () => {
   const model = useStore((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
     []) as unknown as LayerConfigArray
-  const setLayerConfigs = useStore((s) => s.setLayerConfigs)
   const resetLayerConfigs = useStore((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -103,10 +102,10 @@ export const LayerConfigControl = () => {
       ["MaxPooling2D", "Conv2D"].includes(className) && flattenIdx > -1
         ? layerConfigs.toSpliced(flattenIdx, 0, newLayer)
         : layerConfigs.toSpliced(beforeOutputIdx, 0, newLayer)
-    setLayerConfigs(newLayerConfigs)
+    useStore.setState({ layerConfigs: newLayerConfigs })
   }
   const handleRemove = (i: number) => {
-    setLayerConfigs(layerConfigs.filter((_, j) => j !== i))
+    useStore.setState({ layerConfigs: layerConfigs.filter((_, j) => j !== i) })
   }
   const hasMutliDimInput =
     model?.layers[0].batchInputShape &&
@@ -131,7 +130,7 @@ export const LayerConfigControl = () => {
           rowHeight={32}
           onOrderChange={(newOrder) => {
             const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
-            setLayerConfigs([...newLayerConfigs])
+            useStore.setState({ layerConfigs: [...newLayerConfigs] })
           }}
           checkValidChange={(newOrder) =>
             checkVaildOrder(newOrder, layerConfigs)
@@ -142,7 +141,7 @@ export const LayerConfigControl = () => {
               newConfig: LayerConfig<T>["config"]
             ) {
               layerConfigs[i].config = newConfig
-              setLayerConfigs([...layerConfigs])
+              useStore.setState({ layerConfigs: [...layerConfigs] })
             }
             const isLast = i === layerConfigs.length - 1
             const inputComp = getInputComp(layer, updateLayerConfig, isLast)

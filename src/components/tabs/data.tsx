@@ -5,7 +5,6 @@ import { useStore } from "@/store"
 
 export const Data = () => {
   const currDatasetKey = useStore((s) => s.datasetKey)
-  const setDatasetKey = useStore((s) => s.setDatasetKey)
   const isDebug = useStore((s) => s.isDebug)
   return (
     <Box>
@@ -20,7 +19,7 @@ export const Data = () => {
               <MenuBtn
                 key={d.name}
                 isActive={currDatasetKey === d.key}
-                onClick={() => setDatasetKey(d.key)}
+                onClick={() => useStore.setState({ datasetKey: d.key })}
               >
                 <strong>{d.name}</strong> ({d.task})<br />
                 {d.description}

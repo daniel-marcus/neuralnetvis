@@ -7,7 +7,6 @@ import type { DatasetDef, DbBatch, ParsedLike, StoreMeta } from "./types"
 export function useDataset() {
   const datasetKey = useStore((s) => s.datasetKey)
   const ds = useStore((s) => s.ds)
-  const setDs = useStore((s) => s.setDs)
   const setStatusText = useStore((s) => s.status.setText)
 
   useEffect(() => {
@@ -30,11 +29,8 @@ export function useDataset() {
         if (!train || !test) {
           throw new Error("Failed to load indexedDB store")
         }
-        setDs({
-          ...dsDef,
-          train,
-          test,
-        })
+        const ds = { ...dsDef, train, test }
+        useStore.setState({ ds })
       } else {
         console.log("loading new data into indexedDB ...")
         await loadAndSaveDsData(dsDef)
@@ -43,18 +39,15 @@ export function useDataset() {
         if (!train || !test) {
           throw new Error("Failed to create indexedDB store")
         }
-        setDs({
-          ...dsDef,
-          train,
-          test,
-        })
+        const ds = { ...dsDef, train, test }
+        useStore.setState({ ds })
       }
     }
 
     return () => {
-      setDs(undefined)
+      useStore.setState({ ds: undefined })
     }
-  }, [datasetKey, setStatusText, setDs])
+  }, [datasetKey, setStatusText])
 
   return ds
 }

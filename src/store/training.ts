@@ -1,6 +1,7 @@
-import type { StateCreator } from "zustand"
+import { StateCreator } from "zustand"
 import type { TrainingConfig } from "@/model"
 import type { History } from "@tensorflow/tfjs"
+import type { Metric, TrainingLog } from "@/components/ui-elements/logs-plot"
 
 export interface TrainingSlice {
   trainConfig: TrainingConfig
@@ -14,8 +15,13 @@ export interface TrainingSlice {
   epochCount: number
   setEpochCount: (val: number) => void
   resetTrainCounts: () => void
+  //
+  logs: TrainingLog[]
+  addLogs: (newLogs: TrainingLog[]) => void
+  logsMetric: Metric
+  setLogsMetric: (metric: Metric) => void
 }
-
+// SC<TrainingSlice> /
 export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
   trainConfig: {
     batchSize: 256,
@@ -42,7 +48,11 @@ export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
   epochCount: 0,
   setEpochCount: (epochCount) => set({ epochCount }),
   resetTrainCounts: () => {
-    // useLogStore.getState().resetLogs() // TODO
-    set({ isTraining: false, batchCount: 0, epochCount: 0 })
+    set({ isTraining: false, batchCount: 0, epochCount: 0, logs: [] })
   },
+
+  logs: [] as TrainingLog[],
+  addLogs: (newLogs) => set(({ logs }) => ({ logs: [...logs, ...newLogs] })),
+  logsMetric: "loss",
+  setLogsMetric: (logsMetric) => set({ logsMetric }),
 })

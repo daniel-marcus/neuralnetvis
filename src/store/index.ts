@@ -4,20 +4,16 @@ import { createDataSlice, DataSlice } from "./data"
 import { createStatusSlice, StatusSlice } from "./status"
 import { createModelSlice, ModelSlice } from "./model"
 import { createTrainingSlice, TrainingSlice } from "./training"
-import { createLogsSlice, LogsSlice } from "./logs"
-import { createSelectedSlice, SelectedSlice } from "./neuron-select"
-import { createDebugSlice, DebugSlice } from "./debug"
+import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
 
-type StoreType = TabsSlice &
+export type StoreType = TabsSlice &
+  StatusSlice &
   DataSlice &
   ModelSlice &
   TrainingSlice &
-  LogsSlice &
-  StatusSlice &
-  SelectedSlice &
-  VisSlice &
-  DebugSlice
+  NeuronsSlice &
+  VisSlice & { isDebug: boolean }
 
 export const useStore = create<StoreType>()((...a) => ({
   ...createTabsSlice(...a),
@@ -25,10 +21,9 @@ export const useStore = create<StoreType>()((...a) => ({
   ...createDataSlice(...a),
   ...createModelSlice(...a),
   ...createTrainingSlice(...a),
-  ...createLogsSlice(...a),
-  ...createSelectedSlice(...a),
+  ...createNeuronsSlice(...a),
   ...createVisSlice(...a),
-  ...createDebugSlice(...a),
+  isDebug: false,
 }))
 
 export const setTab = useStore.getState().setTab

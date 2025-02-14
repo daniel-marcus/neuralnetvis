@@ -13,7 +13,7 @@ const THROTTLE = 30
 export class UpdateCb extends CustomCallback {
   private silent = useStore.getState().trainConfig.silent
   private batchSize = useStore.getState().trainConfig.batchSize
-  private next = useStore.getState().next
+  private next = useStore.getState().nextSample
   private trainingComplete = false // will be set only if all epochs ran fully without interruption
   declare params: TypedParams
   constructor() {

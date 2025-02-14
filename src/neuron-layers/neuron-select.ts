@@ -1,37 +1,24 @@
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useStore } from "@/store"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "./colors"
 import type { LayerStateful, Nid, HighlightProp } from "./types"
+import { updateGroups } from "./layers-stateful"
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
   const highlightProp = useStore((s) => s.vis.highlightProp)
-  const selectedNid = useStore((s) => s.getSelectedNid())
-  const hoveredNid = useStore((s) => s.getHoveredNid())
-  const setSelected = useStore((s) => s.setSelected)
-
-  // TODO: refactor! + reset selected when model changes
-  useEffect(() => {
-    if (!selectedNid) return
-    const selected = layerProps
-      .flatMap((l) => l.neurons)
-      .find(({ nid }) => nid === selectedNid)
-    setSelected(selected ?? null)
-    if (useStore.getState().isDebug) console.log(selected)
-  }, [layerProps, selectedNid, setSelected])
-
+  const allNeurons = useStore((s) => s.allNeurons)
+  const selectedNid = useStore((s) => s.selectedNid)
+  const hoveredNid = useStore((s) => s.hoveredNid)
   const selOrHovNid = selectedNid || hoveredNid
 
   const patchedLayerProps = useMemo(() => {
     if (!selOrHovNid) return layerProps
-    const allNeuronsMap = new Map(
-      layerProps.flatMap((l) => l.neurons).map((n) => [n.nid, n])
-    )
-    const selN = allNeuronsMap.get(selOrHovNid)
+    const selN = allNeurons.get(selOrHovNid)
     if (!selN) return layerProps
     const selNInputs = (selN.inputNeurons?.map(
-      (n) => allNeuronsMap.get(n.nid)?.activation
+      (n) => allNeurons.get(n.nid)?.activation
     ) ?? []) as number[]
     const weightedInputs = getWeightedInputs(selNInputs, selN.weights)
     const tempObj = {
@@ -51,9 +38,11 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
         const color = getHighlightColor(highlightValue ?? 0)
         return { ...n, color }
       })
-      return { ...l, neurons }
+      const _updatedLayer = { ...l, neurons }
+      const updatedLayer = updateGroups(_updatedLayer)
+      return updatedLayer
     })
-  }, [layerProps, selOrHovNid, highlightProp])
+  }, [layerProps, selOrHovNid, highlightProp, allNeurons])
   return patchedLayerProps
 }
 
@@ -82,16 +71,19 @@ export function getWeightedInputs(
 
 export function useLocalSelected(layerIndex: number, groupIndex: number) {
   // returns values only if they are in the same group to avoid unnecessary re-renders
-  const _selectedNid = useStore((s) => s.getSelectedNid())
-  const _hoveredNid = useStore((s) => s.getHoveredNid())
-  return {
-    selectedNid: isInGroup(_selectedNid, layerIndex, groupIndex)
-      ? _selectedNid
-      : null,
-    hoveredNid: isInGroup(_hoveredNid, layerIndex, groupIndex)
-      ? _hoveredNid
-      : null,
+  const _selectedNid = useStore((s) => s.selectedNid)
+  const _hoveredNid = useStore((s) => s.hoveredNid)
+  const result = {
+    selectedNid:
+      _selectedNid && isInGroup(_selectedNid, layerIndex, groupIndex)
+        ? _selectedNid
+        : null,
+    hoveredNid:
+      _hoveredNid && isInGroup(_hoveredNid, layerIndex, groupIndex)
+        ? _hoveredNid
+        : null,
   }
+  return result
 }
 
 function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {

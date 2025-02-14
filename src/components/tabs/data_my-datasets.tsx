@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 
 export const MyDatasets = () => {
   const ds = useStore((s) => s.ds)
-  const setDatasetKey = useStore((s) => s.setDatasetKey)
   const [savedDatasets, setSavedDatasets] = useState<string[]>([])
   const updateDatasets = async () => {
     try {
@@ -38,7 +37,9 @@ export const MyDatasets = () => {
               isCurrent ? "text-white pointer-events-none" : ""
             }`}
           >
-            <button onClick={() => setDatasetKey(d)}>{d}</button>
+            <button onClick={() => useStore.setState({ datasetKey: d })}>
+              {d}
+            </button>
             <div>
               {!isCurrent && (
                 <button className="pl-2" onClick={() => removeDataset(d)}>

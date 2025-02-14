@@ -20,7 +20,7 @@ type NeuronConnectionsProps = {
 }
 
 export const HoverConnections = () => {
-  const hovered = useStore((s) => s.hovered)
+  const hovered = useStore((s) => s.getHovered())
   const hoverOrigin = useStore((s) => s.hoverOrigin)
   // too many lines for fully connected layers
   const allowDenseHoverLines = useStore((s) => s.vis.allowDenseHoverLines)

@@ -8,7 +8,6 @@ export const SampleSlider = () => {
   const visIsLocked = useStore((s) => s.vis.isLocked)
   const sampleIdx = useStore((s) => s.sampleIdx)
   const totalSamples = useStore((s) => s.totalSamples())
-  const setSampleIdx = useStore((s) => s.setSampleIdx)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
@@ -29,7 +28,7 @@ export const SampleSlider = () => {
       >
         <Slider
           value={sampleIdx}
-          onChange={setSampleIdx}
+          onChange={(sampleIdx) => useStore.setState({ sampleIdx })}
           min={0}
           max={totalSamples - 1}
         />

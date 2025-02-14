@@ -32,10 +32,10 @@ export function InitialStateSetter() {
 function setInitialState(initialState: InitialState) {
   const { datasetKey, layerConfigs, cameraPos } = initialState
   if (datasetKey) {
-    useStore.getState().setDatasetKey(datasetKey)
+    useStore.setState({ datasetKey })
   }
   if (layerConfigs) {
-    useStore.getState().setLayerConfigs(layerConfigs)
+    useStore.setState({ layerConfigs })
   }
   if (cameraPos) {
     moveCameraTo(cameraPos)

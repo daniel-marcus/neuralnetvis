@@ -15,29 +15,24 @@ export function useModel(ds?: Dataset) {
 }
 
 export function useModelTransition() {
-  const [_isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const _setModel = useStore((s) => s._setModel)
-  const isPending = useStore((s) => s.isPending)
-  const setIsPending = useStore((s) => s.setIsPending)
   const setModel = useCallback(
     (model: tf.LayersModel | undefined) => {
       startTransition(() => _setModel(model))
     },
     [startTransition, _setModel]
   )
-  useEffect(() => {
-    setIsPending(_isPending)
-  }, [_isPending, setIsPending])
 
   // set progressbar to spinner mode
   const setPercent = useStore((s) => s.status.setPercent)
   useEffect(() => {
-    if (!_isPending) return
+    if (!isPending) return
     setPercent(-1)
     return () => {
       setPercent(null)
     }
-  }, [_isPending, setPercent])
+  }, [isPending, setPercent])
 
   return [setModel, isPending] as const
 }

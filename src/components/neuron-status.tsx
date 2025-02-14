@@ -8,11 +8,11 @@ import type { Neuron } from "@/neuron-layers/types"
 import { Table } from "./ui-elements"
 
 export const NeuronStatus = () => {
-  const _selected = useStore((s) => s.selected)
-  const _hovered = useStore((s) => s.hovered)
+  const _selected = useStore((s) => s.getSelected())
+  const _hovered = useStore((s) => s.getHovered())
   const hasCurrentSelected = !!_selected || !!_hovered
   let selected = _hovered ?? _selected
-  const prevSelected = useRef<Neuron | null>(null)
+  const prevSelected = useRef<Neuron | undefined>(undefined)
   if (selected) prevSelected.current = selected
   else selected = prevSelected.current
   // TODO: normalize in group?
@@ -28,7 +28,7 @@ export const NeuronStatus = () => {
     selected?.layer.prevLayer?.meshParams.geometry instanceof SphereGeometry
 
   const hasStatus = !!useStore((s) => s.status.text)
-  const setSelected = useStore((s) => s.setSelected)
+  const toggleSelected = useStore((s) => s.toggleSelected)
   if (!selected) return <div />
   return (
     <div
@@ -37,7 +37,7 @@ export const NeuronStatus = () => {
           ? "pointer-events-auto cursor-pointer"
           : "opacity-0 max-w-[20%] pointer-events-none"
       } ${hasStatus ? "hidden sm:flex" : ""} transition-opacity duration-150`}
-      onClick={() => setSelected(null)}
+      onClick={() => toggleSelected(null)}
     >
       <WeightsViewer
         weights={normalizedWeights}

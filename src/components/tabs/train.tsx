@@ -10,7 +10,7 @@ export const Train = () => {
   const isTraining = useStore((s) => s.isTraining)
   const toggleTraining = useStore((s) => s.toggleTraining)
   const [showLogs, setShowLogs] = useState(false)
-  const hasLogs = useStore((s) => s.hasLogs())
+  const hasLogs = useStore((s) => s.logs.length > 0)
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])

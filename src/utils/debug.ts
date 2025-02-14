@@ -10,7 +10,7 @@ export function useDebugCommands() {
 }
 
 function toggleDebug() {
-  useStore.getState().toggleDebug()
+  useStore.setState({ isDebug: !isDebug() })
   setStatus(`Debug mode ${isDebug() ? "enabled" : "disabled"}`)
 }
 
@@ -43,5 +43,5 @@ function showStats() {
   const tfEngine = tf.engine()
   const glInfo = gl?.info
   const appState = useStore.getState()
-  console.log({ data, tfEngine, glInfo, appState })
+  console.log({ tfEngine, glInfo, appState })
 }
