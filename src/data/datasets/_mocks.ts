@@ -1,4 +1,4 @@
-import { Dataset } from "@/data/dataset"
+import { Dataset } from "@/data"
 import { mnist } from "./mnist"
 
 export const dsMnistMock: Dataset = {

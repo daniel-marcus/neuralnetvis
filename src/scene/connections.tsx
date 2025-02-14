@@ -104,7 +104,7 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
 interface DynamicLineProps {
   from: NeuronDef
   to: NeuronDef
-  toPoint?: Vector3 // alternatvie to toRef
+  toPoint?: Vector3 // alternatvie to meshRef
   width?: number
 }
 
