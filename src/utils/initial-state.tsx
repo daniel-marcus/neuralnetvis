@@ -1,13 +1,18 @@
 "use client"
 
 import { useEffect } from "react"
-import { useStore } from "@/store"
+import { StoreType, useStore } from "@/store"
 import { moveCameraTo, type Position } from "@/scene/utils"
-import type { LayerConfigArray } from "@/model"
 
-export interface InitialState {
-  datasetKey?: string
-  layerConfigs?: LayerConfigArray
+type ExposedStoreKeys =
+  | "datasetKey"
+  | "sampleIdx"
+  | "layerConfigs"
+  | "selectedNid"
+type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
+
+export type InitialState = Partial<ExposedStoreType> & {
+  vis?: Partial<StoreType["vis"]>
   cameraPos?: Position
 }
 
@@ -30,14 +35,12 @@ export function InitialStateSetter() {
 }
 
 function setInitialState(initialState: InitialState) {
-  const { datasetKey, layerConfigs, cameraPos } = initialState
-  if (datasetKey) {
-    useStore.setState({ datasetKey })
-  }
-  if (layerConfigs) {
-    useStore.setState({ layerConfigs })
-  }
+  const { cameraPos, vis, ...storeSettings } = initialState
   if (cameraPos) {
     moveCameraTo(cameraPos)
   }
+  if (vis) {
+    useStore.getState().vis.setConfig({ ...vis })
+  }
+  useStore.setState(storeSettings)
 }

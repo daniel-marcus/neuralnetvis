@@ -6,6 +6,7 @@ import { getHighlightColor } from "@/neuron-layers/colors"
 import { useIsScreen } from "@/utils/screen"
 import type { Neuron } from "@/neuron-layers/types"
 import { Table } from "./ui-elements"
+import { useHasLesson } from "./lesson"
 
 export const NeuronStatus = () => {
   const _selected = useStore((s) => s.getSelected())
@@ -29,7 +30,9 @@ export const NeuronStatus = () => {
 
   const hasStatus = !!useStore((s) => s.status.text)
   const toggleSelected = useStore((s) => s.toggleSelected)
-  if (!selected) return <div />
+  const hasLesson = useHasLesson()
+  const visLocked = useStore((s) => s.vis.isLocked)
+  if (!selected || (hasLesson && visLocked)) return <div />
   return (
     <div
       className={`flex gap-4 items-end sm:flex-col ${
