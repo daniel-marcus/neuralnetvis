@@ -266,16 +266,15 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   const isClassification = ds?.task === "classification"
   const trainShape = ds.train.shapeX
   const [X, y] = tf.tidy(() => {
-    const XRaw = tf.tensor(xs, [xs.length, ...trainShape.slice(1)])
-    const X = ds.input?.preprocess?.(XRaw) ?? XRaw
+    const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
     const y = isClassification ? tf.oneHot(ys, ds.output.size) : tf.tensor(ys)
     return [X, y]
   })
-  const metrics = await model.trainOnBatch(X, y)
+  const [loss, acc] = (await model.trainOnBatch(X, y)) as number[]
   setBatchCount((prev) => prev + 1)
   X.dispose()
   y.dispose()
-  return metrics
+  return { loss, acc }
 }
 
 export async function getModelEvaluation() {

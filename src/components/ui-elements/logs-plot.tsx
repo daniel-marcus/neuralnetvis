@@ -1,11 +1,4 @@
-import {
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  forwardRef,
-} from "react"
+import { useMemo, useCallback, useEffect, useRef, useState, Ref } from "react"
 import { create } from "zustand"
 import { InlineButton } from "./buttons"
 import { useTrainingStore } from "@/model/training"
@@ -22,11 +15,17 @@ export type TrainingLog = {
   val_acc?: number // for epoch only
 }
 
+const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
+const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
+const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
+
 interface LogsStore {
   logs: TrainingLog[]
   hasLogs: () => boolean
   resetLogs: () => void
   addLogs: (logs: TrainingLog[]) => void
+  metric: (typeof METRICS)[number]
+  setMetric: (metric: (typeof METRICS)[number]) => void
 }
 
 export const useLogStore = create<LogsStore>((set, get) => ({
@@ -34,6 +33,8 @@ export const useLogStore = create<LogsStore>((set, get) => ({
   hasLogs: () => get().logs.length > 0,
   resetLogs: () => set({ logs: [] }),
   addLogs: (logs) => set((state) => ({ logs: [...state.logs, ...logs] })),
+  metric: "loss",
+  setMetric: (metric) => set({ metric }),
 }))
 
 type TooltipContent = React.ReactNode | null
@@ -41,13 +42,8 @@ type TooltipContent = React.ReactNode | null
 const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
-const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
-const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
-const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
-
 export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
-  const logs = useLogStore((s) => s.logs)
-  const [metric, setMetric] = useState<(typeof METRICS)[number]>("loss")
+  const { logs, metric, setMetric } = useLogStore()
   const isEpochMetric = EPOCH_METRICS.includes(metric)
   const filteredLogs = useMemo(
     () =>
@@ -153,39 +149,30 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
   )
 }
 
-const Dot = forwardRef<HTMLDivElement, { hidden: boolean }>(
-  ({ hidden }, ref) => (
-    <div
-      ref={ref}
-      className={`absolute ${
-        hidden ? "hidden" : ""
-      } p-0 w-2 h-2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pointer-events-none`}
-    />
-  )
-)
-Dot.displayName = "Dot"
+type DotProps = { hidden: boolean; ref: Ref<HTMLDivElement> }
 
-interface TooltipProps {
-  children?: React.ReactNode
-}
-
-const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
-  ({ children }, ref) => {
-    const hidden = !children
-    return (
-      <div
-        ref={ref}
-        className={`${
-          hidden ? "hidden" : ""
-        } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full pointer-events-none`}
-        style={{ width: `${TOOLTIP_WIDTH}px` }}
-      >
-        {children}
-      </div>
-    )
-  }
+const Dot = ({ hidden, ref }: DotProps) => (
+  <div
+    ref={ref}
+    className={`absolute ${
+      hidden ? "hidden" : ""
+    } p-0 w-2 h-2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pointer-events-none`}
+  />
 )
-Tooltip.displayName = "Tooltip"
+
+type TooltipProps = { children?: React.ReactNode; ref?: Ref<HTMLDivElement> }
+
+const Tooltip = ({ children, ref }: TooltipProps) => (
+  <div
+    ref={ref}
+    className={`${
+      !children ? "hidden" : ""
+    } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full pointer-events-none`}
+    style={{ width: `${TOOLTIP_WIDTH}px` }}
+  >
+    {children}
+  </div>
+)
 
 function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
   const canvasRef = useRef<HTMLCanvasElement>(null)

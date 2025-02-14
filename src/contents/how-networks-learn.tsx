@@ -11,6 +11,7 @@ import { interpolateCamera, moveCameraTo } from "@/scene/utils"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
 import { getThree } from "@/scene/three-store"
+import { LogsPlot, useLogStore } from "@/components/ui-elements/logs-plot"
 
 const initialState: InitialState = {
   datasetKey: "mnist",
@@ -43,9 +44,12 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         onScroll={scrollTrain}
         onLeave={() => useStatusStore.getState().setStatusText("", null)}
-        className="pb-[100vh]"
+        className="h-[100vh] relative "
       >
-        We can even train the model as we scroll.
+        <p>We can even train the model as we scroll.</p>
+        <div className="sticky top-0 pt-16 max-w-[32rem]">
+          <LogsPlot />
+        </div>
       </Block>
       <Block
         onEnter={() => moveCameraTo([-15, 0.5, 17], 1000)}
@@ -114,18 +118,33 @@ function changeSample({ percent }: OnScrollProps) {
   useDatasetStore.setState({ i: newI })
 }
 
+let batch = 0
+const trainedIs = new Set<number>()
+
+function getRandomI(totalSamples: number) {
+  let i = Math.round(Math.random() * totalSamples - 1)
+  while (trainedIs.has(i)) {
+    i = Math.round(Math.random() * totalSamples - 1)
+  }
+  trainedIs.add(i)
+  return i
+}
+
 async function scrollTrain({ percent }: OnScrollProps) {
+  const setStatusText = useStatusStore.getState().setStatusText
+
   const totalSamples = useDatasetStore.getState().totalSamples
-  const newI = Math.round(Math.random() * totalSamples - 1)
+  const newI = getRandomI(totalSamples)
+  batch++
   useDatasetStore.setState({ i: newI })
 
-  const input = useDatasetStore.getState().input
-  const trainingY = useDatasetStore.getState().trainingY
-  const setStatusText = useStatusStore.getState().setStatusText
+  const { input, trainingY } = useDatasetStore.getState()
   if (!input || !trainingY) return
-  const metrics = await trainOnBatch([input], [trainingY])
-  const loss = Array.isArray(metrics) ? metrics[0] : metrics
-  setStatusText(`Training loss: ${loss?.toFixed(2)}`, percent)
+  const log = await trainOnBatch([input], [trainingY])
+
+  if (!log) return
+  useLogStore.getState().addLogs([{ ...log, batch }])
+  setStatusText(`Training loss: ${log.loss.toFixed(2)}`, percent)
 }
 
 function changeLayerSpacing({ percent }: OnScrollProps) {

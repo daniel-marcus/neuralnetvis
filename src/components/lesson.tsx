@@ -18,7 +18,7 @@ export const Lesson = (props: LessonProps) => {
   const hasHead = !!children.props.children.find((c) => c.type === Head)
   return (
     <div
-      className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-hidden ${
+      className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
         visLocked ? "" : "pointer-events-none"
       }`}
     >
