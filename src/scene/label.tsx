@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import { Color, Mesh } from "three"
 import { Text } from "troika-three-text"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
 

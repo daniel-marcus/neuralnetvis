@@ -1,27 +1,9 @@
-import npyjs, { Parsed } from "npyjs"
+import npyjs from "npyjs"
 import JSZip from "jszip"
 import { useStatusStore } from "@/components/status"
+import { isSafe } from "@/data/types"
 
 const n = new npyjs()
-
-export type SupportedTypedArray =
-  | Int8Array
-  | Uint8Array
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array
-
-type ParsedSafe = Parsed & { data: SupportedTypedArray }
-
-function isSafe(parsed: Parsed): parsed is ParsedSafe {
-  return !(
-    parsed.data instanceof BigUint64Array ||
-    parsed.data instanceof BigInt64Array
-  )
-}
 
 async function parseNpz(arrayBuffer: ArrayBuffer) {
   // TODO: skip JZip if file is npy

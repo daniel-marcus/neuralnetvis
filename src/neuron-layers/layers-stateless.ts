@@ -1,7 +1,7 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getMeshParams } from "./layout"
-import type { Dataset } from "@/data/data"
+import type { Dataset } from "@/data/dataset"
 import type {
   LayerPos,
   LayerStateless,

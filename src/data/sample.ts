@@ -1,21 +1,24 @@
-import { useCallback, useEffect } from "react"
-import { Dataset, DbBatch, useDatasetStore } from "./data"
+import { useEffect, useCallback } from "react"
+import { useDatasetStore } from "./dataset"
 import { useKeyCommand } from "@/utils/key-command"
-import { getData } from "./indexed-db"
+import { getData } from "./db"
 import * as tf from "@tensorflow/tfjs"
+import type { Dataset, DbBatch } from "./types"
 
-export function useInput(ds?: Dataset) {
-  const i = useDatasetStore((s) => s.i)
+export function useSample(ds?: Dataset) {
+  const sampleIdx = useDatasetStore((s) => s.sampleIdx)
+  const reset = useDatasetStore((s) => s.reset)
 
   useEffect(() => {
-    if (ds) updateInput(i, ds)
-  }, [i, ds])
+    if (ds) updateInput(sampleIdx, ds)
+  }, [sampleIdx, ds])
 
   useEffect(() => {
     return () => {
       currBatchCache = {}
+      reset()
     }
-  }, [ds])
+  }, [ds, reset])
 
   const next = useDatasetStore((s) => s.next)
   const prev = useCallback(() => next(-1), [next])
@@ -23,19 +26,20 @@ export function useInput(ds?: Dataset) {
   useKeyCommand("ArrowRight", next)
 }
 
-async function updateInput(i: number, ds?: Dataset) {
+async function updateInput(sampleIdx: number, ds?: Dataset) {
   if (!ds) return
-  const [data, label, dataRaw] = await getSample(ds, "train", i, true)
-  const _input = Array.from(data)
-  const rawInput = dataRaw ? Array.from(dataRaw) : _input
+  const dbSample = await getSample(ds, "train", sampleIdx, true)
+  const [features, y, featuresRaw] = dbSample
+  const _X = Array.from(features)
+  const rawX = featuresRaw ? Array.from(featuresRaw) : _X
   await tf.ready()
-  const input = tf.tidy(
+  const X = tf.tidy(
     () =>
-      (ds.input?.preprocess?.(tf.tensor(data)).arraySync() as number[]) ??
-      _input
+      (ds.input?.preprocess?.(tf.tensor(features)).arraySync() as number[]) ??
+      features
   )
-  const trainingY = label
-  useDatasetStore.setState({ input, rawInput, trainingY })
+  const sample = { X, y, rawX }
+  useDatasetStore.setState({ sample })
 }
 
 type BatchCacheKey = string // `${ds.key}_${type}`

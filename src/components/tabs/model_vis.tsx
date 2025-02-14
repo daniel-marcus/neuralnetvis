@@ -1,4 +1,4 @@
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { useVisConfigStore } from "@/scene/vis-config"
 import {
   Checkbox,

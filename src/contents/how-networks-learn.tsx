@@ -1,6 +1,6 @@
 "use client"
 
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { trainOnBatch, useTrainingStore } from "@/model/training"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
@@ -114,8 +114,8 @@ function rotate({ percent }: OnScrollProps) {
 }
 
 function changeSample({ percent }: OnScrollProps) {
-  const newI = Math.round(percent * 100 + 1)
-  useDatasetStore.setState({ i: newI })
+  const sampleIdx = Math.round(percent * 100 + 1)
+  useDatasetStore.setState({ sampleIdx })
 }
 
 let batch = 0
@@ -134,13 +134,13 @@ async function scrollTrain({ percent }: OnScrollProps) {
   const setStatusText = useStatusStore.getState().setStatusText
 
   const totalSamples = useDatasetStore.getState().totalSamples
-  const newI = getRandomI(totalSamples)
+  const sampleIdx = getRandomI(totalSamples)
   batch++
-  useDatasetStore.setState({ i: newI })
+  useDatasetStore.setState({ sampleIdx })
 
-  const { input, trainingY } = useDatasetStore.getState()
-  if (!input || !trainingY) return
-  const log = await trainOnBatch([input], [trainingY])
+  const sample = useDatasetStore.getState().sample
+  if (!sample) return
+  const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return
   useLogStore.getState().addLogs([{ ...log, batch }])

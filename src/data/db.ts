@@ -1,5 +1,5 @@
 import { openDB } from "idb"
-import { DatasetKey } from "./data"
+import { DatasetKey } from "./dataset"
 
 /* 
 dbName: ds.key

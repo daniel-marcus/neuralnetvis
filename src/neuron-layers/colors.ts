@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import type { Neuron } from "@/neuron-layers/types"
 
 const ACTIVATION_COLORS = Array.from(

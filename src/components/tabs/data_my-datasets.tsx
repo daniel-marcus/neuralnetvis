@@ -1,5 +1,5 @@
-import { useDatasetStore } from "@/data/data"
-import { DB_PREFIX } from "@/data/indexed-db"
+import { useDatasetStore } from "@/data/dataset"
+import { DB_PREFIX } from "@/data/db"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 

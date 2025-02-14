@@ -1,7 +1,7 @@
-import type { Metadata } from "next"
-import "./globals.css"
 import { App } from "@/components/app"
 import manifest from "./manifest.json"
+import "./globals.css"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: manifest.name,
@@ -11,11 +11,9 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+type LayoutProps = Readonly<{ children: React.ReactNode }>
+
+export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
       <head>

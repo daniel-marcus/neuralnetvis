@@ -1,6 +1,6 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import { useTrainingStore, getModelEvaluation } from "./training"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { useStatusStore } from "@/components/status"
 import { useLogStore } from "@/components/ui-elements/logs-plot"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"

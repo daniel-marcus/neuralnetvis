@@ -1,5 +1,5 @@
 import { Box, CollapsibleWithTitle, MenuBtn } from "@/components/ui-elements"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { useDebugStore } from "@/utils/debug"
 import { datasets } from "@/data/datasets"
 import { MyDatasets } from "./data_my-datasets"

@@ -1,4 +1,4 @@
-import { Dataset } from "@/data/data"
+import { Dataset } from "@/data/dataset"
 import { useStatusStore } from "@/components/status"
 import { ReactNode, useCallback, useEffect, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"

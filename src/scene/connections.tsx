@@ -8,7 +8,7 @@ import {
 } from "three/examples/jsm/Addons.js"
 import { useSelected } from "@/neuron-layers/neuron-select"
 import { useVisConfigStore } from "@/scene/vis-config"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
 import { getWorldPos } from "./utils"
 

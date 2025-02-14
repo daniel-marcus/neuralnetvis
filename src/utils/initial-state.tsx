@@ -1,6 +1,6 @@
 "use client"
 
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { LayerConfigArray, useModelStore } from "@/model/model"
 import { useThreeStore } from "@/scene/three-store"
 import { moveCameraTo, Position } from "@/scene/utils"

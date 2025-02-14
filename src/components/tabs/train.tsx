@@ -11,7 +11,7 @@ import {
 } from "@/components/ui-elements"
 import { getModelEvaluation, useTrainingStore } from "@/model/training"
 import React, { useEffect, useState } from "react"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import { useStatusStore } from "@/components/status"
 
 export const Train = () => {

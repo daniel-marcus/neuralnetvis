@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset, DbBatch, useDatasetStore } from "@/data/data"
+import { Dataset, DbBatch, useDatasetStore } from "@/data/dataset"
 import { useLogStore } from "@/components/ui-elements/logs-plot"
 import { create } from "zustand"
 import { useKeyCommand } from "@/utils/key-command"
@@ -9,7 +9,7 @@ import {
   DEFAULT_BACKEND,
   setBackendIfAvailable,
 } from "./tf-backend"
-import { getAll } from "@/data/indexed-db"
+import { getAll } from "@/data/db"
 import { useModelStore } from "./model"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
 import { debug } from "@/utils/debug"

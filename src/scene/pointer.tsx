@@ -1,7 +1,7 @@
 import { useAnimatedPosition, getWorldPos } from "@/scene/utils"
 import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
-import { useDatasetStore } from "@/data/data"
+import { useDatasetStore } from "@/data/dataset"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {

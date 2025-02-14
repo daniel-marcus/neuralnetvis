@@ -1,6 +1,6 @@
-import { DatasetDef } from "@/data/data"
+import { DatasetDef } from "@/data/dataset"
 import * as tf from "@tensorflow/tfjs"
-import { StandardScaler } from "@/data/normalization"
+import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
 
 export const californiaHousing: DatasetDef = {

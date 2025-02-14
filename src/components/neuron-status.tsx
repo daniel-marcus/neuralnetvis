@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { SphereGeometry } from "three"
 import { useSelected } from "@/neuron-layers/neuron-select"
-import { normalizeWithSign } from "@/data/normalization"
+import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/neuron-layers/colors"
 import { useVisConfigStore } from "@/scene/vis-config"
 import { useIsScreen } from "@/utils/screen"

@@ -1,4 +1,4 @@
-import { DatasetDef } from "@/data/data"
+import { DatasetDef } from "@/data/dataset"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
 
 export const fashionMnist: DatasetDef = {

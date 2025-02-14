@@ -1,9 +1,8 @@
 import { Lesson } from "@/components/lesson"
 import { lessonPreviews, lessons } from "@/contents"
-import React from "react"
 import { metadata } from "@/app/layout"
 import manifest from "@/app/manifest.json"
-import { Metadata } from "next"
+import type { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
 
