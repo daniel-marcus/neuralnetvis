@@ -5,14 +5,14 @@ import type { TableProps } from "@/components/ui-elements/table"
 const DISPLAY_TIME = 5 // seconds
 let timeout: NodeJS.Timeout
 
-interface Status {
-  percent: number | null
-  setPercent: (p: number | null) => void
-  text: TableProps | ReactNode
-  setText: (t: TableProps | ReactNode, percent?: number | null) => void
+export interface StatusSlice {
+  status: {
+    percent: number | null
+    setPercent: (p: number | null) => void
+    text: TableProps | ReactNode
+    setText: (t: TableProps | ReactNode, percent?: number | null) => void
+  }
 }
-
-export type StatusSlice = { status: Status }
 
 export const createStatusSlice: StateCreator<StatusSlice> = (set) => ({
   status: {
