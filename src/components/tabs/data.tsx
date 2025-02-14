@@ -1,13 +1,12 @@
 import { Box, CollapsibleWithTitle, MenuBtn } from "@/components/ui-elements"
-import { useDatasetStore } from "@/data/dataset"
-import { useDebugStore } from "@/utils/debug"
 import { datasets } from "@/data/datasets"
 import { MyDatasets } from "./data_my-datasets"
+import { useStore } from "@/store"
 
 export const Data = () => {
-  const currDatasetKey = useDatasetStore((s) => s.datasetKey)
-  const setDatasetKey = useDatasetStore((s) => s.setDatasetKey)
-  const isDebug = useDebugStore((s) => s.debug)
+  const currDatasetKey = useStore((s) => s.datasetKey)
+  const setDatasetKey = useStore((s) => s.setDatasetKey)
+  const isDebug = useStore((s) => s.isDebug)
   return (
     <Box>
       <div className="flex flex-col gap-2">

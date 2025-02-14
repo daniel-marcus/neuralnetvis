@@ -3,8 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import "@tensorflow/tfjs-backend-wasm"
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm"
-import { useTrainingStore } from "./training"
-import { useModelStore } from "./model"
+import { getModel, useStore } from "@/store"
 
 setWasmPaths({
   "tfjs-backend-wasm.wasm": "/tfjs-backend-wasm.wasm",
@@ -27,7 +26,8 @@ export function useTfBackend() {
   return isReady
 }
 
-export async function setBackendIfAvailable(backend: string) {
+export async function setBackendIfAvailable(_backend?: string) {
+  const backend = _backend || DEFAULT_BACKEND
   await tf.ready()
   return getAvailableBackends().includes(backend) && tf.setBackend(backend)
 }
@@ -41,8 +41,8 @@ export function getAvailableBackends() {
 
 export async function backendForTraining() {
   const backends = getAvailableBackends()
-  const model = useModelStore.getState().model
-  const silent = useTrainingStore.getState().config.silent
+  const model = getModel()
+  const silent = useStore.getState().trainConfig.silent
   if (silent && backends.includes("webgpu")) {
     await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
   } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {

@@ -1,11 +1,11 @@
-import { useDatasetStore } from "@/data/dataset"
 import { DB_PREFIX } from "@/data/db"
+import { useStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 
 export const MyDatasets = () => {
-  const ds = useDatasetStore((s) => s.ds)
-  const setDatasetKey = useDatasetStore((s) => s.setDatasetKey)
+  const ds = useStore((s) => s.ds)
+  const setDatasetKey = useStore((s) => s.setDatasetKey)
   const [savedDatasets, setSavedDatasets] = useState<string[]>([])
   const updateDatasets = async () => {
     try {

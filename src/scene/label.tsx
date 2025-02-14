@@ -2,9 +2,9 @@ import { useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import { Color, Mesh } from "three"
 import { Text } from "troika-three-text"
-import { useDatasetStore } from "@/data/dataset"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
+import { useStore } from "@/store"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -24,8 +24,8 @@ interface NeuronLabelsProps {
 
 export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
-  const trainingY = useDatasetStore((s) => s.trainingY)
-  const isRegression = useDatasetStore((s) => s.isRegression)
+  const trainingY = useStore((s) => s.sample?.y)
+  const isRegression = useStore((s) => s.isRegression())
   const showValueLabel = !!label && isRegression
   if (!position) return null
   return (

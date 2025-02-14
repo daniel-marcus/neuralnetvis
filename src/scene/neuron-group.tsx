@@ -2,12 +2,11 @@ import { useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
 import { useAnimatedPosition } from "@/scene/utils"
-import { useLocalSelected, useSelected } from "@/neuron-layers/neuron-select"
-import { debug } from "@/utils/debug"
-import { useVisConfigStore } from "@/scene/vis-config"
+import { useLocalSelected } from "@/neuron-layers/neuron-select"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
+import { isDebug, useStore } from "@/store"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { meshParams, groups, group, material } = props
@@ -37,7 +36,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
 }
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
-  const neuronSpacing = useVisConfigStore((s) => s.neuronSpacing)
+  const neuronSpacing = useStore((s) => s.vis.neuronSpacing)
   const p = geometry.parameters as { width?: number; radius?: number }
   const size = p.width ?? p.radius ?? 1
   const factor = spacingFactor ?? 1
@@ -50,7 +49,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
   const groupIndex = group.index
   const groupCount = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
-  const splitColors = useVisConfigStore((s) => s.splitColors)
+  const splitColors = useStore((s) => s.vis.splitColors)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
@@ -95,7 +94,7 @@ function useNeuronPositions(props: NeuronGroupProps) {
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!group.meshRef.current) return
-    if (debug()) console.log("upd pos")
+    if (isDebug()) console.log("upd pos")
     for (const [i, position] of positions.entries()) {
       tempObj.position.set(...position)
       tempObj.updateMatrix()
@@ -110,7 +109,7 @@ function useNeuronPositions(props: NeuronGroupProps) {
 function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
-    if (debug()) console.log("upd colors")
+    if (isDebug()) console.log("upd colors")
     for (const [i, n] of neurons.entries()) {
       if (n.color) meshRef.current.setColorAt(i, n.color)
       else console.warn("no color", n)
@@ -128,7 +127,7 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
   const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {
     if (!meshRef.current) return
-    if (debug()) console.log("upd scale")
+    if (isDebug()) console.log("upd scale")
     const base = 1
     const highlight = 1.5
     for (const [i, nid] of nids.split(",").entries()) {
@@ -147,7 +146,8 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
 }
 
 function useInteractions(groupedNeurons: Neuron[]) {
-  const { toggleSelected, toggleHovered } = useSelected()
+  const toggleSelected = useStore((s) => s.toggleSelected)
+  const toggleHovered = useStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {

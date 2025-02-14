@@ -1,7 +1,7 @@
 import { ProgressBar } from "./progress-bar"
 import { Status } from "./status"
 import { NeuronStatus } from "./neuron-status"
-import { MainSampleSlider } from "./sample-slider"
+import { SampleSlider } from "./sample-slider"
 
 export const Footer = () => {
   return (
@@ -11,7 +11,7 @@ export const Footer = () => {
           <NeuronStatus />
           <Status />
         </div>
-        <MainSampleSlider />
+        <SampleSlider />
       </div>
       <ProgressBar />
     </div>

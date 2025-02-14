@@ -1,10 +1,9 @@
+import { useStore } from "@/store"
 import { useAsciiText } from "@/utils/ascii-text"
-import { useTabStore } from "./menu"
 
 export const Logo = () => {
-  const currTab = useTabStore((s) => s.currTab)
-  const isShown = useTabStore((s) => s.isShown)
-  const hasTab = currTab && isShown
+  const currTab = useStore((s) => s.tab)
+  const isShown = useStore((s) => s.tabIsShown)
   const neural = useAsciiText("Neural")
   const net = useAsciiText("Net")
   const vis = useAsciiText("Vis")
@@ -15,7 +14,7 @@ export const Logo = () => {
       <pre>{neural}</pre>
       <div
         className={`transition-opacity duration-100 ${
-          hasTab ? "opacity-0 sm:opacity-100" : ""
+          currTab && isShown ? "opacity-0 sm:opacity-100" : ""
         }`}
       >
         <pre>{net}</pre>

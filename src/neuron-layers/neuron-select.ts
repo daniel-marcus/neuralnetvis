@@ -1,68 +1,15 @@
 import { useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { create } from "zustand"
-import { Vector3 } from "three"
+import { useStore } from "@/store"
 import { normalizeWithSign } from "@/data/utils"
-import { useVisConfigStore, type HighlightProp } from "@/scene/vis-config"
-import type { LayerStateful, Neuron, Nid } from "@/neuron-layers/types"
-import { useDebugStore } from "@/utils/debug"
 import { getHighlightColor } from "./colors"
-
-interface SelectedStore {
-  hovered: Neuron | null
-  selected: Neuron | null
-  getHoveredNid: () => Nid | null
-  getSelectedNid: () => Nid | null
-  toggleHovered: (n: Neuron | null) => void
-  toggleSelected: (n: Neuron | null) => void
-  setSelected: (n: Neuron | null) => void
-  hoverOrigin?: Vector3
-  setHovered: (n: Neuron | null, origin?: Vector3) => void
-  hasHoveredOrSelected: () => boolean
-  // TODO: make all neuron accessible by nid?
-}
-
-export const useSelected = create<SelectedStore>((set, get) => ({
-  hovered: null,
-  selected: null,
-  getHoveredNid: () => get().hovered?.nid ?? null,
-  getSelectedNid: () => get().selected?.nid ?? null,
-  toggleSelected: (n) =>
-    set(({ selected }) => ({
-      selected: selected && n?.nid === selected.nid ? null : n,
-    })),
-  setSelected: (selected) => set({ selected }),
-  setHovered: (hovered, hoverOrigin) => set({ hovered, hoverOrigin }),
-  toggleHovered: (n) =>
-    set(({ hovered }) => ({
-      hovered: hovered && n?.nid === hovered.nid ? null : n,
-    })),
-  hasHoveredOrSelected: () => Boolean(get().hovered || get().selected),
-}))
-
-function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
-  return nid?.startsWith(`${layerIndex}_`) && nid.endsWith(`.${groupIndex}`)
-}
-
-export function useLocalSelected(layerIndex: number, groupIndex: number) {
-  // returns values only if they are in the same group to avoid unnecessary re-renders
-  const _selectedNid = useSelected((s) => s.getSelectedNid())
-  const _hoveredNid = useSelected((s) => s.getHoveredNid())
-  return {
-    selectedNid: isInGroup(_selectedNid, layerIndex, groupIndex)
-      ? _selectedNid
-      : null,
-    hoveredNid: isInGroup(_hoveredNid, layerIndex, groupIndex)
-      ? _hoveredNid
-      : null,
-  }
-}
+import type { LayerStateful, Nid, HighlightProp } from "./types"
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
-  const highlightProp = useVisConfigStore((s) => s.highlightProp)
-  const selectedNid = useSelected((s) => s.getSelectedNid())
-  const hoveredNid = useSelected((s) => s.getHoveredNid())
-  const setSelected = useSelected((s) => s.setSelected)
+  const highlightProp = useStore((s) => s.vis.highlightProp)
+  const selectedNid = useStore((s) => s.getSelectedNid())
+  const hoveredNid = useStore((s) => s.getHoveredNid())
+  const setSelected = useStore((s) => s.setSelected)
 
   // TODO: refactor! + reset selected when model changes
   useEffect(() => {
@@ -71,7 +18,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       .flatMap((l) => l.neurons)
       .find(({ nid }) => nid === selectedNid)
     setSelected(selected ?? null)
-    if (useDebugStore.getState().debug) console.log(selected)
+    if (useStore.getState().isDebug) console.log(selected)
   }, [layerProps, selectedNid, setSelected])
 
   const selOrHovNid = selectedNid || hoveredNid
@@ -131,4 +78,22 @@ export function getWeightedInputs(
     return tf.mul(weightsTensor, inputsTensor).arraySync() as number[]
   })
   return weightedInputs
+}
+
+export function useLocalSelected(layerIndex: number, groupIndex: number) {
+  // returns values only if they are in the same group to avoid unnecessary re-renders
+  const _selectedNid = useStore((s) => s.getSelectedNid())
+  const _hoveredNid = useStore((s) => s.getHoveredNid())
+  return {
+    selectedNid: isInGroup(_selectedNid, layerIndex, groupIndex)
+      ? _selectedNid
+      : null,
+    hoveredNid: isInGroup(_hoveredNid, layerIndex, groupIndex)
+      ? _hoveredNid
+      : null,
+  }
+}
+
+function isInGroup(nid: Nid | null, layerIndex: number, groupIndex = 0) {
+  return nid?.startsWith(`${layerIndex}_`) && nid.endsWith(`.${groupIndex}`)
 }

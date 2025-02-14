@@ -1,13 +1,13 @@
 import { useEffect, useCallback } from "react"
-import { useDatasetStore } from "./dataset"
+import * as tf from "@tensorflow/tfjs"
+import { useStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
-import * as tf from "@tensorflow/tfjs"
 import type { Dataset, DbBatch } from "./types"
 
 export function useSample(ds?: Dataset) {
-  const sampleIdx = useDatasetStore((s) => s.sampleIdx)
-  const reset = useDatasetStore((s) => s.reset)
+  const sampleIdx = useStore((s) => s.sampleIdx)
+  const resetSample = useStore((s) => s.resetSample)
 
   useEffect(() => {
     if (ds) updateInput(sampleIdx, ds)
@@ -16,11 +16,11 @@ export function useSample(ds?: Dataset) {
   useEffect(() => {
     return () => {
       currBatchCache = {}
-      reset()
+      resetSample()
     }
-  }, [ds, reset])
+  }, [ds, resetSample])
 
-  const next = useDatasetStore((s) => s.next)
+  const next = useStore((s) => s.next)
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowLeft", prev)
   useKeyCommand("ArrowRight", next)
@@ -39,7 +39,7 @@ async function updateInput(sampleIdx: number, ds?: Dataset) {
       features
   )
   const sample = { X, y, rawX }
-  useDatasetStore.setState({ sample })
+  useStore.setState({ sample })
 }
 
 type BatchCacheKey = string // `${ds.key}_${type}`

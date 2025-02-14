@@ -1,16 +1,11 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useState } from "react"
-import { useTrainingStore } from "./training"
-
-export interface WeightsBiases {
-  weights?: number[][] // weights per neuron / filter
-  biases?: number[]
-  maxAbsWeight?: number
-}
+import { useStore } from "@/store"
+import type { WeightsBiases } from "./types"
 
 export function useWeights(model?: tf.LayersModel) {
   const [weightsBiases, setWeightsBiases] = useState<WeightsBiases[]>([])
-  const batchCount = useTrainingStore((s) => s.batchCount) // used to trigger updates after/during training
+  const batchCount = useStore((s) => s.batchCount) // used to trigger updates after/during training
   useEffect(() => {
     if (!model) return
     async function updateWeights() {

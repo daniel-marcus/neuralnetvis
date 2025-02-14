@@ -1,26 +1,12 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect } from "react"
+import { useStore } from "@/store"
 import { normalizeConv2DActivations, normalizeTensor } from "@/data/utils"
-import { create } from "zustand"
-
-export interface LayerActivations {
-  activations: number[] // [neuronIdx]
-  normalizedActivations: number[]
-}
-
-interface ActivationStore {
-  layerActivations: LayerActivations[]
-  setLayerActivations: (layerActivations: LayerActivations[]) => void
-}
-
-export const useActivationStore = create<ActivationStore>((set) => ({
-  layerActivations: [],
-  setLayerActivations: (layerActivations) => set(() => ({ layerActivations })),
-}))
+import { LayerActivations } from "./types"
 
 export function useActivations(model?: tf.LayersModel, input?: number[]) {
-  const layerActivations = useActivationStore((s) => s.layerActivations)
-  const setLayerActivations = useActivationStore((s) => s.setLayerActivations)
+  const layerActivations = useStore((s) => s.layerActivations)
+  const setLayerActivations = useStore((s) => s.setLayerActivations)
   useEffect(() => {
     async function getActivations() {
       if (!model || !input || input.length === 0) return

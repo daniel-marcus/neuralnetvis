@@ -1,40 +1,19 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
-import { useTrainingStore, getModelEvaluation } from "./training"
-import { useDatasetStore } from "@/data/dataset"
-import { useStatusStore } from "@/components/status"
-import { useLogStore } from "@/components/ui-elements/logs-plot"
-import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 import throttle from "lodash.throttle"
+import { useStore } from "@/store"
+import { getModelEvaluation } from "./training"
 import {
   resolveScalarsInLogs,
-  UnresolvedLogs,
+  type UnresolvedLogs,
 } from "@tensorflow/tfjs-layers/dist/logs"
+import type { TypedParams } from "./types"
 
 const THROTTLE = 30
 
-type FitParams = {
-  // passed in model.fit()
-  epochs: number
-  samples: number
-  batchSize: number
-  initialEpoch: number
-  steps: null
-}
-type FitDatasetParams = {
-  // passed in model.fitDataset()
-  epochs: number
-  samples: null
-  batchSize: null
-  initialEpoch: null
-  steps: number // batchesPerEpoch has to be set
-}
-
-type TypedParams = Params & (FitParams | FitDatasetParams)
-
 export class UpdateCb extends CustomCallback {
-  private silent = useTrainingStore.getState().config.silent
-  private batchSize = useTrainingStore.getState().config.batchSize
-  private next = useDatasetStore.getState().next
+  private silent = useStore.getState().trainConfig.silent
+  private batchSize = useStore.getState().trainConfig.batchSize
+  private next = useStore.getState().next
   private trainingComplete = false // will be set only if all epochs ran fully without interruption
   declare params: TypedParams
   constructor() {
@@ -42,22 +21,22 @@ export class UpdateCb extends CustomCallback {
       onBatchBegin: () => {
         if (this.silent) return
         this.next(this.batchSize) // trigger view update
-        useTrainingStore.getState().setBatchCount((prev) => prev + 1) // trigger model update
+        useStore.getState().setBatchCount((prev) => prev + 1) // trigger model update
       },
       onEpochEnd: (epoch) => {
-        useTrainingStore.getState().setEpochCount(epoch + 1)
+        useStore.getState().setEpochCount(epoch + 1)
         if (epoch === this.params.epochs - 1) {
           this.trainingComplete = true
         }
       },
       onTrainEnd: () => {
         if (this.trainingComplete) {
-          useTrainingStore.setState({
+          useStore.setState({
             isTraining: false,
             trainingPromise: null,
           })
           if (this.silent) {
-            const { setBatchCount } = useTrainingStore.getState()
+            const setBatchCount = useStore.getState().setBatchCount
             const processedSamples = (this.params.samples ?? 0) - 1
             this.next(processedSamples) // update view
             setBatchCount((c) => c + processedSamples) // update weights
@@ -71,10 +50,7 @@ export class UpdateCb extends CustomCallback {
 export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
-  private setStatus = throttle(
-    useStatusStore.getState().setStatusText,
-    THROTTLE
-  )
+  private setStatus = throttle(useStore.getState().status.setText, THROTTLE)
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0
@@ -133,7 +109,7 @@ export class ProgressCb extends CustomCallback {
 
 export class LogsPlotCb extends CustomCallback {
   private epoch = 0
-  private addLogs = throttle(useLogStore.getState().addLogs, THROTTLE)
+  private addLogs = throttle(useStore.getState().addLogs, THROTTLE)
   private lastLogTime = 0
   private updEvery = 50 // ms
   constructor() {
@@ -147,7 +123,7 @@ export class LogsPlotCb extends CustomCallback {
       },
     })
   }
-  async onBatchEnd(batchIndex: number, logs: UnresolvedLogs) {
+  async onBatchEnd(_: number, logs: UnresolvedLogs) {
     if (!logs) return
     if (Date.now() - this.lastLogTime > this.updEvery) {
       this.lastLogTime = Date.now()
@@ -167,7 +143,7 @@ export class DebugCb extends CustomCallback {
       },
       onTrainEnd: () => {
         console.log(Date.now() - this.startTime)
-        useTrainingStore.getState().setIsTraining(false)
+        useStore.getState().setIsTraining(false)
       },
     })
   }

@@ -1,8 +1,7 @@
-import { useTabStore } from "@/components/menu"
+import { setTab } from "@/store"
 import { Box, InlineButton } from "@/components/ui-elements"
 
 export function Info() {
-  const setTabByKey = useTabStore((s) => s.setTabByKey)
   return (
     <Box padding>
       <p className="mb-4">
@@ -10,13 +9,13 @@ export function Info() {
       </p>
       <p className="mb-4">
         If you are new to the topic, you might want to start with the{" "}
-        <InlineButton onClick={() => setTabByKey("learn")}>learn</InlineButton>{" "}
+        <InlineButton onClick={() => setTab("learn")}>learn</InlineButton>{" "}
         section.
       </p>
       <p className="mb-4">
         Otherwise, dive in, modify or train models, and{" "}
-        <InlineButton onClick={() => setTabByKey("play")}>play</InlineButton>{" "}
-        with neural networks – all within your browser!
+        <InlineButton onClick={() => setTab("play")}>play</InlineButton> with
+        neural networks – all within your browser!
       </p>
       <p className="text-right">
         v{process.env.APP_VERSION}

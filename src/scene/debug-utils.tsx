@@ -1,14 +1,14 @@
-import { useDebugStore } from "@/utils/debug"
-import { Stats } from "@react-three/drei"
-import { useThree, useFrame } from "@react-three/fiber"
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
+import { useThree, useFrame } from "@react-three/fiber"
+import { Stats } from "@react-three/drei"
+import { useStore } from "@/store"
 
 // use for debug purposes
 
 export const DebugUtils = () => {
-  const debug = useDebugStore((s) => s.debug)
-  if (!debug) return null
+  const isDebug = useStore((s) => s.isDebug)
+  if (!isDebug) return null
   return <Stats />
 }
 

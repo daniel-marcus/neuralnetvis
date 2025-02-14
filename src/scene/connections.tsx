@@ -6,11 +6,9 @@ import {
   LineMaterial,
   LineSegments2,
 } from "three/examples/jsm/Addons.js"
-import { useSelected } from "@/neuron-layers/neuron-select"
-import { useVisConfigStore } from "@/scene/vis-config"
-import { useDatasetStore } from "@/data/dataset"
-import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
+import { useStore } from "@/store"
 import { getWorldPos } from "./utils"
+import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
@@ -22,10 +20,10 @@ type NeuronConnectionsProps = {
 }
 
 export const HoverConnections = () => {
-  const hovered = useSelected((s) => s.hovered)
-  const hoverOrigin = useSelected((s) => s.hoverOrigin)
+  const hovered = useStore((s) => s.hovered)
+  const hoverOrigin = useStore((s) => s.hoverOrigin)
   // too many lines for fully connected layers
-  const allowDenseHoverLines = useVisConfigStore((s) => s.allowDenseHoverLines)
+  const allowDenseHoverLines = useStore((s) => s.vis.allowDenseHoverLines)
   if (!hovered) return null
   if (hovered.layer.layerType === "Dense" && !allowDenseHoverLines) return null
   return (
@@ -47,11 +45,11 @@ export const HoverConnections = () => {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const showLines = useVisConfigStore((s) => s.showLines)
+  const showLines = useStore((s) => s.vis.showLines)
   const isConvOrMaxPool =
     ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
     ["Conv2D"].includes(prevLayer.layerType)
-  const isRegression = useDatasetStore((s) => s.isRegression)
+  const isRegression = useStore((s) => s.isRegression())
   const { invalidate } = useThree()
   useEffect(() => {
     invalidate()
@@ -72,7 +70,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
 
 function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
   const lineActivationThreshold =
-    useVisConfigStore.getState().lineActivationThreshold
+    useStore.getState().vis.lineActivationThreshold
   const layerMaxWeight = layer.maxAbsWeight ?? 1
 
   const connections: DynamicLineProps[] = []
@@ -83,6 +81,7 @@ function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
 
     for (const [index, weight] of weights.entries()) {
       const prevNeuron = prevNeurons[index]
+      if (!prevNeuron) continue
       const absWeight = Math.abs(weight)
       if (absWeight < layerMaxWeight * 0.5) continue
       const weightedInput = absWeight * (prevNeuron.activation ?? 0)

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
-import type { NeuronDef } from "@/neuron-layers/types"
-import { getThree } from "./three-store"
 import { Controller } from "@react-spring/web"
+import type { NeuronDef } from "@/neuron-layers/types"
+import { getThree } from "@/store"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   // TODO: could use spring here

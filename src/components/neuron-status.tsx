@@ -1,16 +1,15 @@
 import { useRef, useState } from "react"
 import { SphereGeometry } from "three"
-import { useSelected } from "@/neuron-layers/neuron-select"
+import { useStore } from "@/store"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/neuron-layers/colors"
-import { useVisConfigStore } from "@/scene/vis-config"
 import { useIsScreen } from "@/utils/screen"
-import { Table, useStatusStore } from "./status"
 import type { Neuron } from "@/neuron-layers/types"
+import { Table } from "./ui-elements"
 
 export const NeuronStatus = () => {
-  const _selected = useSelected((s) => s.selected)
-  const _hovered = useSelected((s) => s.hovered)
+  const _selected = useStore((s) => s.selected)
+  const _hovered = useStore((s) => s.hovered)
   const hasCurrentSelected = !!_selected || !!_hovered
   let selected = _hovered ?? _selected
   const prevSelected = useRef<Neuron | null>(null)
@@ -28,8 +27,8 @@ export const NeuronStatus = () => {
   const isRounded =
     selected?.layer.prevLayer?.meshParams.geometry instanceof SphereGeometry
 
-  const hasStatus = !!useStatusStore((s) => s.statusText)
-  const setSelected = useSelected((s) => s.setSelected)
+  const hasStatus = !!useStore((s) => s.status.text)
+  const setSelected = useStore((s) => s.setSelected)
   if (!selected) return <div />
   return (
     <div
@@ -84,7 +83,7 @@ const WeightsViewer = ({
   groupCount = 1,
 }: WeightsGridProps) => {
   const [currGroup, setCurrGroup] = useState(0)
-  const highlightProp = useVisConfigStore((s) => s.highlightProp)
+  const highlightProp = useStore((s) => s.vis.highlightProp)
   const isScreenSm = useIsScreen("sm")
   if (highlightProp === "weights") return null // will be duplication
   if (!weights.length) return null

@@ -1,13 +1,12 @@
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
-import { useLockStore } from "@/scene/lock"
-import { ThreeStoreSetter } from "./three-store"
-import { DebugUtils } from "./debug-utils"
 import { Model } from "./model"
+import { DebugUtils } from "./debug-utils"
 import { defaultState } from "@/utils/initial-state"
+import { useStore } from "@/store"
 
 export const Scene = () => {
-  const isLocked = useLockStore((s) => s.visualizationLocked)
+  const isLocked = useStore((s) => s.vis.isLocked)
   return (
     <div
       className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-background select-none overflow-hidden ${
@@ -18,7 +17,6 @@ export const Scene = () => {
         <Lights />
         <PerspectiveCamera makeDefault position={defaultState.cameraPos} />
         <OrbitControls target={[0, 0, 0]} enabled={!isLocked} />
-        <ThreeStoreSetter />
         <DebugUtils />
         <Model />
       </Canvas>

@@ -1,7 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Ref } from "react"
-import { create } from "zustand"
 import { InlineButton } from "./buttons"
-import { useTrainingStore } from "@/model/training"
+import { useStore } from "@/store"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
@@ -19,23 +18,7 @@ const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
 const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
 const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
 
-interface LogsStore {
-  logs: TrainingLog[]
-  hasLogs: () => boolean
-  resetLogs: () => void
-  addLogs: (logs: TrainingLog[]) => void
-  metric: (typeof METRICS)[number]
-  setMetric: (metric: (typeof METRICS)[number]) => void
-}
-
-export const useLogStore = create<LogsStore>((set, get) => ({
-  logs: [] as TrainingLog[],
-  hasLogs: () => get().logs.length > 0,
-  resetLogs: () => set({ logs: [] }),
-  addLogs: (logs) => set((state) => ({ logs: [...state.logs, ...logs] })),
-  metric: "loss",
-  setMetric: (metric) => set({ metric }),
-}))
+export type Metric = (typeof METRICS)[number]
 
 type TooltipContent = React.ReactNode | null
 
@@ -43,8 +26,10 @@ const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
 export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
-  const { logs, metric, setMetric } = useLogStore()
-  const isEpochMetric = EPOCH_METRICS.includes(metric)
+  const logs = useStore((s) => s.logs)
+  const logsMetric = useStore((s) => s.logsMetric)
+  const setLogsMetric = useStore((s) => s.setLogsMetric)
+  const isEpochMetric = EPOCH_METRICS.includes(logsMetric)
   const filteredLogs = useMemo(
     () =>
       logs.filter((log) =>
@@ -56,7 +41,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
   )
   const tooltipRef = useRef<HTMLDivElement>(null)
   const dotRef = useRef<HTMLDivElement>(null)
-  const [canvasRef, positions] = useCanvasUpdate(filteredLogs, metric)
+  const [canvasRef, positions] = useCanvasUpdate(filteredLogs, logsMetric)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -109,7 +94,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
     },
     [filteredLogs, tooltipRef, isEpochMetric, positions, canvasRef]
   )
-  const validationSplit = useTrainingStore((s) => s.config.validationSplit)
+  const validationSplit = useStore((s) => s.trainConfig.validationSplit)
   if (!logs.length) return null
   return (
     <div>
@@ -128,7 +113,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
       )}
       <div className={`flex mt-2 justify-end ${isShown ? "" : "hidden"}`}>
         {METRICS.map((m) => {
-          const isSelected = m === metric
+          const isSelected = m === logsMetric
           const isDisabled = !validationSplit && EPOCH_METRICS.includes(m)
           return (
             <InlineButton
@@ -137,7 +122,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
               className={`${isSelected ? "text-white" : ""} ${
                 isDisabled ? "opacity-50" : ""
               }`}
-              onClick={() => setMetric(m)}
+              onClick={() => setLogsMetric(m)}
               disabled={isDisabled}
             >
               {m}

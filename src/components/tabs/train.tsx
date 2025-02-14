@@ -1,24 +1,16 @@
-import { LogsPlot, useLogStore } from "@/components/ui-elements/logs-plot"
-import {
-  Box,
-  InlineButton,
-  Slider,
-  InputRow,
-  Checkbox,
-  Collapsible,
-  CollapsibleWithTitle,
-  Arrow,
-} from "@/components/ui-elements"
-import { getModelEvaluation, useTrainingStore } from "@/model/training"
 import React, { useEffect, useState } from "react"
-import { useDatasetStore } from "@/data/dataset"
-import { useStatusStore } from "@/components/status"
+import { useStore } from "@/store"
+import * as Components from "@/components/ui-elements"
+import { getModelEvaluation } from "@/model/training"
+
+const { Box, InlineButton, Slider, InputRow, Checkbox } = Components
+const { Collapsible, CollapsibleWithTitle, Arrow, LogsPlot } = Components
 
 export const Train = () => {
-  const isTraining = useTrainingStore((s) => s.isTraining)
-  const toggleTraining = useTrainingStore((s) => s.toggleTraining)
+  const isTraining = useStore((s) => s.isTraining)
+  const toggleTraining = useStore((s) => s.toggleTraining)
   const [showLogs, setShowLogs] = useState(false)
-  const hasLogs = useLogStore((s) => s.hasLogs())
+  const hasLogs = useStore((s) => s.hasLogs())
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
@@ -53,8 +45,8 @@ export const Train = () => {
 }
 
 const TrainConfigControl = () => {
-  const config = useTrainingStore((s) => s.config)
-  const setConfig = useTrainingStore((s) => s.setConfig)
+  const config = useStore((s) => s.trainConfig)
+  const setConfig = useStore((s) => s.setTrainConfig)
   return (
     <CollapsibleWithTitle title="config">
       <InputRow
@@ -111,8 +103,8 @@ const TrainConfigControl = () => {
         hint="Load data on the fly (could be slower, but saves memory)"
       >
         <Checkbox
-          checked={config.fitDataset}
-          onChange={(fitDataset) => setConfig({ fitDataset })}
+          checked={config.lazyLoading}
+          onChange={(lazyLoading) => setConfig({ lazyLoading })}
         />
       </InputRow>
     </CollapsibleWithTitle>
@@ -120,8 +112,8 @@ const TrainConfigControl = () => {
 }
 
 function useEvaluate() {
-  const ds = useDatasetStore((s) => s.ds)
-  const setStatusText = useStatusStore((s) => s.setStatusText)
+  const ds = useStore((s) => s.ds)
+  const setStatusText = useStore((s) => s.status.setText)
   async function evaluate() {
     if (!ds) return
     const { loss, accuracy } = await getModelEvaluation()

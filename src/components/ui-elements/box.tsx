@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react"
 import { useDrag } from "@use-gesture/react"
 import { useSpring, animated } from "@react-spring/web"
-import { useTabStore } from "@/components/menu"
+import { useStore } from "@/store"
 
 const AnimatedDiv = animated("div")
 
@@ -13,13 +13,10 @@ interface BoxProps {
 }
 
 export function Box({ children, className, padding, hasBg = true }: BoxProps) {
-  const isShown = useTabStore((s) => s.isShown)
-  const setIsShown = useTabStore((s) => s.setIsShown)
+  const isShown = useStore((s) => s.tabIsShown)
   const closeTab = useCallback(() => {
-    setIsShown(false)
-    // const parentPath = pathname.split("/").slice(0, -1).join("/") || "/"
-    // router.push(parentPath)
-  }, [setIsShown])
+    useStore.setState({ tabIsShown: false })
+  }, [])
   const [bind, style] = useSwipeClose(closeTab, isShown)
   return (
     <AnimatedDiv

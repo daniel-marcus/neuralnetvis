@@ -1,20 +1,19 @@
-import { useStatusStore } from "./status"
-import { useSelected } from "@/neuron-layers/neuron-select"
-import { useDatasetStore } from "@/data/dataset"
-import { useLockStore } from "@/scene/lock"
+import { useStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
 
-export const MainSampleSlider = () => {
-  const hasSelected = useSelected((s) => s.hasHoveredOrSelected())
-  const hasStatus = !!useStatusStore((s) => s.statusText)
-  const hasProgressBar = typeof useStatusStore((s) => s.percent) === "number"
-  const { sampleIdx, totalSamples } = useDatasetStore()
-  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
+export const SampleSlider = () => {
+  const hasSelected = useStore((s) => s.hasHoveredOrSelected())
+  const hasStatus = !!useStore((s) => s.status.text)
+  const hasProgressBar = typeof useStore((s) => s.status.percent) === "number"
+  const visIsLocked = useStore((s) => s.vis.isLocked)
+  const sampleIdx = useStore((s) => s.sampleIdx)
+  const totalSamples = useStore((s) => s.totalSamples())
+  const setSampleIdx = useStore((s) => s.setSampleIdx)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
         className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
-          hasProgressBar || !totalSamples || visualizationLocked
+          hasProgressBar || !totalSamples || visIsLocked
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
@@ -28,23 +27,16 @@ export const MainSampleSlider = () => {
           } as React.CSSProperties
         }
       >
-        <SampleSlider />
+        <Slider
+          value={sampleIdx}
+          onChange={setSampleIdx}
+          min={0}
+          max={totalSamples - 1}
+        />
         <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
           {sampleIdx + 1} / {totalSamples}
         </div>
       </div>
     </div>
-  )
-}
-
-function SampleSlider() {
-  const { sampleIdx, setSampleIdx, totalSamples } = useDatasetStore()
-  return (
-    <Slider
-      value={sampleIdx}
-      onChange={setSampleIdx}
-      min={0}
-      max={totalSamples - 1}
-    />
   )
 }

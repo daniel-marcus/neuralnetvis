@@ -1,21 +1,7 @@
-import { create } from "zustand"
 import * as tf from "@tensorflow/tfjs"
-import { useStatusStore } from "@/components/status"
+import { useStore, isDebug, setStatus, getThree } from "@/store"
 import { getAvailableBackends } from "@/model/tf-backend"
-import { useThreeStore } from "@/scene/three-store"
 import { useKeyCommand } from "./key-command"
-
-interface DebugStore {
-  debug: boolean
-  toggleDebug: () => void
-}
-
-export const useDebugStore = create<DebugStore>((set) => ({
-  debug: false,
-  toggleDebug: () => set((s) => ({ debug: !s.debug })),
-}))
-
-export const debug = () => useDebugStore.getState().debug
 
 export function useDebugCommands() {
   useKeyCommand("d", toggleDebug)
@@ -23,13 +9,9 @@ export function useDebugCommands() {
   useKeyCommand("s", showStats)
 }
 
-const { setStatusText } = useStatusStore.getState()
-
 function toggleDebug() {
-  useDebugStore.getState().toggleDebug()
-  const debug = useDebugStore.getState().debug
-  setStatusText(`Debug mode ${debug ? "enabled" : "disabled"}`)
-  // if (debug) tf.enableDebugMode()
+  useStore.getState().toggleDebug()
+  setStatus(`Debug mode ${isDebug() ? "enabled" : "disabled"}`)
 }
 
 function switchBackend() {
@@ -38,11 +20,11 @@ function switchBackend() {
   const currIdx = availableBackends.indexOf(currentBackend)
   const newBackend = availableBackends[(currIdx + 1) % availableBackends.length]
   tf.setBackend(newBackend)
-  setStatusText(`Switched backend to ${newBackend}`)
+  setStatus(`Switched backend to ${newBackend}`)
 }
 
 function showStats() {
-  const gl = useThreeStore.getState().three?.gl
+  const gl = getThree()?.gl
 
   const memoryInfo = tf.memory() as tf.MemoryInfo & {
     numBytesInGPU: number
@@ -56,9 +38,10 @@ function showStats() {
     Tensors: memoryInfo.numTensors,
     Geometries: gl?.info.memory.geometries,
   }
-  setStatusText({ data })
+  setStatus({ data })
 
   const tfEngine = tf.engine()
   const glInfo = gl?.info
-  console.log(data, { tfEngine, glInfo })
+  const appState = useStore.getState()
+  console.log({ data, tfEngine, glInfo, appState })
 }

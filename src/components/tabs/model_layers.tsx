@@ -1,20 +1,10 @@
-import { useStatusStore } from "@/components/status"
-import { useVisConfigStore } from "@/scene/vis-config"
-import {
-  LayerConfig,
-  LayerConfigArray,
-  LayerConfigMap,
-  useModelStore,
-} from "@/model/model"
-import {
-  CollapsibleWithTitle,
-  InlineButton,
-  InputRow,
-  Select,
-  Slider,
-} from "@/components/ui-elements"
-import { DraggableList } from "@/components/ui-elements/draggable-list"
-import { ReactNode, useRef } from "react"
+import { useRef, type ReactNode } from "react"
+import { useStore } from "@/store"
+import * as Components from "@/components/ui-elements"
+import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
+
+const { InputRow, Slider, Select, InlineButton } = Components
+const { CollapsibleWithTitle, DraggableList } = Components
 
 function getInputComp<T extends keyof LayerConfigMap>(
   layerConfig: LayerConfig<T>,
@@ -93,11 +83,11 @@ function newDefaultLayer<T extends keyof LayerConfigMap>(
 }
 
 export const LayerConfigControl = () => {
-  const model = useModelStore((s) => s.model)
+  const model = useStore((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
     []) as unknown as LayerConfigArray
-  const setLayerConfigs = useModelStore((s) => s.setLayerConfigs)
-  const resetLayerConfigs = useModelStore((s) => s.resetLayerConfigs)
+  const setLayerConfigs = useStore((s) => s.setLayerConfigs)
+  const resetLayerConfigs = useStore((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
@@ -132,10 +122,8 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
-  const toggleLayerVisibility = useVisConfigStore(
-    (s) => s.toggleLayerVisibility
-  )
-  const invisibleLayers = useVisConfigStore((s) => s.invisibleLayers)
+  const toggleLayerVisibility = useStore((s) => s.vis.toggleLayerVisibility)
+  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
   return (
     <CollapsibleWithTitle title={"layers"}>
       <div className="flex flex-col gap-4">
@@ -223,7 +211,7 @@ export const LayerConfigControl = () => {
 }
 
 function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
-  const setStatusText = useStatusStore.getState().setStatusText
+  const setStatusText = useStore.getState().status.setText
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")

@@ -1,17 +1,14 @@
 "use client"
 
-import { useDatasetStore } from "@/data/dataset"
-import { useVisConfigStore } from "@/scene/vis-config"
-import { trainOnBatch, useTrainingStore } from "@/model/training"
+import { getThree, setStatus, useStore } from "@/store"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
-import { useStatusStore } from "@/components/status"
 import { LockButton } from "@/scene/lock"
 import { Block, Button, Details, Head } from "@/contents/elements"
+import { LogsPlot } from "@/components/ui-elements/logs-plot"
+import { trainOnBatch } from "@/model/training"
 import { interpolateCamera, moveCameraTo } from "@/scene/utils"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
-import { getThree } from "@/scene/three-store"
-import { LogsPlot, useLogStore } from "@/components/ui-elements/logs-plot"
 
 const initialState: InitialState = {
   datasetKey: "mnist",
@@ -43,7 +40,7 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
       <Block
         onScroll={scrollTrain}
-        onLeave={() => useStatusStore.getState().setStatusText("", null)}
+        onLeave={() => setStatus("", null)}
         className="h-[100vh] relative "
       >
         <p>We can even train the model as we scroll.</p>
@@ -115,7 +112,7 @@ function rotate({ percent }: OnScrollProps) {
 
 function changeSample({ percent }: OnScrollProps) {
   const sampleIdx = Math.round(percent * 100 + 1)
-  useDatasetStore.setState({ sampleIdx })
+  useStore.setState({ sampleIdx })
 }
 
 let batch = 0
@@ -131,38 +128,38 @@ function getRandomI(totalSamples: number) {
 }
 
 async function scrollTrain({ percent }: OnScrollProps) {
-  const setStatusText = useStatusStore.getState().setStatusText
-
-  const totalSamples = useDatasetStore.getState().totalSamples
+  const totalSamples = useStore.getState().totalSamples()
   const sampleIdx = getRandomI(totalSamples)
   batch++
-  useDatasetStore.setState({ sampleIdx })
+  useStore.setState({ sampleIdx })
 
-  const sample = useDatasetStore.getState().sample
+  const sample = useStore.getState().sample
   if (!sample) return
   const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return
-  useLogStore.getState().addLogs([{ ...log, batch }])
-  setStatusText(`Training loss: ${log.loss.toFixed(2)}`, percent)
+  useStore.getState().addLogs([{ ...log, batch }])
+  setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent)
 }
 
 function changeLayerSpacing({ percent }: OnScrollProps) {
   const defaultSpacing = 11
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  useVisConfigStore.setState({ xShift: newSpacing })
+  const setVisConfig = useStore.getState().vis.setConfig
+  setVisConfig({ xShift: newSpacing })
 }
 
 function changeNeuronSpacing({ percent }: OnScrollProps) {
   const defaultSpacing = 1.1
   const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
   const newSpacing = defaultSpacing * scalingFactor
-  useVisConfigStore.setState({ neuronSpacing: newSpacing })
+  const setVisConfig = useStore.getState().vis.setConfig
+  setVisConfig({ neuronSpacing: newSpacing })
 }
 
 function startTraining() {
-  const setIsTraining = useTrainingStore.getState().setIsTraining
-  useTrainingStore.getState().setConfig({ silent: false })
+  const setIsTraining = useStore.getState().setIsTraining
+  useStore.getState().setTrainConfig({ silent: false })
   setIsTraining(true)
 }

@@ -1,71 +1,14 @@
 import { useEffect } from "react"
-import { create } from "zustand"
-import { useStatusStore } from "@/components/status"
+import { useStore } from "@/store"
 import { datasets } from "./datasets"
 import { getData, putData, putDataBatches } from "./db"
-import type {
-  Dataset,
-  DatasetDef,
-  DbBatch,
-  ParsedLike,
-  StoreMeta,
-} from "./types"
-
-type Sample = {
-  X: number[]
-  y: number
-  rawX?: number[]
-}
-
-interface DatasetStore {
-  datasetKey: string | undefined
-  setDatasetKey: (key: string) => void
-  ds: Dataset | undefined
-  setDs: (ds: Dataset | undefined) => void
-  totalSamples: number
-  isRegression: boolean
-
-  sampleIdx: number
-  setSampleIdx: (arg: number | ((prev: number) => number)) => void
-  next: (step?: number) => void
-  sample?: Sample
-  reset: () => void
-}
-
-export const useDatasetStore = create<DatasetStore>((set) => ({
-  datasetKey: undefined,
-  setDatasetKey: (key) => set({ datasetKey: key }),
-  ds: undefined,
-  setDs: (ds) =>
-    set(() => {
-      const totalSamples = ds?.train.shapeX[0] ?? 0
-      // const i = Math.floor(Math.random() * totalSamples - 1) // TODO update i in sample store
-      const isRegression = ds?.task === "regression"
-      return { ds, totalSamples, isRegression }
-    }),
-  totalSamples: 0,
-  isRegression: false,
-
-  sampleIdx: 0,
-  setSampleIdx: (arg) =>
-    set(({ sampleIdx }) => {
-      return { sampleIdx: typeof arg === "function" ? arg(sampleIdx) : arg }
-    }),
-  next: (step = 1) =>
-    set(({ sampleIdx, totalSamples }) => {
-      return {
-        sampleIdx: (sampleIdx + step + totalSamples) % totalSamples,
-      }
-    }),
-  sample: undefined,
-  reset: () => set(() => ({ sampleIdx: 0, sample: undefined })),
-}))
+import type { DatasetDef, DbBatch, ParsedLike, StoreMeta } from "./types"
 
 export function useDataset() {
-  const datasetKey = useDatasetStore((s) => s.datasetKey)
-  const ds = useDatasetStore((s) => s.ds)
-  const setDs = useDatasetStore((s) => s.setDs)
-  const setStatusText = useStatusStore((s) => s.setStatusText)
+  const datasetKey = useStore((s) => s.datasetKey)
+  const ds = useStore((s) => s.ds)
+  const setDs = useStore((s) => s.setDs)
+  const setStatusText = useStore((s) => s.status.setText)
 
   useEffect(() => {
     const dsDef = datasets.find((d) => d.key === datasetKey)

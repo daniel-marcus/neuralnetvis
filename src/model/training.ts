@@ -1,85 +1,30 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { Dataset, DbBatch, useDatasetStore } from "@/data/dataset"
-import { useLogStore } from "@/components/ui-elements/logs-plot"
-import { create } from "zustand"
 import { useKeyCommand } from "@/utils/key-command"
-import {
-  backendForTraining,
-  DEFAULT_BACKEND,
-  setBackendIfAvailable,
-} from "./tf-backend"
+import { backendForTraining, setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/db"
-import { useModelStore } from "./model"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
-import { debug } from "@/utils/debug"
-
-interface TrainingConfig {
-  batchSize: number
-  epochs: number
-  validationSplit: number
-  silent: boolean
-  fitDataset: boolean // TODO: find a better name
-}
-
-interface TrainingStore {
-  config: TrainingConfig
-  setConfig: (newConfig: Partial<TrainingConfig>) => void
-  isTraining: boolean
-  setIsTraining: (val: boolean) => void
-  toggleTraining: () => void
-  trainingPromise: Promise<tf.History | void> | null
-  batchCount: number
-  setBatchCount: (arg: number | ((prev: number) => number)) => void
-  epochCount: number
-  setEpochCount: (val: number) => void
-  reset: () => void
-}
-
-export const useTrainingStore = create<TrainingStore>((set) => ({
-  config: {
-    batchSize: 256,
-    epochs: 10,
-    validationSplit: 0.0,
-    silent: true,
-    fitDataset: true,
-  },
-  setConfig: (newConfig) =>
-    set(({ config }) => ({ config: { ...config, ...newConfig } })),
-
-  isTraining: false,
-  setIsTraining: (isTraining) => set({ isTraining }),
-  toggleTraining: () => set((s) => ({ isTraining: !s.isTraining })),
-  trainingPromise: null,
-
-  batchCount: 0,
-  setBatchCount: (arg) =>
-    set(({ batchCount }) => ({
-      batchCount: typeof arg === "function" ? arg(batchCount) : arg,
-    })),
-  epochCount: 0,
-  setEpochCount: (epochCount) => set({ epochCount }),
-  reset: () => {
-    useLogStore.getState().resetLogs()
-    set({ isTraining: false, batchCount: 0, epochCount: 0 })
-  },
-}))
+import { getDs, getModel, useStore, isDebug } from "@/store"
+import type { Dataset, DbBatch } from "@/data"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
-  const { isTraining, toggleTraining, batchCount, config } = useTrainingStore()
+  const isTraining = useStore((s) => s.isTraining)
+  const toggleTraining = useStore((s) => s.toggleTraining)
+  const batchCount = useStore((s) => s.batchCount)
+  const config = useStore((s) => s.trainConfig)
   useKeyCommand("t", toggleTraining)
-  useEffect(() => useTrainingStore.getState().reset(), [model])
+  useEffect(() => useStore.getState().resetTrainCounts(), [model])
 
   useEffect(() => {
     if (!isTraining || !ds || !model) return
     const { validationSplit, batchSize, epochs: _epochs } = config
-    const initialEpoch = useTrainingStore.getState().epochCount
+    const initialEpoch = useStore.getState().epochCount
     const epochs = initialEpoch + _epochs
 
     startTraining()
     async function startTraining() {
       if (!model || !ds) return
-      if (!debug()) await backendForTraining()
+      if (!isDebug()) await backendForTraining()
       const callbacks = [
         new DebugCb(),
         new UpdateCb(),
@@ -93,7 +38,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         validationSplit,
         callbacks,
       })
-      if (!debug()) await setBackendIfAvailable(DEFAULT_BACKEND)
+      if (!isDebug()) await setBackendIfAvailable() // to default
     }
     return () => {
       model.stopTraining = true
@@ -183,20 +128,20 @@ function makeGenerator(
 }
 
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
-  const ongoingTraining = useTrainingStore.getState().trainingPromise
+  const ongoingTraining = useStore.getState().trainingPromise
   if (ongoingTraining) {
     console.log("Changing ongoing training ...")
     await ongoingTraining
-    useTrainingStore.setState({ trainingPromise: null })
+    useStore.setState({ trainingPromise: null })
   }
 
-  const isFitDataset = useTrainingStore.getState().config.fitDataset
+  const isFitDataset = useStore.getState().trainConfig.lazyLoading
 
   let history: tf.History | void | undefined = undefined
   if (!isFitDataset) {
     const [X, y] = await getDbDataAsTensors(ds, "train")
     const trainingPromise = model.fit(X, y, options)
-    useTrainingStore.setState({ trainingPromise })
+    useStore.setState({ trainingPromise })
     history = await trainingPromise.then(() => {
       X.dispose()
       y.dispose()
@@ -259,9 +204,9 @@ async function getDbDataAsTensors(
 }
 
 export async function trainOnBatch(xs: number[][], ys: number[]) {
-  const ds = useDatasetStore.getState().ds
-  const setBatchCount = useTrainingStore.getState().setBatchCount
-  const model = useModelStore.getState().model
+  const ds = getDs()
+  const setBatchCount = useStore.getState().setBatchCount
+  const model = getModel()
   if (!ds || !model) return
   const isClassification = ds?.task === "classification"
   const trainShape = ds.train.shapeX
@@ -278,8 +223,8 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
 }
 
 export async function getModelEvaluation() {
-  const model = useModelStore.getState().model
-  const ds = useDatasetStore.getState().ds
+  const model = getModel()
+  const ds = getDs()
   if (!ds || !model) return { loss: undefined, accuracy: undefined }
 
   const [X, y] = await getDbDataAsTensors(ds, "test")

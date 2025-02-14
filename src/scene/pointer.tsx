@@ -1,11 +1,11 @@
 import { useAnimatedPosition, getWorldPos } from "@/scene/utils"
 import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
-import { useDatasetStore } from "@/data/dataset"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
+import { useStore } from "@/store"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
-  const trainingY = useDatasetStore((s) => s.trainingY)
+  const trainingY = useStore((s) => s.sample?.y)
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
   const { layerPos, meshParams } = outputLayer
   const spacing = useNeuronSpacing(meshParams)

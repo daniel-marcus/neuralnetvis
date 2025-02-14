@@ -1,21 +1,16 @@
-import { useStatusStore } from "@/components/status"
-import { useModelStore, useModelTransition } from "@/model/model"
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useState,
-  useTransition,
-} from "react"
+import { useModelTransition } from "@/model/model"
+import { useCallback, useEffect, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { CollapsibleWithTitle, InlineButton } from "@/components/ui-elements"
+import { useStore } from "@/store"
+import type { FormEvent } from "react"
 
 export function MyModels() {
-  const model = useModelStore((s) => s.model)
+  const model = useStore((s) => s.model)
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = () => setUpdTrigger((t) => t + 1)
   const [showImportForm, setShowImportForm] = useState(false)
-  const setStatusText = useStatusStore((s) => s.setStatusText)
+  const setStatusText = useStore((s) => s.status.setText)
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
   useEffect(() => {
     setModelName(model?.name ?? "")
@@ -75,7 +70,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const [setModel] = useModelTransition()
-  const setStatusText = useStatusStore((s) => s.setStatusText)
+  const setStatusText = useStore((s) => s.status.setText)
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)

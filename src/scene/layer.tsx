@@ -3,12 +3,12 @@ import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useAnimatedPosition } from "@/scene/utils"
-import { useVisConfigStore } from "@/scene/vis-config"
 import { useOrientation } from "@/utils/screen"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
+import { useStore } from "@/store"
 
 type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 
@@ -39,27 +39,23 @@ function useLayerPos(layer: LayerProps) {
   const visibleLayers = allLayers.filter((l) => l.neurons.length)
   const orientation = useOrientation()
 
-  const _xShift = useVisConfigStore((s) => s.xShift)
-  const yShift = useVisConfigStore((s) => s.yShift)
-  const zShift = useVisConfigStore((s) => s.zShift)
+  const { xShift, yShift, zShift } = useStore((s) => s.vis)
 
   const position = useMemo(() => {
-    const xShift = orientation === "landscape" ? _xShift * 1.1 : _xShift
+    const xShiftN = orientation === "landscape" ? xShift * 1.1 : xShift
     return [
-      visibleIdx * xShift + (visibleLayers.length - 1) * xShift * -0.5,
+      visibleIdx * xShiftN + (visibleLayers.length - 1) * xShiftN * -0.5,
       visibleIdx * yShift + (visibleLayers.length - 1) * yShift * -0.5,
       visibleIdx * zShift + (visibleLayers.length - 1) * zShift * -0.5,
     ]
-  }, [visibleIdx, visibleLayers.length, _xShift, yShift, zShift, orientation])
+  }, [visibleIdx, visibleLayers.length, xShift, yShift, zShift, orientation])
 
   const [ref] = useAnimatedPosition(position, 0.1)
   return ref
 }
 
 const isInvisible = (layer?: LayerStateful) =>
-  useVisConfigStore
-    .getState()
-    .invisibleLayers.includes(layer?.tfLayer.name ?? "")
+  useStore.getState().vis.invisibleLayers.includes(layer?.tfLayer.name ?? "")
 
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
@@ -80,7 +76,7 @@ function useDynamicScale(
 }
 
 export function useAdditiveBlending(hasColorChannels: boolean) {
-  const splitColors = useVisConfigStore((s) => s.splitColors)
+  const splitColors = useStore((s) => s.vis.splitColors)
   const active = hasColorChannels && !splitColors
   const material = useMemo(() => new THREE.MeshStandardMaterial(), [])
   useEffect(() => {

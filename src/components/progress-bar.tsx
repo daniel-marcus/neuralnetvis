@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState, RefObject } from "react"
-import { useStatusStore } from "./status"
+import { useStore } from "@/store"
 
-interface ProgressBarProps {
-  length?: number
-}
-
-export const ProgressBar = ({ length }: ProgressBarProps) => {
-  const percent = useStatusStore((s) => s.percent)
+export const ProgressBar = ({ length }: { length?: number }) => {
+  const percent = useStore((s) => s.status.percent)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const testRef = useRef<HTMLSpanElement>(null)
   const [wrapperWidth, pxPerChar] = useResponsiveSize(wrapperRef, testRef)

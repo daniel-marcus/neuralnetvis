@@ -1,7 +1,7 @@
-import type { LayerPos } from "./types"
 import * as tf from "@tensorflow/tfjs"
-import { ReactElement } from "react"
 import * as THREE from "three"
+import type { ReactElement } from "react"
+import type { LayerPos } from "./types"
 
 export interface LayerLayout {
   geometry: ReactElement

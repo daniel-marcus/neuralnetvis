@@ -1,40 +1,25 @@
-import { create } from "zustand"
 import { useLayoutEffect } from "react"
 import { Button } from "@/contents/elements"
-
-interface LockStore {
-  visualizationLocked: boolean
-  setVisualizationLocked: (locked: boolean) => void
-  toggleVisualizationLocked: () => void
-}
-
-export const useLockStore = create<LockStore>((set) => ({
-  visualizationLocked: false,
-  setVisualizationLocked: (locked) => set({ visualizationLocked: locked }),
-  toggleVisualizationLocked: () =>
-    set((s) => ({ visualizationLocked: !s.visualizationLocked })),
-}))
+import { useStore } from "@/store"
 
 export const LockButton = () => {
-  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
-  const toggleVisualizationLocked = useLockStore(
-    (s) => s.toggleVisualizationLocked
-  )
+  const isLocked = useStore((s) => s.vis.isLocked)
+  const toggleLocked = useStore((s) => s.vis.toggleLocked)
   return (
-    <Button onClick={toggleVisualizationLocked} className="pointer-events-auto">
-      {visualizationLocked ? "Unlock visualization" : "Back to scrolling"}
+    <Button onClick={toggleLocked} className="pointer-events-auto">
+      {isLocked ? "Unlock visualization" : "Back to scrolling"}
     </Button>
   )
 }
 
 export function useLock() {
-  const visualizationLocked = useLockStore((s) => s.visualizationLocked)
-  const setVisualizationLocked = useLockStore((s) => s.setVisualizationLocked)
+  const isLocked = useStore((s) => s.vis.isLocked)
+  const setVisConfig = useStore((s) => s.vis.setConfig)
   useLayoutEffect(() => {
-    setVisualizationLocked(true)
+    setVisConfig({ isLocked: true })
     return () => {
-      setVisualizationLocked(false)
+      setVisConfig({ isLocked: false })
     }
-  }, [setVisualizationLocked])
-  return visualizationLocked
+  }, [setVisConfig])
+  return isLocked
 }

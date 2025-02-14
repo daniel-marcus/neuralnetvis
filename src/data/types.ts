@@ -49,6 +49,12 @@ export interface DbBatch {
   xsRaw?: ParsedLike["data"]
 }
 
+export type Sample = {
+  X: number[]
+  y: number
+  rawX?: number[]
+}
+
 type DatasetLoader = () => Promise<{
   xTrain: ParsedLike
   yTrain: ParsedLike

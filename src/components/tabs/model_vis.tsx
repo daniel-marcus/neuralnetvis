@@ -1,5 +1,4 @@
-import { useDatasetStore } from "@/data/dataset"
-import { useVisConfigStore } from "@/scene/vis-config"
+import { useStore } from "@/store"
 import {
   Checkbox,
   CollapsibleWithTitle,
@@ -11,8 +10,9 @@ import {
 const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
 
 export const VisConfigControl = () => {
-  const { setVisConfig, getDefault, reset, ...config } = useVisConfigStore()
-  const ds = useDatasetStore((s) => s.ds)
+  const vis = useStore((s) => s.vis)
+  const { setConfig, getDefault, reset, ...config } = vis
+  const ds = useStore((s) => s.ds)
   const hasColorChannels = (ds?.train.shapeX[3] ?? 0) > 1
   return (
     <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
@@ -40,7 +40,7 @@ export const VisConfigControl = () => {
               value={value}
               min={-30}
               max={30}
-              onChange={(v) => setVisConfig({ [prop]: v })}
+              onChange={(v) => setConfig({ [prop]: v })}
               showValue
               markers={[0]}
             />
@@ -63,14 +63,14 @@ export const VisConfigControl = () => {
       >
         <Checkbox
           checked={config.showLines}
-          onChange={(showLines) => setVisConfig({ showLines })}
+          onChange={(showLines) => setConfig({ showLines })}
         />
       </InputRow>
       {hasColorChannels && (
         <InputRow label="splitColors" hint="show color channels separately">
           <Checkbox
             checked={config.splitColors}
-            onChange={(splitColors) => setVisConfig({ splitColors })}
+            onChange={(splitColors) => setConfig({ splitColors })}
           />
         </InputRow>
       )}
@@ -84,7 +84,7 @@ export const VisConfigControl = () => {
             { value: "weights", label: "show weights" },
             { value: "weightedInputs", label: "show weighted inputs" },
           ]}
-          onChange={(highlightProp) => setVisConfig({ highlightProp })}
+          onChange={(highlightProp) => setConfig({ highlightProp })}
         />
       </InputRow>
     </CollapsibleWithTitle>

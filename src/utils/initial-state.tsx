@@ -1,10 +1,9 @@
 "use client"
 
-import { useDatasetStore } from "@/data/dataset"
-import { LayerConfigArray, useModelStore } from "@/model/model"
-import { useThreeStore } from "@/scene/three-store"
-import { moveCameraTo, Position } from "@/scene/utils"
 import { useEffect } from "react"
+import { useStore } from "@/store"
+import { moveCameraTo, type Position } from "@/scene/utils"
+import type { LayerConfigArray } from "@/model"
 
 export interface InitialState {
   datasetKey?: string
@@ -18,7 +17,7 @@ export const defaultState: InitialState = {
 }
 
 export function useInitialState(state = defaultState) {
-  const three = useThreeStore((s) => s.three)
+  const three = useStore((s) => s.three)
   useEffect(() => {
     if (!three) return
     setInitialState(state)
@@ -33,10 +32,10 @@ export function InitialStateSetter() {
 function setInitialState(initialState: InitialState) {
   const { datasetKey, layerConfigs, cameraPos } = initialState
   if (datasetKey) {
-    useDatasetStore.getState().setDatasetKey(datasetKey)
+    useStore.getState().setDatasetKey(datasetKey)
   }
   if (layerConfigs) {
-    useModelStore.getState().setLayerConfigs(layerConfigs)
+    useStore.getState().setLayerConfigs(layerConfigs)
   }
   if (cameraPos) {
     moveCameraTo(cameraPos)

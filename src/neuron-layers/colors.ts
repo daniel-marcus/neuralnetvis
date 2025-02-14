@@ -1,6 +1,6 @@
 import * as THREE from "three"
-import { useDatasetStore } from "@/data/dataset"
 import type { Neuron } from "@/neuron-layers/types"
+import { useStore } from "@/store"
 
 const ACTIVATION_COLORS = Array.from(
   { length: 256 },
@@ -38,7 +38,7 @@ const POS_HIGHLIGHT_COLORS = Array.from({ length: 256 }, (_, i) => {
 })
 
 export function getNeuronColor(n: Omit<Neuron, "color">) {
-  const isRegression = useDatasetStore.getState().isRegression
+  const isRegression = useStore.getState().isRegression()
   const defaultColorVal = n.normalizedActivation ?? 0
   return isRegression && n.layer.layerPos === "output"
     ? getPredictionQualityColor(n)
@@ -53,8 +53,8 @@ export function getHighlightColor(val: number) {
 }
 
 function getPredictionQualityColor(n: Omit<Neuron, "color">) {
-  const trainingY = useDatasetStore.getState().trainingY ?? 1
-  const percentualError = Math.abs((n.activation ?? 1) - trainingY) / trainingY
+  const y = useStore.getState().sample?.y ?? 1
+  const percentualError = Math.abs((n.activation ?? 1) - y) / y
   const quality = 1 - Math.min(percentualError, 1) // should be between 0 and 1
   return ACTIVATION_COLORS[Math.ceil(quality * 255)]
 }

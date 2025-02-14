@@ -1,68 +1,12 @@
-import { Dataset } from "@/data/dataset"
-import { useStatusStore } from "@/components/status"
-import { ReactNode, useCallback, useEffect, useTransition } from "react"
+import { useCallback, useEffect, useTransition, ReactNode } from "react"
 import * as tf from "@tensorflow/tfjs"
-import {
-  DenseLayerArgs,
-  DropoutLayerArgs,
-  FlattenLayerArgs,
-} from "@tensorflow/tfjs-layers/dist/layers/core"
-import { debug } from "@/utils/debug"
-import { create } from "zustand"
 import { useTfBackend } from "./tf-backend"
-import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
-import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
-import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
-
-export type LayerConfigMap = {
-  Dense: DenseLayerArgs
-  Conv2D: ConvLayerArgs
-  MaxPooling2D: Pooling2DLayerArgs
-  Flatten: FlattenLayerArgs
-  Dropout: DropoutLayerArgs
-  InputLayer: InputLayerArgs
-}
-
-export type LayerConfig<T extends keyof LayerConfigMap> = {
-  className: T
-  config: LayerConfigMap[T]
-  isInvisible?: boolean
-}
-
-export type LayerConfigArray = LayerConfig<keyof LayerConfigMap>[]
-
-const defaultLayerConfigs: LayerConfig<"Dense">[] = [
-  {
-    className: "Dense",
-    config: { units: 64, activation: "relu" },
-  },
-  { className: "Dense", config: { units: 10, activation: "softmax" } },
-]
-
-interface ModelStore {
-  model: tf.LayersModel | undefined
-  skipCreation: boolean // flag to skip model creation for loaded models
-  isPending: boolean
-  setIsPending: (isPending: boolean) => void
-  _setModel: (model: tf.LayersModel | undefined) => void // use modelTransition instead
-  layerConfigs: LayerConfigArray
-  setLayerConfigs: (layerConfigs: LayerConfigArray) => void
-  resetLayerConfigs: () => void
-}
-
-export const useModelStore = create<ModelStore>((set) => ({
-  model: undefined,
-  skipCreation: false,
-  isPending: false,
-  setIsPending: (isPending) => set({ isPending }),
-  _setModel: (model) => set({ model }),
-  layerConfigs: defaultLayerConfigs,
-  setLayerConfigs: (layerConfigs) => set({ layerConfigs }),
-  resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
-}))
+import { useStore, isDebug } from "@/store"
+import type { Dataset } from "@/data"
+import type { LayerConfigArray, LayerConfigMap } from "./types"
 
 export function useModel(ds?: Dataset) {
-  const model = useModelStore((s) => s.model)
+  const model = useStore((s) => s.model)
   useModelCreation(ds)
   useModelReset(model, ds)
   useModelStatus(model, ds)
@@ -72,9 +16,9 @@ export function useModel(ds?: Dataset) {
 
 export function useModelTransition() {
   const [_isPending, startTransition] = useTransition()
-  const _setModel = useModelStore((s) => s._setModel)
-  const isPending = useModelStore((s) => s.isPending)
-  const setIsPending = useModelStore((s) => s.setIsPending)
+  const _setModel = useStore((s) => s._setModel)
+  const isPending = useStore((s) => s.isPending)
+  const setIsPending = useStore((s) => s.setIsPending)
   const setModel = useCallback(
     (model: tf.LayersModel | undefined) => {
       startTransition(() => _setModel(model))
@@ -86,7 +30,7 @@ export function useModelTransition() {
   }, [_isPending, setIsPending])
 
   // set progressbar to spinner mode
-  const setPercent = useStatusStore((s) => s.setPercent)
+  const setPercent = useStore((s) => s.status.setPercent)
   useEffect(() => {
     if (!_isPending) return
     setPercent(-1)
@@ -102,7 +46,7 @@ function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
     // unset on ds change
     return () => {
-      useModelStore.getState()._setModel(undefined)
+      useStore.getState()._setModel(undefined) // TODO: write setter
     }
   }, [ds])
   useEffect(() => {
@@ -117,18 +61,18 @@ function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
 function useModelCreation(ds?: Dataset) {
   const backendReady = useTfBackend()
   const [setModel, isPending] = useModelTransition()
-  const layerConfigs = useModelStore((s) => s.layerConfigs)
+  const layerConfigs = useStore((s) => s.layerConfigs)
   useEffect(() => {
     if (!ds || !backendReady) return
-    if (useModelStore.getState().skipCreation) {
+    if (useStore.getState().skipModelCreation) {
       console.log("skip model creation")
-      useModelStore.setState({ skipCreation: false })
+      useStore.setState({ skipModelCreation: false })
       return
     }
 
     const _model = createModel(ds, layerConfigs)
 
-    if (debug()) console.log({ _model })
+    if (isDebug()) console.log({ _model })
     if (!_model) return
 
     setModel(_model)
@@ -137,7 +81,7 @@ function useModelCreation(ds?: Dataset) {
 }
 
 function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
-  const setStatusText = useStatusStore((s) => s.setStatusText)
+  const setStatusText = useStore((s) => s.status.setText)
   useEffect(() => {
     if (!model || !ds) return
     const data = {
@@ -160,7 +104,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {
     if (!model || !ds) return
     if (!isModelCompiled(model)) {
-      if (debug()) console.log("Model not compiled. Compiling ...", model)
+      if (isDebug()) console.log("Model not compiled. Compiling ...", model)
       model.compile({
         optimizer: tf.train.adam(),
         loss: ds.loss,
@@ -185,15 +129,17 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
       const configNew = isOutput // use config from ds for output layer
         ? { ...config, units: ds.output.size, activation: ds.output.activation }
         : config
-      addDenseWithFlattenIfNeeded(model, configNew as DenseLayerArgs)
+      addDenseWithFlattenIfNeeded(model, configNew as LayerConfigMap["Dense"])
     } else if (l.className === "Conv2D") {
-      model.add(tf.layers.conv2d(config as ConvLayerArgs))
+      model.add(tf.layers.conv2d(config as LayerConfigMap["Conv2D"]))
     } else if (l.className === "Flatten") {
-      model.add(tf.layers.flatten(config as FlattenLayerArgs))
+      model.add(tf.layers.flatten(config as LayerConfigMap["Flatten"]))
     } else if (l.className === "MaxPooling2D") {
-      model.add(tf.layers.maxPooling2d(config as Pooling2DLayerArgs))
+      model.add(
+        tf.layers.maxPooling2d(config as LayerConfigMap["MaxPooling2D"])
+      )
     } else if (l.className === "Dropout") {
-      model.add(tf.layers.dropout(config as DropoutLayerArgs))
+      model.add(tf.layers.dropout(config as LayerConfigMap["Dropout"]))
     } else if (l.className === "InputLayer") {
       continue // InputLayer is already added w/ config from ds
     } else {
@@ -206,7 +152,7 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
 
 function addDenseWithFlattenIfNeeded(
   model: tf.Sequential,
-  denseArgs: DenseLayerArgs
+  denseArgs: LayerConfigMap["Dense"]
 ) {
   const prevLayer = model.layers[model.layers.length - 1]
   const isMutliDim = prevLayer.outputShape.length > 2

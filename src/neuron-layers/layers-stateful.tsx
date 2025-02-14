@@ -1,7 +1,6 @@
 import { useMemo } from "react"
-import type { LayerActivations } from "@/model/activations"
-import type { WeightsBiases } from "@/model/weights"
 import { getNeuronColor } from "./colors"
+import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron } from "./types"
 
 // add state to each neuron
