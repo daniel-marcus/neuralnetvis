@@ -7,8 +7,8 @@ import type { LayerConfigArray, LayerConfigMap } from "./types"
 
 export function useModel(ds?: Dataset) {
   const model = useStore((s) => s.model)
-  useModelCreation(ds)
-  useModelReset(model, ds)
+  useModelCreate(ds)
+  useModelDispose(model)
   useModelStatus(model, ds)
   useModelCompile(model, ds)
   return model
@@ -37,13 +37,7 @@ export function useModelTransition() {
   return [setModel, isPending] as const
 }
 
-function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
-  useEffect(() => {
-    // unset on ds change
-    return () => {
-      useStore.getState()._setModel(undefined) // TODO: write setter
-    }
-  }, [ds])
+function useModelDispose(model?: tf.LayersModel) {
   useEffect(() => {
     // dispose model on unmount
     if (!model) return
@@ -53,15 +47,14 @@ function useModelReset(model?: tf.LayersModel, ds?: Dataset) {
   }, [model])
 }
 
-function useModelCreation(ds?: Dataset) {
+function useModelCreate(ds?: Dataset) {
   const backendReady = useTfBackend()
   const [setModel, isPending] = useModelTransition()
   const layerConfigs = useStore((s) => s.layerConfigs)
   useEffect(() => {
     if (!ds || !backendReady) return
-    if (useStore.getState().skipModelCreation) {
-      console.log("skip model creation")
-      useStore.setState({ skipModelCreation: false })
+    if (useStore.getState().skipModelCreate) {
+      useStore.setState({ skipModelCreate: false })
       return
     }
 
@@ -111,25 +104,39 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
 
 function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
   const [, ...dims] = ds.train.shapeX
+  const isMultiDim = dims.length >= 2
   const inputShape = [null, ...dims] as [null, ...number[]]
 
   const model = tf.sequential()
 
-  model.add(tf.layers.inputLayer({ batchInputShape: inputShape }))
+  model.add(
+    tf.layers.inputLayer({
+      batchInputShape: inputShape,
+      name: `nnv_InputLayer`,
+    })
+  )
 
   for (const [i, l] of layerConfigs.entries()) {
     const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
     if (l.className === "Dense") {
       const configNew = isOutput // use config from ds for output layer
-        ? { ...config, units: ds.output.size, activation: ds.output.activation }
+        ? {
+            ...config,
+            units: ds.output.size,
+            activation: ds.output.activation,
+            name: `nnv_Output`,
+          }
         : config
       addDenseWithFlattenIfNeeded(model, configNew as LayerConfigMap["Dense"])
     } else if (l.className === "Conv2D") {
+      if (!isMultiDim) continue
       model.add(tf.layers.conv2d(config as LayerConfigMap["Conv2D"]))
     } else if (l.className === "Flatten") {
+      if (!isMultiDim) continue
       model.add(tf.layers.flatten(config as LayerConfigMap["Flatten"]))
     } else if (l.className === "MaxPooling2D") {
+      if (!isMultiDim) continue
       model.add(
         tf.layers.maxPooling2d(config as LayerConfigMap["MaxPooling2D"])
       )

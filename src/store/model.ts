@@ -10,37 +10,27 @@ const defaultLayerConfigs: LayerConfig<"Dense">[] = [
   { className: "Dense", config: { units: 10, activation: "softmax" } },
 ]
 
-interface TfModelSlice {
+export interface ModelSlice {
   model?: LayersModel
-  skipModelCreation: boolean // flag to skip model creation for loaded models
+  skipModelCreate: boolean // flag to skip model creation for loaded models
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
   layerConfigs: LayerConfigArray
   resetLayerConfigs: () => void
   resetWeights: () => void
+
+  layerActivations: LayerActivations[]
+  setLayerActivations: (layerActivations: LayerActivations[]) => void
 }
 
-export const createTfModelSlice: StateCreator<TfModelSlice> = (set) => ({
+export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
   model: undefined,
-  skipModelCreation: false,
-  _setModel: (model) => set({ model }),
+  skipModelCreate: false,
+  _setModel: (model) => set({ model, layerActivations: [] }),
   layerConfigs: defaultLayerConfigs,
   resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
-})
 
-export interface ActivationsSlice {
-  layerActivations: LayerActivations[]
-  setLayerActivations: (layerActivations: LayerActivations[]) => void
-}
-const createActivationsSlice: StateCreator<ActivationsSlice> = (set) => ({
   layerActivations: [],
   setLayerActivations: (layerActivations) => set(() => ({ layerActivations })),
-})
-
-export type ModelSlice = TfModelSlice & ActivationsSlice
-
-export const createModelSlice: StateCreator<ModelSlice> = (...a) => ({
-  ...createTfModelSlice(...a),
-  ...createActivationsSlice(...a),
 })

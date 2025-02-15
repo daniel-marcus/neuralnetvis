@@ -10,8 +10,8 @@ export const Model = () => {
   useThreeStoreSetter()
   return (
     <group>
-      {layers.map((l, i) => (
-        <Layer key={i} {...l} allLayers={layers} />
+      {layers.map((l) => (
+        <Layer key={`${l.tfLayer.name}`} {...l} allLayers={layers} />
       ))}
       <HoverConnections />
     </group>

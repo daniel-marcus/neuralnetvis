@@ -8,6 +8,7 @@ import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
 import { tabs, type Tab } from "@/components/tabs"
+import { setInitialState } from "@/utils/initial-state"
 
 export const Menu = () => {
   const currTab = useStore((s) => s.tab)
@@ -39,7 +40,10 @@ export const Menu = () => {
           <Link
             href="/"
             className={`pointer-events-auto`}
-            onClick={() => setTab(null)}
+            onClick={() => {
+              setTab(null)
+              setInitialState()
+            }}
           >
             <Logo />
           </Link>

@@ -34,7 +34,7 @@ export function InitialStateSetter() {
   return null
 }
 
-function setInitialState(initialState: InitialState) {
+export function setInitialState(initialState: InitialState = defaultState) {
   const { cameraPos, vis, ...storeSettings } = initialState
   if (cameraPos) {
     moveCameraTo(cameraPos)
