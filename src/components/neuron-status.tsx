@@ -1,53 +1,35 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { SphereGeometry } from "three"
 import { useStore } from "@/store"
+import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/neuron-layers/colors"
-import { useIsScreen } from "@/utils/screen"
-import type { Neuron } from "@/neuron-layers/types"
+import { isScreen } from "@/utils/screen"
 import { Table } from "./ui-elements"
 import { useHasLesson } from "./lesson"
+import type { Neuron } from "@/neuron-layers/types"
 
 export const NeuronStatus = () => {
-  const _selected = useStore((s) => s.getSelected())
-  const _hovered = useStore((s) => s.getHovered())
-  const hasCurrentSelected = !!_selected || !!_hovered
-  let selected = _hovered ?? _selected
-  const prevSelected = useRef<Neuron | undefined>(undefined)
-  if (selected) prevSelected.current = selected
-  else selected = prevSelected.current
-  // TODO: normalize in group?
-  const normalizedWeights = normalizeWithSign(selected?.weights) ?? []
-  const length = normalizedWeights.length
-  const kernelSize = selected?.layer.tfLayer.getConfig().kernelSize
-  const [, , prevHeight, prevDepth] =
-    (selected?.layer.prevLayer?.tfLayer.outputShape as number[]) ?? []
-  const cols = Array.isArray(kernelSize)
-    ? (kernelSize[0] as number)
-    : prevHeight ?? Math.ceil(Math.sqrt(length)) // 1D Dense to square
-  const isRounded =
-    selected?.layer.prevLayer?.meshParams.geometry instanceof SphereGeometry
-
-  const hasStatus = !!useStore((s) => s.status.text)
+  const _hovered = useHovered()
+  const _selected = useSelected()
+  const selected = _hovered ?? _selected
   const toggleSelected = useStore((s) => s.toggleSelected)
+  const hasStatus = !!useStore((s) => s.status.text)
   const hasLesson = useHasLesson()
   const visLocked = useStore((s) => s.vis.isLocked)
+  const handleClick = (e: React.MouseEvent) => {
+    if ("tagName" in e.target && e.target.tagName === "BUTTON") return
+    toggleSelected(null)
+  }
   if (!selected || (hasLesson && visLocked)) return <div />
   return (
     <div
       className={`flex gap-4 items-end sm:flex-col ${
-        hasCurrentSelected
-          ? "pointer-events-auto cursor-pointer"
-          : "opacity-0 max-w-[20%] pointer-events-none"
-      } ${hasStatus ? "hidden sm:flex" : ""} transition-opacity duration-150`}
-      onClick={() => toggleSelected(null)}
+        hasStatus ? "hidden sm:flex" : ""
+      } pointer-events-auto`}
+      onClick={handleClick}
     >
-      <WeightsViewer
-        weights={normalizedWeights}
-        cols={cols}
-        isRounded={isRounded}
-        groupCount={prevDepth || 1}
-      />
+      <WeightsViewer neuron={selected} />
       <NeuronInfo neuron={selected} />
     </div>
   )
@@ -72,24 +54,25 @@ const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
   )
 }
 
-interface WeightsGridProps {
-  weights: number[]
-  cols: number
-  isRounded?: boolean
-  groupCount?: number
-}
-
-const WeightsViewer = ({
-  weights,
-  cols,
-  isRounded,
-  groupCount = 1,
-}: WeightsGridProps) => {
+const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
   const [currGroup, setCurrGroup] = useState(0)
   const highlightProp = useStore((s) => s.vis.highlightProp)
-  const isScreenSm = useIsScreen("sm")
+  const isScreenSm = isScreen("sm")
   if (highlightProp === "weights") return null // will be duplication
-  if (!weights.length) return null
+
+  const { prevLayer } = neuron.layer
+  if (!neuron.weights?.length || !prevLayer) return null
+  // TODO: normalize in group?
+  const weights = normalizeWithSign(neuron.weights) ?? []
+
+  const prevShape = prevLayer.tfLayer.outputShape as number[]
+  const [, , prevWidth, groupCount = 1] = prevShape
+  const kernelSize = neuron.layer.tfLayer.getConfig().kernelSize
+  const cols = Array.isArray(kernelSize)
+    ? (kernelSize[0] as number)
+    : prevWidth ?? Math.ceil(Math.sqrt(weights.length)) // 1D Dense to square
+  const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
+
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
   const next = () => setCurrGroup((g) => (g + 1) % groupCount)
   const maxGroupsPerView = isScreenSm ? 16 : 4
@@ -147,7 +130,7 @@ const WeightsViewer = ({
           const isInView = needsShifter ? i === currGroup : true
           if (!isInView) return null
           return (
-            <WeightsGrid
+            <WeightsGridCanvas
               key={`${i}_${groupWeights.length}`}
               weights={groupWeights}
               cols={cols}
@@ -160,35 +143,52 @@ const WeightsViewer = ({
   )
 }
 
-const WeightsGrid = ({ weights, cols, isRounded }: WeightsGridProps) => {
-  return (
-    <div
-      className={`grid gap-[var(--grid-gap)] sm:gap-[var(--grid-gap-sm)]`}
-      style={
-        {
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          "--grid-gap": weights.length > 100 ? "0" : "2px",
-          "--grid-gap-sm": weights.length > 100 ? "0.2px" : "4px",
-        } as React.CSSProperties
-      }
-    >
-      {weights.map((w, i) => (
-        <Box
-          key={i}
-          color={getHighlightColor(w).getStyle()}
-          isRounded={isRounded}
-        />
-      ))}
-    </div>
-  )
+interface WeightsGridProps {
+  weights: number[]
+  cols: number
+  isRounded?: boolean
+  groupCount?: number
 }
 
-// TODO: hover values
-const Box = ({ color, isRounded }: { color: string; isRounded?: boolean }) => (
-  <div
-    className={`aspect-square ${isRounded ? "rounded-full" : ""}`}
-    style={{
-      backgroundColor: color,
-    }}
-  />
-)
+const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const MIN_WIDTH = 400
+    if (canvasRef.current) {
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext("2d")
+      if (ctx) {
+        const rows = Math.ceil(weights.length / cols)
+        const pixelSize = Math.ceil(MIN_WIDTH / cols)
+        const gapSize = Math.floor(pixelSize / 5)
+
+        canvas.width = cols * (pixelSize + gapSize) - gapSize
+        canvas.height = rows * (pixelSize + gapSize) - gapSize
+
+        weights.forEach((w, i) => {
+          const x = (i % cols) * (pixelSize + gapSize) + pixelSize / 2
+          const y = Math.floor(i / cols) * (pixelSize + gapSize) + pixelSize / 2
+
+          const color = getHighlightColor(w).getStyle()
+
+          ctx.fillStyle = color
+          if (isRounded) {
+            ctx.beginPath()
+            ctx.arc(x, y, pixelSize / 2, 0, 2 * Math.PI)
+            ctx.fill()
+          } else {
+            ctx.fillRect(
+              x - pixelSize / 2,
+              y - pixelSize / 2,
+              pixelSize,
+              pixelSize
+            )
+          }
+        })
+      }
+    }
+  }, [weights, cols, isRounded])
+
+  return <canvas ref={canvasRef} className="w-full" />
+}

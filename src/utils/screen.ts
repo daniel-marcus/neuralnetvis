@@ -3,17 +3,20 @@ import { useEffect, useState, useRef } from "react"
 type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 
 export function useIsScreen(bp: Breakpoint) {
-  const [isScreen, setIsScreen] = useState(false)
+  const [isMatch, setIsMatch] = useState(false)
   const windowWidth = useWindowWidth()
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const styles = getComputedStyle(document.documentElement)
-      const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
-      const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
-      setIsScreen(windowWidth >= bpPx)
-    }
+    setIsMatch(isScreen(bp))
   }, [bp, windowWidth])
-  return isScreen
+  return isMatch
+}
+
+export function isScreen(bp: Breakpoint) {
+  if (typeof window === "undefined") return false
+  const styles = getComputedStyle(document.documentElement)
+  const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
+  const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
+  return window.innerWidth >= bpPx
 }
 
 export function useOrientation() {

@@ -6,6 +6,7 @@ import { createModelSlice, ModelSlice } from "./model"
 import { createTrainingSlice, TrainingSlice } from "./training"
 import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
+import { Nid } from "@/neuron-layers"
 
 export type StoreType = TabsSlice &
   StatusSlice &
@@ -29,6 +30,7 @@ export const useStore = create<StoreType>()((...a) => ({
 export const setTab = useStore.getState().setTab
 export const getDs = () => useStore.getState().ds
 export const getModel = () => useStore.getState().model
+export const getNeuron = (nid: Nid) => useStore.getState().allNeurons.get(nid)
 export const getThree = () => useStore.getState().three
 export const isDebug = () => useStore.getState().isDebug
 export const setStatus: StatusSlice["status"]["setText"] = (text, percent) =>

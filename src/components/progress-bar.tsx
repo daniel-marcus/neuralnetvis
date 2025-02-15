@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState, RefObject } from "react"
+import { useEffect, useRef, useState, RefObject, memo } from "react"
 import { useStore } from "@/store"
 
-export const ProgressBar = ({ length }: { length?: number }) => {
+export const ProgressBar = memo(function ProgressBar() {
   const percent = useStore((s) => s.status.percent)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const testRef = useRef<HTMLSpanElement>(null)
   const [wrapperWidth, pxPerChar] = useResponsiveSize(wrapperRef, testRef)
-  const maxLength = Math.ceil(wrapperWidth / pxPerChar)
-  const l = length ? Math.min(length, maxLength) : maxLength
+  const length = Math.ceil(wrapperWidth / pxPerChar)
   const isSpinner = percent === -1
   const isHidden = percent === null
   return (
@@ -26,15 +25,15 @@ export const ProgressBar = ({ length }: { length?: number }) => {
         █
       </span>
       <div className={isSpinner ? "opacity-30" : ""}>
-        {Array.from({ length: l }).map((_, i) => (
+        {Array.from({ length }).map((_, i) => (
           <span key={i} style={{ width: pxPerChar + "px" }}>
-            {(percent ?? 0) >= i / (l - 1) ? "█" : "░"}
+            {(percent ?? 0) >= i / (length - 1) ? "█" : "░"}
           </span>
         ))}
       </div>
     </div>
   )
-}
+})
 
 function useResponsiveSize(
   wrapperRef: RefObject<HTMLDivElement | null>,

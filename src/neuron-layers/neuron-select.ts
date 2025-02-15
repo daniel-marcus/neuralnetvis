@@ -46,6 +46,24 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
   return patchedLayerProps
 }
 
+export function useHovered() {
+  const hoveredNid = useStore((s) => s.hoveredNid)
+  return useNeuron(hoveredNid)
+}
+
+export function useSelected() {
+  const selectedNid = useStore((s) => s.selectedNid)
+  return useNeuron(selectedNid)
+}
+
+function useNeuron(nid?: Nid) {
+  const allNeurons = useStore((s) => s.allNeurons)
+  return useMemo(
+    () => (nid ? allNeurons.get(nid) : undefined),
+    [allNeurons, nid]
+  )
+}
+
 export function getWeightedInputs(
   neuronInput?: number[],
   neuronWeights?: number[]

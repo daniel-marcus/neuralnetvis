@@ -6,9 +6,6 @@ export interface NeuronsSlice {
   allNeurons: Map<Nid, Neuron>
   hoveredNid?: Nid
   selectedNid?: Nid
-  getSelected: () => Neuron | undefined
-  getHovered: () => Neuron | undefined
-  hasHoveredOrSelected: () => boolean
 
   toggleHovered: (n: Neuron | null) => void
   toggleSelected: (n: Neuron | null) => void
@@ -18,19 +15,10 @@ export interface NeuronsSlice {
   setHovered: (n: Neuron | null, origin?: Vector3) => void
 }
 
-export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set, get) => ({
+export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
   allNeurons: new Map(),
   hoveredNid: undefined,
   selectedNid: undefined,
-  getSelected: () => {
-    const { selectedNid } = get()
-    return selectedNid ? get().allNeurons.get(selectedNid) : undefined
-  },
-  getHovered: () => {
-    const { hoveredNid } = get()
-    return hoveredNid ? get().allNeurons.get(hoveredNid) : undefined
-  },
-  hasHoveredOrSelected: () => Boolean(get().hoveredNid || get().selectedNid),
   toggleSelected: (n) =>
     set(({ selectedNid }) => ({
       selectedNid: n?.nid === selectedNid ? undefined : n?.nid,

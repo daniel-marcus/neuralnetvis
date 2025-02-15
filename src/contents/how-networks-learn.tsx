@@ -13,7 +13,6 @@ import type { LessonContent } from "."
 const initialState: InitialState = {
   datasetKey: "mnist",
   layerConfigs: [{ className: "Dense", config: {} }],
-  selectedNid: "2_3.0.0",
   cameraPos: [0, 0, 35],
   vis: {
     xShift: 8,

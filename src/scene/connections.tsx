@@ -9,6 +9,7 @@ import {
 import { useStore } from "@/store"
 import { getWorldPos } from "./utils"
 import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
+import { useHovered } from "@/neuron-layers/neuron-select"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
@@ -20,7 +21,7 @@ type NeuronConnectionsProps = {
 }
 
 export const HoverConnections = () => {
-  const hovered = useStore((s) => s.getHovered())
+  const hovered = useHovered()
   const hoverOrigin = useStore((s) => s.hoverOrigin)
   // too many lines for fully connected layers
   const allowDenseHoverLines = useStore((s) => s.vis.allowDenseHoverLines)
