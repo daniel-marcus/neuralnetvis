@@ -8,12 +8,12 @@ export type ColorObj = {
   style: string // for css
 }
 
-function toColorObj(color: string): ColorObj {
-  const threeColor = new THREE.Color(color)
+function toColorObj(colorStr: string): ColorObj {
+  const threeColor = new THREE.Color(colorStr)
   return {
     rgb: threeColor.toArray(),
     three: threeColor,
-    style: threeColor.getStyle(),
+    style: colorStr,
   }
 }
 

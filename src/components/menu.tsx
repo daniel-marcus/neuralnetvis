@@ -21,7 +21,7 @@ export const Menu = () => {
     <div
       className={`${
         hasLesson ? "relative xl:sticky" : "fixed"
-      } xl:z-[10] top-0 left-0 w-[100vw] pointer-events-none select-none`}
+      } z-[20] top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
         disable={!hasLesson || isScreenXl}
@@ -55,7 +55,7 @@ export const Menu = () => {
                   isShown
                     ? ""
                     : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
-                } transition-transform duration-300 ease-in-out`}
+                } transition-transform duration-300 ease-in-out max-h-[calc(100dvh-var(--header-height))] overflow-y-auto`}
               >
                 {content}
               </div>
