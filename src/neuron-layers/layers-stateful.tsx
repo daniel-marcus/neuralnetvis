@@ -34,6 +34,7 @@ export function useStatefulLayers(
           const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
           const rawInput =
             layer.layerPos === "input" ? rawInputs?.[nIdx] : undefined
+
           const updatedNeuron = {
             ...neuron,
             activation,

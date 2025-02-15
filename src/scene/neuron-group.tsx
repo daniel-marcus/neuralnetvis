@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useThree } from "@react-three/fiber"
+import { useStore, isDebug } from "@/store"
 import { useAnimatedPosition } from "@/scene/utils"
 import { useLocalSelected } from "@/neuron-layers/neuron-select"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
-import { isDebug, useStore } from "@/store"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { meshParams, groups, group, material } = props
@@ -110,11 +110,19 @@ function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
     if (isDebug()) console.log("upd colors")
-    for (const [i, n] of neurons.entries()) {
-      if (n.color) meshRef.current.setColorAt(i, n.color)
-      else console.warn("no color", n)
+    if (!meshRef.current.instanceColor) {
+      const newArr = new Float32Array(neurons.length * 3)
+      const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
+      meshRef.current.instanceColor = newAttr
     }
-    if (!meshRef.current.instanceColor) return
+    for (const [i, n] of neurons.entries()) {
+      // if (n.color) meshRef.current.setColorAt(i, n.color)
+      if (n.color) {
+        meshRef.current.instanceColor.array[i * 3] = n.color.rgb[0]
+        meshRef.current.instanceColor.array[i * 3 + 1] = n.color.rgb[1]
+        meshRef.current.instanceColor.array[i * 3 + 2] = n.color.rgb[2]
+      }
+    }
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, neurons])
 }

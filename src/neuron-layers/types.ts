@@ -2,6 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
 import type { RefObject } from "react"
 import type { MeshParams } from "@/neuron-layers/layout"
+import { ColorObj } from "./colors"
 
 // Types for Layers
 
@@ -83,7 +84,7 @@ export type NeuronState = {
   normalizedActivation?: number
   weights?: number[]
   bias?: number
-  color: THREE.Color
+  color: ColorObj
 }
 
 export type Neuron = NeuronDef & NeuronState

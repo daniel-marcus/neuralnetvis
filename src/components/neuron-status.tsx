@@ -165,7 +165,7 @@ const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
         weights.forEach((w, i) => {
           const x = (i % cols) * (ps + gap) + ps / 2
           const y = Math.floor(i / cols) * (ps + gap) + ps / 2
-          const color = getHighlightColor(w).getStyle()
+          const color = getHighlightColor(w).style
           ctx.fillStyle = color
           if (isRounded) {
             ctx.beginPath()

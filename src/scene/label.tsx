@@ -1,10 +1,11 @@
 import { useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
-import { Color, Mesh } from "three"
+import { Mesh } from "three"
 import { Text } from "troika-three-text"
+import { useStore } from "@/store"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
-import { useStore } from "@/store"
+import type { ColorObj } from "@/neuron-layers/colors"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -55,7 +56,7 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
 interface NeuronLabelProps {
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: Color
+  color?: ColorObj
   children?: string | number // React.ReactNode
 }
 
@@ -80,7 +81,7 @@ export const NeuronLabel = ({
       position={getTextPos(x, y, z, side)}
       fontSize={FONT_SIZE}
       font={"/fonts/Menlo-Regular.woff"}
-      color={color}
+      color={color?.three}
       anchorX={
         OUTPUT_ORIENT === "vertical"
           ? side === "left"
