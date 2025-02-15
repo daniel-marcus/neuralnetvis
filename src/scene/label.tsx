@@ -1,11 +1,10 @@
-import { useRef } from "react"
+import { useLayoutEffect, useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
-import { Mesh } from "three"
+import * as THREE from "three"
 import { Text } from "troika-three-text"
 import { useStore } from "@/store"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
-import type { ColorObj } from "@/neuron-layers/colors"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 class CustomText extends Text {}
@@ -17,6 +16,7 @@ declare module "@react-three/fiber" {
 }
 
 const FONT_SIZE = 2
+const LABEL_COLOR = "rgb(140, 146, 164)"
 
 interface NeuronLabelsProps {
   neuron: NeuronDef & NeuronState
@@ -35,13 +35,19 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
         <NeuronLabel
           side={isRegression ? "left" : "right"}
           position={position}
-          color={neuron.color}
+          size={isRegression ? 1 : FONT_SIZE}
+          color={isRegression ? LABEL_COLOR : neuron.color.three}
         >
           {label}
         </NeuronLabel>
       )}
       {showValueLabel && (
-        <NeuronLabel side={"right"} position={position} color={neuron.color}>
+        <NeuronLabel
+          side={"right"}
+          position={position}
+          size={isRegression ? 1 : FONT_SIZE}
+          color={isRegression ? LABEL_COLOR : neuron.color.three}
+        >
           {rawInput
             ? String(Math.round(rawInput * 100) / 100)
             : activation
@@ -56,32 +62,43 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
 interface NeuronLabelProps {
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: ColorObj
+  color?: THREE.Color | string
   children?: string | number // React.ReactNode
+  size?: number
 }
+
+// reference: https://github.com/pmndrs/drei/blob/master/src/core/Text.tsx
 
 export const NeuronLabel = ({
   position: [x, y, z] = [0, 0, 0],
   side = "right",
   color,
+  size,
   children,
 }: NeuronLabelProps) => {
-  const labelRef = useRef<Mesh>(null)
+  const labelRef = useRef<THREE.Mesh & { sync: (cb: () => void) => void }>(null)
   const camera = useThree((state) => state.camera)
   useFrame(() => {
     if (labelRef.current) {
       labelRef.current.lookAt(camera.position)
     }
   })
+  const invalidate = useThree(({ invalidate }) => invalidate)
+  useLayoutEffect(() => {
+    if (!labelRef.current) return
+    labelRef.current.sync(() => {
+      invalidate()
+    })
+  }, [labelRef, children, invalidate])
 
   return (
     <customText
       ref={labelRef}
       text={children}
       position={getTextPos(x, y, z, side)}
-      fontSize={FONT_SIZE}
+      fontSize={size ?? FONT_SIZE}
       font={"/fonts/Menlo-Regular.woff"}
-      color={color?.three}
+      color={color}
       anchorX={
         OUTPUT_ORIENT === "vertical"
           ? side === "left"
@@ -100,8 +117,7 @@ function getTextPos(
   y: number,
   z: number,
   side: "left" | "right" = "right"
-) {
+): [number, number, number] {
   const factor = side === "right" ? 1 : -1
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + 3.5 * factor]
-  else return [x, y + 3, z]
+  return OUTPUT_ORIENT === "vertical" ? [x, y, z + 3.5 * factor] : [x, y + 3, z]
 }

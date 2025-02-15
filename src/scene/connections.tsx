@@ -51,7 +51,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
     ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
     ["Conv2D"].includes(prevLayer.layerType)
   const isRegression = useStore((s) => s.isRegression())
-  const { invalidate } = useThree()
+  const invalidate = useThree(({ invalidate }) => invalidate)
   useEffect(() => {
     invalidate()
   }, [showLines, invalidate])

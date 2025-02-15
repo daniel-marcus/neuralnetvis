@@ -130,7 +130,7 @@ function useColors(meshRef: MeshRef, neurons: Neuron[]) {
 function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
   // use string to avoid unnecessary updates
   const { selectedNid } = useLocalSelected(lIdx, gIdx)
-  const { invalidate } = useThree()
+  const invalidate = useThree(({ invalidate }) => invalidate)
   const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
   const tempScale = useMemo(() => new THREE.Matrix4(), [])
   useEffect(() => {

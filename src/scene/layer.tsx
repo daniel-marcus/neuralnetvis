@@ -42,7 +42,7 @@ function useLayerPos(layer: LayerProps) {
   const { xShift, yShift, zShift } = useStore((s) => s.vis)
 
   const position = useMemo(() => {
-    const xShiftN = orientation === "landscape" ? xShift * 1.1 : xShift
+    const xShiftN = orientation === "landscape" ? xShift : xShift * 0.8
     return [
       visibleIdx * xShiftN + (visibleLayers.length - 1) * xShiftN * -0.5,
       visibleIdx * yShift + (visibleLayers.length - 1) * yShift * -0.5,
@@ -61,7 +61,7 @@ function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
   scale: number = 1
 ) {
-  const { invalidate } = useThree()
+  const invalidate = useThree(({ invalidate }) => invalidate)
   // would use @react-spring/three, but that breaks @react-spring/web:
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({

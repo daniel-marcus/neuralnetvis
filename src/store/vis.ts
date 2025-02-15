@@ -3,7 +3,7 @@ import type { HighlightProp } from "@/neuron-layers/types"
 import type { RootState } from "@react-three/fiber"
 
 const defaultOptions = {
-  xShift: 10,
+  xShift: 11,
   yShift: 0,
   zShift: 0,
   neuronSpacing: 1.1,

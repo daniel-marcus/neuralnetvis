@@ -14,9 +14,6 @@ const initialState: InitialState = {
   datasetKey: "mnist",
   layerConfigs: [{ className: "Dense", config: {} }],
   cameraPos: [0, 0, 35],
-  vis: {
-    xShift: 8,
-  },
 }
 
 export const IntroNetworks = (): LessonContent => {
