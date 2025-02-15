@@ -16,6 +16,7 @@ interface TfModelSlice {
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
   layerConfigs: LayerConfigArray
   resetLayerConfigs: () => void
+  resetWeights: () => void
 }
 
 export const createTfModelSlice: StateCreator<TfModelSlice> = (set) => ({
@@ -24,6 +25,8 @@ export const createTfModelSlice: StateCreator<TfModelSlice> = (set) => ({
   _setModel: (model) => set({ model }),
   layerConfigs: defaultLayerConfigs,
   resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
+  resetWeights: () =>
+    set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 })
 
 export interface ActivationsSlice {

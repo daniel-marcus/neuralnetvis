@@ -15,6 +15,8 @@ export const Train = () => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
   const evaluate = useEvaluate()
+  const resetWeights = useStore((s) => s.resetWeights)
+  const batchCount = useStore((s) => s.batchCount)
   return (
     <Box>
       <TrainConfigControl />
@@ -32,6 +34,11 @@ export const Train = () => {
           logs
         </button>
         <div className="flex gap-2">
+          {!!batchCount && (
+            <InlineButton variant="secondary" onClick={resetWeights}>
+              reset
+            </InlineButton>
+          )}
           <InlineButton variant="secondary" onClick={evaluate}>
             evaluate
           </InlineButton>

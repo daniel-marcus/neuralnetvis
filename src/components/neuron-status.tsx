@@ -62,7 +62,7 @@ const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
 
   const { prevLayer } = neuron.layer
   if (!neuron.weights?.length || !prevLayer) return null
-  // TODO: normalize in group?
+  // normalize in group?
   const weights = normalizeWithSign(neuron.weights) ?? []
 
   const prevShape = prevLayer.tfLayer.outputShape as number[]
@@ -147,12 +147,10 @@ interface WeightsGridProps {
   weights: number[]
   cols: number
   isRounded?: boolean
-  groupCount?: number
 }
 
 const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
   useEffect(() => {
     const MIN_WIDTH = 400
     if (canvasRef.current) {
@@ -160,35 +158,25 @@ const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
       const ctx = canvas.getContext("2d")
       if (ctx) {
         const rows = Math.ceil(weights.length / cols)
-        const pixelSize = Math.ceil(MIN_WIDTH / cols)
-        const gapSize = Math.floor(pixelSize / 5)
-
-        canvas.width = cols * (pixelSize + gapSize) - gapSize
-        canvas.height = rows * (pixelSize + gapSize) - gapSize
-
+        const ps = Math.ceil(MIN_WIDTH / cols) // pixelSize
+        const gap = Math.floor(ps / 5)
+        canvas.width = cols * (ps + gap) - gap
+        canvas.height = rows * (ps + gap) - gap
         weights.forEach((w, i) => {
-          const x = (i % cols) * (pixelSize + gapSize) + pixelSize / 2
-          const y = Math.floor(i / cols) * (pixelSize + gapSize) + pixelSize / 2
-
+          const x = (i % cols) * (ps + gap) + ps / 2
+          const y = Math.floor(i / cols) * (ps + gap) + ps / 2
           const color = getHighlightColor(w).getStyle()
-
           ctx.fillStyle = color
           if (isRounded) {
             ctx.beginPath()
-            ctx.arc(x, y, pixelSize / 2, 0, 2 * Math.PI)
+            ctx.arc(x, y, ps / 2, 0, 2 * Math.PI)
             ctx.fill()
           } else {
-            ctx.fillRect(
-              x - pixelSize / 2,
-              y - pixelSize / 2,
-              pixelSize,
-              pixelSize
-            )
+            ctx.fillRect(x - ps / 2, y - ps / 2, ps, ps)
           }
         })
       }
     }
   }, [weights, cols, isRounded])
-
   return <canvas ref={canvasRef} className="w-full" />
 }
