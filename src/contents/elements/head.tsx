@@ -3,7 +3,7 @@ import { useScrollCallbacks } from "./block"
 import type { ReactNode } from "react"
 import type { ScrollCallbacks } from "./types"
 
-type HeadProps = { title: string; description: string } & ScrollCallbacks
+type HeadProps = { title: string; description?: string } & ScrollCallbacks
 
 export function Head(props: HeadProps) {
   const { title, description, ...callbacks } = props
@@ -11,7 +11,7 @@ export function Head(props: HeadProps) {
   return (
     <div ref={ref}>
       <Title>{title}</Title>
-      <Teaser>{description}</Teaser>
+      {!!description && <Teaser>{description}</Teaser>}
     </div>
   )
 }
