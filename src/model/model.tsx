@@ -42,9 +42,20 @@ function useModelDispose(model?: tf.LayersModel) {
     // dispose model on unmount
     if (!model) return
     return () => {
+      manuallyDisposeUnusedTensors(model)
       model.dispose()
     }
   }, [model])
+}
+
+function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
+  // kernel and bias tensors which are created during training and not disposed automatically
+  const regVars = Object.values(tf.engine().state.registeredVariables)
+  for (const tw of model.trainableWeights) {
+    const size = [...(tw.shape as number[])].reduce((a, b) => a * b)
+    const olds = regVars.filter((v) => v.size === size && v.trainable === false)
+    olds.forEach((v) => tf.dispose(v))
+  }
 }
 
 function useModelCreate(ds?: Dataset) {

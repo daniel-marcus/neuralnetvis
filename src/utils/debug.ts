@@ -40,8 +40,9 @@ function showStats() {
   }
   setStatus({ data })
 
-  const tfEngine = tf.engine()
-  const glInfo = gl?.info
   const appState = useStore.getState()
-  console.log({ tfEngine, glInfo, appState })
+  const glInfo = gl?.info
+  const tfEngine = tf.engine()
+  const tfVars = tfEngine.state.registeredVariables
+  console.log({ appState, glInfo, tfEngine, tfVars })
 }

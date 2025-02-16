@@ -147,7 +147,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
       y.dispose()
     })
   } else {
-    // test: with fitDataset ...
+    // with fitDataset / lazyLoading
     const { batchSize, validationSplit, ...otherOptions } = options
 
     // TODO splitDataset as function // validationData as tensor (faster)
@@ -177,10 +177,13 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
       batchesPerEpoch: Math.ceil(trainSamples / batchSize),
       validationData,
     })
-    useStore.setState({ trainingPromise })
-    history = await trainingPromise
-  }
 
+    useStore.setState({ trainingPromise })
+    history = await trainingPromise?.then(() => {
+      validationData?.[0].dispose()
+      validationData?.[1].dispose()
+    })
+  }
   return history
 }
 
