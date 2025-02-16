@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+  /* fallback if system has no "Menlo" font */
+  font-family: "Menlo-Regular";
+  src: url("/fonts/Menlo-Regular.woff") format("woff");
+}
+
 @theme {
   --breakpoint-xs: 22.5rem; /* 360px */
-  --font-mono: Menlo, ui-monospace, SFMono-Regular, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-mono: Menlo, Menlo-Regular, ui-monospace, SFMono-Regular, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
   --logo-width: calc(126px + 2 * var(--padding-main));
 
   --color-background: var(--background);
