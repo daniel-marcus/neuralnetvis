@@ -9,7 +9,7 @@ Live here: [https://neuralnetvis.app](https://neuralnetvis.app)
 These datasets are available at the moment; most of them are smaller subsets of the original datasets to keep network load and memory usage reasonable.
 
 | Name                                                                    |  Description           | Task           | Features | Train samples | Test samples |
-| ----------------------------------------------------------------------- | ---------------------- | -------------- | -------: | ------------: | -----------: |
+| :---------------------------------------------------------------------- | :--------------------- | :------------- | -------: | ------------: | -----------: |
 | [MNIST](https://en.wikipedia.org/wiki/MNIST_database)                   | Handwritten digits     | Classification |  28x28x1 |        20,000 |        2,000 |
 | [Fashion MNIST](https://github.com/zalandoresearch/fashion-mnist)       | Clothing items         | Classification |  28x28x1 |        20,000 |        2,000 |
 | [CIFAR10](https://www.cs.toronto.edu/~kriz/cifar.html)                  | Colored images         | Classification |  32x32x3 |        18,000 |        1,800 |
