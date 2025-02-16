@@ -149,8 +149,6 @@ function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
   }
 
   // Conv2D or MaxPooling2D
-  // TODO: use tf.slice?
-
   // get the receptive field
   const [filterHeight, filterWidth] =
     (l.getConfig().kernelSize as number[]) ??
@@ -168,7 +166,7 @@ function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
   const units = getUnits(l)
 
   const inputNids: Nid[][] = []
-  // TODO: padding? use tf to calculate the receptive field?
+  // TODO: padding?
   for (let j = 0; j < units; j++) {
     const unitInputNids: Nid[] = []
     for (let k = 0; k < filterSize * depth; k++) {
