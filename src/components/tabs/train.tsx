@@ -68,6 +68,7 @@ const TrainConfigControl = () => {
           transform={(v) => 2 ** v}
           onChange={(batchSize) => setConfig({ batchSize })}
           showValue={true}
+          lazyUpdate
         />
       </InputRow>
       <InputRow
@@ -80,6 +81,7 @@ const TrainConfigControl = () => {
           max={100}
           onChange={(epochs) => setConfig({ epochs })}
           showValue={true}
+          lazyUpdate
         />
       </InputRow>
       <InputRow
@@ -93,6 +95,7 @@ const TrainConfigControl = () => {
           step={0.1}
           onChange={(validationSplit) => setConfig({ validationSplit })}
           showValue={true}
+          lazyUpdate
         />
       </InputRow>
       <InputRow

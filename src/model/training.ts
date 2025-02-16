@@ -132,7 +132,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   if (ongoingTraining) {
     console.log("Changing ongoing training ...")
     await ongoingTraining
-    useStore.setState({ trainingPromise: null })
+    // useStore.setState({ trainingPromise: null })
   }
 
   const isFitDataset = useStore.getState().trainConfig.lazyLoading
@@ -177,6 +177,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
       batchesPerEpoch: Math.ceil(trainSamples / batchSize),
       validationData,
     })
+    useStore.setState({ trainingPromise })
     history = await trainingPromise
   }
 

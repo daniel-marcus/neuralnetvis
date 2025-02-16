@@ -35,12 +35,12 @@ export class UpdateCb extends CustomCallback {
             isTraining: false,
             trainingPromise: null,
           })
-          if (this.silent) {
-            const setBatchCount = useStore.getState().setBatchCount
-            const processedSamples = (this.params.samples ?? 0) - 1
-            this.next(processedSamples) // update view
-            setBatchCount((c) => c + processedSamples) // update weights
-          }
+        }
+        if (this.silent) {
+          const setBatchCount = useStore.getState().setBatchCount
+          const processedSamples = (this.params.samples ?? 0) - 1
+          this.next(processedSamples) // update view
+          setBatchCount((c) => c + processedSamples) // update weights
         }
       },
     })
@@ -143,7 +143,6 @@ export class DebugCb extends CustomCallback {
       },
       onTrainEnd: () => {
         console.log(Date.now() - this.startTime)
-        useStore.getState().setIsTraining(false)
       },
     })
   }
