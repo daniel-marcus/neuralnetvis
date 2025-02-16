@@ -93,10 +93,11 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
     if (!model || !ds) return
     if (!isModelCompiled(model)) {
       if (isDebug()) console.log("Model not compiled. Compiling ...", model)
+      const isClassification = ds.task === "classification"
       model.compile({
         optimizer: tf.train.adam(),
         loss: ds.loss,
-        metrics: ["accuracy"],
+        metrics: isClassification ? ["accuracy"] : [],
       })
     }
   }, [model, ds])

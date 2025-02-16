@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Ref } from "react"
 import { InlineButton } from "./buttons"
 import { useStore } from "@/store"
+import { Table } from "./table"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
@@ -15,8 +16,8 @@ export type TrainingLog = {
 }
 
 const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
-const EPOCH_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
-const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...EPOCH_METRICS]
+const VAL_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
+const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...VAL_METRICS]
 
 export type Metric = (typeof METRICS)[number]
 
@@ -26,23 +27,24 @@ const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
 export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
-  const logs = useStore((s) => s.logs)
+  const _logs = useStore((s) => s.logs)
   const logsMetric = useStore((s) => s.logsMetric)
   const setLogsMetric = useStore((s) => s.setLogsMetric)
-  const isEpochMetric = EPOCH_METRICS.includes(logsMetric)
-  const filteredLogs = useMemo(
+  const isValMetric = VAL_METRICS.includes(logsMetric)
+  const logs = useMemo(
     () =>
-      logs.filter((log) =>
-        isEpochMetric
-          ? typeof log[EPOCH_METRICS[0]] !== "undefined"
-          : typeof log[EPOCH_METRICS[0]] === "undefined"
-      ),
-    [logs, isEpochMetric]
+      _logs.filter((log) => log.hasOwnProperty(VAL_METRICS[0]) === isValMetric),
+    [_logs, isValMetric]
+  )
+  const availableMetrics = useMemo(
+    () => new Set(_logs.flatMap((log) => Object.keys(log))),
+    [_logs]
   )
   const tooltipRef = useRef<HTMLDivElement>(null)
   const dotRef = useRef<HTMLDivElement>(null)
-  const [canvasRef, positions] = useCanvasUpdate(filteredLogs, logsMetric)
+  const [canvasRef, positions] = useCanvasUpdate(logs, logsMetric)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
+  const isRegression = useStore((s) => s.isRegression())
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -60,8 +62,8 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
       const canvas = canvasRef.current
       if (!canvas) return
       const xRel = x / rect.width
-      const i = Math.floor(xRel * filteredLogs.length)
-      const log = filteredLogs[i]
+      const i = Math.floor(xRel * logs.length)
+      const log = logs[i]
       if (!log) return
       if (dotRef.current) {
         const point = positions.current[i]
@@ -74,25 +76,23 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
       const { epoch, batch } = log
       const epochNr = (epoch ?? 0) + 1
       const batchNr = (batch ?? 0) + 1
+      const getVal = (val?: number) =>
+        isRegression ? val?.toPrecision(3) : val?.toFixed(3)
       const tt = (
         <div>
           <div>
             <strong>
-              {isEpochMetric
-                ? `Epoch ${epochNr}`
-                : `Batch ${epochNr}.${batchNr}`}
+              {isValMetric ? `Epoch ${epochNr}` : `Batch ${epochNr}.${batchNr}`}
             </strong>
           </div>
-          {METRICS.filter((m) => typeof log[m] == "number").map((m) => (
-            <div key={m}>
-              {m}: {log[m]?.toFixed(4)}
-            </div>
-          ))}
+          <Table
+            data={Object.fromEntries(METRICS.map((m) => [m, getVal(log[m])]))}
+          />
         </div>
       )
       setTooltip(<div>{tt}</div>)
     },
-    [filteredLogs, tooltipRef, isEpochMetric, positions, canvasRef]
+    [logs, tooltipRef, isValMetric, positions, canvasRef, isRegression]
   )
   const validationSplit = useStore((s) => s.trainConfig.validationSplit)
   if (!logs.length) return null
@@ -112,15 +112,15 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
         </div>
       )}
       <div className={`flex mt-2 justify-end ${isShown ? "" : "hidden"}`}>
-        {METRICS.map((m) => {
+        {METRICS.filter((m) => availableMetrics.has(m)).map((m) => {
           const isSelected = m === logsMetric
-          const isDisabled = !validationSplit && EPOCH_METRICS.includes(m)
+          const isDisabled = !validationSplit && VAL_METRICS.includes(m)
           return (
             <InlineButton
               key={m}
               variant="transparent"
               className={`${isSelected ? "text-white" : ""} ${
-                isDisabled ? "opacity-50" : ""
+                isDisabled ? "opacity-50 hover:bg-transparent" : ""
               }`}
               onClick={() => setLogsMetric(m)}
               disabled={isDisabled}
@@ -153,7 +153,7 @@ const Tooltip = ({ children, ref }: TooltipProps) => (
     className={`${
       !children ? "hidden" : ""
     } absolute bg-black text-white text-xs px-2 py-1 rounded transform -translate-x-1/2 -translate-y-full pointer-events-none`}
-    style={{ width: `${TOOLTIP_WIDTH}px` }}
+    style={{ minWidth: `${TOOLTIP_WIDTH}px` }}
   >
     {children}
   </div>

@@ -8,7 +8,7 @@ Live here: [https://neuralnetvis.app](https://neuralnetvis.app)
 
 These datasets are available at the moment; most of them are smaller subsets of the original datasets to keep network load and memory usage reasonable.
 
-| Name                                                                    |  Description           | Task           | Features | Train samples | Test samples |
+| Name                                                                    | Description            | Task           | Features | Train samples | Test samples |
 | :---------------------------------------------------------------------- | :--------------------- | :------------- | -------: | ------------: | -----------: |
 | [MNIST](https://en.wikipedia.org/wiki/MNIST_database)                   | Handwritten digits     | Classification |  28x28x1 |        20,000 |        2,000 |
 | [Fashion MNIST](https://github.com/zalandoresearch/fashion-mnist)       | Clothing items         | Classification |  28x28x1 |        20,000 |        2,000 |
@@ -21,7 +21,7 @@ Pretrained models from Python Tensorflow can be exported via [tfjs-converter](ht
 
 Currently supported layer types: _Dense_, _Conv2D_, _MaxPooling2D_, _Flatten_, and _Dropout_.
 
-## Folder structure
+## Folder Structure
 
 - **app**: Layout and pages for the [Next.js](https://nextjs.org/) App Router
 - **components**: Main UI components
