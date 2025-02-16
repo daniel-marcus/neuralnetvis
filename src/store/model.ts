@@ -1,6 +1,7 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { LayerActivations, LayerConfig, LayerConfigArray } from "@/model"
+import { StatusSlice } from "./status"
 
 const defaultLayerConfigs: LayerConfig<"Dense">[] = [
   {
@@ -15,6 +16,7 @@ export interface ModelSlice {
   skipModelCreate: boolean // flag to skip model creation for loaded models
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
   layerConfigs: LayerConfigArray
+  setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
   resetWeights: () => void
 
@@ -22,15 +24,25 @@ export interface ModelSlice {
   setLayerActivations: (layerActivations: LayerActivations[]) => void
 }
 
-export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
+export const createModelSlice: StateCreator<
+  ModelSlice & StatusSlice,
+  [],
+  [],
+  ModelSlice
+> = (set) => ({
   model: undefined,
   skipModelCreate: false,
   _setModel: (model) => set({ model, layerActivations: [] }),
   layerConfigs: defaultLayerConfigs,
+  setLayerConfigs: (layerConfigs) =>
+    set(({ status }) => ({
+      layerConfigs,
+      status: { ...status, percent: -1 }, // trigger spinner
+    })),
   resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 
   layerActivations: [],
-  setLayerActivations: (layerActivations) => set(() => ({ layerActivations })),
+  setLayerActivations: (layerActivations) => set({ layerActivations }),
 })

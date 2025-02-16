@@ -2,6 +2,7 @@ import { StateCreator } from "zustand"
 import type { TrainingConfig } from "@/model"
 import type { History } from "@tensorflow/tfjs"
 import type { Metric, TrainingLog } from "@/components/ui-elements/logs-plot"
+import { StatusSlice } from "./status"
 
 export interface TrainingSlice {
   trainConfig: TrainingConfig
@@ -22,9 +23,14 @@ export interface TrainingSlice {
   setLogsMetric: (metric: Metric) => void
 }
 // SC<TrainingSlice> /
-export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
+export const createTrainingSlice: StateCreator<
+  TrainingSlice & StatusSlice,
+  [],
+  [],
+  TrainingSlice
+> = (set) => ({
   trainConfig: {
-    batchSize: 256,
+    batchSize: 128,
     epochs: 10,
     validationSplit: 0.1,
     silent: true,
@@ -37,7 +43,12 @@ export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
 
   isTraining: false,
   setIsTraining: (isTraining) => set({ isTraining }),
-  toggleTraining: () => set((s) => ({ isTraining: !s.isTraining })),
+  toggleTraining: () =>
+    set(({ isTraining, status }) => {
+      if (isTraining) return { isTraining: false }
+      // trigger spinner with training start
+      else return { isTraining: true, status: { ...status, percent: -1 } }
+    }),
   trainingPromise: null,
 
   batchCount: 0,

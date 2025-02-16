@@ -14,7 +14,6 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const config = useStore((s) => s.trainConfig)
   useKeyCommand("t", toggleTraining)
   useEffect(() => useStore.getState().resetTrainCounts(), [model])
-
   useEffect(() => {
     if (!isTraining || !ds || !model) return
     const { validationSplit, batchSize, epochs: _epochs } = config

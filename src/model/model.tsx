@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useTransition, ReactNode } from "react"
+import { useEffect, ReactNode, useCallback, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useTfBackend } from "./tf-backend"
 import { useStore, isDebug } from "@/store"
@@ -7,33 +7,45 @@ import type { LayerConfigArray, LayerConfigMap } from "./types"
 
 export function useModel(ds?: Dataset) {
   const model = useStore((s) => s.model)
-  useModelCreate(ds)
+  const isPending = useModelCreate(ds)
   useModelDispose(model)
-  useModelStatus(model, ds)
+  useModelStatus(isPending, model, ds)
   useModelCompile(model, ds)
   return model
+}
+
+function useModelCreate(ds?: Dataset) {
+  const backendReady = useTfBackend()
+  const [setModel, isPending] = useModelTransition()
+  const layerConfigs = useStore((s) => s.layerConfigs)
+  useEffect(() => {
+    if (!ds || !backendReady) return
+    if (useStore.getState().skipModelCreate) {
+      useStore.setState({ skipModelCreate: false })
+      return
+    }
+
+    const _model = createModel(ds, layerConfigs)
+
+    if (isDebug()) console.log({ _model })
+    if (!_model) return
+
+    setModel(_model)
+  }, [backendReady, layerConfigs, ds, setModel])
+  return isPending
 }
 
 export function useModelTransition() {
   const [isPending, startTransition] = useTransition()
   const _setModel = useStore((s) => s._setModel)
   const setModel = useCallback(
-    (model: tf.LayersModel | undefined) => {
-      startTransition(() => _setModel(model))
+    async (model?: tf.LayersModel) => {
+      startTransition(() => {
+        _setModel(model)
+      })
     },
-    [startTransition, _setModel]
+    [_setModel]
   )
-
-  // set progressbar to spinner mode
-  const setPercent = useStore((s) => s.status.setPercent)
-  useEffect(() => {
-    if (!isPending) return
-    setPercent(-1)
-    return () => {
-      setPercent(null)
-    }
-  }, [isPending, setPercent])
-
   return [setModel, isPending] as const
 }
 
@@ -58,39 +70,22 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
   }
 }
 
-function useModelCreate(ds?: Dataset) {
-  const backendReady = useTfBackend()
-  const [setModel, isPending] = useModelTransition()
-  const layerConfigs = useStore((s) => s.layerConfigs)
-  useEffect(() => {
-    if (!ds || !backendReady) return
-    if (useStore.getState().skipModelCreate) {
-      useStore.setState({ skipModelCreate: false })
-      return
-    }
-
-    const _model = createModel(ds, layerConfigs)
-
-    if (isDebug()) console.log({ _model })
-    if (!_model) return
-
-    setModel(_model)
-  }, [backendReady, layerConfigs, ds, setModel])
-  return isPending || !backendReady
-}
-
-function useModelStatus(model?: tf.LayersModel, ds?: Dataset) {
+function useModelStatus(
+  isPending: boolean,
+  model?: tf.LayersModel,
+  ds?: Dataset
+) {
   const setStatusText = useStore((s) => s.status.setText)
   useEffect(() => {
-    if (!model || !ds) return
+    if (!model || !ds || isPending) return
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
       Samples: ds.train.shapeX[0].toLocaleString("en-US"),
       Model: model.getClassName(),
       Params: model.countParams().toLocaleString("en-US"),
     }
-    setStatusText({ data })
-  }, [model, ds, setStatusText])
+    setStatusText({ data }, null)
+  }, [model, ds, setStatusText, isPending])
 }
 
 const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (

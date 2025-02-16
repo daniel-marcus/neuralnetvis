@@ -35,3 +35,5 @@ export const getThree = () => useStore.getState().three
 export const isDebug = () => useStore.getState().isDebug
 export const setStatus: StatusSlice["status"]["setText"] = (text, percent) =>
   useStore.getState().status.setText(text, percent)
+export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
+  useStore.getState().setLayerConfigs(layerConfigs)
