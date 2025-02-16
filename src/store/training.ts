@@ -45,7 +45,8 @@ export const createTrainingSlice: StateCreator<
   setIsTraining: (isTraining) => set({ isTraining }),
   toggleTraining: () =>
     set(({ isTraining, status }) => {
-      if (isTraining) return { isTraining: false }
+      if (isTraining)
+        return { isTraining: false, status: { ...status, percent: null } }
       // trigger spinner with training start
       else return { isTraining: true, status: { ...status, percent: -1 } }
     }),
