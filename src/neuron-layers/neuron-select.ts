@@ -69,7 +69,6 @@ export function getWeightedInputs(
   neuronWeights?: number[]
 ) {
   if (!neuronInput || !neuronWeights) return undefined
-  // TODO: check shapes
   const weightedInputs = tf.tidy(() => {
     const weightsTensor = tf.tensor1d(neuronWeights)
     const inputsTensor = tf.tensor1d(neuronInput)

@@ -168,7 +168,9 @@ function useInteractions(groupedNeurons: Neuron[]) {
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
-        toggleSelected(groupedNeurons[e.instanceId as number])
+        const neuron = groupedNeurons[e.instanceId as number]
+        if (useStore.getState().isDebug) console.log(neuron)
+        toggleSelected(neuron)
       },
     }
     return result
