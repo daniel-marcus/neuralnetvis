@@ -18,7 +18,8 @@ export function useTfBackend() {
   const [isReady, setIsReady] = useState(false)
   useEffect(() => {
     async function checkReady() {
-      await (setBackendIfAvailable(DEFAULT_BACKEND) || tf.ready())
+      console.log(getAvailableBackends())
+      await setBackendIfAvailable(DEFAULT_BACKEND)
       setIsReady(true)
     }
     checkReady()
@@ -28,8 +29,12 @@ export function useTfBackend() {
 
 export async function setBackendIfAvailable(_backend?: string) {
   const backend = _backend || DEFAULT_BACKEND
-  await tf.ready()
-  return getAvailableBackends().includes(backend) && tf.setBackend(backend)
+  if (!getAvailableBackends().includes(backend)) return
+  const success = await tf.setBackend(backend)
+  if (!success) {
+    console.warn(`Failed to set backend: ${backend}`)
+    return tf.setBackend(DEFAULT_BACKEND)
+  }
 }
 
 export function getAvailableBackends() {
