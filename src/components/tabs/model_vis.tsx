@@ -82,7 +82,7 @@ export const VisConfigControl = () => {
           value={config.highlightProp}
           options={[
             { value: "weights", label: "show weights" },
-            { value: "weightedInputs", label: "show weighted inputs" },
+            { value: "weightedInputs", label: "show weighted inp." },
           ]}
           onChange={(highlightProp) => setConfig({ highlightProp })}
         />
