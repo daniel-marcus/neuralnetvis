@@ -27,32 +27,31 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
   const trainingY = useStore((s) => s.sample?.y)
   const isRegression = useStore((s) => s.isRegression())
-  const showValueLabel = !!label && isRegression
-  if (!position) return null
+  const showValueLabel = !!label && !!rawInput
+  const layerPos = neuron.layer.layerPos
+  if (!label || !position) return null
   return (
     <group>
-      {!!label && (
-        <NeuronLabel
-          side={isRegression ? "left" : "right"}
-          position={position}
-          size={isRegression ? 1 : FONT_SIZE}
-          color={isRegression ? LABEL_COLOR : neuron.color.three}
-        >
-          {label}
-        </NeuronLabel>
-      )}
+      <NeuronLabel
+        side={layerPos === "input" ? "left" : "right"}
+        position={position}
+        size={isRegression ? 1 : FONT_SIZE}
+        color={isRegression ? LABEL_COLOR : neuron.color.three}
+      >
+        {layerPos === "output" && isRegression
+          ? `${label}\n${activation?.toFixed(
+              0
+            )} (predicted)\n${trainingY} (actual)`
+          : label}
+      </NeuronLabel>
       {showValueLabel && (
         <NeuronLabel
           side={"right"}
           position={position}
-          size={isRegression ? 1 : FONT_SIZE}
-          color={isRegression ? LABEL_COLOR : neuron.color.three}
+          size={1}
+          color={LABEL_COLOR}
         >
-          {rawInput
-            ? String(Math.round(rawInput * 100) / 100)
-            : activation
-            ? `${activation?.toFixed(0)} (predicted)\n${trainingY} (actual)`
-            : ""}
+          {String(Math.round(rawInput * 100) / 100)}
         </NeuronLabel>
       )}
     </group>
