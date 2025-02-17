@@ -12,8 +12,12 @@ import type { LessonContent } from "."
 
 const initialState: InitialState = {
   datasetKey: "mnist",
-  layerConfigs: [{ className: "Dense", config: {} }],
-  cameraPos: [0, 0, 35],
+  layerConfigs: [{ className: "Dense", config: {} }], // the output layer
+  cameraPos: [-7.1, 2.3, -5.6],
+  sampleIdx: 50,
+  vis: {
+    invisibleLayers: ["nnv_Output"],
+  },
 }
 
 export const IntroNetworks = (): LessonContent => {
@@ -22,15 +26,18 @@ export const IntroNetworks = (): LessonContent => {
     <main>
       <Head
         title="How do networks learn?"
-        description="Some basics about machine learning"
-        onScroll={rotate}
+        description="Let's teach a machine to recognize handwritten digits"
+        onScroll={({ percent }) =>
+          interpolateCamera(initialState.cameraPos!, [-30, 20, 50], percent)
+        }
       />
       <Block
-        onScroll={({ percent }) =>
-          interpolateCamera([0, 0, 41.6], [-30, 20, 50], percent)
-        }
+        onEnter={() => {
+          moveCameraTo([-32, 0, 0])
+          useStore.setState({ sampleIdx: initialState.sampleIdx })
+        }}
       >
-        Just scroll and see what happens.
+        This is a three. No doubts.
       </Block>
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
@@ -92,7 +99,7 @@ export const IntroNetworks = (): LessonContent => {
   )
 }
 
-function rotate({ percent }: OnScrollProps) {
+export function rotate({ percent }: OnScrollProps) {
   const three = getThree()
   if (!three) return
   const camera = three.camera

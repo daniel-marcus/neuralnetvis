@@ -9,7 +9,7 @@ export function Block({ children, className, ...callbacks }: ScrollBlockProps) {
     <div
       ref={ref}
       className={`min-h-[50dvh] pb-16 ${
-        inView ? "opacity-100 " : "opacity-50"
+        inView ? "opacity-100 " : "opacity-30"
       } transition-opacity duration-100 ${className ?? ""}`}
     >
       {children}

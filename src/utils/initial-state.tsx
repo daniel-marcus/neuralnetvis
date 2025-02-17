@@ -18,7 +18,14 @@ export type InitialState = Partial<ExposedStoreType> & {
 
 export const defaultState: InitialState = {
   datasetKey: "mnist",
+  layerConfigs: [
+    { className: "Dense", config: { units: 64 } },
+    { className: "Dense", config: {} },
+  ],
   cameraPos: [-23, 0, 35],
+  vis: {
+    invisibleLayers: [],
+  },
 }
 
 export function useInitialState(state = defaultState) {

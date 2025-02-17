@@ -14,6 +14,7 @@ export function useSample(ds?: Dataset) {
   }, [sampleIdx, ds])
 
   useEffect(() => {
+    if (!ds) return
     return () => {
       currBatchCache = {}
       resetSample()

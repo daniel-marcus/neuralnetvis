@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
@@ -15,10 +15,11 @@ type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 export const Layer = (props: LayerProps) => {
   const { layerPos, groups, prevLayer } = props
   const ref = useLayerPos(props)
-  const invisible = isInvisible(props)
+  const invisible = useIsInvisible(props)
+  const prevInvisible = useIsInvisible(prevLayer)
   useDynamicScale(ref, invisible ? 0.001 : 1)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
-  const showConnections = !invisible && !!prevLayer && !isInvisible(prevLayer)
+  const showConnections = !invisible && !!prevLayer && !prevInvisible
   if (!props.neurons.length) return null
   return (
     <>
@@ -54,18 +55,25 @@ function useLayerPos(layer: LayerProps) {
   return ref
 }
 
-const isInvisible = (layer?: LayerStateful) =>
-  useStore.getState().vis.invisibleLayers.includes(layer?.tfLayer.name ?? "")
+function useIsInvisible(layer?: LayerStateful) {
+  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
+  return invisibleLayers.includes(layer?.tfLayer.name ?? "")
+}
 
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
   scale: number = 1
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+    return () => setIsMounted(false)
+  }, [])
   // would use @react-spring/three, but that breaks @react-spring/web:
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({
-    scale,
+    scale: isMounted ? scale : 1,
     config: { duration: 150 },
     onChange: ({ value }) => {
       const val = value.scale

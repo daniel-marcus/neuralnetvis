@@ -7,16 +7,17 @@ import { useStore } from "@/store"
 
 export const Scene = () => {
   const isLocked = useStore((s) => s.vis.isLocked)
+  const isDebug = useStore((s) => s.isDebug)
   return (
     <div
       className={`fixed top-0 left-0 z-0 w-screen h-[100dvh] bg-background select-none overflow-hidden ${
-        isLocked ? "pointer-events-none" : ""
+        isLocked && !isDebug ? "pointer-events-none" : ""
       }`}
     >
       <Canvas frameloop="demand">
         <Lights />
         <PerspectiveCamera makeDefault position={defaultState.cameraPos} />
-        <OrbitControls target={[0, 0, 0]} enabled={!isLocked} />
+        <OrbitControls target={[0, 0, 0]} enabled={!isLocked || isDebug} />
         <DebugUtils />
         <Model />
       </Canvas>

@@ -2,28 +2,23 @@ import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { useThree, useFrame } from "@react-three/fiber"
 import { Stats } from "@react-three/drei"
-import { useStore } from "@/store"
+import { getThree, useStore } from "@/store"
+import { useKeyCommand } from "@/utils/key-command"
 
 // use for debug purposes
 
 export const DebugUtils = () => {
   const isDebug = useStore((s) => s.isDebug)
+  useKeyCommand("c", logCameraPos)
   if (!isDebug) return null
   return <Stats />
 }
 
-export function CameraLogger() {
-  const { camera } = useThree()
-  const prevPosition = useRef(camera.position.clone())
-
-  useFrame(() => {
-    if (!camera.position.equals(prevPosition.current)) {
-      console.log("Camera position:", camera.position.toArray())
-      prevPosition.current.copy(camera.position)
-    }
-  })
-
-  return null
+function logCameraPos() {
+  const three = getThree()
+  if (!three) return
+  const { camera } = three
+  console.log("Camera position:", camera.position.toArray())
 }
 
 export const Raycaster = () => {
