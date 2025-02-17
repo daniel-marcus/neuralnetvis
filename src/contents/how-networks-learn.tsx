@@ -33,11 +33,26 @@ export const IntroNetworks = (): LessonContent => {
       />
       <Block
         onEnter={() => {
-          moveCameraTo([-32, 0, 0])
           useStore.setState({ sampleIdx: initialState.sampleIdx })
+          useStore.getState().vis.setConfig({
+            invisibleLayers: initialState.vis!.invisibleLayers,
+          })
         }}
+        onScroll={({ percent }) =>
+          interpolateCamera([-30, 20, 50], [-25, 15, 30], percent)
+        }
       >
         This is a three. No doubts.
+      </Block>
+      <Block
+        onScroll={({ percent }) =>
+          interpolateCamera([-25, 15, 30], [-15, 10, 35], percent)
+        }
+        onEnter={() => {
+          useStore.getState().vis.setConfig({ invisibleLayers: [] })
+        }}
+      >
+        Let&apos;s add our output layer.
       </Block>
       <Block onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
