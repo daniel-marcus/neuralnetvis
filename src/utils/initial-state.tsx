@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { StoreType, useStore } from "@/store"
 import { moveCameraTo, type Position } from "@/scene/utils"
+import { defaultLayerConfigs } from "@/store/model"
 
 type ExposedStoreKeys =
   | "datasetKey"
@@ -18,10 +19,7 @@ export type InitialState = Partial<ExposedStoreType> & {
 
 export const defaultState: InitialState = {
   datasetKey: "mnist",
-  layerConfigs: [
-    { className: "Dense", config: { units: 64 } },
-    { className: "Dense", config: {} },
-  ],
+  layerConfigs: defaultLayerConfigs,
   cameraPos: [-23, 0, 35],
   vis: {
     invisibleLayers: [],

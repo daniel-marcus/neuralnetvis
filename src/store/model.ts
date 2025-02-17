@@ -3,7 +3,7 @@ import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { LayerActivations, LayerConfig, LayerConfigArray } from "@/model"
 import { StatusSlice } from "./status"
 
-const defaultLayerConfigs: LayerConfig<"Dense">[] = [
+export const defaultLayerConfigs: LayerConfig<"Dense">[] = [
   {
     className: "Dense",
     config: { units: 64, activation: "relu" },
