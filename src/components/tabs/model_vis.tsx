@@ -6,6 +6,7 @@ import {
   Select,
   Slider,
 } from "@/components/ui-elements"
+import type { HighlightProp } from "@/neuron-layers"
 
 const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
 
@@ -79,12 +80,12 @@ export const VisConfigControl = () => {
         hint="What should be shown when you hover or click on a neuron?"
       >
         <Select
-          value={config.highlightProp}
+          value={config.highlightProp ?? ""}
           options={[
-            { value: "weights", label: "show weights" },
-            { value: "weightedInputs", label: "show weighted inp." },
+            { value: "weights" as const, label: "show weights" },
+            { value: "weightedInputs" as const, label: "show weighted inp." },
           ]}
-          onChange={(highlightProp) => setConfig({ highlightProp })}
+          onChange={(val) => setConfig({ highlightProp: val as HighlightProp })}
         />
       </InputRow>
     </CollapsibleWithTitle>
