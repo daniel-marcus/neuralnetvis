@@ -2,14 +2,15 @@ import { StateCreator } from "zustand"
 import type { HighlightProp } from "@/neuron-layers/types"
 import type { RootState } from "@react-three/fiber"
 
-const defaultOptions = {
+export const defaultVisConfig = {
   xShift: 11,
   yShift: 0,
   zShift: 0,
   neuronSpacing: 1.1,
+  showPointer: true,
   showLines: true,
   splitColors: false,
-  highlightProp: "weightedInputs",
+  highlightProp: "weightedInputs" as const,
   lineActivationThreshold: 0.5,
   allowDenseHoverLines: false,
   invisibleLayers: [],
@@ -21,8 +22,9 @@ interface VisConfig {
   yShift: number
   zShift: number
   neuronSpacing: number
+  showPointer: boolean
   splitColors: boolean
-  highlightProp: HighlightProp | string
+  highlightProp: HighlightProp // | string
   showLines: boolean
   lineActivationThreshold: number
   allowDenseHoverLines: boolean
@@ -48,7 +50,7 @@ export type VisSlice = { vis: VisConfig & VisActions; three?: Three }
 
 export const createVisSlice: StateCreator<VisSlice> = (set) => ({
   vis: {
-    ...defaultOptions,
+    ...defaultVisConfig,
     setConfig: (newConfig) =>
       set(({ vis }) => ({ vis: { ...vis, ...newConfig } })),
     toggleLayerVisibility: (layerName) =>
@@ -60,9 +62,9 @@ export const createVisSlice: StateCreator<VisSlice> = (set) => ({
             : vis.invisibleLayers.concat(layerName),
         },
       })),
-    getDefault: (prop) => defaultOptions[prop],
+    getDefault: (prop) => defaultVisConfig[prop],
     reset: (prop) =>
-      set(({ vis }) => ({ vis: { ...vis, [prop]: defaultOptions[prop] } })),
+      set(({ vis }) => ({ vis: { ...vis, [prop]: defaultVisConfig[prop] } })),
     toggleLocked: () =>
       set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
   },

@@ -40,7 +40,8 @@ const Lights = () => (
       angle={Math.PI / 3}
       penumbra={1}
       decay={0}
-      intensity={(Math.PI / 2) * 3}
+      intensity={(Math.PI / 3) * 2}
+      // color="rgb(100,20,255)"
       color="#ff0000"
     />
   </>

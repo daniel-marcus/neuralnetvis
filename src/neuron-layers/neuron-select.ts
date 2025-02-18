@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useStore } from "@/store"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "./colors"
-import type { LayerStateful, Nid, HighlightProp } from "./types"
+import type { LayerStateful, Nid } from "./types"
 import { updateGroups } from "./layers-stateful"
 
 export function useNeuronSelect(layerProps: LayerStateful[]) {
@@ -14,7 +14,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
   const selOrHovNid = selectedNid || hoveredNid
 
   const patchedLayerProps = useMemo(() => {
-    if (!selOrHovNid) return layerProps
+    if (!selOrHovNid || !highlightProp) return layerProps
     const selN = allNeurons.get(selOrHovNid)
     if (!selN) return layerProps
     const selNInputs = (selN.inputNeurons?.map(
@@ -34,7 +34,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       const neurons = l.neurons.map((n) => {
         const idx = inputNidMap.get(n.nid)
         if (typeof idx === "undefined") return n
-        const highlightValue = tempObj[highlightProp as HighlightProp]?.[idx]
+        const highlightValue = tempObj[highlightProp]?.[idx]
         const color = getHighlightColor(highlightValue ?? 0)
         return { ...n, color }
       })

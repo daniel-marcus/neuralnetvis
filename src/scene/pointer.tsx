@@ -1,19 +1,20 @@
+import { useStore } from "@/store"
 import { useAnimatedPosition, getWorldPos } from "@/scene/utils"
 import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
+import { LABEL_COLOR } from "./label"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
-import { useStore } from "@/store"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const trainingY = useStore((s) => s.sample?.y)
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
   const { layerPos, meshParams } = outputLayer
   const spacing = useNeuronSpacing(meshParams)
-  if (!neuron) return null
+  const showPointer = useStore((s) => s.vis.showPointer)
+  if (!showPointer || !neuron) return null
   const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
   const position = getNeuronPos(neuron.index, layerPos, height, width, spacing)
-  const color = Number(neuron.activation) > 0.5 ? "rgb(0, 200, 80)" : "white"
-  return <Pointer position={position} color={color} />
+  return <Pointer position={position} color={LABEL_COLOR} />
 }
 
 export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {

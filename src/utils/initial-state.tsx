@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { StoreType, useStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
+import { defaultVisConfig } from "@/store/vis"
 
 type ExposedStoreKeys =
   | "datasetKey"
@@ -21,9 +22,7 @@ export const defaultState: InitialState = {
   datasetKey: "mnist",
   layerConfigs: defaultLayerConfigs,
   cameraPos: [-23, 0, 35],
-  vis: {
-    invisibleLayers: [],
-  },
+  vis: defaultVisConfig,
 }
 
 export function useInitialState(state = defaultState) {

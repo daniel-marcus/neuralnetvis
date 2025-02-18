@@ -1,5 +1,5 @@
 import { IntroInterface } from "./exploring-the-interface"
-import { IntroNetworks } from "./how-networks-learn"
+import { IntroNetworks } from "./how-machines-learn"
 import type { ReactElement } from "react"
 import type { ScrollBlockProps } from "@/contents/elements/types"
 
@@ -16,8 +16,8 @@ export interface LessonDef {
 
 export const lessons: LessonDef[] = [
   {
-    title: "How do networks learn?",
-    slug: "how-networks-learn",
+    title: "How do machines learn?",
+    slug: "how-machines-learn",
     description: "Some basics about machine learning",
     content: IntroNetworks,
   },

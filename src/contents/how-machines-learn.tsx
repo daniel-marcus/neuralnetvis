@@ -4,11 +4,11 @@ import { getThree, setStatus, setVisConfig, useStore } from "@/store"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { LockButton } from "@/scene/lock"
 import { Block, Details, Head } from "@/contents/elements"
-import { LogsPlot } from "@/components/ui-elements/logs-plot"
 import { trainOnBatch } from "@/model/training"
 import { interpolate } from "@/scene/utils"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
+import { defaultVisConfig } from "@/store/vis"
 
 const initialState: InitialState = {
   datasetKey: "mnist",
@@ -16,8 +16,12 @@ const initialState: InitialState = {
   cameraPos: [-1.6, 0, 2.7],
   sampleIdx: 50,
   vis: {
-    neuronSpacing: 2,
+    neuronSpacing: 2.5,
+    xShift: 13,
     invisibleLayers: ["nnv_Output"],
+    showPointer: false,
+    allowDenseHoverLines: true,
+    highlightProp: null,
   },
 }
 
@@ -26,17 +30,18 @@ export const IntroNetworks = (): LessonContent => {
   return (
     <main>
       <Head
-        title="How do networks learn?"
-        description="Let's teach a machine to recognize handwritten digits"
+        title="How do machines learn?"
+        description="Let's train a neural network to recognize handwritten digits"
         cameraPos={initialState.cameraPos}
         onScroll={({ percent }) => {
           const initSpacing = initialState.vis!.neuronSpacing!
-          const neuronSpacing = interpolate(initSpacing, 1, percent)
+          const dflt = defaultVisConfig.neuronSpacing!
+          const neuronSpacing = interpolate(initSpacing, dflt, percent)
           useStore.getState().vis.setConfig({ neuronSpacing })
         }}
       />
       <Block
-        cameraPos={[-40, 0, 0]}
+        cameraPos={[-60, 0, 30]}
         onEnter={() => {
           useStore.setState({ sampleIdx: initialState.sampleIdx })
           setVisConfig({
@@ -44,28 +49,55 @@ export const IntroNetworks = (): LessonContent => {
           })
         }}
       >
-        This is a three. No doubts.
+        This is a three, obviously.
       </Block>
       <Block
-        cameraPos={[-25, 15, 30]}
+        cameraPos={[-25, 0, 40]}
         onEnter={() => {
           setVisConfig({ invisibleLayers: [] })
         }}
       >
         Let&apos;s add our output layer.
       </Block>
-      <Block cameraPos={[-15, 10, 35]} onScroll={changeSample}>
-        Now let&apos;s change the sample as we scroll.
+      <Block
+        cameraPos={[0, 0, 40]}
+        onScroll={({ percent }) => {
+          const idx = Math.round(percent * 10)
+          const nid = `2_${idx}.0.0`
+          useStore.setState({ hoveredNid: nid })
+        }}
+        onLeave={() => {
+          useStore.setState({ hoveredNid: undefined })
+        }}
+        onEnter={() => {
+          setVisConfig({ showPointer: false })
+        }}
+      >
+        And connect every neuron from the input layer to our output layer
+        neurons.
+      </Block>
+      <Block
+        cameraPos={[-17, 0, 27]}
+        onScroll={changeSample}
+        onEnter={() => setVisConfig({ showPointer: true })}
+      >
+        Here comes: the pointer.
       </Block>
       <Block
         onScroll={scrollTrain}
-        onLeave={() => setStatus("", null)}
-        className="h-[100vh] relative "
+        onEnter={() => {
+          setVisConfig({ highlightProp: "weights" })
+          useStore.setState({ selectedNid: `2_3.0.0` })
+        }}
+        onLeave={() => {
+          setStatus("", null)
+          setVisConfig({ highlightProp: null })
+          useStore.setState({ selectedNid: undefined })
+        }}
       >
-        <p>We can even train the model as we scroll.</p>
-        <div className="sticky top-0 pt-16 max-w-[32rem]">
-          <LogsPlot />
-        </div>
+        <p className="mb-[50vh]">We can even train the model as we scroll.</p>
+        <p className="mb-[50vh]">Keep scrolling ...</p>
+        <p className="mb-[50vh]">Just a little bit more ...</p>
       </Block>
       <Block>
         Try out!

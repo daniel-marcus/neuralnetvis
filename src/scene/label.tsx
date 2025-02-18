@@ -16,7 +16,7 @@ declare module "@react-three/fiber" {
 }
 
 const FONT_SIZE = 2
-const LABEL_COLOR = "rgb(140, 146, 164)"
+export const LABEL_COLOR = "rgb(140, 146, 164)"
 
 interface NeuronLabelsProps {
   neuron: NeuronDef & NeuronState
