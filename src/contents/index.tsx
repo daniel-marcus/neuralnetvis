@@ -1,4 +1,4 @@
-import { introInterface } from "./exploring-the-interface"
+import { IntroInterface } from "./exploring-the-interface"
 import { IntroNetworks } from "./how-networks-learn"
 import type { ReactElement } from "react"
 import type { ScrollBlockProps } from "@/contents/elements/types"
@@ -11,7 +11,7 @@ export interface LessonDef {
   title: string
   slug: string
   description: string
-  content: LessonContent | (() => LessonContent)
+  content: () => LessonContent
 }
 
 export const lessons: LessonDef[] = [
@@ -25,7 +25,7 @@ export const lessons: LessonDef[] = [
     title: "Exploring the interface",
     slug: "exploring-the-interface",
     description: "Learn what you can see and do here",
-    content: introInterface,
+    content: IntroInterface,
   },
 ]
 

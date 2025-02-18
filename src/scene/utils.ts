@@ -52,13 +52,13 @@ export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
   return worldPos
 }
 
-export type Position = [number, number, number]
+export type Pos = [number, number, number]
 
-export function moveCameraTo(targetPosition: Position, duration = 500) {
+export function moveCameraTo(targetPosition: Pos, duration = 500) {
   const three = getThree()
   if (!three) return
-  const initialPosition = three.camera.position.toArray() as Position
-  const api = new Controller<{ position: Position }>({
+  const initialPosition = three.camera.position.toArray() as Pos
+  const api = new Controller<{ position: Pos }>({
     position: initialPosition,
   })
   api.start({
@@ -73,19 +73,18 @@ export function moveCameraTo(targetPosition: Position, duration = 500) {
   })
 }
 
-export function interpolateCamera(
-  fromPos: Position,
-  toPos: Position,
-  percent: number
-) {
+export function interpolateCamera(from: Pos, to: Pos, percent: number) {
   const three = getThree()
   if (!three) return
   const camera = three.camera
   const position = new THREE.Vector3()
-  position
-    .fromArray(fromPos)
-    .lerp(new THREE.Vector3().fromArray(toPos), percent)
+  position.fromArray(from).lerp(new THREE.Vector3().fromArray(to), percent)
   camera.position.copy(position)
   camera.lookAt(0, 0, 0)
   three.invalidate()
+}
+
+export function interpolate(from: number, to: number, percent: number): number {
+  percent = Math.max(0, Math.min(1, percent))
+  return from + (to - from) * percent
 }

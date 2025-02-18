@@ -28,20 +28,19 @@ export const Scene = () => {
 const Lights = () => (
   <>
     <ambientLight intensity={Math.PI * 0.7} />
-    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
     <spotLight
-      position={[-100, 10, -10]}
+      position={[-100, 20, -20]}
       angle={Math.PI / 3}
       penumbra={1}
       decay={0}
       intensity={Math.PI}
     />
     <spotLight
-      position={[30, 10, 15]}
+      position={[100, -20, 20]}
       angle={Math.PI / 3}
       penumbra={1}
       decay={0}
-      intensity={(Math.PI / 3) * 2}
+      intensity={(Math.PI / 2) * 3}
       color="#ff0000"
     />
   </>

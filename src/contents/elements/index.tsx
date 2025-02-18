@@ -1,4 +1,5 @@
 export { Block } from "./block"
+export { Button } from "./ctas"
+export { Ctas } from "./ctas"
 export { Details } from "./details"
 export { Head } from "./head"
-export { Button } from "./ctas"

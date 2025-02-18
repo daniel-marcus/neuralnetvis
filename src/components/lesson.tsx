@@ -2,30 +2,36 @@
 
 import { usePathname } from "next/navigation"
 import { useLock } from "@/scene/lock"
-import { Head } from "@/contents/elements/head"
-import { Ctas } from "@/contents/elements/ctas"
-import type { LessonDef, LessonPreview } from "@/contents"
-import { useEffect } from "react"
+import { Ctas } from "@/contents/elements"
+import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
+import { cloneElement, useEffect } from "react"
 import { useStore } from "@/store"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
 }
 
+function useContent(content: LessonDef["content"]) {
+  const main = content()
+  const children = main.props.children.map((c, i, arr) =>
+    cloneElement(c, { key: i, nextProps: arr[i + 1]?.props })
+  )
+  return (<main>{children}</main>) as LessonContent
+}
+
 export const Lesson = (props: LessonProps) => {
-  const { title, description, content, nextLesson } = props
+  const { content, nextLesson } = props
+  const children = useContent(content)
   useTabClose()
   const visLocked = useLock()
-  const children = typeof content === "function" ? content() : content
-  const hasHead = !!children.props.children.find((c) => c.type === Head)
+  const isDebug = useStore((s) => s.isDebug)
   return (
     <div
       className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
-        visLocked ? "" : "pointer-events-none"
+        visLocked && !isDebug ? "" : "pointer-events-none"
       }`}
     >
       <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
-        {!hasHead && <Head title={title} description={description} />}
         {children}
         <Ctas nextLesson={nextLesson} />
       </div>

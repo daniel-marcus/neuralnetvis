@@ -1,21 +1,22 @@
 "use client"
 
-import { getThree, setStatus, useStore } from "@/store"
+import { getThree, setStatus, setVisConfig, useStore } from "@/store"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { LockButton } from "@/scene/lock"
-import { Block, Button, Details, Head } from "@/contents/elements"
+import { Block, Details, Head } from "@/contents/elements"
 import { LogsPlot } from "@/components/ui-elements/logs-plot"
 import { trainOnBatch } from "@/model/training"
-import { interpolateCamera, moveCameraTo } from "@/scene/utils"
+import { interpolate } from "@/scene/utils"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
 
 const initialState: InitialState = {
   datasetKey: "mnist",
   layerConfigs: [{ className: "Dense", config: {} }], // the output layer
-  cameraPos: [-7.1, 2.3, -5.6],
+  cameraPos: [-1.6, 0, 2.7],
   sampleIdx: 50,
   vis: {
+    neuronSpacing: 2,
     invisibleLayers: ["nnv_Output"],
   },
 }
@@ -27,34 +28,33 @@ export const IntroNetworks = (): LessonContent => {
       <Head
         title="How do networks learn?"
         description="Let's teach a machine to recognize handwritten digits"
-        onScroll={({ percent }) =>
-          interpolateCamera(initialState.cameraPos!, [-30, 20, 50], percent)
-        }
+        cameraPos={initialState.cameraPos}
+        onScroll={({ percent }) => {
+          const initSpacing = initialState.vis!.neuronSpacing!
+          const neuronSpacing = interpolate(initSpacing, 1, percent)
+          useStore.getState().vis.setConfig({ neuronSpacing })
+        }}
       />
       <Block
+        cameraPos={[-40, 0, 0]}
         onEnter={() => {
           useStore.setState({ sampleIdx: initialState.sampleIdx })
-          useStore.getState().vis.setConfig({
+          setVisConfig({
             invisibleLayers: initialState.vis!.invisibleLayers,
           })
         }}
-        onScroll={({ percent }) =>
-          interpolateCamera([-30, 20, 50], [-25, 15, 30], percent)
-        }
       >
         This is a three. No doubts.
       </Block>
       <Block
-        onScroll={({ percent }) =>
-          interpolateCamera([-25, 15, 30], [-15, 10, 35], percent)
-        }
+        cameraPos={[-25, 15, 30]}
         onEnter={() => {
-          useStore.getState().vis.setConfig({ invisibleLayers: [] })
+          setVisConfig({ invisibleLayers: [] })
         }}
       >
         Let&apos;s add our output layer.
       </Block>
-      <Block onScroll={changeSample}>
+      <Block cameraPos={[-15, 10, 35]} onScroll={changeSample}>
         Now let&apos;s change the sample as we scroll.
       </Block>
       <Block
@@ -67,20 +67,6 @@ export const IntroNetworks = (): LessonContent => {
           <LogsPlot />
         </div>
       </Block>
-      <Block
-        onEnter={() => moveCameraTo([-15, 0.5, 17], 1000)}
-        onLeave={() => moveCameraTo([0, 0, 30])}
-      >
-        Move camera to a specific position
-      </Block>
-      <Block
-        onEnter={() => moveCameraTo([-25, 24, 23])}
-        onLeave={() => moveCameraTo([0, 0, 30])}
-      >
-        Another one!
-      </Block>
-      <Block onScroll={changeLayerSpacing}>Changing xShift</Block>
-      <Block onScroll={changeNeuronSpacing}>Changing neuronSpacing</Block>
       <Block>
         Try out!
         <br />
@@ -103,12 +89,6 @@ export const IntroNetworks = (): LessonContent => {
             Sed feugiat varius quam, in volutpat ante eleifend nec.
           </p>
         </Details>
-      </Block>
-      <Block>
-        How about training?
-        <br />
-        <br />
-        <Button onClick={startTraining}>Train!</Button>
       </Block>
     </main>
   )
@@ -159,26 +139,4 @@ async function scrollTrain({ percent }: OnScrollProps) {
   if (!log) return
   useStore.getState().addLogs([{ ...log, batch }])
   setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent)
-}
-
-function changeLayerSpacing({ percent }: OnScrollProps) {
-  const defaultSpacing = 11
-  const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
-  const newSpacing = defaultSpacing * scalingFactor
-  const setVisConfig = useStore.getState().vis.setConfig
-  setVisConfig({ xShift: newSpacing })
-}
-
-function changeNeuronSpacing({ percent }: OnScrollProps) {
-  const defaultSpacing = 1.1
-  const scalingFactor = Math.sin(2 * Math.PI * percent) + 1
-  const newSpacing = defaultSpacing * scalingFactor
-  const setVisConfig = useStore.getState().vis.setConfig
-  setVisConfig({ neuronSpacing: newSpacing })
-}
-
-function startTraining() {
-  const setIsTraining = useStore.getState().setIsTraining
-  useStore.getState().setTrainConfig({ silent: false })
-  setIsTraining(true)
 }

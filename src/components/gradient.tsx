@@ -7,7 +7,7 @@ export const Gradient = () => {
   return (
     <div
       className={`absolute scroll-zero:fixed top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
-        hasLesson ? "opacity-70" : "opacity-0"
+        hasLesson ? "opacity-80" : "opacity-0"
       } transition-opacity duration-700`}
     />
   )

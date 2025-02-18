@@ -1,9 +1,9 @@
 import { useAsciiText } from "@/utils/ascii-text"
 import { useScrollCallbacks } from "./block"
 import type { ReactNode } from "react"
-import type { ScrollCallbacks } from "./types"
+import type { ScrollBlockProps } from "./types"
 
-type HeadProps = { title: string; description?: string } & ScrollCallbacks
+type HeadProps = { title: string; description?: string } & ScrollBlockProps
 
 export function Head(props: HeadProps) {
   const { title, description, ...callbacks } = props

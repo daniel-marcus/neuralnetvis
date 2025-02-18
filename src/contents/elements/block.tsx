@@ -1,10 +1,12 @@
 import { useEffect } from "react"
 import throttle from "lodash.throttle"
 import { useInView } from "@/utils/screen"
-import type { ScrollBlockProps, ScrollCallbacks } from "./types"
+import type { ScrollBlockProps } from "./types"
+import { interpolateCamera } from "@/scene/utils"
 
-export function Block({ children, className, ...callbacks }: ScrollBlockProps) {
-  const [ref, inView] = useScrollCallbacks(callbacks)
+export function Block(props: ScrollBlockProps) {
+  const { children, className, ...scrollProps } = props
+  const [ref, inView] = useScrollCallbacks(scrollProps)
   return (
     <div
       ref={ref}
@@ -17,22 +19,28 @@ export function Block({ children, className, ...callbacks }: ScrollBlockProps) {
   )
 }
 
-export function useScrollCallbacks(callbacks: ScrollCallbacks) {
-  const { onScroll, onEnter, onLeave } = callbacks
+export function useScrollCallbacks(scrollProps: ScrollBlockProps) {
+  const { onScroll, onEnter, onLeave } = scrollProps
+  const { cameraPos, nextProps } = scrollProps
   const [ref, inView] = useInView({ rootMargin: "-50% 0px" })
 
   useEffect(() => {
     if (!inView) return
-    if (!onScroll) return
     const onScrollCb = () => {
       if (!ref.current) return
       const percent = calculateScrolledPercent(ref)
-      onScroll({ percent })
+      const nextCameraPos = nextProps?.cameraPos
+
+      if (cameraPos && nextCameraPos) {
+        interpolateCamera(cameraPos, nextCameraPos, percent)
+      }
+
+      onScroll?.({ percent })
     }
     const throttledOnScrollCb = throttle(onScrollCb, 10)
     window.addEventListener("scroll", throttledOnScrollCb)
     return () => window.removeEventListener("scroll", throttledOnScrollCb)
-  }, [inView, onScroll, ref])
+  }, [inView, onScroll, ref, cameraPos, nextProps])
 
   useEffect(() => {
     if (!onEnter && !onLeave) return

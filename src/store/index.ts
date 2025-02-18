@@ -37,3 +37,5 @@ export const setStatus: StatusSlice["status"]["setText"] = (text, percent) =>
   useStore.getState().status.setText(text, percent)
 export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
   useStore.getState().setLayerConfigs(layerConfigs)
+export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
+  useStore.getState().vis.setConfig(config)

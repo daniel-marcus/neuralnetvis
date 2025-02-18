@@ -3,7 +3,7 @@
 import { Block } from "@/contents/elements/block"
 import { Head } from "./elements"
 
-export const introInterface = (
+export const IntroInterface = () => (
   <main>
     <Head title="Exploring the Interface" />
     <Block>Welcome</Block>

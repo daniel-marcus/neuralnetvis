@@ -17,7 +17,7 @@ export const Layer = (props: LayerProps) => {
   const ref = useLayerPos(props)
   const invisible = useIsInvisible(props)
   const prevInvisible = useIsInvisible(prevLayer)
-  useDynamicScale(ref, invisible ? 0.001 : 1)
+  useDynamicScale(ref, invisible ? 0.0001 : 1)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
   const showConnections = !invisible && !!prevLayer && !prevInvisible
   if (!props.neurons.length) return null
@@ -37,7 +37,10 @@ export const Layer = (props: LayerProps) => {
 
 function useLayerPos(layer: LayerProps) {
   const { visibleIdx, allLayers } = layer
-  const visibleLayers = allLayers.filter((l) => l.neurons.length)
+  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
+  const visibleLayers = allLayers.filter(
+    (l) => l.neurons.length && !invisibleLayers.includes(l.tfLayer.name)
+  )
   const orientation = useOrientation()
 
   const { xShift, yShift, zShift } = useStore((s) => s.vis)

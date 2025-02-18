@@ -35,8 +35,8 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
       <NeuronLabel
         side={layerPos === "input" ? "left" : "right"}
         position={position}
-        size={isRegression ? 1 : FONT_SIZE}
-        color={isRegression ? LABEL_COLOR : neuron.color.three}
+        size={1}
+        color={LABEL_COLOR}
       >
         {layerPos === "output" && isRegression
           ? `${label}\n${activation?.toFixed(

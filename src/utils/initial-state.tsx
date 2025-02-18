@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { StoreType, useStore } from "@/store"
-import { moveCameraTo, type Position } from "@/scene/utils"
+import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
 
 type ExposedStoreKeys =
@@ -14,7 +14,7 @@ type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
   vis?: Partial<StoreType["vis"]>
-  cameraPos?: Position
+  cameraPos?: Pos
 }
 
 export const defaultState: InitialState = {
