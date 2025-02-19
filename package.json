@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@react-spring/web": "^9.7.5",
-    "@react-three/drei": "10.0.0-rc.2",
-    "@react-three/fiber": "9.0.0-rc.7",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
