@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Controller } from "@react-spring/web"
-import type { NeuronDef } from "@/neuron-layers/types"
+import { Controller, config } from "@react-spring/web"
 import { getThree } from "@/store"
+import type { NeuronDef } from "@/neuron-layers/types"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   // TODO: could use spring here
@@ -54,20 +54,23 @@ export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
 
 export type Pos = [number, number, number]
 
-export function moveCameraTo(targetPosition: Pos, duration = 500) {
+export function moveCameraTo(targetPos?: Pos, lookAt?: Pos) {
   const three = getThree()
   if (!three) return
-  const initialPosition = three.camera.position.toArray() as Pos
-  const api = new Controller<{ position: Pos }>({
-    position: initialPosition,
+  const initialPos = three.camera.position.toArray() as Pos
+  const initialLookAt = (three.controls?.target.toArray() as Pos) || [0, 0, 0]
+  const api = new Controller<{ position: Pos; lookAt: Pos }>({
+    position: initialPos,
+    lookAt: initialLookAt,
   })
   api.start({
-    config: { duration },
-    position: targetPosition,
-    from: { position: initialPosition },
+    config: config.default,
+    position: targetPos ?? initialPos,
+    lookAt: lookAt ?? initialLookAt,
+    from: { position: initialPos, lookAt: initialLookAt },
     onChange: ({ value }) => {
       three.camera.position.set(...value.position)
-      three.camera.lookAt(0, 0, 0)
+      three.controls?.target.set(...value.lookAt)
       three.invalidate()
     },
   })

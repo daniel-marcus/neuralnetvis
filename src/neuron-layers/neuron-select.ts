@@ -11,7 +11,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
   const allNeurons = useStore((s) => s.allNeurons)
   const selectedNid = useStore((s) => s.selectedNid)
   const hoveredNid = useStore((s) => s.hoveredNid)
-  const selOrHovNid = selectedNid || hoveredNid
+  const selOrHovNid = hoveredNid || selectedNid
 
   const patchedLayerProps = useMemo(() => {
     if (!selOrHovNid || !highlightProp) return layerProps

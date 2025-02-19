@@ -18,7 +18,7 @@ function logCameraPos() {
   const three = getThree()
   if (!three) return
   const { camera } = three
-  console.log("Camera position:", camera.position.toArray())
+  console.log("Camera position:", camera.position.toArray(), camera)
 }
 
 export const Raycaster = () => {

@@ -16,12 +16,15 @@ type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
 export type InitialState = Partial<ExposedStoreType> & {
   vis?: Partial<StoreType["vis"]>
   cameraPos?: Pos
+  cameraLookAt?: Pos
 }
 
 export const defaultState: InitialState = {
   datasetKey: "mnist",
   layerConfigs: defaultLayerConfigs,
+  selectedNid: undefined,
   cameraPos: [-23, 0, 35],
+  cameraLookAt: [0, 0, 0],
   vis: defaultVisConfig,
 }
 
@@ -39,9 +42,9 @@ export function InitialStateSetter() {
 }
 
 export function setInitialState(initialState: InitialState = defaultState) {
-  const { cameraPos, vis, ...storeSettings } = initialState
+  const { cameraPos, cameraLookAt, vis, ...storeSettings } = initialState
   if (cameraPos) {
-    moveCameraTo(cameraPos)
+    moveCameraTo(cameraPos, cameraLookAt)
   }
   if (vis) {
     useStore.getState().vis.setConfig({ ...vis })

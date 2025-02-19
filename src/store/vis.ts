@@ -1,6 +1,7 @@
 import { StateCreator } from "zustand"
 import type { HighlightProp } from "@/neuron-layers/types"
 import type { RootState } from "@react-three/fiber"
+import { OrbitControls } from "three/examples/jsm/Addons.js"
 
 export const defaultVisConfig = {
   xShift: 11,
@@ -42,6 +43,7 @@ interface VisActions {
 
 interface Three {
   camera: RootState["camera"]
+  controls: OrbitControls | null
   invalidate: RootState["invalidate"]
   gl: RootState["gl"]
 }

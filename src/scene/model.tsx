@@ -4,6 +4,7 @@ import { useStore } from "@/store"
 import { useLayers } from "@/neuron-layers"
 import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
+import { OrbitControls } from "three/examples/jsm/Addons.js"
 
 export const Model = () => {
   const layers = useLayers()
@@ -20,10 +21,11 @@ export const Model = () => {
 
 function useThreeStoreSetter() {
   // make three available outside of the render context
-  const { camera, invalidate, gl } = useThree()
+  const { camera, invalidate, gl, controls: _controls } = useThree()
   useEffect(() => {
-    const three = { camera, invalidate, gl }
+    const controls = _controls as OrbitControls
+    const three = { camera, invalidate, gl, controls }
     useStore.setState({ three })
-  }, [camera, invalidate, gl])
+  }, [camera, invalidate, gl, _controls])
   return null
 }
