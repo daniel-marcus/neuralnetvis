@@ -31,6 +31,7 @@ export const SampleSlider = () => {
           onChange={(sampleIdx) => useStore.setState({ sampleIdx })}
           min={0}
           max={totalSamples - 1}
+          yPad={0.25}
         />
         <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
           {sampleIdx + 1} / {totalSamples}

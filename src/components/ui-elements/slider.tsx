@@ -11,7 +11,7 @@ interface SliderProps {
   lazyUpdate?: boolean
   transform?: (v: number) => number
   markers?: number[]
-  // isOptiona?: boolean
+  yPad?: number // in "em". increases touchable are, helpful for mobile
 }
 
 export const Slider = ({
@@ -24,6 +24,7 @@ export const Slider = ({
   lazyUpdate,
   transform,
   markers = [],
+  yPad = 0,
 }: SliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -52,18 +53,25 @@ export const Slider = ({
   const currPercent = getPercent(currVal)
 
   return (
-    <div className="flex gap-2">
+    <div
+      className="flex gap-2"
+      style={
+        {
+          "--y-pad": `${yPad}em`,
+        } as React.CSSProperties
+      }
+    >
       <div
         ref={sliderRef}
         {...bind()}
-        className="flex-1 overflow-hidden select-none relative cursor-pointer touch-none"
+        className="flex-1 py-[var(--y-pad)] overflow-hidden select-none relative cursor-pointer touch-none"
         aria-label={`${value}/${max}`}
       >
         {bgContent}
         {markers.map((mVal, i) => (
           <span
             key={i}
-            className="absolute top-0 left-0"
+            className="absolute top-[var(--y-pad)] left-0"
             style={{
               left: `${getPercent(mVal)}%`,
               transform: `translateX(-${getPercent(mVal)}%)`,
@@ -73,7 +81,7 @@ export const Slider = ({
           </span>
         ))}
         <span
-          className={`absolute top-0 left-0 text-accent`}
+          className={`absolute top-[var(--y-pad)] left-0 text-accent`}
           style={{
             left: `${currPercent}%`,
             transform: `translateX(-${currPercent}%)`,
