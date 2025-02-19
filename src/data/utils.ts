@@ -1,11 +1,11 @@
 import * as tf from "@tensorflow/tfjs"
 
 export function normalizeTensor(tensor: tf.Tensor1D): tf.Tensor1D {
-  // min-max normalization [0, 1]
+  // normalization between -1 and 1, keeps sign
   return tf.tidy(() => {
-    const min = tensor.min()
-    const max = tensor.max()
-    return tensor.sub(min).div(max.sub(min))
+    const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
+    const maxAbs = tensor.abs().max().maximum(epsilon)
+    return tensor.div(maxAbs)
   })
 }
 

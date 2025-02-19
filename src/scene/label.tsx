@@ -8,6 +8,7 @@ import type { ThreeElement } from "@react-three/fiber"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
+// https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
 class CustomText extends Text {}
 extend({ CustomText })
 declare module "@react-three/fiber" {
