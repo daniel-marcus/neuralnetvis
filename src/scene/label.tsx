@@ -4,6 +4,7 @@ import * as THREE from "three"
 import { Text } from "troika-three-text"
 import { useStore } from "@/store"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
+import type { ThreeElement } from "@react-three/fiber"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
@@ -11,7 +12,7 @@ class CustomText extends Text {}
 extend({ CustomText })
 declare module "@react-three/fiber" {
   interface ThreeElements {
-    customText: unknown // Object3DNode<CustomText, typeof CustomText>
+    customText: ThreeElement<typeof CustomText>
   }
 }
 
@@ -75,7 +76,7 @@ export const NeuronLabel = ({
   size,
   children,
 }: NeuronLabelProps) => {
-  const labelRef = useRef<THREE.Mesh & { sync: (cb: () => void) => void }>(null)
+  const labelRef = useRef<THREE.Object3D & CustomText>(null)
   const camera = useThree((state) => state.camera)
   useFrame(() => {
     if (labelRef.current) {
