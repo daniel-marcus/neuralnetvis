@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.35",
+  "version": "1.0.0-alpha.36",
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
   "author": "Daniel Marcus (https://danielmarcus.de)",
@@ -17,7 +17,7 @@
   "dependencies": {
     "@react-spring/web": "^9.7.5",
     "@react-three/drei": "^10.0.0",
-    "@react-three/fiber": "^9.0.1",
+    "@react-three/fiber": "^9.0.4",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",

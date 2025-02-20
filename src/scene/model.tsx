@@ -4,7 +4,8 @@ import { useStore } from "@/store"
 import { useLayers } from "@/neuron-layers"
 import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
-import { OrbitControls } from "three/examples/jsm/Addons.js"
+import { Highlighted } from "./highlighted"
+import type { OrbitControls } from "three/examples/jsm/Addons.js"
 
 export const Model = () => {
   const layers = useLayers()
@@ -15,6 +16,7 @@ export const Model = () => {
         <Layer key={`${l.tfLayer.name}`} {...l} allLayers={layers} />
       ))}
       <HoverConnections />
+      <Highlighted />
     </group>
   )
 }
