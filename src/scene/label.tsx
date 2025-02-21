@@ -91,7 +91,8 @@ export const NeuronLabel = ({
       invalidate()
     })
   }, [labelRef, children, invalidate])
-
+  const lightsOn = useStore((s) => s.vis.lightsOn)
+  if (!lightsOn) return null
   return (
     <customText
       ref={labelRef}

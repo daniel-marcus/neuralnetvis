@@ -16,6 +16,8 @@ export const defaultVisConfig = {
   allowDenseHoverLines: false,
   invisibleLayers: [],
   isLocked: false,
+  lightsOn: true,
+  lightIntensity: 1,
 }
 
 interface VisConfig {
@@ -31,6 +33,8 @@ interface VisConfig {
   allowDenseHoverLines: boolean
   invisibleLayers: string[]
   isLocked: boolean
+  lightsOn: boolean
+  lightIntensity: number
 }
 
 interface VisActions {
@@ -39,6 +43,7 @@ interface VisActions {
   getDefault: (prop: keyof VisConfig) => VisConfig[keyof VisConfig]
   reset: (prop: keyof VisConfig) => void
   toggleLocked: () => void
+  toggleLights: () => void
 }
 
 interface Three {
@@ -69,6 +74,8 @@ export const createVisSlice: StateCreator<VisSlice> = (set) => ({
       set(({ vis }) => ({ vis: { ...vis, [prop]: defaultVisConfig[prop] } })),
     toggleLocked: () =>
       set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
+    toggleLights: () =>
+      set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
   },
   three: undefined,
 })
