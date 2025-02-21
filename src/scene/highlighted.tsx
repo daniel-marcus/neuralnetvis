@@ -21,13 +21,3 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
     </mesh>
   )
 }
-
-/* 
-
-      <meshBasicMaterial
-        color="rgb(140, 146, 164)"
-        transparent
-        opacity={0.3}
-        wireframe
-      />
-*/
