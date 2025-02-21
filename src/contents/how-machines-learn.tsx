@@ -20,7 +20,6 @@ const initialState: InitialState = {
     xShift: 13,
     invisibleLayers: ["nnv_Output"],
     showPointer: false,
-    allowDenseHoverLines: true,
     highlightProp: null,
   },
 }

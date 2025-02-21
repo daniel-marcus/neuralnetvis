@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Line, Vector2, Vector3 } from "three"
+import { Color, Line, Vector2, Vector3 } from "three"
 import {
+  Line2,
   LineGeometry,
   LineMaterial,
   LineSegments2,
-} from "three/examples/jsm/Addons.js"
+  LineSegmentsGeometry,
+} from "three-stdlib"
 import { useStore } from "@/store"
-import { getWorldPos } from "./utils"
-import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
 import { useHovered } from "@/neuron-layers/neuron-select"
+import { getWorldPos, type Pos } from "./utils"
+import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
 const MIN_LINE_WIDTH = 0.1
@@ -22,25 +24,62 @@ type NeuronConnectionsProps = {
 
 export const HoverConnections = () => {
   const hovered = useHovered()
-  const hoverOrigin = useStore((s) => s.hoverOrigin)
-  // too many lines for fully connected layers
-  const allowDenseHoverLines = useStore((s) => s.vis.allowDenseHoverLines)
-  if (!hovered) return null
-  if (hovered.layer.layerType === "Dense" && !allowDenseHoverLines) return null
+  // const hoverOrigin = useStore((s) => s.hoverOrigin)
+
+  const line = useMemo(() => new Line2(), [])
+  const material = useMemo(() => new LineMaterial(), [])
+  const geometry = useMemo(() => new LineSegmentsGeometry(), [])
+  const resolution = useMemo(() => new Vector2(512, 512), [])
+
+  const length = hovered?.inputNeurons?.length ?? 0
+  const show = length > 0 && length < MAX_LINES_PER_LAYER
+
+  useEffect(() => {
+    // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx
+    if (!show) return
+    const inputNeurons = hovered?.inputNeurons
+    if (!hovered || !inputNeurons?.length) return
+    const toPosition = getWorldPos(hovered)?.toArray() as Pos
+    const color = new Color(0xffffff).toArray()
+    if (!toPosition) return
+    const positions = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
+    const colors = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
+    for (const [i, inputN] of inputNeurons.entries()) {
+      if (i >= MAX_LINES_PER_LAYER) break
+      const fromPosition = getWorldPos(inputN)?.toArray() as Pos
+      if (!fromPosition) continue
+      positions[i * 6] = fromPosition[0]
+      positions[i * 6 + 1] = fromPosition[1]
+      positions[i * 6 + 2] = fromPosition[2]
+      positions[i * 6 + 3] = toPosition[0]
+      positions[i * 6 + 4] = toPosition[1]
+      positions[i * 6 + 5] = toPosition[2]
+      colors[i * 6] = color[0]
+      colors[i * 6 + 1] = color[1]
+      colors[i * 6 + 2] = color[2]
+      colors[i * 6 + 3] = color[0]
+      colors[i * 6 + 4] = color[1]
+      colors[i * 6 + 5] = color[2]
+    }
+    line.geometry.setColors(colors)
+    line.geometry.setPositions(positions)
+    line.geometry.attributes.position.needsUpdate = true
+    line.computeLineDistances()
+  }, [hovered, geometry, line, show])
+
+  if (!show) return null
   return (
-    <group name={`hovered_node_connections`}>
-      {hovered.inputNeurons?.map((inputN, i, arr) => {
-        const width = arr.length > 100 ? 0.1 : 0.5
-        return (
-          <DynamicLine2
-            key={`${hovered.nid}_${inputN.nid}`}
-            from={inputN}
-            to={hovered}
-            toPoint={hoverOrigin}
-            width={width}
-          />
-        )
-      })}
+    <group name={`hovered_node_connections_${hovered?.nid}`}>
+      <primitive object={line}>
+        <primitive object={geometry} attach="geometry" />
+        <primitive
+          object={material}
+          attach="material"
+          vertexColors={true}
+          linewidth={length >= 100 ? 0.1 : 0.5}
+          resolution={resolution}
+        />
+      </primitive>
     </group>
   )
 }

@@ -13,7 +13,6 @@ export const defaultVisConfig = {
   splitColors: false,
   highlightProp: "weightedInputs" as const,
   lineActivationThreshold: 0.5,
-  allowDenseHoverLines: false,
   invisibleLayers: [],
   isLocked: false,
   lightsOn: true,
@@ -30,7 +29,6 @@ interface VisConfig {
   highlightProp: HighlightProp // | string
   showLines: boolean
   lineActivationThreshold: number
-  allowDenseHoverLines: boolean
   invisibleLayers: string[]
   isLocked: boolean
   lightsOn: boolean
