@@ -1,9 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo } from "react"
+import { useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
-import { ThreeEvent, useThree } from "@react-three/fiber"
+import { ThreeEvent } from "@react-three/fiber"
 import { useStore, isDebug } from "@/store"
 import { useAnimatedPosition } from "@/scene/utils"
-import { useLocalSelected } from "@/neuron-layers/neuron-select"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
@@ -13,7 +12,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
   useColors(group.meshRef, group.neurons)
-  useScale(group.meshRef, group.nidsStr, props.index, group.index)
+  // useScale(group.meshRef, group.nidsStr, props.index, group.index)
   const { onPointerOut, ...otherEvHandlers } = useInteractions(group.neurons)
   const renderOrder = groups.length - group.index // reversed order for color blending
   // useHelper(groupRef, THREE.BoxHelper, "cyan")
@@ -128,6 +127,7 @@ function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   }, [meshRef, neurons])
 }
 
+/* 
 function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
   // use string to avoid unnecessary updates
   const { selectedNid } = useLocalSelected(lIdx, gIdx)
@@ -152,7 +152,7 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
     meshRef.current.instanceMatrix.needsUpdate = true
     invalidate()
   }, [meshRef, selectedNid, invalidate, nids, tempMatrix, tempScale])
-}
+} */
 
 function useInteractions(groupedNeurons: Neuron[]) {
   const toggleSelected = useStore((s) => s.toggleSelected)

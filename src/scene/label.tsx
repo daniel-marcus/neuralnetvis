@@ -85,13 +85,13 @@ export const NeuronLabel = ({
     }
   })
   const invalidate = useThree(({ invalidate }) => invalidate)
+  const lightsOn = useStore((s) => s.vis.lightsOn)
   useLayoutEffect(() => {
     if (!labelRef.current) return
     labelRef.current.sync(() => {
       invalidate()
     })
-  }, [labelRef, children, invalidate])
-  const lightsOn = useStore((s) => s.vis.lightsOn)
+  }, [labelRef, invalidate, children, lightsOn])
   if (!lightsOn) return null
   return (
     <customText

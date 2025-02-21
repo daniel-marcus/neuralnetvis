@@ -1,24 +1,33 @@
-import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { getWorldPos } from "./utils"
+import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
+import { Neuron } from "@/neuron-layers"
 
-export function Highlighted() {
-  const hovered = useHovered()
-  const _selected = useSelected()
-  const selected = hovered || _selected
-  if (!selected) return null
-  const pos = getWorldPos(selected)
+interface HighlightedProps {
+  neuron?: Neuron
+  thick?: boolean
+}
+
+const COLOR = "rgb(140, 146, 164)"
+
+export function Highlighted({ neuron, thick }: HighlightedProps) {
+  if (!neuron) return null
+  const pos = getWorldPos(neuron)
+  const { geometry } = neuron.layer.meshParams
   return (
-    <mesh position={pos} scale={1.5}>
-      <primitive
-        object={selected.layer.meshParams.geometry}
-        attach={"geometry"}
-      />
+    <mesh position={pos} scale={thick ? 1.1 : 1.05}>
+      <primitive object={geometry} attach={"geometry"} />
+      <MeshDiscardMaterial />
+      <Outlines color={COLOR} />
+    </mesh>
+  )
+}
+
+/* 
+
       <meshBasicMaterial
         color="rgb(140, 146, 164)"
         transparent
         opacity={0.3}
         wireframe
       />
-    </mesh>
-  )
-}
+*/
