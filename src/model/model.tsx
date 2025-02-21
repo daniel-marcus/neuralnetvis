@@ -116,17 +116,22 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
 
   const model = tf.sequential()
 
-  model.add(
-    tf.layers.inputLayer({
-      batchInputShape: inputShape,
-      name: `nnv_InputLayer`,
-    })
-  )
+  const hasInputLayer = layerConfigs[0].className === "InputLayer"
+  if (!hasInputLayer) {
+    model.add(
+      tf.layers.inputLayer({
+        batchInputShape: inputShape,
+        name: `nnv_InputLayer`,
+      })
+    )
+  }
 
   for (const [i, l] of layerConfigs.entries()) {
     const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
-    if (l.className === "Dense") {
+    if (l.className === "InputLayer") {
+      model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
+    } else if (l.className === "Dense") {
       const configNew = isOutput // use config from ds for output layer
         ? {
             ...config,

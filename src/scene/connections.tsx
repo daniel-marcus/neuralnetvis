@@ -24,6 +24,7 @@ type NeuronConnectionsProps = {
 
 export const HoverConnections = () => {
   const hovered = useHovered()
+  const showLines = useStore((s) => s.vis.showLines)
   // const hoverOrigin = useStore((s) => s.hoverOrigin)
 
   const line = useMemo(() => new Line2(), [])
@@ -32,7 +33,7 @@ export const HoverConnections = () => {
   const resolution = useMemo(() => new Vector2(512, 512), [])
 
   const length = hovered?.inputNeurons?.length ?? 0
-  const show = length > 0 && length < MAX_LINES_PER_LAYER
+  const show = length > 0 && length < MAX_LINES_PER_LAYER && showLines
 
   useEffect(() => {
     // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx
