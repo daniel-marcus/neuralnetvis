@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useStore } from "@/store"
-import { normalizeWithSign } from "@/data/utils"
+import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "./colors"
 import type { LayerStateful, Nid } from "./types"
 import { updateGroups } from "./layers-stateful"
@@ -73,11 +73,7 @@ export function getWeightedInputs(
     const weightsTensor = tf.tensor1d(neuronWeights)
     const inputsTensor = tf.tensor1d(neuronInput)
 
-    if (
-      !weightsTensor.shape.every(
-        (value, index) => value === inputsTensor.shape[index]
-      )
-    ) {
+    if (!checkShapeMatch(weightsTensor.shape, inputsTensor.shape)) {
       console.log("Tensors have different shapes, skipping mul")
       return []
     }

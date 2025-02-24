@@ -1,9 +1,10 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
-import type { LayerActivations, LayerConfig, LayerConfigArray } from "@/model"
+import type { LayerActivations, LayerConfigArray } from "@/model"
 import { StatusSlice } from "./status"
 
-export const defaultLayerConfigs: LayerConfig<"Dense">[] = [
+export const defaultLayerConfigs: LayerConfigArray = [
+  { className: "InputLayer", config: { batchInputShape: [null, 28, 28, 1] } },
   {
     className: "Dense",
     config: { units: 64, activation: "relu" },
@@ -19,6 +20,7 @@ export interface ModelSlice {
   setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
   resetWeights: () => void
+  getInputShape: () => number[]
 
   layerActivations: LayerActivations[]
   setLayerActivations: (layerActivations: LayerActivations[]) => void
@@ -29,7 +31,7 @@ export const createModelSlice: StateCreator<
   [],
   [],
   ModelSlice
-> = (set) => ({
+> = (set, get) => ({
   model: undefined,
   skipModelCreate: false,
   _setModel: (model) => set({ model, layerActivations: [] }),
@@ -42,6 +44,11 @@ export const createModelSlice: StateCreator<
   resetLayerConfigs: () => set({ layerConfigs: defaultLayerConfigs }),
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
+  getInputShape: () => {
+    const model = get().model
+    if (!model) return []
+    return model.layers[0].batchInputShape as number[]
+  },
 
   layerActivations: [],
   setLayerActivations: (layerActivations) => set({ layerActivations }),

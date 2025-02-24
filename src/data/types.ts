@@ -6,6 +6,7 @@ export type DatasetKey =
   | "fashion_mnist"
   | "cifar10"
   | "california_housing"
+  | "hand_pose"
 
 export interface DatasetDef {
   key: DatasetKey
@@ -26,6 +27,7 @@ export interface DatasetDef {
     labels?: string[]
   }
   loadData: DatasetLoader
+  storeBatchSize?: number // default: 100
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
@@ -51,7 +53,7 @@ export interface DbBatch {
 
 export type Sample = {
   X: number[]
-  y: number
+  y?: number
   rawX?: number[]
 }
 

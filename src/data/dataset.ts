@@ -2,7 +2,13 @@ import { useEffect } from "react"
 import { useStore } from "@/store"
 import { datasets } from "./datasets"
 import { getData, putData, putDataBatches } from "./db"
-import type { DatasetDef, DbBatch, ParsedLike, StoreMeta } from "./types"
+import type {
+  Dataset,
+  DatasetDef,
+  DbBatch,
+  ParsedLike,
+  StoreMeta,
+} from "./types"
 
 export function useDataset() {
   const datasetKey = useStore((s) => s.datasetKey)
@@ -53,30 +59,37 @@ export function useDataset() {
 }
 
 export async function loadAndSaveDsData(dsDef: DatasetDef) {
-  const { version } = dsDef
   const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
     await dsDef.loadData()
-  await saveData(dsDef.key, "train", xTrain, yTrain, xTrainRaw, version)
-  await saveData(dsDef.key, "test", xTest, yTest, xTestRaw, version)
+  await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
+  await saveData(dsDef, "test", xTest, yTest, xTestRaw)
 }
 
 async function saveData(
-  dbName: DatasetDef["key"],
+  ds: DatasetDef | Dataset,
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
-  xsRaw: ParsedLike | undefined,
-  version: Date,
-  storeBatchSize = 100
+  xsRaw?: ParsedLike
 ) {
+  const { key: dbName, version, storeBatchSize = 100 } = ds
+
+  const existingMeta = await getData<StoreMeta>(dbName, "meta", storeName)
+  // TODO: checkShapeMatch for dims and throw error if not
+  const oldSamplesX = existingMeta?.shapeX[0] ?? 0
+  const oldSamplesY = existingMeta?.shapeY[0] ?? 0
+  const [newSamplesX, ...dimsX] = xs.shape
+  const [newSamplesY, ...dimsY] = ys.shape
+
   const [totalSamples, ...dims] = xs.shape
   const valsPerSample = dims.reduce((a, b) => a * b)
 
   const batches: DbBatch[] = []
   for (let i = 0; i < totalSamples; i += storeBatchSize) {
     const sliceIdxs = [i * valsPerSample, (i + storeBatchSize) * valsPerSample]
+    const index = Math.floor(i / storeBatchSize) + oldSamplesX
     const batch = {
-      index: Math.floor(i / storeBatchSize),
+      index,
       xs: xs.data.slice(...sliceIdxs),
       ys: ys.data.slice(i, i + storeBatchSize),
       xsRaw: xsRaw?.data.slice(...sliceIdxs),
@@ -86,12 +99,23 @@ async function saveData(
 
   await putDataBatches(dbName, storeName, batches)
 
-  await putData<StoreMeta>(dbName, "meta", {
+  const newStoreMeta = {
     index: storeName,
     version,
-    shapeX: xs.shape,
-    shapeY: ys.shape,
+    shapeX: [oldSamplesX + newSamplesX, ...dimsX],
+    shapeY: [oldSamplesY + newSamplesY, ...dimsY],
     storeBatchSize,
     valsPerSample,
-  })
+  }
+  await putData<StoreMeta>(dbName, "meta", newStoreMeta)
+
+  return newStoreMeta
+}
+
+export async function addTrainData(xs: ParsedLike, ys: ParsedLike) {
+  const ds = useStore.getState().ds
+  if (!ds) return
+  const newTrainMeta = await saveData(ds, "train", xs, ys)
+  const newDs = { ...ds, train: newTrainMeta }
+  useStore.setState({ ds: newDs, skipModelCreate: true })
 }

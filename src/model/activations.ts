@@ -13,6 +13,15 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
 
       const shape = model.layers[0].batchInputShape
       const [, ...dims] = shape as number[]
+      const valsPerSample = dims.reduce((a, b) => a * b, 1)
+      if (input.length !== valsPerSample) {
+        console.log(
+          `Sample shape does not match model input shape. Provided values: ${
+            input.length
+          }, expected: ${valsPerSample} (${dims.join("x")})`
+        )
+        return
+      }
 
       const activationTensors = tf.tidy(() => {
         const tmpModel = tf.model({

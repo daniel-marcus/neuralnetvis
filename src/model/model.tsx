@@ -4,6 +4,7 @@ import { useTfBackend } from "./tf-backend"
 import { useStore, isDebug } from "@/store"
 import type { Dataset } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
+import { checkShapeMatch } from "@/data/utils"
 
 export function useModel(ds?: Dataset) {
   const model = useStore((s) => s.model)
@@ -112,7 +113,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
 function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
   const [, ...dims] = ds.train.shapeX
   const isMultiDim = dims.length >= 2
-  const inputShape = [null, ...dims] as [null, ...number[]]
+  const dsInputShape = [null, ...dims] as [null, ...number[]]
 
   const model = tf.sequential()
 
@@ -120,7 +121,7 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
   if (!hasInputLayer) {
     model.add(
       tf.layers.inputLayer({
-        batchInputShape: inputShape,
+        batchInputShape: dsInputShape,
         name: `nnv_InputLayer`,
       })
     )
@@ -130,6 +131,11 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
     const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
     if (l.className === "InputLayer") {
+      config.batchInputShape =
+        !!config.batchInputShape &&
+        checkShapeMatch(config.batchInputShape, dsInputShape)
+          ? config.batchInputShape
+          : dsInputShape
       model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
     } else if (l.className === "Dense") {
       const configNew = isOutput // use config from ds for output layer

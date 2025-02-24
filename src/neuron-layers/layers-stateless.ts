@@ -54,13 +54,14 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
             const index3d = getNeuronIndex3d(neuronIndex, outputShape)
             const inputNids = layerInputNids?.[neuronIndex] ?? []
             const groupIndex = neuronIndex % groupCount
+            const indexInGroup = Math.floor(neuronIndex / groupCount)
             return {
               nid: getNid(layerIndex, index3d),
               index: neuronIndex,
               index3d,
               layerIndex,
               groupIndex,
-              indexInGroup: Math.floor(neuronIndex / groupCount),
+              indexInGroup,
               meshRef: meshRefs[groupIndex],
               visibleLayerIndex: visibleIdx,
               inputNids,
@@ -72,8 +73,8 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
               label:
                 layerPos === "output"
                   ? ds?.output.labels?.[neuronIndex]
-                  : layerPos === "input"
-                  ? ds?.input?.labels?.[neuronIndex]
+                  : layerPos === "input" && index3d[1] === 0
+                  ? ds?.input?.labels?.[index3d[0]]
                   : undefined,
               layer: layerStateless,
             }

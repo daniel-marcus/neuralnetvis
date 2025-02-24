@@ -58,3 +58,9 @@ export class StandardScaler {
     return this.transform(tensor)
   }
 }
+
+type Shape = (number | null)[]
+
+export function checkShapeMatch(s1: Shape, s2: Shape) {
+  return s1.every((value, idx) => value === s2[idx])
+}

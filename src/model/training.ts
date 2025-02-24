@@ -138,7 +138,9 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
 
   let history: tf.History | void | undefined = undefined
   if (!isFitDataset) {
-    const [X, y] = await getDbDataAsTensors(ds, "train")
+    const trainData = await getDbDataAsTensors(ds, "train")
+    if (!trainData) return
+    const [X, y] = trainData
     const trainingPromise = model.fit(X, y, options)
     useStore.setState({ trainingPromise })
     history = await trainingPromise.then(() => {
@@ -192,6 +194,7 @@ async function getDbDataAsTensors(
   range?: IDBKeyRange
 ) {
   const batches = await getAll<DbBatch>(ds.key, type, range)
+  if (!batches.length) return
   const isClassification = ds.task === "classification"
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
@@ -212,7 +215,7 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   const model = getModel()
   if (!ds || !model) return
   const isClassification = ds?.task === "classification"
-  const trainShape = ds.train.shapeX
+  const trainShape = useStore.getState().getInputShape()
   const [X, y] = tf.tidy(() => {
     const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
     const y = isClassification ? tf.oneHot(ys, ds.output.size) : tf.tensor(ys)
@@ -230,7 +233,9 @@ export async function getModelEvaluation() {
   const ds = getDs()
   if (!ds || !model) return { loss: undefined, accuracy: undefined }
 
-  const [X, y] = await getDbDataAsTensors(ds, "test")
+  const evData = await getDbDataAsTensors(ds, "test")
+  if (!evData) return { loss: undefined, accuracy: undefined }
+  const [X, y] = evData
 
   await tf.ready()
   const result = model.evaluate(X, y, { batchSize: 64 })

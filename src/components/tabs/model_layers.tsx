@@ -27,7 +27,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
       <Slider
         {...sharedSliderProps}
         min={minHeight}
-        max={100}
+        max={96}
         value={dims[0]}
         onChange={(value) => {
           const newShape = [null, value, value, depth]

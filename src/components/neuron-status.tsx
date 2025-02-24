@@ -65,11 +65,14 @@ const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
   const weights = normalizeWithSign(neuron.weights) ?? []
 
   const prevShape = prevLayer.tfLayer.outputShape as number[]
-  const [, , prevWidth, groupCount = 1] = prevShape
+  const [, prevHeight, prevWidth, groupCount = 1] = prevShape
   const kernelSize = neuron.layer.tfLayer.getConfig().kernelSize
-  const cols = Array.isArray(kernelSize)
-    ? (kernelSize[0] as number)
-    : prevWidth ?? Math.ceil(Math.sqrt(weights.length)) // 1D Dense to square
+  const sqr = Math.ceil(Math.sqrt(weights.length))
+  const [rows, cols] = Array.isArray(kernelSize)
+    ? (kernelSize as number[])
+    : prevWidth
+    ? [prevHeight, prevWidth]
+    : [sqr, sqr] // 1D Dense to square
   const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
 
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
@@ -132,6 +135,7 @@ const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
             <WeightsGridCanvas
               key={`${i}_${groupWeights.length}`}
               weights={groupWeights}
+              rows={rows}
               cols={cols}
               isRounded={isRounded}
             />
@@ -144,11 +148,17 @@ const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
 
 interface WeightsGridProps {
   weights: number[]
+  rows: number
   cols: number
   isRounded?: boolean
 }
 
-const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
+const WeightsGridCanvas = ({
+  weights,
+  rows,
+  cols,
+  isRounded,
+}: WeightsGridProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const MIN_WIDTH = 400
@@ -156,8 +166,8 @@ const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
       const canvas = canvasRef.current
       const ctx = canvas.getContext("2d")
       if (ctx) {
-        const rows = Math.ceil(weights.length / cols)
-        const ps = Math.ceil(MIN_WIDTH / cols) // pixelSize
+        const maxDim = Math.max(rows, cols)
+        const ps = Math.ceil(MIN_WIDTH / maxDim) // pixelSize
         const gap = Math.floor(ps / 5)
         canvas.width = cols * (ps + gap) - gap
         canvas.height = rows * (ps + gap) - gap
@@ -176,6 +186,11 @@ const WeightsGridCanvas = ({ weights, cols, isRounded }: WeightsGridProps) => {
         })
       }
     }
-  }, [weights, cols, isRounded])
-  return <canvas ref={canvasRef} className="w-full" />
+  }, [weights, rows, cols, isRounded])
+  return (
+    <canvas
+      ref={canvasRef}
+      className="max-w-full max-h-[var(--grid-width)] sm:max-h-[var(--grid-width-sm)]"
+    />
+  )
 }

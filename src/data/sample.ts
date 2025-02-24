@@ -31,7 +31,8 @@ async function updateInput(sampleIdx: number, ds?: Dataset) {
   if (!ds) return
   const dbSample = await getSample(ds, "train", sampleIdx, true)
   const [features, y, featuresRaw] = dbSample
-  const _X = Array.from(features)
+  if (!features) return
+  const _X = Array.from(features ?? [])
   const rawX = featuresRaw ? Array.from(featuresRaw) : _X
   await tf.ready()
   const X = tf.tidy(

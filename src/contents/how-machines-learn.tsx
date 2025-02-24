@@ -164,7 +164,7 @@ async function scrollTrain({ percent }: OnScrollProps) {
   useStore.setState({ sampleIdx })
 
   const sample = useStore.getState().sample
-  if (!sample) return
+  if (!sample || typeof sample.y !== "number") return
   const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return

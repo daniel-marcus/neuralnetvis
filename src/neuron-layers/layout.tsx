@@ -14,6 +14,7 @@ export const OUTPUT_ORIENT: OutputOrient = "vertical"
 export type MeshParams = {
   geometry: THREE.BoxGeometry | THREE.SphereGeometry
   spacingFactor?: number
+  labelSize?: number
 }
 
 const meshMap: Record<string, MeshParams> = {
@@ -25,12 +26,14 @@ const meshMap: Record<string, MeshParams> = {
     geometry: new THREE.SphereGeometry(0.35, 32, 32),
     spacingFactor: 2.3,
   },
-  boxSmall: {
-    geometry: new THREE.BoxGeometry(0.6, 0.6, 0.6),
-  },
   boxBig: {
     geometry: new THREE.BoxGeometry(2, 2, 2),
     spacingFactor: 1.4,
+    labelSize: 1,
+  },
+  boxSmall: {
+    geometry: new THREE.BoxGeometry(0.6, 0.6, 0.6),
+    labelSize: 0.4,
   },
   boxTiny: {
     geometry: new THREE.BoxGeometry(0.18, 0.18, 0.18),
@@ -44,7 +47,8 @@ export function getMeshParams(
 ): MeshParams {
   if (["input", "output"].includes(layerPos)) {
     if (units <= 10) return meshMap.boxBig
-    return meshMap.boxSmall
+    else if (units > 3072) return meshMap.boxTiny
+    else return meshMap.boxSmall
   } else if (
     layer.getClassName() === "Conv2D" ||
     layer.getClassName() === "MaxPooling2D"

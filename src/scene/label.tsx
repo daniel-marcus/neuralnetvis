@@ -29,7 +29,7 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
   const trainingY = useStore((s) => s.sample?.y)
   const isRegression = useStore((s) => s.isRegression())
-  const showValueLabel = !!label && !!rawInput
+  const showValueLabel = !!label && !!rawInput && isRegression
   const layerPos = neuron.layer.layerPos
   if (!label || !position) return null
   return (
@@ -37,7 +37,7 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
       <NeuronLabel
         side={layerPos === "input" ? "left" : "right"}
         position={position}
-        size={1}
+        size={neuron.layer.meshParams.labelSize ?? 1}
         color={LABEL_COLOR}
       >
         {layerPos === "output" && isRegression
@@ -97,7 +97,7 @@ export const NeuronLabel = ({
     <customText
       ref={labelRef}
       text={children}
-      position={getTextPos(x, y, z, side)}
+      position={getTextPos(x, y, z, side, size)}
       fontSize={size ?? FONT_SIZE}
       font={"/fonts/Menlo-Regular.woff"}
       color={color}
@@ -118,8 +118,11 @@ function getTextPos(
   x: number,
   y: number,
   z: number,
-  side: "left" | "right" = "right"
+  side: "left" | "right" = "right",
+  size = 1
 ): [number, number, number] {
   const factor = side === "right" ? 1 : -1
-  return OUTPUT_ORIENT === "vertical" ? [x, y, z + 3.5 * factor] : [x, y + 3, z]
+  return OUTPUT_ORIENT === "vertical"
+    ? [x, y, z + size * 3.5 * factor]
+    : [x, y + 3, z]
 }
