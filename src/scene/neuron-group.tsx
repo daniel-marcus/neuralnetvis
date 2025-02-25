@@ -45,7 +45,7 @@ export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
 }
 
 export function useGroupPosition(props: NeuronGroupProps) {
-  const { group, layerPos, meshParams } = props
+  const { group, layerPos, meshParams, hasColorChannels } = props
   const groupIndex = group.index
   const groupCount = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
@@ -57,15 +57,15 @@ export function useGroupPosition(props: NeuronGroupProps) {
     const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
     const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
     const offsetY = (groupsPerColumn - 1) * gHeight * 0.5
-    const offsetZ = (groupsPerRow - 1) * gHeight * -0.5
+    const offsetZ = (groupsPerRow - 1) * gWidth * -0.5
     const y = -1 * Math.floor(groupIndex / groupsPerRow) * gHeight + offsetY // row
     const z = (groupIndex % groupsPerRow) * gWidth + offsetZ // column
     const SPLIT_COLORS_OFFSET = 0.05 // to avoid z-fighting
-    return layerPos === "input"
+    return layerPos === "input" && hasColorChannels
       ? splitColors
         ? [
             -groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * gWidth + (groupCount - 1) * gWidth * 0.5,
+            -groupIndex * gHeight + (groupCount - 1) * gHeight * 0.5,
             groupIndex * SPLIT_COLORS_OFFSET,
           ] // spread on y-axis
         : [
@@ -74,7 +74,16 @@ export function useGroupPosition(props: NeuronGroupProps) {
             groupIndex * SPLIT_COLORS_OFFSET,
           ]
       : [0, y, z]
-  }, [groupIndex, groupCount, layerPos, spacing, splitColors, height, width])
+  }, [
+    groupIndex,
+    groupCount,
+    layerPos,
+    spacing,
+    splitColors,
+    height,
+    width,
+    hasColorChannels,
+  ])
   const [groupRef] = useAnimatedPosition(position, 0.1)
   return groupRef
 }

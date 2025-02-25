@@ -13,7 +13,7 @@ import * as draw from "@mediapipe/drawing_utils"
 import * as hand from "@mediapipe/hands"
 import { addTrainData } from "@/data/dataset"
 
-const HAND_DIMS = [21, 3]
+const HAND_DIMS = [21, 3, 2]
 
 export function VideoTest() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -107,34 +107,59 @@ export function VideoTest() {
     if (!video.videoWidth || !video.videoHeight) return
     const result = landmarker.detectForVideo(video, performance.now())
     updCanvas(result)
-    if (!result?.landmarks.length) return
-    const data = result.landmarks[0].map((l) => [l.x, l.y, l.z])
-    const X = tf.tidy(() => tf.tensor(data, HAND_DIMS).flatten().arraySync())
-    const sample = { X, y: undefined }
-    useStore.setState({ sample })
+    if (!result) return
+    // const data = result.landmarks[0].map((l) => [l.x, l.y, l.z])
+    const data = result.landmarks.map((l) => l.map((p) => [p.x, p.y, p.z]))
+    const X = tf.tidy(() => {
+      const tensor = tf.tensor(data, [data.length, 21, 3]).pad([
+        [0, 2 - data.length],
+        [0, 0],
+        [0, 0],
+      ]) // pad missing hands with zeroes to ensure shape [2, 21, 3]
+      // move hand dim to the end: [2, 21, 3] -> [21, 3, 2]
+      return tensor.transpose([1, 2, 0]).flatten().arraySync()
+    })
+    return X
   }, [landmarker])
 
-  const hpRecordSample = useCallback(async () => {
-    const selectedNid = useStore.getState().selectedNid
-    if (!selectedNid) return
-    const video = videoRef.current
-    if (!landmarker || !video) return
-    const result = landmarker.detectForVideo(video, performance.now())
-    if (!result?.landmarks.length) return
-    const data = result.landmarks[0].map((l) => [l.x, l.y, l.z])
-    const X = tf.tidy(() => tf.tensor(data, HAND_DIMS).flatten().arraySync())
-    if (!X) return
-    const y = parseInt(selectedNid.split("_")[1].split(".")[0])
-    const xs = { data: X as unknown as Float32Array, shape: [1, ...HAND_DIMS] }
-    const ys = { data: [y] as unknown as Uint8Array, shape: [1] }
-    await addTrainData(xs, ys)
+  const hpRecordSamples = useCallback(async () => {
+    const ds = useStore.getState().ds
+    const outputSize = ds?.output.size
+    const model = useStore.getState().model
+    if (!outputSize || !model) return
+
+    const SAMPLES = ds.storeBatchSize ?? 1
+    const allY = Array.from({ length: outputSize }, (_, i) => i)
+    for (const y of allY) {
+      const label = ds.output.labels ? ds.output.labels[y] : y
+      setStatus(`Start recording "${label}" in 3 seconds...`)
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      setStatus(`Recording "${label}"...`)
+      let xData: number[] = []
+      const yData: number[] = []
+      for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
+        setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`)
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const X = await hpPredict()
+        if (!X) continue
+        xData = [...xData, ...X]
+        yData.push(y)
+      }
+      const xs = {
+        data: xData as unknown as Float32Array,
+        shape: [yData.length, ...HAND_DIMS],
+      }
+      const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
+      console.log(xs, ys)
+      await addTrainData(xs, ys)
+    }
 
     const totalSamples = useStore.getState().totalSamples()
     useStore.setState({ sampleIdx: totalSamples - 1 })
-
-    setStatus(`Recorded sample ${totalSamples} (${y})`)
-  }, [landmarker])
-  useKeyCommand("r", hpRecordSample)
+    const newSamples = allY.length * SAMPLES
+    setStatus(`Done. Recorded ${newSamples} new samples.`)
+  }, [hpPredict])
+  useKeyCommand("r", hpRecordSamples)
 
   useEffect(() => {
     if (!stream) return
@@ -159,7 +184,11 @@ export function VideoTest() {
     let animationFrame: number
     captureLoop()
     async function captureLoop() {
-      hpPredict()
+      const X = await hpPredict()
+      if (X) {
+        const sample = { X, y: undefined }
+        useStore.setState({ sample })
+      }
       animationFrame = requestAnimationFrame(captureLoop)
     }
     return () => {
@@ -177,7 +206,7 @@ export function VideoTest() {
           {!!stream ? "Stop" : "Start"} Video
         </InlineButton>
         <InlineButton onClick={updateSample}>Use as Input</InlineButton>
-        <InlineButton onClick={hpRecordSample}>Record Sample</InlineButton>
+        <InlineButton onClick={hpRecordSamples}>Record Samples</InlineButton>
       </div>
       <div
         className={`${

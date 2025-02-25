@@ -38,7 +38,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
           hasLabels:
             (layerPos === "input" && !!ds?.input?.labels?.length) ||
             (layerPos === "output" && !!ds?.output.labels?.length),
-          hasColorChannels: layerPos === "input" && outputShape[3] > 1,
+          hasColorChannels: layerPos === "input" && outputShape[3] === 3,
           neurons: [],
           groups: [],
         }
@@ -73,7 +73,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
               label:
                 layerPos === "output"
                   ? ds?.output.labels?.[neuronIndex]
-                  : layerPos === "input" && index3d[1] === 0
+                  : layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
                   ? ds?.input?.labels?.[index3d[0]]
                   : undefined,
               layer: layerStateless,

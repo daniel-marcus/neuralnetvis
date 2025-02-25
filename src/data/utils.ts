@@ -1,6 +1,6 @@
 import * as tf from "@tensorflow/tfjs"
 
-export function normalizeTensor(tensor: tf.Tensor1D): tf.Tensor1D {
+export function normalizeTensor(tensor: tf.Tensor): tf.Tensor {
   // normalization between -1 and 1, keeps sign
   return tf.tidy(() => {
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
@@ -10,6 +10,7 @@ export function normalizeTensor(tensor: tf.Tensor1D): tf.Tensor1D {
 }
 
 export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
+  // normalize between 0 and 1, no negative values
   return tf.tidy(() => {
     const [, height, width, channels] = tensor.shape
     const reshapedTensor = tensor.reshape([height * width, channels])

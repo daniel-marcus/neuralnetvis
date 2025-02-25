@@ -46,7 +46,7 @@ export function getMeshParams(
   units: number
 ): MeshParams {
   if (["input", "output"].includes(layerPos)) {
-    if (units <= 10) return meshMap.boxBig
+    if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
   } else if (

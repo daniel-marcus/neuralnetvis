@@ -6,7 +6,7 @@ export const handPose: DatasetDef = {
   name: "hand pose",
   task: "classification",
   description: "Webcam hand pose classification",
-  version: new Date("2025-02-24"),
+  version: new Date("2025-02-25"),
   aboutUrl:
     "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
   loss: "categoricalCrossentropy",
@@ -37,17 +37,17 @@ export const handPose: DatasetDef = {
   },
   output: {
     activation: "softmax",
-    size: 3,
-    labels: ["rock", "paper", "scissors"],
+    size: 2,
+    labels: ["Hase Jäger", "Jäger Hase"],
   },
   loadData: async () => {
     const emptyData = [] as unknown as Float32Array
     return {
-      xTrain: { data: emptyData, shape: [0, 21, 3] },
-      yTrain: { data: emptyData, shape: [0, 21, 3] },
-      xTest: { data: emptyData, shape: [0, 21, 3] },
-      yTest: { data: emptyData, shape: [0, 21, 3] },
+      xTrain: { data: emptyData, shape: [0, 21, 3, 2] },
+      yTrain: { data: emptyData, shape: [0, 21, 3, 2] },
+      xTest: { data: emptyData, shape: [0, 21, 3, 2] },
+      yTest: { data: emptyData, shape: [0, 21, 3, 2] },
     }
   },
-  storeBatchSize: 1,
+  storeBatchSize: 10,
 }
