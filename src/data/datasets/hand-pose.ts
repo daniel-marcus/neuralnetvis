@@ -37,8 +37,8 @@ export const handPose: DatasetDef = {
   },
   output: {
     activation: "softmax",
-    size: 2,
-    labels: ["Hase Jäger", "Jäger Hase"],
+    size: 5,
+    labels: ["👍", "👌", "🤘", "✋", "🖕"],
   },
   loadData: async () => {
     const emptyData = [] as unknown as Float32Array
@@ -49,5 +49,5 @@ export const handPose: DatasetDef = {
       yTest: { data: emptyData, shape: [0, 21, 3, 2] },
     }
   },
-  storeBatchSize: 10,
+  storeBatchSize: 50,
 }

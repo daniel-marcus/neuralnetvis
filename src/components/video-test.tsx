@@ -127,19 +127,23 @@ export function VideoTest() {
     const outputSize = ds?.output.size
     const model = useStore.getState().model
     if (!outputSize || !model) return
+    const outputLayerIdx = model.layers.length - 1
 
     const SAMPLES = ds.storeBatchSize ?? 1
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
+      const selectedNid = `${outputLayerIdx}_${y}.0.0`
+      useStore.setState({ selectedNid })
       const label = ds.output.labels ? ds.output.labels[y] : y
-      setStatus(`Start recording "${label}" in 3 seconds...`)
+      setStatus(`Start recording "${label}" in 3 seconds...`, null)
       await new Promise((resolve) => setTimeout(resolve, 3000))
-      setStatus(`Recording "${label}"...`)
+      setStatus(`Recording "${label}" ...`, 0)
       let xData: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
-        setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`)
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        const percent = (i + 1) / SAMPLES
+        setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`, percent)
+        await new Promise((resolve) => setTimeout(resolve, 100))
         const X = await hpPredict()
         if (!X) continue
         xData = [...xData, ...X]
@@ -150,14 +154,13 @@ export function VideoTest() {
         shape: [yData.length, ...HAND_DIMS],
       }
       const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
-      console.log(xs, ys)
       await addTrainData(xs, ys)
     }
 
     const totalSamples = useStore.getState().totalSamples()
-    useStore.setState({ sampleIdx: totalSamples - 1 })
+    useStore.setState({ sampleIdx: totalSamples - 1, selectedNid: undefined })
     const newSamples = allY.length * SAMPLES
-    setStatus(`Done. Recorded ${newSamples} new samples.`)
+    setStatus(`Done. Recorded ${newSamples} new samples.`, null)
   }, [hpPredict])
   useKeyCommand("r", hpRecordSamples)
 
