@@ -6,6 +6,7 @@ interface MenuBtnProps {
   isActive?: boolean
   onClick?: () => void
   className?: string
+  variant?: "default" | "no-arrow"
 }
 
 // TODO: rename
@@ -15,6 +16,7 @@ export const MenuBtn = ({
   isActive,
   onClick,
   className = "",
+  variant = "default",
 }: MenuBtnProps) => {
   const Component = href ? Link : "button"
   return (
@@ -25,7 +27,7 @@ export const MenuBtn = ({
       } hover:bg-accent-hover text-left rounded-box flex justify-start items-start ${className}`}
       onClick={onClick}
     >
-      <div className="pr-2">&gt; </div>
+      {variant !== "no-arrow" && <div className="pr-2">&gt; </div>}
       <div className="flex-1">{children}</div>
     </Component>
   )

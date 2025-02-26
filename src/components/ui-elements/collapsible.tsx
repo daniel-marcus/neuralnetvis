@@ -6,6 +6,7 @@ interface CollapsibleWithTitleProps {
   title?: string
   variant?: "has-bg" | "no-bg"
   collapsed?: boolean
+  border?: boolean
   className?: string
 }
 
@@ -14,6 +15,7 @@ export const CollapsibleWithTitle = ({
   title,
   variant = "has-bg",
   collapsed,
+  border = true,
   className = "",
 }: CollapsibleWithTitleProps) => {
   const [isOpen, setIsOpen] = useState(!collapsed)
@@ -36,7 +38,11 @@ export const CollapsibleWithTitle = ({
       )}
       <Collapsible isOpen={isOpen}>
         <div className="p-4 pt-0">
-          <div className="pl-4 border-l border-menu-border flex flex-col gap-2 ">
+          <div
+            className={`${
+              border ? "pl-4 border-l border-menu-border" : ""
+            } flex flex-col gap-2`}
+          >
             {children}
           </div>
         </div>

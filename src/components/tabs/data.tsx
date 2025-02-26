@@ -1,4 +1,4 @@
-import { Box, CollapsibleWithTitle, MenuBtn } from "@/components/ui-elements"
+import { Box, CollapsibleWithTitle } from "@/components/ui-elements"
 import { datasets } from "@/data/datasets"
 import { MyDatasets } from "./data_my-datasets"
 import { useStore } from "@/store"
@@ -8,25 +8,28 @@ export const Data = () => {
   const isDebug = useStore((s) => s.isDebug)
   return (
     <Box>
-      <div className="flex flex-col gap-2">
-        <CollapsibleWithTitle title="my datasets" collapsed>
-          <MyDatasets />
-        </CollapsibleWithTitle>
+      <MyDatasets />
+      <CollapsibleWithTitle title="dataset library" border={false}>
         <div className="flex flex-col">
           {datasets
             .filter((d) => isDebug || !d.disabled)
             .map((d) => (
-              <MenuBtn
+              <button
                 key={d.name}
-                isActive={currDatasetKey === d.key}
+                className={`text-left py-2 has-menu-border hover:bg-menu-border ${
+                  currDatasetKey === d.key ? "text-white border-accent!" : ""
+                }`}
                 onClick={() => useStore.setState({ datasetKey: d.key })}
               >
                 <strong>{d.name}</strong> ({d.task})<br />
                 {d.description}
-              </MenuBtn>
+              </button>
             ))}
         </div>
-      </div>
+      </CollapsibleWithTitle>
+      {/* <div className="p-4 flex justify-end">
+        <InlineButton>create new</InlineButton>
+      </div> */}
     </Box>
   )
 }

@@ -24,7 +24,12 @@ export function MyModels() {
     updateList()
   }
   return (
-    <CollapsibleWithTitle title="my models" variant="no-bg" collapsed>
+    <CollapsibleWithTitle
+      title="my models"
+      variant="no-bg"
+      border={false}
+      collapsed
+    >
       <SavedModels updTrigger={updTrigger} />
       <div className="flex justify-between gap-2">
         <input
@@ -86,9 +91,9 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }
   if (!savedModels.length) return null
   return (
-    <ul className="pl-4 border-l border-menu-border mb-4">
+    <ul className="mb-4">
       {savedModels.map((m, i) => (
-        <li key={i} className="flex justify-between">
+        <li key={i} className="flex justify-between has-menu-border">
           <button onClick={() => loadModel(m)}>{m}</button>
           <div>
             <button className="px-2" onClick={() => exportModel(m)}>

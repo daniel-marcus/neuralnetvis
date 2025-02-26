@@ -2,6 +2,7 @@ import { DB_PREFIX } from "@/data/db"
 import { setStatus, useStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
+import { CollapsibleWithTitle } from "../ui-elements"
 
 export const MyDatasets = () => {
   const ds = useStore((s) => s.ds)
@@ -32,28 +33,37 @@ export const MyDatasets = () => {
     setStatus("", null)
   }
   return (
-    <ul className="pl-4 border-l border-menu-border mb-4">
-      {savedDatasets.map((d, i) => {
-        const isCurrent = d === ds?.key
-        return (
-          <li
-            key={i}
-            className={`flex justify-between ${isCurrent ? "text-white" : ""}`}
-          >
-            <button
-              className={isCurrent ? "disabled pointer-events-none" : ""}
-              onClick={() => useStore.setState({ datasetKey: d })}
+    <CollapsibleWithTitle
+      title="my datasets"
+      variant="no-bg"
+      border={false}
+      collapsed
+    >
+      <ul>
+        {savedDatasets.map((d, i) => {
+          const isCurrent = d === ds?.key
+          return (
+            <li
+              key={i}
+              className={`flex has-menu-border justify-between ${
+                isCurrent ? "text-white border-accent!" : ""
+              }`}
             >
-              {d}
-            </button>
-            <div>
-              <button className="pl-2" onClick={() => removeDataset(d)}>
-                x
+              <button
+                className={isCurrent ? "disabled pointer-events-none" : ""}
+                onClick={() => useStore.setState({ datasetKey: d })}
+              >
+                {d}
               </button>
-            </div>
-          </li>
-        )
-      })}
-    </ul>
+              <div>
+                <button className="pl-2" onClick={() => removeDataset(d)}>
+                  x
+                </button>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </CollapsibleWithTitle>
   )
 }

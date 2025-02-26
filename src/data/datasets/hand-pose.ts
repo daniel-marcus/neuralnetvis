@@ -37,8 +37,8 @@ export const handPose: DatasetDef = {
   },
   output: {
     activation: "softmax",
-    size: 5,
-    labels: ["👍", "👌", "🤘", "✋", "🖕"],
+    size: 3,
+    labels: ["👍", "👌", "🤘"],
   },
   loadData: async () => {
     const emptyData = [] as unknown as Float32Array
