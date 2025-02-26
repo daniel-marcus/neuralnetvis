@@ -28,6 +28,7 @@ export interface DatasetDef {
   }
   loadData: DatasetLoader
   storeBatchSize?: number // default: 100
+  isUserGenerated?: boolean
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {

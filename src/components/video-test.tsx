@@ -135,8 +135,11 @@ export function VideoTest() {
       const selectedNid = `${outputLayerIdx}_${y}.0.0`
       useStore.setState({ selectedNid })
       const label = ds.output.labels ? ds.output.labels[y] : y
-      setStatus(`Start recording "${label}" in 3 seconds...`, null)
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      const SECONDS_BEFORE_RECORDING = 3
+      for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
+        setStatus(`Start recording "${label}" in ${s} seconds...`, -1)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
       setStatus(`Recording "${label}" ...`, 0)
       let xData: number[] = []
       const yData: number[] = []

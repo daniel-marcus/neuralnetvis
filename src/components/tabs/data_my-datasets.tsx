@@ -32,6 +32,10 @@ export const MyDatasets = () => {
     updateDatasets()
     setStatus("", null)
   }
+  const resetDataset = async (dsKey: string) => {
+    await removeDataset(dsKey)
+    useStore.setState({ datasetKey: dsKey })
+  }
   return (
     <CollapsibleWithTitle
       title="my datasets"
@@ -56,6 +60,11 @@ export const MyDatasets = () => {
                 {d}
               </button>
               <div>
+                {isCurrent && ds.isUserGenerated && (
+                  <button className="px-2" onClick={() => resetDataset(d)}>
+                    reset
+                  </button>
+                )}
                 <button className="pl-2" onClick={() => removeDataset(d)}>
                   x
                 </button>

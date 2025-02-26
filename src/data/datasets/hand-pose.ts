@@ -41,13 +41,15 @@ export const handPose: DatasetDef = {
     labels: ["👍", "👌", "🤘"],
   },
   loadData: async () => {
-    const emptyData = [] as unknown as Float32Array
+    const emptyX = new Float32Array()
+    const emptyY = new Uint8Array()
     return {
-      xTrain: { data: emptyData, shape: [0, 21, 3, 2] },
-      yTrain: { data: emptyData, shape: [0, 21, 3, 2] },
-      xTest: { data: emptyData, shape: [0, 21, 3, 2] },
-      yTest: { data: emptyData, shape: [0, 21, 3, 2] },
+      xTrain: { data: emptyX, shape: [0, 21, 3, 2] },
+      yTrain: { data: emptyY, shape: [0, 21, 3, 2] },
+      xTest: { data: emptyX, shape: [0, 21, 3, 2] },
+      yTest: { data: emptyY, shape: [0, 21, 3, 2] },
     }
   },
   storeBatchSize: 50,
+  isUserGenerated: true,
 }
