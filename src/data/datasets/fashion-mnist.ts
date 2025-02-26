@@ -8,13 +8,10 @@ export const fashionMnist: DatasetDef = {
   description: "Clothing items (28x28)",
   version: new Date("2025-02-08"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
-  loss: "categoricalCrossentropy",
   input: {
     preprocess: (inputTensor) => inputTensor.div(255),
   },
   output: {
-    size: 10,
-    activation: "softmax",
     labels: [
       "T-shirt/top",
       "Trouser",

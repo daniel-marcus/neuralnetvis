@@ -104,7 +104,7 @@ export async function getSamplesAsBatch(
     const xs = ds.input?.preprocess?.(_xs) ?? _xs
     const ys =
       ds.task === "classification"
-        ? tf.oneHot(slicedYs, ds.output.size)
+        ? tf.oneHot(slicedYs, ds.output.labels.length)
         : tf.tensor(slicedYs) // regression
     return { xs, ys }
   })
@@ -203,7 +203,7 @@ async function getDbDataAsTensors(
     const X = ds.input?.preprocess?.(XRaw) ?? XRaw
     const yArr = batches.flatMap((b) => Array.from(b.ys))
     const y = isClassification
-      ? tf.oneHot(yArr, ds.output.size)
+      ? tf.oneHot(yArr, ds.output.labels.length)
       : tf.tensor(yArr)
     return [X, y] as const
   })
@@ -218,7 +218,9 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   const trainShape = useStore.getState().getInputShape()
   const [X, y] = tf.tidy(() => {
     const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
-    const y = isClassification ? tf.oneHot(ys, ds.output.size) : tf.tensor(ys)
+    const y = isClassification
+      ? tf.oneHot(ys, ds.output.labels.length)
+      : tf.tensor(ys)
     return [X, y]
   })
   const [loss, acc] = (await model.trainOnBatch(X, y)) as number[]

@@ -124,7 +124,7 @@ export function VideoTest() {
 
   const hpRecordSamples = useCallback(async () => {
     const ds = useStore.getState().ds
-    const outputSize = ds?.output.size
+    const outputSize = ds?.output.labels.length
     const model = useStore.getState().model
     if (!outputSize || !model) return
     const outputLayerIdx = model.layers.length - 1

@@ -36,7 +36,7 @@ describe("getSamplesAsBatch", () => {
       const sample256Label = tf.tidy(
         () =>
           tf
-            .oneHot(sample256[1], dsMnistMock.output.size)
+            .oneHot(sample256[1], dsMnistMock.output.labels.length)
             .arraySync() as number[]
       )
       expect(firstFromBatchData).toEqual(sample256Data)

@@ -86,7 +86,7 @@ async function saveData(
 
   const batches: DbBatch[] = []
   for (let i = 0; i < totalSamples; i += storeBatchSize) {
-    const index = Math.floor(i + oldSamplesX / storeBatchSize)
+    const index = Math.floor((i + oldSamplesX) / storeBatchSize)
     const sliceIdxs = [i * valsPerSample, (i + storeBatchSize) * valsPerSample]
     const batch = {
       index,

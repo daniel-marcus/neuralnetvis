@@ -16,15 +16,12 @@ export interface DatasetDef {
   version: Date
   disabled?: boolean
   aboutUrl: string
-  loss: "categoricalCrossentropy" | "meanSquaredError"
   input?: {
     labels?: string[]
     preprocess?: <T extends Tensor<Rank>>(X: T) => T
   }
   output: {
-    size: number
-    activation: "softmax" | "linear"
-    labels?: string[]
+    labels: string[] // length defines the number of output neurons
   }
   loadData: DatasetLoader
   storeBatchSize?: number // default: 100

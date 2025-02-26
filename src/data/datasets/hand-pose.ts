@@ -9,7 +9,6 @@ export const handPose: DatasetDef = {
   version: new Date("2025-02-25"),
   aboutUrl:
     "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
-  loss: "categoricalCrossentropy",
   input: {
     labels: [
       "wrist",
@@ -36,8 +35,6 @@ export const handPose: DatasetDef = {
     ],
   },
   output: {
-    activation: "softmax",
-    size: 3,
     labels: ["👍", "👌", "🤘"],
   },
   loadData: async () => {

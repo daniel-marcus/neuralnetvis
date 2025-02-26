@@ -8,13 +8,10 @@ export const mnist: DatasetDef = {
   description: "Handwritten digits (28x28)",
   version: new Date("2025-02-08"),
   aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
-  loss: "categoricalCrossentropy",
   input: {
     preprocess: (inputTensor) => inputTensor.div(255),
   },
   output: {
-    size: 10,
-    activation: "softmax",
     labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
   },
   loadData: async () => {

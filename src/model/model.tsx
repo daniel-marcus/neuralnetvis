@@ -103,7 +103,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
       const isClassification = ds.task === "classification"
       model.compile({
         optimizer: tf.train.adam(),
-        loss: ds.loss,
+        loss: isClassification ? "categoricalCrossentropy" : "meanSquaredError",
         metrics: isClassification ? ["accuracy"] : [],
       })
     }
@@ -141,8 +141,8 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
       const configNew = isOutput // use config from ds for output layer
         ? {
             ...config,
-            units: ds.output.size,
-            activation: ds.output.activation,
+            units: ds.output.labels.length,
+            activation: ds.task === "classification" ? "softmax" : "linear",
             name: `nnv_Output`,
           }
         : config

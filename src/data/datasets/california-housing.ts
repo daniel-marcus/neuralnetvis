@@ -10,7 +10,6 @@ export const californiaHousing: DatasetDef = {
   description: "Predict housing prices",
   version: new Date("2025-02-08"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
-  loss: "meanSquaredError",
   input: {
     labels: [
       "longitude",
@@ -24,8 +23,6 @@ export const californiaHousing: DatasetDef = {
     ],
   },
   output: {
-    size: 1,
-    activation: "linear",
     labels: ["median_house_value"],
   },
   loadData: async () => {

@@ -8,13 +8,10 @@ export const cifar10: DatasetDef = {
   description: "Color images (32x32x3)",
   version: new Date("2025-02-08"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
-  loss: "categoricalCrossentropy",
   input: {
     preprocess: (inputTensor) => inputTensor.div(255),
   },
   output: {
-    size: 10,
-    activation: "softmax",
     labels: [
       "airplane",
       "automobile",
