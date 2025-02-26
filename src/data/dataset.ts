@@ -25,37 +25,26 @@ export function useDataset() {
       const existingTrain = await getData<StoreMeta>(dsDef.key, "meta", "train")
       const hasLatestData =
         existingTrain?.version.getTime() === dsDef.version.getTime()
-      if (existingTrain && !hasLatestData) {
-        console.log("old data in indexedDB, updating ...")
-      }
-      if (existingTrain && hasLatestData) {
-        console.log("found data in indexedDB")
-        const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
-        const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
-        if (!train || !test) {
-          throw new Error("Failed to load indexedDB store")
-        }
-        const ds = { ...dsDef, train, test }
-        useStore.setState({ ds })
-      } else {
-        console.log("loading new data into indexedDB ...")
-        await loadAndSaveDsData(dsDef)
-        const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
-        const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
-        if (!train || !test) {
-          throw new Error("Failed to create indexedDB store")
-        }
-        const ds = { ...dsDef, train, test }
-        useStore.setState({ ds })
-      }
+      const skipLoading = existingTrain && hasLatestData
+      await setDsFromDsDef(dsDef, skipLoading)
     }
-
     return () => {
       useStore.setState({ ds: undefined })
     }
   }, [datasetKey, setStatusText])
 
   return ds
+}
+
+export async function setDsFromDsDef(dsDef: DatasetDef, skipLoading?: boolean) {
+  if (!skipLoading) await loadAndSaveDsData(dsDef)
+  const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
+  const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
+  if (!train || !test) {
+    throw new Error("Failed to create indexedDB store")
+  }
+  const ds = { ...dsDef, train, test }
+  useStore.setState({ ds })
 }
 
 export async function loadAndSaveDsData(dsDef: DatasetDef) {

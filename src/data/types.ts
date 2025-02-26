@@ -1,12 +1,7 @@
 import type { Parsed } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
 
-export type DatasetKey =
-  | "mnist"
-  | "fashion_mnist"
-  | "cifar10"
-  | "california_housing"
-  | "hand_pose"
+export type DatasetKey = string
 
 export interface DatasetDef {
   key: DatasetKey

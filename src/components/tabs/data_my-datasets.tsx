@@ -37,12 +37,7 @@ export const MyDatasets = () => {
     useStore.setState({ datasetKey: dsKey })
   }
   return (
-    <CollapsibleWithTitle
-      title="my datasets"
-      variant="no-bg"
-      border={false}
-      collapsed
-    >
+    <CollapsibleWithTitle title="my datasets" border={false} collapsed>
       <ul>
         {savedDatasets.map((d, i) => {
           const isCurrent = d === ds?.key
