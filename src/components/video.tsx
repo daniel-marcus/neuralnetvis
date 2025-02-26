@@ -26,16 +26,14 @@ export function VideoWindow() {
   }, [videoRef, canvasRef])
 
   return (
-    <div className="fixed left-0 bottom-0 sm:bottom-auto sm:top-[112px] p-main w-[320px]">
+    <div className="fixed z-10 left-0 top-[34px] sm:top-[102px] p-main w-full sm:w-[290px] bg-transparent flex flex-row-reverse sm:flex-col gap-2 justify-end">
       <VideoControl />
-      <div className={`${!stream ? "hidden" : ""} relative w-full h-auto`}>
-        <video
-          ref={videoRef}
-          className="w-full h-full"
-          width="320"
-          height="240"
-          playsInline
-        />
+      <div
+        className={`${
+          !stream ? "hidden" : ""
+        } relative w-full h-auto max-w-[50%] sm:max-w-none`}
+      >
+        <video ref={videoRef} className="w-full h-auto" playsInline />
         <canvas
           ref={canvasRef}
           className="absolute top-0 left-0 w-full h-full"
@@ -133,9 +131,13 @@ export function VideoControl() {
   }
 
   return (
-    <div className="flex mb-4 gap-2 justify-between">
+    <div
+      className={`flex flex-1 ${
+        stream ? "flex-col" : "flex-row"
+      } sm:flex-row gap-2 justify-start sm:justify-between`}
+    >
       <InlineButton onClick={toggleStream}>
-        {!!stream ? "close" : "open"} video
+        video {!!stream ? "off" : "on"}
       </InlineButton>
       <InlineButton onClick={hpRecordSamples} disabled={!stream}>
         record
