@@ -26,7 +26,7 @@ export function VideoWindow() {
   }, [videoRef, canvasRef])
 
   return (
-    <div className="fixed left-0 top-[112px] p-main w-[320px]">
+    <div className="fixed left-0 bottom-0 sm:bottom-auto sm:top-[112px] p-main w-[320px]">
       <VideoControl />
       <div className={`${!stream ? "hidden" : ""} relative w-full h-auto`}>
         <video
@@ -34,6 +34,7 @@ export function VideoWindow() {
           className="w-full h-full"
           width="320"
           height="240"
+          playsInline
         />
         <canvas
           ref={canvasRef}
@@ -101,7 +102,7 @@ export function VideoControl() {
     const video = videoRef?.current
     if (!video || !stream) return
     video.srcObject = stream
-    video.play()
+    video.play().catch(console.warn)
     let animationFrame: number
     captureLoop()
     async function captureLoop() {
