@@ -41,7 +41,6 @@ export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
     } else {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: false,
       })
       set({ stream })
     }

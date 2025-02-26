@@ -19,7 +19,7 @@
     "@mediapipe/hands": "^0.4.1675469240",
     "@mediapipe/tasks-vision": "^0.10.21",
     "@react-spring/web": "^9.7.5",
-    "@react-three/drei": "^10.0.2",
+    "@react-three/drei": "^10.0.3",
     "@react-three/fiber": "^9.0.4",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",

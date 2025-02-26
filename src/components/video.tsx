@@ -29,7 +29,12 @@ export function VideoWindow() {
     <div className="fixed left-0 top-[112px] p-main w-[320px]">
       <VideoControl />
       <div className={`${!stream ? "hidden" : ""} relative w-full h-auto`}>
-        <video ref={videoRef} className="w-full h-full" />
+        <video
+          ref={videoRef}
+          className="w-full h-full"
+          width="320"
+          height="240"
+        />
         <canvas
           ref={canvasRef}
           className="absolute top-0 left-0 w-full h-full"
