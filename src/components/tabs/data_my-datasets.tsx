@@ -1,5 +1,5 @@
 import { DB_PREFIX } from "@/data/db"
-import { useStore } from "@/store"
+import { setStatus, useStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 
@@ -21,10 +21,15 @@ export const MyDatasets = () => {
   useEffect(() => {
     updateDatasets()
   }, [ds])
-  const removeDataset = async (name: string) => {
-    const fullName = `${DB_PREFIX}${name}`
+  const removeDataset = async (dsKey: string) => {
+    const fullName = `${DB_PREFIX}${dsKey}`
+    setStatus(`Removing dataset ${dsKey} ...`, -1)
+    if (dsKey === ds?.key) {
+      useStore.setState({ datasetKey: undefined })
+    }
     await deleteDB(fullName)
     updateDatasets()
+    setStatus("", null)
   }
   return (
     <ul className="pl-4 border-l border-menu-border mb-4">
@@ -33,19 +38,18 @@ export const MyDatasets = () => {
         return (
           <li
             key={i}
-            className={`flex justify-between ${
-              isCurrent ? "text-white pointer-events-none" : ""
-            }`}
+            className={`flex justify-between ${isCurrent ? "text-white" : ""}`}
           >
-            <button onClick={() => useStore.setState({ datasetKey: d })}>
+            <button
+              className={isCurrent ? "disabled pointer-events-none" : ""}
+              onClick={() => useStore.setState({ datasetKey: d })}
+            >
               {d}
             </button>
             <div>
-              {!isCurrent && (
-                <button className="pl-2" onClick={() => removeDataset(d)}>
-                  x
-                </button>
-              )}
+              <button className="pl-2" onClick={() => removeDataset(d)}>
+                x
+              </button>
             </div>
           </li>
         )
