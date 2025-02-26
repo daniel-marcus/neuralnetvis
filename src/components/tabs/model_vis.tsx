@@ -13,8 +13,9 @@ const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
 export const VisConfigControl = () => {
   const vis = useStore((s) => s.vis)
   const { setConfig, getDefault, reset, ...config } = vis
-  const ds = useStore((s) => s.ds)
-  const hasColorChannels = (ds?.train.shapeX[3] ?? 0) > 1
+  const model = useStore((s) => s.model)
+  const hasColorChannels =
+    ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
   return (
     <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
       {SHIFT_PROPS.map((prop) => {

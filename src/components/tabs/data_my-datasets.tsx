@@ -3,6 +3,7 @@ import { setStatus, useStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
+import { datasets } from "@/data/datasets"
 
 export const MyDatasets = () => {
   const ds = useStore((s) => s.ds)
@@ -36,6 +37,13 @@ export const MyDatasets = () => {
     await removeDataset(dsKey)
     useStore.setState({ datasetKey: dsKey })
   }
+  const handleSelect = async (dsKey: string) => {
+    if (datasets.find((d) => d.key === dsKey)) {
+      useStore.setState({ datasetKey: dsKey })
+    } else {
+      window.alert("TODO")
+    }
+  }
   return (
     <CollapsibleWithTitle title="my datasets" border={false} collapsed>
       <ul>
@@ -50,7 +58,7 @@ export const MyDatasets = () => {
             >
               <button
                 className={isCurrent ? "disabled pointer-events-none" : ""}
-                onClick={() => useStore.setState({ datasetKey: d })}
+                onClick={() => handleSelect(d)}
               >
                 {d}
               </button>

@@ -18,7 +18,7 @@ const HANDS_OPTIONS = [
 
 const DEFAULT_LABELS = {
   1: ["👍", "👌", "🤘", "✊", "✋", "👎", "🤞", "🖖"],
-  2: ["🫶", "🙌", "🤝", "👐", "👏"],
+  2: ["🫶", "🙌", "🤜🤛", "👐", "👏"],
 }
 
 export const CreateNewDataset = () => {
@@ -118,8 +118,9 @@ function dsDefFromState(
         yTest: { data: emptyY, shape: [0, 21, 3, hands] },
       }
     },
-    storeBatchSize: 50,
+    storeBatchSize: 20,
     isUserGenerated: true,
+    hasCam: true,
   }
 }
 

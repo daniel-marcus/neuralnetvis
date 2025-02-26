@@ -74,6 +74,7 @@ export const Menu = () => {
 const Tabs = () => {
   const currTab = useStore((s) => s.tab)
   const setTab = useStore((s) => s.setTab)
+  const toggleTab = useStore((s) => s.toggleTab)
   const tabIsShown = useStore((s) => s.tabIsShown)
 
   function renderTabs(tabs: Tab[], parent?: Tab) {
@@ -89,7 +90,7 @@ const Tabs = () => {
         (isActive && !isCategory && !currTab?.children) ||
         isChild ||
         (isSibling && !currTab?.children)
-      const handleClick = () => setTab(t.key)
+      const handleClick = () => toggleTab(t.key)
       return (
         <Fragment key={t.key}>
           <TabButton

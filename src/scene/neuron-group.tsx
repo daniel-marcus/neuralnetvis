@@ -118,7 +118,7 @@ function useNeuronPositions(props: NeuronGroupProps) {
 function useColors(meshRef: MeshRef, neurons: Neuron[]) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
-    if (isDebug()) console.log("upd colors")
+    // if (isDebug()) console.log("upd colors")
     if (!meshRef.current.instanceColor) {
       const newArr = new Float32Array(neurons.length * 3)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)

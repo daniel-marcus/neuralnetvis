@@ -6,7 +6,7 @@ import { useModel, useTraining } from "@/model"
 import { useDebugCommands } from "@/utils/debug"
 import { Scene } from "@/scene"
 import type { ReactNode } from "react"
-import { VideoTest } from "./video-test"
+import { VideoWindow } from "./video"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   const ds = useDataset()
@@ -20,7 +20,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
       <Footer />
       <Gradient />
       <Menu />
-      <VideoTest />
+      {ds?.hasCam && <VideoWindow />}
       {children}
     </div>
   )

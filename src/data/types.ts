@@ -5,8 +5,8 @@ export type DatasetKey = string
 
 export interface DatasetDef {
   key: DatasetKey
-  name: string
   task: "classification" | "regression"
+  name: string
   description: string
   version: Date
   disabled?: boolean
@@ -21,6 +21,7 @@ export interface DatasetDef {
   loadData: DatasetLoader
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
+  hasCam?: boolean
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {

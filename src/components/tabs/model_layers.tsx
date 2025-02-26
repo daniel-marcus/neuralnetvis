@@ -16,13 +16,11 @@ function getInputComp<T extends keyof LayerConfigMap>(
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
   if (layerConfig.className === "InputLayer") {
     const config = layerConfig.config as LayerConfigMap["InputLayer"]
-    const shapeX = useStore.getState().ds?.train.shapeX
     const [, ...dims] = config.batchInputShape as number[]
-    const [, minHeight, , depth] =
-      shapeX ?? (config.batchInputShape as number[])
-
-    if (!useStore.getState().isDebug)
-      return <div className="text-right">{dims.join(" x ")}</div>
+    return <div className="text-right">{dims.join(" x ")}</div>
+    /* 
+    const shapeX = useStore.getState().ds?.train.shapeX
+    const [, minHeight] = shapeX ?? (config.batchInputShape as number[])
     return (
       <Slider
         {...sharedSliderProps}
@@ -30,11 +28,11 @@ function getInputComp<T extends keyof LayerConfigMap>(
         max={96}
         value={dims[0]}
         onChange={(value) => {
-          const newShape = [null, value, value, depth]
+          const newShape = [null, value, value, 3]
           updateLayerConfig({ ...config, batchInputShape: newShape })
         }}
       />
-    )
+    ) */
   } else if (layerConfig.className === "Dense") {
     const config = layerConfig.config as LayerConfigMap["Dense"]
     if (isLast) return <div className="text-right">{config.units}</div>

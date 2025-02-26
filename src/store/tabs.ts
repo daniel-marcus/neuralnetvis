@@ -8,12 +8,13 @@ export interface TabsSlice {
   tabIsShown: boolean
   tab: Tab | null
   setTab: (key: string | null) => void
+  toggleTab: (key: string) => void
 }
 
 export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
   tabIsShown: true,
   tab: null,
-  setTab: (key) =>
+  toggleTab: (key) =>
     set(({ tab, tabIsShown }) => {
       if (tab?.key === key) return { tab, tabIsShown: !tabIsShown }
       return {
@@ -21,4 +22,6 @@ export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
         tabIsShown: true,
       }
     }),
+  setTab: (key) =>
+    set({ tab: key ? tabMap.get(key) ?? null : null, tabIsShown: true }),
 })

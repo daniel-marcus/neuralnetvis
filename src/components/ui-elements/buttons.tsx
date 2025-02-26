@@ -58,7 +58,7 @@ export const InlineButton = ({
       href={href as string}
       className={`px-2 ${
         variant === "primary"
-          ? "bg-accent text-white"
+          ? "bg-accent text-white disabled:opacity-50"
           : variant === "secondary"
           ? "bg-secondary"
           : "hover:bg-secondary"

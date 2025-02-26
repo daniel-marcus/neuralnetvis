@@ -54,6 +54,8 @@ export function getMeshParams(
     layer.getClassName() === "MaxPooling2D"
   ) {
     return meshMap.boxTiny
+  } else if (layer.getClassName() === "HandPose") {
+    return meshMap.boxSmall
   } else {
     if (units <= 128) return meshMap.sphere
     else return meshMap.sphereSmall
