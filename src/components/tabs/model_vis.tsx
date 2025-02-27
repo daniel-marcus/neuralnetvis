@@ -81,6 +81,7 @@ export const VisConfigControl = () => {
         hint="What should be shown when you hover or click on a neuron?"
       >
         <Select
+          key={`highlight_prop_${config.highlightProp}`}
           value={config.highlightProp ?? ""}
           options={[
             { value: "weights" as const, label: "show weights" },

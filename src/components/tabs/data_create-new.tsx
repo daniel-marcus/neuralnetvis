@@ -12,8 +12,8 @@ import { setDsFromDsDef } from "@/data/dataset"
 type HandsNum = 1 | 2
 
 const HANDS_OPTIONS = [
-  { value: 1, label: "webcam: one hand" },
-  { value: 2, label: "webcam: two hands" },
+  { value: "1", label: "webcam: one hand" },
+  { value: "2", label: "webcam: two hands" },
 ]
 
 const DEFAULT_LABELS = {
@@ -52,8 +52,9 @@ export const CreateNewDataset = () => {
       </InputRow>
       <InputRow label="input">
         <Select
+          key={`select_hands_${hands}`}
           options={HANDS_OPTIONS}
-          value={hands}
+          value={String(hands)}
           onChange={(val) => setHands(parseInt(val) as HandsNum)}
         />
       </InputRow>

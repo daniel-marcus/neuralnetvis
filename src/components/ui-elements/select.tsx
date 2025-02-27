@@ -2,7 +2,7 @@ import { ReactNode } from "react"
 import { Arrow } from "./buttons"
 
 type Option = {
-  value: string | number
+  value: string
   label?: ReactNode
   disabled?: boolean
   selected?: boolean
