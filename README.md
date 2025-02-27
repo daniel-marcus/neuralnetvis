@@ -15,11 +15,15 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | [CIFAR10](https://www.cs.toronto.edu/~kriz/cifar.html)                  | Colored images         | Classification |  32x32x3 |        18,000 |        1,800 |
 | [California Housing](https://keras.io/api/datasets/california_housing/) | Predict housing prices | Regression     |        8 |        17,000 |        3,000 |
 
+Also, you can generate your own datasets using input from your webcam and these pretrained models:
+
+- [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker): Detects coordinates from 21 landmarks for each hand which can be used for hand pose classifications
+
 ## Model Import (experimental)
 
 Pretrained models from Python Tensorflow can be exported via [tfjs-converter](https://github.com/tensorflow/tfjs/tree/master/tfjs-converter) and then imported in the _my models_ section.
 
-Currently supported layer types: _Dense_, _Conv2D_, _MaxPooling2D_, _Flatten_, and _Dropout_.
+Only _Sequential_ models are supported with these layer types: _Dense_, _Conv2D_, _MaxPooling2D_, _Flatten_, and _Dropout_.
 
 ## Folder Structure
 
@@ -37,7 +41,8 @@ Currently supported layer types: _Dense_, _Conv2D_, _MaxPooling2D_, _Flatten_, a
 
 - [Stanford University CS231n – Deep Learning for Computer Vision](https://cs231n.github.io): A great resource for all the theory behind this project
 - [An Interactive Node-Link Visualization of Convolutional Neural Networks](https://adamharley.com/nn_vis/) by Adam W. Harley
-- Tensorflow's [Neural Network Playground](https://playground.tensorflow.org/)
+- TensorFlow's [Neural Network Playground](https://playground.tensorflow.org/)
+- Google's [Teachable Machine](https://teachablemachine.withgoogle.com)
 - The settings UI was inspired by [Leva](https://github.com/pmndrs/leva)
 - The logo and the lesson headings use a modified version of the _BlurVision ASCII_ font by Aiden Neuding using patorjk's [figlet.js](https://github.com/patorjk/figlet.js) for ASCII Art
 
