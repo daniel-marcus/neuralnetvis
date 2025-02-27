@@ -95,7 +95,7 @@ export function VideoControl() {
     const totalSamples = useStore.getState().totalSamples()
     useStore.setState({ sampleIdx: totalSamples - 1, selectedNid: undefined })
     const newSamples = allY.length * SAMPLES
-    setStatus(`Done. Recorded ${newSamples} new samples.`, null)
+    setStatus(`Recorded ${newSamples} new samples. Ready for training.`, null)
   }, [hpPredict, numHands])
   useKeyCommand("r", hpRecordSamples)
 
@@ -127,8 +127,12 @@ export function VideoControl() {
   const totalSamples = useStore((s) => s.totalSamples())
 
   async function train() {
-    const trainConfig = { batchSize: 16, epochs: 100, validationSplit: 0.1 }
-    useStore.getState().setTrainConfig(trainConfig)
+    useStore.getState().setTrainConfig({
+      batchSize: 16,
+      epochs: 100,
+      validationSplit: 0.1,
+      lazyLoading: false,
+    })
     setTab("train")
     useStore.setState({ isTraining: true, logsMetric: "val_loss" })
   }

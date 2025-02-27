@@ -48,7 +48,8 @@ export async function backendForTraining() {
   const backends = getAvailableBackends()
   const model = getModel()
   const silent = useStore.getState().trainConfig.silent
-  if (silent && backends.includes("webgpu")) {
+  const totalSamples = useStore.getState().totalSamples()
+  if (silent && backends.includes("webgpu") && totalSamples > 1000) {
     await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
   } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {
     await setBackendIfAvailable("webgl") // Conv2D is not yet supported by wasm
