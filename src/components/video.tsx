@@ -5,7 +5,8 @@ import { InlineButton } from "./ui-elements"
 import {
   FilesetResolver,
   HandLandmarker,
-  HandLandmarkerResult,
+  NormalizedLandmark,
+  type HandLandmarkerResult,
 } from "@mediapipe/tasks-vision"
 import { useKeyCommand } from "@/utils/key-command"
 
@@ -215,7 +216,7 @@ function useLandmarker(numHands: number) {
         landmarks[rightIdx] ?? emptyHand,
       ]
     }
-    const data = landmarks.map((l) => l.map((p) => [p.x, p.y, p.z]))
+    const data = landmarks.map(toRelativeCoords)
     const X = tf.tidy(() => {
       const tensor = tf.tensor(data, [data.length, 21, 3]).pad([
         [0, numHands - data.length],
@@ -230,13 +231,24 @@ function useLandmarker(numHands: number) {
   return hpPredict
 }
 
+function toRelativeCoords(
+  landmarks: NormalizedLandmark[]
+): [number, number, number][] {
+  // get positions gelative to wrist & invert y axis
+  const wrist = landmarks[0]
+  return landmarks.map((l) => {
+    return [l.x - wrist.x, -1 * (l.y - wrist.y), l.z - wrist.z]
+  })
+}
+
 async function createHandLandmarker(numHands: number) {
+  // TODO: add to public folder
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
   )
   const handLandmarker = await HandLandmarker.createFromOptions(vision, {
     baseOptions: {
-      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task`,
       delegate: "GPU",
     },
     runningMode: "VIDEO",
