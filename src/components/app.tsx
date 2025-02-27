@@ -16,11 +16,11 @@ export const App = ({ children }: { children?: ReactNode }) => {
   useDebugCommands()
   return (
     <div>
+      {ds?.hasCam && <VideoWindow />}
       <Scene />
       <Footer />
       <Gradient />
       <Menu />
-      {ds?.hasCam && <VideoWindow />}
       {children}
     </div>
   )

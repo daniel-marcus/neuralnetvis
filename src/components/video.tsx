@@ -27,22 +27,26 @@ export function VideoWindow() {
   }, [videoRef, canvasRef])
 
   return (
-    <div className="fixed z-10 left-0 top-[34px] sm:top-[102px] p-main w-full sm:w-[290px] bg-transparent flex flex-row-reverse sm:flex-col gap-2 justify-end">
+    <>
       <VideoControl />
-      <div
-        className={`${
-          !stream ? "hidden" : ""
-        } relative w-full h-auto max-w-[50%] sm:max-w-none`}
-      >
-        <video ref={videoRef} className="w-full h-auto" playsInline />
-        <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full"
-        />
-      </div>
-    </div>
+      <video
+        ref={videoRef}
+        className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none opacity-0 contrast-200 grayscale-100 ${
+          stream ? "opacity-0" : "opacity-5"
+        } transition-opacity duration-5000`}
+        playsInline
+      />
+      <canvas
+        ref={canvasRef}
+        className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none z-20 ${
+          stream ? "opacity-100" : "opacity-0"
+        } transition-opacity duration-500`}
+      />
+    </>
   )
 }
+
+let recordingY: number | undefined = undefined
 
 export function VideoControl() {
   const videoRef = useStore((s) => s.videoRef)
@@ -55,15 +59,12 @@ export function VideoControl() {
   const hpRecordSamples = useCallback(async () => {
     const ds = useStore.getState().ds
     const outputSize = ds?.output.labels.length
-    const model = useStore.getState().model
-    if (!outputSize || !model) return
-    const outputLayerIdx = model.layers.length - 1
+    if (!outputSize) return
 
     const SAMPLES = ds.storeBatchSize ?? 1
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
-      const selectedNid = `${outputLayerIdx}_${y}.0.0`
-      useStore.setState({ selectedNid })
+      recordingY = y
       const label = ds.output.labels ? ds.output.labels[y] : y
       const SECONDS_BEFORE_RECORDING = 3
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
@@ -87,6 +88,7 @@ export function VideoControl() {
         shape: [yData.length, 21, 3, numHands],
       }
       const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
+      recordingY = undefined
       await addTrainData(xs, ys)
     }
 
@@ -110,7 +112,7 @@ export function VideoControl() {
       if (!isTraning) {
         const X = await hpPredict()
         if (X) {
-          const sample = { X, y: undefined }
+          const sample = { X, y: recordingY }
           useStore.setState({ sample })
         }
       }
@@ -133,9 +135,7 @@ export function VideoControl() {
 
   return (
     <div
-      className={`flex flex-1 ${
-        stream ? "flex-col" : "flex-row"
-      } sm:flex-row gap-2 justify-start sm:justify-between`}
+      className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-start`}
     >
       <InlineButton onClick={toggleStream}>
         video {!!stream ? "off" : "on"}
@@ -170,8 +170,8 @@ function useLandmarker(numHands: number) {
       const video = videoRef?.current
       const canvas = canvasRef?.current
       if (!video || !canvas) return
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
+      canvas.width = video.videoWidth * 2
+      canvas.height = video.videoHeight * 2
       const ctx = canvas.getContext("2d")
       if (!ctx) return
 
@@ -180,12 +180,12 @@ function useLandmarker(numHands: number) {
 
       for (const landmarks of results.landmarks) {
         draw.drawConnectors(ctx, landmarks, hand.HAND_CONNECTIONS, {
-          color: "#00FF00",
+          color: "rgb(100,20,255)",
           lineWidth: 5,
           visibilityMin: -1,
         })
         draw.drawLandmarks(ctx, landmarks, {
-          color: "#FF0000",
+          color: "rgb(255,20,100)",
           lineWidth: 2,
           visibilityMin: -1,
         })

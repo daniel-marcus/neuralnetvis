@@ -8,11 +8,12 @@ export const SampleSlider = () => {
   const visIsLocked = useStore((s) => s.vis.isLocked)
   const sampleIdx = useStore((s) => s.sampleIdx)
   const totalSamples = useStore((s) => s.totalSamples())
+  const hasStream = useStore((s) => !!s.stream)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
         className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
-          hasProgressBar || !totalSamples || visIsLocked
+          hasProgressBar || !totalSamples || visIsLocked || hasStream
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"

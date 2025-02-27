@@ -77,7 +77,6 @@ export const CreateNewDataset = () => {
                 const newVal = e.target.value
                 const newLabels = [...labels.toSpliced(i, 1, newVal)]
                 setLabels(newLabels)
-                console.log(e)
               }}
             />
           </div>
