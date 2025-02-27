@@ -3,20 +3,13 @@ import { mnist } from "./mnist"
 
 export const dsMnistMock: Dataset = {
   ...mnist,
+  storeBatchSize: 100,
   train: {
     index: "train",
-    version: new Date(),
-    storeBatchSize: 100,
-    valsPerSample: 784,
-    shapeX: [20000, 784],
-    shapeY: [20000, 10],
+    totalSamples: 20000,
   },
   test: {
     index: "test",
-    version: new Date(),
-    storeBatchSize: 100,
-    valsPerSample: 784,
-    shapeX: [2000, 784],
-    shapeY: [2000, 10],
+    totalSamples: 2000,
   },
 }

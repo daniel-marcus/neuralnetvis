@@ -38,7 +38,7 @@ export function VideoWindow() {
       />
       <canvas
         ref={canvasRef}
-        className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none z-20 ${
+        className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none z-30 ${
           stream ? "opacity-100" : "opacity-0"
         } transition-opacity duration-500`}
       />
@@ -53,19 +53,19 @@ export function VideoControl() {
   const stream = useStore((s) => s.stream)
   const toggleStream = useStore((s) => s.toggleStream)
 
-  const numHands = useStore((s) => s.ds?.train.shapeX[3] ?? 1)
+  const numHands = useStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands)
 
   const hpRecordSamples = useCallback(async () => {
     const ds = useStore.getState().ds
-    const outputSize = ds?.output.labels.length
+    const outputSize = ds?.outputLabels.length
     if (!outputSize) return
 
-    const SAMPLES = ds.storeBatchSize ?? 1
+    const SAMPLES = ds.storeBatchSize
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
       recordingY = y
-      const label = ds.output.labels ? ds.output.labels[y] : y
+      const label = ds.outputLabels ? ds.outputLabels[y] : y
       const SECONDS_BEFORE_RECORDING = 3
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
         setStatus(`Start recording "${label}" in ${s} seconds...`, -1)
@@ -142,7 +142,7 @@ export function VideoControl() {
       className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
     >
       <InlineButton onClick={toggleStream}>
-        video {!!stream ? "off" : "on"}
+        {!!stream ? "stop" : "start"} video
       </InlineButton>
       <InlineButton onClick={hpRecordSamples} disabled={!stream}>
         record
@@ -160,8 +160,10 @@ function useLandmarker(numHands: number) {
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
   useEffect(() => {
     async function init() {
+      setStatus("Loading hand landmark model...", -1)
       const landmarker = await createHandLandmarker(numHands)
       setLandmarker(landmarker)
+      setStatus("", null)
     }
     init()
     return () => {
@@ -260,52 +262,3 @@ async function createHandLandmarker(numHands: number) {
   })
   return handLandmarker
 }
-
-/* const updateSample = useCallback(async () => {
-    if (!stream) return
-    const video = videoRef.current
-    if (!video) return
-    const ds = useStore.getState().ds
-    const inputLayer = useStore.getState().layerConfigs[0]
-    if (!inputLayer || !ds) return
-    const [, height, width, channels] =
-      (inputLayer.config.batchInputShape as number[]) || ds.train.shapeX
-    const isMonochrome = channels === 1
-    const X = tf.tidy(() => {
-      const _img = getDownscaledVideo(video, height, width)
-      if (!_img) return
-      const img = isMonochrome ? convertToMonochrome(_img) : _img
-      return img.div(255).flatten().arraySync()
-    })
-    if (!X) return
-    const sample = { X, y: undefined }
-    useStore.setState({ sample })
-  }, [stream])
-
-function getDownscaledVideo(
-  video: HTMLVideoElement,
-  height: number,
-  width: number
-) {
-  return tf.tidy(() => {
-    if (video.videoWidth === 0) return
-    const image = tf.browser.fromPixels(video)
-
-    const minDim = Math.min(image.shape[0], image.shape[1])
-    const offsetX = (image.shape[1] - minDim) / 2
-    const offsetY = (image.shape[0] - minDim) / 2
-
-    const cropped = image.slice([offsetY, offsetX, 0], [minDim, minDim, 3])
-    const downscaled = tf.image.resizeBilinear(cropped, [height, width])
-    return downscaled
-  })
-}
-
-function convertToMonochrome<T extends tf.Tensor>(imageTensor: T): T {
-  return tf.tidy(() => {
-    const [r, g, b] = tf.split(imageTensor, 3, 2)
-    // Apply the luminance formula: grayscale = 0.2989 * R + 0.587 * G + 0.114 * B
-    const grayscale = r.mul(0.2989).add(g.mul(0.587)).add(b.mul(0.114))
-    return grayscale as T
-  })
-}  */

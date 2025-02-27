@@ -6,25 +6,22 @@ export const cifar10: DatasetDef = {
   name: "cifar10",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: new Date("2025-02-08"),
+  version: new Date("2025-02-27"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
-  input: {
-    preprocess: (inputTensor) => inputTensor.div(255),
-  },
-  output: {
-    labels: [
-      "airplane",
-      "automobile",
-      "bird",
-      "cat",
-      "deer",
-      "dog",
-      "frog",
-      "horse",
-      "ship",
-      "truck",
-    ],
-  },
+  inputDims: [32, 32, 3],
+  preprocess: (inputTensor) => inputTensor.div(255),
+  outputLabels: [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+  ],
   loadData: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([

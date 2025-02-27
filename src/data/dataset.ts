@@ -1,57 +1,67 @@
-import { useEffect } from "react"
 import { useStore } from "@/store"
 import { datasets } from "./datasets"
 import { deleteAll, getData, putData, putDataBatches } from "./db"
 import type {
   Dataset,
   DatasetDef,
+  DatasetMeta,
   DbBatch,
   ParsedLike,
   StoreMeta,
 } from "./types"
 
-export function useDataset() {
-  const datasetKey = useStore((s) => s.datasetKey)
-  const ds = useStore((s) => s.ds)
-  const setStatusText = useStore((s) => s.status.setText)
+const DEFAULT_STORE_BATCH_SIZE = 100
 
-  useEffect(() => {
-    const dsDef = datasets.find((d) => d.key === datasetKey)
-    if (!dsDef) return
-
-    loadData()
-    async function loadData() {
-      if (!dsDef) return
-      const existingTrain = await getData<StoreMeta>(dsDef.key, "meta", "train")
-      const hasLatestData =
-        existingTrain?.version.getTime() === dsDef.version.getTime()
-      const skipLoading = existingTrain && hasLatestData
-      await setDsFromDsDef(dsDef, skipLoading)
-    }
-    return () => {
-      useStore.setState({ ds: undefined })
-    }
-  }, [datasetKey, setStatusText])
-
-  return ds
+export async function setDsFromKey(key: string) {
+  const dsDef = datasets.find((d) => d.key === key)
+  if (!dsDef) return
+  const existinMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
+  const hasLatestData =
+    existinMeta?.version.getTime() === dsDef.version.getTime()
+  const skipLoading = existinMeta && hasLatestData
+  await setDsFromDef(dsDef, skipLoading)
 }
 
-export async function setDsFromDsDef(dsDef: DatasetDef, skipLoading?: boolean) {
+export async function setDsFromDb(key: string) {
+  const dsMeta = await getData<DatasetMeta>(key, "meta", "dsMeta")
+  if (!dsMeta) return
+  await setDsFromDef(dsMeta, true)
+}
+
+function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
+  return { index: storeName, totalSamples }
+}
+
+export async function setDsFromDef(
+  dsDef: DatasetDef | DatasetMeta,
+  skipLoading?: boolean
+) {
   if (!skipLoading) await loadAndSaveDsData(dsDef)
-  const train = await getData<StoreMeta>(dsDef.key, "meta", "train") // TODO: type keys
-  const test = await getData<StoreMeta>(dsDef.key, "meta", "test")
-  if (!train || !test) {
-    throw new Error("Failed to create indexedDB store")
-  }
-  const ds = { ...dsDef, train, test }
+  const { key } = dsDef
+  const train =
+    (await getData<StoreMeta>(key, "meta", "train")) ?? newStoreMeta("train")
+  const test =
+    (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
+  const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
+  const ds = { ...dsDef, train, test, storeBatchSize }
   useStore.setState({ ds })
 }
 
 export async function loadAndSaveDsData(dsDef: DatasetDef) {
-  const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
-    await dsDef.loadData()
-  await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
-  await saveData(dsDef, "test", xTest, yTest, xTestRaw)
+  if (dsDef.loadData) {
+    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
+      await dsDef.loadData()
+    await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
+    await saveData(dsDef, "test", xTest, yTest, xTestRaw)
+  }
+  const dsMeta = dsDefToDsMeta(dsDef)
+  await putData(dsDef.key, "meta", { index: "dsMeta", ...dsMeta })
+}
+
+function dsDefToDsMeta(dsDef: DatasetDef): DatasetMeta {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { loadData, preprocess, ...dsMeta } = dsDef
+  return dsMeta
 }
 
 async function saveData(
@@ -61,20 +71,15 @@ async function saveData(
   ys: ParsedLike,
   xsRaw?: ParsedLike
 ) {
-  const { key: dbName, version, storeBatchSize = 100 } = ds
+  const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
 
   const existingMeta = await getData<StoreMeta>(dbName, "meta", storeName)
-  // TODO: checkShapeMatch for dims and throw error if not
-  const oldSamplesX = existingMeta?.shapeX[0] ?? 0
-  const oldSamplesY = existingMeta?.shapeY[0] ?? 0
-  const [newSamplesX, ...dimsX] = xs.shape
-  const [newSamplesY, ...dimsY] = ys.shape
-
-  const [totalSamples, ...dims] = xs.shape
-  const valsPerSample = dims.reduce((a, b) => a * b)
+  const oldSamplesX = existingMeta?.totalSamples ?? 0
+  const [newSamplesX] = xs.shape
+  const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
 
   const batches: DbBatch[] = []
-  for (let i = 0; i < totalSamples; i += storeBatchSize) {
+  for (let i = 0; i < newSamplesX; i += storeBatchSize) {
     const index = Math.floor((i + oldSamplesX) / storeBatchSize)
     const sliceIdxs = [i * valsPerSample, (i + storeBatchSize) * valsPerSample]
     const batch = {
@@ -88,17 +93,10 @@ async function saveData(
 
   await putDataBatches(dbName, storeName, batches)
 
-  const newStoreMeta = {
-    index: storeName,
-    version,
-    shapeX: [oldSamplesX + newSamplesX, ...dimsX],
-    shapeY: [oldSamplesY + newSamplesY, ...dimsY],
-    storeBatchSize,
-    valsPerSample,
-  }
-  await putData<StoreMeta>(dbName, "meta", newStoreMeta)
-
-  return newStoreMeta
+  const totalSamples = oldSamplesX + newSamplesX
+  const storeMeta = newStoreMeta(storeName, totalSamples)
+  await putData<StoreMeta>(dbName, "meta", storeMeta)
+  return storeMeta
 }
 
 export async function addTrainData(xs: ParsedLike, ys: ParsedLike) {
@@ -109,19 +107,14 @@ export async function addTrainData(xs: ParsedLike, ys: ParsedLike) {
   useStore.setState({ ds: newDs, skipModelCreate: true })
 }
 
-export async function resetData(storeName: "train" | "test") {
-  // for current ds
-  const ds = useStore.getState().ds
-  if (!ds) return
-  await deleteAll(ds.key, storeName)
-  const storeMeta = await getData<StoreMeta>(ds.key, "meta", storeName)
-  if (!storeMeta) return
-  const newStoreMeta = {
-    ...storeMeta,
-    shapeX: [0, ...storeMeta.shapeX.slice(1)],
-    shapeY: [0, ...storeMeta.shapeY.slice(1)],
+export async function resetData(dsKey: string, storeName: "train" | "test") {
+  await deleteAll(dsKey, storeName)
+  const storeMeta = newStoreMeta(storeName, 0)
+  await putData(dsKey, "meta", storeMeta)
+
+  const currDs = useStore.getState().ds
+  if (currDs?.key === dsKey) {
+    const newDs = { ...currDs, [storeName]: storeMeta }
+    useStore.setState({ ds: newDs, skipModelCreate: true })
   }
-  await putData(ds.key, "meta", newStoreMeta)
-  const newDs = { ...ds, [storeName]: newStoreMeta }
-  useStore.setState({ ds: newDs, skipModelCreate: true })
 }

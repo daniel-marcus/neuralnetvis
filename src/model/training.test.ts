@@ -15,8 +15,8 @@ describe("getSamplesAsBatch", () => {
     })
 
     it("should return correctly reshaped TensorBatch", async () => {
-      const shapeX = [newBatchSize, ...dsMnistMock.train.shapeX.slice(1)]
-      const shapeY = [newBatchSize, ...dsMnistMock.train.shapeY.slice(1)]
+      const shapeX = [newBatchSize, ...dsMnistMock.inputDims]
+      const shapeY = [newBatchSize, dsMnistMock.outputLabels.length]
       expect(result?.xs.shape).toEqual(shapeX)
       expect(result?.ys.shape).toEqual(shapeY)
     })
@@ -30,13 +30,13 @@ describe("getSamplesAsBatch", () => {
       const sample256 = await getSample(dsMnistMock, "train", 256)
       const sample256Data = tf.tidy(() => {
         const tensor = tf.tensor(sample256[0]).flatten()
-        const preprocessed = dsMnistMock.input?.preprocess?.(tensor) ?? tensor
+        const preprocessed = dsMnistMock.preprocess?.(tensor) ?? tensor
         return preprocessed.arraySync() as number[]
       })
       const sample256Label = tf.tidy(
         () =>
           tf
-            .oneHot(sample256[1], dsMnistMock.output.labels.length)
+            .oneHot(sample256[1], dsMnistMock.outputLabels.length)
             .arraySync() as number[]
       )
       expect(firstFromBatchData).toEqual(sample256Data)

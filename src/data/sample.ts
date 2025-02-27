@@ -37,8 +37,7 @@ async function updateInput(sampleIdx: number, ds?: Dataset) {
   await tf.ready()
   const X = tf.tidy(
     () =>
-      (ds.input?.preprocess?.(tf.tensor(features)).arraySync() as number[]) ??
-      features
+      (ds.preprocess?.(tf.tensor(features)).arraySync() as number[]) ?? features
   )
   const sample = { X, y, rawX }
   useStore.setState({ sample })
@@ -53,7 +52,8 @@ export async function getSample(
   i: number,
   returnRaw = false
 ) {
-  const { storeBatchSize, valsPerSample } = ds[type]
+  const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
+  const { storeBatchSize } = ds
   const batchIdx = Math.floor(i / storeBatchSize)
   const batchCacheKey: BatchCacheKey = `${ds.key}_${type}`
   const hasCached = currBatchCache[batchCacheKey]?.index === batchIdx

@@ -3,7 +3,7 @@ import type { Tensor, Rank } from "@tensorflow/tfjs"
 
 export type DatasetKey = string
 
-export interface DatasetDef {
+export interface DatasetMeta {
   key: DatasetKey
   task: "classification" | "regression"
   name: string
@@ -11,31 +11,28 @@ export interface DatasetDef {
   version: Date
   disabled?: boolean
   aboutUrl: string
-  input?: {
-    labels?: string[]
-    preprocess?: <T extends Tensor<Rank>>(X: T) => T
-  }
-  output: {
-    labels: string[] // length defines the number of output neurons
-  }
-  loadData: DatasetLoader
+  inputDims: number[]
+  inputLabels?: string[]
+  outputLabels: string[] // length defines the number of output neurons
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
 }
 
+export interface DatasetDef extends DatasetMeta {
+  preprocess?: <T extends Tensor<Rank>>(X: T) => T // not available for user generated ds
+  loadData?: DatasetLoader
+}
+
 export type Dataset = Omit<DatasetDef, "loadData"> & {
+  storeBatchSize: number
   train: StoreMeta
   test: StoreMeta
 }
 
 export interface StoreMeta {
   index: string // storeName: mnist_1_train
-  version: Date
-  shapeX: number[]
-  shapeY: number[]
-  storeBatchSize: number
-  valsPerSample: number
+  totalSamples: number
 }
 
 export interface DbBatch {

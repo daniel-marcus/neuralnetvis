@@ -4,7 +4,7 @@ import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
-import { resetData } from "@/data/dataset"
+import { resetData, setDsFromDb, setDsFromKey } from "@/data/dataset"
 
 export const MyDatasets = () => {
   const ds = useStore((s) => s.ds)
@@ -29,7 +29,7 @@ export const MyDatasets = () => {
     const fullName = `${DB_PREFIX}${dsKey}`
     setStatus(`Removing dataset ${dsKey} ...`, -1)
     if (dsKey === ds?.key) {
-      useStore.setState({ datasetKey: undefined })
+      useStore.setState({ ds: undefined })
     }
     await deleteDB(fullName)
     updateDatasets()
@@ -37,9 +37,9 @@ export const MyDatasets = () => {
   }
   const handleSelect = async (dsKey: string) => {
     if (datasets.find((d) => d.key === dsKey)) {
-      useStore.setState({ datasetKey: dsKey })
+      setDsFromKey(dsKey)
     } else {
-      window.alert("TODO")
+      setDsFromDb(dsKey)
     }
   }
   return (
@@ -62,7 +62,13 @@ export const MyDatasets = () => {
               </button>
               <div>
                 {isCurrent && ds.isUserGenerated && !!totalSamples && (
-                  <button className="px-2" onClick={() => resetData("train")}>
+                  <button
+                    className="px-2"
+                    onClick={() => {
+                      resetData(ds.key, "train")
+                      resetData(ds.key, "test")
+                    }}
+                  >
                     reset
                   </button>
                 )}

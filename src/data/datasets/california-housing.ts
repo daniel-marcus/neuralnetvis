@@ -8,23 +8,20 @@ export const californiaHousing: DatasetDef = {
   name: "california housing",
   task: "regression",
   description: "Predict housing prices",
-  version: new Date("2025-02-08"),
+  version: new Date("2025-02-27"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
-  input: {
-    labels: [
-      "longitude",
-      "latitude",
-      "housing_median_age",
-      "total_rooms",
-      "total_bedrooms",
-      "population",
-      "households",
-      "median_income",
-    ],
-  },
-  output: {
-    labels: ["median_house_value"],
-  },
+  inputDims: [8],
+  inputLabels: [
+    "longitude",
+    "latitude",
+    "housing_median_age",
+    "total_rooms",
+    "total_bedrooms",
+    "population",
+    "households",
+    "median_income",
+  ],
+  outputLabels: ["median_house_value"],
   loadData: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/california_housing/x_train.npz",

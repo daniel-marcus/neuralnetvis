@@ -79,9 +79,10 @@ function useModelStatus(
   const setStatusText = useStore((s) => s.status.setText)
   useEffect(() => {
     if (!model || !ds || isPending) return
+    const totalSamples = useStore.getState().totalSamples()
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
-      Samples: ds.train.shapeX[0].toLocaleString("en-US"),
+      Samples: totalSamples.toLocaleString("en-US"),
       Model: model.getClassName(),
       Params: model.countParams().toLocaleString("en-US"),
     }
@@ -111,9 +112,8 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
 }
 
 function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
-  const [, ...dims] = ds.train.shapeX
-  const isMultiDim = dims.length >= 2
-  const dsInputShape = [null, ...dims] as [null, ...number[]]
+  const isMultiDim = ds.inputDims.length >= 2
+  const dsInputShape = [null, ...ds.inputDims] as [null, ...number[]]
 
   const model = tf.sequential()
 
@@ -141,7 +141,7 @@ function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
       const configNew = isOutput // use config from ds for output layer
         ? {
             ...config,
-            units: ds.output.labels.length,
+            units: ds.outputLabels.length,
             activation: ds.task === "classification" ? "softmax" : "linear",
             name: `nnv_Output`,
           }

@@ -1,6 +1,7 @@
 import { useStore } from "@/store"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
+import { setDsFromKey } from "@/data/dataset"
 
 export const DatasetLibrary = () => {
   const currDatasetKey = useStore((s) => s.ds?.key)
@@ -20,7 +21,7 @@ export const DatasetLibrary = () => {
               className={`text-left py-2 has-menu-border hover:bg-menu-border ${
                 currDatasetKey === d.key ? "text-white border-accent!" : ""
               }`}
-              onClick={() => useStore.setState({ datasetKey: d.key })}
+              onClick={() => setDsFromKey(d.key)}
             >
               <strong>{d.name}</strong> ({d.task})<br />
               {d.description}

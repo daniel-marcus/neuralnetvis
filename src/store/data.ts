@@ -3,7 +3,6 @@ import type { Dataset, Sample } from "@/data"
 import { RefObject } from "react"
 
 export interface DataSlice {
-  datasetKey?: string
   ds?: Dataset
   totalSamples: () => number
   isRegression: () => boolean
@@ -20,9 +19,8 @@ export interface DataSlice {
 }
 
 export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
-  datasetKey: undefined,
   ds: undefined,
-  totalSamples: () => get().ds?.train.shapeX[0] ?? 0,
+  totalSamples: () => get().ds?.train.totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
 
   sampleIdx: 0,

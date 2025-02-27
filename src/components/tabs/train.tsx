@@ -129,7 +129,7 @@ function useEvaluate() {
     if (!ds) return
     const { loss, accuracy } = await getModelEvaluation()
     const data = {
-      "Test samples": ds.test.shapeX[0],
+      "Test samples": ds.test.totalSamples,
       Loss: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
     }

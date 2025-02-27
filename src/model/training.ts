@@ -73,7 +73,8 @@ export async function getSamplesAsBatch(
   newBatchIdx: number
 ): Promise<TensorBatch> {
   const type = "train"
-  const { storeBatchSize, valsPerSample } = ds[type]
+  const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
+  const { storeBatchSize } = ds
 
   const firstSampleIdx = newBatchIdx * newBatchSize
   const lastSampleIdx = firstSampleIdx + newBatchSize - 1 // add range check (trainSamples)?
@@ -91,7 +92,7 @@ export async function getSamplesAsBatch(
       firstIdxInStoreBatch + newBatchSize
     )
     const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
-    const shapeX = [currBatchSize, ...ds[type].shapeX.slice(1)]
+    const shapeX = [currBatchSize, ...ds.inputDims]
     const xTensors = dbBatches.map((b) => tf.tensor(b.xs))
     const _xs = tf
       .concat(xTensors)
@@ -101,10 +102,10 @@ export async function getSamplesAsBatch(
         currBatchSize * valsPerSample
       )
       .reshape(shapeX)
-    const xs = ds.input?.preprocess?.(_xs) ?? _xs
+    const xs = ds.preprocess?.(_xs) ?? _xs
     const ys =
       ds.task === "classification"
-        ? tf.oneHot(slicedYs, ds.output.labels.length)
+        ? tf.oneHot(slicedYs, ds.outputLabels.length)
         : tf.tensor(slicedYs) // regression
     return { xs, ys }
   })
@@ -134,10 +135,10 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     // useStore.setState({ trainingPromise: null })
   }
 
-  const isFitDataset = useStore.getState().trainConfig.lazyLoading
+  const lazyLoading = useStore.getState().trainConfig.lazyLoading
 
   let history: tf.History | void | undefined = undefined
-  if (!isFitDataset) {
+  if (!lazyLoading) {
     const trainData = await getDbDataAsTensors(ds, "train")
     if (!trainData) return
     const [X, y] = trainData
@@ -152,7 +153,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const { batchSize, validationSplit, ...otherOptions } = options
 
     // TODO splitDataset as function // validationData as tensor (faster)
-    const totalSamples = ds.train.shapeX[0]
+    const totalSamples = ds.train.totalSamples
     const validationSamples = Math.floor(totalSamples * validationSplit)
     const trainSamples = totalSamples - validationSamples
 
@@ -165,7 +166,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const firstValidationIdx = trainSamples
     const validStoreBatchIdx = getStoreBatchIdx(
       firstValidationIdx,
-      ds.train.storeBatchSize
+      ds.storeBatchSize
     )
     const range = IDBKeyRange.lowerBound(validStoreBatchIdx)
     const validationData = validationSamples
@@ -198,12 +199,12 @@ async function getDbDataAsTensors(
   const isClassification = ds.task === "classification"
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
-    const shapeX = [-1, ...ds[type].shapeX.slice(1)] // -1 for unknown batch size
+    const shapeX = [-1, ...ds.inputDims] // -1 for unknown batch size
     const XRaw = tf.concat(xBatchTensors).reshape(shapeX)
-    const X = ds.input?.preprocess?.(XRaw) ?? XRaw
+    const X = ds.preprocess?.(XRaw) ?? XRaw
     const yArr = batches.flatMap((b) => Array.from(b.ys))
     const y = isClassification
-      ? tf.oneHot(yArr, ds.output.labels.length)
+      ? tf.oneHot(yArr, ds.outputLabels.length)
       : tf.tensor(yArr)
     return [X, y] as const
   })
@@ -219,7 +220,7 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   const [X, y] = tf.tidy(() => {
     const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
     const y = isClassification
-      ? tf.oneHot(ys, ds.output.labels.length)
+      ? tf.oneHot(ys, ds.outputLabels.length)
       : tf.tensor(ys)
     return [X, y]
   })

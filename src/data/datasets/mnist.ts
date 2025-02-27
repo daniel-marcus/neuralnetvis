@@ -6,14 +6,11 @@ export const mnist: DatasetDef = {
   name: "mnist",
   task: "classification",
   description: "Handwritten digits (28x28)",
-  version: new Date("2025-02-08"),
+  version: new Date("2025-02-27"),
   aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
-  input: {
-    preprocess: (inputTensor) => inputTensor.div(255),
-  },
-  output: {
-    labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-  },
+  inputDims: [28, 28, 1],
+  preprocess: (inputTensor) => inputTensor.div(255),
+  outputLabels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
   loadData: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/mnist_20k/x_train.npz",

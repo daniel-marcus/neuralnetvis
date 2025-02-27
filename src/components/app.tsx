@@ -1,15 +1,16 @@
 "use client"
 
-import { Footer, Gradient, Menu } from "@/components"
-import { useDataset, useSample } from "@/data"
+import { useStore } from "@/store"
 import { useModel, useTraining } from "@/model"
+import { useSample } from "@/data"
 import { useDebugCommands } from "@/utils/debug"
-import { Scene } from "@/scene"
-import type { ReactNode } from "react"
 import { VideoWindow } from "./video"
+import { Scene } from "@/scene"
+import { Footer, Gradient, Menu } from "@/components"
+import type { ReactNode } from "react"
 
 export const App = ({ children }: { children?: ReactNode }) => {
-  const ds = useDataset()
+  const ds = useStore((s) => s.ds)
   const model = useModel(ds)
   useTraining(model, ds)
   useSample(ds)

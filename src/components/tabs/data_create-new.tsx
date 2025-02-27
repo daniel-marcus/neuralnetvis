@@ -7,7 +7,7 @@ import {
   Select,
 } from "../ui-elements"
 import { DatasetDef } from "@/data"
-import { setDsFromDsDef } from "@/data/dataset"
+import { resetData, setDsFromDef } from "@/data/dataset"
 
 type HandsNum = 1 | 2
 
@@ -34,7 +34,9 @@ export const CreateNewDataset = () => {
   }, [hands])
   async function handleCreate() {
     const dsDef = dsDefFromState(name, hands, labels)
-    await setDsFromDsDef(dsDef)
+    await resetData(dsDef.key, "train")
+    await resetData(dsDef.key, "test")
+    await setDsFromDef(dsDef)
   }
   return (
     <CollapsibleWithTitle title="create new dataset" variant="no-bg" collapsed>
@@ -109,31 +111,20 @@ export const CreateNewDataset = () => {
 function dsDefFromState(
   name: string,
   hands: number,
-  labels: string[]
+  outputLabels: string[]
 ): DatasetDef {
   return {
     key: name,
     name,
     version: new Date(),
     task: "classification",
-    description: `Handpose dataset with ${hands} hand(s) and ${labels.length} categories`,
+    description: `Handpose dataset with ${hands} hand(s) and ${outputLabels.length} categories`,
     // aboutUrl: "https://neuralnetvis.app",
     aboutUrl:
       "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
-    input: {
-      labels: handPoseLabels(),
-    },
-    output: { labels },
-    loadData: async () => {
-      const emptyX = new Float32Array()
-      const emptyY = new Uint8Array()
-      return {
-        xTrain: { data: emptyX, shape: [0, 21, 3, hands] },
-        yTrain: { data: emptyY, shape: [0, 21, 3, hands] },
-        xTest: { data: emptyX, shape: [0, 21, 3, hands] },
-        yTest: { data: emptyY, shape: [0, 21, 3, hands] },
-      }
-    },
+    inputDims: [21, 3, hands],
+    inputLabels: handPoseLabels(),
+    outputLabels,
     storeBatchSize: 20,
     isUserGenerated: true,
     hasCam: true,

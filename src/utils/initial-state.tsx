@@ -5,22 +5,20 @@ import { StoreType, useStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
+import { setDsFromKey } from "@/data/dataset"
 
-type ExposedStoreKeys =
-  | "datasetKey"
-  | "sampleIdx"
-  | "layerConfigs"
-  | "selectedNid"
+type ExposedStoreKeys = "sampleIdx" | "layerConfigs" | "selectedNid"
 type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
+  dsKey?: string
   vis?: Partial<StoreType["vis"]>
   cameraPos?: Pos
   cameraLookAt?: Pos
 }
 
 export const defaultState: InitialState = {
-  datasetKey: "mnist",
+  dsKey: "mnist",
   layerConfigs: defaultLayerConfigs,
   selectedNid: undefined,
   cameraPos: [-23, 0, 35],
@@ -42,7 +40,8 @@ export function InitialStateSetter() {
 }
 
 export function setInitialState(initialState: InitialState = defaultState) {
-  const { cameraPos, cameraLookAt, vis, ...storeSettings } = initialState
+  const { dsKey, cameraPos, cameraLookAt, vis, ...storeSettings } = initialState
+  if (dsKey) setDsFromKey(dsKey)
   if (cameraPos) {
     moveCameraTo(cameraPos, cameraLookAt)
   }

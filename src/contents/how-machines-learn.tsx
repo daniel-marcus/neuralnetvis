@@ -11,7 +11,7 @@ import type { LessonContent } from "."
 import { defaultVisConfig } from "@/store/vis"
 
 const initialState: InitialState = {
-  datasetKey: "mnist",
+  dsKey: "mnist",
   layerConfigs: [{ className: "Dense", config: {} }], // the output layer
   cameraPos: [-1.6, 0, 2.7],
   sampleIdx: 50,
