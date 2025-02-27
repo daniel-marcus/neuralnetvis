@@ -4,8 +4,7 @@ import { useAsciiText } from "@/utils/ascii-text"
 export const Logo = () => {
   const currTab = useStore((s) => s.tab)
   const tabIsShwon = useStore((s) => s.tabIsShown)
-  const hasCam = useStore((s) => s.ds?.hasCam)
-  const mobileCrop = (currTab && tabIsShwon) || hasCam
+  const mobileCrop = currTab && tabIsShwon
   const neural = useAsciiText("Neural")
   const net = useAsciiText("Net")
   const vis = useAsciiText("Vis")

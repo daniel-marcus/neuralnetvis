@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import {
   CollapsibleWithTitle,
+  DraggableList,
   InlineButton,
   InputRow,
   Select,
-  Slider,
 } from "../ui-elements"
 import { DatasetDef } from "@/data"
 import { setDsFromDsDef } from "@/data/dataset"
@@ -20,6 +20,8 @@ const DEFAULT_LABELS = {
   1: ["👍", "👌", "🤘", "✊", "✋", "👎", "🤞", "🖖"],
   2: ["🫶", "🙌", "🤜🤛", "👐", "👏"],
 }
+
+const MIN_LABELS = 2
 
 export const CreateNewDataset = () => {
   const [name, setName] = useState<string>("my_handpose_ds")
@@ -55,32 +57,46 @@ export const CreateNewDataset = () => {
           onChange={(val) => setHands(parseInt(val) as HandsNum)}
         />
       </InputRow>
-      <InputRow label="categories">
-        <Slider
-          showValue
-          min={2}
-          max={DEFAULT_LABELS[hands].length}
-          value={labels.length}
-          onChange={(numCategories) => {
-            setLabels(DEFAULT_LABELS[hands].slice(0, numCategories))
-          }}
-        />
-      </InputRow>
       <InputRow label="labels">
-        {labels.map((l, i) => (
-          <div key={i} className="flex gap-2">
-            <div className="w-8 shrink-0">{i + 1}:</div>
-            <input
-              type="string"
-              value={l}
-              onChange={(e) => {
-                const newVal = e.target.value
-                const newLabels = [...labels.toSpliced(i, 1, newVal)]
-                setLabels(newLabels)
-              }}
-            />
-          </div>
-        ))}
+        <DraggableList
+          rowHeight={26}
+          onOrderChange={(newOrder) => {
+            const newLabels = newOrder.map((i) => labels[i])
+            setLabels(newLabels)
+          }}
+        >
+          {labels.map((l, i) => (
+            <div key={i} className="flex gap-2">
+              <div className="w-8 shrink-0">{i + 1}</div>
+              <input
+                className="w-full"
+                type="string"
+                value={l}
+                onChange={(e) =>
+                  setLabels([...labels.toSpliced(i, 1, e.target.value)])
+                }
+              />
+              {labels.length > MIN_LABELS && (
+                <button
+                  className="pl-2"
+                  onClick={() => setLabels([...labels.toSpliced(i, 1)])}
+                >
+                  x
+                </button>
+              )}
+            </div>
+          ))}
+        </DraggableList>
+        <InlineButton
+          variant="secondary"
+          className="mt-2"
+          onClick={() => {
+            const newLabel = DEFAULT_LABELS[hands][labels.length] ?? "edit me"
+            setLabels([...labels, newLabel])
+          }}
+        >
+          add
+        </InlineButton>
       </InputRow>
       <div className="mt-4 flex justify-end">
         <InlineButton onClick={handleCreate}>create</InlineButton>

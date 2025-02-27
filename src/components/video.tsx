@@ -135,7 +135,7 @@ export function VideoControl() {
 
   return (
     <div
-      className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-start`}
+      className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
     >
       <InlineButton onClick={toggleStream}>
         video {!!stream ? "off" : "on"}
