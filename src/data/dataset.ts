@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { useStore } from "@/store"
 import { datasets } from "./datasets"
-import { getData, putData, putDataBatches } from "./db"
+import { deleteAll, getData, putData, putDataBatches } from "./db"
 import type {
   Dataset,
   DatasetDef,
@@ -106,5 +106,22 @@ export async function addTrainData(xs: ParsedLike, ys: ParsedLike) {
   if (!ds) return
   const newTrainMeta = await saveData(ds, "train", xs, ys)
   const newDs = { ...ds, train: newTrainMeta }
+  useStore.setState({ ds: newDs, skipModelCreate: true })
+}
+
+export async function resetData(storeName: "train" | "test") {
+  // for current ds
+  const ds = useStore.getState().ds
+  if (!ds) return
+  await deleteAll(ds.key, storeName)
+  const storeMeta = await getData<StoreMeta>(ds.key, "meta", storeName)
+  if (!storeMeta) return
+  const newStoreMeta = {
+    ...storeMeta,
+    shapeX: [0, ...storeMeta.shapeX.slice(1)],
+    shapeY: [0, ...storeMeta.shapeY.slice(1)],
+  }
+  await putData(ds.key, "meta", newStoreMeta)
+  const newDs = { ...ds, [storeName]: newStoreMeta }
   useStore.setState({ ds: newDs, skipModelCreate: true })
 }

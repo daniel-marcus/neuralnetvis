@@ -77,6 +77,14 @@ export async function getAll<T>(
   return res
 }
 
+export async function deleteAll(dbName: DatasetKey, storeName: StoreName) {
+  const db = await getDb(dbName)
+  const tx = db.transaction(storeName, "readwrite")
+  const store = tx.objectStore(storeName)
+  await store.clear()
+  await tx.done
+}
+
 export async function storeHasEntries(
   dbName: DatasetKey,
   storeName: StoreName
