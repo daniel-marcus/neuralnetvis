@@ -1,6 +1,6 @@
 import { StateCreator } from "zustand"
 import type { Dataset, Sample } from "@/data"
-import { RefObject } from "react"
+import { createRef, RefObject } from "react"
 
 export interface DataSlice {
   ds?: Dataset
@@ -12,10 +12,9 @@ export interface DataSlice {
   nextSample: (step?: number) => void
   resetSample: () => void
 
-  videoRef?: RefObject<HTMLVideoElement | null>
-  canvasRef?: RefObject<HTMLCanvasElement | null>
-  stream?: MediaStream | null
-  toggleStream: () => Promise<void>
+  videoRef: RefObject<HTMLVideoElement | null>
+  canvasRef: RefObject<HTMLCanvasElement | null>
+  stream: MediaStream | null
 }
 
 export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
@@ -31,16 +30,7 @@ export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
     })),
   resetSample: () => set(() => ({ sampleIdx: 0, sample: undefined })),
 
-  toggleStream: async () => {
-    const stream = get().stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop())
-      set({ stream: null })
-    } else {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      })
-      set({ stream })
-    }
-  },
+  videoRef: createRef<HTMLVideoElement>(),
+  canvasRef: createRef<HTMLCanvasElement>(),
+  stream: null,
 })
