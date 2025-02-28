@@ -8,13 +8,13 @@ import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { meshParams, groups, group, material } = props
+  const { meshParams, group, material } = props
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
   useColors(group.meshRef, group.neurons)
   // useScale(group.meshRef, group.nidsStr, props.index, group.index)
   const { onPointerOut, ...otherEvHandlers } = useInteractions(group.neurons)
-  const renderOrder = groups.length - group.index // reversed order for color blending
+  const renderOrder = 0 - group.index // reversed order for color blending
   // useHelper(groupRef, THREE.BoxHelper, "cyan")
   return (
     <group ref={groupRef} onPointerOut={onPointerOut} renderOrder={renderOrder}>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { setStatus, setTab, useStore } from "@/store"
+import { setStatus, useStore } from "@/store"
 import { InlineButton } from "./ui-elements"
 import {
   FilesetResolver,
@@ -133,7 +133,7 @@ export function VideoControl() {
       validationSplit: 0.1,
       lazyLoading: false,
     })
-    setTab("train")
+    // setTab("train")
     useStore.setState({ isTraining: true, logsMetric: "val_loss" })
   }
 
