@@ -33,8 +33,10 @@ export const getModel = () => useStore.getState().model
 export const getNeuron = (nid: Nid) => useStore.getState().allNeurons.get(nid)
 export const getThree = () => useStore.getState().three
 export const isDebug = () => useStore.getState().isDebug
-export const setStatus: StatusSlice["status"]["setText"] = (text, percent) =>
-  useStore.getState().status.setText(text, percent)
+export const setStatus: StatusSlice["status"]["update"] = (text, percent, id) =>
+  useStore.getState().status.update(text, percent, id)
+export const clearStatus: StatusSlice["status"]["clear"] = (id) =>
+  useStore.getState().status.clear(id)
 export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
   useStore.getState().setLayerConfigs(layerConfigs)
 export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>

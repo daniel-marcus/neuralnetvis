@@ -124,7 +124,7 @@ const TrainConfigControl = () => {
 
 function useEvaluate() {
   const ds = useStore((s) => s.ds)
-  const setStatusText = useStore((s) => s.status.setText)
+  const setStatusText = useStore((s) => s.status.update)
   async function evaluate() {
     if (!ds) return
     const { loss, accuracy } = await getModelEvaluation()

@@ -3,7 +3,7 @@ import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { Table } from "./ui-elements"
 
 export const Status = () => {
-  const statusText = useStore((s) => s.status.text)
+  const statusText = useStore((s) => s.status.getText())
   const parsedText = useMemo(
     () =>
       isValidReactNode(statusText) ? statusText : <Table {...statusText} />,

@@ -10,7 +10,7 @@ export function MyModels() {
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = () => setUpdTrigger((t) => t + 1)
   const [showImportForm, setShowImportForm] = useState(false)
-  const setStatusText = useStore((s) => s.status.setText)
+  const setStatusText = useStore((s) => s.status.update)
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
   useEffect(() => {
     setModelName(model?.name ?? "")
@@ -75,7 +75,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const [setModel] = useModelTransition()
-  const setStatusText = useStore((s) => s.status.setText)
+  const setStatusText = useStore((s) => s.status.update)
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)

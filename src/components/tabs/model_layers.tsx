@@ -209,7 +209,7 @@ export const LayerConfigControl = () => {
 }
 
 function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
-  const setStatusText = useStore.getState().status.setText
+  const setStatusText = useStore.getState().status.update
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, RefObject, memo } from "react"
 import { useStore } from "@/store"
 
 export const ProgressBar = memo(function ProgressBar() {
-  const percent = useStore((s) => s.status.percent)
+  const percent = useStore((s) => s.status.getPercent())
   const wrapperRef = useRef<HTMLDivElement>(null)
   const testRef = useRef<HTMLSpanElement>(null)
   const [wrapperWidth, pxPerChar] = useResponsiveSize(wrapperRef, testRef)

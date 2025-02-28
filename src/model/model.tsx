@@ -1,10 +1,11 @@
 import { useEffect, ReactNode, useCallback, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useTfBackend } from "./tf-backend"
-import { useStore, isDebug } from "@/store"
+import { useStore, isDebug, setStatus } from "@/store"
 import type { Dataset } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
+import { useHasLesson } from "@/components/lesson"
 
 export function useModel(ds?: Dataset) {
   const model = useStore((s) => s.model)
@@ -76,9 +77,9 @@ function useModelStatus(
   model?: tf.LayersModel,
   ds?: Dataset
 ) {
-  const setStatusText = useStore((s) => s.status.setText)
+  const hasLesson = useHasLesson()
   useEffect(() => {
-    if (!model || !ds || isPending) return
+    if (!model || !ds || isPending || hasLesson) return
     const totalSamples = useStore.getState().totalSamples()
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
@@ -86,8 +87,8 @@ function useModelStatus(
       Model: model.getClassName(),
       Params: model.countParams().toLocaleString("en-US"),
     }
-    setStatusText({ data }, null)
-  }, [model, ds, setStatusText, isPending])
+    setStatus({ data }, null)
+  }, [model, ds, isPending, hasLesson])
 }
 
 const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (

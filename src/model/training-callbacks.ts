@@ -1,6 +1,6 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
-import { useStore } from "@/store"
+import { useStore, isDebug } from "@/store"
 import { getModelEvaluation } from "./training"
 import {
   resolveScalarsInLogs,
@@ -50,7 +50,8 @@ export class UpdateCb extends CustomCallback {
 export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
-  private setStatus = throttle(useStore.getState().status.setText, THROTTLE)
+  private statusId = "training_progress"
+  private setStatus = throttle(useStore.getState().status.update, THROTTLE)
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0
@@ -78,7 +79,7 @@ export class ProgressCb extends CustomCallback {
           Accuracy: accuracy?.toFixed(3),
           Time: `${totalTime.toFixed(2)}s`,
         }
-        this.setStatus({ title, data }, null)
+        this.setStatus({ title, data }, null, this.statusId)
       },
     })
   }
@@ -103,7 +104,7 @@ export class ProgressCb extends CustomCallback {
       Batch: `${batchIndex + 1}/${this.epochBatches}`,
       "": `${secPerEpoch.toFixed(1)}s/epoch`,
     }
-    this.setStatus({ title: "Training ...", data }, totalPercent)
+    this.setStatus({ title: "Training ...", data }, totalPercent, this.statusId)
   }
 }
 
@@ -142,7 +143,7 @@ export class DebugCb extends CustomCallback {
         this.startTime = Date.now()
       },
       onTrainEnd: () => {
-        console.log(Date.now() - this.startTime)
+        if (isDebug()) console.log(Date.now() - this.startTime)
       },
     })
   }

@@ -1,5 +1,5 @@
 import { DB_PREFIX } from "@/data/db"
-import { setStatus, useStore } from "@/store"
+import { clearStatus, setStatus, useStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
@@ -27,13 +27,13 @@ export const MyDatasets = () => {
   }, [ds])
   const removeDataset = async (dsKey: string) => {
     const fullName = `${DB_PREFIX}${dsKey}`
-    setStatus(`Removing dataset ${dsKey} ...`, -1)
+    const statusId = setStatus(`Removing dataset ${dsKey} ...`, -1)
     if (dsKey === ds?.key) {
       useStore.setState({ ds: undefined })
     }
     await deleteDB(fullName)
     updateDatasets()
-    setStatus("", null)
+    clearStatus(statusId)
   }
   const handleSelect = async (dsKey: string) => {
     if (datasets.find((d) => d.key === dsKey)) {
