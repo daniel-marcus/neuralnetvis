@@ -52,7 +52,6 @@ function useLandmarker(numHands: number) {
     if (!landmarker || !video) return {}
     if (!video.videoWidth || !video.videoHeight) return {}
     const result = landmarker.detectForVideo(video, performance.now())
-    // updCanvas(result.landmarks)
     if (!result) return {}
     let landmarks = result.landmarks
     const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
@@ -140,6 +139,7 @@ function usePredictLoop(
     }
     return () => {
       cancelAnimationFrame(animationFrame)
+      useStore.setState({ sample: undefined })
       updateSample(useStore.getState().sampleIdx)
     }
   }, [stream, hpPredict])
@@ -197,6 +197,7 @@ function useCanvasUpdate() {
   const inputDims = useStore.getState().ds?.inputDims
   useEffect(() => {
     if (!rawX || !inputDims) return
+    if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
     const shapedX = tf.tidy(() =>
       tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
     ) as number[][][]
@@ -219,7 +220,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     for (const y of allY) {
       recordingY = y
       const label = ds.outputLabels ? ds.outputLabels[y] : y
-      const SECONDS_BEFORE_RECORDING = 3
+      const SECONDS_BEFORE_RECORDING = 2
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
         setStatus(
           `Start recording "${label}" in ${s} seconds...`,
