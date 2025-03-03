@@ -3,11 +3,15 @@ import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { Table } from "./ui-elements"
 
 export const Status = () => {
-  const statusText = useStore((s) => s.status.getText())
+  const status = useStore((s) => s.status.getCurrent())
   const parsedText = useMemo(
     () =>
-      isValidReactNode(statusText) ? statusText : <Table {...statusText} />,
-    [statusText]
+      isValidReactNode(status?.text) || !status ? (
+        (status?.text as ReactNode)
+      ) : (
+        <Table {...status.text} />
+      ),
+    [status]
   )
   const keptText = useRef<ReactNode>("")
   useEffect(() => {
@@ -17,13 +21,19 @@ export const Status = () => {
   }, [parsedText])
   return (
     <div
-      className={`absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto ${
-        !!statusText
+      className={`${
+        status?.fullscreen
+          ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
+          : "absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto"
+      }  ${
+        !!status?.text
           ? "opacity-100 duration-0 pointer-events-auto"
           : "opacity-0 duration-300 pointer-events-none"
-      } transition-opacity ease-in-out text-right`}
+      } transition ease-in-out text-right`}
     >
-      {parsedText || keptText.current}
+      <div className={status?.fullscreen ? "p-4" : ""}>
+        {parsedText || keptText.current}
+      </div>
     </div>
   )
 }

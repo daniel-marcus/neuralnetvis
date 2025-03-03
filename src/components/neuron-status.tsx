@@ -14,7 +14,7 @@ export const NeuronStatus = () => {
   const _selected = useSelected()
   const selected = _hovered ?? _selected
   const toggleSelected = useStore((s) => s.toggleSelected)
-  const hasStatus = !!useStore((s) => s.status.getText())
+  const hasStatus = !!useStore((s) => s.status.getCurrent())
   const hasLesson = useHasLesson()
   const visLocked = useStore((s) => s.vis.isLocked)
   const handleClick = (e: React.MouseEvent) => {

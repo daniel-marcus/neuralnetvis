@@ -3,7 +3,7 @@ import { Slider } from "@/components/ui-elements"
 
 export const SampleSlider = () => {
   const hasSelected = useStore((s) => !!s.hoveredNid || !!s.selectedNid)
-  const hasStatus = !!useStore((s) => s.status.getText())
+  const hasStatus = !!useStore((s) => s.status.getCurrent())
   const hasProgressBar =
     typeof useStore((s) => s.status.getPercent()) === "number"
   const visIsLocked = useStore((s) => s.vis.isLocked)

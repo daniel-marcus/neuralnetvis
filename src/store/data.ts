@@ -15,6 +15,8 @@ export interface DataSlice {
   videoRef: RefObject<HTMLVideoElement | null>
   canvasRef: RefObject<HTMLCanvasElement | null>
   stream: MediaStream | null
+  isRecording: boolean
+  toggleRecording: () => void
 }
 
 export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
@@ -33,4 +35,7 @@ export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
   videoRef: createRef<HTMLVideoElement>(),
   canvasRef: createRef<HTMLCanvasElement>(),
   stream: null,
+  isRecording: false,
+  toggleRecording: () =>
+    set(({ isRecording }) => ({ isRecording: !isRecording })),
 })

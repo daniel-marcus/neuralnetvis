@@ -209,7 +209,7 @@ export const LayerConfigControl = () => {
 }
 
 function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
-  const setStatusText = useStore.getState().status.update
+  const setStatus = useStore.getState().status.update
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")
@@ -221,16 +221,16 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
   )
 
   if (newOrder[0] !== 0) {
-    setStatusText("Input layer must be the first layer")
+    setStatus("Input layer must be the first layer")
     return false
   } else if (newOrder.at(-1) !== layerConfigs.length - 1) {
-    setStatusText("Output layer must be the last layer")
+    setStatus("Output layer must be the last layer")
     return false
   } else if (lastMultiDimIdx > 0 && flattenIdx < lastMultiDimIdx) {
-    setStatusText("Conv2D and MaxPooling2D must come before Flatten")
+    setStatus("Conv2D and MaxPooling2D must come before Flatten")
     return false
   } else if (firstDenseIdx > 0 && flattenIdx > firstDenseIdx) {
-    setStatusText("Dense must come after Flatten")
+    setStatus("Dense must come after Flatten")
     return false
   }
   return true

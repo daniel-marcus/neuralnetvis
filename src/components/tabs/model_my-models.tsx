@@ -10,7 +10,7 @@ export function MyModels() {
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = () => setUpdTrigger((t) => t + 1)
   const [showImportForm, setShowImportForm] = useState(false)
-  const setStatusText = useStore((s) => s.status.update)
+  const setStatus = useStore((s) => s.status.update)
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
   useEffect(() => {
     setModelName(model?.name ?? "")
@@ -20,7 +20,7 @@ export function MyModels() {
     if (!model) return
     model.name = modelName
     await model.save(`indexeddb://${modelName}`)
-    setStatusText("Model saved to IndexedDB")
+    setStatus("Model saved to IndexedDB")
     updateList()
   }
   return (
@@ -75,11 +75,11 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const [setModel] = useModelTransition()
-  const setStatusText = useStore((s) => s.status.update)
+  const setStatus = useStore((s) => s.status.update)
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)
-    setStatusText(`Model ${newModel.name} loaded from IndexedDB"`)
+    setStatus(`Model ${newModel.name} loaded from IndexedDB"`)
   }
   const exportModel = async (modelKey: string) => {
     const exportModel = await tf.loadLayersModel(`indexeddb://${modelKey}`)

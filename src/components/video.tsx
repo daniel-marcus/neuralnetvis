@@ -20,7 +20,7 @@ export function VideoWindow() {
       <canvas
         ref={canvasRef}
         className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none ${
-          stream ? "opacity-100 z-30" : "opacity-50 grayscale-100"
+          stream ? "opacity-100 z-30" : "opacity-40 grayscale-100"
         }`}
       />
     </>
@@ -29,23 +29,27 @@ export function VideoWindow() {
 
 function VideoControl() {
   const [stream, toggleStream] = useStream()
-  const [recordSamples, train] = useHandPose(stream)
+  const [isRecording, toggleRecording, train] = useHandPose(stream)
   const dsIsUserGenerated = useStore((s) => s.ds?.isUserGenerated)
   return (
     <div
       className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
     >
-      <InlineButton onClick={toggleStream}>
-        {!!stream ? "stop" : "start"} video
-      </InlineButton>
-      {dsIsUserGenerated && (
-        <InlineButton onClick={recordSamples} disabled={!stream}>
-          record
+      {!isRecording && (
+        <InlineButton onClick={toggleStream}>
+          {!!stream ? "stop" : "start"} video
         </InlineButton>
       )}
-      <InlineButton onClick={train} disabled={!train}>
-        train
-      </InlineButton>
+      {dsIsUserGenerated && (
+        <InlineButton onClick={toggleRecording} disabled={!stream}>
+          {isRecording ? "cancel recording" : "record"}
+        </InlineButton>
+      )}
+      {!isRecording && (
+        <InlineButton onClick={train} disabled={!train}>
+          train
+        </InlineButton>
+      )}
     </div>
   )
 }

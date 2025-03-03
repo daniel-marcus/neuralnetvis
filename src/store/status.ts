@@ -8,6 +8,7 @@ interface Status {
   id: string
   text: TableProps | ReactNode
   percent: undefined | number | null
+  fullscreen?: boolean
 }
 
 export interface StatusSlice {
@@ -16,25 +17,25 @@ export interface StatusSlice {
     update: (
       text: TableProps | ReactNode,
       percent?: number | null,
-      id?: Status["id"]
+      opts?: Partial<Omit<Status, "text" | "percent">>
     ) => Status["id"]
     clear: (id: string) => void
     getPercent: () => number | null
-    getText: () => TableProps | ReactNode
+    getCurrent: () => Status | undefined
   }
 }
 
 export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
   status: {
     stack: [],
-    update: (text, percent, _id) => {
-      const id = _id ?? uid()
-      const newStatus = { id, text, percent }
-      if (typeof percent !== "number" || percent === 1) {
+    update: (text, percent, opts = {}) => {
+      const id = opts.id ?? uid()
+      if (typeof percent !== "number" || (percent === 1 && !opts.id)) {
         setTimeout(() => {
           get().status.clear(id)
         }, DISPLAY_TIME * 1000)
       }
+      const newStatus = { ...opts, id, text, percent }
       set(({ status }) => ({
         status: {
           ...status,
@@ -58,10 +59,10 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
         null
       )
     },
-    getText: () => {
+    getCurrent: () => {
       const stack = get().status.stack
       const spinningStatus = stack.findLast((s) => s.percent === -1)
-      return spinningStatus?.text ?? stack.at(-1)?.text
+      return spinningStatus ?? stack.at(-1)
     },
   },
 })

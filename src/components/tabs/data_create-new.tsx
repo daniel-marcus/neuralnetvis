@@ -126,7 +126,7 @@ function dsDefFromState(
     inputLabels: handPoseLabels(),
     // preprocessFunc: "normalizeHandLandmarks",
     outputLabels,
-    storeBatchSize: 10,
+    storeBatchSize: 20,
     isUserGenerated: true,
     hasCam: true,
   }

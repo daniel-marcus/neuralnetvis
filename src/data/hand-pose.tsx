@@ -24,34 +24,42 @@ export function useHandPose(stream: MediaStream | null | undefined) {
   const hpPredict = useLandmarker(numHands)
   usePredictLoop(stream, hpPredict)
   useCanvasUpdate()
-  const hpRecordSamples = useSampleRecorder(hpPredict, numHands)
+  const [isRecording, toggleRecording] = useSampleRecorder(hpPredict, numHands)
   const hasSamples = !!useStore((s) => s.totalSamples())
   const train = hasSamples ? hpTrain : undefined
-  return [hpRecordSamples, train] as const
+  return [isRecording, toggleRecording, train] as const
 }
 
 function useLandmarker(numHands: number) {
   const videoRef = useStore((s) => s.videoRef)
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
+
   useEffect(() => {
-    if (!numHands) return
+    let handLandmarker: HandLandmarker | undefined
     async function init() {
       const statusId = setStatus("Loading hand landmark model ...", -1)
-      const landmarker = await createHandLandmarker(numHands)
-      setLandmarker(landmarker)
+      handLandmarker = await createHandLandmarker()
+      setLandmarker(handLandmarker)
       useStore.getState().status.clear(statusId)
     }
     init()
     return () => {
+      handLandmarker?.close()
       setLandmarker(null)
     }
-  }, [numHands])
+  }, [])
+
+  useEffect(() => {
+    if (!landmarker) return
+    landmarker.setOptions({ numHands })
+  }, [landmarker, numHands])
 
   const hpPredict = useCallback(async () => {
     const video = videoRef?.current
     if (!landmarker || !video) return {}
     if (!video.videoWidth || !video.videoHeight) return {}
     const result = landmarker.detectForVideo(video, performance.now())
+
     if (!result) return {}
     let landmarks = result.landmarks
     const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
@@ -97,7 +105,7 @@ function toRelativeCoords(
   })
 }
 
-async function createHandLandmarker(numHands: number) {
+async function createHandLandmarker(numHands?: number) {
   // TODO: add to public folder
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
@@ -209,6 +217,9 @@ function useCanvasUpdate() {
 }
 
 function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
+  const isRecording = useStore((s) => s.isRecording)
+  const toggleRecording = useStore((s) => s.toggleRecording)
+
   const hpRecordSamples = useCallback(async () => {
     const ds = useStore.getState().ds
     const outputSize = ds?.outputLabels.length
@@ -220,26 +231,28 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     for (const y of allY) {
       recordingY = y
       const label = ds.outputLabels ? ds.outputLabels[y] : y
-      const SECONDS_BEFORE_RECORDING = 2
+      const SECONDS_BEFORE_RECORDING = 3
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
-        setStatus(
-          `Start recording "${label}" in ${s} seconds...`,
-          -1,
-          STATUS_ID
-        )
+        setStatus(`Start recording "${label}" in ${s} seconds...`, -1, {
+          id: STATUS_ID,
+          fullscreen: true,
+        })
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-      setStatus(`Recording "${label}" ...`, 0, STATUS_ID)
+      setStatus(`Recording "${label}" ...`, 0, { id: STATUS_ID })
       let xData: number[] = []
       let xDataRaw: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
+        if (!useStore.getState().isRecording) {
+          setStatus(`Recording canceled.`, null, { id: STATUS_ID })
+          return
+        }
         const percent = (i + 1) / SAMPLES
-        setStatus(
-          `Recording "${label}": Sample ${i + 1}/${SAMPLES}`,
-          percent,
-          STATUS_ID
-        )
+        setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`, percent, {
+          id: STATUS_ID,
+          fullscreen: true,
+        })
         await new Promise((resolve) => setTimeout(resolve, 100))
         const { X, rawX } = await hpPredict()
         if (!X) continue
@@ -261,14 +274,20 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     }
 
     const newSamples = allY.length * SAMPLES
-    setStatus(
-      `Recorded ${newSamples} new samples. Ready for training.`,
-      null,
-      STATUS_ID
-    )
+    setStatus(`Recorded ${newSamples} new samples. Ready for training.`, null, {
+      id: STATUS_ID,
+      // fullscreen: true,
+    })
+    useStore.setState({ isRecording: false })
   }, [hpPredict, numHands])
-  useKeyCommand("r", hpRecordSamples)
-  return hpRecordSamples
+
+  useEffect(() => {
+    if (!isRecording) return
+    hpRecordSamples()
+  }, [isRecording, hpRecordSamples])
+
+  useKeyCommand("r", toggleRecording)
+  return [isRecording, toggleRecording] as const
 }
 
 function hpTrain() {

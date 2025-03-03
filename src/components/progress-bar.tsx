@@ -14,7 +14,7 @@ export const ProgressBar = memo(function ProgressBar() {
       ref={wrapperRef}
       className={`w-full bg-red leading-none overflow-hidden transition-all duration-300 ${
         isHidden ? "opacity-0" : ""
-      }`}
+      } relative z-30`}
     >
       <span
         ref={testRef}

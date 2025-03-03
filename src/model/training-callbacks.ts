@@ -79,7 +79,7 @@ export class ProgressCb extends CustomCallback {
           Accuracy: accuracy?.toFixed(3),
           Time: `${totalTime.toFixed(2)}s`,
         }
-        this.setStatus({ title, data }, null, this.statusId)
+        this.setStatus({ title, data }, null, { id: this.statusId })
       },
     })
   }
@@ -104,7 +104,9 @@ export class ProgressCb extends CustomCallback {
       Batch: `${batchIndex + 1}/${this.epochBatches}`,
       "": `${secPerEpoch.toFixed(1)}s/epoch`,
     }
-    this.setStatus({ title: "Training ...", data }, totalPercent, this.statusId)
+    this.setStatus({ title: "Training ...", data }, totalPercent, {
+      id: this.statusId,
+    })
   }
 }
 
