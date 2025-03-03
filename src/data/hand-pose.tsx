@@ -25,9 +25,7 @@ export function useHandPose(stream: MediaStream | null | undefined) {
   usePredictLoop(stream, hpPredict)
   useCanvasUpdate()
   const [isRecording, toggleRecording] = useSampleRecorder(hpPredict, numHands)
-  const hasSamples = !!useStore((s) => s.totalSamples())
-  const train = hasSamples ? hpTrain : undefined
-  return [isRecording, toggleRecording, train] as const
+  return [isRecording, toggleRecording] as const
 }
 
 function useLandmarker(numHands: number) {
@@ -227,13 +225,13 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
 
     const SAMPLES = ds.storeBatchSize
     const STATUS_ID = "hpRecordSamples"
+    const SECONDS_BEFORE_RECORDING = 3
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
       recordingY = y
       const label = ds.outputLabels ? ds.outputLabels[y] : y
-      const SECONDS_BEFORE_RECORDING = 3
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
-        setStatus(`Start recording "${label}" in ${s} seconds...`, -1, {
+        setStatus(`Start recording "${label}" in ${s} seconds ...`, -1, {
           id: STATUS_ID,
           fullscreen: true,
         })
@@ -274,10 +272,16 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     }
 
     const newSamples = allY.length * SAMPLES
-    setStatus(`Recorded ${newSamples} new samples. Ready for training.`, null, {
-      id: STATUS_ID,
-      // fullscreen: true,
-    })
+    for (let s = 2; s > 0; s--) {
+      setStatus(
+        `Recorded ${newSamples} new samples. Starting training in ${s} seconds ...`,
+        -1,
+        { id: STATUS_ID, fullscreen: true }
+      )
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+    useStore.getState().status.clear(STATUS_ID)
+    hpTrain()
     useStore.setState({ isRecording: false })
   }, [hpPredict, numHands])
 

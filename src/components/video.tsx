@@ -7,6 +7,7 @@ export function VideoWindow() {
   const videoRef = useStore((s) => s.videoRef)
   const canvasRef = useStore((s) => s.canvasRef)
   const stream = useStore((s) => s.stream)
+  const isTraining = useStore((s) => s.isTraining)
   return (
     <>
       <VideoControl />
@@ -20,7 +21,9 @@ export function VideoWindow() {
       <canvas
         ref={canvasRef}
         className={`fixed top-[50dvh] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none ${
-          stream ? "opacity-100 z-30" : "opacity-40 grayscale-100"
+          stream && !isTraining
+            ? "opacity-100 z-30"
+            : "opacity-40 grayscale-100"
         }`}
       />
     </>
@@ -29,7 +32,7 @@ export function VideoWindow() {
 
 function VideoControl() {
   const [stream, toggleStream] = useStream()
-  const [isRecording, toggleRecording, train] = useHandPose(stream)
+  const [isRecording, toggleRecording] = useHandPose(stream)
   const dsIsUserGenerated = useStore((s) => s.ds?.isUserGenerated)
   return (
     <div
@@ -40,14 +43,12 @@ function VideoControl() {
           {!!stream ? "stop" : "start"} video
         </InlineButton>
       )}
-      {dsIsUserGenerated && (
-        <InlineButton onClick={toggleRecording} disabled={!stream}>
-          {isRecording ? "cancel recording" : "record"}
-        </InlineButton>
-      )}
-      {!isRecording && (
-        <InlineButton onClick={train} disabled={!train}>
-          train
+      {dsIsUserGenerated && !!stream && (
+        <InlineButton
+          onClick={toggleRecording}
+          variant={isRecording ? "primary" : "secondary"}
+        >
+          {isRecording ? "cancel recording" : "record samples"}
         </InlineButton>
       )}
     </div>
