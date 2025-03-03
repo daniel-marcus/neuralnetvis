@@ -152,25 +152,22 @@ function usePredictLoop(
 }
 
 function useCanvasUpdate() {
-  const videoRef = useStore((s) => s.videoRef)
+  const stream = useStore((s) => s.stream)
   const canvasRef = useStore((s) => s.canvasRef)
   useEffect(() => {
     async function setCanvasSize() {
       // TODO: define aspect ratio in ds
-      const video = videoRef?.current
+      const aspectRatio = 4 / 3
       const canvas = canvasRef?.current
       if (!canvas) return
-      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
-        canvas.width = video.videoWidth * 2
-        canvas.height = video.videoHeight * 2
-      } else {
-        const aspectRatio = 4 / 3
-        canvas.width = 1280
-        canvas.height = canvas.width / aspectRatio
-      }
+      const settings = stream?.getVideoTracks()[0].getSettings()
+      canvas.width = settings?.width ? settings.width * 2 : 1280
+      canvas.height = settings?.height
+        ? settings.height * 2
+        : canvas.width / aspectRatio
     }
     setCanvasSize()
-  }, [videoRef, canvasRef])
+  }, [canvasRef, stream])
 
   const updCanvas = useCallback(
     (landmarks: NormalizedLandmark[][]) => {

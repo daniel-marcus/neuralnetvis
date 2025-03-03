@@ -30,7 +30,7 @@ export async function fetchMutlipleNpzWithProgress(paths: string[]) {
     const totalTotalBytes = allTotalBytes.reduce((a, b) => a + b, 0)
     const percent = totalLoadedBytes / totalTotalBytes
     const text = percent < 1 ? "Loading dataset ..." : "Dataset loaded"
-    setStatus(text, percent, STATUS_ID)
+    setStatus(text, percent, { id: STATUS_ID })
   }
   const allPromises = paths.map(
     (path) => fetchWithProgress(path, onProgress).then((r) => r.arrayBuffer()) // , { cache: "force-cache" }
