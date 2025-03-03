@@ -166,8 +166,9 @@ function useCanvasUpdate() {
       const canvas = canvasRef?.current
       if (!canvas) return
       if (videoRef?.current?.videoWidth) {
-        canvas.width = videoRef.current.videoWidth
-        canvas.height = videoRef.current.videoHeight
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = videoRef.current.videoWidth * dpr
+        canvas.height = videoRef.current.videoHeight * dpr
       }
       const ctx = canvas.getContext("2d")
       if (!ctx) return

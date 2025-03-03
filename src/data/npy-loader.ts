@@ -19,24 +19,25 @@ async function parseNpz(arrayBuffer: ArrayBuffer) {
 }
 
 export async function fetchMutlipleNpzWithProgress(paths: string[]) {
+  const STATUS_ID = `fetch_npz`
   const allTotalBytes: number[] = []
   const allLoadedBytes: number[] = []
   const onProgress: OnProgressCb = ({ path, loadedBytes, totalBytes }) => {
-    const STATUS_ID = `fetch_${path}`
     const index = paths.indexOf(path)
     allTotalBytes[index] = totalBytes
     allLoadedBytes[index] = loadedBytes
     const totalLoadedBytes = allLoadedBytes.reduce((a, b) => a + b, 0)
     const totalTotalBytes = allTotalBytes.reduce((a, b) => a + b, 0)
     const percent = totalLoadedBytes / totalTotalBytes
-    const text = percent < 1 ? "Loading dataset ..." : "Dataset loaded"
-    setStatus(text, percent, { id: STATUS_ID })
+    setStatus("Loading dataset ...", percent, { id: STATUS_ID })
   }
   const allPromises = paths.map(
     (path) => fetchWithProgress(path, onProgress).then((r) => r.arrayBuffer()) // , { cache: "force-cache" }
   )
   const allFiles = await Promise.all(allPromises)
+  setStatus("Parsing dataset ...", -1, { id: STATUS_ID })
   const allParsed = await Promise.all(allFiles.map(parseNpz))
+  setStatus("Dataset loaded", null, { id: STATUS_ID })
   return allParsed
 }
 
