@@ -9,7 +9,7 @@ export const fashionMnist: DatasetDef = {
   version: new Date("2025-02-27"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   inputDims: [28, 28, 1],
-  preprocess: (inputTensor) => inputTensor.div(255),
+  preprocessFunc: "normalizeImage",
   outputLabels: [
     "T-shirt/top",
     "Trouser",

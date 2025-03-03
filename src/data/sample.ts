@@ -10,7 +10,7 @@ export function useSample(ds?: Dataset) {
   const resetSample = useStore((s) => s.resetSample)
 
   useEffect(() => {
-    if (ds) updateInput(sampleIdx, ds)
+    updateSample(sampleIdx)
   }, [sampleIdx, ds])
 
   useEffect(() => {
@@ -27,7 +27,8 @@ export function useSample(ds?: Dataset) {
   useKeyCommand("ArrowRight", next)
 }
 
-async function updateInput(sampleIdx: number, ds?: Dataset) {
+export async function updateSample(sampleIdx: number) {
+  const ds = useStore.getState().ds
   if (!ds) return
   const dbSample = await getSample(ds, "train", sampleIdx, true)
   const [features, y, featuresRaw] = dbSample
@@ -36,8 +37,7 @@ async function updateInput(sampleIdx: number, ds?: Dataset) {
   const rawX = featuresRaw ? Array.from(featuresRaw) : _X
   await tf.ready()
   const X = tf.tidy(
-    () =>
-      (ds.preprocess?.(tf.tensor(features)).arraySync() as number[]) ?? features
+    () => (ds.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
   )
   const sample = { X, y, rawX }
   useStore.setState({ sample })

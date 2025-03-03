@@ -11,7 +11,7 @@ export function useModel(ds?: Dataset) {
   const model = useStore((s) => s.model)
   const isPending = useModelCreate(ds)
   useModelDispose(model)
-  useModelStatus(isPending, model, ds)
+  useModelStatus(isPending, model)
   useModelCompile(model, ds)
   return model
 }
@@ -72,14 +72,12 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
   }
 }
 
-function useModelStatus(
-  isPending: boolean,
-  model?: tf.LayersModel,
-  ds?: Dataset
-) {
+function useModelStatus(isPending: boolean, model?: tf.LayersModel) {
   const hasLesson = useHasLesson()
   useEffect(() => {
-    if (!model || !ds || isPending || hasLesson) return
+    if (!model || !isPending || hasLesson) return
+    const ds = useStore.getState().ds
+    if (!ds) return
     const totalSamples = useStore.getState().totalSamples()
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
@@ -88,7 +86,7 @@ function useModelStatus(
       Params: model.countParams().toLocaleString("en-US"),
     }
     setStatus({ data }, null)
-  }, [model, ds, isPending, hasLesson])
+  }, [model, isPending, hasLesson])
 }
 
 const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (

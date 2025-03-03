@@ -9,6 +9,7 @@ import type {
   ParsedLike,
   StoreMeta,
 } from "./types"
+import { preprocessFuncs } from "./preprocess"
 
 const DEFAULT_STORE_BATCH_SIZE = 100
 
@@ -43,8 +44,11 @@ export async function setDsFromDef(
   const test =
     (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
   const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
-  const ds = { ...dsDef, train, test, storeBatchSize }
-  useStore.setState({ ds })
+  const preprocess = dsDef.preprocessFunc
+    ? preprocessFuncs[dsDef.preprocessFunc]
+    : undefined
+  const ds = { ...dsDef, train, test, preprocess, storeBatchSize }
+  useStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 
 export async function loadAndSaveDsData(dsDef: DatasetDef) {
@@ -60,7 +64,7 @@ export async function loadAndSaveDsData(dsDef: DatasetDef) {
 
 function dsDefToDsMeta(dsDef: DatasetDef): DatasetMeta {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { loadData, preprocess, ...dsMeta } = dsDef
+  const { loadData, ...dsMeta } = dsDef
   return dsMeta
 }
 
@@ -99,10 +103,14 @@ async function saveData(
   return storeMeta
 }
 
-export async function addTrainData(xs: ParsedLike, ys: ParsedLike) {
+export async function addTrainData(
+  xs: ParsedLike,
+  ys: ParsedLike,
+  xsRaw?: ParsedLike
+) {
   const ds = useStore.getState().ds
   if (!ds) return
-  const newTrainMeta = await saveData(ds, "train", xs, ys)
+  const newTrainMeta = await saveData(ds, "train", xs, ys, xsRaw)
   const newDs = { ...ds, train: newTrainMeta }
   useStore.setState({ ds: newDs, skipModelCreate: true })
 }

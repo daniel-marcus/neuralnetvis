@@ -33,7 +33,7 @@ export async function setBackendIfAvailable(_backend?: string) {
   const success = await tf.setBackend(backend)
   if (!success) {
     console.warn(`Failed to set backend: ${backend}`)
-    return tf.setBackend(DEFAULT_BACKEND)
+    await tf.setBackend(DEFAULT_BACKEND)
   }
 }
 

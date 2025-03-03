@@ -124,6 +124,7 @@ function dsDefFromState(
       "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
     inputDims: [21, 3, hands],
     inputLabels: handPoseLabels(),
+    // preprocessFunc: "normalizeHandLandmarks",
     outputLabels,
     storeBatchSize: 20,
     isUserGenerated: true,

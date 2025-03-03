@@ -1,9 +1,11 @@
 import { useMemo } from "react"
-import figlet, { Fonts } from "figlet"
+import figlet from "figlet/lib/figlet"
+import type { Fonts } from "figlet"
 
 const MAX_CHARS_PER_LINE = 10
 
 figlet.parseFont("Blur Vision ASCII", blurVision())
+
 export const useAsciiText = (input: string) => {
   return useMemo(() => {
     const textWithLineBreaks = splitWithThreshold(input).join("\n")

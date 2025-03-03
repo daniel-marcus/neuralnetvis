@@ -4,13 +4,13 @@ import {
   FilesetResolver,
   HandLandmarker,
   NormalizedLandmark,
-  type HandLandmarkerResult,
 } from "@mediapipe/tasks-vision"
-import * as draw from "@mediapipe/drawing_utils"
-import * as hand from "@mediapipe/hands"
+import draw from "@mediapipe/drawing_utils"
+import hand from "@mediapipe/hands"
 import { setStatus, useStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
+import { updateSample } from "./sample"
 
 const HP_TRAIN_CONFIG = {
   batchSize: 16,
@@ -23,6 +23,7 @@ export function useHandPose(stream: MediaStream | null | undefined) {
   const numHands = useStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands)
   usePredictLoop(stream, hpPredict)
+  useCanvasUpdate()
   const hpRecordSamples = useSampleRecorder(hpPredict, numHands)
   const hasSamples = !!useStore((s) => s.totalSamples())
   const train = hasSamples ? hpTrain : undefined
@@ -31,7 +32,6 @@ export function useHandPose(stream: MediaStream | null | undefined) {
 
 function useLandmarker(numHands: number) {
   const videoRef = useStore((s) => s.videoRef)
-  const canvasRef = useStore((s) => s.canvasRef)
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
   useEffect(() => {
     if (!numHands) return
@@ -47,71 +47,45 @@ function useLandmarker(numHands: number) {
     }
   }, [numHands])
 
-  const updCanvas = useCallback(
-    (results: HandLandmarkerResult) => {
-      const video = videoRef?.current
-      const canvas = canvasRef?.current
-      if (!video || !canvas) return
-      canvas.width = video.videoWidth * 2
-      canvas.height = video.videoHeight * 2
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      ctx.save()
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      for (const landmarks of results.landmarks) {
-        draw.drawConnectors(ctx, landmarks, hand.HAND_CONNECTIONS, {
-          color: "rgb(100,20,255)",
-          lineWidth: 5,
-          visibilityMin: -1,
-        })
-        draw.drawLandmarks(ctx, landmarks, {
-          color: "rgb(255,20,100)",
-          lineWidth: 2,
-          visibilityMin: -1,
-        })
-      }
-      ctx.restore()
-    },
-    [videoRef, canvasRef]
-  )
-
   const hpPredict = useCallback(async () => {
     const video = videoRef?.current
-    if (!landmarker || !video) return
-    if (!video.videoWidth || !video.videoHeight) return
+    if (!landmarker || !video) return {}
+    if (!video.videoWidth || !video.videoHeight) return {}
     const result = landmarker.detectForVideo(video, performance.now())
-    updCanvas(result)
-    if (!result) return
+    // updCanvas(result.landmarks)
+    if (!result) return {}
     let landmarks = result.landmarks
-    if (numHands > 1) {
+    const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
+    if (numHands === 1) {
+      landmarks = [landmarks[0] ?? emptyHand]
+    } else if (numHands > 1) {
       const leftIdx = result.handedness.findIndex(
         (h) => h[0].categoryName === "Left"
       )
       const rightIdx = result.handedness.findIndex(
         (h) => h[0].categoryName === "Right"
       )
-      const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
       landmarks = [
         landmarks[leftIdx] ?? emptyHand,
         landmarks[rightIdx] ?? emptyHand,
       ]
     }
     const data = landmarks.map(toRelativeCoords)
-    const X = tf.tidy(() => {
-      const tensor = tf.tensor(data, [data.length, 21, 3]).pad([
-        [0, numHands - data.length],
-        [0, 0],
-        [0, 0],
-      ]) // pad missing hands with zeroes to ensure shape [2, 21, 3]
-      // move hand dim to the end: [2, 21, 3] -> [21, 3, 2]
-      return tensor.transpose([1, 2, 0]).flatten().arraySync()
-    })
-    return X
-  }, [landmarker, numHands, updCanvas, videoRef])
+    const dataRaw = landmarks.map((lm) => lm.map((l) => [l.x, l.y, l.z]))
+    const X = transposeLandmarks(data, numHands)
+    const rawX = transposeLandmarks(dataRaw, numHands)
+    return { X, rawX }
+  }, [landmarker, numHands, videoRef])
 
   return hpPredict
+}
+
+function transposeLandmarks(data: number[][][], numHands: number) {
+  return tf.tidy(() => {
+    // move hand dim to the end: [2, 21, 3] -> [21, 3, 2]
+    const tensor = tf.tensor(data, [numHands, 21, 3])
+    return tensor.transpose([1, 2, 0]).flatten().arraySync()
+  })
 }
 
 function toRelativeCoords(
@@ -142,31 +116,98 @@ async function createHandLandmarker(numHands: number) {
 
 let recordingY: number | undefined = undefined
 
+type PrecitFunc = ReturnType<typeof useLandmarker>
+
 function usePredictLoop(
   stream: MediaStream | null | undefined,
-  hpPredict: () => Promise<number[] | undefined>
+  hpPredict: PrecitFunc
 ) {
   useEffect(() => {
     let animationFrame: number
     captureLoop()
     async function captureLoop() {
+      const ds = useStore.getState().ds
       const isTraning = useStore.getState().isTraining
       if (!isTraning) {
-        const X = await hpPredict()
-        if (X) useStore.setState({ sample: { X, y: recordingY } })
+        const { X: _X, rawX } = await hpPredict()
+        if (_X) {
+          const X =
+            (ds?.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
+          useStore.setState({ sample: { X, y: recordingY, rawX } })
+        }
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
     return () => {
       cancelAnimationFrame(animationFrame)
+      updateSample(useStore.getState().sampleIdx)
     }
   }, [stream, hpPredict])
 }
 
-function useSampleRecorder(
-  hpPredict: () => Promise<number[] | undefined>,
-  numHands: number
-) {
+function useCanvasUpdate() {
+  const videoRef = useStore((s) => s.videoRef)
+  const canvasRef = useStore((s) => s.canvasRef)
+  useEffect(() => {
+    async function setCanvasSize() {
+      // TODO: define aspect ratio in ds
+      const video = videoRef?.current
+      const canvas = canvasRef?.current
+      if (!canvas) return
+      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+        canvas.width = video.videoWidth * 2
+        canvas.height = video.videoHeight * 2
+      } else {
+        const aspectRatio = 4 / 3
+        canvas.width = 1280
+        canvas.height = canvas.width / aspectRatio
+      }
+    }
+    setCanvasSize()
+  }, [videoRef, canvasRef])
+
+  const updCanvas = useCallback(
+    (landmarks: NormalizedLandmark[][]) => {
+      const canvas = canvasRef?.current
+      if (!canvas) return
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+
+      ctx.save()
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      for (const lm of landmarks) {
+        draw.drawConnectors(ctx, lm, hand.HAND_CONNECTIONS, {
+          color: "rgb(100,20,255)",
+          lineWidth: 5,
+          visibilityMin: -1,
+        })
+        draw.drawLandmarks(ctx, lm, {
+          color: "rgb(255,20,100)",
+          lineWidth: 2,
+          visibilityMin: -1,
+        })
+      }
+      ctx.restore()
+    },
+    [canvasRef]
+  )
+
+  const rawX = useStore((s) => s.sample?.rawX)
+  const inputDims = useStore.getState().ds?.inputDims
+  useEffect(() => {
+    if (!rawX || !inputDims) return
+    const shapedX = tf.tidy(() =>
+      tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
+    ) as number[][][]
+    const landmarks = shapedX.map((lm) =>
+      lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 }))
+    )
+    updCanvas(landmarks)
+  }, [rawX, inputDims, updCanvas])
+}
+
+function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   const hpRecordSamples = useCallback(async () => {
     const ds = useStore.getState().ds
     const outputSize = ds?.outputLabels.length
@@ -189,6 +230,7 @@ function useSampleRecorder(
       }
       setStatus(`Recording "${label}" ...`, 0, STATUS_ID)
       let xData: number[] = []
+      let xDataRaw: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
         const percent = (i + 1) / SAMPLES
@@ -198,22 +240,25 @@ function useSampleRecorder(
           STATUS_ID
         )
         await new Promise((resolve) => setTimeout(resolve, 100))
-        const X = await hpPredict()
+        const { X, rawX } = await hpPredict()
         if (!X) continue
         xData = [...xData, ...X]
+        xDataRaw = [...xDataRaw, ...rawX]
         yData.push(y)
       }
       const xs = {
         data: xData as unknown as Float32Array,
         shape: [yData.length, 21, 3, numHands],
       }
+      const xsRaw = {
+        data: xDataRaw as unknown as Float32Array,
+        shape: [yData.length, 21, 3, numHands],
+      }
       const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
       recordingY = undefined
-      await addTrainData(xs, ys)
+      await addTrainData(xs, ys, xsRaw)
     }
 
-    const totalSamples = useStore.getState().totalSamples()
-    useStore.setState({ sampleIdx: totalSamples - 1, selectedNid: undefined })
     const newSamples = allY.length * SAMPLES
     setStatus(
       `Recorded ${newSamples} new samples. Ready for training.`,

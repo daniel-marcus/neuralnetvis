@@ -30,7 +30,7 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
     update: (text, percent, _id) => {
       const id = _id ?? uid()
       const newStatus = { id, text, percent }
-      if (!percent || percent === 1) {
+      if (typeof percent !== "number" || percent === 1) {
         setTimeout(() => {
           get().status.clear(id)
         }, DISPLAY_TIME * 1000)

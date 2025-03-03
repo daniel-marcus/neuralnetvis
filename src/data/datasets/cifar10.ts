@@ -9,7 +9,7 @@ export const cifar10: DatasetDef = {
   version: new Date("2025-02-27"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   inputDims: [32, 32, 3],
-  preprocess: (inputTensor) => inputTensor.div(255),
+  preprocessFunc: "normalizeImage",
   outputLabels: [
     "airplane",
     "automobile",

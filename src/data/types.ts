@@ -1,5 +1,6 @@
 import type { Parsed } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
+import { preprocessFuncs } from "./preprocess"
 
 export type DatasetKey = string
 
@@ -13,18 +14,21 @@ export interface DatasetMeta {
   aboutUrl: string
   inputDims: number[]
   inputLabels?: string[]
+  preprocessFunc?: keyof typeof preprocessFuncs
   outputLabels: string[] // length defines the number of output neurons
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
 }
 
+export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
+
 export interface DatasetDef extends DatasetMeta {
-  preprocess?: <T extends Tensor<Rank>>(X: T) => T // not available for user generated ds
   loadData?: DatasetLoader
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
+  preprocess?: PreprocessFunc
   storeBatchSize: number
   train: StoreMeta
   test: StoreMeta
