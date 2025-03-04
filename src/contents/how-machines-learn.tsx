@@ -24,6 +24,8 @@ const initialState: InitialState = {
   },
 }
 
+const SCROLL_TRAIN_STATUS_ID = "scroll-train-status"
+
 export const IntroNetworks = (): LessonContent => {
   useInitialState(initialState)
   return (
@@ -89,7 +91,7 @@ export const IntroNetworks = (): LessonContent => {
           useStore.setState({ selectedNid: `2_3.0.0` })
         }}
         onLeave={() => {
-          setStatus("", null)
+          useStore.getState().status.clear(SCROLL_TRAIN_STATUS_ID)
           setVisConfig({ highlightProp: null })
           useStore.setState({ selectedNid: undefined })
         }}
@@ -169,5 +171,7 @@ async function scrollTrain({ percent }: OnScrollProps) {
 
   if (!log) return
   useStore.getState().addLogs([{ ...log, batch }])
-  setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent)
+  setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
+    id: SCROLL_TRAIN_STATUS_ID,
+  })
 }

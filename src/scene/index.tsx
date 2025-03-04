@@ -5,6 +5,7 @@ import { DebugUtils } from "./debug-utils"
 import { defaultState } from "@/utils/initial-state"
 import { useStore } from "@/store"
 import { Lights } from "./lights"
+import { ThreeStoreSetter } from "./three-store-setter"
 
 const { cameraPos, cameraLookAt } = defaultState
 
@@ -18,7 +19,7 @@ export const Scene = () => {
       }`}
     >
       <Canvas frameloop="demand">
-        <Lights />
+        <ThreeStoreSetter />
         <PerspectiveCamera makeDefault position={cameraPos} />
         <OrbitControls
           makeDefault
@@ -26,6 +27,7 @@ export const Scene = () => {
           enabled={!isLocked || isDebug}
         />
         <DebugUtils />
+        <Lights />
         <Model />
       </Canvas>
     </div>
