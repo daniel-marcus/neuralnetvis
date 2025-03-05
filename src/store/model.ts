@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
-import type { LayerActivations, LayerConfigArray } from "@/model"
+import type { LayerConfigArray } from "@/model"
 import { StatusSlice } from "./status"
 import { setVisConfig } from "."
 
@@ -14,6 +14,8 @@ export const defaultLayerConfigs: LayerConfigArray = [
 ]
 
 export interface ModelSlice {
+  backendReady: boolean
+
   model?: LayersModel
   skipModelCreate: boolean // flag to skip model creation for loaded models
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
@@ -22,9 +24,6 @@ export interface ModelSlice {
   resetLayerConfigs: () => void
   resetWeights: () => void
   getInputShape: () => number[]
-
-  layerActivations: LayerActivations[]
-  setLayerActivations: (layerActivations: LayerActivations[]) => void
 }
 
 export const createModelSlice: StateCreator<
@@ -33,9 +32,11 @@ export const createModelSlice: StateCreator<
   [],
   ModelSlice
 > = (set, get) => ({
+  backendReady: false,
+
   model: undefined,
   skipModelCreate: false,
-  _setModel: (model) => set({ model, layerActivations: [] }),
+  _setModel: (model) => set({ model }), // , layerActivations: []
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
     set(({ status }) => ({
@@ -53,7 +54,4 @@ export const createModelSlice: StateCreator<
     if (!model) return []
     return model.layers[0].batchInputShape as number[]
   },
-
-  layerActivations: [],
-  setLayerActivations: (layerActivations) => set({ layerActivations }),
 })

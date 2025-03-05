@@ -30,6 +30,11 @@ export function useSample(ds?: Dataset) {
 export async function updateSample(sampleIdx: number) {
   const ds = useStore.getState().ds
   if (!ds) return
+  const sample = await getPreprocessedSample(ds, sampleIdx)
+  useStore.setState({ sample })
+}
+
+export async function getPreprocessedSample(ds: Dataset, sampleIdx: number) {
   const dbSample = await getSample(ds, "train", sampleIdx, true)
   const [features, y, featuresRaw] = dbSample
   if (!features) return
@@ -40,7 +45,7 @@ export async function updateSample(sampleIdx: number) {
     () => (ds.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
   )
   const sample = { X, y, rawX }
-  useStore.setState({ sample })
+  return sample
 }
 
 type BatchCacheKey = string // `${ds.key}_${type}`
@@ -53,7 +58,7 @@ export async function getSample(
   returnRaw = false
 ) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
-  const { storeBatchSize } = ds
+  const storeBatchSize = ds.storeBatchSize
   const batchIdx = Math.floor(i / storeBatchSize)
   const batchCacheKey: BatchCacheKey = `${ds.key}_${type}`
   const hasCached = currBatchCache[batchCacheKey]?.index === batchIdx

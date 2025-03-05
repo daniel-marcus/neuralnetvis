@@ -11,7 +11,7 @@ import type {
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
 
-const DEFAULT_STORE_BATCH_SIZE = 100
+export const DEFAULT_STORE_BATCH_SIZE = 100
 
 export async function setDsFromKey(key: string) {
   const dsDef = datasets.find((d) => d.key === key)
@@ -33,7 +33,7 @@ function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
   return { index: storeName, totalSamples }
 }
 
-export async function setDsFromDef(
+export async function getDsFromDef(
   dsDef: DatasetDef | DatasetMeta,
   skipLoading?: boolean
 ) {
@@ -47,7 +47,15 @@ export async function setDsFromDef(
   const preprocess = dsDef.preprocessFunc
     ? preprocessFuncs[dsDef.preprocessFunc]
     : undefined
-  const ds = { ...dsDef, train, test, preprocess, storeBatchSize }
+  const ds: Dataset = { ...dsDef, train, test, preprocess, storeBatchSize }
+  return ds
+}
+
+export async function setDsFromDef(
+  dsDef: DatasetDef | DatasetMeta,
+  skipLoading?: boolean
+) {
+  const ds = await getDsFromDef(dsDef, skipLoading)
   useStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 

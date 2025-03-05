@@ -6,6 +6,8 @@ import { Canvas } from "@react-three/fiber"
 import { SceneInner } from "@/scene"
 import { useStore } from "@/store"
 import { useDrag } from "@use-gesture/react"
+import { DatasetDef } from "@/data"
+import { setDsFromKey } from "@/data/dataset"
 
 export const TileGrid = () => {
   const active = useStore((s) => s.activeTile)
@@ -33,13 +35,14 @@ export const TileGrid = () => {
                 !isActive
                   ? () => {
                       toggleActive(dsDef.key)
-                      // setDsFromKey(dsDef.key)
+                      setDsFromKey(dsDef.key)
                     }
                   : undefined
               }
               className={`${!!active && !isActive ? "opacity-0" : ""} ${
                 lastActive === dsDef.key ? "z-5" : ""
               }`}
+              dsDef={dsDef}
             />
           )
         })}
@@ -53,11 +56,12 @@ interface TileProps {
   isActive?: boolean
   onClick?: () => void
   className?: string
+  dsDef?: DatasetDef
 }
 
 type OffsetState = { x?: number; y?: number }
 
-function Tile({ title, isActive, onClick, className }: TileProps) {
+function Tile({ title, isActive, onClick, className, dsDef }: TileProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [isScrolling, setIsScrolling] = useState(false)
   const [offset, setOffset] = useState<OffsetState>({})
@@ -122,7 +126,7 @@ function Tile({ title, isActive, onClick, className }: TileProps) {
           resize={{ debounce: 0 }}
           className={`absolute w-screen! h-[100dvh]!`}
         >
-          <SceneInner isActive={!!isActive} />
+          <SceneInner isActive={!!isActive} dsDef={dsDef} />
         </Canvas>
       </div>
     </div>

@@ -9,6 +9,7 @@ import { useStore } from "@/store"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
+import { DatasetDef } from "@/data"
 
 const { cameraPos, cameraLookAt } = defaultState
 
@@ -37,10 +38,15 @@ export const Scene = () => {
   )
 }
 
-export const SceneInner = ({ isActive }: { isActive: boolean }) => {
+interface SceneInnerProps {
+  isActive: boolean
+  dsDef?: DatasetDef
+}
+
+export const SceneInner = ({ isActive, dsDef }: SceneInnerProps) => {
   const { camera, invalidate } = useThree()
   useSpring({
-    zoom: isActive ? 1 : 0.4,
+    zoom: isActive ? 1 : 0.4, // TODO: adjust from screen size
     onChange: ({ value }) => {
       camera.zoom = value.zoom
       camera.updateProjectionMatrix()
@@ -54,7 +60,7 @@ export const SceneInner = ({ isActive }: { isActive: boolean }) => {
       <OrbitControls makeDefault target={cameraLookAt} enableZoom={isActive} />
       <DebugUtils />
       <Lights />
-      <Model isActive={isActive} />
+      <Model isActive={isActive} dsDef={dsDef} />
     </>
   )
 }

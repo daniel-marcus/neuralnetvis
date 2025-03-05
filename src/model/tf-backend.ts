@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import "@tensorflow/tfjs-backend-wasm"
@@ -15,16 +15,16 @@ setWasmPaths({
 export const DEFAULT_BACKEND = "wasm" // "webgpu" | "wasm" | "webgl"
 
 export function useTfBackend() {
-  const [isReady, setIsReady] = useState(false)
+  const backendReady = useStore((s) => s.backendReady)
   useEffect(() => {
     async function checkReady() {
       // console.log(getAvailableBackends())
       await setBackendIfAvailable(DEFAULT_BACKEND)
-      setIsReady(true)
+      useStore.setState({ backendReady: true })
     }
     checkReady()
   }, [])
-  return isReady
+  return backendReady
 }
 
 export async function setBackendIfAvailable(_backend?: string) {

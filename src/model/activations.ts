@@ -1,12 +1,12 @@
 import * as tf from "@tensorflow/tfjs"
-import { useEffect } from "react"
-import { useStore } from "@/store"
+import { useEffect, useState } from "react"
 import { normalizeTensor } from "@/data/utils"
 import { LayerActivations } from "./types"
 
 export function useActivations(model?: tf.LayersModel, input?: number[]) {
-  const layerActivations = useStore((s) => s.layerActivations)
-  const setLayerActivations = useStore((s) => s.setLayerActivations)
+  const [layerActivations, setLayerActivations] = useState<LayerActivations[]>(
+    []
+  )
   useEffect(() => {
     async function getActivations() {
       if (!model || !input || input.length === 0) return

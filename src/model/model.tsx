@@ -1,8 +1,14 @@
-import { useEffect, ReactNode, useCallback, useTransition } from "react"
+import {
+  useEffect,
+  ReactNode,
+  useCallback,
+  useTransition,
+  useMemo,
+} from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useTfBackend } from "./tf-backend"
 import { useStore, isDebug, setStatus } from "@/store"
-import type { Dataset } from "@/data"
+import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
 import { useHasLesson } from "@/components/lesson"
@@ -17,6 +23,7 @@ export function useModel(ds?: Dataset) {
 }
 
 function useModelCreate(ds?: Dataset) {
+  // TODO: move useTfBackend to app
   const backendReady = useTfBackend()
   const [setModel, isPending] = useModelTransition()
   const layerConfigs = useStore((s) => s.layerConfigs)
@@ -110,13 +117,28 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   }, [model, ds])
 }
 
-function createModel(ds: Dataset, layerConfigs: LayerConfigArray) {
+const previewLayerConfigs: LayerConfigArray = [
+  { className: "Dense", config: { units: 10, activation: "relu" } },
+]
+
+export function usePreviewModel(ds?: DatasetDef) {
+  const backendReady = useStore((s) => s.backendReady)
+  const model = useMemo(
+    () =>
+      ds && backendReady ? createModel(ds, previewLayerConfigs) : undefined,
+    [ds, backendReady]
+  )
+  // TODO: model dispose
+  return model
+}
+
+function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
   const isMultiDim = ds.inputDims.length >= 2
   const dsInputShape = [null, ...ds.inputDims] as [null, ...number[]]
 
   const model = tf.sequential()
 
-  const hasInputLayer = layerConfigs[0].className === "InputLayer"
+  const hasInputLayer = layerConfigs[0]?.className === "InputLayer"
   if (!hasInputLayer) {
     model.add(
       tf.layers.inputLayer({

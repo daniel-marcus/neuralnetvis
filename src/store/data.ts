@@ -2,7 +2,7 @@ import { StateCreator } from "zustand"
 import type { Dataset, Sample } from "@/data"
 import { createRef, RefObject } from "react"
 
-export interface DataSlice {
+interface DsSlice {
   ds?: Dataset
   totalSamples: () => number
   isRegression: () => boolean
@@ -11,13 +11,17 @@ export interface DataSlice {
   sample?: Sample
   nextSample: (step?: number) => void
   resetSample: () => void
+}
 
+interface VideoSlice {
   videoRef: RefObject<HTMLVideoElement | null>
   canvasRef: RefObject<HTMLCanvasElement | null>
   stream: MediaStream | null
   isRecording: boolean
   toggleRecording: () => void
 }
+
+export type DataSlice = DsSlice & VideoSlice
 
 export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
   ds: undefined,

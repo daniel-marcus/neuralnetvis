@@ -1,14 +1,14 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getMeshParams } from "./layout"
-import type { Dataset } from "@/data"
+import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType } from "./types"
 import type { Index3D, Nid, NeuronDef } from "./types"
 import type { InstancedMesh } from "three"
 
 // here is all data that doesn't change for a given model
 
-export function useStatelessLayers(model?: tf.LayersModel, ds?: Dataset) {
+export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   const layers = useMemo(() => {
     if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model)

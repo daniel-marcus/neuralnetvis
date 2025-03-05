@@ -6,7 +6,10 @@ import { getHighlightColor } from "./colors"
 import type { LayerStateful, Nid } from "./types"
 import { updateGroups } from "./layers-stateful"
 
-export function useNeuronSelect(layerProps: LayerStateful[]) {
+export function useNeuronSelect(
+  isActive: boolean,
+  layerProps: LayerStateful[]
+) {
   const highlightProp = useStore((s) => s.vis.highlightProp)
   const allNeurons = useStore((s) => s.allNeurons)
   const selectedNid = useStore((s) => s.selectedNid)
@@ -14,7 +17,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
   const selOrHovNid = hoveredNid || selectedNid
 
   const patchedLayerProps = useMemo(() => {
-    if (!selOrHovNid || !highlightProp) return layerProps
+    if (!isActive || !selOrHovNid || !highlightProp) return layerProps
     const selN = allNeurons.get(selOrHovNid)
     if (!selN) return layerProps
     const selNInputs = (selN.inputNeurons?.map(
@@ -42,7 +45,7 @@ export function useNeuronSelect(layerProps: LayerStateful[]) {
       const updatedLayer = updateGroups(_updatedLayer)
       return updatedLayer
     })
-  }, [layerProps, selOrHovNid, highlightProp, allNeurons])
+  }, [isActive, layerProps, selOrHovNid, highlightProp, allNeurons])
   return patchedLayerProps
 }
 
