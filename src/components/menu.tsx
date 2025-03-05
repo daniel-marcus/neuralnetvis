@@ -21,8 +21,8 @@ export const Menu = () => {
   return (
     <div
       className={`${
-        hasLesson ? "relative xl:sticky" : "fixed"
-      } z-[20] top-0 left-0 w-[100vw] pointer-events-none select-none`}
+        !hasLesson ? "fixed" : "relative xl:stick"
+      } z-20 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
         disable={!hasLesson || isScreenXl}
@@ -40,6 +40,7 @@ export const Menu = () => {
           <Link
             href="/"
             className={`pointer-events-auto`}
+            scroll={hasLesson ? true : false}
             onClick={() => {
               setTab(null)
               setInitialState()

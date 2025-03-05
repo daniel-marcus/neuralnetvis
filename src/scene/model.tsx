@@ -4,18 +4,20 @@ import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
 import { Highlighted } from "./highlighted"
 
-export const Model = () => {
+export const Model = ({ isActive }: { isActive?: boolean }) => {
   const layers = useLayers()
   const selected = useSelected()
   const hovered = useHovered()
   return (
-    <group>
-      {layers.map((l) => (
-        <Layer key={`${l.tfLayer.name}`} {...l} allLayers={layers} />
-      ))}
-      <HoverConnections />
-      <Highlighted neuron={selected} thick />
-      <Highlighted neuron={hovered} />
-    </group>
+    <>
+      <group>
+        {layers.slice(0, isActive ? layers.length : 1).map((l, _, arr) => (
+          <Layer key={`${l.tfLayer.name}`} {...l} allLayers={arr} />
+        ))}
+        <HoverConnections />
+        <Highlighted neuron={selected} thick />
+        <Highlighted neuron={hovered} />
+      </group>
+    </>
   )
 }

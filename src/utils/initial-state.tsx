@@ -7,7 +7,11 @@ import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
 import { setDsFromKey } from "@/data/dataset"
 
-type ExposedStoreKeys = "sampleIdx" | "layerConfigs" | "selectedNid"
+type ExposedStoreKeys =
+  | "sampleIdx"
+  | "layerConfigs"
+  | "selectedNid"
+  | "activeTile"
 type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
@@ -18,6 +22,7 @@ export type InitialState = Partial<ExposedStoreType> & {
 }
 
 export const defaultState: InitialState = {
+  activeTile: null,
   dsKey: "mnist",
   layerConfigs: defaultLayerConfigs,
   selectedNid: undefined,

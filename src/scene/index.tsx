@@ -1,4 +1,4 @@
-import { Canvas } from "@react-three/fiber"
+import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
@@ -6,6 +6,7 @@ import { defaultState } from "@/utils/initial-state"
 import { useStore } from "@/store"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
+import { useSpring } from "@react-spring/web"
 
 const { cameraPos, cameraLookAt } = defaultState
 
@@ -28,8 +29,30 @@ export const Scene = () => {
         />
         <DebugUtils />
         <Lights />
-        <Model />
+        <Model isActive={true} />
       </Canvas>
     </div>
+  )
+}
+
+export const SceneInner = ({ isActive }: { isActive: boolean }) => {
+  const { camera, invalidate } = useThree()
+  useSpring({
+    zoom: isActive ? 1 : 0.4,
+    onChange: ({ value }) => {
+      camera.zoom = value.zoom
+      camera.updateProjectionMatrix()
+      invalidate()
+    },
+  })
+  return (
+    <>
+      <ThreeStoreSetter />
+      <PerspectiveCamera makeDefault position={cameraPos} zoom={0.4} />
+      <OrbitControls makeDefault target={cameraLookAt} enableZoom={isActive} />
+      <DebugUtils />
+      <Lights />
+      <Model isActive={isActive} />
+    </>
   )
 }

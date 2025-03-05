@@ -3,9 +3,10 @@
 import { usePathname } from "next/navigation"
 import { useLock } from "@/scene/lock"
 import { Ctas } from "@/contents/elements"
-import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
 import { cloneElement, useEffect } from "react"
 import { useStore } from "@/store"
+import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
+import { Scene } from "@/scene"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
@@ -26,16 +27,19 @@ export const Lesson = (props: LessonProps) => {
   const visLocked = useLock()
   const isDebug = useStore((s) => s.isDebug)
   return (
-    <div
-      className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
-        visLocked && !isDebug ? "" : "pointer-events-none"
-      }`}
-    >
-      <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
-        {children}
-        <Ctas nextLesson={nextLesson} />
+    <>
+      <Scene />
+      <div
+        className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
+          visLocked && !isDebug ? "" : "pointer-events-none"
+        }`}
+      >
+        <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
+          {children}
+          <Ctas nextLesson={nextLesson} />
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

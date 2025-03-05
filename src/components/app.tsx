@@ -5,7 +5,7 @@ import { useModel, useTraining } from "@/model"
 import { useSample } from "@/data"
 import { useDebugCommands } from "@/utils/debug"
 import { VideoWindow } from "./video"
-import { Scene } from "@/scene"
+// import { Scene } from "@/scene"
 import { Footer, Gradient, Menu } from "@/components"
 import type { ReactNode } from "react"
 
@@ -18,7 +18,7 @@ export const App = ({ children }: { children?: ReactNode }) => {
   return (
     <div>
       {ds?.hasCam && <VideoWindow />}
-      <Scene />
+
       <Footer />
       <Gradient />
       <Menu />
