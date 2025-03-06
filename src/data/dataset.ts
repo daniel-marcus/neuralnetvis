@@ -10,16 +10,31 @@ import type {
   StoreMeta,
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
+import { useEffect, useState } from "react"
 
 export const DEFAULT_STORE_BATCH_SIZE = 100
+
+export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
+  const [ds, setDs] = useState<Dataset | undefined>(undefined)
+  useEffect(() => {
+    // TODO !!
+    async function loadDs() {
+      if (!dsDef) return
+      const ds = await getDsFromDef(dsDef, isPreview)
+      setDs(ds)
+    }
+    loadDs()
+  }, [dsDef, isPreview])
+  return ds
+}
 
 export async function setDsFromKey(key: string) {
   const dsDef = datasets.find((d) => d.key === key)
   if (!dsDef) return
-  const existinMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
+  const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
   const hasLatestData =
-    existinMeta?.version.getTime() === dsDef.version.getTime()
-  const skipLoading = existinMeta && hasLatestData
+    existingMeta?.version.getTime() === dsDef.version.getTime()
+  const skipLoading = existingMeta && hasLatestData
   await setDsFromDef(dsDef, skipLoading)
 }
 
@@ -35,20 +50,31 @@ function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
 
 export async function getDsFromDef(
   dsDef: DatasetDef | DatasetMeta,
-  skipLoading?: boolean
+  isPreview?: boolean
 ) {
-  if (!skipLoading) await loadAndSaveDsData(dsDef)
+  const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
+  const hasLatestData =
+    existingMeta?.version.getTime() === dsDef.version.getTime()
+  const skipLoading =
+    existingMeta && hasLatestData && (!existingMeta.isPreview || isPreview)
+
+  if (!skipLoading) await loadAndSaveDsData(dsDef, isPreview)
+
   const { key } = dsDef
   const train =
     (await getData<StoreMeta>(key, "meta", "train")) ?? newStoreMeta("train")
   const test =
     (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
   const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
-  const preprocess = dsDef.preprocessFunc
-    ? preprocessFuncs[dsDef.preprocessFunc]
-    : undefined
+  const preprocess = getPreprocessFunc(dsDef)
   const ds: Dataset = { ...dsDef, train, test, preprocess, storeBatchSize }
   return ds
+}
+
+export function getPreprocessFunc(dsDef: DatasetDef | DatasetMeta) {
+  return dsDef.preprocessFunc
+    ? preprocessFuncs[dsDef.preprocessFunc]
+    : undefined
 }
 
 export async function setDsFromDef(
@@ -59,20 +85,23 @@ export async function setDsFromDef(
   useStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 
-export async function loadAndSaveDsData(dsDef: DatasetDef) {
-  if (dsDef.loadData) {
-    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } =
-      await dsDef.loadData()
+export async function loadAndSaveDsData(
+  dsDef: DatasetDef,
+  isPreview?: boolean
+) {
+  const load = isPreview ? dsDef.loadPreview : dsDef.loadData
+  if (load) {
+    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } = await load()
     await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
-    await saveData(dsDef, "test", xTest, yTest, xTestRaw)
+    if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw)
   }
   const dsMeta = dsDefToDsMeta(dsDef)
-  await putData(dsDef.key, "meta", { index: "dsMeta", ...dsMeta })
+  await putData(dsDef.key, "meta", { index: "dsMeta", ...dsMeta, isPreview })
 }
 
 function dsDefToDsMeta(dsDef: DatasetDef): DatasetMeta {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { loadData, ...dsMeta } = dsDef
+  const { loadData, loadPreview, ...dsMeta } = dsDef
   return dsMeta
 }
 

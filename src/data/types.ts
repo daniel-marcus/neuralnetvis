@@ -19,12 +19,14 @@ export interface DatasetMeta {
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
+  isPreview?: boolean // will be set by ds loader
 }
 
 export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
 
 export interface DatasetDef extends DatasetMeta {
   loadData?: DatasetLoader
+  loadPreview?: DatasetLoader
 }
 
 export type Dataset = Omit<DatasetDef, "loadData"> & {
@@ -55,8 +57,8 @@ export type Sample = {
 type DatasetLoader = () => Promise<{
   xTrain: ParsedLike
   yTrain: ParsedLike
-  xTest: ParsedLike
-  yTest: ParsedLike
+  xTest?: ParsedLike
+  yTest?: ParsedLike
   xTrainRaw?: ParsedLike
   xTestRaw?: ParsedLike
 }>

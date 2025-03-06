@@ -8,7 +8,7 @@ export const californiaHousing: DatasetDef = {
   name: "california housing",
   task: "regression",
   description: "Predict housing prices",
-  version: new Date("2025-02-27"),
+  version: new Date("2025-03-06"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
   inputDims: [8],
   inputLabels: [
@@ -22,29 +22,31 @@ export const californiaHousing: DatasetDef = {
     "median_income",
   ],
   outputLabels: ["median_house_value"],
-  loadData: async () => {
-    const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
-      "/data/california_housing/x_train.npz",
-      "/data/california_housing/y_train.npz",
-      "/data/california_housing/x_test.npz",
-      "/data/california_housing/y_test.npz",
-    ])
-    const [xTrainScaled, xTestScaled] = tf.tidy(() => {
-      const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
-      const scaler = new StandardScaler()
-      const trainX = scaler.fitTransform(trainXRaw)
-      const testX = scaler.transform(tf.tensor(xTest.data, xTest.shape))
-      const xTrainScaled = trainX.reshape([-1]).dataSync() as Float32Array
-      const xTestScaled = testX.reshape([-1]).dataSync() as Float32Array
-      return [xTrainScaled, xTestScaled] as const
-    })
-    return {
-      xTrain: { data: xTrainScaled, shape: xTrain.shape },
-      xTrainRaw: xTrain,
-      yTrain,
-      xTest: { data: xTestScaled, shape: xTest.shape },
-      xTestRaw: xTest,
-      yTest,
-    }
-  },
+  loadPreview: loadData,
+}
+
+async function loadData() {
+  const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
+    "/data/california_housing/x_train.npz",
+    "/data/california_housing/y_train.npz",
+    "/data/california_housing/x_test.npz",
+    "/data/california_housing/y_test.npz",
+  ])
+  const [xTrainScaled, xTestScaled] = tf.tidy(() => {
+    const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
+    const scaler = new StandardScaler()
+    const trainX = scaler.fitTransform(trainXRaw)
+    const testX = scaler.transform(tf.tensor(xTest.data, xTest.shape))
+    const xTrainScaled = trainX.reshape([-1]).dataSync() as Float32Array
+    const xTestScaled = testX.reshape([-1]).dataSync() as Float32Array
+    return [xTrainScaled, xTestScaled] as const
+  })
+  return {
+    xTrain: { data: xTrainScaled, shape: xTrain.shape },
+    xTrainRaw: xTrain,
+    yTrain,
+    xTest: { data: xTestScaled, shape: xTest.shape },
+    xTestRaw: xTest,
+    yTest,
+  }
 }

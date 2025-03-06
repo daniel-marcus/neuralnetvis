@@ -8,16 +8,17 @@ import { Dataset, DatasetDef, Sample } from "@/data"
 import { usePreviewModel } from "@/model/model"
 import { useEffect, useState } from "react"
 import { getPreprocessedSample } from "@/data/sample"
-import { getDsFromDef } from "@/data/dataset"
+import { useDataset } from "@/data/dataset"
 
 export function useLayers(isPreview?: boolean, dsDef?: DatasetDef) {
   const globalDs = useStore((s) => s.ds)
   const globalModel = useStore((s) => s.model)
   const globalSample = useStore((s) => s.sample)
 
+  const ds = useDataset(dsDef, isPreview)
   const previewModel = usePreviewModel(dsDef)
   const model = isPreview ? previewModel : globalModel
-  const previewSample = usePreviewSample(dsDef)
+  const previewSample = useSample(ds)
   const sample = isPreview ? previewSample : globalSample
 
   const _lyrs = useStatelessLayers(model, dsDef ?? globalDs)
@@ -28,9 +29,8 @@ export function useLayers(isPreview?: boolean, dsDef?: DatasetDef) {
   return layers
 }
 
-function usePreviewSample(dsDef?: DatasetDef) {
+function useSample(ds?: Dataset) {
   const [sample, setSample] = useState<Sample | undefined>(undefined)
-  const ds = usePreviewDs(dsDef)
   // TODO: use locally scoped sampleIdx
   const sampleIdx = useStore((s) => s.sampleIdx)
   useEffect(() => {
@@ -42,18 +42,4 @@ function usePreviewSample(dsDef?: DatasetDef) {
     loadSample()
   }, [ds, sampleIdx])
   return sample
-}
-
-function usePreviewDs(dsDef?: DatasetDef) {
-  const [ds, setDs] = useState<Dataset | undefined>(undefined)
-  useEffect(() => {
-    // TODO !!
-    async function loadDs() {
-      if (!dsDef) return
-      const ds = await getDsFromDef(dsDef, true)
-      setDs(ds)
-    }
-    loadDs()
-  }, [dsDef])
-  return ds
 }

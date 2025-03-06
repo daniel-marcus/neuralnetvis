@@ -6,7 +6,7 @@ export const fashionMnist: DatasetDef = {
   name: "fashion mnist",
   task: "classification",
   description: "Clothing items (28x28)",
-  version: new Date("2025-02-27"),
+  version: new Date("2025-03-06"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",
@@ -38,5 +38,14 @@ export const fashionMnist: DatasetDef = {
       xTest,
       yTest,
     }
+  },
+  loadPreview: async () => {
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress([
+      "/data/fashion_mnist_20k/x_train_preview.npz",
+      "/data/fashion_mnist_20k/y_train_preview.npz",
+    ])
+    // add depth dim for Conv2D layers
+    xTrain.shape = [...xTrain.shape, 1]
+    return { xTrain, yTrain }
   },
 }

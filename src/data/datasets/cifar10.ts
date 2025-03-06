@@ -6,7 +6,7 @@ export const cifar10: DatasetDef = {
   name: "cifar10",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: new Date("2025-02-27"),
+  version: new Date("2025-03-06"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   inputDims: [32, 32, 3],
   preprocessFunc: "normalizeImage",
@@ -50,5 +50,13 @@ export const cifar10: DatasetDef = {
       fortranOrder: xTrain1.fortranOrder,
     }
     return { xTrain, yTrain, xTest, yTest }
+  },
+
+  loadPreview: async () => {
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress([
+      "/data/cifar10_20k/x_train_preview.npz",
+      "/data/cifar10_20k/y_train_preview.npz",
+    ])
+    return { xTrain, yTrain }
   },
 }
