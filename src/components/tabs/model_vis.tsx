@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/store"
+import { useCurrScene } from "@/store"
 import {
   Checkbox,
   CollapsibleWithTitle,
@@ -11,9 +11,9 @@ import type { HighlightProp } from "@/neuron-layers"
 const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
 
 export const VisConfigControl = () => {
-  const vis = useGlobalStore((s) => s.vis)
+  const vis = useCurrScene((s) => s.vis)
   const { setConfig, getDefault, reset, ...config } = vis
-  const model = useGlobalStore((s) => s.model)
+  const model = useCurrScene((s) => s.model)
   const hasColorChannels =
     ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
   return (

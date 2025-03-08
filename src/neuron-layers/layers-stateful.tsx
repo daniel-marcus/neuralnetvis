@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react"
 import { getNeuronColor } from "./colors"
 import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
-import { useGlobalStore } from "@/store"
+import { useSceneStore } from "@/store"
 
 // add state to each neuron
 
@@ -14,6 +14,7 @@ export function useStatefulLayers(
 ) {
   const [statefulLayers, allNeurons] = useMemo(() => {
     const allNeurons = new Map<Nid, Neuron>()
+    const isRegression = false // TODO
     const result = statelessLayers.reduce((acc, layer, lIdx) => {
       const { layerPos, layerType } = layer
 
@@ -43,7 +44,7 @@ export function useStatefulLayers(
             weights: weights?.[filterIndex],
             bias: biases?.[filterIndex],
           } as Neuron
-          updatedNeuron.color = getNeuronColor(updatedNeuron)
+          updatedNeuron.color = getNeuronColor(updatedNeuron, isRegression)
 
           allNeurons.set(updatedNeuron.nid, updatedNeuron)
 
@@ -65,9 +66,10 @@ export function useStatefulLayers(
     return [result, allNeurons] as const
   }, [statelessLayers, activations, weightsBiases, rawInputs])
 
+  const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
   useEffect(() => {
-    useGlobalStore.setState({ allNeurons })
-  }, [allNeurons])
+    setAllNeurons(allNeurons)
+  }, [allNeurons, setAllNeurons])
 
   return statefulLayers
 }

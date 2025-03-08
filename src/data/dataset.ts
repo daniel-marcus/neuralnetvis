@@ -1,4 +1,4 @@
-import { useGlobalStore, useSceneStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { datasets } from "./datasets"
 import { deleteAll, getData, putData, putDataBatches } from "./db"
 import type {
@@ -88,7 +88,7 @@ export async function setDsFromDef(
 ) {
   const ds = await getDsFromDef(dsDef, skipLoading)
   console.log("TOOD: setDsFromDef", ds)
-  useGlobalStore.setState({ ds, sample: undefined, sampleIdx: 0 })
+  // useGlobalStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 
 export async function loadAndSaveDsData(
@@ -154,15 +154,13 @@ async function saveData(
 }
 
 export async function addTrainData(
+  ds: Dataset | DatasetDef,
   xs: ParsedLike,
   ys: ParsedLike,
   xsRaw?: ParsedLike
 ) {
-  const ds = useGlobalStore.getState().ds
-  if (!ds) return
   const newTrainMeta = await saveData(ds, "train", xs, ys, xsRaw, false)
-  const newDs = { ...ds, train: newTrainMeta }
-  useGlobalStore.setState({ ds: newDs, skipModelCreate: true })
+  return newTrainMeta
 }
 
 export async function resetData(dsKey: string, storeName: "train" | "test") {
@@ -170,9 +168,9 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
   const storeMeta = newStoreMeta(storeName, 0)
   await putData(dsKey, "meta", storeMeta)
 
-  const currDs = useGlobalStore.getState().ds
+  /* const currDs = useGlobalStore.getState().ds
   if (currDs?.key === dsKey) {
     const newDs = { ...currDs, [storeName]: storeMeta }
     useGlobalStore.setState({ ds: newDs, skipModelCreate: true })
-  }
+  } */
 }

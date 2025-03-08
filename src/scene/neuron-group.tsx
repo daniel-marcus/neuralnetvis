@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
-import { useGlobalStore, isDebug } from "@/store"
+import { useGlobalStore, isDebug, useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
@@ -36,7 +36,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
 }
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
-  const neuronSpacing = useGlobalStore((s) => s.vis.neuronSpacing)
+  const neuronSpacing = useSceneStore((s) => s.vis.neuronSpacing)
   const p = geometry.parameters as { width?: number; radius?: number }
   const size = p.width ?? p.radius ?? 1
   const factor = spacingFactor ?? 1
@@ -49,7 +49,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
   const groupIndex = group.index
   const groupCount = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
-  const splitColors = useGlobalStore((s) => s.vis.splitColors)
+  const splitColors = useSceneStore((s) => s.vis.splitColors)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
@@ -164,8 +164,8 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
 } */
 
 function useInteractions(groupedNeurons: Neuron[]) {
-  const toggleSelected = useGlobalStore((s) => s.toggleSelected)
-  const toggleHovered = useGlobalStore((s) => s.toggleHovered)
+  const toggleSelected = useSceneStore((s) => s.toggleSelected)
+  const toggleHovered = useSceneStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {

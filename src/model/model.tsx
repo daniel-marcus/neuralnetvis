@@ -9,7 +9,7 @@ import { useHasLesson } from "@/components/lesson"
 export function useModel(ds?: Dataset, isPreview?: boolean) {
   const [model, isPending] = useModelCreate(ds, isPreview)
   useModelDispose(model)
-  useModelStatus(isPending, model)
+  useModelStatus(isPending, model, isPreview)
   useModelCompile(model, ds)
   return model
 }
@@ -22,7 +22,7 @@ function useModelCreate(ds?: Dataset, isPreview?: boolean) {
   const model = useSceneStore((s) => s.model)
   const [setModel, isPending] = useModelTransition()
   const backendReady = useGlobalStore((s) => s.backendReady)
-  const layerConfigs = useGlobalStore((s) => s.layerConfigs) // TODO: sceneStore
+  const layerConfigs = useSceneStore((s) => s.layerConfigs) // TODO: sceneStore
   const configs = isPreview ? previewLayerConfigs : layerConfigs
   useEffect(() => {
     if (!ds || !backendReady) return
@@ -72,13 +72,17 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
   }
 }
 
-function useModelStatus(isPending: boolean, model?: tf.LayersModel) {
+function useModelStatus(
+  isPending: boolean,
+  model?: tf.LayersModel,
+  isPreview?: boolean
+) {
   const hasLesson = useHasLesson()
+  const ds = useSceneStore((s) => s.ds)
   useEffect(() => {
-    if (!model || !isPending || hasLesson) return
-    const ds = useGlobalStore.getState().ds
+    if (!model || !isPending || hasLesson || isPreview) return
     if (!ds) return
-    const totalSamples = useGlobalStore.getState().totalSamples()
+    const totalSamples = ds.train?.totalSamples ?? 0
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
       Samples: totalSamples.toLocaleString("en-US"),
@@ -86,7 +90,7 @@ function useModelStatus(isPending: boolean, model?: tf.LayersModel) {
       Params: model.countParams().toLocaleString("en-US"),
     }
     setStatus({ data }, null)
-  }, [model, isPending, hasLesson])
+  }, [ds, model, isPending, hasLesson, isPreview])
 }
 
 const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (

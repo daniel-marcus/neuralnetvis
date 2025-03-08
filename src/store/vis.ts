@@ -1,6 +1,6 @@
 import { StateCreator } from "zustand"
 import type { HighlightProp } from "@/neuron-layers/types"
-import type { RootState } from "@react-three/fiber"
+import { RootState } from "@react-three/fiber"
 import { OrbitControls } from "three-stdlib"
 
 export const defaultVisConfig = {
@@ -19,7 +19,7 @@ export const defaultVisConfig = {
   lightIntensity: 1,
 }
 
-interface VisConfig {
+export interface VisConfig {
   xShift: number
   yShift: number
   zShift: number

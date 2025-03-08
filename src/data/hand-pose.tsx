@@ -7,7 +7,7 @@ import {
 } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
-import { setStatus, useGlobalStore } from "@/store"
+import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
 
@@ -19,7 +19,7 @@ const HP_TRAIN_CONFIG = {
 }
 
 export function useHandPose(stream: MediaStream | null | undefined) {
-  const numHands = useGlobalStore((s) => s.ds?.inputDims[2] ?? 1)
+  const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands)
   usePredictLoop(stream, hpPredict)
   useCanvasUpdate()
@@ -28,7 +28,7 @@ export function useHandPose(stream: MediaStream | null | undefined) {
 }
 
 function useLandmarker(numHands: number) {
-  const videoRef = useGlobalStore((s) => s.videoRef)
+  const videoRef = useSceneStore((s) => s.videoRef)
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
 
   useEffect(() => {
@@ -37,7 +37,7 @@ function useLandmarker(numHands: number) {
       const statusId = setStatus("Loading hand landmark model ...", -1)
       handLandmarker = await createHandLandmarker()
       setLandmarker(handLandmarker)
-      useGlobalStore.getState().status.clear(statusId)
+      clearStatus(statusId)
     }
     init()
     return () => {
@@ -126,34 +126,36 @@ function usePredictLoop(
   stream: MediaStream | null | undefined,
   hpPredict: PrecitFunc
 ) {
+  const ds = useSceneStore((s) => s.ds)
+  const setSample = useSceneStore((s) => s.setSample)
+  const nextSample = useSceneStore((s) => s.nextSample)
   useEffect(() => {
     let animationFrame: number
     captureLoop()
     async function captureLoop() {
-      const ds = useGlobalStore.getState().ds
-      const isTraning = useGlobalStore.getState().isTraining
+      const isTraning = useGlobalStore.getState().scene.getState().isTraining
       if (!isTraning) {
         const { X: _X, rawX } = await hpPredict()
         if (_X) {
           const X =
             (ds?.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
-          useGlobalStore.setState({ sample: { X, y: recordingY, rawX } })
+          setSample({ X, y: recordingY, rawX })
         }
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
     return () => {
       cancelAnimationFrame(animationFrame)
-      useGlobalStore.setState({ sample: undefined })
-      // updateSample(useGlobalStore.getState().sampleIdx)
+      nextSample()
     }
-  }, [stream, hpPredict])
+  }, [stream, hpPredict, ds, setSample, nextSample])
 }
 
 function useCanvasUpdate() {
-  const videoRef = useGlobalStore((s) => s.videoRef)
-  const canvasRef = useGlobalStore((s) => s.canvasRef)
+  const videoRef = useSceneStore((s) => s.videoRef)
+  const canvasRef = useSceneStore((s) => s.canvasRef)
   useEffect(() => {
+    console.log("CANVAS REF CHANGED")
     if (!canvasRef.current) return
     // TODO: aspect ratio from dataset?
     canvasRef.current.width = 1280
@@ -192,8 +194,8 @@ function useCanvasUpdate() {
     [canvasRef, videoRef]
   )
 
-  const rawX = useGlobalStore((s) => s.sample?.rawX)
-  const inputDims = useGlobalStore.getState().ds?.inputDims
+  const rawX = useSceneStore((s) => s.sample?.rawX)
+  const inputDims = useSceneStore((s) => s.ds?.inputDims)
   useEffect(() => {
     if (!rawX || !inputDims) return
     if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
@@ -207,18 +209,26 @@ function useCanvasUpdate() {
   }, [rawX, inputDims, updCanvas])
 }
 
+let shouldCancelRecording = false
+
 function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
-  const isRecording = useGlobalStore((s) => s.isRecording)
-  const toggleRecording = useGlobalStore((s) => s.toggleRecording)
+  const isRecording = useSceneStore((s) => s.isRecording)
+  const startRecording = useSceneStore((s) => s.startRecording)
+  const stopRecording = useSceneStore((s) => s.stopRecording)
+
+  const ds = useSceneStore((s) => s.ds)
+  const updateMeta = useSceneStore((s) => s.updateMeta)
+  const hpTrain = useHpTrain()
 
   const hpRecordSamples = useCallback(async () => {
-    const ds = useGlobalStore.getState().ds
+    shouldCancelRecording = false
     const outputSize = ds?.outputLabels.length
     if (!outputSize) return
 
     const SAMPLES = ds.storeBatchSize
     const STATUS_ID = "hpRecordSamples"
     const SECONDS_BEFORE_RECORDING = 3
+
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
       recordingY = y
@@ -235,7 +245,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       let xDataRaw: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
-        if (!useGlobalStore.getState().isRecording) {
+        if (shouldCancelRecording) {
           setStatus(`Recording canceled.`, null, { id: STATUS_ID })
           return
         }
@@ -261,7 +271,8 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       }
       const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
       recordingY = undefined
-      await addTrainData(xs, ys, xsRaw)
+      const trainMeta = await addTrainData(ds, xs, ys, xsRaw)
+      updateMeta("train", trainMeta)
     }
 
     const newSamples = allY.length * SAMPLES
@@ -275,19 +286,32 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     }
     useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
-    useGlobalStore.setState({ isRecording: false })
-  }, [hpPredict, numHands])
+    stopRecording()
+  }, [hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
 
-  useEffect(() => {
-    if (!isRecording) return
-    hpRecordSamples()
-  }, [isRecording, hpRecordSamples])
+  const toggleRecording = useCallback(() => {
+    if (isRecording) {
+      shouldCancelRecording = true
+      clearStatus("hpRecordSamples")
+      stopRecording()
+    } else {
+      startRecording()
+      hpRecordSamples()
+    }
+  }, [isRecording, startRecording, stopRecording, hpRecordSamples])
 
   useKeyCommand("r", toggleRecording)
   return [isRecording, toggleRecording] as const
 }
 
-function hpTrain() {
-  useGlobalStore.getState().setTrainConfig(HP_TRAIN_CONFIG)
-  useGlobalStore.setState({ isTraining: true, logsMetric: "val_loss" })
+function useHpTrain() {
+  const setTrainConfig = useSceneStore((s) => s.setTrainConfig)
+  const setLogsMetric = useSceneStore((s) => s.setLogsMetric)
+  const toggleTraining = useSceneStore((s) => s.toggleTraining)
+  const hpTrain = useCallback(() => {
+    setTrainConfig(HP_TRAIN_CONFIG)
+    setLogsMetric("val_loss")
+    toggleTraining()
+  }, [setTrainConfig, setLogsMetric, toggleTraining])
+  return hpTrain
 }

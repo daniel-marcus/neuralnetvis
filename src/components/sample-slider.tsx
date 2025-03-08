@@ -1,17 +1,22 @@
-import { useGlobalStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
 
-export const SampleSlider = () => {
-  const hasSelected = useGlobalStore((s) => !!s.hoveredNid || !!s.selectedNid)
-  const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
+export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
+  const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
+  const hasStatus = useGlobalStore((s) => !!s.status.getCurrent())
   const hasProgressBar =
     typeof useGlobalStore((s) => s.status.getPercent()) === "number"
-  const visIsLocked = useGlobalStore((s) => s.vis.isLocked)
-  const sampleIdx = useGlobalStore((s) => s.sampleIdx)
-  const totalSamples = useGlobalStore((s) => s.totalSamples())
-  const hasStream = useGlobalStore((s) => !!s.stream)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
+  const sampleIdx = useSceneStore((s) => s.sampleIdx)
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
+  const totalSamples = useSceneStore((s) => s.totalSamples())
+  const hasStream = useSceneStore((s) => !!s.stream)
   return (
-    <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
+    <div
+      className={`fixed bottom-0 left-0 ${
+        isActive ? "p-main" : ""
+      } w-full flex justify-center`}
+    >
       <div
         className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
           hasProgressBar || !totalSamples || visIsLocked || hasStream
@@ -30,14 +35,16 @@ export const SampleSlider = () => {
       >
         <Slider
           value={sampleIdx}
-          onChange={(sampleIdx) => useGlobalStore.setState({ sampleIdx })}
+          onChange={(sampleIdx) => setSampleIdx(sampleIdx)}
           min={0}
           max={totalSamples - 1}
           yPad={0.25}
         />
-        <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
-          {sampleIdx + 1} / {totalSamples}
-        </div>
+        {isActive && (
+          <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
+            {sampleIdx + 1} / {totalSamples}
+          </div>
+        )}
       </div>
     </div>
   )

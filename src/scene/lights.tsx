@@ -1,14 +1,14 @@
 import { useRef } from "react"
-import { useGlobalStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import type { SpotLight } from "three"
 
 export const Lights = () => {
   const ref1 = useRef<SpotLight>(null!)
   // useHelper(ref1, SpotLightHelper)
-  const lightsOn = useGlobalStore((s) => s.vis.lightsOn)
-  const lightIntensity = useGlobalStore((s) => s.vis.lightIntensity)
-  const toggleLights = useGlobalStore((s) => s.vis.toggleLights)
+  const lightsOn = useSceneStore((s) => s.vis.lightsOn)
+  const lightIntensity = useSceneStore((s) => s.vis.lightIntensity)
+  const toggleLights = useSceneStore((s) => s.vis.toggleLights)
   useKeyCommand("L", toggleLights)
   return (
     <>

@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react"
-import { setLayerConfigs, useGlobalStore } from "@/store"
+import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
 
@@ -82,10 +82,10 @@ function newDefaultLayer<T extends keyof LayerConfigMap>(
 }
 
 export const LayerConfigControl = () => {
-  const model = useGlobalStore((s) => s.model)
+  const model = useCurrScene((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
     []) as unknown as LayerConfigArray
-  const resetLayerConfigs = useGlobalStore((s) => s.resetLayerConfigs)
+  const resetLayerConfigs = useCurrScene((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
@@ -120,10 +120,8 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
-  const toggleLayerVisibility = useGlobalStore(
-    (s) => s.vis.toggleLayerVisibility
-  )
-  const invisibleLayers = useGlobalStore((s) => s.vis.invisibleLayers)
+  const toggleLayerVisibility = useCurrScene((s) => s.vis.toggleLayerVisibility)
+  const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
   return (
     <CollapsibleWithTitle title={"layers"}>
       <div className="flex flex-col gap-4">

@@ -12,7 +12,7 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
 
   useEffect(() => {
     async function loadSample() {
-      if (!ds) return
+      if (!ds || isNaN(sampleIdx)) return
       const sample = await getPreprocessedSample(ds, sampleIdx)
       setSample(sample)
     }

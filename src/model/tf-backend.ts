@@ -47,8 +47,9 @@ export function getAvailableBackends() {
 export async function backendForTraining() {
   const backends = getAvailableBackends()
   const model = getModel()
-  const silent = useGlobalStore.getState().trainConfig.silent
-  const totalSamples = useGlobalStore.getState().totalSamples()
+  const scene = useGlobalStore.getState().scene
+  const silent = scene.getState().trainConfig.silent
+  const totalSamples = scene.getState().totalSamples()
   if (silent && backends.includes("webgpu") && totalSamples > 1000) {
     await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
   } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {

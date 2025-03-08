@@ -1,6 +1,12 @@
 "use client"
 
-import { getThree, setStatus, setVisConfig, useGlobalStore } from "@/store"
+import {
+  clearStatus,
+  getThree,
+  setStatus,
+  useCurrScene,
+  useGlobalStore,
+} from "@/store"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { LockButton } from "@/scene/lock"
 import { Block, Details, Head } from "@/contents/elements"
@@ -28,6 +34,10 @@ const SCROLL_TRAIN_STATUS_ID = "scroll-train-status"
 
 export const IntroNetworks = (): LessonContent => {
   useInitialState(initialState)
+  const setVisConfig = useCurrScene((s) => s.vis.setConfig)
+  const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
+  const setHoveredNid = useCurrScene((s) => s.setHoveredNid)
+  const setSelectedNid = useCurrScene((s) => s.setSelectedNid)
   return (
     <main>
       <Head
@@ -38,13 +48,13 @@ export const IntroNetworks = (): LessonContent => {
           const initSpacing = initialState.vis!.neuronSpacing!
           const dflt = defaultVisConfig.neuronSpacing!
           const neuronSpacing = interpolate(initSpacing, dflt, percent)
-          useGlobalStore.getState().vis.setConfig({ neuronSpacing })
+          setVisConfig({ neuronSpacing })
         }}
       />
       <Block
         cameraPos={[-60, 0, 30]}
         onEnter={() => {
-          useGlobalStore.setState({ sampleIdx: initialState.sampleIdx })
+          setSampleIdx(initialState.sampleIdx ?? 0)
           setVisConfig({
             invisibleLayers: initialState.vis!.invisibleLayers,
           })
@@ -65,10 +75,10 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={({ percent }) => {
           const idx = Math.round(percent * 10)
           const nid = `2_${idx}.0.0`
-          useGlobalStore.setState({ hoveredNid: nid })
+          setHoveredNid(nid)
         }}
         onLeave={() => {
-          useGlobalStore.setState({ hoveredNid: undefined })
+          setHoveredNid(undefined)
         }}
         onEnter={() => {
           setVisConfig({ showPointer: false })
@@ -79,7 +89,10 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
       <Block
         cameraPos={[-17, 0, 27]}
-        onScroll={changeSample}
+        onScroll={({ percent }) => {
+          const sampleIdx = Math.round(percent * 100 + 1)
+          setSampleIdx(sampleIdx)
+        }}
         onEnter={() => setVisConfig({ showPointer: true })}
       >
         Here comes: the pointer.
@@ -88,12 +101,12 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={scrollTrain}
         onEnter={() => {
           setVisConfig({ highlightProp: "weights" })
-          useGlobalStore.setState({ selectedNid: `2_3.0.0` })
+          setSelectedNid(`2_3.0.0`)
         }}
         onLeave={() => {
-          useGlobalStore.getState().status.clear(SCROLL_TRAIN_STATUS_ID)
+          clearStatus(SCROLL_TRAIN_STATUS_ID)
           setVisConfig({ highlightProp: null })
-          useGlobalStore.setState({ selectedNid: undefined })
+          setSelectedNid(undefined)
         }}
       >
         <p className="mb-[50vh]">We can even train the model as we scroll.</p>
@@ -142,11 +155,6 @@ export function rotate({ percent }: OnScrollProps) {
   rotate(percent)
 }
 
-function changeSample({ percent }: OnScrollProps) {
-  const sampleIdx = Math.round(percent * 100 + 1)
-  useGlobalStore.setState({ sampleIdx })
-}
-
 let batch = 0
 const trainedIs = new Set<number>()
 
@@ -160,17 +168,18 @@ function getRandomI(totalSamples: number) {
 }
 
 async function scrollTrain({ percent }: OnScrollProps) {
-  const totalSamples = useGlobalStore.getState().totalSamples()
+  const scene = useGlobalStore.getState().scene
+  const totalSamples = scene.getState().totalSamples()
   const sampleIdx = getRandomI(totalSamples)
   batch++
-  useGlobalStore.setState({ sampleIdx })
+  scene.setState({ sampleIdx })
 
-  const sample = useGlobalStore.getState().sample
+  const sample = scene.getState().sample
   if (!sample || typeof sample.y !== "number") return
   const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return
-  useGlobalStore.getState().addLogs([{ ...log, batch }])
+  scene.getState().addLogs([{ ...log, batch }])
   setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
     id: SCROLL_TRAIN_STATUS_ID,
   })

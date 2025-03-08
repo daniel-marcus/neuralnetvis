@@ -1,38 +1,41 @@
 import { StateCreator } from "zustand"
-import type { Dataset, Sample } from "@/data"
-import { createRef, RefObject } from "react"
+import type { Dataset, Sample, StoreMeta } from "@/data"
+import { ModelSlice } from "./model"
 
-interface DsSlice {
+export interface DataSlice {
   ds?: Dataset
   setDs: (ds?: Dataset) => void
+  updateMeta: (storeName: "train" | "test", meta: StoreMeta) => void
   totalSamples: () => number
   isRegression: () => boolean
 
   sampleIdx: number
+  setSampleIdx: (idx: number) => void
   sample?: Sample
   setSample: (sample?: Sample) => void
   nextSample: (step?: number) => void
   resetSample: () => void
 }
 
-interface VideoSlice {
-  videoRef: RefObject<HTMLVideoElement | null>
-  canvasRef: RefObject<HTMLCanvasElement | null>
-  stream: MediaStream | null
-  setStream: (stream: MediaStream | null) => void
-  isRecording: boolean
-  toggleRecording: () => void
-}
-
-export type DataSlice = DsSlice & VideoSlice
-
-export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
+export const createDataSlice: StateCreator<
+  DataSlice & ModelSlice,
+  [],
+  [],
+  DataSlice
+> = (set, get) => ({
   ds: undefined,
   setDs: (ds) => set({ ds }),
+  updateMeta: (storeName, meta) => {
+    const ds = get().ds
+    if (!ds) return
+    const newDs = { ...ds, [storeName]: meta }
+    set({ ds: newDs, skipModelCreate: true })
+  },
   totalSamples: () => get().ds?.train.totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
 
   sampleIdx: 0,
+  setSampleIdx: (sampleIdx) => set({ sampleIdx }),
   sample: undefined, // TODO: no global sample
   setSample: (sample) => set({ sample }),
   nextSample: (step = 1) =>
@@ -40,12 +43,4 @@ export const createDataSlice: StateCreator<DataSlice> = (set, get) => ({
       sampleIdx: (sampleIdx + step + totalSamples()) % totalSamples(),
     })),
   resetSample: () => set(() => ({ sampleIdx: 0, sample: undefined })),
-
-  videoRef: createRef<HTMLVideoElement>(),
-  canvasRef: createRef<HTMLCanvasElement>(),
-  stream: null,
-  setStream: (stream) => set({ stream }),
-  isRecording: false,
-  toggleRecording: () =>
-    set(({ isRecording }) => ({ isRecording: !isRecording })),
 })

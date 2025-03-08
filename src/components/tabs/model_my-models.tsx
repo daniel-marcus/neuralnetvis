@@ -2,11 +2,11 @@ import { useModelTransition } from "@/model/model"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { CollapsibleWithTitle, InlineButton } from "@/components/ui-elements"
-import { useGlobalStore } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
 
 export function MyModels() {
-  const model = useGlobalStore((s) => s.model)
+  const model = useCurrScene((s) => s.model)
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = () => setUpdTrigger((t) => t + 1)
   const [showImportForm, setShowImportForm] = useState(false)
@@ -74,7 +74,8 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
     updateModelList()
   }, [updTrigger])
 
-  const [setModel] = useModelTransition()
+  // const [setModel] = useModelTransition()
+  const setModel = useCurrScene((s) => s._setModel)
   const setStatus = useGlobalStore((s) => s.status.update)
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)

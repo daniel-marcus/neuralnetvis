@@ -24,7 +24,7 @@ export const Menu = () => {
     <div
       className={`${
         !hasLesson ? "fixed" : "relative xl:stick"
-      } z-20 top-0 left-0 w-[100vw] pointer-events-none select-none`}
+      } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
         disable={!hasLesson || isScreenXl}

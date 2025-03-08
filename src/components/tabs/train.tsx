@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { useGlobalStore } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { getModelEvaluation } from "@/model/training"
 
@@ -7,17 +7,17 @@ const { Box, InlineButton, Slider, InputRow, Checkbox } = Components
 const { Collapsible, CollapsibleWithTitle, Arrow, LogsPlot } = Components
 
 export const Train = () => {
-  const isTraining = useGlobalStore((s) => s.isTraining)
-  const toggleTraining = useGlobalStore((s) => s.toggleTraining)
+  const isTraining = useCurrScene((s) => s.isTraining)
+  const toggleTraining = useCurrScene((s) => s.toggleTraining)
 
   const [showLogs, setShowLogs] = useState(false)
-  const hasLogs = useGlobalStore((s) => s.logs.length > 0)
+  const hasLogs = useCurrScene((s) => s.logs.length > 0)
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
   const evaluate = useEvaluate()
-  const resetWeights = useGlobalStore((s) => s.resetWeights)
-  const batchCount = useGlobalStore((s) => s.batchCount)
+  const resetWeights = useCurrScene((s) => s.resetWeights)
+  const batchCount = useCurrScene((s) => s.batchCount)
   return (
     <Box>
       <TrainConfigControl />
@@ -53,8 +53,8 @@ export const Train = () => {
 }
 
 const TrainConfigControl = () => {
-  const config = useGlobalStore((s) => s.trainConfig)
-  const setConfig = useGlobalStore((s) => s.setTrainConfig)
+  const config = useCurrScene((s) => s.trainConfig)
+  const setConfig = useCurrScene((s) => s.setTrainConfig)
   return (
     <CollapsibleWithTitle title="config">
       <InputRow
@@ -123,7 +123,7 @@ const TrainConfigControl = () => {
 }
 
 function useEvaluate() {
-  const ds = useGlobalStore((s) => s.ds)
+  const ds = useCurrScene((s) => s.ds)
   const setStatus = useGlobalStore((s) => s.status.update)
   async function evaluate() {
     if (!ds) return

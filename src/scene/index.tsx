@@ -8,7 +8,7 @@ import { defaultState } from "@/utils/initial-state"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
-import { useGlobalStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 
 const { cameraPos, cameraLookAt } = defaultState
 
@@ -18,7 +18,7 @@ interface SceneProps {
 }
 
 export const Scene = (props: SceneProps) => {
-  const isLocked = useGlobalStore((s) => s.vis.isLocked)
+  const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <Canvas
@@ -36,7 +36,8 @@ export const Scene = (props: SceneProps) => {
 export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
   const { camera, invalidate } = useThree()
   useSpring({
-    zoom: isActive ? 1 : 0.4, // TODO: adjust from screen size
+    from: { zoom: 0.1 },
+    to: { zoom: isActive ? 1 : 0.4 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
       camera.zoom = value.zoom
       camera.updateProjectionMatrix()
@@ -46,7 +47,7 @@ export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
   return (
     <>
       <ThreeStoreSetter />
-      <PerspectiveCamera makeDefault position={cameraPos} zoom={0.4} />
+      <PerspectiveCamera makeDefault position={cameraPos} zoom={0.1} />
       <OrbitControls makeDefault target={cameraLookAt} enableZoom={isActive} />
       <DebugUtils />
       <Lights />

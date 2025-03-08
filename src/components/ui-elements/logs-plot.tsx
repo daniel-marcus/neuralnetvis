@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Ref } from "react"
 import { InlineButton } from "./buttons"
-import { useGlobalStore } from "@/store"
+import { useCurrScene } from "@/store"
 import { Table } from "./table"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
@@ -27,9 +27,9 @@ const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
 export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
-  const _logs = useGlobalStore((s) => s.logs)
-  const logsMetric = useGlobalStore((s) => s.logsMetric)
-  const setLogsMetric = useGlobalStore((s) => s.setLogsMetric)
+  const _logs = useCurrScene((s) => s.logs)
+  const logsMetric = useCurrScene((s) => s.logsMetric)
+  const setLogsMetric = useCurrScene((s) => s.setLogsMetric)
   const isValMetric = VAL_METRICS.includes(logsMetric)
   const logs = useMemo(
     () =>
@@ -44,7 +44,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
   const dotRef = useRef<HTMLDivElement>(null)
   const [canvasRef, positions] = useCanvasUpdate(logs, logsMetric)
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null)
-  const isRegression = useGlobalStore((s) => s.isRegression())
+  const isRegression = useCurrScene((s) => s.isRegression())
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -94,7 +94,7 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
     },
     [logs, tooltipRef, isValMetric, positions, canvasRef, isRegression]
   )
-  const validationSplit = useGlobalStore((s) => s.trainConfig.validationSplit)
+  const validationSplit = useCurrScene((s) => s.trainConfig.validationSplit)
   if (!logs.length) return null
   return (
     <div>

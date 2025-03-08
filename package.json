@@ -58,7 +58,7 @@
     "eslint": "^9.22.0",
     "eslint-config-next": "^15.2.1",
     "fake-indexeddb": "^6.0.0",
-    "happy-dom": "^17.4.0",
+    "happy-dom": "^17.4.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.12",
     "typescript": "^5.8.2",

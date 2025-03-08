@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { SphereGeometry } from "three"
-import { useGlobalStore } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/neuron-layers/colors"
@@ -13,10 +13,10 @@ export const NeuronStatus = () => {
   const _hovered = useHovered()
   const _selected = useSelected()
   const selected = _hovered ?? _selected
-  const toggleSelected = useGlobalStore((s) => s.toggleSelected)
+  const toggleSelected = useCurrScene((s) => s.toggleSelected)
   const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
   const hasLesson = useHasLesson()
-  const visLocked = useGlobalStore((s) => s.vis.isLocked)
+  const visLocked = useCurrScene((s) => s.vis.isLocked)
   const handleClick = (e: React.MouseEvent) => {
     if ("tagName" in e.target && e.target.tagName === "BUTTON") return
     toggleSelected(null)
@@ -55,7 +55,9 @@ const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
 
 const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
   const [currGroup, setCurrGroup] = useState(0)
-  const highlightProp = useGlobalStore((s) => s.vis.highlightProp)
+  const highlightProp = useGlobalStore(
+    (s) => s.scene?.getState().vis?.highlightProp
+  )
   const isScreenSm = isScreen("sm")
   if (highlightProp === "weights") return null // will be duplication
 

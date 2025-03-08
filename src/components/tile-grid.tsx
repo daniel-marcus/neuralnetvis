@@ -37,7 +37,7 @@ export const TileGrid = () => {
     <div
       className={`${
         hasLesson ? "fixed top-0 left-0" : "relative"
-      } mx-auto pt-[112px]`}
+      } mx-auto pt-[112px] xl:pt-[5rem]`}
     >
       <div
         className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-4 p-main"
@@ -135,7 +135,7 @@ function Tile({
           isScrolling ? "" : "transition-all duration-500"
         } ${
           isActive
-            ? "w-screen! h-[100dvh]! z-10 "
+            ? "w-screen! h-[100dvh]! z-10"
             : "w-[var(--item-width)] h-[var(--item-height)] translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
         } ${typeof offset.x === "undefined" ? "opacity-0" : ""} ${className}`}
         style={

@@ -23,7 +23,7 @@ export const Status = () => {
     <div
       className={`${
         status?.fullscreen
-          ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
+          ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center pointer-events-none"
           : "absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto"
       }  ${
         !!status?.text
@@ -31,7 +31,7 @@ export const Status = () => {
           : "opacity-0 duration-300 pointer-events-none"
       } transition ease-in-out text-right`}
     >
-      <div className={status?.fullscreen ? "p-4" : ""}>
+      <div className={status?.fullscreen ? "p-4 pointer-events-auto" : ""}>
         {parsedText || keptText.current}
       </div>
     </div>

@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { LayerConfigArray } from "@/model"
 import { setVisConfig } from "."
+import { Neuron, Nid } from "@/neuron-layers"
 
 export const defaultLayerConfigs: LayerConfigArray = [
   { className: "InputLayer", config: { batchInputShape: [null, 28, 28, 1] } },
@@ -13,8 +14,6 @@ export const defaultLayerConfigs: LayerConfigArray = [
 ]
 
 export interface ModelSlice {
-  backendReady: boolean
-
   model?: LayersModel
   skipModelCreate: boolean // flag to skip model creation for loaded models
   _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
@@ -22,10 +21,12 @@ export interface ModelSlice {
   setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
   resetWeights: () => void
-  getInputShape: () => number[]
+
+  allNeurons: Map<Nid, Neuron>
+  setAllNeurons: (neurons: Map<Nid, Neuron>) => void
 }
 
-export const createModelSlice: StateCreator<ModelSlice> = (set, get) => ({
+export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
   backendReady: false,
 
   model: undefined,
@@ -33,7 +34,7 @@ export const createModelSlice: StateCreator<ModelSlice> = (set, get) => ({
   _setModel: (model) => set({ model }), // , layerActivations: []
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
-    set(({}) => ({
+    set(() => ({
       layerConfigs,
       // status: { ...status, percent: -1 }, // trigger spinner
     })),
@@ -43,9 +44,7 @@ export const createModelSlice: StateCreator<ModelSlice> = (set, get) => ({
   },
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
-  getInputShape: () => {
-    const model = get().model
-    if (!model) return []
-    return model.layers[0].batchInputShape as number[]
-  },
+
+  allNeurons: new Map(),
+  setAllNeurons: (allNeurons) => set({ allNeurons }),
 })

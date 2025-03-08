@@ -1,28 +1,23 @@
 "use client"
 
 import { useEffect } from "react"
-import { StoreType, useGlobalStore } from "@/store"
+import { SceneState, useCurrScene, useGlobalStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
 import { setDsFromKey } from "@/data/dataset"
 
-type ExposedStoreKeys =
-  | "sampleIdx"
-  | "layerConfigs"
-  | "selectedNid"
-  | "activeTile"
-type ExposedStoreType = Pick<StoreType, ExposedStoreKeys>
+type ExposedStoreKeys = "sampleIdx" | "layerConfigs" | "selectedNid"
+type ExposedStoreType = Pick<SceneState, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
   dsKey?: string
-  vis?: Partial<StoreType["vis"]>
+  vis?: Partial<SceneState["vis"]>
   cameraPos?: Pos
   cameraLookAt?: Pos
 }
 
 export const defaultState: InitialState = {
-  activeTile: null,
   // dsKey: "mnist",
   layerConfigs: defaultLayerConfigs,
   selectedNid: undefined,
@@ -32,7 +27,7 @@ export const defaultState: InitialState = {
 }
 
 export function useInitialState(state = defaultState) {
-  const three = useGlobalStore((s) => s.three)
+  const three = useCurrScene((s) => s.three)
   useEffect(() => {
     if (!three) return
     setInitialState(state)
@@ -50,8 +45,9 @@ export function setInitialState(initialState: InitialState = defaultState) {
   if (cameraPos) {
     moveCameraTo(cameraPos, cameraLookAt)
   }
+  const sceneStore = useGlobalStore.getState().scene
   if (vis) {
-    useGlobalStore.getState().vis.setConfig({ ...vis })
+    sceneStore.getState().vis.setConfig({ ...vis })
   }
-  useGlobalStore.setState(storeSettings)
+  sceneStore.setState(storeSettings)
 }
