@@ -10,6 +10,7 @@ import { Logo } from "./logo"
 import { tabs, type Tab } from "@/components/tabs"
 import { usePathname } from "next/navigation"
 import { setInitialState } from "@/utils/initial-state"
+import { useHasActiveTile } from "./tile-grid"
 
 export const Menu = () => {
   const currTab = useGlobalStore((s) => s.tab)
@@ -20,10 +21,11 @@ export const Menu = () => {
   const hasLesson = useHasLesson()
   const [showGradient, setShowGradient] = useState(false)
   const pathname = usePathname()
+  const hasActiveTile = useHasActiveTile()
   return (
     <div
       className={`${
-        !hasLesson ? "fixed" : "relative xl:stick"
+        !hasLesson && hasActiveTile ? "fixed" : "relative xl:stick"
       } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
@@ -35,7 +37,7 @@ export const Menu = () => {
         <div className={`flex justify-between items-start`}>
           <div
             className={`${
-              !hasLesson || !showGradient ? "hidden" : ""
+              !hasActiveTile || !showGradient ? "hidden" : ""
             } xl:hidden absolute h-[30vh] inset-0 bg-gradient-to-b from-background
            to-transparent z-[-1]`}
           />

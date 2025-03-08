@@ -9,6 +9,7 @@ import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
+import { useIsTouchDevice } from "@/utils/screen"
 
 const { cameraPos, cameraLookAt } = defaultState
 
@@ -18,6 +19,7 @@ interface SceneProps {
 }
 
 export const Scene = (props: SceneProps) => {
+  const { isActive } = props
   const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
@@ -25,8 +27,8 @@ export const Scene = (props: SceneProps) => {
       frameloop="demand"
       resize={{ debounce: 0 }}
       className={`absolute w-screen! h-[100dvh]! select-none ${
-        isLocked && !isDebug ? "pointer-events-none" : ""
-      }`}
+        isActive ? "" : "touch-pinch-zoom! touch-pan-y!"
+      } ${isLocked && !isDebug ? "pointer-events-none!" : ""}`}
     >
       <SceneInner {...props} />
     </Canvas>
@@ -44,11 +46,19 @@ export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
       invalidate()
     },
   })
+  const isTouchDevice = useIsTouchDevice()
   return (
     <>
       <ThreeStoreSetter />
       <PerspectiveCamera makeDefault position={cameraPos} zoom={0.1} />
-      <OrbitControls makeDefault target={cameraLookAt} enableZoom={isActive} />
+      <OrbitControls
+        makeDefault
+        target={cameraLookAt}
+        enableZoom={isActive || isTouchDevice}
+        minPolarAngle={isActive || !isTouchDevice ? 0 : Math.PI / 2}
+        maxPolarAngle={isActive || !isTouchDevice ? Math.PI : Math.PI / 2}
+        rotateSpeed={isActive ? 1 : 1.5}
+      />
       <DebugUtils />
       <Lights />
       <Model isActive={isActive} dsKey={dsKey} />

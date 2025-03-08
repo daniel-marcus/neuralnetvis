@@ -14,7 +14,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   return (
     <div
       className={`fixed bottom-0 left-0 ${
-        isActive ? "p-main" : ""
+        isActive ? "p-main" : "leading-[1]"
       } w-full flex justify-center`}
     >
       <div

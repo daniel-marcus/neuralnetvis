@@ -22,7 +22,6 @@ export function useHandPose(stream: MediaStream | null | undefined) {
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands)
   usePredictLoop(stream, hpPredict)
-  useCanvasUpdate()
   const [isRecording, toggleRecording] = useSampleRecorder(hpPredict, numHands)
   return [isRecording, toggleRecording] as const
 }
@@ -151,11 +150,10 @@ function usePredictLoop(
   }, [stream, hpPredict, ds, setSample, nextSample])
 }
 
-function useCanvasUpdate() {
+export function useCanvasUpdate() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
   useEffect(() => {
-    console.log("CANVAS REF CHANGED")
     if (!canvasRef.current) return
     // TODO: aspect ratio from dataset?
     canvasRef.current.width = 1280
@@ -215,6 +213,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
   const startRecording = useSceneStore((s) => s.startRecording)
   const stopRecording = useSceneStore((s) => s.stopRecording)
+  const stream = useSceneStore((s) => s.stream)
 
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
@@ -290,6 +289,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   }, [hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
 
   const toggleRecording = useCallback(() => {
+    if (!stream) return
     if (isRecording) {
       shouldCancelRecording = true
       clearStatus("hpRecordSamples")
@@ -298,7 +298,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       startRecording()
       hpRecordSamples()
     }
-  }, [isRecording, startRecording, stopRecording, hpRecordSamples])
+  }, [stream, isRecording, startRecording, stopRecording, hpRecordSamples])
 
   useKeyCommand("r", toggleRecording)
   return [isRecording, toggleRecording] as const

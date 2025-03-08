@@ -26,28 +26,31 @@ const tiles: TileDef[] = [
   })),
 ]
 
+export function useHasActiveTile() {
+  const pathname = usePathname()
+  return tiles.some(({ path }) => path === pathname)
+}
+
 export const TileGrid = () => {
   const active = usePathname()
   const router = useRouter()
   const lastActive = useLast(active)
   const hasLesson = useHasLesson()
-  const hasActive = active !== "/"
+  const hasActive = useHasActiveTile()
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <div
       className={`${
         hasLesson ? "fixed top-0 left-0" : "relative"
-      } mx-auto pt-[112px] xl:pt-[5rem]`}
+      } mx-auto pt-0 pb-6 w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+1rem)] lg:w-[calc(3*var(--item-width)+2rem)]`}
+      style={
+        {
+          "--item-width": "320px",
+          "--item-height": "320px",
+        } as React.CSSProperties
+      }
     >
-      <div
-        className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-4 p-main"
-        style={
-          {
-            "--item-width": "320px",
-            "--item-height": "320px",
-          } as React.CSSProperties
-        }
-      >
+      <div className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-4 p-main">
         {tiles
           .filter(({ disabled }) => !disabled || isDebug)
           .map(({ path, title, dsKey }) => {
@@ -127,7 +130,7 @@ function Tile({
       ref={ref}
       className={`relative ${
         onClick ? "cursor-pointer" : ""
-      } h-[var(--item-height)] touch-none`}
+      } h-[var(--item-height)] touch-pan-y`}
       {...bind()}
     >
       <div

@@ -34,7 +34,7 @@ Only _Sequential_ models are supported with these layer types: _Dense_, _Conv2D_
 - **model**: Everything related to TensorFlow.js and ML: model creation, training, activations, weights and biases
 - **neuron-layers**: Here is where the current state get's poured into layers of neurons
 - **scene**: Everything related to rendering the model with three.js
-- **store**: The global [Zustand](https://github.com/pmndrs/zustand) store for state and settings
+- **store**: A global [Zustand](https://github.com/pmndrs/zustand) for UI settings and scoped stores for every scene
 - **utils**: Everything else
 
 ## Resources, Inspirations, and Credits
