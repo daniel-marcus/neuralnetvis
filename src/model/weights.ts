@@ -1,11 +1,11 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useState } from "react"
-import { useGlobalStore } from "@/store"
+import { useCurrScene } from "@/store"
 import type { WeightsBiases } from "./types"
 
 export function useWeights(model?: tf.LayersModel) {
   const [weightsBiases, setWeightsBiases] = useState<WeightsBiases[]>([])
-  const batchCount = useGlobalStore((s) => s.batchCount) // used to trigger updates after/during training
+  const batchCount = useCurrScene((s) => s.batchCount) // used to trigger updates after/during training
   useEffect(() => {
     if (!model) return
     async function updateWeights() {

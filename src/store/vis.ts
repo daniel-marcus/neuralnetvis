@@ -51,7 +51,11 @@ interface Three {
   gl: RootState["gl"]
 }
 
-export type VisSlice = { vis: VisConfig & VisActions; three?: Three }
+export type VisSlice = {
+  vis: VisConfig & VisActions
+  three?: Three
+  setThree: (three: Three) => void
+}
 
 export const createVisSlice: StateCreator<VisSlice> = (set) => ({
   vis: {
@@ -76,4 +80,5 @@ export const createVisSlice: StateCreator<VisSlice> = (set) => ({
       set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
   },
   three: undefined,
+  setThree: (three) => set({ three }),
 })

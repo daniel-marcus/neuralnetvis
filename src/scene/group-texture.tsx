@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react"
-import { useGlobalStore } from "@/store"
+import { useSceneStore } from "@/store"
 import * as THREE from "three"
 import { useGroupPosition } from "./neuron-group"
 import type { NeuronGroupProps } from "@/neuron-layers/types"
@@ -24,7 +24,7 @@ export function GroupWithTexture(props: NeuronGroupProps) {
 
   useUvMapping(geometry, width)
 
-  const setHovered = useGlobalStore((s) => s.setHovered)
+  const setHovered = useSceneStore((s) => s.setHovered)
 
   return (
     <mesh
