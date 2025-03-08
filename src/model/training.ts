@@ -4,20 +4,20 @@ import { useKeyCommand } from "@/utils/key-command"
 import { backendForTraining, setBackendIfAvailable } from "./tf-backend"
 import { getAll } from "@/data/db"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
-import { getDs, getModel, useStore, isDebug } from "@/store"
+import { getDs, getModel, useGlobalStore, isDebug } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
-  const isTraining = useStore((s) => s.isTraining)
-  const toggleTraining = useStore((s) => s.toggleTraining)
-  const batchCount = useStore((s) => s.batchCount)
-  const config = useStore((s) => s.trainConfig)
+  const isTraining = useGlobalStore((s) => s.isTraining)
+  const toggleTraining = useGlobalStore((s) => s.toggleTraining)
+  const batchCount = useGlobalStore((s) => s.batchCount)
+  const config = useGlobalStore((s) => s.trainConfig)
   useKeyCommand("t", toggleTraining)
-  useEffect(() => useStore.getState().resetTrainCounts(), [model])
+  useEffect(() => useGlobalStore.getState().resetTrainCounts(), [model])
   useEffect(() => {
     if (!isTraining || !ds || !model) return
     const { validationSplit, batchSize, epochs: _epochs } = config
-    const initialEpoch = useStore.getState().epochCount
+    const initialEpoch = useGlobalStore.getState().epochCount
     const epochs = initialEpoch + _epochs
 
     startTraining()
@@ -128,14 +128,14 @@ function makeGenerator(
 }
 
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
-  const ongoingTraining = useStore.getState().trainingPromise
+  const ongoingTraining = useGlobalStore.getState().trainingPromise
   if (ongoingTraining) {
     console.log("Changing ongoing training ...")
     await ongoingTraining
-    // useStore.setState({ trainingPromise: null })
+    // useGlobalStore.setState({ trainingPromise: null })
   }
 
-  const lazyLoading = useStore.getState().trainConfig.lazyLoading
+  const lazyLoading = useGlobalStore.getState().trainConfig.lazyLoading
 
   let history: tf.History | void | undefined = undefined
   if (!lazyLoading) {
@@ -143,7 +143,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     if (!trainData) return
     const [X, y] = trainData
     const trainingPromise = model.fit(X, y, options)
-    useStore.setState({ trainingPromise })
+    useGlobalStore.setState({ trainingPromise })
     history = await trainingPromise.then(() => {
       X.dispose()
       y.dispose()
@@ -180,7 +180,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
       validationData,
     })
 
-    useStore.setState({ trainingPromise })
+    useGlobalStore.setState({ trainingPromise })
     history = await trainingPromise?.then(() => {
       validationData?.[0].dispose()
       validationData?.[1].dispose()
@@ -212,11 +212,11 @@ async function getDbDataAsTensors(
 
 export async function trainOnBatch(xs: number[][], ys: number[]) {
   const ds = getDs()
-  const setBatchCount = useStore.getState().setBatchCount
+  const setBatchCount = useGlobalStore.getState().setBatchCount
   const model = getModel()
   if (!ds || !model) return
   const isClassification = ds?.task === "classification"
-  const trainShape = useStore.getState().getInputShape()
+  const trainShape = useGlobalStore.getState().getInputShape()
   const [X, y] = tf.tidy(() => {
     const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
     const y = isClassification

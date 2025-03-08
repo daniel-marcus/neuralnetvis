@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import "@tensorflow/tfjs-backend-webgpu"
 import "@tensorflow/tfjs-backend-wasm"
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm"
-import { getModel, useStore } from "@/store"
+import { getModel, useGlobalStore } from "@/store"
 
 setWasmPaths({
   "tfjs-backend-wasm.wasm": "/tfjs-backend-wasm.wasm",
@@ -15,12 +15,12 @@ setWasmPaths({
 export const DEFAULT_BACKEND = "wasm" // "webgpu" | "wasm" | "webgl"
 
 export function useTfBackend() {
-  const backendReady = useStore((s) => s.backendReady)
+  const backendReady = useGlobalStore((s) => s.backendReady)
   useEffect(() => {
     async function checkReady() {
       // console.log(getAvailableBackends())
       await setBackendIfAvailable(DEFAULT_BACKEND)
-      useStore.setState({ backendReady: true })
+      useGlobalStore.setState({ backendReady: true })
     }
     checkReady()
   }, [])
@@ -47,8 +47,8 @@ export function getAvailableBackends() {
 export async function backendForTraining() {
   const backends = getAvailableBackends()
   const model = getModel()
-  const silent = useStore.getState().trainConfig.silent
-  const totalSamples = useStore.getState().totalSamples()
+  const silent = useGlobalStore.getState().trainConfig.silent
+  const totalSamples = useGlobalStore.getState().totalSamples()
   if (silent && backends.includes("webgpu") && totalSamples > 1000) {
     await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
   } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {

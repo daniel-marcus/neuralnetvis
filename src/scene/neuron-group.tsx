@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
-import { useStore, isDebug } from "@/store"
+import { useGlobalStore, isDebug } from "@/store"
 import { useAnimatedPosition } from "@/scene/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
@@ -36,7 +36,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
 }
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
-  const neuronSpacing = useStore((s) => s.vis.neuronSpacing)
+  const neuronSpacing = useGlobalStore((s) => s.vis.neuronSpacing)
   const p = geometry.parameters as { width?: number; radius?: number }
   const size = p.width ?? p.radius ?? 1
   const factor = spacingFactor ?? 1
@@ -49,7 +49,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
   const groupIndex = group.index
   const groupCount = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
-  const splitColors = useStore((s) => s.vis.splitColors)
+  const splitColors = useGlobalStore((s) => s.vis.splitColors)
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
@@ -164,8 +164,8 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
 } */
 
 function useInteractions(groupedNeurons: Neuron[]) {
-  const toggleSelected = useStore((s) => s.toggleSelected)
-  const toggleHovered = useStore((s) => s.toggleHovered)
+  const toggleSelected = useGlobalStore((s) => s.toggleSelected)
+  const toggleHovered = useGlobalStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
@@ -179,7 +179,7 @@ function useInteractions(groupedNeurons: Neuron[]) {
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
         const neuron = groupedNeurons[e.instanceId as number]
-        if (useStore.getState().isDebug) console.log(neuron)
+        if (useGlobalStore.getState().isDebug) console.log(neuron)
         toggleSelected(neuron)
       },
     }

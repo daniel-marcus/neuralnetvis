@@ -7,10 +7,9 @@ import {
 } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
-import { setStatus, useStore } from "@/store"
+import { setStatus, useGlobalStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
-import { updateSample } from "./sample"
 
 const HP_TRAIN_CONFIG = {
   batchSize: 16,
@@ -20,7 +19,7 @@ const HP_TRAIN_CONFIG = {
 }
 
 export function useHandPose(stream: MediaStream | null | undefined) {
-  const numHands = useStore((s) => s.ds?.inputDims[2] ?? 1)
+  const numHands = useGlobalStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands)
   usePredictLoop(stream, hpPredict)
   useCanvasUpdate()
@@ -29,7 +28,7 @@ export function useHandPose(stream: MediaStream | null | undefined) {
 }
 
 function useLandmarker(numHands: number) {
-  const videoRef = useStore((s) => s.videoRef)
+  const videoRef = useGlobalStore((s) => s.videoRef)
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
 
   useEffect(() => {
@@ -38,7 +37,7 @@ function useLandmarker(numHands: number) {
       const statusId = setStatus("Loading hand landmark model ...", -1)
       handLandmarker = await createHandLandmarker()
       setLandmarker(handLandmarker)
-      useStore.getState().status.clear(statusId)
+      useGlobalStore.getState().status.clear(statusId)
     }
     init()
     return () => {
@@ -131,29 +130,29 @@ function usePredictLoop(
     let animationFrame: number
     captureLoop()
     async function captureLoop() {
-      const ds = useStore.getState().ds
-      const isTraning = useStore.getState().isTraining
+      const ds = useGlobalStore.getState().ds
+      const isTraning = useGlobalStore.getState().isTraining
       if (!isTraning) {
         const { X: _X, rawX } = await hpPredict()
         if (_X) {
           const X =
             (ds?.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
-          useStore.setState({ sample: { X, y: recordingY, rawX } })
+          useGlobalStore.setState({ sample: { X, y: recordingY, rawX } })
         }
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
     return () => {
       cancelAnimationFrame(animationFrame)
-      useStore.setState({ sample: undefined })
-      updateSample(useStore.getState().sampleIdx)
+      useGlobalStore.setState({ sample: undefined })
+      // updateSample(useGlobalStore.getState().sampleIdx)
     }
   }, [stream, hpPredict])
 }
 
 function useCanvasUpdate() {
-  const videoRef = useStore((s) => s.videoRef)
-  const canvasRef = useStore((s) => s.canvasRef)
+  const videoRef = useGlobalStore((s) => s.videoRef)
+  const canvasRef = useGlobalStore((s) => s.canvasRef)
   useEffect(() => {
     if (!canvasRef.current) return
     // TODO: aspect ratio from dataset?
@@ -193,8 +192,8 @@ function useCanvasUpdate() {
     [canvasRef, videoRef]
   )
 
-  const rawX = useStore((s) => s.sample?.rawX)
-  const inputDims = useStore.getState().ds?.inputDims
+  const rawX = useGlobalStore((s) => s.sample?.rawX)
+  const inputDims = useGlobalStore.getState().ds?.inputDims
   useEffect(() => {
     if (!rawX || !inputDims) return
     if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
@@ -209,11 +208,11 @@ function useCanvasUpdate() {
 }
 
 function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
-  const isRecording = useStore((s) => s.isRecording)
-  const toggleRecording = useStore((s) => s.toggleRecording)
+  const isRecording = useGlobalStore((s) => s.isRecording)
+  const toggleRecording = useGlobalStore((s) => s.toggleRecording)
 
   const hpRecordSamples = useCallback(async () => {
-    const ds = useStore.getState().ds
+    const ds = useGlobalStore.getState().ds
     const outputSize = ds?.outputLabels.length
     if (!outputSize) return
 
@@ -236,7 +235,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       let xDataRaw: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
-        if (!useStore.getState().isRecording) {
+        if (!useGlobalStore.getState().isRecording) {
           setStatus(`Recording canceled.`, null, { id: STATUS_ID })
           return
         }
@@ -274,9 +273,9 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       )
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
-    useStore.getState().status.clear(STATUS_ID)
+    useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
-    useStore.setState({ isRecording: false })
+    useGlobalStore.setState({ isRecording: false })
   }, [hpPredict, numHands])
 
   useEffect(() => {
@@ -289,6 +288,6 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
 }
 
 function hpTrain() {
-  useStore.getState().setTrainConfig(HP_TRAIN_CONFIG)
-  useStore.setState({ isTraining: true, logsMetric: "val_loss" })
+  useGlobalStore.getState().setTrainConfig(HP_TRAIN_CONFIG)
+  useGlobalStore.setState({ isTraining: true, logsMetric: "val_loss" })
 }

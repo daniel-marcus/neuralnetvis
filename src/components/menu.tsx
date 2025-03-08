@@ -3,7 +3,7 @@
 import { createElement, useState, Fragment, type ReactNode } from "react"
 import Link from "next/link"
 import Headroom from "react-headroom"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
@@ -12,9 +12,9 @@ import { usePathname } from "next/navigation"
 import { setInitialState } from "@/utils/initial-state"
 
 export const Menu = () => {
-  const currTab = useStore((s) => s.tab)
-  const setTab = useStore((s) => s.setTab)
-  const isShown = useStore((s) => s.tabIsShown)
+  const currTab = useGlobalStore((s) => s.tab)
+  const setTab = useGlobalStore((s) => s.setTab)
+  const isShown = useGlobalStore((s) => s.tabIsShown)
   const content = currTab?.component ? createElement(currTab.component) : null
   const isScreenXl = useIsScreen("xl")
   const hasLesson = useHasLesson()
@@ -75,10 +75,10 @@ export const Menu = () => {
 }
 
 const Tabs = () => {
-  const currTab = useStore((s) => s.tab)
-  const setTab = useStore((s) => s.setTab)
-  const toggleTab = useStore((s) => s.toggleTab)
-  const tabIsShown = useStore((s) => s.tabIsShown)
+  const currTab = useGlobalStore((s) => s.tab)
+  const setTab = useGlobalStore((s) => s.setTab)
+  const toggleTab = useGlobalStore((s) => s.toggleTab)
+  const tabIsShown = useGlobalStore((s) => s.tabIsShown)
 
   function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {

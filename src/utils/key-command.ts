@@ -2,8 +2,13 @@ import { useEffect } from "react"
 
 type Callback = () => void | Promise<void>
 
-export function useKeyCommand(key: string, callback: Callback) {
+export function useKeyCommand(
+  key: string,
+  callback: Callback,
+  isActive = true
+) {
   useEffect(() => {
+    if (!isActive) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === "input") return
       if (e.key === key) {
@@ -14,5 +19,5 @@ export function useKeyCommand(key: string, callback: Callback) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [key, callback])
+  }, [key, callback, isActive])
 }

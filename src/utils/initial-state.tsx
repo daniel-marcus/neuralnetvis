@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { StoreType, useStore } from "@/store"
+import { StoreType, useGlobalStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
@@ -23,7 +23,7 @@ export type InitialState = Partial<ExposedStoreType> & {
 
 export const defaultState: InitialState = {
   activeTile: null,
-  dsKey: "mnist",
+  // dsKey: "mnist",
   layerConfigs: defaultLayerConfigs,
   selectedNid: undefined,
   cameraPos: [-23, 0, 35],
@@ -32,7 +32,7 @@ export const defaultState: InitialState = {
 }
 
 export function useInitialState(state = defaultState) {
-  const three = useStore((s) => s.three)
+  const three = useGlobalStore((s) => s.three)
   useEffect(() => {
     if (!three) return
     setInitialState(state)
@@ -51,7 +51,7 @@ export function setInitialState(initialState: InitialState = defaultState) {
     moveCameraTo(cameraPos, cameraLookAt)
   }
   if (vis) {
-    useStore.getState().vis.setConfig({ ...vis })
+    useGlobalStore.getState().vis.setConfig({ ...vis })
   }
-  useStore.setState(storeSettings)
+  useGlobalStore.setState(storeSettings)
 }

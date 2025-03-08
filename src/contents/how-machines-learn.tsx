@@ -1,6 +1,6 @@
 "use client"
 
-import { getThree, setStatus, setVisConfig, useStore } from "@/store"
+import { getThree, setStatus, setVisConfig, useGlobalStore } from "@/store"
 import { useInitialState, type InitialState } from "@/utils/initial-state"
 import { LockButton } from "@/scene/lock"
 import { Block, Details, Head } from "@/contents/elements"
@@ -38,13 +38,13 @@ export const IntroNetworks = (): LessonContent => {
           const initSpacing = initialState.vis!.neuronSpacing!
           const dflt = defaultVisConfig.neuronSpacing!
           const neuronSpacing = interpolate(initSpacing, dflt, percent)
-          useStore.getState().vis.setConfig({ neuronSpacing })
+          useGlobalStore.getState().vis.setConfig({ neuronSpacing })
         }}
       />
       <Block
         cameraPos={[-60, 0, 30]}
         onEnter={() => {
-          useStore.setState({ sampleIdx: initialState.sampleIdx })
+          useGlobalStore.setState({ sampleIdx: initialState.sampleIdx })
           setVisConfig({
             invisibleLayers: initialState.vis!.invisibleLayers,
           })
@@ -65,10 +65,10 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={({ percent }) => {
           const idx = Math.round(percent * 10)
           const nid = `2_${idx}.0.0`
-          useStore.setState({ hoveredNid: nid })
+          useGlobalStore.setState({ hoveredNid: nid })
         }}
         onLeave={() => {
-          useStore.setState({ hoveredNid: undefined })
+          useGlobalStore.setState({ hoveredNid: undefined })
         }}
         onEnter={() => {
           setVisConfig({ showPointer: false })
@@ -88,12 +88,12 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={scrollTrain}
         onEnter={() => {
           setVisConfig({ highlightProp: "weights" })
-          useStore.setState({ selectedNid: `2_3.0.0` })
+          useGlobalStore.setState({ selectedNid: `2_3.0.0` })
         }}
         onLeave={() => {
-          useStore.getState().status.clear(SCROLL_TRAIN_STATUS_ID)
+          useGlobalStore.getState().status.clear(SCROLL_TRAIN_STATUS_ID)
           setVisConfig({ highlightProp: null })
-          useStore.setState({ selectedNid: undefined })
+          useGlobalStore.setState({ selectedNid: undefined })
         }}
       >
         <p className="mb-[50vh]">We can even train the model as we scroll.</p>
@@ -144,7 +144,7 @@ export function rotate({ percent }: OnScrollProps) {
 
 function changeSample({ percent }: OnScrollProps) {
   const sampleIdx = Math.round(percent * 100 + 1)
-  useStore.setState({ sampleIdx })
+  useGlobalStore.setState({ sampleIdx })
 }
 
 let batch = 0
@@ -160,17 +160,17 @@ function getRandomI(totalSamples: number) {
 }
 
 async function scrollTrain({ percent }: OnScrollProps) {
-  const totalSamples = useStore.getState().totalSamples()
+  const totalSamples = useGlobalStore.getState().totalSamples()
   const sampleIdx = getRandomI(totalSamples)
   batch++
-  useStore.setState({ sampleIdx })
+  useGlobalStore.setState({ sampleIdx })
 
-  const sample = useStore.getState().sample
+  const sample = useGlobalStore.getState().sample
   if (!sample || typeof sample.y !== "number") return
   const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return
-  useStore.getState().addLogs([{ ...log, batch }])
+  useGlobalStore.getState().addLogs([{ ...log, batch }])
   setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
     id: SCROLL_TRAIN_STATUS_ID,
   })

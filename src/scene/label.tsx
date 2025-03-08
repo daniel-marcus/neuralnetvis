@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import * as THREE from "three"
 import { Text } from "troika-three-text"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { ThreeElement } from "@react-three/fiber"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
@@ -27,8 +27,8 @@ interface NeuronLabelsProps {
 
 export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
-  const trainingY = useStore((s) => s.sample?.y)
-  const isRegression = useStore((s) => s.isRegression())
+  const trainingY = useGlobalStore((s) => s.sample?.y)
+  const isRegression = useGlobalStore((s) => s.isRegression())
   const showValueLabel = !!label && !!rawInput && isRegression
   const layerPos = neuron.layer.layerPos
   if (!label || !position) return null
@@ -85,7 +85,7 @@ export const NeuronLabel = ({
     }
   })
   const invalidate = useThree(({ invalidate }) => invalidate)
-  const lightsOn = useStore((s) => s.vis.lightsOn)
+  const lightsOn = useGlobalStore((s) => s.vis.lightsOn)
   useLayoutEffect(() => {
     if (!labelRef.current) return
     labelRef.current.sync(() => {

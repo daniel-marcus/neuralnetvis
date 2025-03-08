@@ -8,7 +8,7 @@ import {
   LineSegments2,
   LineSegmentsGeometry,
 } from "three-stdlib"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { useHovered } from "@/neuron-layers/neuron-select"
 import { getWorldPos, type Pos } from "./utils"
 import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
@@ -24,8 +24,8 @@ type NeuronConnectionsProps = {
 
 export const HoverConnections = () => {
   const hovered = useHovered()
-  const showLines = useStore((s) => s.vis.showLines)
-  // const hoverOrigin = useStore((s) => s.hoverOrigin)
+  const showLines = useGlobalStore((s) => s.vis.showLines)
+  // const hoverOrigin = useGlobalStore((s) => s.hoverOrigin)
 
   const line = useMemo(() => new Line2(), [])
   const material = useMemo(() => new LineMaterial(), [])
@@ -86,11 +86,11 @@ export const HoverConnections = () => {
 }
 
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
-  const showLines = useStore((s) => s.vis.showLines)
+  const showLines = useGlobalStore((s) => s.vis.showLines)
   const isConvOrMaxPool =
     ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
     ["Conv2D"].includes(prevLayer.layerType)
-  const isRegression = useStore((s) => s.isRegression())
+  const isRegression = useGlobalStore((s) => s.isRegression())
   const invalidate = useThree(({ invalidate }) => invalidate)
   useEffect(() => {
     invalidate()
@@ -111,7 +111,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
 
 function getConnections(layer: LayerStateful, prevNeurons: Neuron[]) {
   const lineActivationThreshold =
-    useStore.getState().vis.lineActivationThreshold
+    useGlobalStore.getState().vis.lineActivationThreshold
   const layerMaxWeight = layer.maxAbsWeight ?? 1
 
   const connections: DynamicLineProps[] = []

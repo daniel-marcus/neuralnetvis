@@ -12,6 +12,8 @@ export interface LessonDef {
   slug: string
   description: string
   content: () => LessonContent
+  disabled?: boolean
+  dsKey?: string
 }
 
 export const lessons: LessonDef[] = [
@@ -20,12 +22,14 @@ export const lessons: LessonDef[] = [
     slug: "how-machines-learn",
     description: "Some basics about machine learning",
     content: IntroNetworks,
+    dsKey: "mnist",
   },
   {
     title: "Exploring the interface",
     slug: "exploring-the-interface",
     description: "Learn what you can see and do here",
     content: IntroInterface,
+    disabled: true,
   },
 ]
 
@@ -34,12 +38,11 @@ export type LessonPreview = Omit<LessonDef, "content"> & {
 }
 
 export const lessonPreviews: LessonPreview[] = lessons.map((l) => {
-  const { title, slug, description } = l
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { content, ...lessonDef } = l
   return {
-    title,
-    slug,
-    description,
-    path: getLessonPath(slug),
+    ...lessonDef,
+    path: getLessonPath(lessonDef.slug),
   }
 })
 

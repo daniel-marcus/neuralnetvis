@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react"
 import { getNeuronColor } from "./colors"
 import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 
 // add state to each neuron
 
@@ -66,7 +66,7 @@ export function useStatefulLayers(
   }, [statelessLayers, activations, weightsBiases, rawInputs])
 
   useEffect(() => {
-    useStore.setState({ allNeurons })
+    useGlobalStore.setState({ allNeurons })
   }, [allNeurons])
 
   return statefulLayers

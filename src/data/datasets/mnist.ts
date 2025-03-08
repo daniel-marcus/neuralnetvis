@@ -1,5 +1,5 @@
-import { DatasetDef } from "@/data"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import type { DatasetDef } from "@/data/types"
 
 export const mnist: DatasetDef = {
   key: "mnist",

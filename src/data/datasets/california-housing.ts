@@ -1,10 +1,10 @@
-import { DatasetDef } from "@/data"
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import type { DatasetDef } from "@/data/types"
 
 export const californiaHousing: DatasetDef = {
-  key: "california_housing",
+  key: "california-housing",
   name: "california housing",
   task: "regression",
   description: "Predict housing prices",

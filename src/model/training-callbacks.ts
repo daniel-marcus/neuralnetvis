@@ -1,6 +1,6 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
-import { useStore, isDebug } from "@/store"
+import { useGlobalStore, isDebug } from "@/store"
 import { getModelEvaluation } from "./training"
 import {
   resolveScalarsInLogs,
@@ -11,9 +11,9 @@ import type { TypedParams } from "./types"
 const THROTTLE = 30
 
 export class UpdateCb extends CustomCallback {
-  private silent = useStore.getState().trainConfig.silent
-  private batchSize = useStore.getState().trainConfig.batchSize
-  private next = useStore.getState().nextSample
+  private silent = useGlobalStore.getState().trainConfig.silent
+  private batchSize = useGlobalStore.getState().trainConfig.batchSize
+  private next = useGlobalStore.getState().nextSample
   private trainingComplete = false // will be set only if all epochs ran fully without interruption
   declare params: TypedParams
   constructor() {
@@ -21,23 +21,23 @@ export class UpdateCb extends CustomCallback {
       onBatchBegin: () => {
         if (this.silent) return
         this.next(this.batchSize) // trigger view update
-        useStore.getState().setBatchCount((prev) => prev + 1) // trigger model update
+        useGlobalStore.getState().setBatchCount((prev) => prev + 1) // trigger model update
       },
       onEpochEnd: (epoch) => {
-        useStore.getState().setEpochCount(epoch + 1)
+        useGlobalStore.getState().setEpochCount(epoch + 1)
         if (epoch === this.params.epochs - 1) {
           this.trainingComplete = true
         }
       },
       onTrainEnd: () => {
         if (this.trainingComplete) {
-          useStore.setState({
+          useGlobalStore.setState({
             isTraining: false,
             trainingPromise: null,
           })
         }
         if (this.silent) {
-          const setBatchCount = useStore.getState().setBatchCount
+          const setBatchCount = useGlobalStore.getState().setBatchCount
           const processedSamples = (this.params.samples ?? 0) - 1
           this.next(processedSamples) // update view
           setBatchCount((c) => c + processedSamples) // update weights
@@ -51,7 +51,10 @@ export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
   private statusId = "training_progress"
-  private setStatus = throttle(useStore.getState().status.update, THROTTLE)
+  private setStatus = throttle(
+    useGlobalStore.getState().status.update,
+    THROTTLE
+  )
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0
@@ -112,7 +115,7 @@ export class ProgressCb extends CustomCallback {
 
 export class LogsPlotCb extends CustomCallback {
   private epoch = 0
-  private addLogs = throttle(useStore.getState().addLogs, THROTTLE)
+  private addLogs = throttle(useGlobalStore.getState().addLogs, THROTTLE)
   private lastLogTime = 0
   private updEvery = 50 // ms
   constructor() {

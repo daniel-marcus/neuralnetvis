@@ -1,4 +1,4 @@
-import { useStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { datasets } from "./datasets"
 import { deleteAll, getData, putData, putDataBatches } from "./db"
 import type {
@@ -10,22 +10,27 @@ import type {
   StoreMeta,
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo } from "react"
 
 export const DEFAULT_STORE_BATCH_SIZE = 100
 
 export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
-  const [ds, setDs] = useState<Dataset | undefined>(undefined)
+  const ds = useSceneStore((s) => s.ds)
+  const setDs = useSceneStore((s) => s.setDs)
   useEffect(() => {
-    // TODO !!
     async function loadDs() {
       if (!dsDef) return
       const ds = await getDsFromDef(dsDef, isPreview)
       setDs(ds)
     }
     loadDs()
-  }, [dsDef, isPreview])
+  }, [dsDef, isPreview, setDs])
   return ds
+}
+
+export function useDsDef(dsKey?: string) {
+  // TODO: also use user generated from db
+  return useMemo(() => datasets.find((d) => d.key === dsKey), [dsKey])
 }
 
 export async function setDsFromKey(key: string) {
@@ -82,7 +87,8 @@ export async function setDsFromDef(
   skipLoading?: boolean
 ) {
   const ds = await getDsFromDef(dsDef, skipLoading)
-  useStore.setState({ ds, sample: undefined, sampleIdx: 0 })
+  console.log("TOOD: setDsFromDef", ds)
+  useGlobalStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 
 export async function loadAndSaveDsData(
@@ -110,12 +116,19 @@ async function saveData(
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
-  xsRaw?: ParsedLike
+  xsRaw?: ParsedLike,
+  overwrite = true
 ) {
   const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
 
-  const existingMeta = await getData<StoreMeta>(dbName, "meta", storeName)
-  const oldSamplesX = existingMeta?.totalSamples ?? 0
+  let oldSamplesX = 0
+  if (overwrite) {
+    await deleteAll(dbName, storeName)
+  } else {
+    const existingMeta = await getData<StoreMeta>(dbName, "meta", storeName)
+    oldSamplesX = existingMeta?.totalSamples ?? 0
+  }
+
   const [newSamplesX] = xs.shape
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
 
@@ -145,11 +158,11 @@ export async function addTrainData(
   ys: ParsedLike,
   xsRaw?: ParsedLike
 ) {
-  const ds = useStore.getState().ds
+  const ds = useGlobalStore.getState().ds
   if (!ds) return
-  const newTrainMeta = await saveData(ds, "train", xs, ys, xsRaw)
+  const newTrainMeta = await saveData(ds, "train", xs, ys, xsRaw, false)
   const newDs = { ...ds, train: newTrainMeta }
-  useStore.setState({ ds: newDs, skipModelCreate: true })
+  useGlobalStore.setState({ ds: newDs, skipModelCreate: true })
 }
 
 export async function resetData(dsKey: string, storeName: "train" | "test") {
@@ -157,9 +170,9 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
   const storeMeta = newStoreMeta(storeName, 0)
   await putData(dsKey, "meta", storeMeta)
 
-  const currDs = useStore.getState().ds
+  const currDs = useGlobalStore.getState().ds
   if (currDs?.key === dsKey) {
     const newDs = { ...currDs, [storeName]: storeMeta }
-    useStore.setState({ ds: newDs, skipModelCreate: true })
+    useGlobalStore.setState({ ds: newDs, skipModelCreate: true })
   }
 }

@@ -1,7 +1,6 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { LayerConfigArray } from "@/model"
-import { StatusSlice } from "./status"
 import { setVisConfig } from "."
 
 export const defaultLayerConfigs: LayerConfigArray = [
@@ -26,12 +25,7 @@ export interface ModelSlice {
   getInputShape: () => number[]
 }
 
-export const createModelSlice: StateCreator<
-  ModelSlice & StatusSlice,
-  [],
-  [],
-  ModelSlice
-> = (set, get) => ({
+export const createModelSlice: StateCreator<ModelSlice> = (set, get) => ({
   backendReady: false,
 
   model: undefined,
@@ -39,9 +33,9 @@ export const createModelSlice: StateCreator<
   _setModel: (model) => set({ model }), // , layerActivations: []
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
-    set(({ status }) => ({
+    set(({}) => ({
       layerConfigs,
-      status: { ...status, percent: -1 }, // trigger spinner
+      // status: { ...status, percent: -1 }, // trigger spinner
     })),
   resetLayerConfigs: () => {
     set({ layerConfigs: defaultLayerConfigs })

@@ -1,7 +1,9 @@
+"use client"
+
 import { useCallback, useEffect } from "react"
 import { useDrag } from "@use-gesture/react"
 import { useSpring, animated } from "@react-spring/web"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 
 const AnimatedDiv = animated("div")
 
@@ -13,9 +15,9 @@ interface BoxProps {
 }
 
 export function Box({ children, className, padding, hasBg = true }: BoxProps) {
-  const isShown = useStore((s) => s.tabIsShown)
+  const isShown = useGlobalStore((s) => s.tabIsShown)
   const closeTab = useCallback(() => {
-    useStore.setState({ tabIsShown: false })
+    useGlobalStore.setState({ tabIsShown: false })
   }, [])
   const [bind, style] = useSwipeClose(closeTab, isShown)
   return (

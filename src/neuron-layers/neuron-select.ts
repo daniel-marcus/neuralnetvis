@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "./colors"
 import type { LayerStateful, Nid } from "./types"
@@ -10,10 +10,10 @@ export function useNeuronSelect(
   isActive: boolean,
   layerProps: LayerStateful[]
 ) {
-  const highlightProp = useStore((s) => s.vis.highlightProp)
-  const allNeurons = useStore((s) => s.allNeurons)
-  const selectedNid = useStore((s) => s.selectedNid)
-  const hoveredNid = useStore((s) => s.hoveredNid)
+  const highlightProp = useGlobalStore((s) => s.vis.highlightProp)
+  const allNeurons = useGlobalStore((s) => s.allNeurons)
+  const selectedNid = useGlobalStore((s) => s.selectedNid)
+  const hoveredNid = useGlobalStore((s) => s.hoveredNid)
   const selOrHovNid = hoveredNid || selectedNid
 
   const patchedLayerProps = useMemo(() => {
@@ -50,17 +50,17 @@ export function useNeuronSelect(
 }
 
 export function useHovered() {
-  const hoveredNid = useStore((s) => s.hoveredNid)
+  const hoveredNid = useGlobalStore((s) => s.hoveredNid)
   return useNeuron(hoveredNid)
 }
 
 export function useSelected() {
-  const selectedNid = useStore((s) => s.selectedNid)
+  const selectedNid = useGlobalStore((s) => s.selectedNid)
   return useNeuron(selectedNid)
 }
 
 function useNeuron(nid?: Nid) {
-  const allNeurons = useStore((s) => s.allNeurons)
+  const allNeurons = useGlobalStore((s) => s.allNeurons)
   return useMemo(
     () => (nid ? allNeurons.get(nid) : undefined),
     [allNeurons, nid]
@@ -87,8 +87,8 @@ export function getWeightedInputs(
 
 export function useLocalSelected(layerIndex: number, groupIndex: number) {
   // returns values only if they are in the same group to avoid unnecessary re-renders
-  const _selectedNid = useStore((s) => s.selectedNid)
-  const _hoveredNid = useStore((s) => s.hoveredNid)
+  const _selectedNid = useGlobalStore((s) => s.selectedNid)
+  const _hoveredNid = useGlobalStore((s) => s.hoveredNid)
   const result = {
     selectedNid:
       _selectedNid && isInGroup(_selectedNid, layerIndex, groupIndex)

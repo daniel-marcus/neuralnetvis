@@ -9,9 +9,6 @@ export interface TabsSlice {
   tab: Tab | null
   setTab: (key: string | null) => void
   toggleTab: (key: string) => void
-
-  activeTile: string | null
-  toggleActiveTile: (key: string) => void
 }
 
 export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
@@ -27,8 +24,4 @@ export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
     }),
   setTab: (key) =>
     set({ tab: key ? tabMap.get(key) ?? null : null, tabIsShown: true }),
-
-  activeTile: null,
-  toggleActiveTile: (key) =>
-    set((s) => ({ activeTile: s.activeTile === key ? null : key })),
 })

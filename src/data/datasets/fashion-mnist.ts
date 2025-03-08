@@ -1,8 +1,8 @@
-import { DatasetDef } from "@/data"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import type { DatasetDef } from "@/data/types"
 
 export const fashionMnist: DatasetDef = {
-  key: "fashion_mnist",
+  key: "fashion-mnist",
   name: "fashion mnist",
   task: "classification",
   description: "Clothing items (28x28)",

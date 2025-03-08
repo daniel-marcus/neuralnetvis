@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useThree } from "@react-three/fiber"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import type { OrbitControls } from "three-stdlib"
 
 export const ThreeStoreSetter = () => {
@@ -14,7 +14,7 @@ function useThreeStoreSetter() {
   useEffect(() => {
     const controls = _controls as OrbitControls
     const three = { camera, invalidate, gl, controls }
-    useStore.setState({ three })
+    useGlobalStore.setState({ three })
   }, [camera, invalidate, gl, _controls])
   return null
 }

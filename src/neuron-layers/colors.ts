@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import type { Neuron } from "@/neuron-layers/types"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 
 export type ColorObj = {
   rgb: number[] // for meshes
@@ -54,7 +54,7 @@ function normalizeTo(val?: number, max = 255) {
 
 export function getNeuronColor(n: Omit<Neuron, "color">) {
   const colorVal = normalizeTo(n.normalizedActivation, 255)
-  const isRegression = useStore.getState().isRegression()
+  const isRegression = useGlobalStore.getState().isRegression()
   return isRegression && n.layer.layerPos === "output"
     ? getPredictionQualityColor(n)
     : n.layer.hasColorChannels
@@ -69,7 +69,7 @@ export function getHighlightColor(val: number) {
 }
 
 function getPredictionQualityColor(n: Omit<Neuron, "color">) {
-  const y = useStore.getState().sample?.y ?? 1
+  const y = useGlobalStore.getState().sample?.y ?? 1
   const percentualError = Math.abs((n.activation ?? 1) - y) / y
   const quality = 1 - Math.min(percentualError, 1) // should be between 0 and 1
   return POS_HIGHLIGHT_COLORS[Math.ceil(quality * 255)]

@@ -5,7 +5,7 @@ import { preprocessFuncs } from "./preprocess"
 export type DatasetKey = string
 
 export interface DatasetMeta {
-  key: DatasetKey
+  key: DatasetKey // aka slug
   task: "classification" | "regression"
   name: string
   description: string

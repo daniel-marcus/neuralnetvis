@@ -1,5 +1,5 @@
-import { DatasetDef } from "@/data"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import type { DatasetDef } from "@/data/types"
 
 export const cifar10: DatasetDef = {
   key: "cifar10",

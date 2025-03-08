@@ -1,3 +1,5 @@
+"use client"
+
 import { Data } from "./data"
 import { Info } from "./info"
 import { Learn } from "./learn"

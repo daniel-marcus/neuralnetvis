@@ -3,15 +3,14 @@ import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
 import { Highlighted } from "./highlighted"
-import { DatasetDef } from "@/data"
 
 interface ModelProps {
   isActive?: boolean
-  dsDef?: DatasetDef
+  dsKey?: string
 }
 
-export const Model = ({ isActive, dsDef }: ModelProps) => {
-  const layers = useLayers(!isActive, dsDef)
+export const Model = ({ isActive, dsKey }: ModelProps) => {
+  const layers = useLayers(!isActive, dsKey)
   const selected = useSelected()
   const hovered = useHovered()
   return (

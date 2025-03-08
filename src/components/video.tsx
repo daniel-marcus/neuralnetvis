@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from "react"
-import { useStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { useHandPose } from "@/data"
 import { InlineButton } from "./ui-elements"
 
 export function VideoWindow() {
-  const videoRef = useStore((s) => s.videoRef)
-  const canvasRef = useStore((s) => s.canvasRef)
-  const stream = useStore((s) => s.stream)
-  const isTraining = useStore((s) => s.isTraining)
+  const videoRef = useSceneStore((s) => s.videoRef)
+  const canvasRef = useSceneStore((s) => s.canvasRef)
+  const stream = useSceneStore((s) => s.stream)
+  const isTraining = useSceneStore((s) => s.isTraining)
   return (
     <>
       <VideoControl />
@@ -33,10 +33,10 @@ export function VideoWindow() {
 function VideoControl() {
   const [stream, toggleStream] = useStream()
   const [isRecording, toggleRecording] = useHandPose(stream)
-  const dsIsUserGenerated = useStore((s) => s.ds?.isUserGenerated)
+  const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
   return (
     <div
-      className={`fixed z-10 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
+      className={`fixed z-20 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
     >
       {!isRecording && (
         <InlineButton onClick={toggleStream}>
@@ -56,19 +56,20 @@ function VideoControl() {
 }
 
 function useStream() {
-  const videoRef = useStore((s) => s.videoRef)
-  const stream = useStore((s) => s.stream)
+  const videoRef = useSceneStore((s) => s.videoRef)
+  const stream = useSceneStore((s) => s.stream)
+  const setStream = useSceneStore((s) => s.setStream)
   const stopStream = useCallback(() => {
     stream?.getTracks().forEach((track) => track.stop())
-    useStore.setState({ stream: null })
-  }, [stream])
+    setStream(null)
+  }, [stream, setStream])
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()
     else {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      useStore.setState({ stream })
+      setStream(stream)
     }
-  }, [stream, stopStream])
+  }, [stream, setStream, stopStream])
   useEffect(() => {
     const video = videoRef?.current
     if (!video || !stream) return

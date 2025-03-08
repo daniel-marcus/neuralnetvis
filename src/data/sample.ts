@@ -1,17 +1,33 @@
 import { useEffect, useCallback } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
 import type { Dataset, DbBatch } from "./types"
 
-export function useSample(ds?: Dataset) {
-  const sampleIdx = useStore((s) => s.sampleIdx)
-  const resetSample = useStore((s) => s.resetSample)
+export function useSample(ds?: Dataset, isActive?: boolean) {
+  const sampleIdx = useSceneStore((s) => s.sampleIdx)
+  const sample = useSceneStore((s) => s.sample)
+  const setSample = useSceneStore((s) => s.setSample)
 
   useEffect(() => {
-    updateSample(sampleIdx)
-  }, [sampleIdx, ds])
+    async function loadSample() {
+      if (!ds) return
+      const sample = await getPreprocessedSample(ds, sampleIdx)
+      setSample(sample)
+    }
+    loadSample()
+  }, [ds, sampleIdx, setSample])
+
+  const next = useSceneStore((s) => s.nextSample)
+  const prev = useCallback(() => next(-1), [next])
+  useKeyCommand("ArrowLeft", prev, isActive)
+  useKeyCommand("ArrowRight", next, isActive)
+
+  return sample
+}
+
+/* 
 
   useEffect(() => {
     if (!ds) return
@@ -20,19 +36,7 @@ export function useSample(ds?: Dataset) {
       resetSample()
     }
   }, [ds, resetSample])
-
-  const next = useStore((s) => s.nextSample)
-  const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowLeft", prev)
-  useKeyCommand("ArrowRight", next)
-}
-
-export async function updateSample(sampleIdx: number) {
-  const ds = useStore.getState().ds
-  if (!ds) return
-  const sample = await getPreprocessedSample(ds, sampleIdx)
-  useStore.setState({ sample })
-}
+*/
 
 export async function getPreprocessedSample(ds: Dataset, sampleIdx: number) {
   const dbSample = await getSample(ds, "train", sampleIdx, true)

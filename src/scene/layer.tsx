@@ -8,7 +8,7 @@ import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 
 type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 
@@ -37,13 +37,13 @@ export const Layer = (props: LayerProps) => {
 
 function useLayerPos(layer: LayerProps) {
   const { visibleIdx, allLayers } = layer
-  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
+  const invisibleLayers = useGlobalStore((s) => s.vis.invisibleLayers)
   const visibleLayers = allLayers.filter(
     (l) => l.neurons.length && !invisibleLayers.includes(l.tfLayer.name)
   )
   const orientation = useOrientation()
 
-  const { xShift, yShift, zShift } = useStore((s) => s.vis)
+  const { xShift, yShift, zShift } = useGlobalStore((s) => s.vis)
 
   const position = useMemo(() => {
     const xShiftN = orientation === "landscape" ? xShift : xShift * 0.8
@@ -59,7 +59,7 @@ function useLayerPos(layer: LayerProps) {
 }
 
 function useIsInvisible(layer?: LayerStateful) {
-  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
+  const invisibleLayers = useGlobalStore((s) => s.vis.invisibleLayers)
   return invisibleLayers.includes(layer?.tfLayer.name ?? "")
 }
 
@@ -87,7 +87,7 @@ function useDynamicScale(
 }
 
 export function useAdditiveBlending(hasColorChannels: boolean) {
-  const splitColors = useStore((s) => s.vis.splitColors)
+  const splitColors = useGlobalStore((s) => s.vis.splitColors)
   const active = hasColorChannels && !splitColors
   const material = useMemo(() => new THREE.MeshStandardMaterial(), [])
   useEffect(() => {

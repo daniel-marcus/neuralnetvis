@@ -1,3 +1,5 @@
+"use client"
+
 import npyjs from "npyjs"
 import JSZip from "jszip"
 import { setStatus } from "@/store"

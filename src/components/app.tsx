@@ -1,27 +1,24 @@
 "use client"
 
-import { useStore } from "@/store"
-import { useModel, useTraining } from "@/model"
-import { useSample } from "@/data"
+import { useGlobalStore } from "@/store"
+import { useTfBackend } from "@/model/tf-backend"
+import { useTraining } from "@/model"
 import { useDebugCommands } from "@/utils/debug"
-import { VideoWindow } from "./video"
-// import { Scene } from "@/scene"
-import { Footer, Gradient, Menu } from "@/components"
+import { Footer, Gradient, Menu, TileGrid } from "@/components"
 import type { ReactNode } from "react"
 
 export const App = ({ children }: { children?: ReactNode }) => {
-  const ds = useStore((s) => s.ds)
-  const model = useModel(ds)
+  useTfBackend()
+  const ds = useGlobalStore((s) => s.ds)
+  const model = useGlobalStore((s) => s.model)
   useTraining(model, ds)
-  useSample(ds)
   useDebugCommands()
   return (
     <div>
-      {ds?.hasCam && <VideoWindow />}
-
       <Footer />
       <Gradient />
       <Menu />
+      <TileGrid />
       {children}
     </div>
   )

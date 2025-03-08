@@ -1,4 +1,4 @@
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import {
   Checkbox,
   CollapsibleWithTitle,
@@ -11,9 +11,9 @@ import type { HighlightProp } from "@/neuron-layers"
 const SHIFT_PROPS = ["xShift", "yShift", "zShift"] as const
 
 export const VisConfigControl = () => {
-  const vis = useStore((s) => s.vis)
+  const vis = useGlobalStore((s) => s.vis)
   const { setConfig, getDefault, reset, ...config } = vis
-  const model = useStore((s) => s.model)
+  const model = useGlobalStore((s) => s.model)
   const hasColorChannels =
     ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
   return (

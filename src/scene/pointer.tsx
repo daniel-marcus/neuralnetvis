@@ -1,4 +1,4 @@
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { useAnimatedPosition, getWorldPos, type Pos } from "@/scene/utils"
 import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
@@ -6,11 +6,11 @@ import { LABEL_COLOR } from "./label"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 
 export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
-  const trainingY = useStore((s) => s.sample?.y)
+  const trainingY = useGlobalStore((s) => s.sample?.y)
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
   const { layerPos, meshParams } = outputLayer
   const spacing = useNeuronSpacing(meshParams)
-  const showPointer = useStore((s) => s.vis.showPointer)
+  const showPointer = useGlobalStore((s) => s.vis.showPointer)
   if (!showPointer || !neuron) return null
   const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
   const position = getNeuronPos(neuron.index, layerPos, height, width, spacing)
@@ -35,7 +35,7 @@ export const Pointer = ({ position, color }: PointerProps) => {
   const [x, y, z] = position
   const pointerPosition = getPointerPos(x, y, z)
   const [ref] = useAnimatedPosition(pointerPosition, 0.6)
-  const lightsOn = useStore((s) => s.vis.lightsOn)
+  const lightsOn = useGlobalStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
   return (
     <customText

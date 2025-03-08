@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react"
-import { setLayerConfigs, useStore } from "@/store"
+import { setLayerConfigs, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
 
@@ -82,10 +82,10 @@ function newDefaultLayer<T extends keyof LayerConfigMap>(
 }
 
 export const LayerConfigControl = () => {
-  const model = useStore((s) => s.model)
+  const model = useGlobalStore((s) => s.model)
   const layerConfigs = (model?.getConfig().layers ??
     []) as unknown as LayerConfigArray
-  const resetLayerConfigs = useStore((s) => s.resetLayerConfigs)
+  const resetLayerConfigs = useGlobalStore((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
@@ -120,8 +120,10 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
   ]
-  const toggleLayerVisibility = useStore((s) => s.vis.toggleLayerVisibility)
-  const invisibleLayers = useStore((s) => s.vis.invisibleLayers)
+  const toggleLayerVisibility = useGlobalStore(
+    (s) => s.vis.toggleLayerVisibility
+  )
+  const invisibleLayers = useGlobalStore((s) => s.vis.invisibleLayers)
   return (
     <CollapsibleWithTitle title={"layers"}>
       <div className="flex flex-col gap-4">
@@ -209,7 +211,7 @@ export const LayerConfigControl = () => {
 }
 
 function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
-  const setStatus = useStore.getState().status.update
+  const setStatus = useGlobalStore.getState().status.update
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")

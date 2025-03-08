@@ -1,11 +1,11 @@
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
 import { setDsFromKey } from "@/data/dataset"
 
 export const DatasetLibrary = () => {
-  const currDatasetKey = useStore((s) => s.ds?.key)
-  const isDebug = useStore((s) => s.isDebug)
+  const currDatasetKey = useGlobalStore((s) => s.ds?.key)
+  const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <CollapsibleWithTitle
       title="dataset library"

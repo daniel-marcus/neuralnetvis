@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { useStore, isDebug, setStatus, getThree } from "@/store"
+import { useGlobalStore, isDebug, setStatus, getThree } from "@/store"
 import { getAvailableBackends } from "@/model/tf-backend"
 import { useKeyCommand } from "./key-command"
 
@@ -10,7 +10,7 @@ export function useDebugCommands() {
 }
 
 function toggleDebug() {
-  useStore.setState({ isDebug: !isDebug() })
+  useGlobalStore.setState({ isDebug: !isDebug() })
   setStatus(`Debug mode ${isDebug() ? "enabled" : "disabled"}`)
 }
 
@@ -40,7 +40,7 @@ function showStats() {
   }
   setStatus({ data })
 
-  const appState = useStore.getState()
+  const appState = useGlobalStore.getState()
   const glInfo = gl?.info
   const tfEngine = tf.engine()
   const tfVars = tfEngine.state.registeredVariables

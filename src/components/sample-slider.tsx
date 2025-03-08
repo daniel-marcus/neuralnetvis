@@ -1,15 +1,15 @@
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
 
 export const SampleSlider = () => {
-  const hasSelected = useStore((s) => !!s.hoveredNid || !!s.selectedNid)
-  const hasStatus = !!useStore((s) => s.status.getCurrent())
+  const hasSelected = useGlobalStore((s) => !!s.hoveredNid || !!s.selectedNid)
+  const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
   const hasProgressBar =
-    typeof useStore((s) => s.status.getPercent()) === "number"
-  const visIsLocked = useStore((s) => s.vis.isLocked)
-  const sampleIdx = useStore((s) => s.sampleIdx)
-  const totalSamples = useStore((s) => s.totalSamples())
-  const hasStream = useStore((s) => !!s.stream)
+    typeof useGlobalStore((s) => s.status.getPercent()) === "number"
+  const visIsLocked = useGlobalStore((s) => s.vis.isLocked)
+  const sampleIdx = useGlobalStore((s) => s.sampleIdx)
+  const totalSamples = useGlobalStore((s) => s.totalSamples())
+  const hasStream = useGlobalStore((s) => !!s.stream)
   return (
     <div className="absolute bottom-0 left-0 p-main w-full flex justify-center">
       <div
@@ -30,7 +30,7 @@ export const SampleSlider = () => {
       >
         <Slider
           value={sampleIdx}
-          onChange={(sampleIdx) => useStore.setState({ sampleIdx })}
+          onChange={(sampleIdx) => useGlobalStore.setState({ sampleIdx })}
           min={0}
           max={totalSamples - 1}
           yPad={0.25}

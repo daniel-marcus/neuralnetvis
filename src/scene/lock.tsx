@@ -1,10 +1,10 @@
 import { useLayoutEffect } from "react"
 import { Button } from "@/contents/elements"
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 
 export const LockButton = () => {
-  const isLocked = useStore((s) => s.vis.isLocked)
-  const toggleLocked = useStore((s) => s.vis.toggleLocked)
+  const isLocked = useGlobalStore((s) => s.vis.isLocked)
+  const toggleLocked = useGlobalStore((s) => s.vis.toggleLocked)
   return (
     <Button onClick={toggleLocked} className="pointer-events-auto">
       {isLocked ? "Unlock visualization" : "Back to scrolling"}
@@ -13,8 +13,8 @@ export const LockButton = () => {
 }
 
 export function useLock() {
-  const isLocked = useStore((s) => s.vis.isLocked)
-  const setVisConfig = useStore((s) => s.vis.setConfig)
+  const isLocked = useGlobalStore((s) => s.vis.isLocked)
+  const setVisConfig = useGlobalStore((s) => s.vis.setConfig)
   useLayoutEffect(() => {
     setVisConfig({ isLocked: true })
     return () => {

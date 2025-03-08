@@ -1,20 +1,44 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { ReactNode, useEffect, useRef, useState } from "react"
 import { datasets } from "@/data/datasets"
-import { Canvas } from "@react-three/fiber"
-import { SceneInner } from "@/scene"
-import { useStore } from "@/store"
 import { useDrag } from "@use-gesture/react"
-import { DatasetDef } from "@/data"
-import { setDsFromKey } from "@/data/dataset"
+import { lessonPreviews } from "@/contents"
+import { usePathname, useRouter } from "next/navigation"
+import { useHasLesson } from "./lesson"
+import { useGlobalStore } from "@/store"
+import { SceneViewer } from "./scene-viewer"
+
+interface TileDef {
+  path: string
+  title: string
+  dsKey?: string
+  disabled?: boolean
+}
+
+const tiles: TileDef[] = [
+  ...lessonPreviews,
+  ...datasets.map((dsDef) => ({
+    path: `/${dsDef.key}`,
+    title: dsDef.name,
+    dsKey: dsDef.key,
+    disabled: dsDef.disabled,
+  })),
+]
 
 export const TileGrid = () => {
-  const active = useStore((s) => s.activeTile)
-  const toggleActive = useStore((s) => s.toggleActiveTile)
+  const active = usePathname()
+  const router = useRouter()
   const lastActive = useLast(active)
+  const hasLesson = useHasLesson()
+  const hasActive = active !== "/"
+  const isDebug = useGlobalStore((s) => s.isDebug)
   return (
-    <div className="relative mx-auto pt-[112px]">
+    <div
+      className={`${
+        hasLesson ? "fixed top-0 left-0" : "relative"
+      } mx-auto pt-[112px]`}
+    >
       <div
         className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-4 p-main"
         style={
@@ -24,28 +48,25 @@ export const TileGrid = () => {
           } as React.CSSProperties
         }
       >
-        {datasets.map((dsDef, i) => {
-          const isActive = dsDef.key === active
-          return (
-            <Tile
-              key={i}
-              title={dsDef.name}
-              isActive={isActive}
-              onClick={
-                !isActive
-                  ? () => {
-                      toggleActive(dsDef.key)
-                      setDsFromKey(dsDef.key)
-                    }
-                  : undefined
-              }
-              className={`${!!active && !isActive ? "opacity-0" : ""} ${
-                lastActive === dsDef.key ? "z-5" : ""
-              }`}
-              dsDef={dsDef}
-            />
-          )
-        })}
+        {tiles
+          .filter(({ disabled }) => !disabled || isDebug)
+          .map(({ path, title, dsKey }) => {
+            const isActive = path === active
+            return (
+              <Tile
+                key={path}
+                title={title}
+                isActive={isActive}
+                onClick={!isActive ? () => router.push(path) : undefined}
+                className={`${hasActive && !isActive ? "opacity-0" : ""} ${
+                  lastActive === path ? "z-5" : ""
+                }`}
+                syncTrigger={hasLesson}
+              >
+                <SceneViewer isActive={!!isActive} dsKey={dsKey} />
+              </Tile>
+            )
+          })}
       </div>
     </div>
   )
@@ -56,12 +77,20 @@ interface TileProps {
   isActive?: boolean
   onClick?: () => void
   className?: string
-  dsDef?: DatasetDef
+  children?: ReactNode | ReactNode[]
+  syncTrigger: boolean
 }
 
 type OffsetState = { x?: number; y?: number }
 
-function Tile({ title, isActive, onClick, className, dsDef }: TileProps) {
+function Tile({
+  title,
+  isActive,
+  onClick,
+  className,
+  children,
+  syncTrigger,
+}: TileProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [isScrolling, setIsScrolling] = useState(false)
   const [offset, setOffset] = useState<OffsetState>({})
@@ -85,7 +114,7 @@ function Tile({ title, isActive, onClick, className, dsDef }: TileProps) {
       window.removeEventListener("resize", syncOffset)
       window.removeEventListener("scroll", syncOffset)
     }
-  }, [])
+  }, [syncTrigger])
 
   const bind = useDrag(({ tap }) => {
     if (tap) {
@@ -102,7 +131,7 @@ function Tile({ title, isActive, onClick, className, dsDef }: TileProps) {
       {...bind()}
     >
       <div
-        className={`fixed overflow-hidden top-0 left-0 bg-background origin-center flex items-center justify-center ${
+        className={`fixed overflow-hidden top-0 left-0 origin-center flex items-center justify-center ${
           isScrolling ? "" : "transition-all duration-500"
         } ${
           isActive
@@ -121,13 +150,7 @@ function Tile({ title, isActive, onClick, className, dsDef }: TileProps) {
             {title}
           </div>
         )}
-        <Canvas
-          frameloop="demand"
-          resize={{ debounce: 0 }}
-          className={`absolute w-screen! h-[100dvh]!`}
-        >
-          <SceneInner isActive={!!isActive} dsDef={dsDef} />
-        </Canvas>
+        {children}
       </div>
     </div>
   )

@@ -1,52 +1,45 @@
-import {
-  useEffect,
-  ReactNode,
-  useCallback,
-  useTransition,
-  useMemo,
-} from "react"
+import { useEffect, ReactNode, useCallback, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useTfBackend } from "./tf-backend"
-import { useStore, isDebug, setStatus } from "@/store"
+import { useGlobalStore, isDebug, setStatus, useSceneStore } from "@/store"
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
 import { useHasLesson } from "@/components/lesson"
 
-export function useModel(ds?: Dataset) {
-  const model = useStore((s) => s.model)
-  const isPending = useModelCreate(ds)
+export function useModel(ds?: Dataset, isPreview?: boolean) {
+  const [model, isPending] = useModelCreate(ds, isPreview)
   useModelDispose(model)
   useModelStatus(isPending, model)
   useModelCompile(model, ds)
   return model
 }
 
-function useModelCreate(ds?: Dataset) {
-  // TODO: move useTfBackend to app
-  const backendReady = useTfBackend()
+const previewLayerConfigs: LayerConfigArray = [
+  { className: "Dense", config: { units: 10, activation: "relu" } },
+]
+
+function useModelCreate(ds?: Dataset, isPreview?: boolean) {
+  const model = useSceneStore((s) => s.model)
   const [setModel, isPending] = useModelTransition()
-  const layerConfigs = useStore((s) => s.layerConfigs)
+  const backendReady = useGlobalStore((s) => s.backendReady)
+  const layerConfigs = useGlobalStore((s) => s.layerConfigs) // TODO: sceneStore
+  const configs = isPreview ? previewLayerConfigs : layerConfigs
   useEffect(() => {
     if (!ds || !backendReady) return
-    if (useStore.getState().skipModelCreate) {
-      useStore.setState({ skipModelCreate: false })
+    if (useGlobalStore.getState().skipModelCreate) {
+      useGlobalStore.setState({ skipModelCreate: false })
       return
     }
-
-    const _model = createModel(ds, layerConfigs)
-
+    const _model = createModel(ds, configs)
     if (isDebug()) console.log({ _model })
-    if (!_model) return
-
     setModel(_model)
-  }, [backendReady, layerConfigs, ds, setModel])
-  return isPending
+  }, [backendReady, configs, ds, setModel, isPreview])
+  return [model, isPending] as const
 }
 
 export function useModelTransition() {
   const [isPending, startTransition] = useTransition()
-  const _setModel = useStore((s) => s._setModel)
+  const _setModel = useSceneStore((s) => s._setModel)
   const setModel = useCallback(
     async (model?: tf.LayersModel) => {
       startTransition(() => {
@@ -83,9 +76,9 @@ function useModelStatus(isPending: boolean, model?: tf.LayersModel) {
   const hasLesson = useHasLesson()
   useEffect(() => {
     if (!model || !isPending || hasLesson) return
-    const ds = useStore.getState().ds
+    const ds = useGlobalStore.getState().ds
     if (!ds) return
-    const totalSamples = useStore.getState().totalSamples()
+    const totalSamples = useGlobalStore.getState().totalSamples()
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
       Samples: totalSamples.toLocaleString("en-US"),
@@ -115,21 +108,6 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
       })
     }
   }, [model, ds])
-}
-
-const previewLayerConfigs: LayerConfigArray = [
-  { className: "Dense", config: { units: 10, activation: "relu" } },
-]
-
-export function usePreviewModel(ds?: DatasetDef) {
-  const backendReady = useStore((s) => s.backendReady)
-  const model = useMemo(
-    () =>
-      ds && backendReady ? createModel(ds, previewLayerConfigs) : undefined,
-    [ds, backendReady]
-  )
-  // TODO: model dispose
-  return model
 }
 
 function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {

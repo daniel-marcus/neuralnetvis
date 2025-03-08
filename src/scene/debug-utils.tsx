@@ -2,13 +2,13 @@ import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { useThree, useFrame } from "@react-three/fiber"
 import { Stats } from "@react-three/drei"
-import { getThree, useStore } from "@/store"
+import { getThree, useGlobalStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 
 // use for debug purposes
 
 export const DebugUtils = () => {
-  const isDebug = useStore((s) => s.isDebug)
+  const isDebug = useGlobalStore((s) => s.isDebug)
   useKeyCommand("c", logCameraPos)
   if (!isDebug) return null
   return <Stats />

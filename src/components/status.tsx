@@ -1,9 +1,9 @@
-import { useStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { Table } from "./ui-elements"
 
 export const Status = () => {
-  const status = useStore((s) => s.status.getCurrent())
+  const status = useGlobalStore((s) => s.status.getCurrent())
   const parsedText = useMemo(
     () =>
       isValidReactNode(status?.text) || !status ? (

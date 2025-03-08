@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import {
   CollapsibleWithTitle,
@@ -6,8 +8,9 @@ import {
   InputRow,
   Select,
 } from "../ui-elements"
-import { DatasetDef } from "@/data"
 import { resetData, setDsFromDef } from "@/data/dataset"
+import type { DatasetDef } from "@/data"
+import { handPose } from "@/data/datasets/hand-pose"
 
 type HandsNum = 1 | 2
 
@@ -114,46 +117,11 @@ function dsDefFromState(
   outputLabels: string[]
 ): DatasetDef {
   return {
+    ...handPose,
     key: name,
     name,
     version: new Date(),
-    task: "classification",
-    description: `Handpose dataset with ${hands} hand(s) and ${outputLabels.length} categories`,
-    // aboutUrl: "https://neuralnetvis.app",
-    aboutUrl:
-      "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
     inputDims: [21, 3, hands],
-    inputLabels: handPoseLabels(),
-    // preprocessFunc: "normalizeHandLandmarks",
     outputLabels,
-    storeBatchSize: 20,
-    isUserGenerated: true,
-    hasCam: true,
   }
-}
-
-function handPoseLabels() {
-  return [
-    "wrist",
-    "thumb_cmc",
-    "thumb_mcp",
-    "thumb_ip",
-    "thumb_tip",
-    "index_finger_mcp",
-    "index_finger_pip",
-    "index_finger_dip",
-    "index_finger_tip",
-    "middle_finger_mcp",
-    "middle_finger_pip",
-    "middle_finger_dip",
-    "middle_finger_tip",
-    "ring_finger_mcp",
-    "ring_finger_pip",
-    "ring_finger_dip",
-    "ring_finger_tip",
-    "pinky_mcp",
-    "pinky_pip",
-    "pinky_dip",
-    "pinky_tip",
-  ]
 }

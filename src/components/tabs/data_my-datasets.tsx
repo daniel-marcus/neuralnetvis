@@ -1,5 +1,5 @@
 import { DB_PREFIX } from "@/data/db"
-import { clearStatus, setStatus, useStore } from "@/store"
+import { clearStatus, setStatus, useGlobalStore } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
@@ -7,8 +7,8 @@ import { datasets } from "@/data/datasets"
 import { resetData, setDsFromDb, setDsFromKey } from "@/data/dataset"
 
 export const MyDatasets = () => {
-  const ds = useStore((s) => s.ds)
-  const totalSamples = useStore((s) => s.totalSamples())
+  const ds = useGlobalStore((s) => s.ds)
+  const totalSamples = useGlobalStore((s) => s.totalSamples())
   const [savedDatasets, setSavedDatasets] = useState<string[]>([])
   const updateDatasets = async () => {
     try {
@@ -29,7 +29,7 @@ export const MyDatasets = () => {
     const fullName = `${DB_PREFIX}${dsKey}`
     const statusId = setStatus(`Removing dataset ${dsKey} ...`, -1)
     if (dsKey === ds?.key) {
-      useStore.setState({ ds: undefined })
+      useGlobalStore.setState({ ds: undefined })
     }
     await deleteDB(fullName)
     updateDatasets()
