@@ -44,7 +44,7 @@ interface VisActions {
   toggleLights: () => void
 }
 
-interface Three {
+export interface Three {
   camera: RootState["camera"]
   controls: OrbitControls | null
   invalidate: RootState["invalidate"]

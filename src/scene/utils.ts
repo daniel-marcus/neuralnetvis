@@ -4,6 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, config } from "@react-spring/web"
 import { getThree } from "@/store"
 import type { NeuronDef } from "@/neuron-layers/types"
+import { Three } from "@/store/vis"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   // TODO: could use spring here
@@ -54,8 +55,9 @@ export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
 
 export type Pos = [number, number, number]
 
-export function moveCameraTo(targetPos?: Pos, lookAt?: Pos) {
-  const three = getThree()
+export function moveCameraTo(targetPos?: Pos, lookAt?: Pos, _three?: Three) {
+  const currSceneThree = getThree()
+  const three = _three || currSceneThree
   if (!three) return
   const initialPos = three.camera.position.toArray() as Pos
   const initialLookAt = (three.controls?.target.toArray() as Pos) || [0, 0, 0]

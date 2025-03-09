@@ -4,14 +4,12 @@ import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
-import { defaultState } from "@/utils/initial-state"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useIsTouchDevice } from "@/utils/screen"
-
-const { cameraPos, cameraLookAt } = defaultState
+import { defaultState } from "@/utils/initial-state"
 
 interface SceneProps {
   isActive: boolean
@@ -39,7 +37,7 @@ export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
   const { camera, invalidate } = useThree()
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? 1 : 0.4 }, // TODO: adjust from screen size
+    to: { zoom: isActive ? 1 : 0.38 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
       camera.zoom = value.zoom
       camera.updateProjectionMatrix()
@@ -50,10 +48,14 @@ export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
   return (
     <>
       <ThreeStoreSetter />
-      <PerspectiveCamera makeDefault position={cameraPos} zoom={0.1} />
+      <PerspectiveCamera
+        makeDefault
+        position={defaultState.cameraPos}
+        zoom={0.1}
+      />
       <OrbitControls
         makeDefault
-        target={cameraLookAt}
+        target={defaultState.cameraLookAt}
         enableZoom={isActive || isTouchDevice}
         minPolarAngle={isActive || !isTouchDevice ? 0 : Math.PI / 2}
         maxPolarAngle={isActive || !isTouchDevice ? Math.PI : Math.PI / 2}

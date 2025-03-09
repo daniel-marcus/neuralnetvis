@@ -9,7 +9,6 @@ import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
 import { tabs, type Tab } from "@/components/tabs"
 import { usePathname } from "next/navigation"
-import { setInitialState } from "@/utils/initial-state"
 import { useHasActiveTile } from "./tile-grid"
 
 export const Menu = () => {
@@ -47,7 +46,6 @@ export const Menu = () => {
             scroll={hasLesson ? true : false}
             onClick={() => {
               setTab(null)
-              setInitialState()
             }}
           >
             <Logo />

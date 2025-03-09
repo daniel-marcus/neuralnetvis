@@ -22,7 +22,7 @@ function useModelCreate(ds?: Dataset, isPreview?: boolean) {
   const model = useSceneStore((s) => s.model)
   const [setModel, isPending] = useModelTransition()
   const backendReady = useGlobalStore((s) => s.backendReady)
-  const layerConfigs = useSceneStore((s) => s.layerConfigs) // TODO: sceneStore
+  const layerConfigs = useSceneStore((s) => s.layerConfigs)
   const configs = isPreview ? previewLayerConfigs : layerConfigs
   useEffect(() => {
     if (!ds || !backendReady) return

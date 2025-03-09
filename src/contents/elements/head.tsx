@@ -16,12 +16,26 @@ export function Head(props: HeadProps) {
   )
 }
 
-function Title({ children }: { children: string }) {
+interface TitleProps {
+  children: string
+  className?: string
+  dynamic?: boolean
+}
+
+export function Title({
+  children,
+  className = "",
+  dynamic = true,
+}: TitleProps) {
   const title = useAsciiText(children)
   return (
-    <div className="mb-12">
+    <div className={`mb-12} ${className}`}>
       <h1 className="hidden">{children}</h1>
-      <pre className="text-[min(1.25vw,0.75rem)]/[1.2]">{title}</pre>
+      <pre
+        className={dynamic ? "text-[min(1.25vw,0.75rem)]/[1.2]" : "text-logo"}
+      >
+        {title}
+      </pre>
     </div>
   )
 }

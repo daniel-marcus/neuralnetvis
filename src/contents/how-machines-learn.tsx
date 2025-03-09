@@ -7,7 +7,7 @@ import {
   useCurrScene,
   useGlobalStore,
 } from "@/store"
-import { useInitialState, type InitialState } from "@/utils/initial-state"
+import { type InitialState } from "@/utils/initial-state"
 import { LockButton } from "@/scene/lock"
 import { Block, Details, Head } from "@/contents/elements"
 import { trainOnBatch } from "@/model/training"
@@ -16,10 +16,9 @@ import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
 import { defaultVisConfig } from "@/store/vis"
 
-const initialState: InitialState = {
-  dsKey: "mnist",
-  layerConfigs: [{ className: "Dense", config: {} }], // the output layer
-  cameraPos: [-1.6, 0, 2.7],
+export const hmlInitialState: InitialState = {
+  layerConfigs: [{ className: "Dense", config: {} }], // output layer
+  cameraPos: [-3, 0, 5],
   sampleIdx: 50,
   vis: {
     neuronSpacing: 2.5,
@@ -33,7 +32,6 @@ const initialState: InitialState = {
 const SCROLL_TRAIN_STATUS_ID = "scroll-train-status"
 
 export const IntroNetworks = (): LessonContent => {
-  useInitialState(initialState)
   const setVisConfig = useCurrScene((s) => s.vis.setConfig)
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
   const setHoveredNid = useCurrScene((s) => s.setHoveredNid)
@@ -43,9 +41,9 @@ export const IntroNetworks = (): LessonContent => {
       <Head
         title="How do machines learn?"
         description="Let's train a neural network to recognize handwritten digits"
-        cameraPos={initialState.cameraPos}
+        cameraPos={hmlInitialState.cameraPos}
         onScroll={({ percent }) => {
-          const initSpacing = initialState.vis!.neuronSpacing!
+          const initSpacing = hmlInitialState.vis!.neuronSpacing!
           const dflt = defaultVisConfig.neuronSpacing!
           const neuronSpacing = interpolate(initSpacing, dflt, percent)
           setVisConfig({ neuronSpacing })
@@ -54,9 +52,9 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         cameraPos={[-60, 0, 30]}
         onEnter={() => {
-          setSampleIdx(initialState.sampleIdx ?? 0)
+          setSampleIdx(hmlInitialState.sampleIdx ?? 0)
           setVisConfig({
-            invisibleLayers: initialState.vis!.invisibleLayers,
+            invisibleLayers: hmlInitialState.vis!.invisibleLayers,
           })
         }}
       >

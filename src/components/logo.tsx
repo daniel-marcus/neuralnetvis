@@ -10,7 +10,7 @@ export const Logo = () => {
   const vis = useAsciiText("Vis")
   return (
     <div
-      className={`text-logo hover:text-white transition-colors duration-100 h-[112px] ${
+      className={`text-logo p-main hover:text-white transition-colors duration-100 h-[112px] ${
         mobileCrop ? "max-h-[40px] overflow-clip sm:max-h-none" : ""
       }`}
     >

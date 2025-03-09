@@ -39,6 +39,7 @@ export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
       // status: { ...status, percent: -1 }, // trigger spinner
     })),
   resetLayerConfigs: () => {
+    console.log("RESET")
     set({ layerConfigs: defaultLayerConfigs })
     setVisConfig({ invisibleLayers: [] })
   },

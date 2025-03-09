@@ -1,7 +1,8 @@
 import { IntroInterface } from "./exploring-the-interface"
-import { IntroNetworks } from "./how-machines-learn"
+import { hmlInitialState, IntroNetworks } from "./how-machines-learn"
 import type { ReactElement } from "react"
 import type { ScrollBlockProps } from "@/contents/elements/types"
+import { InitialState } from "@/utils/initial-state"
 
 export type LessonContent = ReactElement<{
   children: ReactElement<ScrollBlockProps>[]
@@ -14,6 +15,7 @@ export interface LessonDef {
   content: () => LessonContent
   disabled?: boolean
   dsKey?: string
+  initialState?: InitialState
 }
 
 export const lessons: LessonDef[] = [
@@ -23,6 +25,7 @@ export const lessons: LessonDef[] = [
     description: "Some basics about machine learning",
     content: IntroNetworks,
     dsKey: "mnist",
+    initialState: hmlInitialState,
   },
   {
     title: "Exploring the interface",

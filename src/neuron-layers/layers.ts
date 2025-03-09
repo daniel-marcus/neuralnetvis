@@ -8,7 +8,6 @@ import { useDsDef } from "@/data/dataset"
 
 export function useLayers(isPreview?: boolean, dsKey?: string) {
   const dsDef = useDsDef(dsKey)
-  // const ds = useSceneStore((s) => s.ds)
   const model = useSceneStore((s) => s.model)
   const sample = useSceneStore((s) => s.sample)
 

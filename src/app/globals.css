@@ -20,6 +20,7 @@
   --color-accent-hover: rgb(220, 20, 100, 0.2);
   --color-secondary: #373c4b;
   --color-menu-border: #373c4b80;
+  --color-purple: rgb(100, 20, 180);
 
   --animate-move-left-right: move-left-right 3s infinite ease-in-out;
   @keyframes move-left-right {
@@ -60,7 +61,6 @@
         button height / height for row in ascii art */
     font-size: calc((var(--menu-btn-height)) / (7 * var(--logo-lh)));
     line-height: calc(var(--logo-lh) * 1em);
-    padding: var(--padding-main);
   }
 }
 

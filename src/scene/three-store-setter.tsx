@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useThree } from "@react-three/fiber"
-import { useCurrScene } from "@/store"
+import { useSceneStore } from "@/store"
 import type { OrbitControls } from "three-stdlib"
 
 export const ThreeStoreSetter = () => {
@@ -11,7 +11,7 @@ export const ThreeStoreSetter = () => {
 function useThreeStoreSetter() {
   // make three available outside of the render context
   const { camera, invalidate, gl, controls: _controls } = useThree()
-  const setThree = useCurrScene((s) => s.setThree)
+  const setThree = useSceneStore((s) => s.setThree)
   useEffect(() => {
     const controls = _controls as OrbitControls
     const three = { camera, invalidate, gl, controls }

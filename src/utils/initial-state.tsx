@@ -1,53 +1,38 @@
 "use client"
 
 import { useEffect } from "react"
-import { SceneState, useCurrScene, useGlobalStore } from "@/store"
+import { SceneState, useSceneStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene/utils"
 import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
-import { setDsFromKey } from "@/data/dataset"
 
-type ExposedStoreKeys = "sampleIdx" | "layerConfigs" | "selectedNid"
+type ExposedStoreKeys = "sampleIdx" | "layerConfigs"
 type ExposedStoreType = Pick<SceneState, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
-  dsKey?: string
   vis?: Partial<SceneState["vis"]>
   cameraPos?: Pos
   cameraLookAt?: Pos
 }
 
 export const defaultState: InitialState = {
-  // dsKey: "mnist",
   layerConfigs: defaultLayerConfigs,
-  selectedNid: undefined,
+  vis: defaultVisConfig,
   cameraPos: [-23, 0, 35],
   cameraLookAt: [0, 0, 0],
-  vis: defaultVisConfig,
 }
 
-export function useInitialState(state = defaultState) {
-  const three = useCurrScene((s) => s.three)
+export function useInitialState(state?: InitialState) {
+  const three = useSceneStore((s) => s.three)
+  const setLayersConfig = useSceneStore((s) => s.setLayerConfigs)
+  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
   useEffect(() => {
-    if (!three) return
-    setInitialState(state)
-  }, [state, three])
-}
-
-export function InitialStateSetter() {
-  useInitialState()
-  return null
-}
-
-export function setInitialState(initialState: InitialState = defaultState) {
-  const { dsKey, cameraPos, cameraLookAt, vis, ...storeSettings } = initialState
-  if (dsKey) setDsFromKey(dsKey)
-  if (cameraPos) {
-    moveCameraTo(cameraPos, cameraLookAt)
-  }
-  const sceneStore = useGlobalStore.getState().scene
-  if (vis) {
-    sceneStore.getState().vis.setConfig({ ...vis })
-  }
-  sceneStore.setState(storeSettings)
+    if (!three || !state) return
+    const { cameraPos, cameraLookAt } = state
+    if (cameraPos) {
+      moveCameraTo(cameraPos, cameraLookAt, three)
+    }
+    if (state.vis) setVisConfig({ ...state.vis })
+    if (state.layerConfigs) setLayersConfig(state.layerConfigs)
+  }, [state, three, setLayersConfig, setVisConfig])
 }

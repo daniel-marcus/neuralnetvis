@@ -13,7 +13,8 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const positions = useNeuronPositions(props)
   useColors(group.meshRef, group.neurons)
   // useScale(group.meshRef, group.nidsStr, props.index, group.index)
-  const { onPointerOut, ...otherEvHandlers } = useInteractions(group.neurons)
+  const { onPointerOut, ...otherEvHandlers } =
+    useInteractions(group.neurons) ?? {}
   const renderOrder = 0 - group.index // reversed order for color blending
   // useHelper(groupRef, THREE.BoxHelper, "cyan")
   return (
@@ -166,7 +167,9 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
 function useInteractions(groupedNeurons: Neuron[]) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
+  const isActive = useSceneStore((s) => s.isActive)
   const eventHandlers = useMemo(() => {
+    if (!isActive) return
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         if (e.buttons) return
@@ -184,6 +187,6 @@ function useInteractions(groupedNeurons: Neuron[]) {
       },
     }
     return result
-  }, [groupedNeurons, toggleHovered, toggleSelected])
+  }, [isActive, groupedNeurons, toggleHovered, toggleSelected])
   return eventHandlers
 }

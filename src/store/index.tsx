@@ -16,7 +16,7 @@ export type SceneState = DataSlice &
   ModelSlice &
   TrainingSlice &
   NeuronsSlice &
-  VisSlice
+  VisSlice & { isActive: boolean }
 
 const createSceneStore = (initProps?: Partial<SceneState>) => {
   return createStore<SceneState>()((...a) => ({
@@ -27,17 +27,20 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
     ...createNeuronsSlice(...a),
     ...createVisSlice(...a),
     ...initProps,
+    isActive: false,
   }))
 }
+
+const dummySceneStore = createSceneStore()
 
 type SceneStore = ReturnType<typeof createSceneStore>
 const SceneContext = createContext<SceneStore | null>(null)
 
 type SceneProviderProps = React.PropsWithChildren<
-  { isActive: boolean } & Partial<SceneState>
+  {
+    isActive: boolean
+  } & Partial<SceneState>
 >
-
-const dummySceneStore = createSceneStore()
 
 export function SceneStoreProvider({
   children,
@@ -50,9 +53,13 @@ export function SceneStoreProvider({
   }
   useEffect(() => {
     if (!isActive) return
-    useGlobalStore.setState({ scene: storeRef.current ?? undefined })
+    useGlobalStore.setState({
+      scene: storeRef.current ?? undefined,
+    })
+    storeRef.current?.setState({ isActive: true })
     return () => {
       useGlobalStore.setState({ scene: dummySceneStore })
+      storeRef.current?.setState({ isActive: false })
     }
   }, [isActive])
   return (
