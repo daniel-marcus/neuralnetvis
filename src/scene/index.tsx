@@ -33,7 +33,7 @@ export const Scene = (props: SceneProps) => {
   )
 }
 
-export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
+export const SceneInner = ({ isActive }: SceneProps) => {
   const { camera, invalidate } = useThree()
   useSpring({
     from: { zoom: 0.1 },
@@ -63,7 +63,7 @@ export const SceneInner = ({ isActive, dsKey }: SceneProps) => {
       />
       <DebugUtils />
       <Lights />
-      <Model isActive={isActive} dsKey={dsKey} />
+      <Model />
     </>
   )
 }

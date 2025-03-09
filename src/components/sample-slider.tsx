@@ -1,5 +1,5 @@
 import { useGlobalStore, useSceneStore } from "@/store"
-import { Slider } from "@/components/ui-elements"
+import { InlineButton, Slider } from "@/components/ui-elements"
 
 export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
@@ -41,11 +41,26 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
           yPad={0.25}
         />
         {isActive && (
-          <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200">
-            {sampleIdx + 1} / {totalSamples}
+          <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200 flex justify-between">
+            <div>
+              {sampleIdx + 1} / {totalSamples}
+            </div>
+            <LoadFullBtn />
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+function LoadFullBtn() {
+  const isPreview = useSceneStore((s) => s.ds?.isPreview)
+  const hasMoreData = true // TODO
+  const setLoadFull = useSceneStore((s) => s.setLoadFullDs)
+  if (!isPreview || !hasMoreData) return null
+  return (
+    <InlineButton onClick={setLoadFull} className="pointer-events-auto">
+      Load full
+    </InlineButton>
   )
 }

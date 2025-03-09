@@ -3,6 +3,9 @@ import type { Dataset, Sample, StoreMeta } from "@/data"
 import { ModelSlice } from "./model"
 
 export interface DataSlice {
+  shouldLoadFullDs?: boolean
+  setLoadFullDs: () => void
+
   ds?: Dataset
   setDs: (ds?: Dataset) => void
   updateMeta: (storeName: "train" | "test", meta: StoreMeta) => void
@@ -23,6 +26,9 @@ export const createDataSlice: StateCreator<
   [],
   DataSlice
 > = (set, get) => ({
+  shouldLoadFullDs: false,
+  setLoadFullDs: () => set({ shouldLoadFullDs: true }),
+
   ds: undefined,
   setDs: (ds) => set({ ds }),
   updateMeta: (storeName, meta) => {

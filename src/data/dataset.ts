@@ -17,14 +17,15 @@ export const DEFAULT_STORE_BATCH_SIZE = 100
 export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
   const ds = useSceneStore((s) => s.ds)
   const setDs = useSceneStore((s) => s.setDs)
+  const shouldLoadFullDs = useSceneStore((s) => s.shouldLoadFullDs)
   useEffect(() => {
     async function loadDs() {
       if (!dsDef) return
-      const ds = await getDsFromDef(dsDef, isPreview)
+      const ds = await getDsFromDef(dsDef, isPreview, shouldLoadFullDs)
       setDs(ds)
     }
     loadDs()
-  }, [dsDef, isPreview, setDs])
+  }, [dsDef, isPreview, setDs, shouldLoadFullDs])
   return ds
 }
 
@@ -55,15 +56,22 @@ function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
 
 export async function getDsFromDef(
   dsDef: DatasetDef | DatasetMeta,
-  isPreview?: boolean
+  isPreview?: boolean,
+  shouldLoadFullDs?: boolean
 ) {
   const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
   const hasLatestData =
     existingMeta?.version.getTime() === dsDef.version.getTime()
   const skipLoading =
-    existingMeta && hasLatestData && (!existingMeta.isPreview || isPreview)
+    existingMeta &&
+    hasLatestData &&
+    (!existingMeta.isPreview || !shouldLoadFullDs)
 
-  if (!skipLoading) await loadAndSaveDsData(dsDef, isPreview)
+  let newIsPreview: boolean | undefined = undefined
+  if (!skipLoading) {
+    const newMeta = await loadAndSaveDsData(dsDef, isPreview)
+    newIsPreview = newMeta.isPreview
+  }
 
   const { key } = dsDef
   const train =
@@ -72,7 +80,14 @@ export async function getDsFromDef(
     (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
   const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
   const preprocess = getPreprocessFunc(dsDef)
-  const ds: Dataset = { ...dsDef, train, test, preprocess, storeBatchSize }
+  const ds: Dataset = {
+    ...dsDef,
+    train,
+    test,
+    preprocess,
+    storeBatchSize,
+    isPreview: newIsPreview ?? existingMeta?.isPreview,
+  }
   return ds
 }
 
@@ -102,7 +117,9 @@ export async function loadAndSaveDsData(
     if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw)
   }
   const dsMeta = dsDefToDsMeta(dsDef)
-  await putData(dsDef.key, "meta", { index: "dsMeta", ...dsMeta, isPreview })
+  const newMeta = { index: "dsMeta", ...dsMeta, isPreview }
+  await putData(dsDef.key, "meta", newMeta)
+  return newMeta
 }
 
 function dsDefToDsMeta(dsDef: DatasetDef): DatasetMeta {

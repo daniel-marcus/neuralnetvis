@@ -8,9 +8,10 @@ import {
   InputRow,
   Select,
 } from "../ui-elements"
-import { resetData, setDsFromDef } from "@/data/dataset"
+import { getDsFromDef, resetData } from "@/data/dataset"
 import type { DatasetDef } from "@/data"
 import { handPose } from "@/data/datasets/hand-pose"
+import { useCurrScene } from "@/store"
 
 type HandsNum = 1 | 2
 
@@ -35,11 +36,13 @@ export const CreateNewDataset = () => {
   useEffect(() => {
     setLabels(DEFAULT_LABELS[hands].slice(0, 3))
   }, [hands])
+  const setDs = useCurrScene((s) => s.setDs)
   async function handleCreate() {
     const dsDef = dsDefFromState(name, hands, labels)
     await resetData(dsDef.key, "train")
     await resetData(dsDef.key, "test")
-    await setDsFromDef(dsDef)
+    const ds = await getDsFromDef(dsDef)
+    setDs(ds)
   }
   return (
     <CollapsibleWithTitle title="create new dataset" variant="no-bg" collapsed>

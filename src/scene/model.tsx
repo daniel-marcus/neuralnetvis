@@ -3,14 +3,11 @@ import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { Layer } from "./layer"
 import { HoverConnections } from "./connections"
 import { Highlighted } from "./highlighted"
+import { useSceneStore } from "@/store"
 
-interface ModelProps {
-  isActive?: boolean
-  dsKey?: string
-}
-
-export const Model = ({ isActive, dsKey }: ModelProps) => {
-  const layers = useLayers(!isActive, dsKey)
+export const Model = () => {
+  const isActive = useSceneStore((s) => s.isActive)
+  const layers = useLayers(!isActive)
   const selected = useSelected()
   const hovered = useHovered()
   return (
