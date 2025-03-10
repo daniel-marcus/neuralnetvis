@@ -40,10 +40,13 @@ export const fashionMnist: DatasetDef = {
     }
   },
   loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress([
-      "/data/fashion_mnist_20k/x_train_preview.npz",
-      "/data/fashion_mnist_20k/y_train_preview.npz",
-    ])
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      [
+        "/data/fashion_mnist_20k/x_train_preview.npz",
+        "/data/fashion_mnist_20k/y_train_preview.npz",
+      ],
+      true
+    )
     // add depth dim for Conv2D layers
     xTrain.shape = [...xTrain.shape, 1]
     return { xTrain, yTrain }

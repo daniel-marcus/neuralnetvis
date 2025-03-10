@@ -53,10 +53,13 @@ export const cifar10: DatasetDef = {
   },
 
   loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress([
-      "/data/cifar10_20k/x_train_preview.npz",
-      "/data/cifar10_20k/y_train_preview.npz",
-    ])
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      [
+        "/data/cifar10_20k/x_train_preview.npz",
+        "/data/cifar10_20k/y_train_preview.npz",
+      ],
+      true
+    )
     return { xTrain, yTrain }
   },
 }

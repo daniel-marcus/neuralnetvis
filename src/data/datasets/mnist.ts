@@ -29,10 +29,13 @@ export const mnist: DatasetDef = {
     }
   },
   loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress([
-      "/data/mnist_20k/x_train_preview.npz",
-      "/data/mnist_20k/y_train_preview.npz",
-    ])
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      [
+        "/data/mnist_20k/x_train_preview.npz",
+        "/data/mnist_20k/y_train_preview.npz",
+      ],
+      true
+    )
     xTrain.shape = [...xTrain.shape, 1]
     return { xTrain, yTrain }
   },

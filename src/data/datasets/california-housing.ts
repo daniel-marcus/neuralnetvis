@@ -26,12 +26,15 @@ export const californiaHousing: DatasetDef = {
 }
 
 async function loadData() {
-  const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
-    "/data/california_housing/x_train.npz",
-    "/data/california_housing/y_train.npz",
-    "/data/california_housing/x_test.npz",
-    "/data/california_housing/y_test.npz",
-  ])
+  const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+    [
+      "/data/california_housing/x_train.npz",
+      "/data/california_housing/y_train.npz",
+      "/data/california_housing/x_test.npz",
+      "/data/california_housing/y_test.npz",
+    ],
+    true
+  )
   const [xTrainScaled, xTestScaled] = tf.tidy(() => {
     const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
     const scaler = new StandardScaler()
