@@ -65,12 +65,11 @@ export async function getDsFromDef(
   const skipLoading =
     existingMeta &&
     hasLatestData &&
-    (!existingMeta.isPreview || !shouldLoadFullDs)
+    (existingMeta.loaded === "full" || !shouldLoadFullDs)
 
-  let newIsPreview: boolean | undefined = undefined
+  let newMeta: DatasetMeta | undefined
   if (!skipLoading) {
-    const newMeta = await loadAndSaveDsData(dsDef, isPreview)
-    newIsPreview = newMeta.isPreview
+    newMeta = await loadAndSaveDsData(dsDef, isPreview)
   }
 
   const { key } = dsDef
@@ -86,7 +85,7 @@ export async function getDsFromDef(
     test,
     preprocess,
     storeBatchSize,
-    isPreview: newIsPreview ?? existingMeta?.isPreview,
+    loaded: newMeta?.loaded ?? existingMeta?.loaded ?? "preview",
   }
   return ds
 }
@@ -110,22 +109,24 @@ export async function loadAndSaveDsData(
   dsDef: DatasetDef,
   isPreview?: boolean
 ) {
-  const load = isPreview ? dsDef.loadPreview : dsDef.loadData
+  const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
     const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } = await load()
     await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
     if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw)
   }
-  const dsMeta = dsDefToDsMeta(dsDef)
-  const newMeta = { index: "dsMeta", ...dsMeta, isPreview }
+  const dsMeta = dsDefToDsMeta(dsDef, isPreview)
+  const newMeta = { index: "dsMeta", ...dsMeta }
   await putData(dsDef.key, "meta", newMeta)
   return newMeta
 }
 
-function dsDefToDsMeta(dsDef: DatasetDef): DatasetMeta {
+function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { loadData, loadPreview, ...dsMeta } = dsDef
-  return dsMeta
+  const { loadPreview, loadFull, ...dsMeta } = dsDef
+  const loaded =
+    isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
+  return { ...dsMeta, loaded }
 }
 
 async function saveData(

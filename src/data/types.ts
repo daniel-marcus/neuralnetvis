@@ -19,17 +19,17 @@ export interface DatasetMeta {
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
-  isPreview?: boolean // will be set by ds loader
+  loaded: "preview" | "full" // will be set by ds loader
 }
 
 export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
 
-export interface DatasetDef extends DatasetMeta {
-  loadData?: DatasetLoader
+export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {
   loadPreview?: DatasetLoader
+  loadFull?: DatasetLoader
 }
 
-export type Dataset = Omit<DatasetDef, "loadData"> & {
+export type Dataset = DatasetMeta & {
   preprocess?: PreprocessFunc
   storeBatchSize: number
   train: StoreMeta

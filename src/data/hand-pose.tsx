@@ -18,19 +18,20 @@ const HP_TRAIN_CONFIG = {
   lazyLoading: false,
 }
 
-export function useHandPose(stream: MediaStream | null | undefined) {
+export function useHandPose(stream?: MediaStream) {
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
-  const hpPredict = useLandmarker(numHands)
+  const hpPredict = useLandmarker(numHands, stream)
   usePredictLoop(stream, hpPredict)
   const [isRecording, toggleRecording] = useSampleRecorder(hpPredict, numHands)
   return [isRecording, toggleRecording] as const
 }
 
-function useLandmarker(numHands: number) {
+function useLandmarker(numHands: number, stream?: MediaStream) {
   const videoRef = useSceneStore((s) => s.videoRef)
   const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
 
   useEffect(() => {
+    if (!stream) return
     let handLandmarker: HandLandmarker | undefined
     async function init() {
       const statusId = setStatus("Loading hand landmark model ...", -1)
@@ -43,7 +44,7 @@ function useLandmarker(numHands: number) {
       handLandmarker?.close()
       setLandmarker(null)
     }
-  }, [])
+  }, [stream])
 
   useEffect(() => {
     if (!landmarker) return

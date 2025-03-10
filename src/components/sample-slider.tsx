@@ -1,5 +1,5 @@
 import { useGlobalStore, useSceneStore } from "@/store"
-import { InlineButton, Slider } from "@/components/ui-elements"
+import { Slider } from "@/components/ui-elements"
 
 export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
@@ -13,8 +13,8 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   const hasStream = useSceneStore((s) => !!s.stream)
   return (
     <div
-      className={`fixed bottom-0 left-0 ${
-        isActive ? "p-main" : "leading-[1]"
+      className={`fixed left-0 ${
+        isActive ? "bottom-4 p-main" : "bottom-0 leading-[1]"
       } w-full flex justify-center`}
     >
       <div
@@ -45,22 +45,9 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
             <div>
               {sampleIdx + 1} / {totalSamples}
             </div>
-            <LoadFullBtn />
           </div>
         )}
       </div>
     </div>
-  )
-}
-
-function LoadFullBtn() {
-  const isPreview = useSceneStore((s) => s.ds?.isPreview)
-  const hasMoreData = true // TODO
-  const setLoadFull = useSceneStore((s) => s.setLoadFullDs)
-  if (!isPreview || !hasMoreData) return null
-  return (
-    <InlineButton onClick={setLoadFull} className="pointer-events-auto">
-      Load full
-    </InlineButton>
   )
 }

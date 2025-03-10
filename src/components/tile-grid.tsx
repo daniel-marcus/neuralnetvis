@@ -20,10 +20,15 @@ interface TileDef {
   dsKey?: string
   disabled?: boolean
   initialState?: InitialState
+  shouldLoadFullDs?: boolean
 }
 
 const tiles: TileDef[] = [
-  ...lessonPreviews.map((l) => ({ ...l, sceneType: "lesson" as const })),
+  ...lessonPreviews.map((l) => ({
+    ...l,
+    sceneType: "lesson" as const,
+    shouldLoadFullDs: true,
+  })),
   ...datasets.map((dsDef) => ({
     path: `/${dsDef.key}`,
     title: dsDef.name,
@@ -61,7 +66,8 @@ export const TileGrid = () => {
       <div className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
         {tiles
           .filter(({ disabled }) => !disabled || isDebug)
-          .map(({ path, title, dsKey, initialState, sceneType }) => {
+          .map((tile) => {
+            const { path, title, dsKey, initialState, sceneType } = tile
             const isActive = path === active
             return (
               <Tile
@@ -80,6 +86,7 @@ export const TileGrid = () => {
                   dsKey={dsKey}
                   initialState={initialState}
                   sceneType={sceneType}
+                  shouldLoadFullDs={tile.shouldLoadFullDs}
                 />
               </Tile>
             )

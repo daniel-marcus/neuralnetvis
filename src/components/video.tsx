@@ -6,7 +6,7 @@ import { useHandPose } from "@/data"
 import { InlineButton } from "./ui-elements"
 import { useCanvasUpdate } from "@/data/hand-pose"
 
-export function VideoWindow({ isActive }: { isActive: boolean }) {
+export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
   const stream = useSceneStore((s) => s.stream)
@@ -14,7 +14,6 @@ export function VideoWindow({ isActive }: { isActive: boolean }) {
   useCanvasUpdate()
   return (
     <>
-      {isActive && <VideoControl />}
       <div
         className={`absolute z-20 top-0 left-0 w-full h-full ${
           isRecording
@@ -39,14 +38,12 @@ export function VideoWindow({ isActive }: { isActive: boolean }) {
   )
 }
 
-function VideoControl() {
+export function VideoControl() {
   const [stream, toggleStream] = useStream()
   const [isRecording, toggleRecording] = useHandPose(stream)
   const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
   return (
-    <div
-      className={`fixed z-50 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
-    >
+    <>
       {!isRecording && (
         <InlineButton onClick={toggleStream}>
           {!!stream ? "stop" : "start"} video
@@ -60,7 +57,7 @@ function VideoControl() {
           {isRecording ? "cancel recording" : "record samples"}
         </InlineButton>
       )}
-    </div>
+    </>
   )
 }
 
@@ -70,7 +67,7 @@ function useStream() {
   const setStream = useSceneStore((s) => s.setStream)
   const stopStream = useCallback(() => {
     stream?.getTracks().forEach((track) => track.stop())
-    setStream(null)
+    setStream(undefined)
   }, [stream, setStream])
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()
