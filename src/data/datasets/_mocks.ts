@@ -3,6 +3,7 @@ import { mnist } from "./mnist"
 
 export const dsMnistMock: Dataset = {
   ...mnist,
+  loaded: "full",
   storeBatchSize: 100,
   train: {
     index: "train",

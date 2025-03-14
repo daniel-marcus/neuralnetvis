@@ -1,17 +1,25 @@
-import { ProgressBar } from "./progress-bar"
-import { Status } from "./status"
-import { NeuronStatus } from "./neuron-status"
-
-export const Footer = () => {
+export const Footer = ({ className = "" }) => {
   return (
-    <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none">
-      <div className="p-main -mb-1 relative">
-        <div className="flex justify-between items-end relative">
-          <NeuronStatus />
-          <Status />
-        </div>
-      </div>
-      <ProgressBar />
+    <div className={`my-16 text-right ${className}`}>
+      <p>
+        © 2025 by{" "}
+        <a
+          className="text-accent hover:text-white"
+          target="_blank"
+          href="https://danielmarcus.de/"
+        >
+          Daniel Marcus
+        </a>{" "}
+        |{" "}
+        <a
+          className="text-accent hover:text-white"
+          href="https://github.com/daniel-marcus/neuralnetvis"
+          target="_blank"
+        >
+          Github
+        </a>
+      </p>
+      <p className="mt-4"></p>
     </div>
   )
 }

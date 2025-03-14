@@ -1,8 +1,24 @@
-import { useGlobalStore } from "@/store"
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
+import { useGlobalStore } from "@/store"
+import { NeuronStatus } from "./neuron-status"
+import { ProgressBar } from "./progress-bar"
 import { Table } from "./ui-elements"
 
-export const Status = () => {
+export const StatusBar = () => {
+  return (
+    <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none">
+      <div className="p-main -mb-1 relative">
+        <div className="flex justify-between items-end relative">
+          <NeuronStatus />
+          <Status />
+        </div>
+      </div>
+      <ProgressBar />
+    </div>
+  )
+}
+
+const Status = () => {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const parsedText = useMemo(
     () =>

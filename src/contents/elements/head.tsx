@@ -29,7 +29,7 @@ export function Title({
 }: TitleProps) {
   const title = useAsciiText(children)
   return (
-    <div className={`mb-12} ${className}`}>
+    <div className={`${className}`}>
       <h1 className="hidden">{children}</h1>
       <pre
         className={dynamic ? "text-[min(1.25vw,0.75rem)]/[1.2]" : "text-logo"}
@@ -41,5 +41,5 @@ export function Title({
 }
 
 function Teaser({ children }: { children: ReactNode }) {
-  return <div className="pb-[50dvh]">{children}</div>
+  return <div className="pt-12 pb-[50dvh]">{children}</div>
 }

@@ -1,6 +1,12 @@
 import { useEffect, ReactNode, useCallback, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useGlobalStore, isDebug, setStatus, useSceneStore } from "@/store"
+import {
+  useGlobalStore,
+  isDebug,
+  setStatus,
+  useSceneStore,
+  clearStatus,
+} from "@/store"
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
@@ -51,11 +57,14 @@ export function useModelTransition() {
   return [setModel, isPending] as const
 }
 
+const MODEL_STATUS_ID = "model_status"
+
 function useModelDispose(model?: tf.LayersModel) {
   useEffect(() => {
     // dispose model on unmount
     if (!model) return
     return () => {
+      clearStatus(MODEL_STATUS_ID)
       manuallyDisposeUnusedTensors(model)
       model.dispose()
     }
@@ -80,8 +89,7 @@ function useModelStatus(
   const hasLesson = useHasLesson()
   const ds = useSceneStore((s) => s.ds)
   useEffect(() => {
-    if (!model || !isPending || hasLesson || isPreview) return
-    if (!ds) return
+    if (!model || !isPending || hasLesson || isPreview || !ds) return
     const totalSamples = ds.train?.totalSamples ?? 0
     const data = {
       Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
@@ -89,7 +97,7 @@ function useModelStatus(
       Model: model.getClassName(),
       Params: model.countParams().toLocaleString("en-US"),
     }
-    setStatus({ data }, null)
+    setStatus({ data }, null, { id: MODEL_STATUS_ID })
   }, [ds, model, isPending, hasLesson, isPreview])
 }
 

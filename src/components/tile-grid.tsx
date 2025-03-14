@@ -10,13 +10,15 @@ import { useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
 import { Title } from "@/contents/elements/head"
+import { Footer } from "./footer"
+import { SectionIntro } from "./section-intro"
 
-export type SceneType = "lesson" | "dataset"
+export type Section = "learn" | "play"
 
 interface TileDef {
   path: string
   title: string
-  sceneType: SceneType
+  section: Section
   dsKey?: string
   disabled?: boolean
   initialState?: InitialState
@@ -26,34 +28,31 @@ interface TileDef {
 const tiles: TileDef[] = [
   ...lessonPreviews.map((l) => ({
     ...l,
-    sceneType: "lesson" as const,
+    section: "learn" as const,
     shouldLoadFullDs: true,
   })),
   ...datasets.map((dsDef) => ({
-    path: `/${dsDef.key}`,
+    path: `/play/${dsDef.key}`,
     title: dsDef.name,
-    sceneType: "dataset" as const,
+    section: "play" as const,
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
   })),
 ]
 
-export function useHasActiveTile() {
-  const pathname = usePathname()
-  return tiles.some(({ path }) => path === pathname)
-}
-
 export const TileGrid = () => {
   const active = usePathname()
+  const lastActive = useLast(active)
   const router = useRouter()
   const hasLesson = useHasLesson()
   const hasActive = useHasActiveTile()
   const isDebug = useGlobalStore((s) => s.isDebug)
+  const section = useSection()
   return (
     <div
       className={`top-[120px] left-0 w-screen ${
         hasLesson ? "fixed" : "absolute"
-      } pt-0 pb-6 `}
+      }`}
       style={
         {
           "--item-width": "320px",
@@ -62,32 +61,40 @@ export const TileGrid = () => {
         } as React.CSSProperties
       }
     >
-      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
-        {tiles
-          .filter(({ disabled }) => !disabled || isDebug)
-          .map((tile) => {
-            const { path, title, dsKey, initialState, sceneType } = tile
-            const isActive = path === active
-            return (
-              <Tile
-                key={path}
-                title={title}
-                isActive={isActive}
-                onClick={!isActive ? () => router.push(path) : undefined}
-                className={`${hasActive && !isActive ? "opacity-0" : ""}`}
-                syncTrigger={hasLesson}
-                sceneType={sceneType}
-              >
-                <SceneViewer
-                  isActive={!!isActive}
-                  dsKey={dsKey}
-                  initialState={initialState}
-                  sceneType={sceneType}
-                  shouldLoadFullDs={tile.shouldLoadFullDs}
-                />
-              </Tile>
-            )
-          })}
+      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)]">
+        <SectionIntro
+          className={hasActive ? "opacity-0 pointer-events-none" : ""}
+        />
+        <div className="flex-grow grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
+          {tiles
+            .filter(({ disabled }) => !disabled || isDebug)
+            .map((tile) => {
+              const { path, title, dsKey, initialState } = tile
+              const isActive = path === active
+              return (
+                <Tile
+                  key={path}
+                  title={title}
+                  isActive={isActive}
+                  onClick={!isActive ? () => router.push(path) : undefined}
+                  className={`${hasActive && !isActive ? "opacity-0" : ""} ${
+                    !!section && tile.section !== section ? "hidden" : ""
+                  } ${path === lastActive ? "z-5" : ""}`}
+                  syncTrigger={hasLesson}
+                  section={tile.section}
+                >
+                  <SceneViewer
+                    isActive={!!isActive}
+                    dsKey={dsKey}
+                    initialState={initialState}
+                    section={tile.section}
+                    shouldLoadFullDs={tile.shouldLoadFullDs}
+                  />
+                </Tile>
+              )
+            })}
+        </div>
+        <Footer className={hasActive ? "opacity-0 pointer-events-none" : ""} />
       </div>
     </div>
   )
@@ -100,7 +107,7 @@ interface TileProps {
   className?: string
   children?: ReactNode | ReactNode[]
   syncTrigger: boolean
-  sceneType: SceneType
+  section: Section
 }
 
 function Tile({
@@ -110,7 +117,7 @@ function Tile({
   className,
   children,
   // syncTrigger,
-  sceneType,
+  section,
 }: TileProps) {
   // const [ref, offset, isScrolling] = useOffsetSync(syncTrigger)
 
@@ -130,33 +137,42 @@ function Tile({
     setLocalActive(!!isActive)
   }, [isActive])
 
+  const isFeatured = false
+
   return (
     <div
       ref={ref}
       className={`relative ${
         onClick ? "cursor-pointer" : ""
-      } h-[var(--item-height)] group/tile`}
+      } h-[var(--item-height)] group/tile ${
+        isFeatured ? "sm:col-span-2" : ""
+      } ${className}`}
       {...bind()}
+      style={
+        (isFeatured
+          ? { "--item-width": "calc(var(--item-height) * 2 + var(--gap))" }
+          : {}) as React.CSSProperties
+      }
     >
       <div
         className={`rounded-box overflow-hidden origin-center flex items-center justify-center ${
           localActive
             ? "fixed inset-0 w-screen h-[100dvh] z-10"
-            : "relative w-[var(--item-width)] h-[var(--item-height)]"
+            : "w-[var(--item-width)] h-[var(--item-height)]"
         } ${
           isActive === localActive
             ? "transition-all duration-500 ease-in-out"
             : isActive && !localActive
             ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
-            : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)]"
-        } ${className}`}
+            : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
+        }`}
       >
         {children}
         {!isActive && (
           <div
             className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main rounded-box  pointer-events-none flex flex-col justify-between border-1 border-box-bg`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
-            {sceneType === "lesson" ? (
+            {section === "learn" ? (
               <>
                 <div></div>
                 <Title
@@ -178,4 +194,23 @@ function Tile({
       </div>
     </div>
   )
+}
+
+export function useHasActiveTile() {
+  const pathname = usePathname()
+  return tiles.some(({ path }) => path === pathname)
+}
+
+export function useSection() {
+  const pathname = usePathname()
+  const splits = pathname.split("/")
+  return splits.length === 2 ? splits[1] : ""
+}
+
+function useLast<T>(value: T) {
+  const ref = useRef(value)
+  useEffect(() => {
+    ref.current = value
+  }, [value])
+  return ref.current
 }

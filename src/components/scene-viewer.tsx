@@ -7,12 +7,12 @@ import { VideoControl, VideoWindow } from "./video"
 import { SampleSlider } from "./sample-slider"
 import { useTraining } from "@/model"
 import { InitialState, useInitialState } from "@/utils/initial-state"
-import { SceneType } from "./tile-grid"
+import { Section } from "./tile-grid"
 import { InlineButton } from "./ui-elements"
 
 interface SceneViewerProps {
   isActive: boolean
-  sceneType: SceneType
+  section: Section
   dsKey?: string
   initialState?: InitialState
   shouldLoadFullDs?: boolean
@@ -28,7 +28,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
 }
 
 function SceneViewerInner(props: SceneViewerProps) {
-  const { dsKey, isActive, sceneType } = props
+  const { dsKey, isActive, section } = props
   const isPreview = !isActive
   const dsDef = useDsDef(dsKey)
   const ds = useDataset(dsDef, isPreview)
@@ -46,7 +46,7 @@ function SceneViewerInner(props: SceneViewerProps) {
           {dsDef?.hasCam && <VideoControl />}
         </SceneBtns>
       )}
-      {sceneType === "dataset" && <SampleSlider isActive={isActive} />}
+      {section === "play" && <SampleSlider isActive={isActive} />}
     </>
   )
 }

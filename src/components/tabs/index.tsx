@@ -1,10 +1,7 @@
 "use client"
 
 import { Data } from "./data"
-import { Info } from "./info"
-import { Learn } from "./learn"
 import { Model } from "./model"
-import { Play } from "./play"
 import { Train } from "./train"
 
 export type Tab = {
@@ -17,18 +14,15 @@ export type Tab = {
   parent?: Tab // will be added in addParent
 }
 
-const _tabs: Tab[] = [
-  { key: "learn", component: Learn },
-  {
-    key: "play",
-    component: Play,
-    children: [
-      { key: "data", component: Data },
-      { key: "model", component: Model },
-      { key: "train", component: Train },
-    ],
-  },
-  { key: "info", label: "i", component: Info },
+const _rootTabs: Tab[] = [
+  { key: "learn", slug: "learn" },
+  { key: "play", slug: "play" },
+]
+
+const _playTabs: Tab[] = [
+  { key: "data", component: Data },
+  { key: "model", component: Model },
+  { key: "train", component: Train },
 ]
 
 function addParent(tab: Tab, parent?: Tab): Tab {
@@ -36,4 +30,5 @@ function addParent(tab: Tab, parent?: Tab): Tab {
   return { ...tab, parent, children }
 }
 
-export const tabs = _tabs.map((t) => addParent(t))
+export const rootTabs = _rootTabs.map((t) => addParent(t))
+export const playTabs = _playTabs.map((t) => addParent(t))

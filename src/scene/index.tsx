@@ -44,6 +44,7 @@ export const SceneInner = ({ isActive }: SceneProps) => {
       camera.updateProjectionMatrix()
       invalidate()
     },
+    config: { duration: 500 },
   })
   const isTouchDevice = useIsTouchDevice()
   return (

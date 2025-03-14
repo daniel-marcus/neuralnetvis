@@ -16,6 +16,7 @@ export function isScreen(bp: Breakpoint) {
   const styles = getComputedStyle(document.documentElement)
   const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
   const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
+  console.log({ styles, bpRem, bpPx })
   return window.innerWidth >= bpPx
 }
 

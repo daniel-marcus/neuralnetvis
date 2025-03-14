@@ -1,7 +1,10 @@
 import type { StateCreator } from "zustand"
-import { tabs, type Tab } from "@/components/tabs"
+import { rootTabs, playTabs, type Tab } from "@/components/tabs"
 
-const allTabs = tabs.flatMap((t) => [t, ...(t.children ?? [])])
+const allTabs = [...rootTabs, ...playTabs].flatMap((t) => [
+  t,
+  ...(t.children ?? []),
+])
 const tabMap = new Map(allTabs.map((t) => [t.key, t]))
 
 export interface TabsSlice {

@@ -1,13 +1,20 @@
 "use client"
 
-import { createElement, useState, Fragment, type ReactNode } from "react"
+import {
+  createElement,
+  useState,
+  Fragment,
+  type ReactNode,
+  useMemo,
+  useEffect,
+} from "react"
 import Link from "next/link"
 import Headroom from "react-headroom"
 import { useGlobalStore } from "@/store"
 import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
-import { tabs, type Tab } from "@/components/tabs"
+import { rootTabs, playTabs, type Tab } from "@/components/tabs"
 import { usePathname } from "next/navigation"
 import { useHasActiveTile } from "./tile-grid"
 
@@ -19,16 +26,16 @@ export const Menu = () => {
   const isScreenXl = useIsScreen("xl")
   const hasLesson = useHasLesson()
   const [showGradient, setShowGradient] = useState(false)
-  const pathname = usePathname()
+  const isPlayMode = useIsPlayMode()
   const hasActiveTile = useHasActiveTile()
   return (
     <div //
       className={`${
-        !hasLesson && hasActiveTile ? "fixed" : "relative xl:stick"
+        isPlayMode ? "fixed" : "relative xl:stick"
       } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
-        disable={!hasLesson || isScreenXl}
+        disable={isPlayMode || isScreenXl}
         onPin={() => setShowGradient(true)}
         onUnpin={() => setShowGradient(false)}
         onUnfix={() => setShowGradient(false)}
@@ -41,7 +48,7 @@ export const Menu = () => {
            to-transparent z-[-1]`}
           />
           <Link
-            href={pathname === "/menu" ? "/menu" : "/"}
+            href={"/"}
             className={`pointer-events-auto`}
             scroll={hasLesson ? true : false}
             onClick={() => {
@@ -74,32 +81,43 @@ export const Menu = () => {
   )
 }
 
+export function useIsPlayMode() {
+  const pathname = usePathname()
+  return pathname.startsWith("/play/")
+}
+
 const Tabs = () => {
   const currTab = useGlobalStore((s) => s.tab)
   const setTab = useGlobalStore((s) => s.setTab)
   const toggleTab = useGlobalStore((s) => s.toggleTab)
   const tabIsShown = useGlobalStore((s) => s.tabIsShown)
 
+  const isPlayMode = useIsPlayMode()
+  const tabs = useMemo(() => (isPlayMode ? playTabs : rootTabs), [isPlayMode])
+  useEffect(() => {
+    setTab(null)
+  }, [isPlayMode, setTab])
+  const pathname = usePathname()
+
   function renderTabs(tabs: Tab[], parent?: Tab) {
     return tabs.map((t) => {
-      const isActive = currTab?.key === t.key
+      const isActive = currTab?.key === t.key || pathname === `/${t.slug}`
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
       const isParent =
         !!currTab && allChildren?.some((c) => c.key === currTab.key)
       const isSibling = currTab?.parent?.key === parent?.key && !isActive
       const isChild = !!parent && parent.key === currTab?.key
-      const isCategory = !t.component
       const isShown =
-        (isActive && !isCategory && !currTab?.children) ||
+        (isActive && !currTab?.children) ||
         isChild ||
         (isSibling && !currTab?.children)
-      const handleClick = () => toggleTab(t.key)
       return (
         <Fragment key={t.key}>
           <TabButton
-            isActive={isActive && tabIsShown}
+            href={t.slug ? (isActive ? "/" : `/${t.slug}`) : undefined}
+            isActive={isActive && (tabIsShown || !t.component)}
             isShown={isShown}
-            onClick={handleClick}
+            onClick={t.slug ? undefined : () => toggleTab(t.key)}
           >
             {t.label ?? t.key}
           </TabButton>
