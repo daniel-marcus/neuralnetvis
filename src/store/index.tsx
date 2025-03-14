@@ -8,6 +8,7 @@ import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
 import { createContext, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
+import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
 //
 
@@ -88,6 +89,7 @@ export type GlobalStoreType = TabsSlice &
     isDebug: boolean
     skipModelCreate: boolean
     scene: SceneStore
+    handLandmarker?: HandLandmarker
   }
 
 export const useGlobalStore = create<GlobalStoreType>()((...a) => ({

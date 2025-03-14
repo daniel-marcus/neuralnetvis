@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   FilesetResolver,
@@ -28,23 +28,19 @@ export function useHandPose(stream?: MediaStream) {
 
 function useLandmarker(numHands: number, stream?: MediaStream) {
   const videoRef = useSceneStore((s) => s.videoRef)
-  const [landmarker, setLandmarker] = useState<HandLandmarker | null>(null)
+  const landmarker = useGlobalStore((s) => s.handLandmarker)
 
   useEffect(() => {
-    if (!stream) return
+    if (!stream || landmarker) return
     let handLandmarker: HandLandmarker | undefined
     async function init() {
       const statusId = setStatus("Loading hand landmark model ...", -1)
       handLandmarker = await createHandLandmarker()
-      setLandmarker(handLandmarker)
+      useGlobalStore.setState({ handLandmarker })
       clearStatus(statusId)
     }
     init()
-    return () => {
-      handLandmarker?.close()
-      setLandmarker(null)
-    }
-  }, [stream])
+  }, [stream, landmarker])
 
   useEffect(() => {
     if (!landmarker) return
