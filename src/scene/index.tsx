@@ -34,7 +34,8 @@ export const Scene = (props: SceneProps) => {
 }
 
 export const SceneInner = ({ isActive }: SceneProps) => {
-  const { camera, invalidate } = useThree()
+  const invalidate = useThree((s) => s.invalidate)
+  const camera = useThree((s) => s.camera)
   useSpring({
     from: { zoom: 0.1 },
     to: { zoom: isActive ? 1 : 0.38 }, // TODO: adjust from screen size

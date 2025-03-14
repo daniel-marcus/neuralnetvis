@@ -160,7 +160,7 @@ interface DynamicLineProps {
 
 const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
   const lineRef = useRef<Line | null>(null)
-  const { size } = useThree()
+  const size = useThree((s) => s.size)
 
   const geometry = useMemo(() => new LineGeometry(), [])
 

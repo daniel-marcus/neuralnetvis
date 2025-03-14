@@ -78,7 +78,7 @@ export const NeuronLabel = ({
   children,
 }: NeuronLabelProps) => {
   const labelRef = useRef<THREE.Object3D & CustomText>(null)
-  const camera = useThree((state) => state.camera)
+  const camera = useThree((s) => s.camera)
   useFrame(() => {
     if (labelRef.current) {
       labelRef.current.lookAt(camera.position)
