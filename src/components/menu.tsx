@@ -22,7 +22,7 @@ export const Menu = () => {
   const pathname = usePathname()
   const hasActiveTile = useHasActiveTile()
   return (
-    <div
+    <div //
       className={`${
         !hasLesson && hasActiveTile ? "fixed" : "relative xl:stick"
       } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}

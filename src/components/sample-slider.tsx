@@ -13,12 +13,14 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   const hasStream = useSceneStore((s) => !!s.stream)
   return (
     <div
-      className={`fixed left-0 ${
-        isActive ? "bottom-4 p-main" : "bottom-0 leading-[1]"
-      } w-full flex justify-center`}
+      className={`absolute left-0 ${
+        isActive ? "bottom-8" : "bottom-0 leading-[1]"
+      } w-full flex justify-center transition-[bottom] duration-300`}
     >
       <div
-        className={`w-full max-w-[80vw] sm:max-w-[380px] pointer-events-auto ${
+        className={`w-full ${
+          isActive ? "max-w-[80vw] sm:max-w-[380px]" : ""
+        } pointer-events-auto ${
           hasProgressBar || !totalSamples || visIsLocked || hasStream
             ? "opacity-0 pointer-events-none"
             : hasStatus || hasSelected

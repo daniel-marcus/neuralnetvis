@@ -46,15 +46,14 @@ export function useHasActiveTile() {
 export const TileGrid = () => {
   const active = usePathname()
   const router = useRouter()
-  const lastActive = useLast(active)
   const hasLesson = useHasLesson()
   const hasActive = useHasActiveTile()
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <div
-      className={`${
-        hasLesson ? "fixed top-0 left-0" : "relative"
-      } mx-auto pt-0 pb-6 w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))]`}
+      className={`top-[120px] left-0 w-screen ${
+        hasLesson ? "fixed" : "absolute"
+      } pt-0 pb-6 `}
       style={
         {
           "--item-width": "320px",
@@ -63,7 +62,7 @@ export const TileGrid = () => {
         } as React.CSSProperties
       }
     >
-      <div className="grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
+      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
         {tiles
           .filter(({ disabled }) => !disabled || isDebug)
           .map((tile) => {
@@ -75,9 +74,7 @@ export const TileGrid = () => {
                 title={title}
                 isActive={isActive}
                 onClick={!isActive ? () => router.push(path) : undefined}
-                className={`${hasActive && !isActive ? "opacity-0" : ""} ${
-                  lastActive === path ? "z-5" : ""
-                }`}
+                className={`${hasActive && !isActive ? "opacity-0" : ""}`}
                 syncTrigger={hasLesson}
                 sceneType={sceneType}
               >
@@ -112,13 +109,26 @@ function Tile({
   onClick,
   className,
   children,
-  syncTrigger,
+  // syncTrigger,
   sceneType,
 }: TileProps) {
-  const [ref, offset, isScrolling] = useOffsetSync(syncTrigger)
+  // const [ref, offset, isScrolling] = useOffsetSync(syncTrigger)
+
+  const ref = useRef<HTMLDivElement>(null)
+
   const bind = useDrag(({ tap }) => {
-    if (tap) onClick?.()
+    if (tap) {
+      onClick?.()
+    }
   })
+
+  const [localActive, setLocalActive] = useState(false)
+  useEffect(() => {
+    const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
+    ref.current?.style.setProperty("--offset-x", `${x}px`)
+    ref.current?.style.setProperty("--offset-y", `${y}px`)
+    setLocalActive(!!isActive)
+  }, [isActive])
 
   return (
     <div
@@ -129,24 +139,22 @@ function Tile({
       {...bind()}
     >
       <div
-        className={`fixed rounded-box overflow-hidden top-0 left-0 origin-center flex items-center justify-center ${
-          isScrolling ? "" : "transition-all duration-500"
+        className={`rounded-box overflow-hidden origin-center flex items-center justify-center ${
+          localActive
+            ? "fixed inset-0 w-screen h-[100dvh] z-10"
+            : "relative w-[var(--item-width)] h-[var(--item-height)]"
         } ${
-          isActive
-            ? "w-screen! h-[100dvh]! z-10"
-            : "w-[var(--item-width)] h-[var(--item-height)] translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
-        } ${typeof offset.x === "undefined" ? "opacity-0" : ""} ${className}`}
-        style={
-          {
-            "--offset-x": `${offset.x}px`,
-            "--offset-y": `${offset.y}px`,
-          } as React.CSSProperties
-        }
+          isActive === localActive
+            ? "transition-all duration-500 ease-in-out"
+            : isActive && !localActive
+            ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
+            : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)]"
+        } ${className}`}
       >
         {children}
         {!isActive && (
           <div
-            className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main border-1 rounded-box border-box-bg pointer-events-none flex flex-col justify-between`} // bg-gradient-to-tr from-background to-transparent via-transparent
+            className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main rounded-box  pointer-events-none flex flex-col justify-between border-1 border-box-bg`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
             {sceneType === "lesson" ? (
               <>
@@ -170,42 +178,4 @@ function Tile({
       </div>
     </div>
   )
-}
-
-type OffsetState = { x?: number; y?: number }
-
-function useOffsetSync(syncTrigger: boolean) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [isScrolling, setIsScrolling] = useState(false)
-  const [offset, setOffset] = useState<OffsetState>({})
-  useEffect(() => {
-    let scrollTimer: NodeJS.Timeout
-    function syncOffset() {
-      if (ref.current) {
-        setIsScrolling(true)
-        clearTimeout(scrollTimer)
-        scrollTimer = setTimeout(() => {
-          setIsScrolling(false)
-        }, 150)
-        const { x, y } = ref.current.getBoundingClientRect()
-        setOffset({ x, y })
-      }
-    }
-    syncOffset()
-    window.addEventListener("resize", syncOffset)
-    window.addEventListener("scroll", syncOffset)
-    return () => {
-      window.removeEventListener("resize", syncOffset)
-      window.removeEventListener("scroll", syncOffset)
-    }
-  }, [syncTrigger])
-  return [ref, offset, isScrolling] as const
-}
-
-function useLast<T>(value: T) {
-  const ref = useRef(value)
-  useEffect(() => {
-    ref.current = value
-  }, [value])
-  return ref.current
 }
