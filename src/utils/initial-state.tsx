@@ -26,6 +26,7 @@ export function useInitialState(state?: InitialState) {
   const three = useSceneStore((s) => s.three)
   const setLayersConfig = useSceneStore((s) => s.setLayerConfigs)
   const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   useEffect(() => {
     if (!three || !state) return
     const { cameraPos, cameraLookAt } = state
@@ -34,5 +35,6 @@ export function useInitialState(state?: InitialState) {
     }
     if (state.vis) setVisConfig({ ...state.vis })
     if (state.layerConfigs) setLayersConfig(state.layerConfigs)
-  }, [state, three, setLayersConfig, setVisConfig])
+    if (state.sampleIdx) setSampleIdx(state.sampleIdx)
+  }, [state, three, setLayersConfig, setVisConfig, setSampleIdx])
 }

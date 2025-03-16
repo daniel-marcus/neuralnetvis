@@ -7,8 +7,8 @@ import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
   handPose,
-  mnist,
   fashionMnist,
+  mnist,
   cifar10,
   californiaHousing,
 ] as const

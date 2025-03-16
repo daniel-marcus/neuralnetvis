@@ -12,7 +12,7 @@ export interface DataSlice {
   totalSamples: () => number
   isRegression: () => boolean
 
-  sampleIdx: number
+  sampleIdx: number | undefined
   setSampleIdx: (idx: number) => void
   sample?: Sample
   setSample: (sample?: Sample) => void
@@ -30,7 +30,12 @@ export const createDataSlice: StateCreator<
   setLoadFullDs: (shouldLoadFullDs) => set({ shouldLoadFullDs }),
 
   ds: undefined,
-  setDs: (ds) => set({ ds }),
+  setDs: (ds) =>
+    set(({ sampleIdx }) => ({
+      ds,
+      sampleIdx:
+        sampleIdx ?? Math.floor(Math.random() * (ds?.train.totalSamples ?? 0)),
+    })),
   updateMeta: (storeName, meta) => {
     const ds = get().ds
     if (!ds) return
@@ -40,13 +45,13 @@ export const createDataSlice: StateCreator<
   totalSamples: () => get().ds?.train.totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
 
-  sampleIdx: 0,
+  sampleIdx: undefined,
   setSampleIdx: (sampleIdx) => set({ sampleIdx }),
   sample: undefined, // TODO: no global sample
   setSample: (sample) => set({ sample }),
   nextSample: (step = 1) =>
     set(({ sampleIdx, totalSamples }) => ({
-      sampleIdx: (sampleIdx + step + totalSamples()) % totalSamples(),
+      sampleIdx: ((sampleIdx ?? 0) + step + totalSamples()) % totalSamples(),
     })),
   resetSample: () => set(() => ({ sampleIdx: 0, sample: undefined })),
 })
