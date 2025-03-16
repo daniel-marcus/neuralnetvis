@@ -2,16 +2,15 @@
 
 import { useTfBackend } from "@/model/tf-backend"
 import { useDebugCommands } from "@/utils/debug"
-import { Gradient, Menu, TileGrid } from "@/components"
+import { Gradient, Header, TileGrid, StatusBar } from "@/components"
 import type { ReactNode } from "react"
-import { StatusBar } from "./status"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   useTfBackend()
   useDebugCommands()
   return (
     <>
-      <Menu />
+      <Header />
       <Gradient />
       <TileGrid />
       {children}

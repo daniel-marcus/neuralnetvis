@@ -6,6 +6,7 @@ export type DatasetKey = string
 
 export interface DatasetMeta {
   key: DatasetKey // aka slug
+  parentKey?: DatasetKey // for user-generated datasets
   task: "classification" | "regression"
   name: string
   description: string
@@ -22,12 +23,12 @@ export interface DatasetMeta {
   loaded: "preview" | "full" // will be set by ds loader
 }
 
-export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
-
 export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {
   loadPreview?: DatasetLoader
   loadFull?: DatasetLoader
 }
+
+export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
 
 export type Dataset = DatasetMeta & {
   preprocess?: PreprocessFunc

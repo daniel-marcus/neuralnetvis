@@ -38,7 +38,7 @@ export const SceneInner = ({ isActive }: SceneProps) => {
   const camera = useThree((s) => s.camera)
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? 1 : 0.38 }, // TODO: adjust from screen size
+    to: { zoom: isActive ? 1 : 0.4 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
       camera.zoom = value.zoom
       camera.updateProjectionMatrix()

@@ -8,10 +8,11 @@ import {
   InputRow,
   Select,
 } from "../ui-elements"
-import { getDsFromDef, resetData } from "@/data/dataset"
+import { getDsFromDef, getDsPath, resetData } from "@/data/dataset"
 import type { DatasetDef } from "@/data"
 import { handPose } from "@/data/datasets/hand-pose"
 import { useCurrScene } from "@/store"
+import { useRouter } from "next/navigation"
 
 type HandsNum = 1 | 2
 
@@ -36,16 +37,22 @@ export const CreateNewDataset = () => {
   useEffect(() => {
     setLabels(DEFAULT_LABELS[hands].slice(0, 3))
   }, [hands])
+  const router = useRouter()
+  const ds = useCurrScene((s) => s.ds)
   const setDs = useCurrScene((s) => s.setDs)
   async function handleCreate() {
     const dsDef = dsDefFromState(name, hands, labels)
     await resetData(dsDef.key, "train")
     await resetData(dsDef.key, "test")
-    const ds = await getDsFromDef(dsDef)
-    setDs(ds)
+    const newDs = await getDsFromDef(dsDef) // creates meta data in db
+    if (ds?.key === dsDef.key) {
+      setDs(newDs)
+    } else {
+      router.push(getDsPath(dsDef))
+    }
   }
   return (
-    <CollapsibleWithTitle title="create new dataset" variant="no-bg" collapsed>
+    <CollapsibleWithTitle title="create new dataset">
       <div className="flex gap-2">
         <InlineButton variant="secondary" className="text-white" disabled>
           hand pose classification
@@ -122,9 +129,11 @@ function dsDefFromState(
   return {
     ...handPose,
     key: name,
+    parentKey: handPose.key,
     name,
     version: new Date(),
     inputDims: [21, 3, hands],
     outputLabels,
+    isUserGenerated: true,
   }
 }

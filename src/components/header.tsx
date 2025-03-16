@@ -16,9 +16,8 @@ import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
 import { rootTabs, playTabs, type Tab } from "@/components/tabs"
 import { usePathname } from "next/navigation"
-import { useHasActiveTile } from "./tile-grid"
 
-export const Menu = () => {
+export const Header = () => {
   const currTab = useGlobalStore((s) => s.tab)
   const setTab = useGlobalStore((s) => s.setTab)
   const isShown = useGlobalStore((s) => s.tabIsShown)
@@ -27,11 +26,14 @@ export const Menu = () => {
   const hasLesson = useHasLesson()
   const [showGradient, setShowGradient] = useState(false)
   const isPlayMode = useIsPlayMode()
-  const hasActiveTile = useHasActiveTile()
   return (
     <div //
       className={`${
-        isPlayMode ? "fixed" : "relative xl:stick"
+        isPlayMode
+          ? "fixed"
+          : hasLesson
+          ? "relative xl:sticky"
+          : "relative xl:fixed"
       } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
@@ -43,7 +45,7 @@ export const Menu = () => {
         <div className={`flex justify-between items-start`}>
           <div
             className={`${
-              !hasActiveTile || !showGradient ? "hidden" : ""
+              !showGradient ? "hidden" : ""
             } xl:hidden absolute h-[30vh] inset-0 bg-gradient-to-b from-background
            to-transparent z-[-1]`}
           />
@@ -59,7 +61,7 @@ export const Menu = () => {
           </Link>
           <div className="pointer-events-auto">
             <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
-              <Tabs />
+              <TabMenu />
             </div>
             <div
               className={`overflow-hidden pb-8 pointer-events-none absolute right-0 w-[25rem] max-w-[100vw]`}
@@ -86,7 +88,7 @@ export function useIsPlayMode() {
   return pathname.startsWith("/play/")
 }
 
-const Tabs = () => {
+const TabMenu = () => {
   const currTab = useGlobalStore((s) => s.tab)
   const setTab = useGlobalStore((s) => s.setTab)
   const toggleTab = useGlobalStore((s) => s.toggleTab)

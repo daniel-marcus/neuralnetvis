@@ -4,7 +4,7 @@ import { ModelSlice } from "./model"
 
 export interface DataSlice {
   shouldLoadFullDs?: boolean
-  setLoadFullDs: () => void
+  setLoadFullDs: (shouldLoadFullDs: boolean) => void
 
   ds?: Dataset
   setDs: (ds?: Dataset) => void
@@ -27,7 +27,7 @@ export const createDataSlice: StateCreator<
   DataSlice
 > = (set, get) => ({
   shouldLoadFullDs: false,
-  setLoadFullDs: () => set({ shouldLoadFullDs: true }),
+  setLoadFullDs: (shouldLoadFullDs) => set({ shouldLoadFullDs }),
 
   ds: undefined,
   setDs: (ds) => set({ ds }),

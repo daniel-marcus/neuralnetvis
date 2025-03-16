@@ -1,4 +1,4 @@
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { datasets } from "./datasets"
 import { deleteAll, getData, putData, putDataBatches } from "./db"
 import type {
@@ -10,7 +10,7 @@ import type {
   StoreMeta,
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 export const DEFAULT_STORE_BATCH_SIZE = 100
 
@@ -18,36 +18,40 @@ export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
   const ds = useSceneStore((s) => s.ds)
   const setDs = useSceneStore((s) => s.setDs)
   const shouldLoadFullDs = useSceneStore((s) => s.shouldLoadFullDs)
+  const setLoadFullDs = useSceneStore((s) => s.setLoadFullDs)
   useEffect(() => {
     async function loadDs() {
       if (!dsDef) return
       const ds = await getDsFromDef(dsDef, isPreview, shouldLoadFullDs)
       setDs(ds)
+      if (shouldLoadFullDs && ds.loaded === "full") {
+        setLoadFullDs(false)
+      }
     }
     loadDs()
-  }, [dsDef, isPreview, setDs, shouldLoadFullDs])
+  }, [dsDef, isPreview, setDs, shouldLoadFullDs, setLoadFullDs])
   return ds
 }
 
-export function useDsDef(dsKey?: string) {
-  // TODO: also use user generated from db
-  return useMemo(() => datasets.find((d) => d.key === dsKey), [dsKey])
+export function useDsDef(dsKey?: string): DatasetDef | DatasetMeta | undefined {
+  const dsDef = useMemo(() => datasets.find((d) => d.key === dsKey), [dsKey])
+  const [dsMetaFromDb, setDsMeta] = useState<DatasetMeta | undefined>(undefined)
+  useEffect(() => {
+    if (dsKey) getDsMetaFromDb(dsKey).then(setDsMeta)
+  }, [dsKey])
+  return dsDef || dsMetaFromDb
 }
 
-export async function setDsFromKey(key: string) {
-  const dsDef = datasets.find((d) => d.key === key)
-  if (!dsDef) return
-  const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
-  const hasLatestData =
-    existingMeta?.version.getTime() === dsDef.version.getTime()
-  const skipLoading = existingMeta && hasLatestData
-  await setDsFromDef(dsDef, skipLoading)
+export function getDsPath(dsDef: DatasetDef | DatasetMeta) {
+  if (dsDef.parentKey) {
+    const params = new URLSearchParams({ ds: dsDef.key })
+    return `/play/${dsDef.parentKey}?${params.toString()}`
+  } else return `/play/${dsDef.key}`
 }
 
-export async function setDsFromDb(key: string) {
+export async function getDsMetaFromDb(key: string) {
   const dsMeta = await getData<DatasetMeta>(key, "meta", "dsMeta")
-  if (!dsMeta) return
-  await setDsFromDef(dsMeta, true)
+  return dsMeta
 }
 
 function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
@@ -62,10 +66,9 @@ export async function getDsFromDef(
   const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
   const hasLatestData =
     existingMeta?.version.getTime() === dsDef.version.getTime()
-  const skipLoading =
-    existingMeta &&
-    hasLatestData &&
-    (existingMeta.loaded === "full" || !shouldLoadFullDs)
+  const needsFullLoad =
+    shouldLoadFullDs && existingMeta?.loaded !== "full" && !isPreview
+  const skipLoading = existingMeta && hasLatestData && !needsFullLoad
 
   let newMeta: DatasetMeta | undefined
   if (!skipLoading) {
@@ -94,15 +97,6 @@ export function getPreprocessFunc(dsDef: DatasetDef | DatasetMeta) {
   return dsDef.preprocessFunc
     ? preprocessFuncs[dsDef.preprocessFunc]
     : undefined
-}
-
-export async function setDsFromDef(
-  dsDef: DatasetDef | DatasetMeta,
-  skipLoading?: boolean
-) {
-  const ds = await getDsFromDef(dsDef, skipLoading)
-  console.log("TOOD: setDsFromDef", ds)
-  // useGlobalStore.setState({ ds, sample: undefined, sampleIdx: 0 })
 }
 
 export async function loadAndSaveDsData(
@@ -186,9 +180,10 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
   const storeMeta = newStoreMeta(storeName, 0)
   await putData(dsKey, "meta", storeMeta)
 
-  /* const currDs = useGlobalStore.getState().ds
-  if (currDs?.key === dsKey) {
+  const scene = useGlobalStore.getState().scene
+  const currDs = scene.getState().ds
+  if (currDs && currDs.key === dsKey) {
     const newDs = { ...currDs, [storeName]: storeMeta }
-    useGlobalStore.setState({ ds: newDs, skipModelCreate: true })
-  } */
+    scene.setState({ ds: newDs, skipModelCreate: true })
+  }
 }

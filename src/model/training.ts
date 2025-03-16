@@ -18,7 +18,8 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const toggleTraining = useSceneStore((s) => s.toggleTraining)
   const batchCount = useSceneStore((s) => s.batchCount)
   const config = useSceneStore((s) => s.trainConfig)
-  useKeyCommand("t", toggleTraining)
+  const isActive = useSceneStore((s) => s.isActive)
+  useKeyCommand("t", toggleTraining, isActive)
   const resetTrainCounts = useSceneStore((s) => s.resetTrainCounts)
   useEffect(() => resetTrainCounts(), [model, resetTrainCounts])
   useEffect(() => {

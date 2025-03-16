@@ -1,6 +1,7 @@
 export { App } from "./app"
 export { Footer } from "./footer"
 export { Gradient } from "./gradient"
-export { Menu } from "./menu"
+export { Header } from "./header"
+export { StatusBar } from "./status-bar"
 export { TileGrid } from "./tile-grid"
 export { VideoWindow } from "./video"

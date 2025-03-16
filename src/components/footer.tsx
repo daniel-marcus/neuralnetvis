@@ -1,6 +1,6 @@
 export const Footer = ({ className = "" }) => {
   return (
-    <div className={`my-16 text-right ${className}`}>
+    <div className={`py-16 text-right ${className}`}>
       <p>
         © 2025 by{" "}
         <a

@@ -9,6 +9,8 @@ import { useTraining } from "@/model"
 import { InitialState, useInitialState } from "@/utils/initial-state"
 import { Section } from "./tile-grid"
 import { InlineButton } from "./ui-elements"
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
 interface SceneViewerProps {
   isActive: boolean
@@ -22,7 +24,9 @@ export const SceneViewer = (props: SceneViewerProps) => {
   const { isActive, shouldLoadFullDs } = props
   return (
     <SceneStoreProvider isActive={isActive} shouldLoadFullDs={shouldLoadFullDs}>
-      <SceneViewerInner {...props} />
+      <Suspense>
+        <SceneViewerInner {...props} />
+      </Suspense>
     </SceneStoreProvider>
   )
 }
@@ -30,7 +34,8 @@ export const SceneViewer = (props: SceneViewerProps) => {
 function SceneViewerInner(props: SceneViewerProps) {
   const { dsKey, isActive, section } = props
   const isPreview = !isActive
-  const dsDef = useDsDef(dsKey)
+  const dsKeyFromParams = useSearchParams().get("ds")
+  const dsDef = useDsDef(isActive && dsKeyFromParams ? dsKeyFromParams : dsKey)
   const ds = useDataset(dsDef, isPreview)
   const model = useModel(ds, isPreview)
   useSample(ds, isActive)
@@ -69,7 +74,10 @@ function LoadFullBtn() {
   return (
     <>
       <span className="text-accent">PREVIEW</span>
-      <InlineButton onClick={setLoadFull} className="pointer-events-auto">
+      <InlineButton
+        onClick={() => setLoadFull(true)}
+        className="pointer-events-auto"
+      >
         load full
       </InlineButton>
     </>

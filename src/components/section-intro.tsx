@@ -9,7 +9,7 @@ const introTexts = {
 export const SectionIntro = ({ className = "" }) => {
   const section = useSection()
   return (
-    <div className={`mb-16 ${className}`}>
+    <div className={`py-16 ${className}`}>
       {introTexts[section] ?? introTexts.default}
     </div>
   )

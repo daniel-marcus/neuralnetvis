@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useSceneStore } from "@/store"
+import { isDebug, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
 import type { Dataset, DbBatch } from "./types"
@@ -69,7 +69,10 @@ export async function getSample(
   const batch = hasCached
     ? currBatchCache[batchCacheKey]
     : await getData<DbBatch>(ds.key, type, batchIdx)
-  if (!batch) return []
+  if (!batch) {
+    if (isDebug()) console.log("NO BATCH", hasCached, batchIdx, i, ds)
+    return []
+  }
   if (!hasCached) currBatchCache = { [batchCacheKey]: batch }
   const sampleIdx = i % storeBatchSize
   const sliceIdxs = [sampleIdx * valsPerSample, (sampleIdx + 1) * valsPerSample]

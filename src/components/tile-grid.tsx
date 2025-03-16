@@ -12,28 +12,50 @@ import { InitialState } from "@/utils/initial-state"
 import { Title } from "@/contents/elements/head"
 import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
+import { getDsPath } from "@/data/dataset"
 
 export type Section = "learn" | "play"
 
 interface TileDef {
   path: string
   title: string
+  tags?: ReactNode[]
   section: Section
   dsKey?: string
+  isFeatured?: boolean
   disabled?: boolean
   initialState?: InitialState
   shouldLoadFullDs?: boolean
 }
 
+const cameraSvg = (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-4 h-4"
+  >
+    <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
+    <rect x="2" y="6" width="14" height="12" rx="2" />
+  </svg>
+)
+
 const tiles: TileDef[] = [
   ...lessonPreviews.map((l) => ({
     ...l,
+    // isFeatured: true,
     section: "learn" as const,
+    tags: ["lesson"],
     shouldLoadFullDs: true,
   })),
   ...datasets.map((dsDef) => ({
-    path: `/play/${dsDef.key}`,
+    path: getDsPath(dsDef),
     title: dsDef.name,
+    tags: dsDef.hasCam ? [cameraSvg, "dataset"] : ["dataset"],
     section: "play" as const,
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
@@ -50,31 +72,32 @@ export const TileGrid = () => {
   const section = useSection()
   return (
     <div
-      className={`top-[120px] left-0 w-screen ${
+      className={`top-[var(--logo-height)] left-0 w-screen ${
         hasLesson ? "fixed" : "absolute"
       }`}
       style={
         {
           "--item-width": "320px",
-          "--item-height": "320px",
-          "--gap": "1rem",
+          "--item-height": "420px",
+          "--gap": "2rem",
         } as React.CSSProperties
       }
     >
-      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)]">
+      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-[var(--padding-main)] xs:px-0">
         <SectionIntro
           className={hasActive ? "opacity-0 pointer-events-none" : ""}
         />
-        <div className="flex-grow grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)] p-main">
+        <div className="flex-grow grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)]">
           {tiles
             .filter(({ disabled }) => !disabled || isDebug)
             .map((tile) => {
-              const { path, title, dsKey, initialState } = tile
+              const { path, title, dsKey, initialState, isFeatured } = tile
               const isActive = path === active
               return (
                 <Tile
                   key={path}
                   title={title}
+                  tags={tile.tags}
                   isActive={isActive}
                   onClick={!isActive ? () => router.push(path) : undefined}
                   className={`${hasActive && !isActive ? "opacity-0" : ""} ${
@@ -82,6 +105,7 @@ export const TileGrid = () => {
                   } ${path === lastActive ? "z-5" : ""}`}
                   syncTrigger={hasLesson}
                   section={tile.section}
+                  isFeatured={isFeatured}
                 >
                   <SceneViewer
                     isActive={!!isActive}
@@ -102,22 +126,25 @@ export const TileGrid = () => {
 
 interface TileProps {
   title: string
+  tags?: ReactNode[]
   isActive?: boolean
   onClick?: () => void
   className?: string
   children?: ReactNode | ReactNode[]
   syncTrigger: boolean
   section: Section
+  isFeatured?: boolean
 }
 
 function Tile({
   title,
+  tags = [],
   isActive,
   onClick,
   className,
   children,
-  // syncTrigger,
   section,
+  isFeatured,
 }: TileProps) {
   // const [ref, offset, isScrolling] = useOffsetSync(syncTrigger)
 
@@ -137,8 +164,6 @@ function Tile({
     setLocalActive(!!isActive)
   }, [isActive])
 
-  const isFeatured = false
-
   return (
     <div
       ref={ref}
@@ -150,7 +175,7 @@ function Tile({
       {...bind()}
       style={
         (isFeatured
-          ? { "--item-width": "calc(var(--item-height) * 2 + var(--gap))" }
+          ? { "--item-width": "calc(640px + var(--gap))" }
           : {}) as React.CSSProperties
       }
     >
@@ -158,7 +183,7 @@ function Tile({
         className={`rounded-box overflow-hidden origin-center flex items-center justify-center ${
           localActive
             ? "fixed inset-0 w-screen h-[100dvh] z-10"
-            : "w-[var(--item-width)] h-[var(--item-height)]"
+            : "relative w-[var(--item-width)] h-[var(--item-height)]"
         } ${
           isActive === localActive
             ? "transition-all duration-500 ease-in-out"
@@ -170,25 +195,20 @@ function Tile({
         {children}
         {!isActive && (
           <div
-            className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main rounded-box  pointer-events-none flex flex-col justify-between border-1 border-box-bg`} // bg-gradient-to-tr from-background to-transparent via-transparent
+            className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main rounded-box pointer-events-none flex ${
+              section === "learn" ? "flex-col-reverse" : "flex-col"
+            } justify-between border-2 border-box-bg group-hover/tile:border-accent transition-colors duration-100`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
-            {section === "learn" ? (
-              <>
-                <div></div>
-                <Title
-                  className="pb-4 group-hover/tile:text-white"
-                  dynamic={false}
-                >
-                  {title}
-                </Title>
-              </>
-            ) : (
-              <>
-                <div>
-                  <span className="group-hover/tile:text-white">{title}</span>
-                </div>
-              </>
-            )}
+            <Title className="pb-4 group-hover/tile:text-white" dynamic={false}>
+              {title}
+            </Title>
+            <div className="mb-4 flex flew-wrap gap-1 items-center justify-end">
+              {tags.map((tag, i) => (
+                <span key={i} className="px-2 brightness-25 rounded-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

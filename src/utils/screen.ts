@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from "react"
 
-type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
+const breakpoints = {
+  xs: 360,
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  "2xl": 1536,
+}
+
+type Breakpoint = keyof typeof breakpoints
 
 export function useIsScreen(bp: Breakpoint) {
   const [isMatch, setIsMatch] = useState(false)
@@ -13,10 +22,7 @@ export function useIsScreen(bp: Breakpoint) {
 
 export function isScreen(bp: Breakpoint) {
   if (typeof window === "undefined") return false
-  const styles = getComputedStyle(document.documentElement)
-  const bpRem = styles.getPropertyValue(`--breakpoint-${bp}`).trim()
-  const bpPx = parseInt(bpRem) * parseFloat(styles.fontSize)
-  console.log({ styles, bpRem, bpPx })
+  const bpPx = breakpoints[bp]
   return window.innerWidth >= bpPx
 }
 

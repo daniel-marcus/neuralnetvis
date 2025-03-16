@@ -28,7 +28,7 @@ interface NeuronLabelsProps {
 export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
   const trainingY = useSceneStore((s) => s.sample?.y)
-  const isRegression = false // useSceneStore((s) => s.isRegression())
+  const isRegression = useSceneStore((s) => s.isRegression())
   const showValueLabel = !!label && !!rawInput && isRegression
   const layerPos = neuron.layer.layerPos
   if (!label || !position) return null

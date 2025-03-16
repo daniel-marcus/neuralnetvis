@@ -1,15 +1,17 @@
 import { DB_PREFIX } from "@/data/db"
-import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
+import { clearStatus, setStatus, useCurrScene } from "@/store"
 import { deleteDB } from "idb"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
-import { resetData, setDsFromDb, setDsFromKey } from "@/data/dataset"
+import { getDsPath, resetData, getDsMetaFromDb } from "@/data/dataset"
+import { useRouter } from "next/navigation"
+import { DatasetMeta } from "@/data"
 
 export const MyDatasets = () => {
   const ds = useCurrScene((s) => s.ds)
   const totalSamples = useCurrScene((s) => s.totalSamples())
-  const [savedDatasets, setSavedDatasets] = useState<string[]>([])
+  const [savedDatasets, setSavedDatasets] = useState<DatasetMeta[]>([])
   const updateDatasets = async () => {
     try {
       const databases = await indexedDB.databases()
@@ -17,7 +19,12 @@ export const MyDatasets = () => {
         .filter((d) => d.name?.startsWith(DB_PREFIX))
         .map((d) => d.name?.replace(DB_PREFIX, ""))
         .filter(Boolean) as string[]
-      setSavedDatasets(dsNames)
+      const dsMetas: DatasetMeta[] = []
+      for (const dsName of dsNames) {
+        const dsMeta = await getDsMetaFromDb(dsName)
+        if (dsMeta) dsMetas.push(dsMeta)
+      }
+      setSavedDatasets(dsMetas)
     } catch (error) {
       console.error("Error listing databases:", error)
     }
@@ -25,28 +32,34 @@ export const MyDatasets = () => {
   useEffect(() => {
     updateDatasets()
   }, [ds])
+  const router = useRouter()
   const removeDataset = async (dsKey: string) => {
     const fullName = `${DB_PREFIX}${dsKey}`
     const statusId = setStatus(`Removing dataset ${dsKey} ...`, -1)
     if (dsKey === ds?.key) {
-      useGlobalStore.getState().scene.setState({ ds: undefined })
+      router.push("/")
     }
     await deleteDB(fullName)
-    updateDatasets()
     clearStatus(statusId)
+    updateDatasets()
   }
   const handleSelect = async (dsKey: string) => {
-    if (datasets.find((d) => d.key === dsKey)) {
-      setDsFromKey(dsKey)
-    } else {
-      setDsFromDb(dsKey)
+    const dsDef =
+      datasets.find((d) => d.key === dsKey) || (await getDsMetaFromDb(dsKey))
+    if (dsDef) {
+      router.push(getDsPath(dsDef))
     }
   }
   return (
-    <CollapsibleWithTitle title="my datasets" border={false} collapsed>
+    <CollapsibleWithTitle
+      title="my datasets"
+      border={false}
+      variant="no-bg"
+      collapsed
+    >
       <ul>
         {savedDatasets.map((d, i) => {
-          const isCurrent = d === ds?.key
+          const isCurrent = d.key === ds?.key
           return (
             <li
               key={i}
@@ -56,9 +69,9 @@ export const MyDatasets = () => {
             >
               <button
                 className={isCurrent ? "disabled pointer-events-none" : ""}
-                onClick={() => handleSelect(d)}
+                onClick={() => handleSelect(d.key)}
               >
-                {d}
+                {d.name} {d.loaded === "preview" ? "(preview)" : ""}
               </button>
               <div>
                 {isCurrent && ds.isUserGenerated && !!totalSamples && (
@@ -72,7 +85,7 @@ export const MyDatasets = () => {
                     reset
                   </button>
                 )}
-                <button className="pl-2" onClick={() => removeDataset(d)}>
+                <button className="pl-2" onClick={() => removeDataset(d.key)}>
                   x
                 </button>
               </div>

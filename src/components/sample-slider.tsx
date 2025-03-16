@@ -14,7 +14,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   return (
     <div
       className={`absolute left-0 ${
-        isActive ? "bottom-8" : "bottom-0 leading-[1]"
+        isActive ? "bottom-8" : "bottom-[-1px] leading-[1]"
       } w-full flex justify-center transition-[bottom] duration-300`}
     >
       <div

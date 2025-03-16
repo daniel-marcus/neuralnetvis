@@ -6,7 +6,7 @@ dbName: ds.key
 storeName: "train" | "test" | "meta
 */
 
-export const DB_PREFIX = "nnv_dev_"
+export const DB_PREFIX = "nnv_"
 const KEY_PATH = "index"
 const STORE_NAMES = ["train", "test", "meta"] as const
 
