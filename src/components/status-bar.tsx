@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
-import { useGlobalStore } from "@/store"
+import { clearStatus, useGlobalStore } from "@/store"
 import { NeuronStatus } from "./neuron-status"
 import { ProgressBar } from "./progress-bar"
 import { Table } from "./ui-elements"
@@ -35,6 +35,7 @@ const Status = () => {
       keptText.current = parsedText
     }
   }, [parsedText])
+  const onClick = status ? () => clearStatus(status.id) : undefined
   return (
     <div
       className={`${
@@ -47,7 +48,10 @@ const Status = () => {
           : "opacity-0 duration-300 pointer-events-none"
       } transition ease-in-out text-right`}
     >
-      <div className={status?.fullscreen ? "p-4 pointer-events-auto" : ""}>
+      <div
+        className={status?.fullscreen ? "p-4 pointer-events-auto" : ""}
+        onClick={onClick}
+      >
         {parsedText || keptText.current}
       </div>
     </div>

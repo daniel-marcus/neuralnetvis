@@ -12,13 +12,14 @@ import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
 
 const HP_TRAIN_CONFIG = {
-  batchSize: 16,
+  batchSize: 4,
   epochs: 100,
   validationSplit: 0.1,
   lazyLoading: false,
 }
 
 export function useHandPose(stream?: MediaStream) {
+  useHpTrainConfig()
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands, stream)
   usePredictLoop(stream, hpPredict)
@@ -214,7 +215,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
 
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
-  const hpTrain = useHpTrain()
+  const hpTrain = useSceneStore((s) => s.toggleTraining)
 
   const hpRecordSamples = useCallback(async () => {
     shouldCancelRecording = false
@@ -295,14 +296,11 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   return [isRecording, toggleRecording] as const
 }
 
-function useHpTrain() {
+function useHpTrainConfig() {
   const setTrainConfig = useSceneStore((s) => s.setTrainConfig)
   const setLogsMetric = useSceneStore((s) => s.setLogsMetric)
-  const toggleTraining = useSceneStore((s) => s.toggleTraining)
-  const hpTrain = useCallback(() => {
+  useEffect(() => {
     setTrainConfig(HP_TRAIN_CONFIG)
     setLogsMetric("val_loss")
-    toggleTraining()
-  }, [setTrainConfig, setLogsMetric, toggleTraining])
-  return hpTrain
+  }, [setTrainConfig, setLogsMetric])
 }

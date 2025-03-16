@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
-import { getModelEvaluation } from "@/model/training"
+import { canUseLazyLoading, getModelEvaluation } from "@/model/training"
 
 const { Box, InlineButton, Slider, InputRow, Checkbox } = Components
 const { Collapsible, CollapsibleWithTitle, Arrow, LogsPlot } = Components
@@ -58,6 +58,8 @@ export const Train = () => {
 const TrainConfigControl = () => {
   const config = useCurrScene((s) => s.trainConfig)
   const setConfig = useCurrScene((s) => s.setTrainConfig)
+  const ds = useCurrScene((s) => s.ds)
+
   return (
     <CollapsibleWithTitle title="config">
       <InputRow
@@ -112,15 +114,17 @@ const TrainConfigControl = () => {
         />
       </InputRow>
 
-      <InputRow
-        label="lazyLoading"
-        hint="Load data on the fly (could be slower, but saves memory)"
-      >
-        <Checkbox
-          checked={config.lazyLoading}
-          onChange={(lazyLoading) => setConfig({ lazyLoading })}
-        />
-      </InputRow>
+      {!!ds && canUseLazyLoading(ds) && (
+        <InputRow
+          label="lazyLoading"
+          hint="Load data on the fly (could be slower, but saves memory)"
+        >
+          <Checkbox
+            checked={config.lazyLoading}
+            onChange={(lazyLoading) => setConfig({ lazyLoading })}
+          />
+        </InputRow>
+      )}
     </CollapsibleWithTitle>
   )
 }

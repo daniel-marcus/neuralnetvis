@@ -8,7 +8,7 @@ export const californiaHousing: DatasetDef = {
   name: "california housing",
   task: "regression",
   description: "Predict housing prices",
-  version: new Date("2025-03-06"),
+  version: new Date("2025-03-16"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
   inputDims: [8],
   inputLabels: [

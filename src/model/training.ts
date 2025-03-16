@@ -135,6 +135,11 @@ function makeGenerator(
   }
 }
 
+export function canUseLazyLoading(ds: Dataset) {
+  // regression: model.fit() works better that fitDataset() due to integrated shuffling
+  return ds.task !== "regression" && !ds.isUserGenerated
+}
+
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   const ongoingTraining = useGlobalStore
     .getState()
@@ -145,8 +150,10 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     // useGlobalStore.setState({ trainingPromise: null })
   }
 
-  const lazyLoading = useGlobalStore.getState().scene.getState()
+  const _lazyLoading = useGlobalStore.getState().scene.getState()
     .trainConfig.lazyLoading
+
+  const lazyLoading = canUseLazyLoading(ds) && _lazyLoading
 
   let history: tf.History | void | undefined = undefined
   if (!lazyLoading) {
@@ -163,7 +170,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     // with fitDataset / lazyLoading
     const { batchSize, validationSplit, ...otherOptions } = options
 
-    // TODO splitDataset as function // validationData as tensor (faster)
+    // TODO splitDataset as function
     const totalSamples = ds.train.totalSamples
     const validationSamples = Math.floor(totalSamples * validationSplit)
     const trainSamples = totalSamples - validationSamples
@@ -171,8 +178,10 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const generator = makeGenerator(ds, batchSize, totalSamples)
     const dataset = tf.data.generator(generator)
 
-    const trainSteps = Math.ceil(trainSamples / batchSize)
-    const trainDataset = dataset.take(trainSteps).repeat(otherOptions.epochs)
+    const batchesPerEpoch = Math.ceil(trainSamples / batchSize)
+    const trainDataset = dataset
+      .take(batchesPerEpoch)
+      .repeat(otherOptions.epochs)
 
     const firstValidationIdx = trainSamples
     const validStoreBatchIdx = getStoreBatchIdx(
@@ -187,7 +196,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
 
     const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
-      batchesPerEpoch: Math.ceil(trainSamples / batchSize),
+      batchesPerEpoch,
       validationData,
     })
 
