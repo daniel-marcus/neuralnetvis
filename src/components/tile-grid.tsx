@@ -14,6 +14,7 @@ import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "./video"
+import Link from "next/link"
 
 export type Section = "learn" | "play"
 
@@ -50,7 +51,6 @@ const tiles: TileDef[] = [
 export const TileGrid = () => {
   const active = usePathname()
   const lastActive = useLast(active)
-  const router = useRouter()
   const hasLesson = useHasLesson()
   const hasActive = useHasActiveTile()
   const isDebug = useGlobalStore((s) => s.isDebug)
@@ -82,7 +82,6 @@ export const TileGrid = () => {
                   key={tile.path}
                   {...tile}
                   isActive={isActive}
-                  onClick={!isActive ? () => router.push(tile.path) : undefined}
                   className={`${hasActive && !isActive ? "opacity-0" : ""} ${
                     !!section && tile.section !== section ? "hidden" : ""
                   } ${tile.path === lastActive ? "z-5" : ""}`}
@@ -105,10 +104,10 @@ export const TileGrid = () => {
 }
 
 interface TileProps {
+  path: string
   title: string
   tags?: ReactNode[]
   isActive?: boolean
-  onClick?: () => void
   className?: string
   children?: ReactNode | ReactNode[]
   section: Section
@@ -116,10 +115,10 @@ interface TileProps {
 }
 
 function Tile({
+  path,
   title,
   tags = [],
   isActive,
-  onClick,
   className,
   children,
   section,
@@ -127,9 +126,11 @@ function Tile({
 }: TileProps) {
   const ref = useRef<HTMLDivElement>(null)
 
+  const router = useRouter()
+
   const bind = useDrag(({ tap }) => {
     if (tap) {
-      onClick?.()
+      if (!isActive) router.push(path)
     }
   })
 
@@ -145,7 +146,7 @@ function Tile({
     <div
       ref={ref}
       className={`relative ${
-        onClick ? "cursor-pointer" : ""
+        !isActive ? "cursor-pointer" : ""
       } h-[var(--item-height)] group/tile ${
         isFeatured ? "sm:col-span-2" : ""
       } ${className}`}
@@ -172,13 +173,18 @@ function Tile({
         {children}
         {!isActive && (
           <div
-            className={`absolute top-0 left-0 w-full h-full p-4 rounded-box pointer-events-none flex ${
+            className={`absolute top-0 left-0 w-full h-full p-4 rounded-box flex pointer-events-none ${
               section === "learn" ? "flex-col-reverse" : "flex-col"
             } justify-between border-2 border-box-bg group-hover/tile:border-accent transition-colors duration-100`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
-            <Title className="pb-4 group-hover/tile:text-white" dynamic={false}>
-              {title}
-            </Title>
+            <Link href={path} className="pointer-events-auto">
+              <Title
+                className="pb-4 group-hover/tile:text-white"
+                dynamic={false}
+              >
+                {title}
+              </Title>
+            </Link>
             <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
               {tags.map((tag, i) => (
                 <span key={i} className="brightness-25">

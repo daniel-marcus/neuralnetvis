@@ -27,7 +27,7 @@ export const MyDatasets = () => {
       }
       setSavedDatasets(dsMetas)
     } catch (error) {
-      console.error("Error listing databases:", error)
+      console.warn("Error listing databases:", error)
     }
   }
   useEffect(() => {
