@@ -4,6 +4,7 @@
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
   "author": "Daniel Marcus (https://danielmarcus.de)",
+  "license": "MIT",
   "homepage": "https://neuralnetvis.app",
   "repository": "https://github.com/daniel-marcus/neuralnetvis",
   "scripts": {
