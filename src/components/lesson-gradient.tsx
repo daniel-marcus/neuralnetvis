@@ -1,13 +1,13 @@
 import { useHasLesson } from "./lesson"
 import { useEffect, useState } from "react"
 
-export const Gradient = () => {
+export const LessonGradient = () => {
   useScrollZero()
   const hasLesson = useHasLesson()
   return (
     <div
-      className={`absolute scroll-zero:fixed top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
-        hasLesson ? "opacity-70" : "opacity-0"
+      className={`absolute z-10 scroll-zero:fixed top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
+        hasLesson ? "opacity-50" : "opacity-0"
       } transition-opacity duration-700`}
     />
   )

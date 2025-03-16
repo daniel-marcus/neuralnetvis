@@ -11,14 +11,6 @@ interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview
 }
 
-function useContent(content: LessonDef["content"]) {
-  const main = content()
-  const children = main.props.children.map((c, i, arr) =>
-    cloneElement(c, { key: i, nextProps: arr[i + 1]?.props })
-  )
-  return (<main>{children}</main>) as LessonContent
-}
-
 export const Lesson = (props: LessonProps) => {
   const { content, nextLesson } = props
   const children = useContent(content)
@@ -27,7 +19,7 @@ export const Lesson = (props: LessonProps) => {
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <div
-      className={`relative pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
+      className={`relative z-20 pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
         visLocked && !isDebug ? "" : "pointer-events-none"
       }`}
     >
@@ -37,6 +29,14 @@ export const Lesson = (props: LessonProps) => {
       </div>
     </div>
   )
+}
+
+function useContent(content: LessonDef["content"]) {
+  const main = content()
+  const children = main.props.children.map((c, i, arr) =>
+    cloneElement(c, { key: i, nextProps: arr[i + 1]?.props })
+  )
+  return (<main>{children}</main>) as LessonContent
 }
 
 export function useHasLesson() {

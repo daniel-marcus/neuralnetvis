@@ -2,7 +2,7 @@
 
 import { useTfBackend } from "@/model/tf-backend"
 import { useDebugCommands } from "@/utils/debug"
-import { Gradient, Header, TileGrid, StatusBar } from "@/components"
+import { Header, LessonGradient, TileGrid, StatusBar } from "@/components"
 import type { ReactNode } from "react"
 
 export const App = ({ children }: { children?: ReactNode }) => {
@@ -11,9 +11,9 @@ export const App = ({ children }: { children?: ReactNode }) => {
   return (
     <>
       <Header />
-      <Gradient />
       <TileGrid />
       {children}
+      <LessonGradient />
       <StatusBar />
     </>
   )
