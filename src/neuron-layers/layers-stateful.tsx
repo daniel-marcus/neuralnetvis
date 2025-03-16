@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react"
-import { getNeuronColor } from "./colors"
+import { useSceneStore } from "@/store"
+import { getNeuronColor, getPredictionQualityColor } from "./colors"
 import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
-import { useSceneStore } from "@/store"
+import type { Sample } from "@/data"
 
 // add state to each neuron
 
@@ -10,11 +11,12 @@ export function useStatefulLayers(
   statelessLayers: LayerStateless[],
   activations: LayerActivations[],
   weightsBiases: WeightsBiases[],
-  rawInputs?: number[]
+  sample?: Sample
 ) {
+  const isRegression = useSceneStore((s) => s.isRegression())
+  const yMean = useSceneStore((s) => s.ds?.train.yMean)
   const [statefulLayers, allNeurons] = useMemo(() => {
     const allNeurons = new Map<Nid, Neuron>()
-    const isRegression = false // TODO
     const result = statelessLayers.reduce((acc, layer, lIdx) => {
       const { layerPos, layerType } = layer
 
@@ -34,9 +36,9 @@ export function useStatefulLayers(
           // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
           const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
           const rawInput =
-            layer.layerPos === "input" ? rawInputs?.[nIdx] : undefined
+            layer.layerPos === "input" ? sample?.rawX?.[nIdx] : undefined
 
-          const updatedNeuron = {
+          const newNeuron = {
             ...neuron,
             activation,
             rawInput,
@@ -44,11 +46,14 @@ export function useStatefulLayers(
             weights: weights?.[filterIndex],
             bias: biases?.[filterIndex],
           } as Neuron
-          updatedNeuron.color = getNeuronColor(updatedNeuron, isRegression)
+          newNeuron.color =
+            isRegression && layerPos === "output"
+              ? getPredictionQualityColor(newNeuron, sample?.y, yMean)
+              : getNeuronColor(newNeuron)
 
-          allNeurons.set(updatedNeuron.nid, updatedNeuron)
+          allNeurons.set(newNeuron.nid, newNeuron)
 
-          return updatedNeuron
+          return newNeuron
         }
       )
 
@@ -64,7 +69,7 @@ export function useStatefulLayers(
     }, [] as LayerStateful[])
 
     return [result, allNeurons] as const
-  }, [statelessLayers, activations, weightsBiases, rawInputs])
+  }, [statelessLayers, activations, weightsBiases, sample, isRegression, yMean])
 
   const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
   useEffect(() => {

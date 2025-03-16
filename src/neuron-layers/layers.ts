@@ -13,7 +13,7 @@ export function useLayers(isPreview?: boolean) {
   const _lyrs = useStatelessLayers(model, ds) // dsDef
   const activations = useActivations(model, sample?.X)
   const weights = useWeights(model)
-  const _layers = useStatefulLayers(_lyrs, activations, weights, sample?.rawX)
+  const _layers = useStatefulLayers(_lyrs, activations, weights, sample)
   const layers = useNeuronSelect(!isPreview, _layers)
   return layers
 }

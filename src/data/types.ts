@@ -45,6 +45,7 @@ export type Dataset = DatasetMeta & {
 export interface StoreMeta {
   index: string // storeName: mnist_1_train
   totalSamples: number
+  yMean?: number
 }
 
 export interface DbBatch {

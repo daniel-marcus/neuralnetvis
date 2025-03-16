@@ -55,8 +55,12 @@ export async function getDsMetaFromDb(key: string) {
   return dsMeta
 }
 
-function newStoreMeta(storeName: "train" | "test", totalSamples = 0) {
-  return { index: storeName, totalSamples }
+function newStoreMeta(
+  storeName: "train" | "test",
+  totalSamples = 0,
+  yMean?: number
+): StoreMeta {
+  return { index: storeName, totalSamples, yMean }
 }
 
 export async function getDsFromDef(
@@ -162,9 +166,15 @@ async function saveData(
   await putDataBatches(dbName, storeName, batches)
 
   const totalSamples = oldSamplesX + newSamplesX
-  const storeMeta = newStoreMeta(storeName, totalSamples)
+  const yMean =
+    ds.task === "regression" ? getMean(Array.from(ys.data)) : undefined
+  const storeMeta = newStoreMeta(storeName, totalSamples, yMean)
   await putData<StoreMeta>(dbName, "meta", storeMeta)
   return storeMeta
+}
+
+function getMean(arr: number[]) {
+  return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
 export async function addTrainData(
