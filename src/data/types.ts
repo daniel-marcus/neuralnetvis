@@ -28,6 +28,11 @@ export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {
   loadFull?: DatasetLoader
 }
 
+export type PreprocessFuncDef = <T extends Tensor<Rank>>(
+  X: T,
+  inputDims: DatasetMeta["inputDims"]
+) => T
+
 export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
 
 export type Dataset = DatasetMeta & {

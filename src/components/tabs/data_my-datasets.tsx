@@ -1,12 +1,13 @@
-import { DB_PREFIX } from "@/data/db"
-import { clearStatus, setStatus, useCurrScene } from "@/store"
+import * as tf from "@tensorflow/tfjs"
 import { deleteDB } from "idb"
+import { DB_PREFIX, getAll } from "@/data/db"
+import { clearStatus, setStatus, useCurrScene } from "@/store"
 import { useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
 import { getDsPath, resetData, getDsMetaFromDb } from "@/data/dataset"
 import { useRouter } from "next/navigation"
-import { DatasetMeta } from "@/data"
+import { DatasetMeta, DbBatch } from "@/data"
 
 export const MyDatasets = () => {
   const ds = useCurrScene((s) => s.ds)
@@ -74,12 +75,17 @@ export const MyDatasets = () => {
                 {d.name} {d.loaded === "preview" ? "(preview)" : ""}
               </button>
               <div>
-                {isCurrent && ds.isUserGenerated && !!totalSamples && (
+                {d.isUserGenerated && (
+                  <button className="px-2" onClick={() => exportDs(d)}>
+                    export
+                  </button>
+                )}
+                {isCurrent && d.isUserGenerated && !!totalSamples && (
                   <button
                     className="px-2"
                     onClick={() => {
-                      resetData(ds.key, "train")
-                      resetData(ds.key, "test")
+                      resetData(d.key, "train")
+                      resetData(d.key, "test")
                     }}
                   >
                     reset
@@ -95,4 +101,28 @@ export const MyDatasets = () => {
       </ul>
     </CollapsibleWithTitle>
   )
+}
+
+function saveArrayAsJson(array: unknown[], filename: string) {
+  const blob = new Blob([JSON.stringify(array)], { type: "application/json" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function exportDs(ds: DatasetMeta) {
+  const batches = await getAll<DbBatch>(ds.key, "train")
+  if (!batches.length) return
+  const [X, y] = tf.tidy(() => {
+    const xBatchTensors = batches.map((b) => tf.tensor(b.xsRaw ?? b.xs))
+    const shapeX = [-1, ...ds.inputDims]
+    const X = tf.concat(xBatchTensors).reshape(shapeX).arraySync() as number[][]
+    const y = batches.flatMap((b) => Array.from(b.ys))
+    return [X, y] as const
+  })
+  saveArrayAsJson(X, `x_train.json`)
+  saveArrayAsJson(y, `y_train.json`)
 }

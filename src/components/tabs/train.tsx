@@ -18,6 +18,7 @@ export const Train = () => {
   const evaluate = useEvaluate()
   const resetWeights = useCurrScene((s) => s.resetWeights)
   const batchCount = useCurrScene((s) => s.batchCount)
+  const hasTestData = useCurrScene((s) => !!s.ds?.test?.totalSamples)
   return (
     <Box>
       <TrainConfigControl />
@@ -40,9 +41,11 @@ export const Train = () => {
               reset
             </InlineButton>
           )}
-          <InlineButton variant="secondary" onClick={evaluate}>
-            evaluate
-          </InlineButton>
+          {hasTestData && !!batchCount && (
+            <InlineButton variant="secondary" onClick={evaluate}>
+              evaluate
+            </InlineButton>
+          )}
           <InlineButton onClick={toggleTraining}>
             {isTraining ? "stop" : "train"}
           </InlineButton>

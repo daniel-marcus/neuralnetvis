@@ -13,6 +13,7 @@ import { Title } from "@/contents/elements/head"
 import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
 import { getDsPath } from "@/data/dataset"
+import { cameraSvg } from "./video"
 
 export type Section = "learn" | "play"
 
@@ -27,22 +28,6 @@ interface TileDef {
   initialState?: InitialState
   shouldLoadFullDs?: boolean
 }
-
-const cameraSvg = (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-4 h-4"
-  >
-    <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
-    <rect x="2" y="6" width="14" height="12" rx="2" />
-  </svg>
-)
 
 const tiles: TileDef[] = [
   ...lessonPreviews.map((l) => ({
@@ -91,26 +76,21 @@ export const TileGrid = () => {
           {tiles
             .filter(({ disabled }) => !disabled || isDebug)
             .map((tile) => {
-              const { path, title, dsKey, initialState, isFeatured } = tile
-              const isActive = path === active
+              const isActive = tile.path === active
               return (
                 <Tile
-                  key={path}
-                  title={title}
-                  tags={tile.tags}
+                  key={tile.path}
+                  {...tile}
                   isActive={isActive}
-                  onClick={!isActive ? () => router.push(path) : undefined}
+                  onClick={!isActive ? () => router.push(tile.path) : undefined}
                   className={`${hasActive && !isActive ? "opacity-0" : ""} ${
                     !!section && tile.section !== section ? "hidden" : ""
-                  } ${path === lastActive ? "z-5" : ""}`}
-                  syncTrigger={hasLesson}
-                  section={tile.section}
-                  isFeatured={isFeatured}
+                  } ${tile.path === lastActive ? "z-5" : ""}`}
                 >
                   <SceneViewer
-                    isActive={!!isActive}
-                    dsKey={dsKey}
-                    initialState={initialState}
+                    isActive={isActive}
+                    dsKey={tile.dsKey}
+                    initialState={tile.initialState}
                     section={tile.section}
                     shouldLoadFullDs={tile.shouldLoadFullDs}
                   />
@@ -131,7 +111,6 @@ interface TileProps {
   onClick?: () => void
   className?: string
   children?: ReactNode | ReactNode[]
-  syncTrigger: boolean
   section: Section
   isFeatured?: boolean
 }
@@ -146,8 +125,6 @@ function Tile({
   section,
   isFeatured,
 }: TileProps) {
-  // const [ref, offset, isScrolling] = useOffsetSync(syncTrigger)
-
   const ref = useRef<HTMLDivElement>(null)
 
   const bind = useDrag(({ tap }) => {
@@ -195,16 +172,16 @@ function Tile({
         {children}
         {!isActive && (
           <div
-            className={`absolute top-0 left-0 w-full h-[calc(100%)] p-main rounded-box pointer-events-none flex ${
+            className={`absolute top-0 left-0 w-full h-full p-4 rounded-box pointer-events-none flex ${
               section === "learn" ? "flex-col-reverse" : "flex-col"
             } justify-between border-2 border-box-bg group-hover/tile:border-accent transition-colors duration-100`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
             <Title className="pb-4 group-hover/tile:text-white" dynamic={false}>
               {title}
             </Title>
-            <div className="mb-4 flex flew-wrap gap-1 items-center justify-end">
+            <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
               {tags.map((tag, i) => (
-                <span key={i} className="px-2 brightness-25 rounded-sm">
+                <span key={i} className="brightness-25">
                   {tag}
                 </span>
               ))}

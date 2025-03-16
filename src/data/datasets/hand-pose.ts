@@ -1,4 +1,5 @@
 import type { DatasetDef } from "@/data/types"
+import { fetchMutlipleNpzWithProgress } from "../npy-loader"
 
 const hands = 1
 const outputLabels = ["👍", "👌", "🤘"]
@@ -13,11 +14,18 @@ export const handPose: DatasetDef = {
     "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
   inputDims: [21, 3, hands],
   inputLabels: handPoseLabels(),
-  // preprocessFunc: "normalizeHandLandmarks",
+  preprocessFunc: "normalizeHandLandmarks",
   outputLabels,
   storeBatchSize: 20,
   isUserGenerated: true,
   hasCam: true,
+  loadPreview: async () => {
+    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      ["/data/hand-pose/x_train.npz", "/data/hand-pose/y_train.npz"],
+      true
+    )
+    return { xTrain, yTrain }
+  },
 }
 
 function handPoseLabels() {

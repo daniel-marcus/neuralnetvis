@@ -75,7 +75,7 @@
     --padding-main: calc(var(--spacing) * 4);
   }
   --header-height: calc(var(--padding-main) * 2 + 1.5rem);
-  --logo-height: calc(92px + var(--padding-main));
+  --logo-height: 92px;
 }
 
 body {

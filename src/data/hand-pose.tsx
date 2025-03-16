@@ -70,11 +70,11 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
         landmarks[rightIdx] ?? emptyHand,
       ]
     }
-    const data = landmarks.map(toRelativeCoords)
+    // const data = landmarks.map(toRelativeCoords)
     const dataRaw = landmarks.map((lm) => lm.map((l) => [l.x, l.y, l.z]))
-    const X = transposeLandmarks(data, numHands)
+    // const X = transposeLandmarks(data, numHands)
     const rawX = transposeLandmarks(dataRaw, numHands)
-    return { X, rawX }
+    return { X: rawX }
   }, [landmarker, numHands, videoRef])
 
   return hpPredict
@@ -88,7 +88,7 @@ function transposeLandmarks(data: number[][][], numHands: number) {
   })
 }
 
-function toRelativeCoords(
+/* function toRelativeCoords(
   landmarks: NormalizedLandmark[]
 ): [number, number, number][] {
   // get positions gelative to wrist & invert y axis
@@ -96,7 +96,7 @@ function toRelativeCoords(
   return landmarks.map((l) => {
     return [l.x - wrist.x, -1 * (l.y - wrist.y), l.z - wrist.z]
   })
-}
+} */
 
 async function createHandLandmarker(numHands?: number) {
   // TODO: add to public folder
@@ -131,11 +131,11 @@ function usePredictLoop(
     async function captureLoop() {
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
       if (!isTraning) {
-        const { X: _X, rawX } = await hpPredict()
+        const { X: _X } = await hpPredict()
         if (_X) {
           const X =
             (ds?.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
-          setSample({ X, y: recordingY, rawX })
+          setSample({ X, y: recordingY, rawX: _X })
         }
       }
       animationFrame = requestAnimationFrame(captureLoop)
@@ -238,7 +238,6 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       }
       setStatus(`Recording "${label}" ...`, 0, { id: STATUS_ID })
       let xData: number[] = []
-      let xDataRaw: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
         if (shouldCancelRecording) {
@@ -251,23 +250,18 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
           fullscreen: true,
         })
         await new Promise((resolve) => setTimeout(resolve, 100))
-        const { X, rawX } = await hpPredict()
+        const { X } = await hpPredict()
         if (!X) continue
         xData = [...xData, ...X]
-        xDataRaw = [...xDataRaw, ...rawX]
         yData.push(y)
       }
       const xs = {
         data: xData as unknown as Float32Array,
         shape: [yData.length, 21, 3, numHands],
       }
-      const xsRaw = {
-        data: xDataRaw as unknown as Float32Array,
-        shape: [yData.length, 21, 3, numHands],
-      }
       const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
       recordingY = undefined
-      const trainMeta = await addTrainData(ds, xs, ys, xsRaw)
+      const trainMeta = await addTrainData(ds, xs, ys)
       updateMeta("train", trainMeta)
     }
 

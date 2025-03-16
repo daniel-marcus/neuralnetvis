@@ -1,5 +1,4 @@
-import { IntroInterface } from "./exploring-the-interface"
-import { hmlInitialState, IntroNetworks } from "./how-machines-learn"
+import { IntroNetworks, hmlInitialState } from "./how-machines-learn"
 import type { ReactElement } from "react"
 import type { ScrollBlockProps } from "@/contents/elements/types"
 import { InitialState } from "@/utils/initial-state"
@@ -26,13 +25,6 @@ export const lessons: LessonDef[] = [
     content: IntroNetworks,
     dsKey: "mnist",
     initialState: hmlInitialState,
-  },
-  {
-    title: "Exploring the interface",
-    slug: "exploring-the-interface",
-    description: "Learn what you can see and do here",
-    content: IntroInterface,
-    disabled: true,
   },
 ]
 

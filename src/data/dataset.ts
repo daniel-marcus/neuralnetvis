@@ -7,6 +7,7 @@ import type {
   DatasetMeta,
   DbBatch,
   ParsedLike,
+  PreprocessFunc,
   StoreMeta,
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
@@ -94,9 +95,10 @@ export async function getDsFromDef(
 }
 
 export function getPreprocessFunc(dsDef: DatasetDef | DatasetMeta) {
-  return dsDef.preprocessFunc
-    ? preprocessFuncs[dsDef.preprocessFunc]
-    : undefined
+  const funcName = dsDef.preprocessFunc
+  if (!funcName) return
+  const func = preprocessFuncs[funcName]
+  return ((inp) => func(inp, dsDef.inputDims)) as PreprocessFunc
 }
 
 export async function loadAndSaveDsData(
