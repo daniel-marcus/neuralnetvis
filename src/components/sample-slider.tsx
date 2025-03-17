@@ -36,7 +36,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
         }
       >
         <Slider
-          value={sampleIdx}
+          value={sampleIdx ?? 0}
           onChange={(sampleIdx) => setSampleIdx(sampleIdx)}
           min={0}
           max={totalSamples - 1}
@@ -45,7 +45,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
         {isActive && (
           <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200 flex justify-between">
             <div>
-              {sampleIdx + 1} / {totalSamples}
+              {(sampleIdx ?? 0) + 1} / {totalSamples}
             </div>
           </div>
         )}
