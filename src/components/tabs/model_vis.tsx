@@ -1,4 +1,4 @@
-import { useCurrScene } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import {
   Checkbox,
   CollapsibleWithTitle,
@@ -16,27 +16,19 @@ export const VisConfigControl = () => {
   const model = useCurrScene((s) => s.model)
   const hasColorChannels =
     ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
+  const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
       {SHIFT_PROPS.map((prop) => {
         const value = config[prop]
         const isDefault = getDefault(prop) === value
-        const label = isDefault ? (
-          prop
-        ) : (
-          <div className="flex justify-between">
-            <div>{prop}</div>
-            <button onClick={() => reset(prop)} className="px-2">
-              ↺
-            </button>
-          </div>
-        )
         const axis = prop.slice(0, 1)
         return (
           <InputRow
             key={prop}
-            label={label}
+            label={prop}
             hint={`layer spacing along the ${axis} axis`}
+            reset={isDefault ? undefined : () => reset(prop)}
           >
             <Slider
               value={value}
@@ -49,16 +41,26 @@ export const VisConfigControl = () => {
           </InputRow>
         )
       })}
-      {/* <InputRow label="nodeSpacing">
-        <Slider
-          value={config.neuronSpacing}
-          min={1}
-          max={5}
-          step={0.001}
-          onChange={(neuronSpacing) => setVisConfig({ neuronSpacing })}
-          showValue
-        />
-      </InputRow> */}
+      {isDebug && (
+        <InputRow
+          label={"nodeSpacing"}
+          reset={
+            config.neuronSpacing === getDefault("neuronSpacing")
+              ? undefined
+              : () => reset("neuronSpacing")
+          }
+          hint="spacing between neurons"
+        >
+          <Slider
+            value={config.neuronSpacing}
+            min={1}
+            max={5}
+            step={0.001}
+            onChange={(neuronSpacing) => setConfig({ neuronSpacing })}
+            showValue
+          />
+        </InputRow>
+      )}
       <InputRow
         label="showLines"
         hint="show (strongest) connections between neurons"

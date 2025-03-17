@@ -41,7 +41,7 @@ export const Train = () => {
               reset
             </InlineButton>
           )}
-          {hasTestData && !!batchCount && (
+          {hasTestData && (
             <InlineButton variant="secondary" onClick={evaluate}>
               evaluate
             </InlineButton>
