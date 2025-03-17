@@ -1,7 +1,12 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useState } from "react"
 import { useActivationStats } from "./activation-stats"
-import { checkShapeMatch, normalizeTensor, scaleNormalize } from "@/data/utils"
+import {
+  checkShapeMatch,
+  normalizeConv2DActivations,
+  normalizeTensor,
+  scaleNormalize,
+} from "@/data/utils"
 import type { LayerActivations } from "./types"
 import type { Dataset, Sample } from "@/data"
 
@@ -23,14 +28,20 @@ export function useActivations(
         const layerActivations = getLayerActivations(model, sample.xTensor)
         const activations = layerActivations.map((layerActivation, i) => {
           const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
-          const normalizedFlattened =
-            isRegression && i > 0 && activationStats
-              ? scaleNormalize(
-                  flattened,
-                  activationStats[i].mean,
-                  activationStats[i].std
-                )
-              : normalizeTensor(flattened)
+          const layer = model.layers[i]
+          const normalizedFlattened = ["Conv2D", "MaxPooling2D"].includes(
+            layer.getClassName()
+          )
+            ? normalizeConv2DActivations(
+                layerActivation as tf.Tensor4D
+              ).flatten()
+            : isRegression && i > 0 && activationStats
+            ? scaleNormalize(
+                flattened,
+                activationStats[i].mean,
+                activationStats[i].std
+              )
+            : normalizeTensor(flattened)
           return [flattened, normalizedFlattened]
         })
         return activations
