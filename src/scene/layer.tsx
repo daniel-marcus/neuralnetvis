@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
+import { useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene/utils"
 import { useOrientation } from "@/utils/screen"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
-import { useSceneStore } from "@/store"
 
 type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 

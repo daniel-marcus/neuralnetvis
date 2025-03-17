@@ -15,7 +15,10 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   // useScale(group.meshRef, group.nidsStr, props.index, group.index)
   const { onPointerOut, ...otherEvHandlers } =
     useInteractions(group.neurons) ?? {}
-  const renderOrder = 0 - group.index // reversed order for color blending
+  const renderOrder =
+    props.layerPos === "input"
+      ? 0 - group.index // reversed order for color blending
+      : undefined
   // useHelper(groupRef, THREE.BoxHelper, "cyan")
   return (
     <group ref={groupRef} onPointerOut={onPointerOut} renderOrder={renderOrder}>
