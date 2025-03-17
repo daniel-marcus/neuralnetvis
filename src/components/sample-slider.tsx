@@ -23,7 +23,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
         } pointer-events-auto ${
           hasProgressBar || !totalSamples || visIsLocked || hasStream
             ? "opacity-0 pointer-events-none"
-            : hasStatus || hasSelected
+            : isActive && (hasStatus || hasSelected)
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
             : "opacity-[var(--opacity-inactive)] lg:opacity-[var(--opacity-inactive-lg)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
         } transition-opacity duration-200 group`}

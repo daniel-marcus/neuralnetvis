@@ -21,7 +21,7 @@ export interface TrainingSlice {
   logsMetric: Metric
   setLogsMetric: (metric: Metric) => void
 }
-// SC<TrainingSlice> /
+
 export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
   trainConfig: {
     batchSize: 128,

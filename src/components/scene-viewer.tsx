@@ -67,10 +67,11 @@ export function SceneBtns({ children }: { children?: React.ReactNode }) {
 }
 
 function LoadFullBtn() {
+  const dsLoaded = useSceneStore((s) => !!s.ds)
   const hasMoreData = useSceneStore((s) => s.ds?.loaded !== "full")
   const shouldLoadFullDs = useSceneStore((s) => s.shouldLoadFullDs)
   const setLoadFull = useSceneStore((s) => s.setLoadFullDs)
-  if (!hasMoreData || shouldLoadFullDs) return null
+  if (!hasMoreData || shouldLoadFullDs || !dsLoaded) return null
   return (
     <>
       <span className="text-accent">PREVIEW</span>

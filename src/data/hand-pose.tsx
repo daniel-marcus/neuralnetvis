@@ -127,20 +127,17 @@ function usePredictLoop(
   const setSample = useSceneStore((s) => s.setSample)
   const nextSample = useSceneStore((s) => s.nextSample)
   useEffect(() => {
+    if (!stream) return
     let animationFrame: number
-    captureLoop()
     async function captureLoop() {
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
       if (!isTraning) {
-        const { X: _X } = await hpPredict()
-        if (_X) {
-          const X =
-            (ds?.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
-          setSample({ X, y: recordingY, rawX: _X })
-        }
+        const { X } = await hpPredict()
+        if (X) setSample({ X, y: recordingY })
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
+    captureLoop()
     return () => {
       cancelAnimationFrame(animationFrame)
       nextSample()

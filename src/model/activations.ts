@@ -1,51 +1,43 @@
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useState } from "react"
-import { normalizeTensor } from "@/data/utils"
-import { LayerActivations } from "./types"
+import { useActivationStats } from "./activation-stats"
+import { checkShapeMatch, normalizeTensor, scaleNormalize } from "@/data/utils"
+import type { LayerActivations } from "./types"
+import type { Dataset, Sample } from "@/data"
 
-export function useActivations(model?: tf.LayersModel, input?: number[]) {
+export function useActivations(
+  model?: tf.LayersModel,
+  ds?: Dataset,
+  sample?: Sample
+) {
+  const isRegression = ds?.task === "regression"
+  const activationStats = useActivationStats(model, ds)
   const [layerActivations, setLayerActivations] = useState<LayerActivations[]>(
     []
   )
   useEffect(() => {
-    async function getActivations() {
-      if (!model || !input || input.length === 0) return
-
-      const shape = model.layers[0].batchInputShape
-      const [, ...dims] = shape as number[]
-      const valsPerSample = dims.reduce((a, b) => a * b, 1)
-      if (input.length !== valsPerSample) {
-        console.log(
-          `Sample shape does not match model input shape. Provided values: ${
-            input.length
-          }, expected: ${valsPerSample} (${dims.join("x")})`
-        )
-        return
-      }
+    async function getData() {
+      if (!model || !sample) return
 
       const activationTensors = tf.tidy(() => {
-        const tmpModel = tf.model({
-          inputs: model.input,
-          outputs: model.layers.flatMap((layer) => layer.output),
-        })
-        const tensor = tf.tensor([input], [1, ...dims])
-        // note: predictAsync method not available for tf.LayersModel
-        const _activations = tmpModel.predict(tensor) as
-          | tf.Tensor<tf.Rank>[]
-          | tf.Tensor<tf.Rank>
-        const layerActivations = Array.isArray(_activations)
-          ? _activations
-          : [_activations]
-        const activations = layerActivations.map((layerActivation) => {
+        const layerActivations = getLayerActivations(model, sample.xTensor)
+        const activations = layerActivations.map((layerActivation, i) => {
           const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
-          const normalizedFlattened = normalizeTensor(flattened)
+          const normalizedFlattened =
+            isRegression && i > 0 && activationStats
+              ? scaleNormalize(
+                  flattened,
+                  activationStats[i].mean,
+                  activationStats[i].std
+                )
+              : normalizeTensor(flattened)
           return [flattened, normalizedFlattened]
         })
         return activations
       })
 
+      const newLayerActivations: LayerActivations[] = []
       try {
-        const newLayerActivations: LayerActivations[] = []
         for (const [actTensor, normActTensor] of activationTensors) {
           const act = (await actTensor.array()) as number[]
           const normAct = (await normActTensor.array()) as number[]
@@ -54,14 +46,35 @@ export function useActivations(model?: tf.LayersModel, input?: number[]) {
             normalizedActivations: normAct,
           })
         }
-        setLayerActivations(newLayerActivations)
       } catch (e) {
         console.log("Error getting activations", e)
       } finally {
         activationTensors.flat().forEach((t) => t.dispose())
       }
+
+      if (newLayerActivations) setLayerActivations(newLayerActivations)
     }
-    getActivations()
-  }, [model, input, setLayerActivations])
+    getData()
+  }, [model, sample, setLayerActivations, activationStats, isRegression])
+
   return layerActivations
+}
+
+export function getLayerActivations(
+  model: tf.LayersModel,
+  inputTensor: tf.Tensor
+) {
+  const inputDimsModel = model.layers[0].batchInputShape.slice(1)
+  const inputDimsSample = inputTensor.shape.slice(1)
+  if (!checkShapeMatch(inputDimsModel, inputDimsSample)) return []
+  return tf.tidy(() => {
+    const tmpModel = tf.model({
+      inputs: model.input,
+      outputs: model.layers.flatMap((layer) => layer.output),
+    })
+    const layerActivations = tmpModel.predict(
+      inputTensor
+    ) as tf.Tensor<tf.Rank>[]
+    return layerActivations
+  })
 }

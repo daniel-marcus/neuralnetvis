@@ -55,10 +55,14 @@ export interface DbBatch {
   xsRaw?: ParsedLike["data"]
 }
 
-export type Sample = {
+export interface SampleRaw {
   X: number[]
   y?: number
   rawX?: number[]
+}
+
+export interface Sample extends SampleRaw {
+  xTensor: Tensor<Rank>
 }
 
 type DatasetLoader = () => Promise<{

@@ -10,8 +10,8 @@ export function useLayers(isPreview?: boolean) {
   const model = useSceneStore((s) => s.model)
   const sample = useSceneStore((s) => s.sample)
 
-  const _lyrs = useStatelessLayers(model, ds) // dsDef
-  const activations = useActivations(model, sample?.X)
+  const _lyrs = useStatelessLayers(model, ds)
+  const activations = useActivations(model, ds, sample)
   const weights = useWeights(model)
   const _layers = useStatefulLayers(_lyrs, activations, weights, sample)
   const layers = useNeuronSelect(!isPreview, _layers)

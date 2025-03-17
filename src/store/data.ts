@@ -1,6 +1,7 @@
 import { StateCreator } from "zustand"
-import type { Dataset, Sample, StoreMeta } from "@/data"
-import { ModelSlice } from "./model"
+import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
+import type { ModelSlice } from "./model"
+import { preprocessSample } from "@/data/sample"
 
 export interface DataSlice {
   shouldLoadFullDs?: boolean
@@ -15,7 +16,7 @@ export interface DataSlice {
   sampleIdx: number | undefined
   setSampleIdx: (idx: number) => void
   sample?: Sample
-  setSample: (sample?: Sample) => void
+  setSample: (sampleRaw?: SampleRaw) => void
   nextSample: (step?: number) => void
   resetSample: () => void
 }
@@ -33,6 +34,7 @@ export const createDataSlice: StateCreator<
   setDs: (ds) =>
     set(({ sampleIdx }) => ({
       ds,
+      sample: undefined,
       sampleIdx:
         sampleIdx ?? Math.floor(Math.random() * (ds?.train.totalSamples ?? 0)),
     })),
@@ -47,8 +49,9 @@ export const createDataSlice: StateCreator<
 
   sampleIdx: undefined,
   setSampleIdx: (sampleIdx) => set({ sampleIdx }),
-  sample: undefined, // TODO: no global sample
-  setSample: (sample) => set({ sample }),
+  sample: undefined,
+  setSample: (sampleRaw) =>
+    set(({ ds }) => ({ sample: preprocessSample(sampleRaw, ds) })),
   nextSample: (step = 1) =>
     set(({ sampleIdx, totalSamples }) => ({
       sampleIdx: ((sampleIdx ?? 0) + step + totalSamples()) % totalSamples(),

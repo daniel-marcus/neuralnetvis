@@ -209,7 +209,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   return history
 }
 
-async function getDbDataAsTensors(
+export async function getDbDataAsTensors(
   ds: Dataset,
   type: "train" | "test",
   range?: IDBKeyRange

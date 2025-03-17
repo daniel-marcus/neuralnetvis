@@ -28,15 +28,16 @@ describe("getSamplesAsBatch", () => {
         .arraySync() as number[]
       const firstFromBatchLabel = result?.ys.slice(0, 1).arraySync() as number[]
       const sample256 = await getSample(dsMnistMock, "train", 256)
+      if (!sample256) throw new Error("No sample")
       const sample256Data = tf.tidy(() => {
-        const tensor = tf.tensor(sample256[0]).flatten()
+        const tensor = tf.tensor(sample256.X).flatten()
         const preprocessed = dsMnistMock.preprocess?.(tensor) ?? tensor
         return preprocessed.arraySync() as number[]
       })
       const sample256Label = tf.tidy(
         () =>
           tf
-            .oneHot(sample256[1], dsMnistMock.outputLabels.length)
+            .oneHot(sample256.y!, dsMnistMock.outputLabels.length)
             .arraySync() as number[]
       )
       expect(firstFromBatchData).toEqual(sample256Data)

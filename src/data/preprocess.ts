@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import type { PreprocessFuncDef } from "./types"
 
-// note: training uses input w/ batchInputShape, sample uses flattened input
+// TODO: only use shaped input tensors (no more flattened)
 
 const normalizeImage: PreprocessFuncDef = (inputTensor) => inputTensor.div(255)
 

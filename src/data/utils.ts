@@ -9,6 +9,31 @@ export function normalizeTensor(tensor: tf.Tensor): tf.Tensor {
   })
 }
 
+export function minMaxNormalize(
+  tensor: tf.Tensor,
+  min: tf.Tensor,
+  max: tf.Tensor
+): tf.Tensor {
+  // normalization between 0 and 1
+  return tf.tidy(() => {
+    const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
+    const range = max.sub(min).maximum(epsilon)
+    return tensor.sub(min).div(range)
+  })
+}
+
+export function scaleNormalize(
+  tensor: tf.Tensor,
+  mean: tf.Tensor,
+  std: tf.Tensor
+) {
+  // z-scale and normalize between -1 and 1
+  return tf.tidy(() => {
+    const scaled = tensor.sub(mean).div(std)
+    return normalizeTensor(scaled)
+  })
+}
+
 export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
   // normalize between 0 and 1, no negative values
   return tf.tidy(() => {

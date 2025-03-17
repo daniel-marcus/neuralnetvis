@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { isDebug, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
-import type { Dataset, DbBatch } from "./types"
+import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
 
 export function useSample(ds?: Dataset, isActive?: boolean) {
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
@@ -13,11 +13,17 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
   useEffect(() => {
     async function loadSample() {
       if (!ds || typeof sampleIdx === "undefined" || isNaN(sampleIdx)) return
-      const sample = await getPreprocessedSample(ds, sampleIdx)
-      setSample(sample)
+      const rawSample = await getSample(ds, "train", sampleIdx)
+      setSample(rawSample)
     }
     loadSample()
   }, [ds, sampleIdx, setSample])
+
+  useEffect(() => {
+    return () => {
+      if (sample?.xTensor) sample.xTensor.dispose()
+    }
+  }, [sample])
 
   const next = useSceneStore((s) => s.nextSample)
   const prev = useCallback(() => next(-1), [next])
@@ -27,28 +33,16 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
   return sample
 }
 
-/* 
-
-  useEffect(() => {
-    if (!ds) return
-    return () => {
-      currBatchCache = {}
-      resetSample()
-    }
-  }, [ds, resetSample])
-*/
-
-export async function getPreprocessedSample(ds: Dataset, sampleIdx: number) {
-  const dbSample = await getSample(ds, "train", sampleIdx, true)
-  const [features, y, featuresRaw] = dbSample
-  if (!features) return
-  const _X = Array.from(features ?? [])
-  const rawX = featuresRaw ? Array.from(featuresRaw) : _X
-  await tf.ready()
-  const X = tf.tidy(
-    () => (ds.preprocess?.(tf.tensor1d(_X)).arraySync() as number[]) ?? _X
-  )
-  const sample = { X, y, rawX }
+export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
+  if (!sampleRaw || !ds) return
+  // await tf.ready()
+  const rawX = sampleRaw.rawX ?? sampleRaw.X
+  const xTensor = tf.tidy(() => {
+    const tensor = tf.tensor(sampleRaw.X, [1, ...ds.inputDims])
+    return ds.preprocess ? ds.preprocess(tensor) : tensor
+  })
+  const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
+  const sample: Sample = { X, y: sampleRaw.y, rawX, xTensor }
   return sample
 }
 
@@ -58,8 +52,7 @@ let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
 export async function getSample(
   ds: Dataset,
   type: "train" | "test",
-  i: number,
-  returnRaw = false
+  i: number
 ) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
   const storeBatchSize = ds.storeBatchSize
@@ -71,13 +64,18 @@ export async function getSample(
     : await getData<DbBatch>(ds.key, type, batchIdx)
   if (!batch) {
     if (isDebug()) console.log("NO BATCH", hasCached, batchIdx, i, ds)
-    return []
+    return
   }
   if (!hasCached) currBatchCache = { [batchCacheKey]: batch }
   const sampleIdx = i % storeBatchSize
   const sliceIdxs = [sampleIdx * valsPerSample, (sampleIdx + 1) * valsPerSample]
   const X = batch.xs.slice(...sliceIdxs)
-  const XRaw = batch.xsRaw?.slice(...sliceIdxs)
+  const rawX = batch.xsRaw?.slice(...sliceIdxs)
   const y = batch.ys[sampleIdx]
-  return returnRaw ? ([X, y, XRaw] as const) : ([X, y] as const)
+  const result: SampleRaw = {
+    X: Array.from(X),
+    y,
+    rawX: rawX ? Array.from(rawX) : undefined,
+  }
+  return result
 }
