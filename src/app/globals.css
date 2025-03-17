@@ -62,6 +62,10 @@
     font-size: calc((var(--menu-btn-height)) / (7 * var(--logo-lh)));
     line-height: calc(var(--logo-lh) * 1em);
   }
+  .input-appearance {
+    /* for Select and TextInput */
+    @apply px-2 border-1 border-menu-border rounded-[3px];
+  }
 }
 
 :root {

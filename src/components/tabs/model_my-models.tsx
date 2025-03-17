@@ -1,7 +1,11 @@
 import { useModelTransition } from "@/model/model"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { CollapsibleWithTitle, InlineButton } from "@/components/ui-elements"
+import {
+  CollapsibleWithTitle,
+  InlineButton,
+  TextInput,
+} from "@/components/ui-elements"
 import { useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
 
@@ -32,11 +36,7 @@ export function MyModels() {
     >
       <SavedModels updTrigger={updTrigger} />
       <div className="flex justify-between gap-2">
-        <input
-          type="string"
-          onChange={(e) => setModelName(e.target.value)}
-          value={modelName}
-        />
+        <TextInput onChange={setModelName} value={modelName} />
         <div className="flex gap-2">
           <InlineButton onClick={saveModel} disabled={!model}>
             save

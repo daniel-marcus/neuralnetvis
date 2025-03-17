@@ -7,6 +7,7 @@ import {
   InlineButton,
   InputRow,
   Select,
+  TextInput,
 } from "../ui-elements"
 import { getDsFromDef, getDsPath, resetData } from "@/data/dataset"
 import type { DatasetDef } from "@/data"
@@ -53,17 +54,11 @@ export const CreateNewDataset = () => {
   }
   return (
     <CollapsibleWithTitle title="create new dataset">
-      <div className="flex gap-2">
-        <InlineButton variant="secondary" className="text-white" disabled>
-          hand pose classification
-        </InlineButton>
-      </div>
+      <Select
+        options={[{ value: "handpose", label: "hand pose classification" }]}
+      />
       <InputRow label="name">
-        <input
-          type="string"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <TextInput value={name} onChange={setName} />
       </InputRow>
       <InputRow label="input">
         <Select
@@ -75,7 +70,7 @@ export const CreateNewDataset = () => {
       </InputRow>
       <InputRow label="labels">
         <DraggableList
-          rowHeight={26}
+          rowHeight={32}
           onOrderChange={(newOrder) => {
             const newLabels = newOrder.map((i) => labels[i])
             setLabels(newLabels)
@@ -83,18 +78,15 @@ export const CreateNewDataset = () => {
         >
           {labels.map((l, i) => (
             <div key={i} className="flex gap-2">
-              <div className="w-8 shrink-0">{i + 1}</div>
-              <input
-                className="w-full"
-                type="string"
+              <div className="w-4 shrink-0">{i + 1}</div>
+              <TextInput
+                // className="w-full"
                 value={l}
-                onChange={(e) =>
-                  setLabels([...labels.toSpliced(i, 1, e.target.value)])
-                }
+                onChange={(val) => setLabels([...labels.toSpliced(i, 1, val)])}
               />
               {labels.length > MIN_LABELS && (
                 <button
-                  className="pl-2"
+                  className="px-2"
                   onClick={() => setLabels([...labels.toSpliced(i, 1)])}
                 >
                   x

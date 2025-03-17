@@ -17,7 +17,6 @@ export const handPose: DatasetDef = {
   preprocessFunc: "normalizeHandLandmarks",
   outputLabels,
   storeBatchSize: 20,
-  isUserGenerated: true,
   hasCam: true,
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(

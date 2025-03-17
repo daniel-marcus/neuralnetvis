@@ -137,7 +137,7 @@ function makeGenerator(
 
 export function canUseLazyLoading(ds: Dataset) {
   // regression: model.fit() works better that fitDataset() due to integrated shuffling
-  return ds.task !== "regression" && !ds.isUserGenerated
+  return ds.task !== "regression" && !ds.hasCam
 }
 
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
