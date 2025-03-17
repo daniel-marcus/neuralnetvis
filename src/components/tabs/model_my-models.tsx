@@ -1,4 +1,3 @@
-import { useModelTransition } from "@/model/model"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
@@ -115,7 +114,7 @@ interface ImportFormProps {
 }
 
 function ImportForm({ onUploadFinished }: ImportFormProps) {
-  const [setModel] = useModelTransition()
+  const setModel = useCurrScene((s) => s._setModel)
   const [modelFile, setModelFile] = useState<File | null>(null)
   const [weightsFiles, setWeightsFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
@@ -139,7 +138,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
   return (
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
-        <label className="block cursor-pointer">
+        <label className="block cursor-pointer input-appearance">
           {modelFile ? modelFile.name : "Choose model.json ..."}
           <input
             type="file"
@@ -148,7 +147,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
             onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
           />
         </label>
-        <label className="block cursor-pointer">
+        <label className="block cursor-pointer input-appearance">
           {weightsFiles
             ? weightsFiles.length + " weight file(s) selected"
             : "Choose weights.bin ..."}
