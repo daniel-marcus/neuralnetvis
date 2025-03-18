@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
 import { useEffect } from "react"
 import { getLayerActivations } from "./activations"
-import { getDbDataAsTensors } from "./training"
+import { getDbDataAsTensors } from "@/data/dataset"
 import { Dataset } from "@/data"
 
 // store min and max activations for each neuron across all samples for per-neuron normalization in regression tasks

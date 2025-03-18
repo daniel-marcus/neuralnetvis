@@ -28,15 +28,20 @@ const B_COLORS = Array.from({ length: 256 }, (_, i) =>
 const CHANNEL_COLORS = [R_COLORS, G_COLORS, B_COLORS]
 
 const ZERO_BASE = [28, 29, 33] // color-gray / 5
-const POS_BASE = [255, 20, 100]
-const NEG_BASE = POS_BASE.toReversed()
+export const POS_BASE = [255, 20, 100]
+export const NEG_BASE = POS_BASE.toReversed()
+
+export function getColorVals(val: number, base: number[]) {
+  const a = Math.floor(ZERO_BASE[0] + val * (base[0] - ZERO_BASE[0]))
+  const b = Math.floor(ZERO_BASE[1] + val * (base[1] - ZERO_BASE[1]))
+  const c = Math.floor(ZERO_BASE[2] + val * (base[2] - ZERO_BASE[2]))
+  return [a, b, c]
+}
 
 function newColorArr(base: number[]) {
   return Array.from({ length: 256 }, (_, i) => {
     const val = i / 255
-    const a = Math.floor(ZERO_BASE[0] + val * (base[0] - ZERO_BASE[0]))
-    const b = Math.floor(ZERO_BASE[1] + val * (base[1] - ZERO_BASE[1]))
-    const c = Math.floor(ZERO_BASE[2] + val * (base[2] - ZERO_BASE[2]))
+    const [a, b, c] = getColorVals(val, base)
     return toColorObj(`rgb(${a}, ${b}, ${c})`)
   })
 }

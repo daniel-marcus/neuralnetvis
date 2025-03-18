@@ -24,11 +24,13 @@ export function minMaxNormalize(
 
 export function scaleNormalize(
   tensor: tf.Tensor,
-  mean: tf.Tensor,
-  std: tf.Tensor
+  _mean?: tf.Tensor,
+  _std?: tf.Tensor
 ) {
   // z-scale and normalize between -1 and 1
   return tf.tidy(() => {
+    const mean = _mean ?? tensor.mean()
+    const std = _std ?? tf.moments(tensor).variance.sqrt()
     const scaled = tensor.sub(mean).div(std)
     return normalizeTensor(scaled)
   })

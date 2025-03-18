@@ -20,6 +20,7 @@ export interface DatasetMeta {
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
+  hasMap?: boolean
   loaded: "preview" | "full" // will be set by ds loader
 }
 

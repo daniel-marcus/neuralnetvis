@@ -1,6 +1,7 @@
+import * as tf from "@tensorflow/tfjs"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { datasets } from "./datasets"
-import { deleteAll, getData, putData, putDataBatches } from "./db"
+import { deleteAll, getAll, getData, putData, putDataBatches } from "./db"
 import type {
   Dataset,
   DatasetDef,
@@ -209,4 +210,25 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
     const newDs = { ...currDs, [storeName]: storeMeta }
     scene.setState({ ds: newDs, skipModelCreate: true })
   }
+}
+
+export async function getDbDataAsTensors(
+  ds: Dataset,
+  type: "train" | "test",
+  range?: IDBKeyRange
+) {
+  const batches = await getAll<DbBatch>(ds.key, type, range)
+  if (!batches.length) return
+  const isClassification = ds.task === "classification"
+  return tf.tidy(() => {
+    const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
+    const shapeX = [-1, ...ds.inputDims] // -1 for unknown batch size
+    const XRaw = tf.concat(xBatchTensors).reshape(shapeX)
+    const X = ds.preprocess?.(XRaw) ?? XRaw
+    const yArr = batches.flatMap((b) => Array.from(b.ys))
+    const y = isClassification
+      ? tf.oneHot(yArr, ds.outputLabels.length)
+      : tf.tensor(yArr)
+    return [X, y] as const
+  })
 }

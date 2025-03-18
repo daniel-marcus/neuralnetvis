@@ -12,6 +12,7 @@ import { InlineButton } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useMemo } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
+import { Map } from "./map"
 
 interface SceneViewerProps {
   isActive: boolean
@@ -44,6 +45,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   useInitialState(props.initialState)
   return (
     <>
+      {dsDef?.hasMap && <Map />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
