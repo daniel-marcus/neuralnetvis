@@ -111,8 +111,9 @@ export async function loadAndSaveDsData(
 ) {
   const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
-    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw } = await load()
-    await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw)
+    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw, xTrainNames } =
+      await load()
+    await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw, xTrainNames)
     if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw)
   }
   const dsMeta = dsDefToDsMeta(dsDef, isPreview)
@@ -135,6 +136,7 @@ async function saveData(
   xs: ParsedLike,
   ys: ParsedLike,
   xsRaw?: ParsedLike,
+  sampleNames?: string[],
   overwrite = true
 ) {
   const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
@@ -159,6 +161,7 @@ async function saveData(
       xs: xs.data.slice(...sliceIdxs),
       ys: ys.data.slice(i, i + storeBatchSize),
       xsRaw: xsRaw?.data.slice(...sliceIdxs),
+      sampleNames: sampleNames?.slice(i, i + storeBatchSize),
     }
     batches.push(batch)
   }
@@ -183,7 +186,15 @@ export async function addTrainData(
   ys: ParsedLike,
   xsRaw?: ParsedLike
 ) {
-  const newTrainMeta = await saveData(ds, "train", xs, ys, xsRaw, false)
+  const newTrainMeta = await saveData(
+    ds,
+    "train",
+    xs,
+    ys,
+    xsRaw,
+    undefined,
+    false
+  )
   return newTrainMeta
 }
 

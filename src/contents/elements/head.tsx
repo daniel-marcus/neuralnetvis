@@ -1,4 +1,4 @@
-import { useAsciiText } from "@/utils/ascii-text"
+import { AsciiText } from "@/components/ui-elements/ascii-text"
 import { useScrollCallbacks } from "./block"
 import type { ReactNode } from "react"
 import type { ScrollBlockProps } from "./types"
@@ -19,23 +19,15 @@ export function Head(props: HeadProps) {
 interface TitleProps {
   children: string
   className?: string
-  dynamic?: boolean
 }
 
-export function Title({
-  children,
-  className = "",
-  dynamic = true,
-}: TitleProps) {
-  const title = useAsciiText(children)
+export function Title({ children, className = "" }: TitleProps) {
   return (
     <div className={`${className}`}>
       <h1 className="hidden">{children}</h1>
-      <pre
-        className={dynamic ? "text-[min(1.25vw,0.75rem)]/[1.2]" : "text-logo"}
-      >
-        {title}
-      </pre>
+      <AsciiText className="text-[min(1.25vw,0.75rem)]/[1.2]">
+        {children}
+      </AsciiText>
     </div>
   )
 }

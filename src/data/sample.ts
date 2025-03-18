@@ -36,13 +36,14 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
 export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
   if (!sampleRaw || !ds) return
   // await tf.ready()
+  const name = sampleRaw.name
   const rawX = sampleRaw.rawX ?? sampleRaw.X
   const xTensor = tf.tidy(() => {
     const tensor = tf.tensor(sampleRaw.X, [1, ...ds.inputDims])
     return ds.preprocess ? ds.preprocess(tensor) : tensor
   })
   const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
-  const sample: Sample = { X, y: sampleRaw.y, rawX, xTensor }
+  const sample: Sample = { X, y: sampleRaw.y, rawX, xTensor, name }
   return sample
 }
 
@@ -72,10 +73,12 @@ export async function getSample(
   const X = batch.xs.slice(...sliceIdxs)
   const rawX = batch.xsRaw?.slice(...sliceIdxs)
   const y = batch.ys[sampleIdx]
+  const name = batch.sampleNames?.[sampleIdx]
   const result: SampleRaw = {
     X: Array.from(X),
     y,
     rawX: rawX ? Array.from(rawX) : undefined,
+    name,
   }
   return result
 }

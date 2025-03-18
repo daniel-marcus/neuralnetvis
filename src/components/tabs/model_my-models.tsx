@@ -115,49 +115,39 @@ interface ImportFormProps {
 
 function ImportForm({ onUploadFinished }: ImportFormProps) {
   const setModel = useCurrScene((s) => s._setModel)
-  const [modelFile, setModelFile] = useState<File | null>(null)
-  const [weightsFiles, setWeightsFiles] = useState<FileList | null>(null)
+  const [modelFiles, setModelFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
     async (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault()
-      if (!modelFile || !weightsFiles) return
+      if (!modelFiles) return
       const newModel = await tf.loadLayersModel(
-        tf.io.browserFiles([modelFile, ...weightsFiles])
+        tf.io.browserFiles([...modelFiles])
       )
       await newModel.save(`indexeddb://imported_${newModel.name}`)
       setModel(newModel)
       onUploadFinished()
     },
-    [modelFile, weightsFiles, onUploadFinished, setModel]
+    [modelFiles, onUploadFinished, setModel]
   )
   const [isPending, startTransition] = useTransition()
   useEffect(() => {
-    if (!modelFile || !weightsFiles) return
+    if (!modelFiles) return
     startTransition(importModel)
-  }, [modelFile, weightsFiles, importModel])
+  }, [modelFiles, importModel])
   return (
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
         <label className="block cursor-pointer input-appearance">
-          {modelFile ? modelFile.name : "Choose model.json ..."}
-          <input
-            type="file"
-            id="model-file"
-            className="hidden text-transparent"
-            onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-        <label className="block cursor-pointer input-appearance">
-          {weightsFiles
-            ? weightsFiles.length + " weight file(s) selected"
-            : "Choose weights.bin ..."}
+          {modelFiles
+            ? modelFiles.length + " model file(s) selected"
+            : "Choose model.json & weights.bin"}
           <input
             type="file"
             multiple
-            id="weights-file"
+            id="model-files"
             className="hidden text-transparent"
-            placeholder="Choose file"
-            onChange={(e) => setWeightsFiles(e.target.files ?? null)}
+            placeholder="Choose files"
+            onChange={(e) => setModelFiles(e.target.files ?? null)}
           />
         </label>
       </div>

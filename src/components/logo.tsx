@@ -1,20 +1,17 @@
 import { useGlobalStore } from "@/store"
-import { useAsciiText } from "@/utils/ascii-text"
+import { AsciiText } from "@/components/ui-elements/ascii-text"
 
 export const Logo = () => {
   const currTab = useGlobalStore((s) => s.tab)
   const tabIsShwon = useGlobalStore((s) => s.tabIsShown)
   const mobileCrop = currTab && tabIsShwon
-  const neural = useAsciiText("Neural")
-  const net = useAsciiText("Net")
-  const vis = useAsciiText("Vis")
   return (
     <div
       className={`text-logo p-main hover:text-white transition-colors duration-100 h-[112px] ${
         mobileCrop ? "max-h-[40px] overflow-clip sm:max-h-none" : ""
       }`}
     >
-      <pre>{neural}</pre>
+      <AsciiText>Neural</AsciiText>
       <div
         className={`transition-opacity duration-100 ${
           mobileCrop
@@ -22,8 +19,8 @@ export const Logo = () => {
             : ""
         }`}
       >
-        <pre>{net}</pre>
-        <pre>{vis}</pre>
+        <AsciiText>Net</AsciiText>
+        <AsciiText>Vis</AsciiText>
       </div>
     </div>
   )

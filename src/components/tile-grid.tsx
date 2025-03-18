@@ -9,12 +9,12 @@ import { useHasLesson } from "./lesson"
 import { useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
-import { Title } from "@/contents/elements/head"
 import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "./video"
 import Link from "next/link"
+import { AsciiText } from "@/components/ui-elements/ascii-text"
 
 export type Section = "learn" | "play"
 
@@ -177,13 +177,10 @@ function Tile({
               section === "learn" ? "flex-col-reverse" : "flex-col"
             } justify-between border-2 border-box-bg group-hover/tile:border-accent transition-colors duration-100`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
-            <Link href={path} className="pointer-events-auto">
-              <Title
-                className="pb-4 group-hover/tile:text-white"
-                dynamic={false}
-              >
+            <Link href={path} className="pointer-events-auto pb-4">
+              <AsciiText className="text-logo group-hover/tile:text-white">
                 {title}
-              </Title>
+              </AsciiText>
             </Link>
             <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
               {tags.map((tag, i) => (

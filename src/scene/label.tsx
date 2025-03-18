@@ -29,7 +29,8 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const { label, rawInput, activation } = neuron
   const trainingY = useSceneStore((s) => s.sample?.y)
   const isRegression = useSceneStore((s) => s.isRegression())
-  const showValueLabel = !!label && !!rawInput && isRegression
+  const showValueLabel =
+    !!label && typeof rawInput !== "undefined" && isRegression
   const layerPos = neuron.layer.layerPos
   if (!label || !position) return null
   return (
@@ -41,9 +42,9 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
         color={LABEL_COLOR}
       >
         {layerPos === "output" && isRegression
-          ? `${label}\n${activation?.toFixed(
-              0
-            )} (predicted)\n${trainingY} (actual)`
+          ? `${label}\n${round(activation)} (predicted)\n${round(
+              trainingY
+            )} (actual)`
           : label}
       </NeuronLabel>
       {showValueLabel && (
@@ -53,11 +54,16 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
           size={1}
           color={LABEL_COLOR}
         >
-          {String(Math.round(rawInput * 100) / 100)}
+          {round(rawInput)}
         </NeuronLabel>
       )}
     </group>
   )
+}
+
+function round(val: number | undefined, dec = 1) {
+  if (typeof val === "undefined") return
+  return Math.round(val * 10 ** dec) / 10 ** dec
 }
 
 interface NeuronLabelProps {

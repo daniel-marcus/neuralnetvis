@@ -53,12 +53,14 @@ export interface DbBatch {
   xs: ParsedLike["data"]
   ys: ParsedLike["data"]
   xsRaw?: ParsedLike["data"]
+  sampleNames?: string[]
 }
 
 export interface SampleRaw {
   X: number[]
   y?: number
   rawX?: number[]
+  name?: string
 }
 
 export interface Sample extends SampleRaw {
@@ -72,6 +74,7 @@ type DatasetLoader = () => Promise<{
   yTest?: ParsedLike
   xTrainRaw?: ParsedLike
   xTestRaw?: ParsedLike
+  xTrainNames?: string[]
 }>
 
 export interface ParsedLike {
@@ -87,13 +90,13 @@ type SupportedTypedArray =
   | Int32Array
   | Uint32Array
   | Float32Array
-  | Float64Array
 
 type ParsedSafe = Parsed & { data: SupportedTypedArray }
 
 export function isSafe(parsed: Parsed): parsed is ParsedSafe {
   return !(
     parsed.data instanceof BigUint64Array ||
-    parsed.data instanceof BigInt64Array
+    parsed.data instanceof BigInt64Array ||
+    parsed.data instanceof Float64Array
   )
 }

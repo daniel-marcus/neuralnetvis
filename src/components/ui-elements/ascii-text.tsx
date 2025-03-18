@@ -6,7 +6,17 @@ const MAX_CHARS_PER_LINE = 10
 
 figlet.parseFont("Blur Vision ASCII", blurVision())
 
-export const useAsciiText = (input: string) => {
+interface AsciiTextProps {
+  children: string
+  className?: string
+}
+
+export function AsciiText({ children, className }: AsciiTextProps) {
+  const ascii = useAsciiText(children)
+  return <pre className={className}>{ascii}</pre>
+}
+
+const useAsciiText = (input: string) => {
   return useMemo(() => {
     const textWithLineBreaks = splitWithThreshold(input).join("\n")
     return figlet
@@ -18,7 +28,10 @@ export const useAsciiText = (input: string) => {
   }, [input])
 }
 
-function splitWithThreshold(str: string, threshold = MAX_CHARS_PER_LINE) {
+export function splitWithThreshold(
+  str: string,
+  threshold = MAX_CHARS_PER_LINE
+) {
   return str.split(" ").reduce((acc, word) => {
     const lastChunk = acc.at(-1) || ""
     const newChunk = lastChunk ? `${lastChunk} ${word}` : word

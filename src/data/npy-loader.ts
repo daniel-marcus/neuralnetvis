@@ -16,7 +16,7 @@ async function parseNpz(arrayBuffer: ArrayBuffer) {
   const data = await file.async("arraybuffer")
   const parsed = n.parse(data)
   if (!isSafe(parsed))
-    throw new Error("BigUint64Array/BigInt64Array not supported")
+    throw new Error("BigUint64Array/BigInt64Array/Float64Array not supported")
   return parsed
 }
 

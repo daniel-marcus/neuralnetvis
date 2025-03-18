@@ -10,7 +10,8 @@ import { InitialState, useInitialState } from "@/utils/initial-state"
 import { Section } from "./tile-grid"
 import { InlineButton } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
-import { Suspense } from "react"
+import { Suspense, useMemo } from "react"
+import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 
 interface SceneViewerProps {
   isActive: boolean
@@ -44,6 +45,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   return (
     <>
       {dsDef?.hasCam && <VideoWindow />}
+      <SampleName />
       <Scene {...props} />
       {isActive && (
         <SceneBtns>
@@ -82,5 +84,34 @@ function LoadFullBtn() {
         load full
       </InlineButton>
     </>
+  )
+}
+
+function SampleName() {
+  const isActive = useSceneStore((s) => s.isActive)
+  const sampleName = useSceneStore((s) => s.sample?.name)
+  const chunks = useMemo(
+    () => splitWithThreshold(sampleName ?? "", 9),
+    [sampleName]
+  )
+  if (!sampleName) return null
+  return (
+    <div
+      className={`absolute top-0 w-full h-full p-4 pointer-events-none flex items-end justify-end pb-24 ${
+        isActive ? "pb-30 sm:items-center sm:justify-start sm:pb-4" : ""
+      }`}
+    >
+      <div
+        className={`text-right ${
+          isActive
+            ? "text-[min(0.75vw,0.25rem)]/[1.2] sm:text-left"
+            : "text-[2px]/[1.2]"
+        } brightness-25`}
+      >
+        {chunks.map((chunk, i) => (
+          <AsciiText key={i}>{chunk}</AsciiText>
+        ))}
+      </div>
+    </div>
   )
 }

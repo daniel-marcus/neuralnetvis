@@ -19,7 +19,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
     >
       <div
         className={`w-full ${
-          isActive ? "max-w-[80vw] sm:max-w-[380px]" : ""
+          isActive ? "px-4 max-w-full sm:max-w-[380px]" : ""
         } pointer-events-auto ${
           hasProgressBar || !totalSamples || visIsLocked || hasStream
             ? "opacity-0 pointer-events-none"
