@@ -16,9 +16,9 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@deck.gl/core": "^9.1.5",
-    "@deck.gl/layers": "^9.1.5",
-    "@deck.gl/react": "^9.1.5",
+    "@deck.gl/core": "^9.1.6",
+    "@deck.gl/layers": "^9.1.6",
+    "@deck.gl/react": "^9.1.6",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
