@@ -87,7 +87,7 @@ export const Map = () => {
         isActive
           ? "grayscale-25 opacity-75 sm:grayscale-0 sm:opacity-100 md:translate-x-[25vw]"
           : "grayscale-25 opacity-75"
-      } transition-all duration-500 pointer-events-none w-[100vw] h-[100dvh]`}
+      } transition-all duration-[var(--tile-duration)] pointer-events-none w-[100vw] h-[100dvh]`}
     >
       <DeckGL
         layers={layers}

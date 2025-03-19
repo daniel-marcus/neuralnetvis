@@ -9,8 +9,8 @@ import { autoMpg } from "./auto-mpg"
 export const datasets: DatasetDef[] = [
   handPose,
   fashionMnist,
+  cifar10,
   mnist,
   californiaHousing,
-  cifar10,
   autoMpg,
 ] as const

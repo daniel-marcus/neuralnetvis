@@ -7,14 +7,12 @@ import { lessonPreviews } from "@/contents"
 import { usePathname, useRouter } from "next/navigation"
 import { useHasLesson } from "./lesson"
 import { useGlobalStore } from "@/store"
-import { SceneViewer } from "./scene-viewer"
+import { SceneTitle, SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
 import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "./video"
-import Link from "next/link"
-import { AsciiText } from "@/components/ui-elements/ascii-text"
 
 export type Section = "learn" | "play"
 
@@ -88,6 +86,7 @@ export const TileGrid = () => {
                 >
                   <SceneViewer
                     isActive={isActive}
+                    path={tile.path}
                     dsKey={tile.dsKey}
                     initialState={tile.initialState}
                     section={tile.section}
@@ -125,13 +124,10 @@ function Tile({
   isFeatured,
 }: TileProps) {
   const ref = useRef<HTMLDivElement>(null)
-
   const router = useRouter()
 
   const bind = useDrag(({ tap }) => {
-    if (tap) {
-      if (!isActive) router.push(path)
-    }
+    if (tap && !isActive) router.push(path)
   })
 
   const [localActive, setLocalActive] = useState(false)
@@ -160,50 +156,42 @@ function Tile({
       <div
         className={`rounded-box overflow-hidden origin-center flex items-center justify-center ${
           localActive
-            ? "fixed inset-0 w-screen h-[100dvh] z-10"
+            ? "fixed inset-0 w-screen h-[100dvh] z-10 border-transparent!"
             : "relative w-[var(--tile-width)] h-[var(--tile-height)]"
         } ${
           isActive === localActive
-            ? "transition-all duration-500 ease-in-out"
+            ? "transition-all duration-[var(--tile-duration)] ease-in-out"
             : isActive && !localActive
             ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
             : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
         }`}
+        style={
+          {
+            "--tile-duration": "500ms",
+          } as React.CSSProperties
+        }
       >
         {children}
-        {(section === "play" || !isActive) && (
-          <div
-            className={`absolute top-0 left-0 w-full h-full rounded-box flex pointer-events-none ${
-              section === "learn" ? "flex-col-reverse" : "flex-col"
-            } justify-between transition-colors duration-100 ${
-              isActive
-                ? "p-main pointer-events-none"
-                : "p-4 border-2 border-box-bg group-hover/tile:border-accent"
-            }`} // bg-gradient-to-tr from-background to-transparent via-transparent
-          >
-            <Link
-              href={isActive ? "/" : path}
-              className="pointer-events-auto pb-4"
-            >
-              <AsciiText
-                className={`text-logo ${
-                  isActive ? "hover:text-white" : "group-hover/tile:text-white"
-                }`}
-              >
-                {isActive ? `../\n${title}` : title}
-              </AsciiText>
-            </Link>
-            {!isActive && (
-              <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
-                {tags.map((tag, i) => (
-                  <span key={i} className="brightness-25">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+        <div // TileOverlay
+          className={`absolute top-0 left-0 w-full h-full pointer-events-none rounded-box flex flex-col ${
+            section === "learn" ? "justify-between" : "justify-end"
+          }  p-4 border-2 border-box-bg ${
+            isActive
+              ? "border-transparent! opacity-0"
+              : "group-hover/tile:border-accent transition-opacity duration-100 delay-[var(--tile-duration)]"
+          }`}
+        >
+          <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
+            {tags.map((tag, i) => (
+              <span key={i} className="brightness-25">
+                {tag}
+              </span>
+            ))}
           </div>
-        )}
+          {section === "learn" && (
+            <SceneTitle isActive={isActive} title={title} path={path} />
+          )}
+        </div>
       </div>
     </div>
   )

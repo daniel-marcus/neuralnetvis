@@ -19,7 +19,6 @@ import { usePathname } from "next/navigation"
 
 export const Header = () => {
   const currTab = useGlobalStore((s) => s.tab)
-  const setTab = useGlobalStore((s) => s.setTab)
   const isShown = useGlobalStore((s) => s.tabIsShown)
   const content = currTab?.component ? createElement(currTab.component) : null
   const isScreenXl = useIsScreen("xl")
@@ -51,13 +50,12 @@ export const Header = () => {
           />
           <Link
             href={"/"}
+            prefetch={false}
             className={`pointer-events-auto ${
               isPlayMode ? "-translate-x-full" : ""
             } transition-translate duration-500`}
             scroll={hasLesson ? true : false}
-            onClick={() => {
-              setTab(null)
-            }}
+            // onClick={() => setTab(null)}
           >
             <Logo />
           </Link>

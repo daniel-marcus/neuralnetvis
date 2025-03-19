@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Scene } from "@/scene"
 import { SceneStoreProvider, useSceneStore } from "@/store"
 import { useModel } from "@/model/model"
@@ -16,6 +17,7 @@ import { Map } from "./map"
 
 interface SceneViewerProps {
   isActive: boolean
+  path: string
   section: Section
   dsKey?: string
   initialState?: InitialState
@@ -34,7 +36,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
 }
 
 function SceneViewerInner(props: SceneViewerProps) {
-  const { dsKey, isActive, section } = props
+  const { dsKey, isActive, section, path } = props
   const isPreview = !isActive
   const dsKeyFromParams = useSearchParams().get("ds")
   const dsDef = useDsDef(isActive && dsKeyFromParams ? dsKeyFromParams : dsKey)
@@ -49,26 +51,61 @@ function SceneViewerInner(props: SceneViewerProps) {
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
-      {isActive && (
-        <SceneBtns>
-          <LoadFullBtn />
-          {dsDef?.hasCam && <VideoControl />}
-        </SceneBtns>
-      )}
+      <SceneOverlay>
+        {section === "play" && (
+          <SceneTitle
+            isActive={isActive}
+            title={dsDef?.name ?? ""}
+            path={path}
+          />
+        )}
+        {isActive && (
+          <SceneBtns>
+            <LoadFullBtn />
+            {dsDef?.hasCam && <VideoControl />}
+          </SceneBtns>
+        )}
+      </SceneOverlay>
       {section === "play" && <SampleSlider isActive={isActive} />}
     </>
   )
 }
 
-export function SceneBtns({ children }: { children?: React.ReactNode }) {
+const SceneOverlay = ({ children }: { children?: React.ReactNode }) => (
+  <div className="absolute z-50 top-0 left-0 w-full h-full pointer-events-none p-main">
+    {children}
+  </div>
+)
+
+function SceneBtns({ children }: { children?: React.ReactNode }) {
   return (
-    <div
-      className={`absolute z-50 left-0 top-[calc(62px+var(--padding-main))] p-main flex gap-2 justify-start w-auto`}
-    >
+    <div className={`flex gap-2 justify-start w-auto py-[var(--padding-main)]`}>
       {children}
     </div>
   )
 }
+
+interface SceneTitleProps {
+  isActive?: boolean
+  title: string
+  path: string
+}
+
+export const SceneTitle = ({ isActive, title, path }: SceneTitleProps) => (
+  <Link
+    href={isActive ? "/" : path}
+    prefetch={!isActive}
+    className="pointer-events-auto pb-4"
+  >
+    <AsciiText
+      className={`text-logo ${
+        isActive ? "hover:text-white" : "group-hover/tile:text-white"
+      }`}
+    >
+      {isActive ? `../\n${title}` : title}
+    </AsciiText>
+  </Link>
+)
 
 function LoadFullBtn() {
   const dsLoaded = useSceneStore((s) => !!s.ds)

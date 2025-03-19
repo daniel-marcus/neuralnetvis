@@ -23,8 +23,8 @@ export const Scene = (props: SceneProps) => {
   return (
     <Canvas
       frameloop="demand"
-      resize={{ debounce: 0 }}
-      className={`absolute w-screen! h-[100dvh]! select-none ${
+      // resize={{ debounce: 0 }}
+      className={`absolute! w-screen! h-[100dvh]! select-none ${
         isActive ? "" : "touch-pinch-zoom! touch-pan-y!"
       } ${isLocked && !isDebug ? "pointer-events-none!" : ""}`}
     >
@@ -44,7 +44,7 @@ export const SceneInner = ({ isActive }: SceneProps) => {
       camera.updateProjectionMatrix()
       invalidate()
     },
-    config: { duration: 500 },
+    config: { duration: 500 }, // sync with --tile-duration
   })
   const isTouchDevice = useIsTouchDevice()
   return (
