@@ -62,17 +62,17 @@ export const TileGrid = () => {
       }`}
       style={
         {
-          "--item-width": "320px",
-          "--item-height": "420px",
+          "--tile-width": "320px",
+          "--tile-height": "420px",
           "--gap": "2rem",
         } as React.CSSProperties
       }
     >
-      <div className="w-[var(--item-width)] sm:w-[calc(2*var(--item-width)+var(--gap))] lg:w-[calc(3*var(--item-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-[var(--padding-main)] xs:px-0">
+      <div className="w-[var(--tile-width)] sm:w-[calc(2*var(--tile-width)+var(--gap))] lg:w-[calc(3*var(--tile-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-[var(--padding-main)] xs:px-0">
         <SectionIntro
           className={hasActive ? "opacity-0 pointer-events-none" : ""}
         />
-        <div className="flex-grow grid grid-cols-[repeat(1,var(--item-width))] sm:grid-cols-[repeat(2,var(--item-width))] lg:grid-cols-[repeat(3,var(--item-width))] justify-center gap-[var(--gap)]">
+        <div className="flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)]">
           {tiles
             .filter(({ disabled }) => !disabled || isDebug)
             .map((tile) => {
@@ -147,13 +147,13 @@ function Tile({
       ref={ref}
       className={`relative ${
         !isActive ? "cursor-pointer" : ""
-      } h-[var(--item-height)] group/tile ${
+      } h-[var(--tile-height)] group/tile ${
         isFeatured ? "sm:col-span-2" : ""
       } ${className}`}
       {...bind()}
       style={
         (isFeatured
-          ? { "--item-width": "calc(640px + var(--gap))" }
+          ? { "--tile-width": "calc(640px + var(--gap))" }
           : {}) as React.CSSProperties
       }
     >
@@ -161,7 +161,7 @@ function Tile({
         className={`rounded-box overflow-hidden origin-center flex items-center justify-center ${
           localActive
             ? "fixed inset-0 w-screen h-[100dvh] z-10"
-            : "relative w-[var(--item-width)] h-[var(--item-height)]"
+            : "relative w-[var(--tile-width)] h-[var(--tile-height)]"
         } ${
           isActive === localActive
             ? "transition-all duration-500 ease-in-out"

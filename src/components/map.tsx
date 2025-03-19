@@ -12,9 +12,9 @@ import { scaleNormalize } from "@/data/utils"
 import { getColorVals, NEG_BASE, POS_BASE } from "@/neuron-layers/colors"
 
 const INITIAL_VIEW_STATE = {
-  longitude: -121.1,
+  longitude: -120.5,
   latitude: 37.5,
-  zoom: 6,
+  zoom: 5.8,
 }
 
 interface Point {
@@ -84,8 +84,10 @@ export const Map = () => {
   return (
     <div
       className={`absolute ${
-        isActive ? "translate-x-[50%]" : "grayscale-25 opacity-75"
-      } transition-all duration-500 pointer-events-none w-[50vw] h-[100dvh]`}
+        isActive
+          ? "grayscale-25 opacity-75 sm:grayscale-0 sm:opacity-100 md:translate-x-[25vw]"
+          : "grayscale-25 opacity-75"
+      } transition-all duration-500 pointer-events-none w-[100vw] h-[100dvh]`}
     >
       <DeckGL
         layers={layers}

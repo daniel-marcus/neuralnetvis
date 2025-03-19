@@ -7,7 +7,7 @@ type Params = Promise<{ slug: string }>
 
 export async function generateMetadata(props: { params: Params }) {
   const { slug } = await props.params
-  const dsDef = getDsDefFromKey(slug) ?? { name: "", description: "" }
+  const dsDef = getDsDefFromKey(slug)!
   const { name, description } = dsDef
   return {
     ...metadata,
