@@ -189,7 +189,7 @@ function Tile({
             ))}
           </div>
           {section === "learn" && (
-            <SceneTitle isActive={isActive} title={title} path={path} />
+            <SceneTitle isActive={isActive} title={title} href={path} />
           )}
         </div>
       </div>

@@ -51,9 +51,7 @@ export const Header = () => {
           <Link
             href={"/"}
             prefetch={false}
-            className={`pointer-events-auto ${
-              isPlayMode ? "-translate-x-full" : ""
-            } transition-translate duration-500`}
+            className={`pointer-events-auto`}
             scroll={hasLesson ? true : false}
             // onClick={() => setTab(null)}
           >

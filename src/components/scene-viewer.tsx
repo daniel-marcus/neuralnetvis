@@ -3,7 +3,7 @@ import { Scene } from "@/scene"
 import { SceneStoreProvider, useSceneStore } from "@/store"
 import { useModel } from "@/model/model"
 import { useDataset, useDsDef } from "@/data/dataset"
-import { useSample } from "@/data"
+import { Dataset, DatasetDef, useSample } from "@/data"
 import { VideoControl, VideoWindow } from "./video"
 import { SampleSlider } from "./sample-slider"
 import { useTraining } from "@/model"
@@ -11,9 +11,10 @@ import { InitialState, useInitialState } from "@/utils/initial-state"
 import { Section } from "./tile-grid"
 import { InlineButton } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
-import { Suspense, useMemo } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { Map } from "./map"
+import { ExtLink } from "./ui-elements/buttons"
 
 interface SceneViewerProps {
   isActive: boolean
@@ -45,25 +46,30 @@ function SceneViewerInner(props: SceneViewerProps) {
   useSample(ds, isActive)
   useTraining(model, ds)
   useInitialState(props.initialState)
+  const [showDescription, setShowDescription] = useState(true)
   return (
     <>
       {dsDef?.hasMap && <Map />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
-      <SceneOverlay>
+      <SceneOverlay isActive={isActive}>
         {section === "play" && (
           <SceneTitle
             isActive={isActive}
-            title={dsDef?.name ?? ""}
-            path={path}
+            title={`${dsDef?.name ?? ""}`}
+            href={isActive ? undefined : path}
+            onClick={isActive ? () => setShowDescription((s) => !s) : undefined}
           />
         )}
         {isActive && (
-          <SceneBtns>
-            <LoadFullBtn />
-            {dsDef?.hasCam && <VideoControl />}
-          </SceneBtns>
+          <>
+            {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
+            <SceneBtns>
+              <LoadFullBtn />
+              {dsDef?.hasCam && <VideoControl />}
+            </SceneBtns>
+          </>
         )}
       </SceneOverlay>
       {section === "play" && <SampleSlider isActive={isActive} />}
@@ -71,41 +77,54 @@ function SceneViewerInner(props: SceneViewerProps) {
   )
 }
 
-const SceneOverlay = ({ children }: { children?: React.ReactNode }) => (
-  <div className="absolute z-50 top-0 left-0 w-full h-full pointer-events-none p-main">
+const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => (
+  <div className="max-w-[300px] mb-4">
+    <p>{ds.description}</p>
+    <p>
+      <ExtLink href={ds.aboutUrl}>See Details</ExtLink>
+    </p>
+  </div>
+)
+
+type SceneOverlayProps = { children?: React.ReactNode; isActive: boolean }
+const SceneOverlay = ({ children, isActive }: SceneOverlayProps) => (
+  <div
+    className={`absolute z-50 top-0 left-0 p-main ${
+      isActive
+        ? "translate-y-[calc(var(--header-height)-var(--padding-main))]"
+        : ""
+    } transition-transform duration-[var(--tile-duration)] flex flex-col gap-4 items-start`}
+  >
     {children}
   </div>
 )
 
 function SceneBtns({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className={`flex gap-2 justify-start w-auto py-[var(--padding-main)]`}>
-      {children}
-    </div>
-  )
+  return <div className={`flex gap-2 justify-start w-auto`}>{children}</div>
 }
 
 interface SceneTitleProps {
   isActive?: boolean
   title: string
-  path: string
+  href?: string
+  onClick?: () => void
 }
 
-export const SceneTitle = ({ isActive, title, path }: SceneTitleProps) => (
-  <Link
-    href={isActive ? "/" : path}
-    prefetch={!isActive}
-    className="pointer-events-auto pb-4"
-  >
-    <AsciiText
-      className={`text-logo ${
-        isActive ? "hover:text-white" : "group-hover/tile:text-white"
-      }`}
-    >
-      {isActive ? `../\n${title}` : title}
-    </AsciiText>
-  </Link>
-)
+export const SceneTitle = (props: SceneTitleProps) => {
+  const { isActive, title, href, onClick } = props
+  const Comp = href ? Link : "button"
+  return (
+    <Comp href={href!} className={`pointer-events-auto`} onClick={onClick}>
+      <AsciiText
+        className={`text-logo mb-[-2em] ${
+          isActive ? "hover:text-white" : "group-hover/tile:text-white"
+        }`}
+      >
+        {title}
+      </AsciiText>
+    </Comp>
+  )
+}
 
 function LoadFullBtn() {
   const dsLoaded = useSceneStore((s) => !!s.ds)

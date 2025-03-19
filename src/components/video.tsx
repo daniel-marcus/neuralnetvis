@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect } from "react"
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { useHandPose } from "@/data"
 import { InlineButton } from "./ui-elements"
 import { useCanvasUpdate } from "@/data/hand-pose"
@@ -78,6 +78,7 @@ export function VideoControl() {
   const [stream, toggleStream] = useStream()
   const [isRecording, toggleRecording] = useHandPose(stream)
   const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
+  const setTab = useGlobalStore((s) => s.setTab)
   return (
     <>
       {!isRecording && (
@@ -85,9 +86,17 @@ export function VideoControl() {
           {!!stream ? <>{cameraOffSvg} stop</> : <>{cameraSvg} start</>} video
         </InlineButton>
       )}
-      {dsIsUserGenerated && !!stream && (
+      {!dsIsUserGenerated && (
+        <InlineButton onClick={() => setTab("data")} variant="secondary">
+          modify
+        </InlineButton>
+      )}
+      {dsIsUserGenerated && (
         <InlineButton
-          onClick={toggleRecording}
+          onClick={async () => {
+            if (!stream) await toggleStream()
+            toggleRecording()
+          }}
           variant={isRecording ? "primary" : "secondary"}
         >
           {isRecording ? "cancel recording" : "record samples"}

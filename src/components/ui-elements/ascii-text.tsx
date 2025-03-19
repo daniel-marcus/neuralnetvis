@@ -42,7 +42,7 @@ export function splitWithThreshold(
   }, [] as string[])
 }
 
-// modification: added "/"
+// modification: added "/", "-" and "_"
 function blurVision() {
   return `flf2a$ 9 9 23 0 3 0 128 0
 Font Author: Aiden Neuding
@@ -615,15 +615,15 @@ $    $@@
 @
 @
 @@
-@
-@
-@
-@
-@
-@
-@
-@
-@@
+              @
+              @
+              @
+              @
+              @
+              @
+ ░▒▓██████▓▒░ @
+              @
+              @@
 @
 @
 @

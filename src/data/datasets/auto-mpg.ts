@@ -22,7 +22,7 @@ export const autoMpg: DatasetDef = {
     "europe",
     "japan",
   ],
-  outputLabels: ["miles_per_galon"],
+  outputLabels: ["miles_per_gallon"],
   loadPreview: loadData,
 }
 

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 
 interface MenuBtnProps {
   href?: string
@@ -71,6 +72,19 @@ export const InlineButton = ({
     </Comp>
   )
 }
+
+type ExtLinkProps = { href: string; children: ReactNode }
+
+export const ExtLink = ({ href, children }: ExtLinkProps) => (
+  <a
+    href={href}
+    rel="noopener"
+    className="text-secondary hover:text-accent"
+    target="_blank"
+  >
+    {children}
+  </a>
+)
 
 interface ArrowProps {
   direction?: "right" | "down" | "left" | "up"

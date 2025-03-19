@@ -24,7 +24,7 @@ export const Scene = (props: SceneProps) => {
     <Canvas
       frameloop="demand"
       // resize={{ debounce: 0 }}
-      className={`absolute! w-screen! h-[100dvh]! select-none ${
+      className={`absolute! w-screen! h-[100vh]! select-none ${
         isActive ? "" : "touch-pinch-zoom! touch-pan-y!"
       } ${isLocked && !isDebug ? "pointer-events-none!" : ""}`}
     >

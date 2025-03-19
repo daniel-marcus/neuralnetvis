@@ -1,4 +1,4 @@
-import { useEffect, ReactNode, useCallback, useTransition } from "react"
+import { useEffect, useCallback, useTransition } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   useGlobalStore,
@@ -11,6 +11,7 @@ import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
 import { useHasLesson } from "@/components/lesson"
+import { ExtLink } from "@/components/ui-elements/buttons"
 
 export function useModel(ds?: Dataset, isPreview?: boolean) {
   const [model, isPending] = useModelCreate(ds, isPreview)
@@ -100,12 +101,6 @@ function useModelStatus(
     setStatus({ data }, null, { id: MODEL_STATUS_ID })
   }, [ds, model, isPending, hasLesson, isPreview])
 }
-
-const ExtLink = ({ href, children }: { href: string; children: ReactNode }) => (
-  <a href={href} rel="noopener" className="text-accent" target="_blank">
-    {children}
-  </a>
-)
 
 function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   useEffect(() => {

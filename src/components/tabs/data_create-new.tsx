@@ -123,6 +123,9 @@ function dsDefFromState(
     key: name,
     parentKey: handPose.key,
     name,
+    description: `Your dataset with ${hands} hand${hands > 1 ? "s" : ""} and ${
+      outputLabels.length
+    } categories`,
     version: new Date(),
     inputDims: [21, 3, hands],
     outputLabels,

@@ -208,7 +208,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
   const startRecording = useSceneStore((s) => s.startRecording)
   const stopRecording = useSceneStore((s) => s.stopRecording)
-  const stream = useSceneStore((s) => s.stream)
+  // const stream = useSceneStore((s) => s.stream)
 
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
@@ -277,8 +277,8 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     stopRecording()
   }, [hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
 
-  const toggleRecording = useCallback(() => {
-    if (!stream) return
+  const toggleRecording = useCallback(async () => {
+    // if (!stream) return
     if (isRecording) {
       shouldCancelRecording = true
       clearStatus("hpRecordSamples")
@@ -287,7 +287,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       startRecording()
       hpRecordSamples()
     }
-  }, [stream, isRecording, startRecording, stopRecording, hpRecordSamples])
+  }, [isRecording, startRecording, stopRecording, hpRecordSamples])
 
   useKeyCommand("r", toggleRecording)
   return [isRecording, toggleRecording] as const
