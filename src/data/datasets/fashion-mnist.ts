@@ -3,10 +3,10 @@ import type { DatasetDef } from "@/data/types"
 
 export const fashionMnist: DatasetDef = {
   key: "fashion-mnist",
-  name: "fashion mnist",
+  name: "Fashion MNIST",
   task: "classification",
   description: "Clothing items (28x28)",
-  version: new Date("2025-03-06"),
+  version: new Date("2025-03-19"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",

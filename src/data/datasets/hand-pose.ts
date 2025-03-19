@@ -6,8 +6,8 @@ const outputLabels = ["👍", "👌", "🤘"]
 
 export const handPose: DatasetDef = {
   key: "hand-pose",
-  name: "hand pose",
-  version: new Date("2025-03-06"),
+  name: "Hand Pose",
+  version: new Date("2025-03-19"),
   task: "classification",
   description: `Handpose dataset with ${hands} hand(s) and ${outputLabels.length} categories`,
   aboutUrl:

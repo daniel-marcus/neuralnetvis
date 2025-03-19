@@ -5,10 +5,10 @@ import type { DatasetDef } from "@/data/types"
 
 export const autoMpg: DatasetDef = {
   key: "auto-mpg",
-  name: "auto mpg",
+  name: "Auto MPG",
   task: "regression",
   description: "Predict fuel efficiency",
-  version: new Date("2025-03-18"),
+  version: new Date("2025-03-19"),
   aboutUrl: "https://archive.ics.uci.edu/dataset/9/auto+mpg",
   inputDims: [9],
   inputLabels: [

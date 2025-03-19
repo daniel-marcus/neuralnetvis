@@ -5,10 +5,10 @@ import type { DatasetDef } from "@/data/types"
 
 export const californiaHousing: DatasetDef = {
   key: "california-housing",
-  name: "california housing",
+  name: "California Housing",
   task: "regression",
   description: "Predict housing prices",
-  version: new Date("2025-03-18"),
+  version: new Date("2025-03-19"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
   inputDims: [8],
   inputLabels: [

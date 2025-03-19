@@ -3,7 +3,7 @@ import type { DatasetDef } from "@/data/types"
 
 export const mnist: DatasetDef = {
   key: "mnist",
-  name: "mnist",
+  name: "MNIST",
   task: "classification",
   description: "Handwritten digits (28x28)",
   version: new Date("2025-03-06"),

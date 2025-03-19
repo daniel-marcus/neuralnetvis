@@ -2,11 +2,11 @@ import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
 import type { DatasetDef } from "@/data/types"
 
 export const cifar10: DatasetDef = {
-  key: "cifar10",
-  name: "cifar10",
+  key: "cifar-10",
+  name: "CIFAR-10",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: new Date("2025-03-06"),
+  version: new Date("2025-03-19"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   inputDims: [32, 32, 3],
   preprocessFunc: "normalizeImage",
