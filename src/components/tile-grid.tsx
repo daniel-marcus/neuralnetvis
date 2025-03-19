@@ -171,24 +171,37 @@ function Tile({
         }`}
       >
         {children}
-        {!isActive && (
+        {(section === "play" || !isActive) && (
           <div
-            className={`absolute top-0 left-0 w-full h-full p-4 rounded-box flex pointer-events-none ${
+            className={`absolute top-0 left-0 w-full h-full rounded-box flex pointer-events-none ${
               section === "learn" ? "flex-col-reverse" : "flex-col"
-            } justify-between border-2 border-box-bg group-hover/tile:border-accent transition-colors duration-100`} // bg-gradient-to-tr from-background to-transparent via-transparent
+            } justify-between transition-colors duration-100 ${
+              isActive
+                ? "p-main pointer-events-none"
+                : "p-4 border-2 border-box-bg group-hover/tile:border-accent"
+            }`} // bg-gradient-to-tr from-background to-transparent via-transparent
           >
-            <Link href={path} className="pointer-events-auto pb-4">
-              <AsciiText className="text-logo group-hover/tile:text-white">
-                {title}
+            <Link
+              href={isActive ? "/" : path}
+              className="pointer-events-auto pb-4"
+            >
+              <AsciiText
+                className={`text-logo ${
+                  isActive ? "hover:text-white" : "group-hover/tile:text-white"
+                }`}
+              >
+                {isActive ? `../\n${title}` : title}
               </AsciiText>
             </Link>
-            <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
-              {tags.map((tag, i) => (
-                <span key={i} className="brightness-25">
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {!isActive && (
+              <div className="mb-4 flex flew-wrap gap-4 items-center justify-end">
+                {tags.map((tag, i) => (
+                  <span key={i} className="brightness-25">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

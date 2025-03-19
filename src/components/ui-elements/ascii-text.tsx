@@ -35,12 +35,14 @@ export function splitWithThreshold(
   return str.split(" ").reduce((acc, word) => {
     const lastChunk = acc.at(-1) || ""
     const newChunk = lastChunk ? `${lastChunk} ${word}` : word
-    return newChunk.length <= threshold
+    const length = newChunk.replace(/(.*)\n/, "").length
+    return length <= threshold
       ? [...acc.slice(0, -1), newChunk]
       : [...acc, word]
   }, [] as string[])
 }
 
+// modification: added "/"
 function blurVision() {
   return `flf2a$ 9 9 23 0 3 0 128 0
 Font Author: Aiden Neuding
@@ -181,15 +183,15 @@ $    $@@
 ░▒▓██▓▒░ @
          @
          @@
-@
-@
-@
-@
-@
-@
-@
-@
-@@
+       ░▒▓█▓▒░ @
+      ░▒▓█▓▒░  @
+     ░▒▓█▓▒░   @
+    ░▒▓█▓▒░    @
+   ░▒▓█▓▒░     @
+  ░▒▓█▓▒░      @
+ ░▒▓█▓▒░       @
+               @
+               @@
 ░▒▓████████▓▒░ @
 ░▒▓█▓▒░░▒▓█▓▒░ @
 ░▒▓█▓▒░░▒▓█▓▒░ @

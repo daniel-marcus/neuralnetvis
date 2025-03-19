@@ -63,7 +63,7 @@ function SceneViewerInner(props: SceneViewerProps) {
 export function SceneBtns({ children }: { children?: React.ReactNode }) {
   return (
     <div
-      className={`fixed z-50 left-0 top-[34px] sm:top-[102px] p-main flex gap-2 justify-end sm:justify-start w-full sm:w-auto`}
+      className={`absolute z-50 left-0 top-[calc(62px+var(--padding-main))] p-main flex gap-2 justify-start w-auto`}
     >
       {children}
     </div>
@@ -105,9 +105,7 @@ function SampleName() {
     >
       <div
         className={`text-right ${
-          isActive
-            ? "text-[min(0.75vw,0.25rem)]/[1.2] sm:text-left"
-            : "text-[2px]/[1.2]"
+          isActive ? "text-[min(0.75vw,0.3rem)] sm:text-left" : "text-[2px]"
         } brightness-25`}
       >
         {chunks.map((chunk, i) => (
