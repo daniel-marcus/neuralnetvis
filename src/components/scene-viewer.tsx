@@ -53,25 +53,25 @@ function SceneViewerInner(props: SceneViewerProps) {
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
-      <SceneOverlay isActive={isActive}>
-        {section === "play" && (
+      {section === "play" && (
+        <SceneOverlay isActive={isActive}>
           <SceneTitle
             isActive={isActive}
             title={`${dsDef?.name ?? ""}`}
             href={isActive ? undefined : path}
             onClick={isActive ? () => setShowDescription((s) => !s) : undefined}
           />
-        )}
-        {isActive && (
-          <>
-            {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
-            <SceneBtns>
-              <LoadFullBtn />
-              {dsDef?.hasCam && <VideoControl />}
-            </SceneBtns>
-          </>
-        )}
-      </SceneOverlay>
+          {isActive && (
+            <>
+              {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
+              <SceneBtns>
+                <LoadFullBtn />
+                {dsDef?.hasCam && <VideoControl />}
+              </SceneBtns>
+            </>
+          )}
+        </SceneOverlay>
+      )}
       {section === "play" && <SampleSlider isActive={isActive} />}
     </>
   )
