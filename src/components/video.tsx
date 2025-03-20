@@ -88,15 +88,12 @@ export function VideoControl() {
       )}
       {!dsIsUserGenerated && (
         <InlineButton onClick={() => setTab("data")} variant="secondary">
-          modify
+          new dataset
         </InlineButton>
       )}
-      {dsIsUserGenerated && (
+      {dsIsUserGenerated && !!stream && (
         <InlineButton
-          onClick={async () => {
-            if (!stream) await toggleStream()
-            toggleRecording()
-          }}
+          onClick={async () => toggleRecording()}
           variant={isRecording ? "primary" : "secondary"}
         >
           {isRecording ? "cancel recording" : "record samples"}

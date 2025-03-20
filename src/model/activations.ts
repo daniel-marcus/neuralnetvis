@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useActivationStats } from "./activation-stats"
 import {
   checkShapeMatch,
@@ -9,6 +9,7 @@ import {
 } from "@/data/utils"
 import type { LayerActivations } from "./types"
 import type { Dataset, Sample } from "@/data"
+import { useSceneStore } from "@/store"
 
 export function useActivations(
   model?: tf.LayersModel,
@@ -17,9 +18,8 @@ export function useActivations(
 ) {
   const isRegression = ds?.task === "regression"
   const activationStats = useActivationStats(model, ds)
-  const [layerActivations, setLayerActivations] = useState<LayerActivations[]>(
-    []
-  )
+  const layerActivations = useSceneStore((s) => s.layerActivations)
+  const setLayerActivations = useSceneStore((s) => s.setLayerActivations)
   useEffect(() => {
     async function getData() {
       if (!model || !sample) return

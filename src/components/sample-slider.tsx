@@ -43,7 +43,7 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
           yPad={0.25}
         />
         {isActive && (
-          <div className="label pointer-events-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200 flex justify-between">
+          <div className="label pointer-events-none select-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200 flex justify-between">
             <div>
               {(sampleIdx ?? 0) + 1} / {totalSamples}
             </div>

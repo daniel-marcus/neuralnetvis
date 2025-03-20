@@ -12,7 +12,7 @@ import {
 import { getDsFromDef, getDsPath, resetData } from "@/data/dataset"
 import type { DatasetDef } from "@/data"
 import { handPose } from "@/data/datasets/hand-pose"
-import { useCurrScene } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import { useRouter } from "next/navigation"
 
 type HandsNum = 1 | 2
@@ -41,11 +41,13 @@ export const CreateNewDataset = () => {
   const router = useRouter()
   const ds = useCurrScene((s) => s.ds)
   const setDs = useCurrScene((s) => s.setDs)
+  const toggleTab = useGlobalStore((s) => s.toggleTab)
   async function handleCreate() {
     const dsDef = dsDefFromState(name, hands, labels)
     await resetData(dsDef.key, "train")
     await resetData(dsDef.key, "test")
     const newDs = await getDsFromDef(dsDef) // creates meta data in db
+    toggleTab("data")
     if (ds?.key === dsDef.key) {
       setDs(newDs)
     } else {
@@ -123,9 +125,10 @@ function dsDefFromState(
     key: name,
     parentKey: handPose.key,
     name,
-    description: `Your dataset with ${hands} hand${hands > 1 ? "s" : ""} and ${
+    description: "Start video to record samples",
+    /* description: `Your dataset with ${hands} hand${hands > 1 ? "s" : ""} and ${
       outputLabels.length
-    } categories`,
+    } categories`, */
     version: new Date(),
     inputDims: [21, 3, hands],
     outputLabels,

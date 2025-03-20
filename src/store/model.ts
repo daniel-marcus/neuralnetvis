@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
-import type { LayerConfigArray } from "@/model"
+import type { LayerActivations, LayerConfigArray } from "@/model"
 import { setVisConfig } from "."
 import { Neuron, Nid } from "@/neuron-layers"
 import { ActivationStats } from "@/model/activation-stats"
@@ -23,6 +23,8 @@ export interface ModelSlice {
   resetLayerConfigs: () => void
   resetWeights: () => void
 
+  layerActivations: LayerActivations[]
+  setLayerActivations: (layerActivations: LayerActivations[]) => void
   activationStats?: ActivationStats[]
   setActivationStats: (activationStats?: ActivationStats[]) => void
 
@@ -35,7 +37,8 @@ export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
 
   model: undefined,
   skipModelCreate: false,
-  _setModel: (model) => set({ model, activationStats: undefined }), // , layerActivations: []
+  _setModel: (model) =>
+    set({ model, activationStats: undefined, layerActivations: [] }),
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
     set(() => ({
@@ -49,6 +52,8 @@ export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 
+  layerActivations: [],
+  setLayerActivations: (layerActivations) => set({ layerActivations }),
   activationStats: undefined,
   setActivationStats: (activationStats) => set({ activationStats }),
 

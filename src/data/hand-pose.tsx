@@ -190,7 +190,10 @@ export function useCanvasUpdate() {
   const rawX = useSceneStore((s) => s.sample?.rawX)
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   useEffect(() => {
-    if (!rawX || !inputDims) return
+    if (!rawX || !inputDims) {
+      updCanvas([])
+      return
+    }
     if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
     const shapedX = tf.tidy(() =>
       tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
@@ -254,10 +257,10 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
         yData.push(y)
       }
       const xs = {
-        data: xData as unknown as Float32Array,
+        data: Float32Array.from(xData),
         shape: [yData.length, 21, 3, numHands],
       }
-      const ys = { data: yData as unknown as Uint8Array, shape: [yData.length] }
+      const ys = { data: Uint8Array.from(yData), shape: [yData.length] }
       recordingY = undefined
       const trainMeta = await addTrainData(ds, xs, ys)
       updateMeta("train", trainMeta)
