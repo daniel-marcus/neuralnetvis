@@ -33,15 +33,15 @@ Pretrained models from Python Tensorflow can be exported via [tfjs-converter](ht
 ```
 ├── public              # assets: datasets, fonts, images and TensorFlow's WebAssembly backend
 ├── src
-│   └── app/            # Layout and pages for the Next.js App Router
-│   └── components/     # Main UI components
-│   └── contents/       # Lessons and specific UI elements for lessons
-│   └── data/           # Dataset definitions and all logic related to loading and storing datasets
-│   └── model/          # Everything related to TensorFlow.js and ML: model creation, training, activations, weights and biases
-│   └── neuron-layers/  # Here is where the current state get's poured into layers of neurons
-│   └── scene/          # Everything related to rendering the model with three.js
-│   └── store/          # A global Zustand store for UI settings and scoped stores for every scene
-│   └── utils/          # Everything else
+│   └── app/            # layout and pages for the Next.js App Router
+│   └── components/     # main UI components
+│   └── contents/       # lessons and specific UI elements for lessons
+│   └── data/           # dataset definitions and all logic related to loading and storing datasets
+│   └── model/          # everything related to TensorFlow.js and ML: model creation, training, activations, weights and biases
+│   └── neuron-layers/  # here is where the current state get's poured into layers of neurons
+│   └── scene/          # everything related to rendering the model with three.js
+│   └── store/          # a global Zustand store for UI settings and scoped stores for every scene
+│   └── utils/          # everything else
 ```
 
 ## Resources, Inspirations, and Credits
