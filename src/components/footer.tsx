@@ -1,23 +1,14 @@
+import { ExtLink } from "./ui-elements/buttons"
+
 export const Footer = ({ className = "" }) => {
   return (
     <div className={`py-16 text-right ${className}`}>
       <p>
         © 2025 by{" "}
-        <a
-          className="text-accent hover:text-white"
-          target="_blank"
-          href="https://danielmarcus.de/"
-        >
-          Daniel Marcus
-        </a>{" "}
-        |{" "}
-        <a
-          className="text-accent hover:text-white"
-          href="https://github.com/daniel-marcus/neuralnetvis"
-          target="_blank"
-        >
+        <ExtLink href="https://danielmarcus.de/">Daniel Marcus</ExtLink> |{" "}
+        <ExtLink href="https://github.com/daniel-marcus/neuralnetvis">
           Github
-        </a>
+        </ExtLink>
       </p>
       <p className="mt-4"></p>
     </div>

@@ -7,10 +7,10 @@ import type { DatasetDef } from "@/data/types"
 import { autoMpg } from "./auto-mpg"
 
 export const datasets: DatasetDef[] = [
-  handPose,
   fashionMnist,
-  cifar10,
+  handPose,
   mnist,
   californiaHousing,
+  cifar10,
   autoMpg,
 ] as const

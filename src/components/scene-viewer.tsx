@@ -7,8 +7,8 @@ import { Dataset, DatasetDef, useSample } from "@/data"
 import { VideoControl, VideoWindow } from "./video"
 import { SampleSlider } from "./sample-slider"
 import { useTraining } from "@/model"
-import { InitialState, useInitialState } from "@/utils/initial-state"
-import { Section } from "./tile-grid"
+import { useInitialState } from "@/utils/initial-state"
+import { TileDef } from "./tile-grid"
 import { InlineButton } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useMemo, useState } from "react"
@@ -16,14 +16,7 @@ import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { Map } from "./map"
 import { ExtLink } from "./ui-elements/buttons"
 
-interface SceneViewerProps {
-  isActive: boolean
-  path: string
-  section: Section
-  dsKey?: string
-  initialState?: InitialState
-  shouldLoadFullDs?: boolean
-}
+type SceneViewerProps = TileDef & { isActive: boolean }
 
 export const SceneViewer = (props: SceneViewerProps) => {
   const { isActive, shouldLoadFullDs } = props
@@ -47,17 +40,21 @@ function SceneViewerInner(props: SceneViewerProps) {
   useTraining(model, ds)
   useInitialState(props.initialState)
   const [showDescription, setShowDescription] = useState(true)
+  const title = section === "play" && dsDef ? dsDef.name : props.title
   return (
     <>
       {dsDef?.hasMap && <Map />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
-      {section === "play" && (
-        <SceneOverlay isActive={isActive}>
+      {(section === "play" || !isActive) && (
+        <SceneOverlay
+          isActive={isActive}
+          className={section === "learn" ? "justify-end pb-8" : ""}
+        >
           <SceneTitle
             isActive={isActive}
-            title={`${dsDef?.name ?? ""}`}
+            title={title}
             href={isActive ? undefined : path}
             onClick={isActive ? () => setShowDescription((s) => !s) : undefined}
           />
@@ -78,7 +75,7 @@ function SceneViewerInner(props: SceneViewerProps) {
 }
 
 const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => (
-  <div className="max-w-[300px] mb-4">
+  <div className="max-w-[300px] mb-4 pointer-events-auto">
     <p>{ds.description}</p>
     <p>
       <ExtLink href={ds.aboutUrl}>See Details</ExtLink>
@@ -86,22 +83,31 @@ const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => (
   </div>
 )
 
-type SceneOverlayProps = { children?: React.ReactNode; isActive: boolean }
-const SceneOverlay = ({ children, isActive }: SceneOverlayProps) => (
+type SceneOverlayProps = {
+  children?: React.ReactNode
+  isActive: boolean
+  className?: string
+}
+
+const SceneOverlay = ({ children, isActive, className }: SceneOverlayProps) => (
   <div
-    className={`absolute z-50 top-0 left-0 p-main ${
+    className={`absolute z-50 top-0 left-0 h-full pointer-events-none ${
       isActive
-        ? "translate-y-[calc(var(--header-height)-var(--padding-main))]"
-        : ""
-    } transition-transform duration-[var(--tile-duration)] flex flex-col gap-4 items-start`}
+        ? "p-main translate-y-[calc(var(--header-height)-var(--padding-main))]"
+        : "p-4"
+    } transition-transform duration-[var(--tile-duration)] flex flex-col gap-4 items-start ${
+      className ?? ""
+    }`}
   >
     {children}
   </div>
 )
 
-function SceneBtns({ children }: { children?: React.ReactNode }) {
-  return <div className={`flex gap-2 justify-start w-auto`}>{children}</div>
-}
+const SceneBtns = ({ children }: { children?: React.ReactNode }) => (
+  <div className={`flex gap-2 justify-start w-auto pointer-events-auto`}>
+    {children}
+  </div>
+)
 
 interface SceneTitleProps {
   isActive?: boolean
@@ -148,7 +154,7 @@ function LoadFullBtn() {
 function SampleName() {
   const isActive = useSceneStore((s) => s.isActive)
   const sampleName = useSceneStore((s) => s.sample?.name)
-  const chunks = useMemo(
+  const rows = useMemo(
     () => splitWithThreshold(sampleName ?? "", 9),
     [sampleName]
   )
@@ -161,11 +167,11 @@ function SampleName() {
     >
       <div
         className={`text-right ${
-          isActive ? "text-[min(0.75vw,0.3rem)] sm:text-left" : "text-[2px]"
+          isActive ? "text-[min(0.75vw,0.25rem)] sm:text-left" : "text-[2px]"
         } brightness-25`}
       >
-        {chunks.map((chunk, i) => (
-          <AsciiText key={i}>{chunk}</AsciiText>
+        {rows.map((row, i) => (
+          <AsciiText key={i}>{row}</AsciiText>
         ))}
       </div>
     </div>
