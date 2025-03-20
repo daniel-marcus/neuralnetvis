@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useState, useTransition } from "react"
+import { useCallback, useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   CollapsibleWithTitle,
   InlineButton,
   TextInput,
 } from "@/components/ui-elements"
-import { useCurrScene, useGlobalStore } from "@/store"
+import { setStatus, useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
 import { useModelTransition } from "@/model/model"
 
 export function MyModels() {
   const model = useCurrScene((s) => s.model)
   const [updTrigger, setUpdTrigger] = useState(0)
-  const updateList = () => setUpdTrigger((t) => t + 1)
+  const updateList = useCallback(() => setUpdTrigger((t) => t + 1), [])
   const [showImportForm, setShowImportForm] = useState(false)
   const setStatus = useGlobalStore((s) => s.status.update)
   const [modelName, setModelName] = useState<string>(model?.name ?? "")
@@ -27,6 +27,10 @@ export function MyModels() {
     setStatus("Model saved to IndexedDB")
     updateList()
   }
+  const onUploadFinished = useCallback(() => {
+    updateList()
+    setShowImportForm(false)
+  }, [updateList])
   return (
     <CollapsibleWithTitle
       title="my models"
@@ -49,14 +53,7 @@ export function MyModels() {
           </InlineButton>
         </div>
       </div>
-      {showImportForm && (
-        <ImportForm
-          onUploadFinished={() => {
-            setShowImportForm(false)
-            updateList()
-          }}
-        />
-      )}
+      {showImportForm && <ImportForm onUploadFinished={onUploadFinished} />}
     </CollapsibleWithTitle>
   )
 }
@@ -112,28 +109,36 @@ interface ImportFormProps {
   onUploadFinished: () => void
 }
 
+const IMPORT_STATUS = "import_status"
+
 function ImportForm({ onUploadFinished }: ImportFormProps) {
   const _setModel = useCurrScene((s) => s._setModel)
-  const [setModel] = useModelTransition(_setModel)
+  const [setModel, isPending] = useModelTransition(_setModel)
   const [modelFiles, setModelFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
     async (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault()
       if (!modelFiles) return
+      setStatus("Importing model ...", -1, { id: IMPORT_STATUS })
       const newModel = await tf.loadLayersModel(
         tf.io.browserFiles([...modelFiles])
       )
       await newModel.save(`indexeddb://imported_${newModel.name}`)
       setModel(newModel)
-      onUploadFinished()
     },
-    [modelFiles, onUploadFinished, setModel]
+    [modelFiles, setModel]
   )
-  const [isPending, startTransition] = useTransition()
   useEffect(() => {
     if (!modelFiles) return
-    startTransition(importModel)
-  }, [modelFiles, importModel])
+    importModel()
+  }, [modelFiles, importModel, onUploadFinished])
+  useEffect(() => {
+    if (!isPending) return
+    return () => {
+      setStatus("Model imported", null, { id: IMPORT_STATUS })
+      onUploadFinished()
+    }
+  }, [isPending, onUploadFinished])
   return (
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
@@ -151,7 +156,6 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
           />
         </label>
       </div>
-      {isPending && <div className="mt-2">Loading ...</div>}
     </form>
   )
 }
