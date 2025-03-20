@@ -10,13 +10,12 @@ import {
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
-import { useHasLesson } from "@/components/lesson"
 import { ExtLink } from "@/components/ui-elements/buttons"
+import { useHasLesson } from "@/components/lesson"
 
 export function useModel(ds?: Dataset, isPreview?: boolean) {
-  const [model, isPending] = useModelCreate(ds, isPreview)
+  const model = useModelCreate(ds, isPreview)
   useModelDispose(model)
-  useModelStatus(isPending, model, isPreview)
   useModelCompile(model, ds)
   return model
 }
@@ -28,29 +27,31 @@ const previewLayerConfigs: LayerConfigArray = [
 function useModelCreate(ds?: Dataset, isPreview?: boolean) {
   const model = useSceneStore((s) => s.model)
   const _setModel = useSceneStore((s) => s._setModel)
-  const [setModel, isPending] = useModelTransition(_setModel)
+  const [setModel] = useModelTransition(_setModel)
   const backendReady = useGlobalStore((s) => s.backendReady)
   const layerConfigs = useSceneStore((s) => s.layerConfigs)
   const configs = isPreview ? previewLayerConfigs : layerConfigs
   useEffect(() => {
     if (!ds || !backendReady) return
-    if (useGlobalStore.getState().skipModelCreate) {
-      useGlobalStore.setState({ skipModelCreate: false })
+    const scene = useGlobalStore.getState().scene
+    if (scene.getState().skipModelCreate) {
+      scene.setState({ skipModelCreate: false })
       return
     }
     const _model = createModel(ds, configs)
     if (isDebug()) console.log({ _model })
     setModel(_model, isPreview)
   }, [backendReady, configs, ds, setModel, isPreview])
-  return [model, isPending] as const
+  return model
 }
 
 type ModelSetter = (model?: tf.LayersModel) => void
 
 export function useModelTransition(
   _setModel: ModelSetter,
-  onTransitionEnd?: () => void
+  onTransitionFinished?: () => void
 ) {
+  const hasLesson = useHasLesson()
   const [isPending, startTransition] = useTransition()
   const [statusId, setStatusId] = useState<string | null>(null)
   const modelToSet = useRef<tf.LayersModel | undefined>(undefined)
@@ -77,9 +78,10 @@ export function useModelTransition(
       clearStatus(statusId)
       modelToSet.current = undefined
       setStatusId(null)
-      onTransitionEnd?.()
+      onTransitionFinished?.()
+      if (!hasLesson) showModelStatus()
     }
-  }, [isPending, statusId, onTransitionEnd])
+  }, [isPending, statusId, onTransitionFinished, hasLesson])
 
   return [setModel, isPending] as const
 }
@@ -108,20 +110,7 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
   }
 }
 
-function useModelStatus(
-  isPending: boolean,
-  model?: tf.LayersModel,
-  isPreview?: boolean
-) {
-  const hasLesson = useHasLesson()
-  const ds = useSceneStore((s) => s.ds)
-  useEffect(() => {
-    if (!model || !isPending || hasLesson || isPreview || !ds) return
-    showModelStatus()
-  }, [ds, model, isPending, hasLesson, isPreview])
-}
-
-export function showModelStatus() {
+function showModelStatus() {
   const scene = useGlobalStore.getState().scene.getState()
   const { model, ds } = scene
   if (!model || !ds) return

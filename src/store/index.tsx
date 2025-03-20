@@ -87,7 +87,6 @@ export type GlobalStoreType = TabsSlice &
   StatusSlice & {
     backendReady: boolean
     isDebug: boolean
-    skipModelCreate: boolean
     scene: SceneStore
     handLandmarker?: HandLandmarker
   }

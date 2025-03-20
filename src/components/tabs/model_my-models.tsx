@@ -7,7 +7,7 @@ import {
 } from "@/components/ui-elements"
 import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
-import { showModelStatus, useModelTransition } from "@/model/model"
+import { useModelTransition } from "@/model/model"
 
 export function MyModels() {
   const model = useCurrScene((s) => s.model)
@@ -72,7 +72,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const _setModel = useCurrScene((s) => s._setModel)
-  const [setModel] = useModelTransition(_setModel, showModelStatus)
+  const [setModel] = useModelTransition(_setModel)
 
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
@@ -116,7 +116,6 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
   const _setModel = useCurrScene((s) => s._setModel)
   const onImportFinished = useCallback(() => {
     clearStatus(IMPORT_STATUS)
-    showModelStatus()
     onUploadFinished()
   }, [onUploadFinished])
   const [setModel] = useModelTransition(_setModel, onImportFinished)
