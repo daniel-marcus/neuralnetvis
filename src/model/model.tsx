@@ -47,7 +47,10 @@ function useModelCreate(ds?: Dataset, isPreview?: boolean) {
 
 type ModelSetter = (model?: tf.LayersModel) => void
 
-export function useModelTransition(_setModel: ModelSetter) {
+export function useModelTransition(
+  _setModel: ModelSetter,
+  onTransitionEnd?: () => void
+) {
   const [isPending, startTransition] = useTransition()
   const [statusId, setStatusId] = useState<string | null>(null)
   const modelToSet = useRef<tf.LayersModel | undefined>(undefined)
@@ -74,8 +77,9 @@ export function useModelTransition(_setModel: ModelSetter) {
       clearStatus(statusId)
       modelToSet.current = undefined
       setStatusId(null)
+      onTransitionEnd?.()
     }
-  }, [isPending, statusId])
+  }, [isPending, statusId, onTransitionEnd])
 
   return [setModel, isPending] as const
 }
@@ -113,15 +117,22 @@ function useModelStatus(
   const ds = useSceneStore((s) => s.ds)
   useEffect(() => {
     if (!model || !isPending || hasLesson || isPreview || !ds) return
-    const totalSamples = ds.train?.totalSamples ?? 0
-    const data = {
-      Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
-      Samples: totalSamples.toLocaleString("en-US"),
-      Model: model.getClassName(),
-      Params: model.countParams().toLocaleString("en-US"),
-    }
-    setStatus({ data }, null, { id: MODEL_STATUS_ID })
+    showModelStatus()
   }, [ds, model, isPending, hasLesson, isPreview])
+}
+
+export function showModelStatus() {
+  const scene = useGlobalStore.getState().scene.getState()
+  const { model, ds } = scene
+  if (!model || !ds) return
+  const totalSamples = ds.train?.totalSamples ?? 0
+  const data = {
+    Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
+    Samples: totalSamples.toLocaleString("en-US"),
+    Model: model.getClassName(),
+    Params: model.countParams().toLocaleString("en-US"),
+  }
+  setStatus({ data }, null, { id: MODEL_STATUS_ID })
 }
 
 function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {

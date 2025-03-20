@@ -5,9 +5,9 @@ import {
   InlineButton,
   TextInput,
 } from "@/components/ui-elements"
-import { setStatus, useCurrScene, useGlobalStore } from "@/store"
+import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
-import { useModelTransition } from "@/model/model"
+import { showModelStatus, useModelTransition } from "@/model/model"
 
 export function MyModels() {
   const model = useCurrScene((s) => s.model)
@@ -72,7 +72,8 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }, [updTrigger])
 
   const _setModel = useCurrScene((s) => s._setModel)
-  const [setModel] = useModelTransition(_setModel)
+  const [setModel] = useModelTransition(_setModel, showModelStatus)
+
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)
@@ -113,7 +114,12 @@ const IMPORT_STATUS = "import_status"
 
 function ImportForm({ onUploadFinished }: ImportFormProps) {
   const _setModel = useCurrScene((s) => s._setModel)
-  const [setModel, isPending] = useModelTransition(_setModel)
+  const onImportFinished = useCallback(() => {
+    clearStatus(IMPORT_STATUS)
+    showModelStatus()
+    onUploadFinished()
+  }, [onUploadFinished])
+  const [setModel] = useModelTransition(_setModel, onImportFinished)
   const [modelFiles, setModelFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
     async (e?: FormEvent<HTMLFormElement>) => {
@@ -131,14 +137,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
   useEffect(() => {
     if (!modelFiles) return
     importModel()
-  }, [modelFiles, importModel, onUploadFinished])
-  useEffect(() => {
-    if (!isPending) return
-    return () => {
-      setStatus("Model imported", null, { id: IMPORT_STATUS })
-      onUploadFinished()
-    }
-  }, [isPending, onUploadFinished])
+  }, [modelFiles, importModel])
   return (
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
