@@ -4,7 +4,7 @@ import DeckGL from "@deck.gl/react"
 import { ScatterplotLayer, GeoJsonLayer, IconLayer } from "@deck.gl/layers"
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useMemo, useState } from "react"
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { getAll } from "@/data/db"
 import california from "@/data/datasets/california.json"
 import type { DbBatch } from "@/data"
@@ -98,46 +98,13 @@ export const Map = () => {
   )
 }
 
-/* 
-
-      <MapContainer
-        center={center}
-        scrollWheelZoom={true}
-        style={{
-          width: "100%",
-          height: "100%",
-          // border: "1px solid var(--color-secondary)",
-        }}
-        zoom={6}
-      >
-        <GeoJSON
-          pathOptions={{
-            stroke: true,
-            color: "var(--color-secondary)",
-            opacity: 0.5,
-            weight: 1,
-            fillColor: "transparent",
-          }}
-          data={california}
-        />
-        <AllPoints />
-        <SampleCircle />
-      </MapContainer>
-
-function SampleCircle() {
-  const sample = useSceneStore((s) => s.sample)
-  if (!sample || !sample.rawX) return null
-  const [lon, lat] = sample.rawX
-  return null
-}
-
-*/
-
 function usePoints() {
+  const backendReady = useGlobalStore((s) => s.backendReady)
   const [points, setPoints] = useState<Point[] | null>(null)
   const dsKey = useSceneStore((s) => s.ds?.key)
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   useEffect(() => {
+    if (!backendReady) return
     async function getAllSamples() {
       if (!dsKey || !inputDims) return
       const batches = await getAll<DbBatch>(dsKey, "train")
@@ -164,6 +131,6 @@ function usePoints() {
       setPoints(points)
     }
     getAllSamples()
-  }, [dsKey, inputDims])
+  }, [dsKey, inputDims, backendReady])
   return points
 }
