@@ -1,23 +1,25 @@
 import { useEffect, useCallback } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { isDebug, useSceneStore } from "@/store"
+import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
 import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
 
 export function useSample(ds?: Dataset, isActive?: boolean) {
+  const backendReady = useGlobalStore((s) => s.backendReady)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)
   const setSample = useSceneStore((s) => s.setSample)
 
   useEffect(() => {
+    if (!backendReady) return
     async function loadSample() {
       if (!ds || typeof sampleIdx === "undefined" || isNaN(sampleIdx)) return
       const rawSample = await getSample(ds, "train", sampleIdx)
       setSample(rawSample)
     }
     loadSample()
-  }, [ds, sampleIdx, setSample])
+  }, [ds, sampleIdx, setSample, backendReady])
 
   useEffect(() => {
     return () => {
@@ -35,7 +37,6 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
 
 export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
   if (!sampleRaw || !ds) return
-  // await tf.ready()
   const name = sampleRaw.name
   const rawX = sampleRaw.rawX ?? sampleRaw.X
   const xTensor = tf.tidy(() => {
