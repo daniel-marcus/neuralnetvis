@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useTransition } from "react"
+import { useEffect, useCallback, useTransition, useState, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   useGlobalStore,
@@ -27,7 +27,8 @@ const previewLayerConfigs: LayerConfigArray = [
 
 function useModelCreate(ds?: Dataset, isPreview?: boolean) {
   const model = useSceneStore((s) => s.model)
-  const [setModel, isPending] = useModelTransition()
+  const _setModel = useSceneStore((s) => s._setModel)
+  const [setModel, isPending] = useModelTransition(_setModel)
   const backendReady = useGlobalStore((s) => s.backendReady)
   const layerConfigs = useSceneStore((s) => s.layerConfigs)
   const configs = isPreview ? previewLayerConfigs : layerConfigs
@@ -39,22 +40,43 @@ function useModelCreate(ds?: Dataset, isPreview?: boolean) {
     }
     const _model = createModel(ds, configs)
     if (isDebug()) console.log({ _model })
-    setModel(_model)
+    setModel(_model, isPreview)
   }, [backendReady, configs, ds, setModel, isPreview])
   return [model, isPending] as const
 }
 
-export function useModelTransition() {
+type ModelSetter = (model?: tf.LayersModel) => void
+
+export function useModelTransition(_setModel: ModelSetter) {
   const [isPending, startTransition] = useTransition()
-  const _setModel = useSceneStore((s) => s._setModel)
+  const [statusId, setStatusId] = useState<string | null>(null)
+  const modelToSet = useRef<tf.LayersModel | undefined>(undefined)
+
   const setModel = useCallback(
-    async (model?: tf.LayersModel) => {
-      startTransition(() => {
-        _setModel(model)
-      })
+    async (model?: tf.LayersModel, isPreview?: boolean) => {
+      modelToSet.current = model
+      const id = setStatus(isPreview ? "" : "Creating model ...", -1)
+      setStatusId(id)
     },
-    [_setModel]
+    []
   )
+
+  useEffect(() => {
+    if (!statusId || !modelToSet.current) return
+    startTransition(() => {
+      _setModel(modelToSet.current)
+    })
+  }, [_setModel, statusId])
+
+  useEffect(() => {
+    if (!isPending || !statusId) return
+    return () => {
+      clearStatus(statusId)
+      modelToSet.current = undefined
+      setStatusId(null)
+    }
+  }, [isPending, statusId])
+
   return [setModel, isPending] as const
 }
 

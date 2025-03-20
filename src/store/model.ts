@@ -37,8 +37,9 @@ export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
 
   model: undefined,
   skipModelCreate: false,
-  _setModel: (model) =>
-    set({ model, activationStats: undefined, layerActivations: [] }),
+  _setModel: (model) => {
+    set({ model, activationStats: undefined, layerActivations: [] })
+  },
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
     set(() => ({
