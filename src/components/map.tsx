@@ -62,17 +62,15 @@ export const Map = () => {
       radiusMinPixels: 1,
       radiusMaxPixels: 100,
       lineWidthMinPixels: 1,
-      getPosition: (d) => [d.lon, d.lat],
+      getPosition: (d: Point) => [d.lon, d.lat],
       getRadius: () => 10,
-      getFillColor: (d) =>
-        d.y >= 0
-          ? (getColorVals(d.y, POS_BASE) as unknown as Uint8Array)
-          : (getColorVals(-d.y, NEG_BASE) as unknown as Uint8Array),
+      getFillColor: (d: Point) =>
+        d.y >= 0 ? getColorVals(d.y, POS_BASE) : getColorVals(-d.y, NEG_BASE),
     }),
-    new IconLayer({
+    new IconLayer<Point>({
       id: "active-point-layer",
       data: activePoint ? [activePoint] : [],
-      getPosition: (d) => [d.lon, d.lat],
+      getPosition: (d: Point) => [d.lon, d.lat],
       getIcon: () => "marker",
       getSize: 40,
       getColor: [140, 146, 164], // text color

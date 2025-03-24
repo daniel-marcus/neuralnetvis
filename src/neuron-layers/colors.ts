@@ -32,10 +32,11 @@ export const POS_BASE = [255, 20, 100]
 export const NEG_BASE = POS_BASE.toReversed()
 
 export function getColorVals(val: number, base: number[]) {
-  const a = Math.floor(ZERO_BASE[0] + val * (base[0] - ZERO_BASE[0]))
-  const b = Math.floor(ZERO_BASE[1] + val * (base[1] - ZERO_BASE[1]))
-  const c = Math.floor(ZERO_BASE[2] + val * (base[2] - ZERO_BASE[2]))
-  return [a, b, c]
+  const result = new Uint8Array(3)
+  result[0] = Math.floor(ZERO_BASE[0] + val * (base[0] - ZERO_BASE[0]))
+  result[1] = Math.floor(ZERO_BASE[1] + val * (base[1] - ZERO_BASE[1]))
+  result[2] = Math.floor(ZERO_BASE[2] + val * (base[2] - ZERO_BASE[2]))
+  return result
 }
 
 function newColorArr(base: number[]) {
