@@ -119,7 +119,7 @@ export class ProgressCb extends CustomCallback {
 
 export class LogsPlotCb extends CustomCallback {
   private epoch = 0
-  private addLogs = getScene().getState().addLogs
+  private addLog = getScene().getState().addLog
   private lastLogTime = 0
   private updEvery = 50 // ms
   constructor() {
@@ -129,7 +129,7 @@ export class LogsPlotCb extends CustomCallback {
       },
       onEpochEnd: (epoch, logs) => {
         if (!logs) return
-        this.addLogs([{ epoch, ...logs }])
+        this.addLog({ epoch, ...logs })
       },
     })
   }
@@ -139,7 +139,7 @@ export class LogsPlotCb extends CustomCallback {
       this.lastLogTime = Date.now()
       await nextFrame()
       await resolveScalarsInLogs(logs)
-      this.addLogs([{ epoch: this.epoch, ...logs }])
+      this.addLog({ epoch: this.epoch, ...logs })
     }
   }
 }

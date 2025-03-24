@@ -1,7 +1,11 @@
 import { StateCreator } from "zustand"
 import type { TrainingConfig } from "@/model"
 import type { History } from "@tensorflow/tfjs"
-import type { Metric, TrainingLog } from "@/components/ui-elements/logs-plot"
+import {
+  isBatchLog,
+  type Metric,
+  type TrainingLog,
+} from "@/components/ui-elements/logs-plot"
 
 export interface TrainingSlice {
   trainConfig: TrainingConfig
@@ -16,8 +20,9 @@ export interface TrainingSlice {
   setEpochCount: (val: number) => void
   resetTrainCounts: () => void
   //
-  logs: TrainingLog[]
-  addLogs: (newLogs: TrainingLog[]) => void
+  batchLogs: TrainingLog[]
+  epochLogs: TrainingLog[]
+  addLog: (newLog: TrainingLog) => void
   logsMetric: Metric
   setLogsMetric: (metric: Metric) => void
 }
@@ -54,11 +59,23 @@ export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
   epochCount: 0,
   setEpochCount: (epochCount) => set({ epochCount }),
   resetTrainCounts: () => {
-    set({ isTraining: false, batchCount: 0, epochCount: 0, logs: [] })
+    set({
+      isTraining: false,
+      batchCount: 0,
+      epochCount: 0,
+      batchLogs: [],
+      epochLogs: [],
+    })
   },
 
-  logs: [] as TrainingLog[],
-  addLogs: (newLogs) => set(({ logs }) => ({ logs: [...logs, ...newLogs] })),
+  batchLogs: [] as TrainingLog[],
+  epochLogs: [] as TrainingLog[],
+  addLog: (newLog) =>
+    set(({ batchLogs, epochLogs }) =>
+      isBatchLog(newLog)
+        ? { batchLogs: [...batchLogs, newLog] }
+        : { epochLogs: [...epochLogs, newLog] }
+    ),
   logsMetric: "loss",
   setLogsMetric: (logsMetric) => set({ logsMetric }),
 })

@@ -11,7 +11,9 @@ export const Train = () => {
   const toggleTraining = useCurrScene((s) => s.toggleTraining)
 
   const [showLogs, setShowLogs] = useState(false)
-  const hasLogs = useCurrScene((s) => s.logs.length > 0)
+  const hasLogs = useCurrScene(
+    (s) => s.epochLogs.length + s.batchLogs.length > 0
+  )
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])

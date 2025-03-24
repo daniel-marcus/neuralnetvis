@@ -5,19 +5,23 @@ import { Table } from "./table"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
-export type TrainingLog = {
-  epoch?: number
-  batch?: number
-  size?: number
+interface EpochLog {
+  epoch: number
   loss?: number
   acc?: number
-  val_loss?: number // for epoch only
-  val_acc?: number // for epoch only
+  val_loss?: number
+  val_acc?: number
 }
 
-const BATCH_METRICS: (keyof TrainingLog)[] = ["loss", "acc"]
-const VAL_METRICS: (keyof TrainingLog)[] = ["val_loss", "val_acc"]
-const METRICS: (keyof TrainingLog)[] = [...BATCH_METRICS, ...VAL_METRICS]
+interface BatchLog extends EpochLog {
+  batch: number
+  size: number
+}
+
+export type TrainingLog = BatchLog | EpochLog
+
+const VAL_METRICS: (keyof EpochLog)[] = ["val_loss", "val_acc"]
+const METRICS: (keyof TrainingLog)[] = ["loss", "acc", ...VAL_METRICS]
 
 export type Metric = (typeof METRICS)[number]
 
@@ -27,18 +31,20 @@ const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
 export function LogsPlot({ className = "" }) {
-  const _logs = useCurrScene((s) => s.logs)
+  const batchLogs = useCurrScene((s) => s.batchLogs)
+  const epochLogs = useCurrScene((s) => s.epochLogs)
   const logsMetric = useCurrScene((s) => s.logsMetric)
   const setLogsMetric = useCurrScene((s) => s.setLogsMetric)
   const isValMetric = VAL_METRICS.includes(logsMetric)
-  const logs = useMemo(
-    () =>
-      _logs.filter((log) => log.hasOwnProperty(VAL_METRICS[0]) === isValMetric),
-    [_logs, isValMetric]
-  )
+
+  const logs = useMemo(() => {
+    const hasMoreEpochLogs = epochLogs.length >= batchLogs.length
+    return isValMetric || hasMoreEpochLogs ? epochLogs : batchLogs
+  }, [batchLogs, epochLogs, isValMetric])
+
   const availableMetrics = useMemo(
-    () => new Set(_logs.flatMap((log) => Object.keys(log))),
-    [_logs]
+    () => new Set([...batchLogs, ...epochLogs].flatMap(Object.keys)),
+    [batchLogs, epochLogs]
   )
   const tooltipRef = useRef<HTMLDivElement>(null)
   const dotRef = useRef<HTMLDivElement>(null)
@@ -73,16 +79,14 @@ export function LogsPlot({ className = "" }) {
         dotRef.current.style.left = `${dotX}px`
         dotRef.current.style.top = `${dotY}px`
       }
-      const { epoch, batch } = log
-      const epochNr = (epoch ?? 0) + 1
-      const batchNr = (batch ?? 0) + 1
+      const ep = log.epoch + 1
       const getVal = (val?: number) =>
         isRegression ? val?.toPrecision(3) : val?.toFixed(3)
       const tt = (
         <div>
           <div>
             <strong>
-              {isValMetric ? `Epoch ${epochNr}` : `Batch ${epochNr}.${batchNr}`}
+              {isBatchLog(log) ? `Batch ${ep}.${log.batch + 1}` : `Epoch ${ep}`}
             </strong>
           </div>
           <Table
@@ -92,7 +96,7 @@ export function LogsPlot({ className = "" }) {
       )
       setTooltip(<div>{tt}</div>)
     },
-    [logs, tooltipRef, isValMetric, positions, canvasRef, isRegression]
+    [logs, tooltipRef, positions, canvasRef, isRegression]
   )
   const validationSplit = useCurrScene((s) => s.trainConfig.validationSplit)
   return (
@@ -129,6 +133,10 @@ export function LogsPlot({ className = "" }) {
       </div>
     </div>
   )
+}
+
+export function isBatchLog(log: TrainingLog): log is BatchLog {
+  return "batch" in log && typeof log.batch === "number"
 }
 
 type DotProps = { hidden: boolean; ref: Ref<HTMLDivElement> }

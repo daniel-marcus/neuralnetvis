@@ -1,8 +1,9 @@
-import { getWorldPos } from "./utils"
+import { useRef, useEffect } from "react"
+import { useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
-import { Neuron } from "@/neuron-layers"
-import { useFrame } from "@react-three/fiber"
-import { useRef } from "react"
+import { getWorldPos } from "./utils"
+import type { Neuron } from "@/neuron-layers"
+
 import { Mesh } from "three"
 
 interface HighlightedProps {
@@ -14,6 +15,8 @@ const COLOR = "rgb(140, 146, 164)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<Mesh>(null)
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(invalidate, [neuron, invalidate])
   useFrame(() => {
     if (!neuron || !ref.current) return
     const pos = getWorldPos(neuron)

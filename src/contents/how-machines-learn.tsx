@@ -177,7 +177,7 @@ async function scrollTrain({ percent }: OnScrollProps) {
   const log = await trainOnBatch([sample.X], [sample.y])
 
   if (!log) return
-  scene.getState().addLogs([{ ...log, batch }])
+  scene.getState().addLog({ ...log, epoch: 0, batch })
   setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
     id: SCROLL_TRAIN_STATUS_ID,
   })
