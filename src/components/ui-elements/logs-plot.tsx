@@ -26,7 +26,7 @@ type TooltipContent = React.ReactNode | null
 const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
-export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
+export function LogsPlot({ className = "" }) {
   const _logs = useCurrScene((s) => s.logs)
   const logsMetric = useCurrScene((s) => s.logsMetric)
   const setLogsMetric = useCurrScene((s) => s.setLogsMetric)
@@ -95,23 +95,20 @@ export function LogsPlot({ isShown = true }: { isShown?: boolean }) {
     [logs, tooltipRef, isValMetric, positions, canvasRef, isRegression]
   )
   const validationSplit = useCurrScene((s) => s.trainConfig.validationSplit)
-  if (!logs.length) return null
   return (
-    <div>
-      {!!isShown && (
-        <div>
-          <div className="relative" onMouseLeave={() => setTooltip(null)}>
-            <canvas
-              ref={canvasRef}
-              className={`w-full h-[100px] sm:h-[132px]`}
-              onMouseMove={onMouseMove}
-            />
-            <Dot ref={dotRef} hidden={!tooltip} />
-            <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
-          </div>
+    <div className={className}>
+      <div>
+        <div className="relative" onMouseLeave={() => setTooltip(null)}>
+          <canvas
+            ref={canvasRef}
+            className={`w-full h-[100px] sm:h-[132px]`}
+            onMouseMove={onMouseMove}
+          />
+          <Dot ref={dotRef} hidden={!tooltip} />
+          <Tooltip ref={tooltipRef}>{tooltip}</Tooltip>
         </div>
-      )}
-      <div className={`flex mt-2 justify-end ${isShown ? "" : "hidden"}`}>
+      </div>
+      <div className={`flex mt-2 justify-end`}>
         {METRICS.filter((m) => availableMetrics.has(m)).map((m) => {
           const isSelected = m === logsMetric
           const isDisabled = !validationSplit && VAL_METRICS.includes(m)

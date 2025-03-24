@@ -62,7 +62,7 @@ export const InlineButton = ({
           ? "bg-accent text-white disabled:opacity-50"
           : variant === "secondary"
           ? "bg-secondary"
-          : "hover:bg-secondary"
+          : "hover:text-white"
       } rounded-btn ${className}`}
       onClick={onClick}
       disabled={disabled}

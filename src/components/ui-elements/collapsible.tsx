@@ -54,7 +54,6 @@ export const CollapsibleWithTitle = ({
 interface CollapsibleProps {
   children?: React.ReactNode
   isOpen?: boolean
-  maxHeight?: number
   animate?: boolean
   className?: string
 }
@@ -67,7 +66,9 @@ export function Collapsible({
 }: CollapsibleProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(500)
-  useEffect(() => setHeight(ref.current?.scrollHeight ?? 0), [children])
+  useEffect(() => {
+    if (ref.current?.scrollHeight) setHeight(ref.current?.scrollHeight ?? 0)
+  }, [children])
   return (
     <div
       ref={ref}

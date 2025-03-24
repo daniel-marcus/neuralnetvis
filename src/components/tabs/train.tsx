@@ -22,10 +22,8 @@ export const Train = () => {
   return (
     <Box>
       <TrainConfigControl />
-      <Collapsible isOpen={showLogs} maxHeight={184}>
-        <div className="p-4 pb-0">
-          <LogsPlot />
-        </div>
+      <Collapsible isOpen={showLogs}>
+        {hasLogs && <LogsPlot className="px-4 pt-4" />}
       </Collapsible>
       <div className="p-4 flex justify-between">
         <button
