@@ -8,8 +8,6 @@ import {
 } from "@tensorflow/tfjs-layers/dist/logs"
 import type { TypedParams } from "./types"
 
-const THROTTLE = 30
-
 export class UpdateCb extends CustomCallback {
   private silent = getScene().getState().trainConfig.silent
   private batchSize = getScene().getState().trainConfig.batchSize
@@ -51,13 +49,15 @@ export class UpdateCb extends CustomCallback {
   }
 }
 
+const PROGRESS_UPD_THROTTLE = 30
+
 export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
   private statusId = "training_progress"
   private setStatus = throttle(
     useGlobalStore.getState().status.update,
-    THROTTLE
+    PROGRESS_UPD_THROTTLE
   )
   private startTime = 0
   private firstRun = true
@@ -119,7 +119,7 @@ export class ProgressCb extends CustomCallback {
 
 export class LogsPlotCb extends CustomCallback {
   private epoch = 0
-  private addLogs = throttle(getScene().getState().addLogs, THROTTLE)
+  private addLogs = getScene().getState().addLogs
   private lastLogTime = 0
   private updEvery = 50 // ms
   constructor() {
