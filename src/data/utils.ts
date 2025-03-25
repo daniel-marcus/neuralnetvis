@@ -92,3 +92,14 @@ type Shape = (number | null)[]
 export function checkShapeMatch(s1: Shape, s2: Shape) {
   return s1.every((value, idx) => value === s2[idx])
 }
+
+export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {
+  return tf.tidy(() => {
+    const yTrueMean = yTrue.mean()
+    const residualSumSquares = yTrue.sub(yPred).pow(2).sum()
+    const totalSumSquares = yTrue.sub(yTrueMean).pow(2).sum()
+    const result = tf.scalar(1).sub(residualSumSquares.div(totalSumSquares))
+    console.log({ yTrueMean, residualSumSquares, totalSumSquares, result })
+    return result.dataSync()[0]
+  })
+}

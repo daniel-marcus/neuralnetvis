@@ -2,13 +2,15 @@ import type { ReactNode } from "react"
 import type { StateCreator } from "zustand"
 import type { TableProps } from "@/components/ui-elements/table"
 
-const DISPLAY_TIME = 5 // seconds
+const DEFAULT_DURATION = 5
 
 interface Status {
   id: string
   text: TableProps | ReactNode
   percent: undefined | number | null
   fullscreen?: boolean
+  duration?: number // display time in seconds
+  timer?: NodeJS.Timeout
 }
 
 export interface StatusSlice {
@@ -17,8 +19,9 @@ export interface StatusSlice {
     update: (
       text: TableProps | ReactNode,
       percent?: number | null,
-      opts?: Partial<Omit<Status, "text" | "percent">>
+      opts?: Partial<Omit<Status, "text" | "percent" | "timer">>
     ) => Status["id"]
+    clearTimer: (id: string) => void
     clear: (id: string) => void
     getPercent: () => number | null
     getCurrent: () => Status | undefined
@@ -30,12 +33,15 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
     stack: [],
     update: (text, percent, opts = {}) => {
       const id = opts.id ?? uid()
+      const duration = (opts.duration ?? DEFAULT_DURATION) * 1000
+      let timer: NodeJS.Timeout | undefined
+      if (opts.id) get().status.clearTimer(id)
       if (typeof percent !== "number" || (percent === 1 && !opts.id)) {
-        setTimeout(() => {
+        timer = setTimeout(() => {
           get().status.clear(id)
-        }, DISPLAY_TIME * 1000)
+        }, duration)
       }
-      const newStatus = { ...opts, id, text, percent }
+      const newStatus = { ...opts, id, text, percent, timer }
       set(({ status }) => ({
         status: {
           ...status,
@@ -44,13 +50,19 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
       }))
       return id
     },
-    clear: (id) =>
+    clearTimer: (id) => {
+      const oldStatus = get().status.stack.find((s) => s.id === id)
+      if (oldStatus?.timer) clearTimeout(oldStatus.timer)
+    },
+    clear: (id) => {
+      get().status.clearTimer(id)
       set(({ status }) => ({
         status: {
           ...status,
           stack: status.stack.filter((s) => s.id !== id),
         },
-      })),
+      }))
+    },
     getPercent: () => {
       const stack = get().status.stack
       if (stack.length === 0) return null

@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react"
 import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
-import { canUseLazyLoading, getModelEvaluation } from "@/model/training"
+import {
+  canUseLazyLoading,
+  getModelEvaluation,
+  getTestPredictions,
+} from "@/model/training"
 
 const { Box, InlineButton, Slider, InputRow, Checkbox } = Components
-const { Collapsible, CollapsibleWithTitle, Arrow, LogsPlot } = Components
+const { Collapsible, CollapsibleWithTitle, Arrow } = Components
+const { LogsPlot, Table, ScatterPlot } = Components
 
 export const Train = () => {
   const isTraining = useCurrScene((s) => s.isTraining)
@@ -131,16 +136,44 @@ const TrainConfigControl = () => {
 
 function useEvaluate() {
   const ds = useCurrScene((s) => s.ds)
+  const isRegression = useCurrScene((s) => s.isRegression())
+  const model = useCurrScene((s) => s.model)
   const setStatus = useGlobalStore((s) => s.status.update)
   async function evaluate() {
-    if (!ds) return
+    if (!ds || !model) return
+
     const { loss, accuracy } = await getModelEvaluation()
-    const data = {
+    let data = {
       "Test samples": ds.test.totalSamples,
       Loss: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
+    } as Record<string, string | number>
+
+    let scatterPlot: React.JSX.Element | null = null
+    if (isRegression) {
+      const result = await getTestPredictions()
+      if (result) {
+        data = {
+          ...data,
+          "R²": result.rSquared.toFixed(3),
+        }
+        const points = result.predictions.map(({ actual, predicted }) => ({
+          x: actual,
+          y: predicted,
+        }))
+        scatterPlot = <ScatterPlot data={points} />
+      }
     }
-    setStatus({ data }, null)
+
+    const table = <Table data={data} />
+    const status = (
+      <>
+        {table}
+        {scatterPlot}
+      </>
+    )
+
+    setStatus(status, null, { id: "model-evaluation", duration: 20 })
   }
   return evaluate
 }

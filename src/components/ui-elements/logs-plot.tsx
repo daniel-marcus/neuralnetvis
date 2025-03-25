@@ -102,10 +102,13 @@ export function LogsPlot({ className = "" }) {
   return (
     <div className={className}>
       <div>
-        <div className="relative" onMouseLeave={() => setTooltip(null)}>
+        <div
+          className="relative h-[100px] sm:h-[132px]"
+          onMouseLeave={() => setTooltip(null)}
+        >
           <canvas
             ref={canvasRef}
-            className={`w-full h-[100px] sm:h-[132px]`}
+            className={`w-full h-full`}
             onMouseMove={onMouseMove}
           />
           <Dot ref={dotRef} hidden={!tooltip} />
@@ -167,14 +170,37 @@ const Tooltip = ({ children, ref }: TooltipProps) => (
 function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const positions = useRef<[number, number][]>([])
+  const [width, setWidth] = useState(0)
+  const [height, setHeight] = useState(0)
+  useEffect(() => {
+    function onResize() {
+      const canvas = canvasRef.current
+      const parent = canvas?.parentElement
+      if (!canvas) return
+      const rect = (parent ?? canvas).getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
+      setWidth(rect.width * dpr)
+      setHeight(rect.height * dpr)
+    }
+    onResize()
+    window.addEventListener("resize", onResize)
+    return () => {
+      window.removeEventListener("resize", onResize)
+    }
+  }, [])
   useEffect(() => {
     if (!Array.isArray(logs)) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
     if (!ctx) return
-    const { width, height } = canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const rect = (canvas.parentElement ?? canvas).getBoundingClientRect()
+    canvas.width = width
+    canvas.height = height
+    canvas.style.width = `${rect.width}px`
+    canvas.style.height = `${rect.height}px`
+
+    ctx.clearRect(0, 0, width, height)
     positions.current = []
 
     const logsWithValue = logs.filter((log) => typeof log[metric] === "number")
@@ -194,7 +220,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
         const x = getX(i)
         ctx.beginPath()
         ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
-        ctx.lineWidth = 0.3
+        ctx.lineWidth = 0.5
         ctx.moveTo(x, 0)
         ctx.lineTo(x, height)
         ctx.stroke()
@@ -218,6 +244,6 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
       }
     })
     ctx.stroke()
-  }, [logs, metric])
+  }, [logs, metric, width, height])
   return [canvasRef, positions] as const
 }

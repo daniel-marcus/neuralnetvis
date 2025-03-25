@@ -13,6 +13,7 @@ import {
   useSceneStore,
 } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
+import { calculateRSquared } from "@/data/utils"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const isTraining = useSceneStore((s) => s.isTraining)
@@ -231,14 +232,17 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   return { loss, acc }
 }
 
+async function getTestData() {
+  const ds = getDs()
+  if (!ds) return
+  return getDbDataAsTensors(ds, "test")
+}
+
 export async function getModelEvaluation() {
   const model = getModel()
-  const ds = getDs()
-  if (!ds || !model) return { loss: undefined, accuracy: undefined }
-
-  const evData = await getDbDataAsTensors(ds, "test")
-  if (!evData) return { loss: undefined, accuracy: undefined }
-  const [X, y] = evData
+  const testData = await getTestData()
+  if (!model || !testData) return { loss: undefined, accuracy: undefined }
+  const [X, y] = testData
 
   await tf.ready()
   const result = model.evaluate(X, y, { batchSize: 64 })
@@ -255,5 +259,26 @@ export async function getModelEvaluation() {
     y.dispose()
     lossT.dispose()
     accuracyT?.dispose()
+  }
+}
+
+export async function getTestPredictions() {
+  const model = getModel()
+  const testData = await getTestData()
+  if (!model || !testData) return
+  const [X, y] = testData
+  try {
+    return tf.tidy(() => {
+      const yTrueArr = y.arraySync() as number[]
+      const yPred = (model.predict(X) as tf.Tensor).flatten()
+      const predictions = yPred
+        .arraySync()
+        .map((predicted, i) => ({ predicted, actual: yTrueArr[i] }))
+      const rSquared = calculateRSquared(y, yPred)
+      return { predictions, rSquared }
+    })
+  } finally {
+    X.dispose()
+    y.dispose()
   }
 }
