@@ -6,6 +6,7 @@ import {
   DraggableList,
   InlineButton,
   InputRow,
+  InputRowsWrapper,
   Select,
   TextInput,
 } from "../ui-elements"
@@ -56,61 +57,65 @@ export const CreateNewDataset = () => {
   }
   return (
     <CollapsibleWithTitle title="create new dataset">
-      <Select
-        options={[{ value: "handpose", label: "hand pose classification" }]}
-      />
-      <InputRow label="name">
-        <TextInput value={name} onChange={setName} />
-      </InputRow>
-      <InputRow label="input">
+      <InputRowsWrapper>
         <Select
-          key={`select_hands_${hands}`}
-          options={HANDS_OPTIONS}
-          value={String(hands)}
-          onChange={(val) => setHands(parseInt(val) as HandsNum)}
+          options={[{ value: "handpose", label: "hand pose classification" }]}
         />
-      </InputRow>
-      <InputRow label="labels">
-        <DraggableList
-          rowHeight={32}
-          onOrderChange={(newOrder) => {
-            const newLabels = newOrder.map((i) => labels[i])
-            setLabels(newLabels)
-          }}
-        >
-          {labels.map((l, i) => (
-            <div key={i} className="flex gap-2">
-              <div className="w-4 shrink-0">{i + 1}</div>
-              <TextInput
-                // className="w-full"
-                value={l}
-                onChange={(val) => setLabels([...labels.toSpliced(i, 1, val)])}
-              />
-              {labels.length > MIN_LABELS && (
-                <button
-                  className="px-2"
-                  onClick={() => setLabels([...labels.toSpliced(i, 1)])}
-                >
-                  x
-                </button>
-              )}
-            </div>
-          ))}
-        </DraggableList>
-        <InlineButton
-          variant="secondary"
-          className="mt-2"
-          onClick={() => {
-            const newLabel = DEFAULT_LABELS[hands][labels.length] ?? "edit me"
-            setLabels([...labels, newLabel])
-          }}
-        >
-          add
-        </InlineButton>
-      </InputRow>
-      <div className="mt-4 flex justify-end">
-        <InlineButton onClick={handleCreate}>create</InlineButton>
-      </div>
+        <InputRow label="name">
+          <TextInput value={name} onChange={setName} />
+        </InputRow>
+        <InputRow label="input">
+          <Select
+            key={`select_hands_${hands}`}
+            options={HANDS_OPTIONS}
+            value={String(hands)}
+            onChange={(val) => setHands(parseInt(val) as HandsNum)}
+          />
+        </InputRow>
+        <InputRow label="labels">
+          <DraggableList
+            rowHeight={32}
+            onOrderChange={(newOrder) => {
+              const newLabels = newOrder.map((i) => labels[i])
+              setLabels(newLabels)
+            }}
+          >
+            {labels.map((l, i) => (
+              <div key={i} className="flex gap-2">
+                <div className="w-4 shrink-0">{i + 1}</div>
+                <TextInput
+                  // className="w-full"
+                  value={l}
+                  onChange={(val) =>
+                    setLabels([...labels.toSpliced(i, 1, val)])
+                  }
+                />
+                {labels.length > MIN_LABELS && (
+                  <button
+                    className="px-2"
+                    onClick={() => setLabels([...labels.toSpliced(i, 1)])}
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            ))}
+          </DraggableList>
+          <InlineButton
+            variant="secondary"
+            className="mt-2"
+            onClick={() => {
+              const newLabel = DEFAULT_LABELS[hands][labels.length] ?? "edit me"
+              setLabels([...labels, newLabel])
+            }}
+          >
+            add
+          </InlineButton>
+        </InputRow>
+        <div className="mt-4 flex justify-end">
+          <InlineButton onClick={handleCreate}>create</InlineButton>
+        </div>
+      </InputRowsWrapper>
     </CollapsibleWithTitle>
   )
 }

@@ -30,7 +30,7 @@ export const Select = ({
       <select
         value={value}
         ref={ref}
-        className={`w-full input-appearance appearance-none bg-transparent ${className}`}
+        className={`w-full input-appearance appearance-none bg-transparent pr-6! truncate ${className}`}
         onChange={(e) => {
           if (onChange) onChange(e.target.value, e)
         }}

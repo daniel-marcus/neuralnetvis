@@ -7,7 +7,8 @@ import {
   getTestPredictions,
 } from "@/model/training"
 
-const { Box, InlineButton, Slider, InputRow, Checkbox } = Components
+const { Box, InlineButton, Slider, InputRow, InputRowsWrapper, Checkbox } =
+  Components
 const { Collapsible, CollapsibleWithTitle, Arrow } = Components
 const { LogsPlot, Table, ScatterPlot } = Components
 
@@ -67,8 +68,7 @@ const TrainConfigControl = () => {
 
   return (
     <CollapsibleWithTitle title="config">
-      <div
-        className="input-rows"
+      <InputRowsWrapper
         style={
           {
             "--slider-value-width": "4em",
@@ -150,7 +150,7 @@ const TrainConfigControl = () => {
             />
           </InputRow>
         )}
-      </div>
+      </InputRowsWrapper>
     </CollapsibleWithTitle>
   )
 }

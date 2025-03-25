@@ -3,6 +3,7 @@ import {
   Checkbox,
   CollapsibleWithTitle,
   InputRow,
+  InputRowsWrapper,
   Select,
   Slider,
 } from "@/components/ui-elements"
@@ -19,7 +20,7 @@ export const VisConfigControl = () => {
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
-      <div className="input-rows">
+      <InputRowsWrapper>
         {SHIFT_PROPS.map((prop) => {
           const value = config[prop]
           const isDefault = getDefault(prop) === value
@@ -88,14 +89,17 @@ export const VisConfigControl = () => {
             value={config.highlightProp ?? ""}
             options={[
               { value: "weights" as const, label: "show weights" },
-              { value: "weightedInputs" as const, label: "show weighted inp." },
+              {
+                value: "weightedInputs" as const,
+                label: "show weighted inputs",
+              },
             ]}
             onChange={(val) =>
               setConfig({ highlightProp: val as HighlightProp })
             }
           />
         </InputRow>
-      </div>
+      </InputRowsWrapper>
     </CollapsibleWithTitle>
   )
 }

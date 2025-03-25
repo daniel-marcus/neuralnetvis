@@ -66,9 +66,6 @@
     /* for Select and TextInput */
     @apply px-2 border-1 border-menu-border rounded-[3px];
   }
-  .input-rows {
-    @apply flex flex-col gap-2;
-  }
 }
 
 :root {

@@ -69,7 +69,9 @@ export const MyDatasets = () => {
               }`}
             >
               <button
-                className={isCurrent ? "disabled pointer-events-none" : ""}
+                className={`flex-1 min-w-0 text-left truncate ${
+                  isCurrent ? "disabled pointer-events-none" : ""
+                }`}
                 onClick={() => handleSelect(d.key)}
               >
                 {d.name} {d.loaded === "preview" ? "(preview)" : ""}

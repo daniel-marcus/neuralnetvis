@@ -57,3 +57,12 @@ const Hint = ({ children }: { children: ReactNode }) => (
     {children}
   </div>
 )
+
+type InputRowsWrapperProps = {
+  children: ReactNode
+  style?: React.CSSProperties
+}
+
+export const InputRowsWrapper = (props: InputRowsWrapperProps) => (
+  <div className="flex flex-col gap-2" {...props} />
+)

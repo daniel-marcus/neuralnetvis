@@ -3,6 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import {
   CollapsibleWithTitle,
   InlineButton,
+  InputRowsWrapper,
   TextInput,
 } from "@/components/ui-elements"
 import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
@@ -38,22 +39,24 @@ export function MyModels() {
       border={false}
       collapsed
     >
-      <SavedModels updTrigger={updTrigger} />
-      <div className="flex justify-between gap-2">
-        <TextInput onChange={setModelName} value={modelName} />
-        <div className="flex gap-2">
-          <InlineButton onClick={saveModel} disabled={!model}>
-            save
-          </InlineButton>
-          <InlineButton
-            variant="secondary"
-            onClick={() => setShowImportForm((i) => !i)}
-          >
-            import
-          </InlineButton>
+      <InputRowsWrapper>
+        <SavedModels updTrigger={updTrigger} />
+        <div className="flex justify-between gap-2">
+          <TextInput onChange={setModelName} value={modelName} />
+          <div className="flex gap-2">
+            <InlineButton onClick={saveModel} disabled={!model}>
+              save
+            </InlineButton>
+            <InlineButton
+              variant="secondary"
+              onClick={() => setShowImportForm((i) => !i)}
+            >
+              import
+            </InlineButton>
+          </div>
         </div>
-      </div>
-      {showImportForm && <ImportForm onUploadFinished={onUploadFinished} />}
+        {showImportForm && <ImportForm onUploadFinished={onUploadFinished} />}
+      </InputRowsWrapper>
     </CollapsibleWithTitle>
   )
 }
@@ -88,17 +91,20 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   }
   if (!savedModels.length) return null
   return (
-    <ul className="mb-4">
+    <ul>
       {savedModels.map((m, i) => (
         <li key={i} className="flex justify-between has-menu-border">
-          <button onClick={() => loadModel(m)}>{m}</button>
-          <div>
+          <button
+            className="flex-1 min-w-0 text-left truncate"
+            onClick={() => loadModel(m)}
+          >
+            {m}
+          </button>
+          <div className="flex gap-2 flex-nowrap">
             <button className="px-2" onClick={() => exportModel(m)}>
               export
             </button>
-            <button className="pl-2" onClick={() => removeModel(m)}>
-              x
-            </button>
+            <button onClick={() => removeModel(m)}>x</button>
           </div>
         </li>
       ))}
