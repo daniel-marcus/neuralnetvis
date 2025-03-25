@@ -67,69 +67,90 @@ const TrainConfigControl = () => {
 
   return (
     <CollapsibleWithTitle title="config">
-      <InputRow
-        label="batchSize"
-        hint="How many samples should be processed at once?"
+      <div
+        className="input-rows"
+        style={
+          {
+            "--slider-value-width": "4em",
+          } as React.CSSProperties
+        }
       >
-        <Slider
-          // value={config.batchSize}
-          value={Math.log2(config.batchSize)}
-          min={0} // 2^0 = 1
-          max={10} // 2^10 = 1024
-          transform={(v) => 2 ** v}
-          onChange={(batchSize) => setConfig({ batchSize })}
-          showValue={true}
-          lazyUpdate
-        />
-      </InputRow>
-      <InputRow
-        label="epochs"
-        hint={"How often should the model see the entire dataset?"}
-      >
-        <Slider
-          value={config.epochs}
-          min={1}
-          max={100}
-          onChange={(epochs) => setConfig({ epochs })}
-          showValue={true}
-          lazyUpdate
-        />
-      </InputRow>
-      <InputRow
-        label="validSplit"
-        hint="How much of the data should be used for validation?"
-      >
-        <Slider
-          value={config.validationSplit}
-          min={0}
-          max={0.5}
-          step={0.1}
-          onChange={(validationSplit) => setConfig({ validationSplit })}
-          showValue={true}
-          lazyUpdate
-        />
-      </InputRow>
-      <InputRow
-        label="silent"
-        hint="Update visualization only after training (faster)"
-      >
-        <Checkbox
-          checked={config.silent}
-          onChange={(silent) => setConfig({ silent: silent })}
-        />
-      </InputRow>
-
-      {!!ds && canUseLazyLoading(ds) && (
         <InputRow
-          label="lazyLoading"
-          hint="Load data on the fly (could be slower, but saves memory)"
+          label="batchSize"
+          hint="How many samples should be processed at once?"
         >
-          <Checkbox
-            checked={config.lazyLoading}
-            onChange={(lazyLoading) => setConfig({ lazyLoading })}
+          <Slider
+            // value={config.batchSize}
+            value={Math.log2(config.batchSize)}
+            min={0} // 2^0 = 1
+            max={10} // 2^10 = 1024
+            transform={(v) => 2 ** v}
+            onChange={(batchSize) => setConfig({ batchSize })}
+            showValue={true}
+            lazyUpdate
           />
         </InputRow>
-      )}
+        <InputRow
+          label="epochs"
+          hint={"How often should the model see the entire dataset?"}
+        >
+          <Slider
+            value={config.epochs}
+            min={1}
+            max={100}
+            onChange={(epochs) => setConfig({ epochs })}
+            showValue={true}
+            lazyUpdate
+          />
+        </InputRow>
+        <InputRow
+          label="validSplit"
+          hint="How much of the data should be used for validation?"
+        >
+          <Slider
+            value={config.validationSplit}
+            min={0}
+            max={0.5}
+            step={0.1}
+            onChange={(validationSplit) => setConfig({ validationSplit })}
+            showValue={true}
+            lazyUpdate
+          />
+        </InputRow>
+        <InputRow label="learningRate" hint="How fast should the model learn?">
+          <Slider
+            value={Math.log10(config.learningRate)}
+            min={-4}
+            max={-1}
+            step={1}
+            transform={(v) => 10 ** v}
+            onChange={(learningRate) => setConfig({ learningRate })}
+            showValue={true}
+            lazyUpdate
+          />
+        </InputRow>
+        <InputRow
+          label="silent"
+          hint="Update visualization only after training (faster)"
+        >
+          <Checkbox
+            checked={config.silent}
+            onChange={(silent) => setConfig({ silent: silent })}
+          />
+        </InputRow>
+
+        {!!ds && canUseLazyLoading(ds) && (
+          <InputRow
+            label="lazyLoading"
+            hint="Load data on the fly (could be slower, but saves memory)"
+          >
+            <Checkbox
+              checked={config.lazyLoading}
+              onChange={(lazyLoading) => setConfig({ lazyLoading })}
+            />
+          </InputRow>
+        )}
+      </div>
     </CollapsibleWithTitle>
   )
 }
@@ -173,7 +194,7 @@ function useEvaluate() {
       </>
     )
 
-    setStatus(status, null, { id: "model-evaluation", duration: 20 })
+    setStatus(status, null, { id: "model-evaluation", duration: 10 })
   }
   return evaluate
 }

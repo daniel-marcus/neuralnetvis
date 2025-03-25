@@ -46,6 +46,7 @@ export interface TrainingConfig {
   batchSize: number
   epochs: number
   validationSplit: number
+  learningRate: number
   silent: boolean
   lazyLoading: boolean
 }

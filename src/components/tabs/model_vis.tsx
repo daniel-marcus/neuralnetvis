@@ -19,79 +19,83 @@ export const VisConfigControl = () => {
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
-      {SHIFT_PROPS.map((prop) => {
-        const value = config[prop]
-        const isDefault = getDefault(prop) === value
-        const axis = prop.slice(0, 1)
-        return (
+      <div className="input-rows">
+        {SHIFT_PROPS.map((prop) => {
+          const value = config[prop]
+          const isDefault = getDefault(prop) === value
+          const axis = prop.slice(0, 1)
+          return (
+            <InputRow
+              key={prop}
+              label={prop}
+              hint={`layer spacing along the ${axis} axis`}
+              reset={isDefault ? undefined : () => reset(prop)}
+            >
+              <Slider
+                value={value}
+                min={-30}
+                max={30}
+                onChange={(v) => setConfig({ [prop]: v })}
+                showValue
+                markers={[0]}
+              />
+            </InputRow>
+          )
+        })}
+        {isDebug && (
           <InputRow
-            key={prop}
-            label={prop}
-            hint={`layer spacing along the ${axis} axis`}
-            reset={isDefault ? undefined : () => reset(prop)}
+            label={"nodeSpacing"}
+            reset={
+              config.neuronSpacing === getDefault("neuronSpacing")
+                ? undefined
+                : () => reset("neuronSpacing")
+            }
+            hint="spacing between neurons"
           >
             <Slider
-              value={value}
-              min={-30}
-              max={30}
-              onChange={(v) => setConfig({ [prop]: v })}
+              value={config.neuronSpacing}
+              min={1}
+              max={5}
+              step={0.001}
+              onChange={(neuronSpacing) => setConfig({ neuronSpacing })}
               showValue
-              markers={[0]}
             />
           </InputRow>
-        )
-      })}
-      {isDebug && (
+        )}
         <InputRow
-          label={"nodeSpacing"}
-          reset={
-            config.neuronSpacing === getDefault("neuronSpacing")
-              ? undefined
-              : () => reset("neuronSpacing")
-          }
-          hint="spacing between neurons"
+          label="showLines"
+          hint="show (strongest) connections between neurons"
         >
-          <Slider
-            value={config.neuronSpacing}
-            min={1}
-            max={5}
-            step={0.001}
-            onChange={(neuronSpacing) => setConfig({ neuronSpacing })}
-            showValue
-          />
-        </InputRow>
-      )}
-      <InputRow
-        label="showLines"
-        hint="show (strongest) connections between neurons"
-      >
-        <Checkbox
-          checked={config.showLines}
-          onChange={(showLines) => setConfig({ showLines })}
-        />
-      </InputRow>
-      {hasColorChannels && (
-        <InputRow label="splitColors" hint="show color channels separately">
           <Checkbox
-            checked={config.splitColors}
-            onChange={(splitColors) => setConfig({ splitColors })}
+            checked={config.showLines}
+            onChange={(showLines) => setConfig({ showLines })}
           />
         </InputRow>
-      )}
-      <InputRow
-        label="onSelect"
-        hint="What should be shown when you hover or click on a neuron?"
-      >
-        <Select
-          key={`highlight_prop_${config.highlightProp}`}
-          value={config.highlightProp ?? ""}
-          options={[
-            { value: "weights" as const, label: "show weights" },
-            { value: "weightedInputs" as const, label: "show weighted inp." },
-          ]}
-          onChange={(val) => setConfig({ highlightProp: val as HighlightProp })}
-        />
-      </InputRow>
+        {hasColorChannels && (
+          <InputRow label="splitColors" hint="show color channels separately">
+            <Checkbox
+              checked={config.splitColors}
+              onChange={(splitColors) => setConfig({ splitColors })}
+            />
+          </InputRow>
+        )}
+        <InputRow
+          label="onSelect"
+          hint="What should be shown when you hover or click on a neuron?"
+        >
+          <Select
+            key={`highlight_prop_${config.highlightProp}`}
+            value={config.highlightProp ?? ""}
+            options={[
+              { value: "weights" as const, label: "show weights" },
+              { value: "weightedInputs" as const, label: "show weighted inp." },
+            ]}
+            onChange={(val) =>
+              setConfig({ highlightProp: val as HighlightProp })
+            }
+          />
+        </InputRow>
+      </div>
     </CollapsibleWithTitle>
   )
 }

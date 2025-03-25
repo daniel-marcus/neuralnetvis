@@ -25,6 +25,7 @@ export interface StatusSlice {
     clear: (id: string) => void
     getPercent: () => number | null
     getCurrent: () => Status | undefined
+    reset: () => void
   }
 }
 
@@ -75,6 +76,10 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
       const stack = get().status.stack
       const spinningStatus = stack.findLast((s) => s.percent === -1)
       return spinningStatus ?? stack.at(-1)
+    },
+    reset: () => {
+      get().status.stack.forEach((s) => get().status.clear(s.id))
+      set(({ status }) => ({ status: { ...status, stack: [] } }))
     },
   },
 })

@@ -125,18 +125,21 @@ function showModelStatus() {
 }
 
 function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
+  const learningRate = useSceneStore((s) => s.trainConfig.learningRate)
   useEffect(() => {
     if (!model || !ds) return
-    if (!isModelCompiled(model)) {
-      if (isDebug()) console.log("Model not compiled. Compiling ...", model)
+    if (
+      !isModelCompiled(model) ||
+      model.optimizer.getConfig().learningRate !== learningRate
+    ) {
       const isClassification = ds.task === "classification"
       model.compile({
-        optimizer: tf.train.adam(),
+        optimizer: tf.train.adam(learningRate),
         loss: isClassification ? "categoricalCrossentropy" : "meanSquaredError",
         metrics: isClassification ? ["accuracy"] : [],
       })
     }
-  }, [model, ds])
+  }, [model, ds, learningRate])
 }
 
 function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {

@@ -54,12 +54,10 @@ export function SceneStoreProvider({
   }
   useEffect(() => {
     if (!isActive) return
-    useGlobalStore.setState({
-      scene: storeRef.current ?? undefined,
-    })
+    useGlobalStore.getState().setScene(storeRef.current!)
     storeRef.current?.setState({ isActive: true })
     return () => {
-      useGlobalStore.setState({ scene: dummySceneStore })
+      useGlobalStore.getState().setScene(dummySceneStore)
       storeRef.current?.setState({ isActive: false })
     }
   }, [isActive])
@@ -88,17 +86,23 @@ export type GlobalStoreType = TabsSlice &
     backendReady: boolean
     isDebug: boolean
     scene: SceneStore
+    setScene: (scene: SceneStore) => void
     handLandmarker?: HandLandmarker
   }
 
-export const useGlobalStore = create<GlobalStoreType>()((...a) => ({
-  ...createTabsSlice(...a),
-  ...createStatusSlice(...a),
+export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
+  ...createTabsSlice(...apiProps),
+  ...createStatusSlice(...apiProps),
   backendReady: false,
   isDebug: false,
   skipModelCreate: false,
   visLocked: false,
   scene: dummySceneStore,
+  setScene: (scene) => {
+    const [set, get] = apiProps
+    get().status.reset()
+    set({ scene })
+  },
 }))
 
 //

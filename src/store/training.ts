@@ -32,6 +32,7 @@ export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
     batchSize: 128,
     epochs: 10,
     validationSplit: 0.1,
+    learningRate: 0.001,
     silent: true,
     lazyLoading: true,
   },

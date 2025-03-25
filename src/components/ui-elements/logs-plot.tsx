@@ -203,21 +203,21 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
     ctx.clearRect(0, 0, width, height)
     positions.current = []
 
-    const logsWithValue = logs.filter((log) => typeof log[metric] === "number")
-
-    const maxVal = Math.max(
-      ...logsWithValue.map((log) =>
-        typeof log[metric] === "number" ? log[metric] : 0
-      )
-    )
-    const getX = (i: number) => (i / (logs.length - 1)) * width
+    const allVals = logs
+      .filter((log) => typeof log[metric] === "number")
+      .map((log) => log[metric]!)
+    const maxVal = Math.max(...allVals)
+    const minVal = Math.min(...allVals)
+    const scaleX = (i: number) => (i / (logs.length - 1)) * width
+    const scaleY = (value: number) =>
+      height - ((value - minVal) / (maxVal - minVal)) * height
 
     // first: draw epoch separators
     logs.forEach(({ epoch }, i, arr) => {
       const prevEpoch = arr[i - 1]?.epoch
       const newEpoch = prevEpoch !== epoch
       if (newEpoch) {
-        const x = getX(i)
+        const x = scaleX(i)
         ctx.beginPath()
         ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
         ctx.lineWidth = 0.5
@@ -234,8 +234,8 @@ function useCanvasUpdate(logs: TrainingLog[], metric: keyof TrainingLog) {
     logs.forEach((log, i) => {
       const value = log[metric]
       if (typeof value !== "number") return
-      const x = getX(i)
-      const y = height - (value / maxVal) * height
+      const x = scaleX(i)
+      const y = scaleY(value)
       positions.current.push([x, y])
       if (i === 0) {
         ctx.moveTo(x, y) // Move to the first point

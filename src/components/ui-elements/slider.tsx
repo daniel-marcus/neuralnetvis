@@ -91,7 +91,7 @@ export const Slider = ({
         </span>
       </div>
       {!!showValue && ( // maybe use input?
-        <div className="flex-none w-[2.5em] text-right">
+        <div className="flex-none w-[var(--slider-value-width)] text-right">
           {transform?.(currVal) ?? currVal}
         </div>
       )}
