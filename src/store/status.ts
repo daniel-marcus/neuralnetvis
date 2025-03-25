@@ -9,6 +9,7 @@ interface Status {
   text: TableProps | ReactNode
   percent: undefined | number | null
   fullscreen?: boolean
+  permanent?: boolean
   duration?: number // display time in seconds
   timer?: NodeJS.Timeout
 }
@@ -34,13 +35,14 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
     stack: [],
     update: (text, percent, opts = {}) => {
       const id = opts.id ?? uid()
-      const duration = (opts.duration ?? DEFAULT_DURATION) * 1000
-      let timer: NodeJS.Timeout | undefined
       if (opts.id) get().status.clearTimer(id)
-      if (typeof percent !== "number" || (percent === 1 && !opts.id)) {
-        timer = setTimeout(() => {
-          get().status.clear(id)
-        }, duration)
+      const duration = (opts.duration ?? DEFAULT_DURATION) * 1000
+      const expires =
+        !opts.permanent &&
+        (typeof percent !== "number" || (percent === 1 && !opts.id))
+      let timer: NodeJS.Timeout | undefined
+      if (expires) {
+        timer = setTimeout(() => get().status.clear(id), duration)
       }
       const newStatus = { ...opts, id, text, percent, timer }
       set(({ status }) => ({

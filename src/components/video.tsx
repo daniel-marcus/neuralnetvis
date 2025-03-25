@@ -10,17 +10,9 @@ export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
   const stream = useSceneStore((s) => s.stream)
-  const isRecording = useSceneStore((s) => s.isRecording)
   useCanvasUpdate()
   return (
     <>
-      <div
-        className={`absolute z-20 top-0 left-0 w-full h-full ${
-          isRecording
-            ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
-            : ""
-        } transition-all duration-300 pointer-events-none`}
-      />
       <video
         ref={videoRef}
         className={`absolute top-[50%] -translate-y-1/2 scale-x-[-1] left-0 w-full pointer-events-none opacity-0 contrast-200 grayscale-100 ${

@@ -2,9 +2,11 @@ import { useRef, useEffect } from "react"
 
 interface ScatterPlotProps {
   data: { x: number; y: number }[]
+  xLegend?: string
+  yLegend?: string
 }
 
-export function ScatterPlot({ data }: ScatterPlotProps) {
+export function ScatterPlot({ data, xLegend, yLegend }: ScatterPlotProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
@@ -36,8 +38,8 @@ export function ScatterPlot({ data }: ScatterPlotProps) {
     const scaleY = (y: number) => (1 - y / xMax) * plotHeight + paddingY
 
     // axes
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
-    ctx.lineWidth = 0.3
+    ctx.strokeStyle = "rgb(140, 146, 164)"
+    ctx.lineWidth = 0.5
     ctx.beginPath()
     ctx.moveTo(0, 0)
     ctx.lineTo(0, height - paddingY)
@@ -54,7 +56,7 @@ export function ScatterPlot({ data }: ScatterPlotProps) {
     })
 
     // diagonal line
-    ctx.strokeStyle = "rgba(255,20,100, 1)"
+    ctx.strokeStyle = "rgb(255,20,100)"
     ctx.lineWidth = 2
     ctx.setLineDash([5, 3])
     ctx.beginPath()
@@ -63,8 +65,21 @@ export function ScatterPlot({ data }: ScatterPlotProps) {
     ctx.stroke()
   }, [data])
   return (
-    <div ref={wrapperRef} className="w-[220px] h-[220px] mt-4 mx-auto">
-      <canvas ref={canvasRef} className="aspect-square" />
+    <div
+      ref={wrapperRef}
+      className="relative w-[300px] h-[300px] md:w-[420px] md:h-[420px] aspect-square mt-4 mb-8 mx-auto"
+    >
+      <canvas ref={canvasRef} />
+      {xLegend && (
+        <div className="absolute bottom-[-1.25em] w-full text-center">
+          {xLegend}
+        </div>
+      )}
+      {yLegend && (
+        <div className="absolute top-[calc(50%-1rem)] left-[-1.25em] -rotate-90 -translate-x-1/2 origin-center text-center">
+          {yLegend}
+        </div>
+      )}
     </div>
   )
 }

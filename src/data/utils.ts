@@ -99,7 +99,6 @@ export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {
     const residualSumSquares = yTrue.sub(yPred).pow(2).sum()
     const totalSumSquares = yTrue.sub(yTrueMean).pow(2).sum()
     const result = tf.scalar(1).sub(residualSumSquares.div(totalSumSquares))
-    console.log({ yTrueMean, residualSumSquares, totalSumSquares, result })
     return result.dataSync()[0]
   })
 }

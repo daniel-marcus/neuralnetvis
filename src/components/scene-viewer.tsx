@@ -15,6 +15,7 @@ import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { Map } from "./map"
 import { ExtLink } from "./ui-elements/buttons"
+import { BlurMask, useHasFullscreenStatus } from "./status-bar"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -46,6 +47,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {dsDef?.hasMap && <Map />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
+      <BlurMask />
       <Scene {...props} />
       {(section === "play" || !isActive) && (
         <SceneOverlay
@@ -74,14 +76,21 @@ function SceneViewerInner(props: SceneViewerProps) {
   )
 }
 
-const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => (
-  <div className="max-w-[300px] mb-4 pointer-events-auto">
-    <p>{ds.description}</p>
-    <p>
-      <ExtLink href={ds.aboutUrl}>See Details</ExtLink>
-    </p>
-  </div>
-)
+const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => {
+  const hasFullscreenStatus = useHasFullscreenStatus()
+  return (
+    <div
+      className={`max-w-[300px] mb-4 ${
+        hasFullscreenStatus ? "hidden md:block" : "pointer-events-auto"
+      }`}
+    >
+      <p>{ds.description}</p>
+      <p>
+        <ExtLink href={ds.aboutUrl}>See Details</ExtLink>
+      </p>
+    </div>
+  )
+}
 
 type SceneOverlayProps = {
   children?: React.ReactNode
@@ -163,7 +172,7 @@ function SampleName() {
     <div
       className={`absolute top-0 w-full h-full p-4 pointer-events-none flex items-end justify-end pb-24 ${
         isActive ? "pb-30 sm:items-center sm:justify-start sm:pb-4" : ""
-      }`}
+      } transition-opacity duration-200`}
     >
       <div
         className={`text-right ${

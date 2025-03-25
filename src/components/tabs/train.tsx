@@ -164,9 +164,10 @@ function useEvaluate() {
     if (!ds || !model) return
 
     const { loss, accuracy } = await getModelEvaluation()
+    const lossName = typeof model.loss === "string" ? `(${model.loss})` : ""
     let data = {
       "Test samples": ds.test.totalSamples,
-      Loss: loss?.toFixed(3),
+      [`Loss ${lossName}`]: loss?.toFixed(3),
       Accuracy: accuracy?.toFixed(3),
     } as Record<string, string | number>
 
@@ -182,19 +183,25 @@ function useEvaluate() {
           x: actual,
           y: predicted,
         }))
-        scatterPlot = <ScatterPlot data={points} />
+        scatterPlot = (
+          <ScatterPlot data={points} xLegend="actual" yLegend="predicted" />
+        )
       }
     }
 
     const table = <Table data={data} />
     const status = (
       <>
-        {table}
         {scatterPlot}
+        {table}
       </>
     )
 
-    setStatus(status, null, { id: "model-evaluation", duration: 10 })
+    setStatus(status, null, {
+      id: "model-evaluation",
+      permanent: true,
+      fullscreen: true,
+    })
   }
   return evaluate
 }

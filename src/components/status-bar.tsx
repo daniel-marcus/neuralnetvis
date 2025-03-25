@@ -7,7 +7,7 @@ import { Table } from "./ui-elements"
 export const StatusBar = () => {
   return (
     <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none">
-      <div className="p-main -mb-1 relative">
+      <div className="-mb-1 relative">
         <div className="flex justify-between items-end relative">
           <NeuronStatus />
           <Status />
@@ -31,14 +31,14 @@ const Status = () => {
   )
   const keptText = useRef<ReactNode>("")
   useEffect(() => {
-    if (parsedText !== null) {
+    if (parsedText !== null && !status?.fullscreen) {
       keptText.current = parsedText
     }
-  }, [parsedText])
+  }, [parsedText, status])
   const onClick = status ? () => clearStatus(status.id) : undefined
   return (
     <div
-      className={`${
+      className={`p-main rounded-box ${
         status?.fullscreen
           ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center pointer-events-none"
           : "absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto"
@@ -49,12 +49,32 @@ const Status = () => {
       } transition ease-in-out text-right`}
     >
       <div
-        className={status?.fullscreen ? "p-4 pointer-events-auto" : ""}
+        className={status?.fullscreen ? "pointer-events-auto" : ""}
         onClick={onClick}
       >
         {parsedText || keptText.current}
       </div>
     </div>
+  )
+}
+
+export function useHasFullscreenStatus() {
+  const status = useGlobalStore((s) => s.status.getCurrent())
+  return !!status?.fullscreen
+}
+
+export function BlurMask() {
+  const status = useGlobalStore((s) => s.status.getCurrent())
+  const hasFullscreenStatus = useHasFullscreenStatus()
+  return (
+    <div
+      className={`absolute z-20 top-0 left-0 w-full h-full ${
+        hasFullscreenStatus
+          ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100 pointer-events-auto cursor-pointer"
+          : "pointer-events-none"
+      } transition-all duration-300 `}
+      onClick={status ? () => clearStatus(status.id) : undefined}
+    />
   )
 }
 

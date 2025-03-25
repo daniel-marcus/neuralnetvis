@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { useGlobalStore, isDebug, setStatus, getThree } from "@/store"
+import { useGlobalStore, isDebug, setStatus, getThree, getScene } from "@/store"
 import { getAvailableBackends } from "@/model/tf-backend"
 import { useKeyCommand } from "./key-command"
 
@@ -41,8 +41,9 @@ function showStats() {
   setStatus({ data })
 
   const appState = useGlobalStore.getState()
+  const scene = getScene().getState()
   const glInfo = gl?.info
   const tfEngine = tf.engine()
   const tfVars = tfEngine.state.registeredVariables
-  console.log({ appState, glInfo, tfEngine, tfVars })
+  console.log({ appState, scene, glInfo, tfEngine, tfVars })
 }

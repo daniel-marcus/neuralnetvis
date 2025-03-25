@@ -16,6 +16,7 @@ import { useHasLesson } from "./lesson"
 import { Logo } from "./logo"
 import { rootTabs, playTabs, type Tab } from "@/components/tabs"
 import { usePathname } from "next/navigation"
+import { useHasFullscreenStatus } from "./status-bar"
 
 export const Header = () => {
   const currTab = useGlobalStore((s) => s.tab)
@@ -25,6 +26,7 @@ export const Header = () => {
   const hasLesson = useHasLesson()
   const [showGradient, setShowGradient] = useState(false)
   const isPlayMode = useIsPlayMode()
+  const hasFullscreenStatus = useHasFullscreenStatus()
   return (
     <div //
       className={`${
@@ -66,7 +68,7 @@ export const Header = () => {
             >
               <div
                 className={`${
-                  isShown
+                  isShown && !hasFullscreenStatus
                     ? ""
                     : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
                 } transition-transform duration-300 ease-in-out max-h-[calc(100dvh-var(--header-height))] overflow-y-auto`}

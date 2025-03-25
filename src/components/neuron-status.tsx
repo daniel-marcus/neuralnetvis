@@ -24,7 +24,7 @@ export const NeuronStatus = () => {
   if (!selected || (hasLesson && visLocked)) return <div />
   return (
     <div
-      className={`flex gap-4 items-end sm:flex-col ${
+      className={`p-main flex gap-4 items-end sm:flex-col ${
         hasStatus ? "hidden sm:flex" : ""
       } pointer-events-auto`}
       onClick={handleClick}

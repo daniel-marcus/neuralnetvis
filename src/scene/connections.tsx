@@ -98,9 +98,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const lineActivationThreshold = useSceneStore(
     (s) => s.vis.lineActivationThreshold
   )
-  if (isRegression) return null
-  if (isConvOrMaxPool) return null
-  if (!showLines) return null
+  if (isRegression || isConvOrMaxPool || !showLines) return null
 
   const connections = getConnections(
     layer,
@@ -127,7 +125,7 @@ function getConnections(
   for (const neuron of layer.neurons) {
     const { weights, normalizedActivation: activation = 0 } = neuron
     if (!weights || !neuron.inputNeurons?.length) continue
-    if (activation < lineActivationThreshold) continue
+    if (Math.abs(activation) < lineActivationThreshold) continue
 
     for (const [index, weight] of weights.entries()) {
       const prevNeuron = prevNeurons[index]
