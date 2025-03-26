@@ -1,5 +1,6 @@
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
+import { createViewSlice, ViewSlice } from "./view"
 import { createDataSlice, DataSlice } from "./data"
 import { createStatusSlice, StatusSlice } from "./status"
 import { createModelSlice, ModelSlice } from "./model"
@@ -10,22 +11,17 @@ import { createContext, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
-type View = "model" | "plot" | "map"
-
-export type SceneState = DataSlice &
+export type SceneState = ViewSlice &
+  DataSlice &
   VideoSlice &
   ModelSlice &
   TrainingSlice &
   NeuronsSlice &
-  VisSlice & {
-    isActive: boolean
-    view: View
-    setView: (view: View) => void
-    toggleView: () => void
-  }
+  VisSlice
 
 const createSceneStore = (initProps?: Partial<SceneState>) => {
   return createStore<SceneState>()((...a) => ({
+    ...createViewSlice(...a),
     ...createDataSlice(...a),
     ...createVideoSlice(...a),
     ...createModelSlice(...a),
@@ -33,17 +29,6 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
     ...createNeuronsSlice(...a),
     ...createVisSlice(...a),
     ...initProps,
-    isActive: false,
-    view: "model",
-    setView: (view) => {
-      const set = a[0]
-      set({ view })
-    },
-    toggleView: () => {
-      // togglePlotView
-      const set = a[0]
-      set((s) => ({ view: s.view === "model" ? "plot" : "model" }))
-    },
   }))
 }
 
@@ -73,7 +58,11 @@ export function SceneStoreProvider({
     storeRef.current?.setState({ isActive: true })
     return () => {
       useGlobalStore.getState().setScene(dummySceneStore)
-      storeRef.current?.setState({ isActive: false })
+      storeRef.current?.setState({
+        isActive: false,
+        view: "model",
+        viewSubset: "train",
+      })
     }
   }, [isActive])
   return (

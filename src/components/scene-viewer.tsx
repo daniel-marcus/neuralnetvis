@@ -9,7 +9,7 @@ import { SampleSlider } from "./sample-slider"
 import { useTraining } from "@/model"
 import { useInitialState } from "@/utils/initial-state"
 import { TileDef } from "./tile-grid"
-import { InlineButton } from "./ui-elements"
+import { InlineButton, Select } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
@@ -65,7 +65,7 @@ function SceneViewerInner(props: SceneViewerProps) {
               {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
               <SceneBtns>
                 <LoadFullBtn />
-                <ToggleViewBtn />
+                <ViewBtns />
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
             </>
@@ -161,14 +161,16 @@ function LoadFullBtn() {
   )
 }
 
-function ToggleViewBtn() {
-  // const isRegression = useSceneStore((s) => s.isRegression())
+function ViewBtns() {
+  const isRegression = useSceneStore((s) => s.isRegression())
   const view = useSceneStore((s) => s.view)
   const setView = useSceneStore((s) => s.setView)
-  const togglePlotView = useSceneStore((s) => s.toggleView)
+  const togglePlotView = () =>
+    view === "plot" ? setView("model") : setView("plot")
   const hasMap = useSceneStore((s) => !!s.ds?.mapProps)
   const toggleMapView = () =>
     view === "map" ? setView("model") : setView("map")
+  if (!isRegression) return null // TODO: plot view for classification (confusion matrix)
   return (
     <>
       {view !== "map" && (
@@ -181,7 +183,27 @@ function ToggleViewBtn() {
           {view === "map" ? "show model" : "show map"}
         </InlineButton>
       )}
+      <ViewSubsetSelect />
     </>
+  )
+}
+
+function ViewSubsetSelect() {
+  const ds = useSceneStore((s) => s.ds)
+  const viewSubset = useSceneStore((s) => s.viewSubset)
+  const setViewSubset = useSceneStore((s) => s.setViewSubset)
+  if (!ds) return null
+  const subsets = (["train", "test"] as const).filter(
+    (s) => ds[s].totalSamples > 0
+  )
+  if (subsets.length < 2) return null
+  return (
+    <Select
+      options={subsets.map((s) => ({ value: s, label: s }))}
+      value={viewSubset}
+      onChange={(val: string) => setViewSubset(val as "train" | "test")}
+      className="pointer-events-auto"
+    />
   )
 }
 

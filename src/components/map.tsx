@@ -14,7 +14,6 @@ import { useEffect, useMemo, useState } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { scaleNormalize } from "@/data/utils"
 import { getColorVals, NEG_BASE, POS_BASE } from "@/neuron-layers/colors"
-import { useKeyCommand } from "@/utils/key-command"
 import { getDbDataAsTensors } from "@/data/dataset"
 import {
   LinearInterpolator,
@@ -28,11 +27,9 @@ const PLOT_HEIGHT = PLOT_WIDTH
 
 export const Map = () => {
   const view = useSceneStore((s) => s.view)
-  const toggleView = useSceneStore((s) => s.toggleView)
   const isPlotView = view === "plot"
   const isMapView = view === "map"
   const isActive = useSceneStore((s) => s.isActive)
-  useKeyCommand("g", toggleView, isActive)
 
   const viewStateProps = useViewState()
   const layers = useLayers()
@@ -121,7 +118,7 @@ function useLayers() {
             : [d.lon, d.lat],
         getRadius: () =>
           isPlotView && points
-            ? Math.max(Math.floor((PLOT_WIDTH / points.length) * 3), 1)
+            ? Math.max(Math.floor(PLOT_WIDTH / points.length), 1)
             : 0.5,
         getFillColor: (d: Point) =>
           isPlotView
@@ -361,6 +358,7 @@ function usePoints() {
   const [points, setPoints] = useState<Point[] | null>(null)
   const [minY, setMinY] = useState<number>(0)
   const ds = useSceneStore((s) => s.ds)
+  const viewSubset = useSceneStore((s) => s.viewSubset)
   const model = useSceneStore((s) => s.model)
   const batchCount = useSceneStore((s) => s.batchCount)
   useEffect(() => {
@@ -368,7 +366,7 @@ function usePoints() {
     async function getAllSamples() {
       if (!model || !ds) return
 
-      const data = await getDbDataAsTensors(ds, "train", undefined, true)
+      const data = await getDbDataAsTensors(ds, viewSubset, undefined, true)
       if (!data) return
       const { X, y, XRaw } = data
 
@@ -416,6 +414,6 @@ function usePoints() {
       }
     }
     getAllSamples()
-  }, [batchCount, ds, model, backendReady])
+  }, [viewSubset, batchCount, ds, model, backendReady])
   return [points, minY] as const
 }

@@ -8,7 +8,7 @@ export const autoMpg: DatasetDef = {
   name: "Auto MPG",
   task: "regression",
   description: "Predict fuel efficiency",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-03-26"),
   aboutUrl: "https://archive.ics.uci.edu/dataset/9/auto+mpg",
   inputDims: [9],
   inputLabels: [
@@ -39,7 +39,9 @@ async function loadData() {
   const xTrainNames = await fetch("/data/auto-mpg/x_train_names.json").then(
     (r) => r.json()
   )
-  console.log({ xTrainNames })
+  const xTestNames = await fetch("/data/auto-mpg/x_test_names.json").then((r) =>
+    r.json()
+  )
   const [xTrainScaled, xTestScaled] = tf.tidy(() => {
     const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
     const scaler = new StandardScaler()
@@ -57,5 +59,6 @@ async function loadData() {
     xTestRaw: xTest,
     yTest,
     xTrainNames,
+    xTestNames,
   }
 }

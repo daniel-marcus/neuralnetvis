@@ -1,4 +1,4 @@
-import { StateCreator } from "zustand"
+import type { StateCreator } from "zustand"
 import type { TrainingConfig } from "@/model"
 import type { History } from "@tensorflow/tfjs"
 import {

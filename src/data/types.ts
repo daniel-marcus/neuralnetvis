@@ -82,6 +82,7 @@ type DatasetLoader = () => Promise<{
   xTrainRaw?: ParsedLike
   xTestRaw?: ParsedLike
   xTrainNames?: string[]
+  xTestNames?: string[]
 }>
 
 export interface ParsedLike {

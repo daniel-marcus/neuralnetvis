@@ -10,16 +10,17 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)
   const setSample = useSceneStore((s) => s.setSample)
+  const viewSubset = useSceneStore((s) => s.viewSubset)
 
   useEffect(() => {
     if (!backendReady) return
     async function loadSample() {
       if (!ds || typeof sampleIdx === "undefined" || isNaN(sampleIdx)) return
-      const rawSample = await getSample(ds, "train", sampleIdx)
+      const rawSample = await getSample(ds, viewSubset, sampleIdx)
       setSample(rawSample)
     }
     loadSample()
-  }, [ds, sampleIdx, setSample, backendReady])
+  }, [ds, sampleIdx, setSample, backendReady, viewSubset])
 
   useEffect(() => {
     return () => {

@@ -112,10 +112,19 @@ export async function loadAndSaveDsData(
 ) {
   const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
-    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw, xTrainNames } =
-      await load()
+    const {
+      xTrain,
+      yTrain,
+      xTest,
+      yTest,
+      xTrainRaw,
+      xTestRaw,
+      xTrainNames,
+      xTestNames,
+    } = await load()
     await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw, xTrainNames)
-    if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw)
+    if (xTest && yTest)
+      await saveData(dsDef, "test", xTest, yTest, xTestRaw, xTestNames)
   }
   const dsMeta = dsDefToDsMeta(dsDef, isPreview)
   const newMeta = { index: "dsMeta", ...dsMeta }

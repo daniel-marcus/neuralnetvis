@@ -9,7 +9,8 @@ export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
   const visIsLocked = useSceneStore((s) => s.vis.isLocked)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
-  const totalSamples = useSceneStore((s) => s.totalSamples())
+  const viewSubset = useSceneStore((s) => s.viewSubset)
+  const totalSamples = useSceneStore((s) => s.totalSamples(viewSubset))
   const hasStream = useSceneStore((s) => !!s.stream)
   return (
     <div

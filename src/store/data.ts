@@ -10,7 +10,7 @@ export interface DataSlice {
   ds?: Dataset
   setDs: (ds?: Dataset) => void
   updateMeta: (storeName: "train" | "test", meta: StoreMeta) => void
-  totalSamples: () => number
+  totalSamples: (subset?: "train" | "test") => number
   isRegression: () => boolean
 
   sampleIdx: number | undefined
@@ -44,7 +44,7 @@ export const createDataSlice: StateCreator<
     const newDs = { ...ds, [storeName]: meta }
     set({ ds: newDs, skipModelCreate: true })
   },
-  totalSamples: () => get().ds?.train.totalSamples ?? 0,
+  totalSamples: (subset = "train") => get().ds?.[subset].totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
 
   sampleIdx: undefined,

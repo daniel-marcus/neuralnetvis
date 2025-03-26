@@ -26,7 +26,7 @@ export const Select = ({
   noArrow,
 }: SelectProps) => {
   return (
-    <div className="relative flex-1">
+    <div className="relative">
       <select
         value={value}
         ref={ref}
