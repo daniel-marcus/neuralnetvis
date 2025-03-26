@@ -24,7 +24,7 @@ export function useActivationStats(model?: tf.LayersModel, ds?: Dataset) {
       if (ds.task !== "regression") return
       const data = await getDbDataAsTensors(ds, "train")
       if (!data) return
-      const [X] = data
+      const { X } = data
       const statsTensors = tf.tidy(() =>
         getLayerActivations(model, X).map((la) => {
           const min = la.min(0)
@@ -44,7 +44,7 @@ export function useActivationStats(model?: tf.LayersModel, ds?: Dataset) {
       } catch {
         console.log("error")
       } finally {
-        data.forEach((t) => t.dispose())
+        Object.values(data).forEach((t) => t?.dispose())
       }
     }
     getActivationStats()

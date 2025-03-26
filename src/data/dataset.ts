@@ -215,7 +215,8 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
 export async function getDbDataAsTensors(
   ds: Dataset,
   type: "train" | "test",
-  range?: IDBKeyRange
+  range?: IDBKeyRange,
+  returnRaw?: boolean
 ) {
   const batches = await getAll<DbBatch>(ds.key, type, range)
   if (!batches.length) return
@@ -223,12 +224,15 @@ export async function getDbDataAsTensors(
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
     const shapeX = [-1, ...ds.inputDims] // -1 for unknown batch size
-    const XRaw = tf.concat(xBatchTensors).reshape(shapeX)
-    const X = ds.preprocess?.(XRaw) ?? XRaw
+    const _X = tf.concat(xBatchTensors).reshape(shapeX)
+    const X = ds.preprocess?.(_X) ?? _X
     const yArr = batches.flatMap((b) => Array.from(b.ys))
     const y = isClassification
       ? tf.oneHot(yArr, ds.outputLabels.length)
       : tf.tensor(yArr)
-    return [X, y] as const
+    const XRaw = batches.find((b) => !!b.xsRaw)
+      ? tf.concat(batches.map((b) => tf.tensor(b.xsRaw!))).reshape(shapeX)
+      : undefined
+    return returnRaw ? { X, y, XRaw } : { X, y }
   })
 }

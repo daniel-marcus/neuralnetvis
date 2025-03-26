@@ -20,7 +20,7 @@ export interface DatasetMeta {
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
   hasCam?: boolean
-  hasMap?: boolean
+  mapProps?: DsMapProps
   loaded: "preview" | "full" // will be set by ds loader
 }
 
@@ -41,6 +41,12 @@ export type Dataset = DatasetMeta & {
   storeBatchSize: number
   train: StoreMeta
   test: StoreMeta
+}
+
+interface DsMapProps {
+  center: [number, number]
+  zoom: number
+  baseLayer?: GeoJSON.FeatureCollection | GeoJSON.GeometryCollection
 }
 
 export interface StoreMeta {

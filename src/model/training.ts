@@ -161,12 +161,11 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   if (!lazyLoading) {
     const trainData = await getDbDataAsTensors(ds, "train")
     if (!trainData) return
-    const [X, y] = trainData
+    const { X, y } = trainData
     const trainingPromise = model.fit(X, y, options)
     useGlobalStore.getState().scene.setState({ trainingPromise })
     history = await trainingPromise.then(() => {
-      X.dispose()
-      y.dispose()
+      Object.values(trainData).forEach((t) => t?.dispose())
     })
   } else {
     // with fitDataset / lazyLoading
@@ -199,13 +198,14 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
       batchesPerEpoch,
-      validationData,
+      validationData: validationData
+        ? [validationData.X, validationData.y]
+        : undefined,
     })
 
     useGlobalStore.getState().scene.setState({ trainingPromise })
     history = await trainingPromise?.then(() => {
-      validationData?.[0].dispose()
-      validationData?.[1].dispose()
+      Object.values(validationData ?? {}).forEach((t) => t?.dispose())
     })
   }
   return history
@@ -242,7 +242,7 @@ export async function getModelEvaluation() {
   const model = getModel()
   const testData = await getTestData()
   if (!model || !testData) return { loss: undefined, accuracy: undefined }
-  const [X, y] = testData
+  const { X, y } = testData
 
   await tf.ready()
   const result = model.evaluate(X, y, { batchSize: 64 })
@@ -255,8 +255,7 @@ export async function getModelEvaluation() {
     console.warn(e)
     return { loss: undefined, accuracy: undefined }
   } finally {
-    X.dispose()
-    y.dispose()
+    Object.values(testData).forEach((t) => t?.dispose())
     lossT.dispose()
     accuracyT?.dispose()
   }
@@ -266,7 +265,7 @@ export async function getTestPredictions() {
   const model = getModel()
   const testData = await getTestData()
   if (!model || !testData) return
-  const [X, y] = testData
+  const { X, y } = testData
   try {
     return tf.tidy(() => {
       const yTrueArr = y.arraySync() as number[]
@@ -278,7 +277,6 @@ export async function getTestPredictions() {
       return { predictions, rSquared }
     })
   } finally {
-    X.dispose()
-    y.dispose()
+    Object.values(testData).forEach((t) => t?.dispose())
   }
 }

@@ -10,14 +10,19 @@ import { createContext, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
-//
+type View = "model" | "plot"
 
 export type SceneState = DataSlice &
   VideoSlice &
   ModelSlice &
   TrainingSlice &
   NeuronsSlice &
-  VisSlice & { isActive: boolean }
+  VisSlice & {
+    isActive: boolean
+    view: View
+    setView: (view: View) => void
+    toggleView: () => void
+  }
 
 const createSceneStore = (initProps?: Partial<SceneState>) => {
   return createStore<SceneState>()((...a) => ({
@@ -29,6 +34,15 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
     ...createVisSlice(...a),
     ...initProps,
     isActive: false,
+    view: "model",
+    setView: (view) => {
+      const set = a[0]
+      set({ view })
+    },
+    toggleView: () => {
+      const set = a[0]
+      set((s) => ({ view: s.view === "model" ? "plot" : "model" }))
+    },
   }))
 }
 

@@ -11,6 +11,9 @@ importers:
       '@deck.gl/core':
         specifier: ^9.1.8
         version: 9.1.8
+      '@deck.gl/extensions':
+        specifier: ^9.1.8
+        version: 9.1.8(@deck.gl/core@9.1.8)(@luma.gl/core@9.1.5)(@luma.gl/engine@9.1.5(@luma.gl/core@9.1.5)(@luma.gl/shadertools@9.1.5(@luma.gl/core@9.1.5)))
       '@deck.gl/layers':
         specifier: ^9.1.8
         version: 9.1.8(@deck.gl/core@9.1.8)(@loaders.gl/core@4.3.3)(@luma.gl/core@9.1.5)(@luma.gl/engine@9.1.5(@luma.gl/core@9.1.5)(@luma.gl/shadertools@9.1.5(@luma.gl/core@9.1.5)))
@@ -255,6 +258,13 @@ packages:
 
   '@deck.gl/core@9.1.8':
     resolution: {integrity: sha512-0TVbplCikn9dyWYQcIOxk+9y7PhmJ1pVxp80Yr61nZKwEemTsv6ru07eIuGual6EOsnNP7cJd0SRtfiMYD0UWg==}
+
+  '@deck.gl/extensions@9.1.8':
+    resolution: {integrity: sha512-kOAmIALZkxCfGAIwO9r1s5+I0YEr3gSryUbFaxsBrXpWcnkkeKlkJWQsC3F+6rjYAdHff/4SMvRrUKNN5Dd+0w==}
+    peerDependencies:
+      '@deck.gl/core': ^9.1.0
+      '@luma.gl/core': ^9.1.5
+      '@luma.gl/engine': ^9.1.5
 
   '@deck.gl/layers@9.1.8':
     resolution: {integrity: sha512-vhqdimu98iPhF5Q8PClOtQQQ3BJFIhRayLqwmByg2S9r0uHednbsoyKGCPnEbZY+fqnbXqKc0ruVftUhUog7Fw==}
@@ -3456,6 +3466,15 @@ snapshots:
       '@types/offscreencanvas': 2019.7.3
       gl-matrix: 3.4.3
       mjolnir.js: 3.0.0
+
+  '@deck.gl/extensions@9.1.8(@deck.gl/core@9.1.8)(@luma.gl/core@9.1.5)(@luma.gl/engine@9.1.5(@luma.gl/core@9.1.5)(@luma.gl/shadertools@9.1.5(@luma.gl/core@9.1.5)))':
+    dependencies:
+      '@deck.gl/core': 9.1.8
+      '@luma.gl/constants': 9.1.5
+      '@luma.gl/core': 9.1.5
+      '@luma.gl/engine': 9.1.5(@luma.gl/core@9.1.5)(@luma.gl/shadertools@9.1.5(@luma.gl/core@9.1.5))
+      '@luma.gl/shadertools': 9.1.5(@luma.gl/core@9.1.5)
+      '@math.gl/core': 4.1.0
 
   '@deck.gl/layers@9.1.8(@deck.gl/core@9.1.8)(@loaders.gl/core@4.3.3)(@luma.gl/core@9.1.5)(@luma.gl/engine@9.1.5(@luma.gl/core@9.1.5)(@luma.gl/shadertools@9.1.5(@luma.gl/core@9.1.5)))':
     dependencies:

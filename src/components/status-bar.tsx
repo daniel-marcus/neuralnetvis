@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, ReactNode, useMemo } from "react"
-import { clearStatus, useGlobalStore } from "@/store"
+import { clearStatus, useCurrScene, useGlobalStore } from "@/store"
 import { NeuronStatus } from "./neuron-status"
 import { ProgressBar } from "./progress-bar"
 import { Table } from "./ui-elements"
@@ -58,22 +58,24 @@ const Status = () => {
   )
 }
 
-export function useHasFullscreenStatus() {
+export function useHasBlur() {
   const status = useGlobalStore((s) => s.status.getCurrent())
-  return !!status?.fullscreen
+  const isPlotView = useCurrScene((s) => s.view === "plot")
+  return !!status?.fullscreen || isPlotView
 }
 
 export function BlurMask() {
   const status = useGlobalStore((s) => s.status.getCurrent())
-  const hasFullscreenStatus = useHasFullscreenStatus()
+  const hasBlur = useHasBlur()
+  const toggleView = useCurrScene((s) => s.toggleView)
   return (
     <div
       className={`absolute z-20 top-0 left-0 w-full h-full ${
-        hasFullscreenStatus
+        hasBlur
           ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100 pointer-events-auto cursor-pointer"
           : "pointer-events-none"
       } transition-all duration-300 `}
-      onClick={status ? () => clearStatus(status.id) : undefined}
+      onClick={status?.fullscreen ? () => clearStatus(status.id) : toggleView}
     />
   )
 }

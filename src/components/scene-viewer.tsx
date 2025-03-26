@@ -15,7 +15,7 @@ import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { Map } from "./map"
 import { ExtLink } from "./ui-elements/buttons"
-import { BlurMask, useHasFullscreenStatus } from "./status-bar"
+import { BlurMask, useHasBlur } from "./status-bar"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -44,7 +44,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const title = section === "play" && dsDef ? dsDef.name : props.title
   return (
     <>
-      {dsDef?.hasMap && <Map />}
+      {dsDef?.task === "regression" && <Map />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <BlurMask />
@@ -65,6 +65,7 @@ function SceneViewerInner(props: SceneViewerProps) {
               {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
               <SceneBtns>
                 <LoadFullBtn />
+                <ToggleViewBtn />
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
             </>
@@ -77,11 +78,11 @@ function SceneViewerInner(props: SceneViewerProps) {
 }
 
 const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => {
-  const hasFullscreenStatus = useHasFullscreenStatus()
+  const hasBlur = useHasBlur()
   return (
     <div
       className={`max-w-[300px] mb-4 ${
-        hasFullscreenStatus ? "hidden md:block" : "pointer-events-auto"
+        hasBlur ? "hidden md:block" : "pointer-events-auto"
       }`}
     >
       <p>{ds.description}</p>
@@ -157,6 +158,18 @@ function LoadFullBtn() {
         load full
       </InlineButton>
     </>
+  )
+}
+
+function ToggleViewBtn() {
+  const isRegression = useSceneStore((s) => s.isRegression())
+  const view = useSceneStore((s) => s.view)
+  const toggleView = useSceneStore((s) => s.toggleView)
+  if (!isRegression) return null
+  return (
+    <InlineButton onClick={toggleView} className="pointer-events-auto">
+      {view === "model" ? "show plot" : "show model"}
+    </InlineButton>
   )
 }
 

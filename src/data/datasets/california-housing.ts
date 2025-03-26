@@ -1,6 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import california from "@/data/datasets/california.json"
 import type { DatasetDef } from "@/data/types"
 
 export const californiaHousing: DatasetDef = {
@@ -22,7 +23,11 @@ export const californiaHousing: DatasetDef = {
     "median_income",
   ],
   outputLabels: ["median_house_value"],
-  hasMap: true,
+  mapProps: {
+    center: [-120.5, 37.5],
+    zoom: 5.8,
+    baseLayer: california as GeoJSON.GeometryCollection,
+  },
   loadPreview: loadData,
 }
 
