@@ -408,9 +408,3 @@ function usePoints() {
   }, [batchCount, ds, model, backendReady])
   return [points, minY] as const
 }
-
-/* how much is the latitude stretched at a given latitude
-function getMercatorDistortion(latitudeDeg: number): number {
-  const phi = (latitudeDeg * Math.PI) / 180 // Convert to radians
-  return 1 / Math.cos(phi)
-} */
