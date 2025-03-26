@@ -1,5 +1,5 @@
 import { AsciiText } from "@/components/ui-elements/ascii-text"
-import { useIsPlayMode } from "./header"
+import { useIsPlayMode } from "./tab-menu"
 
 export const Logo = () => {
   const isPlayMode = useIsPlayMode()
