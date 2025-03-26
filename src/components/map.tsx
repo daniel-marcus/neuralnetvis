@@ -62,19 +62,17 @@ export const Map = () => {
     return points[sampleIdx]
   }, [points, sampleIdx])
 
-  const _center = mapProps?.center ?? [0, 0]
-  const center = lngLatToScreen(_center, _center)
-
   const baseLayer = useMemo(() => {
     if (!mapProps?.baseLayer) return
-    return projectGeoJSON(mapProps.baseLayer, mapProps.center)
+    return projectGeoJSON(mapProps.baseLayer, mapProps.center, mapProps.zoom)
   }, [mapProps])
 
   const layers = [
     new GeoJsonLayer({
       id: "geojson-layer",
+      visible: !isPlotView,
       data: baseLayer ?? [],
-      stroked: isPlotView ? false : true,
+      stroked: true,
       filled: false,
       getLineWidth: 0.5,
       getLineColor: [55, 60, 75],
@@ -88,10 +86,7 @@ export const Map = () => {
       lineWidthMinPixels: 1,
       getPosition: (d: Point) =>
         isPlotView
-          ? [
-              center[0] + (d.yNorm - 0.5) * PLOT_WIDTH,
-              center[1] - (d.yPredNorm - 0.5) * PLOT_HEIGHT,
-            ]
+          ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
           : [d.lon, d.lat],
       getRadius: () =>
         isPlotView && points
@@ -116,57 +111,22 @@ export const Map = () => {
     }),
     new PathLayer({
       id: "coordinate-axes",
-      data: isPlotView
-        ? [
-            {
-              // x-axis
-              sourcePosition: [
-                center[0] - PLOT_WIDTH / 2,
-                center[1] + PLOT_HEIGHT / 2,
-              ],
-              targetPosition: [
-                center[0] + PLOT_WIDTH / 2,
-                center[1] + PLOT_HEIGHT / 2,
-              ],
-            },
-            {
-              // y-axis
-              sourcePosition: [
-                center[0] - PLOT_WIDTH / 2,
-                center[1] + PLOT_HEIGHT / 2,
-              ],
-              targetPosition: [
-                center[0] - PLOT_WIDTH / 2,
-                center[1] - PLOT_HEIGHT / 2,
-              ],
-            },
-          ]
-        : [],
-      getPath: (d) => [d.sourcePosition, d.targetPosition],
+      visible: isPlotView,
+      data: [
+        [xyToPlot([0, 0]), xyToPlot([1, 0])],
+        [xyToPlot([0, 0]), xyToPlot([0, 1])],
+      ],
+      getPath: (d) => d,
       getColor: [140, 146, 164],
       getWidth: 0.25,
     }),
     new PathLayer({
       id: "middle-line",
       visible: isPlotView,
-      data: [
-        {
-          // middle line
-          sourcePosition: [
-            // bottom left
-            center[0] + (minY - 0.5) * PLOT_WIDTH,
-            center[1] - (minY - 0.5) * PLOT_HEIGHT,
-          ],
-          targetPosition: [
-            // top right
-            center[0] + PLOT_WIDTH / 2,
-            center[1] - PLOT_HEIGHT / 2,
-          ],
-        },
-      ],
-      getPath: (d) => [d.sourcePosition, d.targetPosition],
+      data: [[xyToPlot([minY, minY]), xyToPlot([1, 1])]],
+      getPath: (d) => d,
       getColor: [255, 20, 100], // [200, 255, 90], //
-      getWidth: 2,
+      getWidth: 1.4,
       extensions: [pathStyleExtension],
       getDashArray: [5, 3],
     }),
@@ -176,42 +136,67 @@ export const Map = () => {
       data: [
         {
           label: "actual",
-          coordinates: [center[0], center[1] + PLOT_HEIGHT / 2 + 10],
+          pos: xyToPlot([0.5, 0]),
+          offset: [0, 16],
         },
         {
           label: "predicted",
-          coordinates: [center[0] - PLOT_WIDTH / 2 - 10, center[1]],
+          pos: xyToPlot([0, 0.5]),
           angle: 90,
+          offset: [-16, 0],
         },
       ],
       getText: (d) => d.label,
-      getPosition: (d) => d.coordinates,
+      getPosition: (d) => d.pos,
+      getPixelOffset: (d) => d.offset,
       getAngle: (d) => d.angle ?? 0,
       getColor: [140, 146, 164],
       fontFamily: "Menlo-Regular, Menlo",
       getSize: 16,
     }),
-    !!mapProps &&
-      new IconLayer<Point>({
-        id: "active-point-layer",
-        data: activePoint && !isPlotView ? [activePoint] : [],
-        getPosition: (d: Point) => [d.lon, d.lat],
-        getIcon: () => "marker",
-        getSize: 40,
-        getColor: [140, 146, 164], // text color
-        opacity: 0.5,
-        iconAtlas: "/images/icon-atlas.png",
-        iconMapping,
-      }),
-  ].filter(Boolean)
+    new IconLayer<Point>({
+      id: "active-point-layer",
+      visible: !!mapProps && !isPlotView,
+      data: activePoint ? [activePoint] : [],
+      getPosition: (d: Point) => [d.lon, d.lat],
+      getIcon: () => "marker",
+      getSize: 40,
+      getColor: [140, 146, 164], // text color
+      opacity: 0.5,
+      iconAtlas: "/images/icon-atlas.png",
+      iconMapping,
+    }),
+  ]
 
+  const viewStateProps = useViewState()
+
+  return (
+    <div
+      className={`absolute ${
+        isActive
+          ? isPlotView
+            ? "z-30"
+            : "md:translate-x-[25vw]"
+          : "grayscale-25 opacity-75"
+      } transition-all duration-[var(--tile-duration)] pointer-events-none w-[100vw] h-[100dvh]`}
+    >
+      <DeckGL
+        layers={layers}
+        views={new OrthographicView()}
+        {...viewStateProps}
+      />
+    </div>
+  )
+}
+
+function useViewState() {
   const [viewState, setViewState] = useState<OrthographicViewState>({
-    target: [...center, 0],
+    target: [0, 0, 0],
     zoom: 0,
   })
   useEffect(() => {
     function onResize() {
-      const DESKTOP_ZOOM = 1
+      const DESKTOP_ZOOM = 0.5
       const MOBILE_ZOOM = 0
       if (window.innerWidth > 640)
         setViewState((s) => ({ ...s, zoom: DESKTOP_ZOOM }))
@@ -219,58 +204,49 @@ export const Map = () => {
     }
     onResize()
     window.addEventListener("resize", onResize)
-    return () => {
-      window.removeEventListener("resize", onResize)
-    }
+    return () => window.removeEventListener("resize", onResize)
   }, [])
+  const onViewStateChange = (e: { viewState: OrthographicViewState }) =>
+    setViewState(e.viewState)
+  return { viewState, onViewStateChange }
+}
 
-  return (
-    <div
-      className={`absolute ${
-        isActive
-          ? `${
-              isPlotView
-                ? "z-30"
-                : "md:translate-x-[25vw] grayscale-25 opacity-75 sm:grayscale-0 sm:opacity-100 "
-            }`
-          : "grayscale-25 opacity-75"
-      } transition-all duration-[var(--tile-duration)] pointer-events-none w-[100vw] h-[100dvh]`}
-    >
-      <DeckGL
-        layers={layers}
-        views={new OrthographicView()}
-        viewState={viewState}
-        onViewStateChange={(e) => {
-          setViewState(e.viewState as OrthographicViewState)
-        }}
-      />
-    </div>
-  )
+function xyToPlot([x, y]: [number, number], center = [0, 0]): [number, number] {
+  // x, y are normalized values (0-1)
+  return [
+    center[0] + (x - 0.5) * PLOT_WIDTH,
+    center[1] - (y - 0.5) * PLOT_HEIGHT,
+  ]
 }
 
 function lngLatToScreen(
   lngLat: [number, number],
-  center: [number, number]
+  centerLngLat: [number, number],
+  zoom: number
 ): [number, number] {
+  // returns x, y as carthesian coordinates relative to center
+  const WIDTH = 300
+  const HEIGHT = 300
   const viewport = new WebMercatorViewport({
-    width: 600,
-    height: 600,
-    longitude: center[0],
-    latitude: center[1],
-    zoom: 4.8, // ?
+    width: WIDTH,
+    height: HEIGHT,
+    longitude: centerLngLat[0],
+    latitude: centerLngLat[1],
+    zoom,
   })
   const [x, y] = viewport.project(lngLat)
-  return [x, y]
+  return [x - WIDTH / 2, y - HEIGHT / 2]
 }
 
 type InputGeoJSON = GeoJSON.GeometryCollection | GeoJSON.FeatureCollection
 
 function projectGeoJSON(
   input: InputGeoJSON,
-  center: [number, number]
+  center: [number, number],
+  zoom: number
 ): InputGeoJSON {
   const projectCoordinate = (coord: GeoJSON.Position): GeoJSON.Position => {
-    const [x, y] = lngLatToScreen([coord[0], coord[1]], center)
+    const [x, y] = lngLatToScreen([coord[0], coord[1]], center, zoom)
     return [x, y]
   }
 
@@ -379,21 +355,22 @@ function usePoints() {
             .div(yMax)
             .arraySync() as number[]
 
-          const points =
-            Array.from({ length: yScaled.length }).map((_, i) => {
-              const c = (coords?.[i] as [number, number]) ?? [0, 0]
-              return {
-                lon: ds.mapProps
-                  ? lngLatToScreen(c, ds.mapProps.center)[0] ?? 0
-                  : 0,
-                lat: ds.mapProps
-                  ? lngLatToScreen(c, ds.mapProps.center)[1] ?? 0
-                  : 0,
-                y: yScaled[i],
-                yNorm: yNorm[i],
-                yPredNorm: yPredNorm[i],
-              }
-            }) ?? []
+          const projectCoords = (coords: [number, number]) =>
+            ds.mapProps
+              ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom)
+              : coords
+
+          const points = Array.from({ length: yScaled.length }).map((_, i) => {
+            const c = (coords?.[i] as [number, number]) ?? [0, 0]
+            const [lon, lat] = projectCoords(c)
+            return {
+              lon,
+              lat,
+              y: yScaled[i],
+              yNorm: yNorm[i],
+              yPredNorm: yPredNorm[i],
+            }
+          })
           return [points, minY]
         })
         setMinY(minY)

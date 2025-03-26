@@ -24,8 +24,8 @@ export const californiaHousing: DatasetDef = {
   ],
   outputLabels: ["median_house_value"],
   mapProps: {
-    center: [-120.5, 37.5],
-    zoom: 5.8,
+    center: [-120.5, 37],
+    zoom: 5.4,
     baseLayer: california as GeoJSON.GeometryCollection,
   },
   loadPreview: loadData,
