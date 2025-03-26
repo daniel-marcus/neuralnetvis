@@ -17,15 +17,49 @@ import { getColorVals, NEG_BASE, POS_BASE } from "@/neuron-layers/colors"
 import { useKeyCommand } from "@/utils/key-command"
 import { getDbDataAsTensors } from "@/data/dataset"
 import {
+  LinearInterpolator,
   OrthographicView,
   OrthographicViewState,
   WebMercatorViewport,
 } from "@deck.gl/core"
 
-const pathStyleExtension = new PathStyleExtension({ dash: true })
-
 const PLOT_WIDTH = 300
 const PLOT_HEIGHT = PLOT_WIDTH
+
+export const Map = () => {
+  const view = useSceneStore((s) => s.view)
+  const toggleView = useSceneStore((s) => s.toggleView)
+  const isPlotView = view === "plot"
+  const isMapView = view === "map"
+  const isActive = useSceneStore((s) => s.isActive)
+  useKeyCommand("g", toggleView, isActive)
+
+  const viewStateProps = useViewState()
+  const layers = useLayers()
+
+  return (
+    <div
+      className={`absolute pointer-events-none ${
+        isActive
+          ? isPlotView
+            ? "z-30"
+            : isMapView
+            ? "pointer-events-auto!"
+            : "md:translate-x-[25vw]"
+          : "grayscale-25 opacity-75"
+      } transition-all duration-[var(--tile-duration)] w-[100vw] h-[100dvh]`}
+    >
+      <DeckGL
+        layers={layers}
+        views={new OrthographicView()}
+        controller
+        {...viewStateProps}
+      />
+    </div>
+  )
+}
+
+const pathStyleExtension = new PathStyleExtension({ dash: true })
 
 interface Point {
   lon: number
@@ -46,13 +80,9 @@ const iconMapping = {
   },
 }
 
-export const Map = () => {
+function useLayers() {
   const view = useSceneStore((s) => s.view)
-  const toggleView = useSceneStore((s) => s.toggleView)
   const isPlotView = view === "plot"
-  const isActive = useSceneStore((s) => s.isActive)
-  useKeyCommand("g", toggleView, isActive)
-
   const mapProps = useSceneStore((s) => s.ds?.mapProps)
 
   const [points, minY] = usePoints()
@@ -67,140 +97,144 @@ export const Map = () => {
     return projectGeoJSON(mapProps.baseLayer, mapProps.center, mapProps.zoom)
   }, [mapProps])
 
-  const layers = [
-    new GeoJsonLayer({
-      id: "geojson-layer",
-      visible: !isPlotView,
-      data: baseLayer ?? [],
-      stroked: true,
-      filled: false,
-      getLineWidth: 0.5,
-      getLineColor: [55, 60, 75],
-    }),
-    new ScatterplotLayer<Point>({
-      id: "scatterplot-layer",
-      data: !mapProps && !isPlotView ? [] : points ?? [],
-      opacity: 1,
-      stroked: false,
-      filled: true,
-      lineWidthMinPixels: 1,
-      getPosition: (d: Point) =>
-        isPlotView
-          ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
-          : [d.lon, d.lat],
-      getRadius: () =>
-        isPlotView && points
-          ? Math.max(Math.floor((PLOT_WIDTH / points.length) * 3), 1)
-          : 0.5,
-      getFillColor: (d: Point) =>
-        isPlotView
-          ? [200, 255, 90]
-          : d.y >= 0
-          ? getColorVals(d.y, POS_BASE)
-          : getColorVals(-d.y, NEG_BASE),
-      updateTriggers: {
-        getRadius: [isPlotView],
-        getPosition: [isPlotView],
-        getFillColor: [isPlotView],
-      },
-      transitions: {
-        getRadius: 500,
-        getPosition: 500,
-        getFillColor: 500,
-      },
-    }),
-    new PathLayer({
-      id: "coordinate-axes",
-      visible: isPlotView,
-      data: [
-        [xyToPlot([0, 0]), xyToPlot([1, 0])],
-        [xyToPlot([0, 0]), xyToPlot([0, 1])],
-      ],
-      getPath: (d) => d,
-      getColor: [140, 146, 164],
-      getWidth: 0.25,
-    }),
-    new PathLayer({
-      id: "middle-line",
-      visible: isPlotView,
-      data: [[xyToPlot([minY, minY]), xyToPlot([1, 1])]],
-      getPath: (d) => d,
-      getColor: [255, 20, 100], // [200, 255, 90], //
-      getWidth: 1.4,
-      extensions: [pathStyleExtension],
-      getDashArray: [5, 3],
-    }),
-    new TextLayer({
-      id: "axes-labels",
-      visible: isPlotView,
-      data: [
-        {
-          label: "actual",
-          pos: xyToPlot([0.5, 0]),
-          offset: [0, 16],
+  const layers = useMemo(
+    () => [
+      new GeoJsonLayer({
+        id: "geojson-layer",
+        visible: !isPlotView,
+        data: baseLayer ?? [],
+        stroked: true,
+        filled: false,
+        getLineWidth: 0.5,
+        getLineColor: [55, 60, 75],
+      }),
+      new ScatterplotLayer<Point>({
+        id: "scatterplot-layer",
+        data: !mapProps && !isPlotView ? [] : points ?? [],
+        opacity: 1,
+        stroked: false,
+        filled: true,
+        lineWidthMinPixels: 1,
+        getPosition: (d: Point) =>
+          isPlotView
+            ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
+            : [d.lon, d.lat],
+        getRadius: () =>
+          isPlotView && points
+            ? Math.max(Math.floor((PLOT_WIDTH / points.length) * 3), 1)
+            : 0.5,
+        getFillColor: (d: Point) =>
+          isPlotView
+            ? [200, 255, 90]
+            : d.y >= 0
+            ? getColorVals(d.y, POS_BASE)
+            : getColorVals(-d.y, NEG_BASE),
+        updateTriggers: {
+          getRadius: [isPlotView],
+          getPosition: [isPlotView],
+          getFillColor: [isPlotView],
         },
-        {
-          label: "predicted",
-          pos: xyToPlot([0, 0.5]),
-          angle: 90,
-          offset: [-16, 0],
+        transitions: {
+          getRadius: 500,
+          getPosition: 500,
+          getFillColor: 500,
         },
-      ],
-      getText: (d) => d.label,
-      getPosition: (d) => d.pos,
-      getPixelOffset: (d) => d.offset,
-      getAngle: (d) => d.angle ?? 0,
-      getColor: [140, 146, 164],
-      fontFamily: "Menlo-Regular, Menlo",
-      getSize: 16,
-    }),
-    new IconLayer<Point>({
-      id: "active-point-layer",
-      visible: !!mapProps && !isPlotView,
-      data: activePoint ? [activePoint] : [],
-      getPosition: (d: Point) => [d.lon, d.lat],
-      getIcon: () => "marker",
-      getSize: 40,
-      getColor: [140, 146, 164], // text color
-      opacity: 0.5,
-      iconAtlas: "/images/icon-atlas.png",
-      iconMapping,
-    }),
-  ]
-
-  const viewStateProps = useViewState()
-
-  return (
-    <div
-      className={`absolute ${
-        isActive
-          ? isPlotView
-            ? "z-30"
-            : "md:translate-x-[25vw]"
-          : "grayscale-25 opacity-75"
-      } transition-all duration-[var(--tile-duration)] pointer-events-none w-[100vw] h-[100dvh]`}
-    >
-      <DeckGL
-        layers={layers}
-        views={new OrthographicView()}
-        {...viewStateProps}
-      />
-    </div>
+      }),
+      new PathLayer({
+        id: "coordinate-axes",
+        visible: isPlotView,
+        data: [
+          [xyToPlot([0, 0]), xyToPlot([1, 0])],
+          [xyToPlot([0, 0]), xyToPlot([0, 1])],
+        ],
+        getPath: (d) => d,
+        getColor: [140, 146, 164],
+        getWidth: 0.25,
+      }),
+      new PathLayer({
+        id: "middle-line",
+        visible: isPlotView,
+        data: [[xyToPlot([minY, minY]), xyToPlot([1, 1])]],
+        getPath: (d) => d,
+        getColor: [255, 20, 100], // [200, 255, 90], //
+        getWidth: 1.4,
+        extensions: [pathStyleExtension],
+        getDashArray: [5, 3],
+      }),
+      new TextLayer({
+        id: "axes-labels",
+        visible: isPlotView,
+        data: [
+          {
+            label: "actual",
+            pos: xyToPlot([0.5, 0]),
+            offset: [0, 16],
+          },
+          {
+            label: "predicted",
+            pos: xyToPlot([0, 0.5]),
+            angle: 90,
+            offset: [-16, 0],
+          },
+        ],
+        getText: (d) => d.label,
+        getPosition: (d) => d.pos,
+        getPixelOffset: (d) => d.offset,
+        getAngle: (d) => d.angle ?? 0,
+        getColor: [140, 146, 164],
+        fontFamily: "Menlo-Regular, Menlo",
+        getSize: 16,
+      }),
+      new IconLayer<Point>({
+        id: "active-point-layer",
+        visible: !!mapProps && !isPlotView,
+        data: activePoint ? [activePoint] : [],
+        getPosition: (d: Point) => [d.lon, d.lat],
+        getIcon: () => "marker",
+        getSize: 40,
+        getColor: [140, 146, 164], // text color
+        opacity: 0.5,
+        iconAtlas: "/images/icon-atlas.png",
+        iconMapping,
+      }),
+    ],
+    [activePoint, isPlotView, mapProps, points, minY, baseLayer]
   )
+
+  return layers
 }
 
+const DEFAULT_VIEW: OrthographicViewState = {
+  target: [0, 0, 0],
+  zoom: 0,
+}
+const DESKTOP_ZOOM = 0.5
+const MOBILE_ZOOM = 0
+function getZoom() {
+  return window.innerWidth > 640 ? DESKTOP_ZOOM : MOBILE_ZOOM
+}
+
+const orthographicInterpolator = new LinearInterpolator({
+  transitionProps: ["target", "zoom"],
+})
+
 function useViewState() {
-  const [viewState, setViewState] = useState<OrthographicViewState>({
-    target: [0, 0, 0],
-    zoom: 0,
-  })
+  const [viewState, setViewState] = useState(DEFAULT_VIEW)
+
+  const view = useSceneStore((s) => s.view)
+  useEffect(() => {
+    if (view !== "map")
+      setViewState({
+        ...DEFAULT_VIEW,
+        zoom: getZoom(),
+        transitionDuration: 500,
+        transitionInterpolator: orthographicInterpolator,
+      })
+  }, [view])
+
   useEffect(() => {
     function onResize() {
-      const DESKTOP_ZOOM = 0.5
-      const MOBILE_ZOOM = 0
-      if (window.innerWidth > 640)
-        setViewState((s) => ({ ...s, zoom: DESKTOP_ZOOM }))
-      else setViewState((s) => ({ ...s, zoom: MOBILE_ZOOM }))
+      setViewState((s) => ({ ...s, zoom: getZoom() }))
     }
     onResize()
     window.addEventListener("resize", onResize)

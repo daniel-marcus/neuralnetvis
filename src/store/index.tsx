@@ -10,7 +10,7 @@ import { createContext, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
-type View = "model" | "plot"
+type View = "model" | "plot" | "map"
 
 export type SceneState = DataSlice &
   VideoSlice &
@@ -40,6 +40,7 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
       set({ view })
     },
     toggleView: () => {
+      // togglePlotView
       const set = a[0]
       set((s) => ({ view: s.view === "model" ? "plot" : "model" }))
     },

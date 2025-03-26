@@ -162,14 +162,26 @@ function LoadFullBtn() {
 }
 
 function ToggleViewBtn() {
-  const isRegression = useSceneStore((s) => s.isRegression())
+  // const isRegression = useSceneStore((s) => s.isRegression())
   const view = useSceneStore((s) => s.view)
-  const toggleView = useSceneStore((s) => s.toggleView)
-  if (!isRegression) return null
+  const setView = useSceneStore((s) => s.setView)
+  const togglePlotView = useSceneStore((s) => s.toggleView)
+  const hasMap = useSceneStore((s) => !!s.ds?.mapProps)
+  const toggleMapView = () =>
+    view === "map" ? setView("model") : setView("map")
   return (
-    <InlineButton onClick={toggleView} className="pointer-events-auto">
-      {view === "model" ? "show plot" : "show model"}
-    </InlineButton>
+    <>
+      {view !== "map" && (
+        <InlineButton onClick={togglePlotView} className="pointer-events-auto">
+          {view === "model" ? "show plot" : "show model"}
+        </InlineButton>
+      )}
+      {hasMap && view !== "plot" && (
+        <InlineButton onClick={toggleMapView}>
+          {view === "map" ? "show model" : "show map"}
+        </InlineButton>
+      )}
+    </>
   )
 }
 

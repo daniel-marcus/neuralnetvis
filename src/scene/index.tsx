@@ -19,6 +19,7 @@ interface SceneProps {
 export const Scene = (props: SceneProps) => {
   const { isActive } = props
   const isLocked = useSceneStore((s) => s.vis.isLocked)
+  const isMapView = useSceneStore((s) => s.view === "map")
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <Canvas
@@ -26,7 +27,9 @@ export const Scene = (props: SceneProps) => {
       // resize={{ debounce: 0 }}
       className={`absolute! w-screen! h-[100vh]! select-none ${
         isActive ? "" : "touch-pinch-zoom! touch-pan-y!"
-      } ${isLocked && !isDebug ? "pointer-events-none!" : ""}`}
+      } ${(isLocked || isMapView) && !isDebug ? "pointer-events-none!" : ""} ${
+        isMapView ? "opacity-0" : ""
+      } transition-opacity duration-300`}
     >
       <SceneInner {...props} />
     </Canvas>
