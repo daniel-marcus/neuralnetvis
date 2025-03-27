@@ -6,11 +6,12 @@ import {
   getModelEvaluation,
   getTestPredictions,
 } from "@/model/training"
+import { LogsPlot } from "@/components/datavis/logs-plot"
+import { ScatterPlot } from "@/components/datavis/scatter-plot"
 
-const { Box, InlineButton, Slider, InputRow, InputRowsWrapper, Checkbox } =
+const { InlineButton, Slider, InputRow, InputRowsWrapper, Checkbox } =
   Components
-const { Collapsible, CollapsibleWithTitle, Arrow } = Components
-const { LogsPlot, Table, ScatterPlot } = Components
+const { Box, Collapsible, CollapsibleWithTitle, Arrow, Table } = Components
 
 export const Train = () => {
   const isTraining = useCurrScene((s) => s.isTraining)

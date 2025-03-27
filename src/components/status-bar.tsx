@@ -60,22 +60,19 @@ const Status = () => {
 
 export function useHasBlur() {
   const status = useGlobalStore((s) => s.status.getCurrent())
-  const isPlotView = useCurrScene((s) => s.view === "plot")
-  return !!status?.fullscreen || isPlotView
+  const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
+  return !!status?.fullscreen || isEvaluationView
 }
 
 export function BlurMask() {
-  const status = useGlobalStore((s) => s.status.getCurrent())
   const hasBlur = useHasBlur()
-  const toggleView = useCurrScene((s) => s.toggleView)
   return (
     <div
       className={`absolute z-20 top-0 left-0 w-full h-full ${
         hasBlur
-          ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100 pointer-events-auto cursor-pointer"
+          ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
           : "pointer-events-none"
       } transition-all duration-300 `}
-      onClick={status?.fullscreen ? () => clearStatus(status.id) : toggleView}
     />
   )
 }

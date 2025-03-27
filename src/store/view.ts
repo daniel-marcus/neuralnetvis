@@ -1,14 +1,14 @@
 import type { StateCreator } from "zustand"
-import { DataSlice } from "./data"
+import { DataSlice, Subset } from "./data"
 
-type View = "model" | "plot" | "map"
+export type View = "model" | "evaluation" | "map"
 
 export interface ViewSlice {
   isActive: boolean
   view: View
   setView: (view: View) => void
-  viewSubset: "train" | "test"
-  setViewSubset: (subset: "train" | "test") => void
+  subset: Subset
+  setSubset: (subset: Subset) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -20,11 +20,10 @@ export const createViewSlice: StateCreator<
   isActive: false,
   view: "model",
   setView: (view) => set({ view }),
-  viewSubset: "train",
-  setViewSubset: (viewSubset) =>
+  subset: "train",
+  setSubset: (subset) =>
     set(({ totalSamples }) => {
-      if (viewSubset === "test" && totalSamples("test") === 0) return {}
-      const newSampleIdx = Math.floor(Math.random() * totalSamples(viewSubset))
-      return { viewSubset, sampleIdx: newSampleIdx }
+      const newSampleIdx = Math.floor(Math.random() * totalSamples(subset))
+      return { subset, sampleIdx: newSampleIdx }
     }),
 })

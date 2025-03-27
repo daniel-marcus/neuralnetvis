@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useCurrScene, useSceneStore } from "@/store"
 import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
-import { getHighlightColor } from "./colors"
+import { getHighlightColor } from "../utils/colors"
 import type { LayerStateful, Nid } from "./types"
 import { updateGroups } from "./layers-stateful"
 

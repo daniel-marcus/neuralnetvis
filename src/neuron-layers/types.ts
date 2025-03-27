@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
 import type { RefObject } from "react"
 import type { MeshParams } from "@/neuron-layers/layout"
-import { ColorObj } from "./colors"
+import { ColorObj } from "../utils/colors"
 
 // Types for Layers
 

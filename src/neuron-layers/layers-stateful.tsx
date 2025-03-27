@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react"
 import { useSceneStore } from "@/store"
-import { getNeuronColor, getPredictionQualityColor } from "./colors"
+import { getNeuronColor, getPredictionQualityColor } from "../utils/colors"
 import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
 import type { Sample } from "@/data"

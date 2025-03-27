@@ -13,7 +13,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useEffect, useMemo, useState } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { scaleNormalize } from "@/data/utils"
-import { getColorVals, NEG_BASE, POS_BASE } from "@/neuron-layers/colors"
+import { getColorVals, NEG_BASE, POS_BASE } from "@/utils/colors"
 import { getDbDataAsTensors } from "@/data/dataset"
 import {
   LinearInterpolator,
@@ -25,9 +25,9 @@ import {
 const PLOT_WIDTH = 300
 const PLOT_HEIGHT = PLOT_WIDTH
 
-export const Map = () => {
+export const MapPlot = () => {
   const view = useSceneStore((s) => s.view)
-  const isPlotView = view === "plot"
+  const isEvaluationView = view === "evaluation"
   const isMapView = view === "map"
   const isActive = useSceneStore((s) => s.isActive)
 
@@ -38,7 +38,7 @@ export const Map = () => {
     <div
       className={`absolute pointer-events-none ${
         isActive
-          ? isPlotView
+          ? isEvaluationView
             ? "z-30"
             : isMapView
             ? "pointer-events-auto!"
@@ -79,7 +79,7 @@ const iconMapping = {
 
 function useLayers() {
   const view = useSceneStore((s) => s.view)
-  const isPlotView = view === "plot"
+  const isEvaluationView = view === "evaluation"
   const mapProps = useSceneStore((s) => s.ds?.mapProps)
 
   const [points, minY] = usePoints()
@@ -94,11 +94,13 @@ function useLayers() {
     return projectGeoJSON(mapProps.baseLayer, mapProps.center, mapProps.zoom)
   }, [mapProps])
 
+  const subset = useSceneStore((s) => s.subset)
+
   const layers = useMemo(
     () => [
       new GeoJsonLayer({
         id: "geojson-layer",
-        visible: !isPlotView,
+        visible: !isEvaluationView,
         data: baseLayer ?? [],
         stroked: true,
         filled: false,
@@ -106,30 +108,29 @@ function useLayers() {
         getLineColor: [55, 60, 75],
       }),
       new ScatterplotLayer<Point>({
-        id: "scatterplot-layer",
-        data: !mapProps && !isPlotView ? [] : points ?? [],
-        opacity: 1,
+        id: `scatterplot-layer-${subset}`,
+        data: !mapProps && !isEvaluationView ? [] : points ?? [],
         stroked: false,
         filled: true,
         lineWidthMinPixels: 1,
         getPosition: (d: Point) =>
-          isPlotView
+          isEvaluationView
             ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
             : [d.lon, d.lat],
         getRadius: () =>
-          isPlotView && points
-            ? Math.max(Math.floor(PLOT_WIDTH / points.length), 1)
+          isEvaluationView && points
+            ? Math.max(Math.floor((PLOT_WIDTH / points.length) * 0.8), 1)
             : 0.5,
         getFillColor: (d: Point) =>
-          isPlotView
+          isEvaluationView
             ? [200, 255, 90]
             : d.y >= 0
             ? getColorVals(d.y, POS_BASE)
             : getColorVals(-d.y, NEG_BASE),
         updateTriggers: {
-          getRadius: [isPlotView],
-          getPosition: [isPlotView],
-          getFillColor: [isPlotView],
+          getRadius: [isEvaluationView],
+          getPosition: [isEvaluationView],
+          getFillColor: [isEvaluationView],
         },
         transitions: {
           getRadius: 500,
@@ -139,7 +140,7 @@ function useLayers() {
       }),
       new PathLayer({
         id: "coordinate-axes",
-        visible: isPlotView,
+        visible: isEvaluationView,
         data: [
           [xyToPlot([0, 0]), xyToPlot([1, 0])],
           [xyToPlot([0, 0]), xyToPlot([0, 1])],
@@ -150,7 +151,7 @@ function useLayers() {
       }),
       new PathLayer({
         id: "middle-line",
-        visible: isPlotView,
+        visible: isEvaluationView,
         data: [[xyToPlot([minY, minY]), xyToPlot([1, 1])]],
         getPath: (d) => d,
         getColor: [255, 20, 100], // [200, 255, 90], //
@@ -160,7 +161,7 @@ function useLayers() {
       }),
       new TextLayer({
         id: "axes-labels",
-        visible: isPlotView,
+        visible: isEvaluationView,
         data: [
           {
             label: "actual",
@@ -184,7 +185,7 @@ function useLayers() {
       }),
       new IconLayer<Point>({
         id: "active-point-layer",
-        visible: !!mapProps && !isPlotView,
+        visible: !!mapProps && !isEvaluationView,
         data: activePoint ? [activePoint] : [],
         getPosition: (d: Point) => [d.lon, d.lat],
         getIcon: () => "marker",
@@ -195,7 +196,7 @@ function useLayers() {
         iconMapping,
       }),
     ],
-    [activePoint, isPlotView, mapProps, points, minY, baseLayer]
+    [activePoint, isEvaluationView, mapProps, points, minY, baseLayer, subset]
   )
 
   return layers
@@ -358,15 +359,19 @@ function usePoints() {
   const [points, setPoints] = useState<Point[] | null>(null)
   const [minY, setMinY] = useState<number>(0)
   const ds = useSceneStore((s) => s.ds)
-  const viewSubset = useSceneStore((s) => s.viewSubset)
+  const subset = useSceneStore((s) => s.subset)
   const model = useSceneStore((s) => s.model)
   const batchCount = useSceneStore((s) => s.batchCount)
+  useEffect(() => {
+    setPoints(null)
+    setMinY(0)
+  }, [subset])
   useEffect(() => {
     if (!backendReady) return
     async function getAllSamples() {
       if (!model || !ds) return
 
-      const data = await getDbDataAsTensors(ds, viewSubset, undefined, true)
+      const data = await getDbDataAsTensors(ds, subset, undefined, true)
       if (!data) return
       const { X, y, XRaw } = data
 
@@ -414,6 +419,6 @@ function usePoints() {
       }
     }
     getAllSamples()
-  }, [viewSubset, batchCount, ds, model, backendReady])
+  }, [subset, batchCount, ds, model, backendReady])
   return [points, minY] as const
 }

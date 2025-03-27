@@ -61,7 +61,7 @@ export function SceneStoreProvider({
       storeRef.current?.setState({
         isActive: false,
         view: "model",
-        viewSubset: "train",
+        subset: "train",
       })
     }
   }, [isActive])

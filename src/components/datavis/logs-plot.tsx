@@ -1,7 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Ref } from "react"
-import { InlineButton } from "./buttons"
+import { InlineButton, Table } from "@/components/ui-elements"
 import { useCurrScene } from "@/store"
-import { Table } from "./table"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 

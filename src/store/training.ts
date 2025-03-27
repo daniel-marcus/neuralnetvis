@@ -5,7 +5,7 @@ import {
   isBatchLog,
   type Metric,
   type TrainingLog,
-} from "@/components/ui-elements/logs-plot"
+} from "@/components/datavis/logs-plot"
 
 export interface TrainingSlice {
   trainConfig: TrainingConfig

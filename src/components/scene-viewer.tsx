@@ -13,9 +13,11 @@ import { InlineButton, Select } from "./ui-elements"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
-import { Map } from "./map"
+import { MapPlot } from "./datavis/map-plot"
 import { ExtLink } from "./ui-elements/buttons"
 import { BlurMask, useHasBlur } from "./status-bar"
+import { View } from "@/store/view"
+import { ConfusionMatrix } from "./datavis/confusion-matrix"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -37,6 +39,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const dsDef = useDsDef(isActive && dsKeyFromParams ? dsKeyFromParams : dsKey)
   const ds = useDataset(dsDef, isPreview)
   const model = useModel(ds, isPreview)
+  const view = useSceneStore((s) => s.view)
   useSample(ds, isActive)
   useTraining(model, ds)
   useInitialState(props.initialState)
@@ -44,7 +47,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const title = section === "play" && dsDef ? dsDef.name : props.title
   return (
     <>
-      {dsDef?.task === "regression" && <Map />}
+      {dsDef?.task === "regression" && <MapPlot />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
       <BlurMask />
@@ -65,15 +68,38 @@ function SceneViewerInner(props: SceneViewerProps) {
               {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
               <SceneBtns>
                 <LoadFullBtn />
-                <ViewBtns />
+                <ViewSelect />
+                <ViewSubsetSelect />
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
+              {dsDef?.task === "classification" && view === "evaluation" && (
+                <StatsViewer title="Confusion Matrix">
+                  <ConfusionMatrix />
+                </StatsViewer>
+              )}
             </>
           )}
         </SceneOverlay>
       )}
       {section === "play" && <SampleSlider isActive={isActive} />}
     </>
+  )
+}
+
+function StatsViewer({
+  children,
+  title,
+}: {
+  children?: React.ReactNode
+  title: string
+}) {
+  return (
+    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen">
+      <div className="pointer-events-auto">
+        <div className="my-8 xl:mt-24">{title}</div>
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -103,7 +129,7 @@ const SceneOverlay = ({ children, isActive, className }: SceneOverlayProps) => (
   <div
     className={`absolute z-50 top-0 left-0 h-full pointer-events-none ${
       isActive
-        ? "p-main translate-y-[calc(var(--header-height)-var(--padding-main))]"
+        ? "p-main mt-[calc(var(--header-height)-var(--padding-main))]"
         : "p-4"
     } transition-transform duration-[var(--tile-duration)] flex flex-col gap-4 items-start ${
       className ?? ""
@@ -144,10 +170,10 @@ export const SceneTitle = (props: SceneTitleProps) => {
 
 function LoadFullBtn() {
   const dsLoaded = useSceneStore((s) => !!s.ds)
-  const hasMoreData = useSceneStore((s) => s.ds?.loaded !== "full")
+  const isPreview = useSceneStore((s) => s.ds?.loaded !== "full")
   const shouldLoadFullDs = useSceneStore((s) => s.shouldLoadFullDs)
   const setLoadFull = useSceneStore((s) => s.setLoadFullDs)
-  if (!hasMoreData || shouldLoadFullDs || !dsLoaded) return null
+  if (!isPreview || shouldLoadFullDs || !dsLoaded) return null
   return (
     <>
       <span className="text-accent">PREVIEW</span>
@@ -161,37 +187,31 @@ function LoadFullBtn() {
   )
 }
 
-function ViewBtns() {
-  const isRegression = useSceneStore((s) => s.isRegression())
+const VIEWS = [
+  { value: "model" },
+  { value: "evaluation", label: "evaluation" },
+  { value: "map", cond: (ds?: Dataset) => !!ds?.mapProps },
+]
+
+function ViewSelect() {
   const view = useSceneStore((s) => s.view)
   const setView = useSceneStore((s) => s.setView)
-  const togglePlotView = () =>
-    view === "plot" ? setView("model") : setView("plot")
-  const hasMap = useSceneStore((s) => !!s.ds?.mapProps)
-  const toggleMapView = () =>
-    view === "map" ? setView("model") : setView("map")
-  if (!isRegression) return null // TODO: plot view for classification (confusion matrix)
+  const ds = useSceneStore((s) => s.ds)
+  const views = VIEWS.filter((v) => !v.cond || v.cond(ds))
+  if (views.length < 2) return null
   return (
-    <>
-      {view !== "map" && (
-        <InlineButton onClick={togglePlotView} className="pointer-events-auto">
-          {view === "model" ? "show plot" : "show model"}
-        </InlineButton>
-      )}
-      {hasMap && view !== "plot" && (
-        <InlineButton onClick={toggleMapView}>
-          {view === "map" ? "show model" : "show map"}
-        </InlineButton>
-      )}
-      <ViewSubsetSelect />
-    </>
+    <Select
+      options={views}
+      value={view}
+      onChange={(val) => setView(val as View)}
+    />
   )
 }
 
 function ViewSubsetSelect() {
   const ds = useSceneStore((s) => s.ds)
-  const viewSubset = useSceneStore((s) => s.viewSubset)
-  const setViewSubset = useSceneStore((s) => s.setViewSubset)
+  const subset = useSceneStore((s) => s.subset)
+  const setSubset = useSceneStore((s) => s.setSubset)
   if (!ds) return null
   const subsets = (["train", "test"] as const).filter(
     (s) => ds[s].totalSamples > 0
@@ -200,8 +220,8 @@ function ViewSubsetSelect() {
   return (
     <Select
       options={subsets.map((s) => ({ value: s, label: s }))}
-      value={viewSubset}
-      onChange={(val: string) => setViewSubset(val as "train" | "test")}
+      value={subset}
+      onChange={(val: string) => setSubset(val as "train" | "test")}
       className="pointer-events-auto"
     />
   )

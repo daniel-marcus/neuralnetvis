@@ -16,10 +16,11 @@ export function MyModels() {
   const updateList = useCallback(() => setUpdTrigger((t) => t + 1), [])
   const [showImportForm, setShowImportForm] = useState(false)
   const setStatus = useGlobalStore((s) => s.status.update)
-  const [modelName, setModelName] = useState<string>(model?.name ?? "")
+  const defaultName = useCurrScene((s) => `my_${s.ds?.key ?? ""}_model`)
+  const [modelName, setModelName] = useState<string>(defaultName)
   useEffect(() => {
-    setModelName(model?.name ?? "")
-  }, [model])
+    setModelName(defaultName)
+  }, [defaultName])
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return

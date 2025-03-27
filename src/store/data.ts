@@ -3,14 +3,16 @@ import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"
 import { preprocessSample } from "@/data/sample"
 
+export type Subset = "train" | "test"
+
 export interface DataSlice {
   shouldLoadFullDs?: boolean
   setLoadFullDs: (shouldLoadFullDs: boolean) => void
 
   ds?: Dataset
   setDs: (ds?: Dataset) => void
-  updateMeta: (storeName: "train" | "test", meta: StoreMeta) => void
-  totalSamples: (subset?: "train" | "test") => number
+  updateMeta: (storeName: Subset, meta: StoreMeta) => void
+  totalSamples: (subset?: Subset) => number
   isRegression: () => boolean
 
   sampleIdx: number | undefined
