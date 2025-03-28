@@ -24,14 +24,16 @@ export const ConfusionMatrix = () => {
 
   return (
     <div
-      className="relative grid grid-cols-[auto_1fr] gap-[var(--gap)] text-sm sm:text-base"
+      className="relative grid grid-cols-[auto_1fr] gap-[var(--gap)] text-sm sm:text-base [--label-padding:0.5em] sm:[--label-padding:1em]"
       style={
         {
           "--num-classes": numClasses,
-          "--cell-size": `calc(min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-width))) / (var(--num-classes)))`, // TODO ...
+          "--grid-size":
+            "min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-max-w)))",
+          "--cell-size": `calc(var(--grid-size) / var(--num-classes) - var(--gap))`,
           "--gap": "0.1em",
-          "--label-padding": "1em",
           "--label-width": `calc(${maxChars}ch + 2 * var(--label-padding))`,
+          "--label-max-w": "min(var(--label-width), 5em)",
         } as React.CSSProperties
       }
     >
@@ -83,19 +85,23 @@ function Labels({ labels, position, longLabels }: LabelProps) {
       {labels.map((label, i) => (
         <div
           key={i}
-          className={`text-secondary bg-box-bg px-[var(--label-padding)] flex items-center whitespace-nowrap ${
-            longLabels && orient === "row"
-              ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
+          className={`text-secondary bg-box-bg px-[var(--label-padding)] flex items-center ${
+            longLabels
+              ? orient === "row"
+                ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
+                : "max-w-[var(--label-max-w)] sm:max-w-none"
               : ""
           } ${
             longLabels
               ? position === "left" || position === "bottom"
-                ? "justify-end"
+                ? "sm:justify-end"
                 : "justify-start"
               : "justify-center"
           }`}
         >
-          {label}
+          <div className={longLabels && orient === "column" ? "truncate" : ""}>
+            {label}
+          </div>
         </div>
       ))}
     </div>
