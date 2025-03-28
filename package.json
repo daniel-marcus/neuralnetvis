@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "1.0.0-alpha.49",
+  "version": "1.0.0-alpha.50",
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
   "author": "Daniel Marcus (https://danielmarcus.de)",
@@ -37,8 +37,8 @@
     "lodash.throttle": "^4.1.1",
     "next": "^15.2.4",
     "npyjs": "^0.7.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "react-headroom": "^3.2.1",
     "three": "^0.174.0",
     "three-stdlib": "^2.35.14",
