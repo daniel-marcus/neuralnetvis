@@ -22,7 +22,7 @@ export const CollapsibleWithTitle = ({
   return (
     <div
       className={`${
-        variant === "has-bg" ? "bg-box-bg" : ""
+        variant === "has-bg" ? "bg-box" : ""
       } rounded-box ${className}`}
     >
       {title && (

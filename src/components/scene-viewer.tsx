@@ -73,7 +73,7 @@ function SceneViewerInner(props: SceneViewerProps) {
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
               {dsDef?.task === "classification" && view === "evaluation" && (
-                <StatsViewer title="Confusion Matrix">
+                <StatsViewer>
                   <ConfusionMatrix />
                 </StatsViewer>
               )}
@@ -86,19 +86,10 @@ function SceneViewerInner(props: SceneViewerProps) {
   )
 }
 
-function StatsViewer({
-  children,
-  title,
-}: {
-  children?: React.ReactNode
-  title: string
-}) {
+function StatsViewer({ children }: { children?: React.ReactNode }) {
   return (
-    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen ">
-      <div className="pointer-events-auto">
-        <div className="my-8 xl:mt-24">{title}</div>
-        {children}
-      </div>
+    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center">
+      <div className="pointer-events-auto py-8">{children}</div>
     </div>
   )
 }
@@ -140,7 +131,9 @@ const SceneOverlay = ({ children, isActive, className }: SceneOverlayProps) => (
 )
 
 const SceneBtns = ({ children }: { children?: React.ReactNode }) => (
-  <div className={`flex gap-2 justify-start w-auto pointer-events-auto`}>
+  <div
+    className={`flex gap-2 flex-wrap justify-start w-auto pointer-events-auto`}
+  >
     {children}
   </div>
 )

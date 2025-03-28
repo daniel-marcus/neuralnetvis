@@ -20,26 +20,33 @@ export const ConfusionMatrix = () => {
   const maxChars = labels.reduce((acc, label) => {
     return label.length > acc ? label.length : acc
   }, 0)
-  const longLabels = maxChars > 2
+  const long = maxChars > 2
 
   return (
     <div
-      className="relative grid grid-cols-[auto_1fr] gap-[var(--gap)] text-sm sm:text-base [--label-padding:0.5em] sm:[--label-padding:1em]"
+      className="grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] w-full overflow-hidden"
       style={
         {
           "--num-classes": numClasses,
           "--grid-size":
-            "min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-max-w)))",
+            "min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-height) - var(--gap)))",
           "--cell-size": `calc(var(--grid-size) / var(--num-classes) - var(--gap))`,
-          "--gap": "0.1em",
-          "--label-width": `calc(${maxChars}ch + 2 * var(--label-padding))`,
-          "--label-max-w": "min(var(--label-width), 5em)",
+          "--label-width": long
+            ? `calc(${maxChars}ch + 2 * var(--label-padding))`
+            : "var(--axis-label-height)",
+          "--label-max-w": "min(var(--label-width), 4em)",
+          "--axis-label-height": "1.5em",
         } as React.CSSProperties
       }
     >
-      <div></div>
-      <Labels labels={labels} position="top" longLabels={longLabels} />
-      <Labels labels={labels} position="left" longLabels={longLabels} />
+      <Labels
+        name="actual"
+        labels={labels}
+        position="top"
+        long={long}
+        className="col-start-2"
+      />
+      <Labels name="predicted" labels={labels} position="left" long={long} />
       <div className="aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
         {Array.from({ length }, (_, i) => {
           const rowIdx = Math.floor(i / numClasses)
@@ -66,44 +73,71 @@ export const ConfusionMatrix = () => {
 }
 
 interface LabelProps {
+  name: string
   labels: string[]
   position: "top" | "bottom" | "left" | "right"
-  longLabels?: boolean
+  long?: boolean
+  className?: string
 }
 
-function Labels({ labels, position, longLabels }: LabelProps) {
+function Labels({ name, labels, position, long, className = "" }: LabelProps) {
   const orient = position === "top" || position === "bottom" ? "row" : "column"
   return (
     <div
-      className={`grid gap-[var(--gap)] text-secondary ${
-        orient === "column"
-          ? "h-full grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--cell-size)]"
-          : "w-full grid-cols-[repeat(var(--num-classes),var(--cell-size))] min-h-[max(var(--label-width),var(--cell-size))]"
-      }`}
-      style={{} as React.CSSProperties}
+      className={`flex gap-[var(--gap)] ${
+        position === "top"
+          ? "flex-col"
+          : position === "bottom"
+          ? "flex-col-reverse"
+          : position === "right"
+          ? "flex-row-reverse"
+          : "flex-row"
+      } text-secondary ${className}`}
     >
-      {labels.map((label, i) => (
-        <div
-          key={i}
-          className={`text-secondary bg-box-bg px-[var(--label-padding)] flex items-center ${
-            longLabels
-              ? orient === "row"
-                ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
-                : "max-w-[var(--label-max-w)] sm:max-w-none"
-              : ""
-          } ${
-            longLabels
-              ? position === "left" || position === "bottom"
-                ? "sm:justify-end"
-                : "justify-start"
-              : "justify-center"
-          }`}
-        >
-          <div className={longLabels && orient === "column" ? "truncate" : ""}>
-            {label}
+      <div
+        className={`flex items-center justify-center bg-box-dark ${
+          orient === "column" ? "w-[var(--axis-label-height)]" : ""
+        }`}
+      >
+        <div className={orient === "column" ? "-rotate-90" : ""}>{name}</div>
+      </div>
+      <div
+        className={`grid gap-[var(--gap)] ${
+          orient === "column"
+            ? "h-full grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)] _sm:min-w-[var(--cell-size)]"
+            : `w-full grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
+                long
+                  ? "min-h-[var(--label-width)]"
+                  : "min-h-[var(--axis-label-height)]"
+              }`
+        }`}
+        style={{} as React.CSSProperties}
+      >
+        {labels.map((label, i) => (
+          <div
+            key={i}
+            className={`bg-box-dark ${
+              long ? "px-[var(--label-padding)]" : ""
+            } leading-none flex items-center ${
+              long
+                ? orient === "row"
+                  ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
+                  : "max-w-[var(--label-max-w)] sm:max-w-none"
+                : ""
+            } ${
+              long
+                ? position === "left" || position === "bottom"
+                  ? "sm:justify-end"
+                  : "justify-start"
+                : "justify-center"
+            }`}
+          >
+            <div className={long && orient === "column" ? "truncate" : ""}>
+              {label}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

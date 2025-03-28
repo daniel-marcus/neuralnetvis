@@ -145,7 +145,7 @@ function Tile(props: TileProps) {
             : isActive && !localActive
             ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
             : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
-        } border-2 border-box-bg ${
+        } border-2 border-box ${
           isActive ? "border-transparent!" : "group-hover/tile:border-accent"
         } `}
       >
