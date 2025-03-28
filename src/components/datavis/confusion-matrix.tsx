@@ -20,22 +20,25 @@ export const ConfusionMatrix = () => {
   const maxChars = labels.reduce((acc, label) => {
     return label.length > acc ? label.length : acc
   }, 0)
-  const rotate = maxChars > 2
+  const longLabels = maxChars > 2
 
   return (
     <div
-      className="relative grid grid-cols-[auto_1fr] grid-rows-[auto_auto] sm:gap-[var(--gap-sm)]"
+      className="relative grid grid-cols-[auto_1fr] gap-[var(--gap)] text-sm sm:text-base"
       style={
         {
           "--num-classes": numClasses,
           "--cell-size": `calc(min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-width))) / (var(--num-classes)))`, // TODO ...
-          "--gap-sm": "0.25rem",
-          "--label-width": `calc(${maxChars}ch + 2rem)`,
+          "--gap": "0.1em",
+          "--label-padding": "1em",
+          "--label-width": `calc(${maxChars}ch + 2 * var(--label-padding))`,
         } as React.CSSProperties
       }
     >
-      <Labels labels={labels} orient="column" rotate={rotate} />
-      <div className="aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] sm:gap-[var(--gap-sm)]">
+      <div></div>
+      <Labels labels={labels} position="top" longLabels={longLabels} />
+      <Labels labels={labels} position="left" longLabels={longLabels} />
+      <div className="aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
         {Array.from({ length }, (_, i) => {
           const rowIdx = Math.floor(i / numClasses)
           const colIdx = i % numClasses
@@ -56,22 +59,21 @@ export const ConfusionMatrix = () => {
           )
         })}
       </div>
-      <div></div>
-      <Labels labels={labels} orient="row" rotate={rotate} />
     </div>
   )
 }
 
 interface LabelProps {
   labels: string[]
-  orient: "row" | "column"
-  rotate?: boolean
+  position: "top" | "bottom" | "left" | "right"
+  longLabels?: boolean
 }
 
-function Labels({ labels, orient, rotate }: LabelProps) {
+function Labels({ labels, position, longLabels }: LabelProps) {
+  const orient = position === "top" || position === "bottom" ? "row" : "column"
   return (
     <div
-      className={`grid sm:gap-[var(--gap-sm)] text-secondary ${
+      className={`grid gap-[var(--gap)] text-secondary ${
         orient === "column"
           ? "h-full grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--cell-size)]"
           : "w-full grid-cols-[repeat(var(--num-classes),var(--cell-size))] min-h-[max(var(--label-width),var(--cell-size))]"
@@ -81,12 +83,16 @@ function Labels({ labels, orient, rotate }: LabelProps) {
       {labels.map((label, i) => (
         <div
           key={i}
-          className={`bg-background px-4 flex items-center whitespace-nowrap ${
-            rotate ? "justify-end" : "justify-center"
-          } ${
-            orient === "row" && rotate
+          className={`text-secondary bg-box-bg px-[var(--label-padding)] flex items-center whitespace-nowrap ${
+            longLabels && orient === "row"
               ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
               : ""
+          } ${
+            longLabels
+              ? position === "left" || position === "bottom"
+                ? "justify-end"
+                : "justify-start"
+              : "justify-center"
           }`}
         >
           {label}

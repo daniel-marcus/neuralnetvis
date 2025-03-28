@@ -94,7 +94,7 @@ function StatsViewer({
   title: string
 }) {
   return (
-    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen">
+    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen ">
       <div className="pointer-events-auto">
         <div className="my-8 xl:mt-24">{title}</div>
         {children}
