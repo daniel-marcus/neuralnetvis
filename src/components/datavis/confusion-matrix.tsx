@@ -1,9 +1,9 @@
 import { getDbDataAsTensors } from "@/data/dataset"
-import { clearStatus, setStatus, useSceneStore } from "@/store"
+import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import React, { useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { setBackendIfAvailable } from "@/model/tf-backend"
 import { getHighlightColor } from "@/utils/colors"
+import { setBackendIfAvailable } from "@/model/tf-backend"
 
 const DUMMY_CELL: ConfusionCell = {
   count: undefined,
@@ -13,12 +13,13 @@ const DUMMY_CELL: ConfusionCell = {
 
 export const ConfusionMatrix = () => {
   const labels = useSceneStore((s) => s.ds?.outputLabels ?? [])
-  const cells = useCellValues()
+  const cells = useConfusionCells()
   const numClasses = labels.length
   const length = numClasses * numClasses
 
   const maxChars = labels.reduce((acc, label) => {
-    return label.length > acc ? label.length : acc
+    const length = Array.from(label).length // bc emojis count as 2
+    return length > acc ? length : acc
   }, 0)
   const long = maxChars > 2
 
@@ -111,9 +112,9 @@ export const ConfusionMatrix = () => {
           const isCorrect = rowIdx === colIdx
           const cell = cells[i] ?? DUMMY_CELL
           const backgroundColor = getCellColor(cell.normalized, isCorrect)
-          const isSelected = selected === cell
+          const isSelected = cell !== DUMMY_CELL && selected === cell
           const isHighlighted =
-            hovered === cell ||
+            (cell !== DUMMY_CELL && hovered === cell) ||
             (sel?.groupProp && sel[sel.groupProp] === cell[sel.groupProp])
           return (
             <div
@@ -243,18 +244,19 @@ export interface ConfusionCell {
   groupProp?: "actualClass" | "predictedClass"
 }
 
-function useCellValues() {
-  const [values, setValues] = useState<ConfusionCell[]>([])
+function useConfusionCells() {
+  const [cells, setCells] = useState<ConfusionCell[]>([])
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
+  const backendReady = useGlobalStore((s) => s.backendReady)
 
   useEffect(() => {
     async function getValues() {
-      if (!model || !ds) return
-      const statusId = setStatus("Calculating confusion matrix...", -1)
+      if (!model || !ds || !backendReady) return
+      const statusId = setStatus("Calculating confusion matrix ...", -1)
       const numClasses = ds.outputLabels.length
-      await setBackendIfAvailable("webgl") // wasm doesn't support confusionMatrix
+      await setBackendIfAvailable("webgl")
       const res = await getDbDataAsTensors(ds, subset)
       if (!res) return
       try {
@@ -284,30 +286,30 @@ function useCellValues() {
           return cmValues.map((count, i) => {
             const rowIdx = Math.floor(i / numClasses)
             const colIdx = i % numClasses
+            const sampleIdxs = getSampleIdxs(colIdx, rowIdx)
             return {
               count,
+              sampleIdxs,
               normalized: count / (maxPerCol[colIdx] || Infinity),
-              sampleIdxs: getSampleIdxs(colIdx, rowIdx),
               actualClass: colIdx,
               predictedClass: rowIdx,
             }
           })
         })
-        console.log({ cm })
-        setValues(cm)
+        setCells(cm)
       } catch (e) {
         console.warn(e)
       } finally {
         clearStatus(statusId)
         Object.values(res).forEach((t) => t?.dispose())
-        await setBackendIfAvailable() // reset to default backend
+        setBackendIfAvailable() // reset to default backend
       }
     }
     getValues()
-    return () => setValues([])
-  }, [model, ds, subset])
+    return () => setCells([])
+  }, [model, ds, subset, backendReady])
 
-  return values
+  return cells
 }
 
 function getCellColor(normalized: number, isCorrect: boolean) {

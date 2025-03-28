@@ -95,8 +95,8 @@ function StatsViewer() {
       <div className="py-8">
         <div
           className={`${
-            hasSample ? "-translate-x-full scale-50" : ""
-          } transition-transform duration-500 pointer-events-auto`}
+            hasSample ? "-translate-x-full scale-50 " : ""
+          } origin-left transition-transform duration-500 pointer-events-auto`}
           onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
         >
           <ConfusionMatrix />

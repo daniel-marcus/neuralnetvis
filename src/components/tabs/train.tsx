@@ -7,7 +7,6 @@ import {
   getTestPredictions,
 } from "@/model/training"
 import { LogsPlot } from "@/components/datavis/logs-plot"
-import { ScatterPlot } from "@/components/datavis/scatter-plot"
 
 const { InlineButton, Slider, InputRow, InputRowsWrapper, Checkbox } =
   Components
@@ -161,6 +160,8 @@ function useEvaluate() {
   const isRegression = useCurrScene((s) => s.isRegression())
   const model = useCurrScene((s) => s.model)
   const setStatus = useGlobalStore((s) => s.status.update)
+  const setView = useCurrScene((s) => s.setView)
+  const setSubset = useCurrScene((s) => s.setSubset)
   async function evaluate() {
     if (!ds || !model) return
 
@@ -172,7 +173,6 @@ function useEvaluate() {
       Accuracy: accuracy?.toFixed(3),
     } as Record<string, string | number>
 
-    let scatterPlot: React.JSX.Element | null = null
     if (isRegression) {
       const result = await getTestPredictions()
       if (result) {
@@ -180,28 +180,16 @@ function useEvaluate() {
           ...data,
           "R²": result.rSquared.toFixed(3),
         }
-        const points = result.predictions.map(({ actual, predicted }) => ({
-          x: actual,
-          y: predicted,
-        }))
-        scatterPlot = (
-          <ScatterPlot data={points} xLegend="actual" yLegend="predicted" />
-        )
       }
     }
 
-    const table = <Table data={data} />
-    const status = (
-      <>
-        {scatterPlot}
-        {table}
-      </>
-    )
+    const status = <Table data={data} />
 
+    setView("evaluation")
+    setSubset("test")
     setStatus(status, null, {
       id: "model-evaluation",
-      permanent: true,
-      fullscreen: true,
+      // permanent: true,
     })
   }
   return evaluate

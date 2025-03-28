@@ -27,14 +27,14 @@ export function useTfBackend() {
   return backendReady
 }
 
-export async function setBackendIfAvailable(_backend?: string) {
-  const backend = _backend || DEFAULT_BACKEND
-  if (!getAvailableBackends().includes(backend)) return
-  let success = await tf.setBackend(backend)
-  if (!success) {
-    console.warn(`Failed to set backend: ${backend}`)
-    success = await tf.setBackend(DEFAULT_BACKEND)
-  }
+export async function setBackendIfAvailable(
+  backend = DEFAULT_BACKEND,
+  fallback = DEFAULT_BACKEND
+) {
+  const success = getAvailableBackends().includes(backend)
+    ? await tf.setBackend(backend)
+    : await tf.setBackend(fallback)
+  if (!success) console.warn(`Failed to set backend: ${backend}`)
   return success
 }
 

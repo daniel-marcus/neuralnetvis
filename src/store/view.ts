@@ -22,10 +22,14 @@ export const createViewSlice: StateCreator<
   isActive: false,
   view: "model",
   setView: (view) =>
-    set(({ sampleIdx }) => ({
-      view,
-      sampleIdx: view === "evaluation" ? undefined : sampleIdx,
-    })),
+    set(({ sampleIdx, ds, subset }) => {
+      const hasTestData = !!ds?.test.totalSamples
+      return {
+        view,
+        subset: view === "evaluation" && hasTestData ? "test" : subset,
+        sampleIdx: view === "evaluation" ? undefined : sampleIdx,
+      }
+    }),
   subset: "train",
   setSubset: (subset) =>
     set(({ totalSamples, sampleIdx }) => {

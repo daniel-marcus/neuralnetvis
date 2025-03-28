@@ -1,5 +1,7 @@
 import { useRef, useEffect } from "react"
 
+// deprecated: now using deck.gl
+
 interface ScatterPlotProps {
   data: { x: number; y: number }[]
   xLegend?: string

@@ -1,15 +1,12 @@
 import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import {
-  FilesetResolver,
-  HandLandmarker,
-  NormalizedLandmark,
-} from "@mediapipe/tasks-vision"
+import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
+import { SampleRaw } from "./types"
 
 const HP_TRAIN_CONFIG = {
   batchSize: 4,
@@ -155,54 +152,18 @@ export function useCanvasUpdate() {
     canvasRef.current.height = 960
   }, [canvasRef])
 
-  const updCanvas = useCallback(
-    (landmarks: NormalizedLandmark[][]) => {
-      const canvas = canvasRef?.current
-      if (!canvas) return
-      if (videoRef?.current?.videoWidth) {
-        const dpr = window.devicePixelRatio || 1
-        canvas.width = videoRef.current.videoWidth * dpr
-        canvas.height = videoRef.current.videoHeight * dpr
-      }
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      ctx.save()
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      for (const lm of landmarks) {
-        draw.drawConnectors(ctx, lm, hand.HAND_CONNECTIONS, {
-          color: "rgb(100,20,255)",
-          lineWidth: 5,
-          visibilityMin: -1,
-        })
-        draw.drawLandmarks(ctx, lm, {
-          color: "rgb(255,20,100)",
-          lineWidth: 2,
-          visibilityMin: -1,
-        })
-      }
-      ctx.restore()
-    },
-    [canvasRef, videoRef]
-  )
-
-  const rawX = useSceneStore((s) => s.sample?.rawX)
+  const sample = useSceneStore((s) => s.sample)
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   useEffect(() => {
-    if (!rawX || !inputDims) {
-      updCanvas([])
-      return
+    const canvas = canvasRef?.current
+    if (!canvas) return
+    if (videoRef?.current?.videoWidth) {
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = videoRef.current.videoWidth * dpr
+      canvas.height = videoRef.current.videoHeight * dpr
     }
-    if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
-    const shapedX = tf.tidy(() =>
-      tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
-    ) as number[][][]
-    const landmarks = shapedX.map((lm) =>
-      lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 }))
-    )
-    updCanvas(landmarks)
-  }, [rawX, inputDims, updCanvas])
+    drawHandPoseSampleToCanvas(sample, inputDims, canvas)
+  }, [sample, inputDims, canvasRef, videoRef])
 }
 
 let shouldCancelRecording = false
@@ -303,4 +264,45 @@ function useHpTrainConfig() {
     setTrainConfig(HP_TRAIN_CONFIG)
     setLogsMetric("val_loss")
   }, [setTrainConfig, setLogsMetric])
+}
+
+function sampleToLandmarks(sample?: SampleRaw, inputDims?: number[]) {
+  const rawX = sample?.rawX ?? sample?.X
+  if (!rawX || !inputDims) return
+  if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
+  const shapedX = tf.tidy(() =>
+    tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
+  ) as number[][][]
+  const landmarks = shapedX.map((lm) =>
+    lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 }))
+  )
+  return landmarks
+}
+
+export function drawHandPoseSampleToCanvas(
+  sample?: SampleRaw,
+  inputDims?: number[],
+  canvas?: HTMLCanvasElement
+) {
+  const ctx = canvas?.getContext("2d")
+  if (!canvas || !ctx) return
+
+  const landmarks = sampleToLandmarks(sample, inputDims) ?? []
+
+  ctx.save()
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  for (const lm of landmarks) {
+    draw.drawConnectors(ctx, lm, hand.HAND_CONNECTIONS, {
+      color: "rgb(100,20,255)",
+      lineWidth: 5,
+      visibilityMin: -1,
+    })
+    draw.drawLandmarks(ctx, lm, {
+      color: "rgb(255,20,100)",
+      lineWidth: 2,
+      visibilityMin: -1,
+    })
+  }
+  ctx.restore()
 }
