@@ -9,6 +9,8 @@ export interface ViewSlice {
   setView: (view: View) => void
   subset: Subset
   setSubset: (subset: Subset) => void
+  sampleViewerIdxs: number[]
+  setSampleViewerIdxs: (idxs: number[]) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -19,11 +21,20 @@ export const createViewSlice: StateCreator<
 > = (set) => ({
   isActive: false,
   view: "model",
-  setView: (view) => set({ view }),
+  setView: (view) =>
+    set(({ sampleIdx }) => ({
+      view,
+      sampleIdx: view === "evaluation" ? undefined : sampleIdx,
+    })),
   subset: "train",
   setSubset: (subset) =>
-    set(({ totalSamples }) => {
-      const newSampleIdx = Math.floor(Math.random() * totalSamples(subset))
+    set(({ totalSamples, sampleIdx }) => {
+      const newSampleIdx =
+        typeof sampleIdx !== "undefined" && sampleIdx > totalSamples(subset) - 1
+          ? Math.floor(Math.random() * totalSamples(subset))
+          : sampleIdx
       return { subset, sampleIdx: newSampleIdx }
     }),
+  sampleViewerIdxs: [],
+  setSampleViewerIdxs: (idxs) => set({ sampleViewerIdxs: idxs }),
 })

@@ -61,7 +61,8 @@ const Status = () => {
 export function useHasBlur() {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
-  return !!status?.fullscreen || isEvaluationView
+  const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
+  return !!status?.fullscreen || (isEvaluationView && !hasSample)
 }
 
 export function BlurMask() {

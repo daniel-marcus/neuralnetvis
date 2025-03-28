@@ -1,11 +1,11 @@
 import { getDbDataAsTensors } from "@/data/dataset"
 import { clearStatus, setStatus, useSceneStore } from "@/store"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { setBackendIfAvailable } from "@/model/tf-backend"
 import { getHighlightColor } from "@/utils/colors"
 
-const DUMMY_CELL: CellProps = {
+const DUMMY_CELL: ConfusionCell = {
   count: undefined,
   normalized: 0,
   sampleIdxs: [],
@@ -13,7 +13,7 @@ const DUMMY_CELL: CellProps = {
 
 export const ConfusionMatrix = () => {
   const labels = useSceneStore((s) => s.ds?.outputLabels ?? [])
-  const values = useCellValues()
+  const cells = useCellValues()
   const numClasses = labels.length
   const length = numClasses * numClasses
 
@@ -22,9 +22,47 @@ export const ConfusionMatrix = () => {
   }, 0)
   const long = maxChars > 2
 
+  const [selected, setSelected] = useState<ConfusionCell | null>(null)
+  const [hovered, setHovered] = useState<ConfusionCell | null>(null)
+  const sel = useMemo(() => selected ?? hovered, [selected, hovered])
+
+  const setSampleViewerIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
+  useEffect(() => {
+    setSampleViewerIdxs(sel?.sampleIdxs ?? [])
+  }, [sel, setSampleViewerIdxs])
+
+  const createGroupedCell = (
+    prop: "actualClass" | "predictedClass",
+    val: number,
+    cb?: (cell: ConfusionCell) => void
+  ) => {
+    const filteredCells = cells.filter((cell) => cell[prop] === val)
+    const groupedCell = filteredCells.reduce(
+      (acc, cell) => ({
+        ...acc,
+        count: (acc.count ?? 0) + (cell.count ?? 0),
+        sampleIdxs: [...acc.sampleIdxs, ...cell.sampleIdxs],
+      }),
+      { ...DUMMY_CELL, [prop]: val, groupProp: prop }
+    )
+    cb?.(groupedCell)
+    return groupedCell
+  }
+
+  const handleLabelClick = (
+    prop: "actualClass" | "predictedClass",
+    val: number
+  ) => {
+    setSelected((s) =>
+      s?.groupProp === prop && s[prop] === val
+        ? null
+        : createGroupedCell(prop, val)
+    )
+  }
+
   return (
     <div
-      className="grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] w-full overflow-hidden"
+      className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] w-full overflow-hidden pointer-events-auto`}
       style={
         {
           "--num-classes": numClasses,
@@ -45,23 +83,52 @@ export const ConfusionMatrix = () => {
         position="top"
         long={long}
         className="col-start-2"
+        highlighted={sel?.actualClass}
+        highlightedIsSelected={!!selected}
+        onClick={(val) => handleLabelClick("actualClass", val)}
+        onMouseEnter={(actualClass) => {
+          createGroupedCell("actualClass", actualClass, setHovered)
+        }}
+        onMouseLeave={() => setHovered(null)}
       />
-      <Labels name="predicted" labels={labels} position="left" long={long} />
+      <Labels
+        name="predicted"
+        labels={labels}
+        position="left"
+        long={long}
+        highlighted={sel?.predictedClass}
+        highlightedIsSelected={!!selected}
+        onClick={(val) => handleLabelClick("predictedClass", val)}
+        onMouseEnter={(predictedClass) => {
+          createGroupedCell("predictedClass", predictedClass, setHovered)
+        }}
+        onMouseLeave={() => setHovered(null)}
+      />
       <div className="aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
         {Array.from({ length }, (_, i) => {
           const rowIdx = Math.floor(i / numClasses)
           const colIdx = i % numClasses
           const isCorrect = rowIdx === colIdx
-          const cell = values[i] ?? DUMMY_CELL
+          const cell = cells[i] ?? DUMMY_CELL
           const backgroundColor = getCellColor(cell.normalized, isCorrect)
+          const isSelected = selected === cell
+          const isHighlighted =
+            hovered === cell ||
+            (sel?.groupProp && sel[sel.groupProp] === cell[sel.groupProp])
           return (
             <div
               key={i}
               className={`flex items-center justify-center cursor-pointer ${
                 isCorrect ? "text-white" : ""
-              }`}
+              } border-2 ${
+                isSelected || isHighlighted
+                  ? "border-marker"
+                  : "border-transparent"
+              } ${isSelected ? "rounded-sm" : ""}`}
               style={{ backgroundColor }}
-              onClick={() => console.log(cell.sampleIdxs)}
+              onClick={() => setSelected((c) => (c === cell ? null : cell))}
+              onMouseEnter={() => setHovered(cell)}
+              onMouseLeave={() => setHovered(null)}
             >
               {cell.count ?? "-"}
             </div>
@@ -78,9 +145,25 @@ interface LabelProps {
   position: "top" | "bottom" | "left" | "right"
   long?: boolean
   className?: string
+  highlighted?: number
+  highlightedIsSelected?: boolean
+  onClick?: (i: number) => void
+  onMouseEnter?: (i: number) => void
+  onMouseLeave?: (i: number) => void
 }
 
-function Labels({ name, labels, position, long, className = "" }: LabelProps) {
+function Labels({
+  name,
+  labels,
+  position,
+  long,
+  highlighted,
+  highlightedIsSelected,
+  className = "",
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: LabelProps) {
   const orient = position === "top" || position === "bottom" ? "row" : "column"
   return (
     <div
@@ -116,7 +199,13 @@ function Labels({ name, labels, position, long, className = "" }: LabelProps) {
         {labels.map((label, i) => (
           <div
             key={i}
-            className={`bg-box-dark ${
+            className={`${
+              highlighted === i
+                ? `bg-marker text-black ${
+                    highlightedIsSelected ? "rounded-sm" : ""
+                  }`
+                : "bg-box-dark"
+            } ${
               long ? "px-[var(--label-padding)]" : ""
             } leading-none flex items-center ${
               long
@@ -130,7 +219,10 @@ function Labels({ name, labels, position, long, className = "" }: LabelProps) {
                   ? "sm:justify-end"
                   : "justify-start"
                 : "justify-center"
-            }`}
+            } ${typeof onClick === "function" ? "cursor-pointer" : ""}`}
+            onClick={() => onClick?.(i)}
+            onMouseEnter={() => onMouseEnter?.(i)}
+            onMouseLeave={() => onMouseLeave?.(i)}
           >
             <div className={long && orient === "column" ? "truncate" : ""}>
               {label}
@@ -142,14 +234,17 @@ function Labels({ name, labels, position, long, className = "" }: LabelProps) {
   )
 }
 
-interface CellProps {
+export interface ConfusionCell {
   count?: number
   normalized: number
   sampleIdxs: number[]
+  actualClass?: number
+  predictedClass?: number
+  groupProp?: "actualClass" | "predictedClass"
 }
 
 function useCellValues() {
-  const [values, setValues] = useState<CellProps[]>([])
+  const [values, setValues] = useState<ConfusionCell[]>([])
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
@@ -193,6 +288,8 @@ function useCellValues() {
               count,
               normalized: count / (maxPerCol[colIdx] || Infinity),
               sampleIdxs: getSampleIdxs(colIdx, rowIdx),
+              actualClass: colIdx,
+              predictedClass: rowIdx,
             }
           })
         })

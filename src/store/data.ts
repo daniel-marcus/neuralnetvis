@@ -16,7 +16,7 @@ export interface DataSlice {
   isRegression: () => boolean
 
   sampleIdx: number | undefined
-  setSampleIdx: (idx: number) => void
+  setSampleIdx: (idx: number | undefined) => void
   sample?: Sample
   setSample: (sampleRaw?: SampleRaw) => void
   nextSample: (step?: number) => void

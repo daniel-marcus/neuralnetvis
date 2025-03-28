@@ -18,6 +18,7 @@ import { ExtLink } from "./ui-elements/buttons"
 import { BlurMask, useHasBlur } from "./status-bar"
 import { View } from "@/store/view"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
+import { SampleViewer } from "./sample-viewer"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -73,23 +74,35 @@ function SceneViewerInner(props: SceneViewerProps) {
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
               {dsDef?.task === "classification" && view === "evaluation" && (
-                <StatsViewer>
-                  <ConfusionMatrix />
-                </StatsViewer>
+                <StatsViewer />
               )}
             </>
           )}
         </SceneOverlay>
       )}
-      {section === "play" && <SampleSlider isActive={isActive} />}
+      {section === "play" && view === "model" && (
+        <SampleSlider isActive={isActive} />
+      )}
     </>
   )
 }
 
-function StatsViewer({ children }: { children?: React.ReactNode }) {
+function StatsViewer() {
+  const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
-    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center overflow-scroll xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center">
-      <div className="pointer-events-auto py-8">{children}</div>
+    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center">
+      <div className="py-8">
+        <div
+          className={`${
+            hasSample ? "-translate-x-full scale-50" : ""
+          } transition-transform duration-500 pointer-events-auto`}
+          onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
+        >
+          <ConfusionMatrix />
+        </div>
+        <SampleViewer />
+      </div>
     </div>
   )
 }
@@ -118,7 +131,7 @@ type SceneOverlayProps = {
 
 const SceneOverlay = ({ children, isActive, className }: SceneOverlayProps) => (
   <div
-    className={`absolute z-50 top-0 left-0 h-full pointer-events-none ${
+    className={`absolute z-50 top-0 left-0 h-full overflow-scroll pointer-events-none ${
       isActive
         ? "p-main mt-[calc(var(--header-height)-var(--padding-main))]"
         : "p-4"
