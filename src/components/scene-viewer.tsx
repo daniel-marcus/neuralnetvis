@@ -74,7 +74,7 @@ function SceneViewerInner(props: SceneViewerProps) {
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
               {dsDef?.task === "classification" && view === "evaluation" && (
-                <StatsViewer />
+                <ConfusionViewer />
               )}
             </>
           )}
@@ -87,7 +87,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   )
 }
 
-function StatsViewer() {
+function ConfusionViewer() {
   const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (

@@ -8,7 +8,7 @@ import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
-import { useIsTouchDevice } from "@/utils/screen"
+import { useIsScreen, useIsTouchDevice } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 
 interface SceneProps {
@@ -39,9 +39,10 @@ export const Scene = (props: SceneProps) => {
 export const SceneInner = ({ isActive }: SceneProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const camera = useThree((s) => s.camera)
+  const isScreenSm = useIsScreen("sm")
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? 1 : 0.4 }, // TODO: adjust from screen size
+    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : 0.4 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
       camera.zoom = value.zoom
       camera.updateProjectionMatrix()
