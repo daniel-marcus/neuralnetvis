@@ -4,5 +4,7 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
 
-/wasm/*
-  Cross-Origin-Resource-Policy: same-origin
+# uncomment the following lines for multi-threading:
+#
+# /wasm/*
+#   Cross-Origin-Resource-Policy: same-origin

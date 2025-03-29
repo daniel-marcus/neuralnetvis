@@ -15,7 +15,6 @@ export function useTfBackend() {
   const backendReady = useGlobalStore((s) => s.backendReady)
   useEffect(() => {
     async function checkReady() {
-      // console.log(getAvailableBackends())
       await setBackendIfAvailable(DEFAULT_BACKEND)
       useGlobalStore.setState({ backendReady: true })
     }
