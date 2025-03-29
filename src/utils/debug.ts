@@ -1,4 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
+import { getThreadsCount } from "@tensorflow/tfjs-backend-wasm"
 import { useGlobalStore, isDebug, setStatus, getThree, getScene } from "@/store"
 import { getAvailableBackends } from "@/model/tf-backend"
 import { useKeyCommand } from "./key-command"
@@ -45,5 +46,6 @@ function showStats() {
   const glInfo = gl?.info
   const tfEngine = tf.engine()
   const tfVars = tfEngine.state.registeredVariables
-  console.log({ appState, scene, glInfo, tfEngine, tfVars })
+  const wasmThreads = getThreadsCount()
+  console.log({ appState, scene, glInfo, tfEngine, tfVars, wasmThreads })
 }

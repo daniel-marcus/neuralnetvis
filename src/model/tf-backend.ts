@@ -5,12 +5,7 @@ import "@tensorflow/tfjs-backend-wasm"
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm"
 import { getModel, useGlobalStore } from "@/store"
 
-setWasmPaths({
-  "tfjs-backend-wasm.wasm": "/tfjs-backend-wasm.wasm",
-  "tfjs-backend-wasm-simd.wasm": "/tfjs-backend-wasm-simd.wasm",
-  "tfjs-backend-wasm-threaded-simd.wasm":
-    "/tfjs-backend-wasm-threaded-simd.wasm",
-})
+setWasmPaths("/wasm/")
 
 export const DEFAULT_BACKEND = "wasm" // "webgpu" | "wasm" | "webgl"
 

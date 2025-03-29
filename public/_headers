@@ -1,0 +1,7 @@
+# Cloudflare headers for multi-threading support in tfjs-backend-wasm (see: https://github.com/tensorflow/tfjs/tree/master/tfjs-backend-wasm)
+
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+
+/wasm/
+  Cross-Origin-Resource-Policy: same-origin
