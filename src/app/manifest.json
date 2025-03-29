@@ -4,8 +4,8 @@
   "description": "Wrap your head around neural networks and watch machines learn",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#110000",
-  "theme_color": "#110000",
+  "background_color": "#0d0000",
+  "theme_color": "#0d0000",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
