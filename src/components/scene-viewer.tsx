@@ -15,7 +15,7 @@ import { Suspense, useMemo, useState } from "react"
 import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { MapPlot } from "./datavis/map-plot"
 import { ExtLink } from "./ui-elements/buttons"
-import { BlurMask, useHasBlur } from "./status-bar"
+import { BlurMask } from "./status-bar"
 import { View } from "@/store/view"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
 import { SampleViewer } from "./sample-viewer"
@@ -95,8 +95,10 @@ function StatsViewer() {
       <div className="py-8">
         <div
           className={`${
-            hasSample ? "-translate-x-full scale-50 " : ""
-          } origin-left transition-transform duration-500 pointer-events-auto`}
+            hasSample
+              ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
+              : ""
+          } transition-transform duration-500 pointer-events-auto`}
           onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
         >
           <ConfusionMatrix />
@@ -108,11 +110,11 @@ function StatsViewer() {
 }
 
 const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => {
-  const hasBlur = useHasBlur()
+  const view = useSceneStore((s) => s.view)
   return (
     <div
       className={`max-w-[300px] mb-4 ${
-        hasBlur ? "hidden md:block" : "pointer-events-auto"
+        view !== "model" ? "hidden md:block" : "pointer-events-auto"
       }`}
     >
       <p>{ds.description}</p>

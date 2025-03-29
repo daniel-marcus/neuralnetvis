@@ -58,7 +58,7 @@ const Status = () => {
   )
 }
 
-export function useHasBlur() {
+function useHasBlur() {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
   const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
