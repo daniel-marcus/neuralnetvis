@@ -1,9 +1,9 @@
-import { getDbDataAsTensors } from "@/data/dataset"
-import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import React, { useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
+import { getDbDataAsTensors } from "@/data/dataset"
 import { getHighlightColor } from "@/utils/colors"
-import { setBackendIfAvailable } from "@/model/tf-backend"
+import { setBackend } from "@/model/tf-backend"
 
 const DUMMY_CELL: ConfusionCell = {
   count: undefined,
@@ -252,26 +252,25 @@ function useConfusionCells() {
   const backendReady = useGlobalStore((s) => s.backendReady)
 
   useEffect(() => {
-    async function getValues() {
+    async function getCells() {
       if (!model || !ds || !backendReady) return
       const statusId = setStatus("Calculating confusion matrix ...", -1)
       const numClasses = ds.outputLabels.length
-      await setBackendIfAvailable("webgl")
-      const res = await getDbDataAsTensors(ds, subset)
+      const res = await getDbDataAsTensors(ds, subset, { noOneHot: true })
       if (!res) return
+      await setBackend("webgl")
       try {
-        const { X, y } = res
         const cm = tf.tidy(() => {
-          const yTrue = y.argMax(-1) as tf.Tensor1D
-          const yPred = (model.predict(X) as tf.Tensor).argMax(
-            -1
-          ) as tf.Tensor1D
+          const { X, y } = res
+          const yTrue = y as tf.Tensor1D
+          const yPred = (model.predict(X) as tf.Tensor).argMax(1) as tf.Tensor1D
+
           const cm = tf.math
             .confusionMatrix(yTrue, yPred, numClasses)
             .transpose()
-          const maxPerCol = cm.max(0).arraySync() as number[]
-          const cmValues = cm.flatten().arraySync()
 
+          const cmValues = cm.flatten().arraySync()
+          const maxPerCol = cm.max(0).arraySync() as number[]
           function getSampleIdxs(trueClass: number, predClass: number) {
             const trueMask = yTrue.equal(trueClass)
             const predMask = yPred.equal(predClass)
@@ -282,7 +281,6 @@ function useConfusionCells() {
             }, [] as number[])
             return indices
           }
-
           return cmValues.map((count, i) => {
             const rowIdx = Math.floor(i / numClasses)
             const colIdx = i % numClasses
@@ -302,10 +300,10 @@ function useConfusionCells() {
       } finally {
         clearStatus(statusId)
         Object.values(res).forEach((t) => t?.dispose())
-        setBackendIfAvailable() // reset to default backend
+        setBackend() // reset to default backend
       }
     }
-    getValues()
+    getCells()
     return () => setCells([])
   }, [model, ds, subset, backendReady])
 

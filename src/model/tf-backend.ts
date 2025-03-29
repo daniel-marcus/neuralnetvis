@@ -5,17 +5,17 @@ import "@tensorflow/tfjs-backend-wasm"
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm"
 import { getModel, useGlobalStore } from "@/store"
 
-// note: tfjs-backend-wasm-threaded-simd.wasm is used only in production.
-// development uses tfjs-backend-wasm-simd.wasm
 setWasmPaths("/wasm/")
 
-export const DEFAULT_BACKEND = "wasm" // "webgpu" | "wasm" | "webgl"
+export type Backend = "webgpu" | "wasm" | "webgl" | "cpu"
+
+export const DEFAULT_BACKEND: Backend = "wasm"
 
 export function useTfBackend() {
   const backendReady = useGlobalStore((s) => s.backendReady)
   useEffect(() => {
     async function checkReady() {
-      await setBackendIfAvailable(DEFAULT_BACKEND)
+      await setBackend(DEFAULT_BACKEND)
       useGlobalStore.setState({ backendReady: true })
     }
     checkReady()
@@ -23,9 +23,9 @@ export function useTfBackend() {
   return backendReady
 }
 
-export async function setBackendIfAvailable(
-  backend = DEFAULT_BACKEND,
-  fallback = DEFAULT_BACKEND
+export async function setBackend(
+  backend: Backend = DEFAULT_BACKEND,
+  fallback: Backend = DEFAULT_BACKEND
 ) {
   const success = getAvailableBackends().includes(backend)
     ? await tf.setBackend(backend)
@@ -35,10 +35,10 @@ export async function setBackendIfAvailable(
 }
 
 export function getAvailableBackends() {
-  // sort backends by priority: [webgpu, webgl, cpu]
+  // sort backends by priority: [webgpu, webgl, wasm, cpu]
   return Object.entries(tf.engine().registryFactory)
     .sort(([, a], [, b]) => b.priority - a.priority)
-    .map(([name]) => name)
+    .map(([name]) => name as Backend)
 }
 
 export async function backendForTraining() {
@@ -48,8 +48,8 @@ export async function backendForTraining() {
   const silent = scene.getState().trainConfig.silent
   const totalSamples = scene.getState().totalSamples()
   if (silent && backends.includes("webgpu") && totalSamples > 1000) {
-    await setBackendIfAvailable("webgpu") // fastest for silent, only in Chrome
+    await setBackend("webgpu") // fastest for silent, only in Chrome
   } else if (model?.layers.find((l) => l.getClassName() === "Conv2D")) {
-    await setBackendIfAvailable("webgl") // Conv2D is not yet supported by wasm
+    await setBackend("webgl") // Conv2D is not yet supported by wasm
   }
 }

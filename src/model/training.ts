@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useKeyCommand } from "@/utils/key-command"
-import { backendForTraining, setBackendIfAvailable } from "./tf-backend"
+import { backendForTraining, setBackend } from "./tf-backend"
 import { getAll } from "@/data/db"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
 import { getDbDataAsTensors } from "@/data/dataset"
@@ -47,7 +47,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
         validationSplit,
         callbacks,
       })
-      if (!isDebug()) await setBackendIfAvailable() // to default
+      if (!isDebug()) await setBackend() // to default
     }
     return () => {
       model.stopTraining = true
@@ -191,7 +191,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     )
     const range = IDBKeyRange.lowerBound(validStoreBatchIdx)
     const validationData = validationSamples
-      ? await getDbDataAsTensors(ds, "train", range)
+      ? await getDbDataAsTensors(ds, "train", { range })
       : undefined
     // const validationDataset = dataset.skip(trainSteps) <- slow
 

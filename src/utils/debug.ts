@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { getThreadsCount } from "@tensorflow/tfjs-backend-wasm"
 import { useGlobalStore, isDebug, setStatus, getThree, getScene } from "@/store"
-import { getAvailableBackends } from "@/model/tf-backend"
+import { getAvailableBackends, type Backend } from "@/model/tf-backend"
 import { useKeyCommand } from "./key-command"
 
 export function useDebugCommands() {
@@ -16,7 +16,7 @@ function toggleDebug() {
 }
 
 function switchBackend() {
-  const currentBackend = tf.getBackend()
+  const currentBackend = tf.getBackend() as Backend
   const availableBackends = getAvailableBackends()
   const currIdx = availableBackends.indexOf(currentBackend)
   const newBackend = availableBackends[(currIdx + 1) % availableBackends.length]

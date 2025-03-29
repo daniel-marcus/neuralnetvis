@@ -371,7 +371,7 @@ function usePoints() {
     async function getAllSamples() {
       if (!model || !ds) return
 
-      const data = await getDbDataAsTensors(ds, subset, undefined, true)
+      const data = await getDbDataAsTensors(ds, subset, { returnRawX: true })
       if (!data) return
       const { X, y, XRaw } = data
 

@@ -221,12 +221,18 @@ export async function resetData(dsKey: string, storeName: "train" | "test") {
   }
 }
 
+interface GetDbDataOpts {
+  range?: IDBKeyRange
+  returnRawX?: boolean
+  noOneHot?: boolean
+}
+
 export async function getDbDataAsTensors(
   ds: Dataset,
   type: "train" | "test",
-  range?: IDBKeyRange,
-  returnRaw?: boolean
+  opts: GetDbDataOpts = {}
 ) {
+  const { range, returnRawX, noOneHot } = opts
   const batches = await getAll<DbBatch>(ds.key, type, range)
   if (!batches.length) return
   const isClassification = ds.task === "classification"
@@ -235,13 +241,16 @@ export async function getDbDataAsTensors(
     const shapeX = [-1, ...ds.inputDims] // -1 for unknown batch size
     const _X = tf.concat(xBatchTensors).reshape(shapeX)
     const X = ds.preprocess?.(_X) ?? _X
-    const yArr = batches.flatMap((b) => Array.from(b.ys))
-    const y = isClassification
-      ? tf.oneHot(yArr, ds.outputLabels.length)
-      : tf.tensor(yArr)
-    const XRaw = batches.find((b) => !!b.xsRaw)
-      ? tf.concat(batches.map((b) => tf.tensor(b.xsRaw!))).reshape(shapeX)
-      : undefined
-    return returnRaw ? { X, y, XRaw } : { X, y }
+    const yBatches = batches.map((b) => tf.tensor(b.ys))
+    const yTensor = tf.concat(yBatches)
+    const y =
+      isClassification && !noOneHot
+        ? tf.oneHot(yTensor, ds.outputLabels.length)
+        : yTensor
+    const XRaw =
+      returnRawX && batches.find((b) => !!b.xsRaw)
+        ? tf.concat(batches.map((b) => tf.tensor(b.xsRaw!))).reshape(shapeX)
+        : undefined
+    return { X, y, XRaw }
   })
 }
