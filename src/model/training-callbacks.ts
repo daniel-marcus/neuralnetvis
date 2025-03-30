@@ -78,9 +78,10 @@ export class ProgressCb extends CustomCallback {
         }
       },
       onTrainEnd: async () => {
+        const backend = getBackend()
         const { accuracy, loss } = await getModelEvaluation()
         const totalTime = (Date.now() - this.startTime) / 1000
-        const title = `Training finished (${getBackend()})`
+        const title = `Training finished (${backend})`
         const data = {
           Loss: loss?.toFixed(3),
           Accuracy: accuracy?.toFixed(3),

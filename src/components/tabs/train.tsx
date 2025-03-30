@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { useCurrScene } from "@/store"
+import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { canUseLazyLoading } from "@/model/training"
 import { LogsPlot } from "@/components/datavis/logs-plot"
@@ -23,6 +23,7 @@ export const Train = () => {
   const hasTestData = useCurrScene((s) => !!s.ds?.test?.totalSamples)
   const view = useCurrScene((s) => s.view)
   const setView = useCurrScene((s) => s.setView)
+  const toggleTab = useGlobalStore((s) => s.toggleTab)
   return (
     <Box>
       <TrainConfigControl />
@@ -46,7 +47,10 @@ export const Train = () => {
           {hasTestData && view !== "evaluation" && (
             <InlineButton
               variant="secondary"
-              onClick={() => setView("evaluation")}
+              onClick={() => {
+                toggleTab("train")
+                setView("evaluation")
+              }}
             >
               evaluate
             </InlineButton>

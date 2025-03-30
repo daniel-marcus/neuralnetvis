@@ -25,6 +25,7 @@ function useEvaluate() {
   const isRegression = useSceneStore((s) => s.isRegression())
   const model = useSceneStore((s) => s.model)
   const subset = useSceneStore((s) => s.subset)
+  const batchCount = useSceneStore((s) => s.batchCount)
 
   const [data, setData] = useState<Record<string, string | number>>({})
 
@@ -59,6 +60,6 @@ function useEvaluate() {
     }
     evaluate()
     return () => setData({})
-  }, [ds, model, subset, isRegression])
+  }, [batchCount, ds, model, subset, isRegression])
   return data
 }
