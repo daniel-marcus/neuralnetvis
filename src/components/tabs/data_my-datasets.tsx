@@ -52,12 +52,7 @@ export const MyDatasets = () => {
     }
   }
   return (
-    <CollapsibleWithTitle
-      title="my datasets"
-      border={false}
-      variant="no-bg"
-      collapsed
-    >
+    <CollapsibleWithTitle title="my datasets" border={false} collapsed>
       <ul>
         {savedDatasets.map((d, i) => {
           const isCurrent = d.key === ds?.key

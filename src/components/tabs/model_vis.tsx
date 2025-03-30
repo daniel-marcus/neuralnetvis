@@ -19,7 +19,7 @@ export const VisConfigControl = () => {
     ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
-    <CollapsibleWithTitle title="visualization" variant="no-bg" collapsed>
+    <CollapsibleWithTitle title="visualization" collapsed>
       <InputRowsWrapper>
         {SHIFT_PROPS.map((prop) => {
           const value = config[prop]

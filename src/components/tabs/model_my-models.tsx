@@ -34,12 +34,7 @@ export function MyModels() {
     setShowImportForm(false)
   }, [updateList])
   return (
-    <CollapsibleWithTitle
-      title="my models"
-      variant="no-bg"
-      border={false}
-      collapsed
-    >
+    <CollapsibleWithTitle title="my models" border={false} collapsed>
       <InputRowsWrapper>
         <SavedModels updTrigger={updTrigger} />
         <div className="flex justify-between gap-2">

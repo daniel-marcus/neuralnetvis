@@ -66,7 +66,7 @@ const TrainConfigControl = () => {
   const ds = useCurrScene((s) => s.ds)
 
   return (
-    <CollapsibleWithTitle title="config">
+    <CollapsibleWithTitle title="config" className="bg-box-solid">
       <InputRowsWrapper
         style={
           {

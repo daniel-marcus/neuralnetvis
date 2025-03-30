@@ -4,7 +4,6 @@ import { Arrow } from "./buttons"
 interface CollapsibleWithTitleProps {
   children?: ReactNode
   title?: string
-  variant?: "has-bg" | "no-bg"
   collapsed?: boolean
   border?: boolean
   className?: string
@@ -13,18 +12,13 @@ interface CollapsibleWithTitleProps {
 export const CollapsibleWithTitle = ({
   children,
   title,
-  variant = "has-bg",
   collapsed,
   border = true,
   className = "",
 }: CollapsibleWithTitleProps) => {
   const [isOpen, setIsOpen] = useState(!collapsed)
   return (
-    <div
-      className={`${
-        variant === "has-bg" ? "bg-box" : ""
-      } rounded-box ${className}`}
-    >
+    <div className={`rounded-box ${className}`}>
       {title && (
         <div className={`${isOpen ? "text-white" : ""}`}>
           <button

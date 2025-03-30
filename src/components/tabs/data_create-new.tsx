@@ -56,7 +56,7 @@ export const CreateNewDataset = () => {
     }
   }
   return (
-    <CollapsibleWithTitle title="create new dataset">
+    <CollapsibleWithTitle title="create new dataset" className="bg-box-solid">
       <InputRowsWrapper>
         <Select
           options={[{ value: "handpose", label: "hand pose classification" }]}

@@ -123,7 +123,7 @@ export const LayerConfigControl = () => {
   const toggleLayerVisibility = useCurrScene((s) => s.vis.toggleLayerVisibility)
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
   return (
-    <CollapsibleWithTitle title={"layers"}>
+    <CollapsibleWithTitle title={"layers"} className="bg-box-solid">
       <div className="flex flex-col gap-4">
         <DraggableList
           rowHeight={32}
