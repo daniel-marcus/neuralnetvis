@@ -5,6 +5,7 @@ import { getDbDataAsTensors } from "@/data/dataset"
 import { getHighlightColor } from "@/utils/colors"
 import { setBackend } from "@/model/tf-backend"
 import { isTouch } from "@/utils/screen"
+import { Evaluation } from "../evaluation"
 
 export const ConfusionMatrix = () => {
   const labels = useSceneStore((s) => s.ds?.outputLabels ?? [])
@@ -55,6 +56,7 @@ export const ConfusionMatrix = () => {
           )
         })}
       </InnerGrid>
+      <Evaluation className="col-start-2 text-base" />
     </OuterGrid>
   )
 }
@@ -186,7 +188,7 @@ function Labels(props: LabelProps) {
       <div
         className={`grid gap-[var(--gap)] ${
           orient === "column"
-            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))]"
+            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)]"
             : `grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
                 long
                   ? "min-h-[var(--label-width)]"

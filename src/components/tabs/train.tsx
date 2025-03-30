@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from "react"
-import { useCurrScene, useGlobalStore } from "@/store"
+import { useCurrScene } from "@/store"
 import * as Components from "@/components/ui-elements"
-import {
-  canUseLazyLoading,
-  getModelEvaluation,
-  getTestPredictions,
-} from "@/model/training"
+import { canUseLazyLoading } from "@/model/training"
 import { LogsPlot } from "@/components/datavis/logs-plot"
 
-const { InlineButton, Slider, InputRow, InputRowsWrapper, Checkbox } =
-  Components
-const { Box, Collapsible, CollapsibleWithTitle, Arrow, Table } = Components
+const { Box, Slider, InputRow, InputRowsWrapper, Checkbox } = Components
+const { Collapsible, CollapsibleWithTitle, Arrow, InlineButton } = Components
 
 export const Train = () => {
   const isTraining = useCurrScene((s) => s.isTraining)
@@ -23,10 +18,11 @@ export const Train = () => {
   useEffect(() => {
     if (hasLogs) setShowLogs(true)
   }, [hasLogs])
-  const evaluate = useEvaluate()
   const resetWeights = useCurrScene((s) => s.resetWeights)
   const batchCount = useCurrScene((s) => s.batchCount)
   const hasTestData = useCurrScene((s) => !!s.ds?.test?.totalSamples)
+  const view = useCurrScene((s) => s.view)
+  const setView = useCurrScene((s) => s.setView)
   return (
     <Box>
       <TrainConfigControl />
@@ -47,8 +43,11 @@ export const Train = () => {
               reset
             </InlineButton>
           )}
-          {hasTestData && (
-            <InlineButton variant="secondary" onClick={evaluate}>
+          {hasTestData && view !== "evaluation" && (
+            <InlineButton
+              variant="secondary"
+              onClick={() => setView("evaluation")}
+            >
               evaluate
             </InlineButton>
           )}
@@ -138,7 +137,6 @@ const TrainConfigControl = () => {
             onChange={(silent) => setConfig({ silent: silent })}
           />
         </InputRow>
-
         {!!ds && canUseLazyLoading(ds) && (
           <InputRow
             label="lazyLoading"
@@ -153,44 +151,4 @@ const TrainConfigControl = () => {
       </InputRowsWrapper>
     </CollapsibleWithTitle>
   )
-}
-
-function useEvaluate() {
-  const ds = useCurrScene((s) => s.ds)
-  const isRegression = useCurrScene((s) => s.isRegression())
-  const model = useCurrScene((s) => s.model)
-  const setStatus = useGlobalStore((s) => s.status.update)
-  const setView = useCurrScene((s) => s.setView)
-  const setSubset = useCurrScene((s) => s.setSubset)
-  async function evaluate() {
-    if (!ds || !model) return
-
-    const { loss, accuracy } = await getModelEvaluation()
-    const lossName = typeof model.loss === "string" ? `(${model.loss})` : ""
-    let data = {
-      "Test samples": ds.test.totalSamples,
-      [`Loss ${lossName}`]: loss?.toFixed(3),
-      Accuracy: accuracy?.toFixed(3),
-    } as Record<string, string | number>
-
-    if (isRegression) {
-      const result = await getTestPredictions()
-      if (result) {
-        data = {
-          ...data,
-          "R²": result.rSquared.toFixed(3),
-        }
-      }
-    }
-
-    const status = <Table data={data} />
-
-    setView("evaluation")
-    setSubset("test")
-    setStatus(status, null, {
-      id: "model-evaluation",
-      // permanent: true,
-    })
-  }
-  return evaluate
 }

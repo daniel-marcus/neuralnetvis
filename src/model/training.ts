@@ -14,6 +14,7 @@ import {
 } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
 import { calculateRSquared } from "@/data/utils"
+import { Subset } from "@/store/data"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const isTraining = useSceneStore((s) => s.isTraining)
@@ -232,17 +233,17 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   return { loss, acc }
 }
 
-async function getTestData() {
+async function getEvalData(subset: Subset = "test") {
   const ds = getDs()
   if (!ds) return
-  return getDbDataAsTensors(ds, "test")
+  return getDbDataAsTensors(ds, subset)
 }
 
-export async function getModelEvaluation() {
+export async function getModelEvaluation(subset: Subset = "test") {
   const model = getModel()
-  const testData = await getTestData()
-  if (!model || !testData) return { loss: undefined, accuracy: undefined }
-  const { X, y } = testData
+  const data = await getEvalData(subset)
+  if (!model || !data) return { loss: undefined, accuracy: undefined }
+  const { X, y } = data
 
   await tf.ready()
   const result = model.evaluate(X, y, { batchSize: 64 })
@@ -255,17 +256,17 @@ export async function getModelEvaluation() {
     console.warn(e)
     return { loss: undefined, accuracy: undefined }
   } finally {
-    Object.values(testData).forEach((t) => t?.dispose())
+    Object.values(data).forEach((t) => t?.dispose())
     lossT.dispose()
     accuracyT?.dispose()
   }
 }
 
-export async function getTestPredictions() {
+export async function getPredictions(subset: Subset = "test") {
   const model = getModel()
-  const testData = await getTestData()
-  if (!model || !testData) return
-  const { X, y } = testData
+  const data = await getEvalData(subset)
+  if (!model || !data) return
+  const { X, y } = data
   try {
     return tf.tidy(() => {
       const yTrueArr = y.arraySync() as number[]
@@ -277,6 +278,6 @@ export async function getTestPredictions() {
       return { predictions, rSquared }
     })
   } finally {
-    Object.values(testData).forEach((t) => t?.dispose())
+    Object.values(data).forEach((t) => t?.dispose())
   }
 }

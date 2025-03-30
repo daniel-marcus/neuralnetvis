@@ -19,6 +19,7 @@ import { BlurMask } from "./status-bar"
 import { View } from "@/store/view"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
 import { SampleViewer } from "./sample-viewer"
+import { Evaluation } from "./evaluation"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -73,8 +74,14 @@ function SceneViewerInner(props: SceneViewerProps) {
                 <ViewSubsetSelect />
                 {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
-              {dsDef?.task === "classification" && view === "evaluation" && (
-                <ConfusionViewer />
+              {view === "evaluation" && (
+                <>
+                  {dsDef?.task === "classification" ? (
+                    <ConfusionViewer />
+                  ) : (
+                    <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-[var(--plot-size)] pt-8" /> /* sm:plotsize = PLOT_SIZE * (2 ** zoom) */
+                  )}
+                </>
               )}
             </>
           )}
