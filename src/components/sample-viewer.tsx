@@ -4,7 +4,7 @@ import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
-import { useIsScreen } from "@/utils/screen"
+import { useHasBlur } from "./status-bar"
 
 export function SampleViewer() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
@@ -12,8 +12,7 @@ export function SampleViewer() {
   const [samples, setSamples] = useState<SampleRaw[]>([])
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
-  const isScreenXl = useIsScreen("xl")
-  const itemsPerPage = isScreenXl ? 16 : 4
+  const itemsPerPage = 16
   useEffect(() => {
     setOffset(0)
     setSamples([])
@@ -33,13 +32,21 @@ export function SampleViewer() {
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   const hasCam = useSceneStore((s) => s.ds?.hasCam)
+  const hasBlur = useHasBlur()
+  if (!samples.length) return null
   return (
-    <div className="w-[calc(4*var(--item-size)+2rem)] fixed bottom-4 right-[50vw] translate-x-[50%] xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-auto">
+    <div
+      className={`fixed pt-4! bg-gradient-to-b from-transparent via-[1rem] ${
+        hasBlur ? "via-black to-black" : "via-background to-background"
+      } transition-colors duration-300 w-screen bottom-4 right-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
+    >
       <div
-        className={`w-full ${hasCam ? "xl:aspect-[4/3]" : "xl:aspect-square"} `}
+        className={`xl:w-[calc(4*var(--item-size)+1.5rem)] ${
+          hasCam ? "xl:aspect-[4/3]" : "xl:aspect-square"
+        } flex justify-center items-start xl:justify-end`}
       >
         <div
-          className={`flex items-start justify-center xl:justify-end gap-2 flex-wrap`}
+          className={`flex items-start justify-start gap-2 overflow-auto no-scrollbar px-4 xl:justify-end xl:flex-wrap xl:px-0 mx-auto xl:mx-0 pointer-events-auto`}
         >
           {samples.map((sample, i) => {
             const idx = idxs[offset + i]
@@ -84,9 +91,11 @@ function Pagination({
   const isFirstPage = page === 0
   const isLastPage = page === totalPages - 1 || totalPages === 0
   return (
-    <div className="w-full flex justify-between items-center mt-2">
+    <div
+      className={`w-full max-w-[500px] mx-auto flex justify-between items-center mt-2 pointer-events-auto`}
+    >
       <button
-        className={`p-2 ${isFirstPage ? "opacity-0" : ""}`}
+        className={`px-4 py-2 ${isFirstPage ? "opacity-0" : ""}`}
         disabled={page === 0}
         onClick={() => setPage(Math.max(page - 1, 0))}
       >
@@ -96,7 +105,7 @@ function Pagination({
         {page + 1}/{totalPages}
       </div>
       <button
-        className={`p-2 ${isLastPage ? "opacity-0" : ""}`}
+        className={`px-4 py-2  ${isLastPage ? "opacity-0" : ""}`}
         disabled={isLastPage}
         onClick={() => setPage(Math.min(page + 1, totalPages - 1))}
       >

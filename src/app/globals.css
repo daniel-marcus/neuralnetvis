@@ -69,6 +69,13 @@
     /* for Select and TextInput */
     @apply px-2 border-1 border-menu-border rounded-[3px];
   }
+  .no-scrollbar {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 :root {

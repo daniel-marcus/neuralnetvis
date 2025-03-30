@@ -58,7 +58,7 @@ const Status = () => {
   )
 }
 
-function useHasBlur() {
+export function useHasBlur() {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
   const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
@@ -73,7 +73,7 @@ export function BlurMask() {
         hasBlur
           ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
           : "pointer-events-none"
-      } transition-all duration-300 `}
+      } transition-all duration-300`}
     />
   )
 }

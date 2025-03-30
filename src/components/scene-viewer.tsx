@@ -70,9 +70,9 @@ function SceneViewerInner(props: SceneViewerProps) {
               {showDescription && !!dsDef && <DsDescription ds={ds ?? dsDef} />}
               <SceneBtns>
                 <LoadFullBtn />
+                {dsDef?.hasCam && <VideoControl />}
                 <ViewSelect />
                 <ViewSubsetSelect />
-                {dsDef?.hasCam && <VideoControl />}
               </SceneBtns>
               {view === "evaluation" && (
                 <>

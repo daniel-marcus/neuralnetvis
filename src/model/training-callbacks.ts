@@ -39,10 +39,10 @@ export class UpdateCb extends CustomCallback {
           })
         }
         if (this.silent) {
-          const setBatchCount = getScene().getState().setBatchCount
+          const scene = getScene().getState()
           const processedSamples = (this.params.samples ?? 0) - 1
-          this.next(processedSamples) // update view
-          setBatchCount((c) => c + processedSamples) // update weights
+          if (scene.view === "model") this.next(processedSamples) // update view
+          scene.setBatchCount((c) => c + processedSamples) // update weights
         }
       },
     })

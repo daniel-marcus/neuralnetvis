@@ -18,7 +18,10 @@ export const ConfusionMatrix = () => {
   const [hovered, setHovered] = useState<ConfusionCell | null>(null)
   const sel = useMemo(() => selected ?? hovered, [selected, hovered])
   const setSampleIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
-  useEffect(() => setSampleIdxs(sel?.sampleIdxs ?? []), [sel, setSampleIdxs])
+  useEffect(() => {
+    setSampleIdxs(sel?.sampleIdxs ?? [])
+    return () => setSampleIdxs([])
+  }, [sel, setSampleIdxs])
 
   const labelProps = (prop: GroupProp) => ({
     name: prop,
@@ -78,7 +81,7 @@ const Cell = (
   return (
     <div
       className={`flex items-center justify-center cursor-pointer border-2 ${
-        isHighlighted ? "border-marker" : "border-transparent"
+        isHighlighted || isSelected ? "border-marker" : "border-transparent"
       } ${isSelected ? "rounded-sm" : ""} ${isCorrect ? "text-white" : ""}`}
       style={{ backgroundColor: color }}
       {...otherProps}
@@ -124,7 +127,7 @@ interface GridProps {
 
 const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
   <div
-    className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs mg:text-sm lg:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:400px] xl:[--grid-base:500px]`}
+    className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs md:text-sm xl:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:400px] xl:[--grid-base:500px] lg:max-xl:-mt-[var(--label-width)]`}
     style={
       {
         "--num-classes": numClasses,
@@ -251,6 +254,7 @@ function useConfusionCells() {
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
   const backendReady = useGlobalStore((s) => s.backendReady)
+  const batchCount = useSceneStore((s) => s.batchCount)
 
   useEffect(() => {
     async function getCells() {
@@ -305,8 +309,7 @@ function useConfusionCells() {
       }
     }
     getCells()
-    return () => setCells([])
-  }, [model, ds, subset, backendReady])
+  }, [model, ds, subset, backendReady, batchCount])
 
   return cells
 }
