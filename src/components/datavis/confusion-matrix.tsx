@@ -63,12 +63,12 @@ export const ConfusionMatrix = () => {
 
   return (
     <div
-      className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] w-full overflow-hidden pointer-events-auto`}
+      className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:450px] xl:[--grid-base:500px]`}
       style={
         {
           "--num-classes": numClasses,
           "--grid-size":
-            "min(500px, calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-height) - var(--gap)))",
+            "min(var(--grid-base), calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-height) - var(--gap)))",
           "--cell-size": `calc(var(--grid-size) / var(--num-classes) - var(--gap))`,
           "--label-width": long
             ? `calc(${maxChars}ch + 2 * var(--label-padding))`
@@ -105,7 +105,7 @@ export const ConfusionMatrix = () => {
         }}
         onMouseLeave={() => setHovered(null)}
       />
-      <div className="aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
+      <div className="w-[var(--grid-size)] aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
         {Array.from({ length }, (_, i) => {
           const rowIdx = Math.floor(i / numClasses)
           const colIdx = i % numClasses
@@ -188,8 +188,8 @@ function Labels({
       <div
         className={`grid gap-[var(--gap)] ${
           orient === "column"
-            ? "h-full grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)] _sm:min-w-[var(--cell-size)]"
-            : `w-full grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
+            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)] _sm:min-w-[var(--cell-size)]"
+            : `grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
                 long
                   ? "min-h-[var(--label-width)]"
                   : "min-h-[var(--axis-label-height)]"

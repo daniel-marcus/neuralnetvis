@@ -4,43 +4,45 @@ import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
-
-const SAMPLES_PER_PAGE = 16
+import { useIsScreen } from "@/utils/screen"
 
 export function SampleViewer() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
-  const [page, setPage] = useState(0)
+  const [offset, setOffset] = useState(0)
   const [samples, setSamples] = useState<SampleRaw[]>([])
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
+  const isScreenXl = useIsScreen("xl")
+  const itemsPerPage = isScreenXl ? 16 : 4
   useEffect(() => {
-    setPage(0)
+    setOffset(0)
     setSamples([])
   }, [idxs])
   useEffect(() => {
     async function getSamples() {
       if (!ds) return
       const newSamples: SampleRaw[] = []
-      const offset = page * SAMPLES_PER_PAGE
-      for (const idx of idxs.slice(offset, offset + SAMPLES_PER_PAGE)) {
+      for (const idx of idxs.slice(offset, offset + itemsPerPage)) {
         const sample = await getSample(ds, subset, idx)
         if (sample) newSamples.push(sample)
       }
       setSamples(newSamples)
     }
     getSamples()
-  }, [idxs, ds, subset, page])
+  }, [idxs, ds, subset, offset, itemsPerPage])
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   const hasCam = useSceneStore((s) => s.ds?.hasCam)
   return (
-    <div className="max-w-[calc(4*var(--item-size)+2rem)] xl:w-[calc(4*var(--item-size)+2rem)] mt-8 mx-auto xl:m-0 xl:fixed xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:80px] pointer-events-auto">
-      <div className={`w-full ${hasCam ? "aspect-[4/3]" : "aspect-square"} `}>
+    <div className="w-[calc(4*var(--item-size)+2rem)] fixed bottom-4 right-[50vw] translate-x-[50%] xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-auto">
+      <div
+        className={`w-full ${hasCam ? "xl:aspect-[4/3]" : "xl:aspect-square"} `}
+      >
         <div
           className={`flex items-start justify-center xl:justify-end gap-2 flex-wrap`}
         >
           {samples.map((sample, i) => {
-            const idx = idxs[page * SAMPLES_PER_PAGE + i]
+            const idx = idxs[offset + i]
             const isCurrent = typeof idx !== "undefined" && idx === sampleIdx
             return (
               <button
@@ -55,9 +57,9 @@ export function SampleViewer() {
       </div>
       <Pagination
         total={idxs.length}
-        itemsPerPage={SAMPLES_PER_PAGE}
-        page={page}
-        setPage={setPage}
+        itemsPerPage={itemsPerPage}
+        offset={offset}
+        setOffset={setOffset}
       />
     </div>
   )
@@ -66,11 +68,18 @@ export function SampleViewer() {
 interface PaginationProps {
   total: number
   itemsPerPage: number
-  page: number
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  offset: number
+  setOffset: React.Dispatch<React.SetStateAction<number>>
 }
 
-function Pagination({ total, itemsPerPage, page, setPage }: PaginationProps) {
+function Pagination({
+  total,
+  itemsPerPage,
+  offset,
+  setOffset,
+}: PaginationProps) {
+  const page = Math.floor(offset / itemsPerPage)
+  const setPage = (newPage: number) => setOffset(newPage * itemsPerPage)
   const totalPages = Math.ceil(total / itemsPerPage)
   const isFirstPage = page === 0
   const isLastPage = page === totalPages - 1 || totalPages === 0
@@ -79,7 +88,7 @@ function Pagination({ total, itemsPerPage, page, setPage }: PaginationProps) {
       <button
         className={`p-2 ${isFirstPage ? "opacity-0" : ""}`}
         disabled={page === 0}
-        onClick={() => setPage((p) => Math.max(p - 1, 0))}
+        onClick={() => setPage(Math.max(page - 1, 0))}
       >
         &lt; prev
       </button>
@@ -89,7 +98,7 @@ function Pagination({ total, itemsPerPage, page, setPage }: PaginationProps) {
       <button
         className={`p-2 ${isLastPage ? "opacity-0" : ""}`}
         disabled={isLastPage}
-        onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+        onClick={() => setPage(Math.min(page + 1, totalPages - 1))}
       >
         next &gt;
       </button>

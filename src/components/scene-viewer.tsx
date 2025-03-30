@@ -92,7 +92,7 @@ function ConfusionViewer() {
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
     <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center">
-      <div className="py-8">
+      <div className="pt-2">
         <div
           className={`${
             hasSample
@@ -114,7 +114,7 @@ const DsDescription = ({ ds }: { ds: Dataset | DatasetDef }) => {
   return (
     <div
       className={`max-w-[300px] mb-4 ${
-        view !== "model" ? "hidden md:block" : "pointer-events-auto"
+        view !== "model" ? "hidden xl:block" : "pointer-events-auto"
       }`}
     >
       <p>{ds.description}</p>
