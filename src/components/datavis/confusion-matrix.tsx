@@ -4,140 +4,154 @@ import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { getDbDataAsTensors } from "@/data/dataset"
 import { getHighlightColor } from "@/utils/colors"
 import { setBackend } from "@/model/tf-backend"
-
-const DUMMY_CELL: ConfusionCell = {
-  count: undefined,
-  normalized: 0,
-  sampleIdxs: [],
-}
+import { isTouch } from "@/utils/screen"
 
 export const ConfusionMatrix = () => {
   const labels = useSceneStore((s) => s.ds?.outputLabels ?? [])
   const cells = useConfusionCells()
   const numClasses = labels.length
-  const length = numClasses * numClasses
-
-  const maxChars = labels.reduce((acc, label) => {
-    const length = Array.from(label).length // bc emojis count as 2
-    return length > acc ? length : acc
-  }, 0)
+  const maxChars = getMaxChars(labels)
   const long = maxChars > 2
 
   const [selected, setSelected] = useState<ConfusionCell | null>(null)
   const [hovered, setHovered] = useState<ConfusionCell | null>(null)
   const sel = useMemo(() => selected ?? hovered, [selected, hovered])
+  const setSampleIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
+  useEffect(() => setSampleIdxs(sel?.sampleIdxs ?? []), [sel, setSampleIdxs])
 
-  const setSampleViewerIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
-  useEffect(() => {
-    setSampleViewerIdxs(sel?.sampleIdxs ?? [])
-  }, [sel, setSampleViewerIdxs])
+  const labelProps = (prop: GroupProp) => ({
+    name: prop,
+    labels: labels,
+    long,
+    highlighted: sel?.[prop],
+    highlightedIsSelected: !!selected,
+    ...labelHandlers(prop, setSelected, setHovered, cells),
+  })
 
-  const createGroupedCell = (
-    prop: "actualClass" | "predictedClass",
-    val: number,
-    cb?: (cell: ConfusionCell) => void
-  ) => {
-    const filteredCells = cells.filter((cell) => cell[prop] === val)
-    const groupedCell = filteredCells.reduce(
-      (acc, cell) => ({
-        ...acc,
-        count: (acc.count ?? 0) + (cell.count ?? 0),
-        sampleIdxs: [...acc.sampleIdxs, ...cell.sampleIdxs],
-      }),
-      { ...DUMMY_CELL, [prop]: val, groupProp: prop }
-    )
-    cb?.(groupedCell)
-    return groupedCell
-  }
-
-  const handleLabelClick = (
-    prop: "actualClass" | "predictedClass",
-    val: number
-  ) => {
-    setSelected((s) =>
-      s?.groupProp === prop && s[prop] === val
-        ? null
-        : createGroupedCell(prop, val)
-    )
-  }
+  const groupProp = sel?.groupProp
 
   return (
-    <div
-      className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:450px] xl:[--grid-base:500px]`}
-      style={
-        {
-          "--num-classes": numClasses,
-          "--grid-size":
-            "min(var(--grid-base), calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-height) - var(--gap)))",
-          "--cell-size": `calc(var(--grid-size) / var(--num-classes) - var(--gap))`,
-          "--label-width": long
-            ? `calc(${maxChars}ch + 2 * var(--label-padding))`
-            : "var(--axis-label-height)",
-          "--label-max-w": "min(var(--label-width), 4em)",
-          "--axis-label-height": "1.5em",
-        } as React.CSSProperties
-      }
-    >
-      <Labels
-        name="actual"
-        labels={labels}
-        position="top"
-        long={long}
-        className="col-start-2"
-        highlighted={sel?.actualClass}
-        highlightedIsSelected={!!selected}
-        onClick={(val) => handleLabelClick("actualClass", val)}
-        onMouseEnter={(actualClass) => {
-          createGroupedCell("actualClass", actualClass, setHovered)
-        }}
-        onMouseLeave={() => setHovered(null)}
-      />
-      <Labels
-        name="predicted"
-        labels={labels}
-        position="left"
-        long={long}
-        highlighted={sel?.predictedClass}
-        highlightedIsSelected={!!selected}
-        onClick={(val) => handleLabelClick("predictedClass", val)}
-        onMouseEnter={(predictedClass) => {
-          createGroupedCell("predictedClass", predictedClass, setHovered)
-        }}
-        onMouseLeave={() => setHovered(null)}
-      />
-      <div className="w-[var(--grid-size)] aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
-        {Array.from({ length }, (_, i) => {
-          const rowIdx = Math.floor(i / numClasses)
-          const colIdx = i % numClasses
-          const isCorrect = rowIdx === colIdx
-          const cell = cells[i] ?? DUMMY_CELL
-          const backgroundColor = getCellColor(cell.normalized, isCorrect)
-          const isSelected = cell !== DUMMY_CELL && selected === cell
-          const isHighlighted =
-            (cell !== DUMMY_CELL && hovered === cell) ||
-            (sel?.groupProp && sel[sel.groupProp] === cell[sel.groupProp])
+    <OuterGrid numClasses={numClasses} long={long} maxChars={maxChars}>
+      <div />
+      <Labels position="top" {...labelProps("actual")} />
+      <Labels position="left" {...labelProps("predicted")} />
+      <InnerGrid>
+        {cells.map((cell, i) => {
+          const isCorrect = cell.actual === cell.predicted
+          const isInSelGroup = groupProp && cell[groupProp] === sel[groupProp]
           return (
-            <div
+            <Cell
               key={i}
-              className={`flex items-center justify-center cursor-pointer ${
-                isCorrect ? "text-white" : ""
-              } border-2 ${
-                isSelected || isHighlighted
-                  ? "border-marker"
-                  : "border-transparent"
-              } ${isSelected ? "rounded-sm" : ""}`}
-              style={{ backgroundColor }}
+              isSelected={cell === selected}
+              isHighlighted={cell === hovered || isInSelGroup}
+              isCorrect={isCorrect}
+              color={getCellColor(cell.normalized ?? 0, isCorrect)}
               onClick={() => setSelected((c) => (c === cell ? null : cell))}
-              onMouseEnter={() => setHovered(cell)}
+              onMouseEnter={!isTouch() ? () => setHovered(cell) : undefined}
               onMouseLeave={() => setHovered(null)}
             >
-              {cell.count ?? "-"}
-            </div>
+              {cell.count}
+            </Cell>
           )
         })}
-      </div>
-    </div>
+      </InnerGrid>
+    </OuterGrid>
   )
+}
+
+type DivProps = React.DetailedHTMLProps<
+  React.HTMLAttributes<HTMLElement>,
+  HTMLDivElement
+>
+
+const Cell = (
+  props: {
+    isHighlighted?: boolean
+    isSelected?: boolean
+    isCorrect?: boolean
+    color?: string
+  } & DivProps
+) => {
+  const { isHighlighted, isSelected, isCorrect, color, ...otherProps } = props
+  return (
+    <div
+      className={`flex items-center justify-center cursor-pointer border-2 ${
+        isHighlighted ? "border-marker" : "border-transparent"
+      } ${isSelected ? "rounded-sm" : ""} ${isCorrect ? "text-white" : ""}`}
+      style={{ backgroundColor: color }}
+      {...otherProps}
+    />
+  )
+}
+
+function labelHandlers(
+  prop: GroupProp,
+  setSelected: React.Dispatch<React.SetStateAction<ConfusionCell | null>>,
+  setHovered: React.Dispatch<React.SetStateAction<ConfusionCell | null>>,
+  cells: ConfusionCell[]
+) {
+  const groupedCell = (val: number) => {
+    return cells
+      .filter((cell) => cell[prop] === val)
+      .reduce(
+        (acc, cell) => ({
+          ...acc,
+          count: (acc.count ?? 0) + (cell.count ?? 0),
+          sampleIdxs: [...acc.sampleIdxs, ...cell.sampleIdxs],
+        }),
+        { sampleIdxs: [], [prop]: val, groupProp: prop } as ConfusionCell
+      )
+  }
+
+  const onClick = (val: number) =>
+    setSelected((s) =>
+      s?.groupProp === prop && s[prop] === val ? null : groupedCell(val)
+    )
+  const onMouseEnter = (val: number) => setHovered(groupedCell(val))
+  const onMouseLeave = () => setHovered(null)
+
+  return { onClick, onMouseEnter, onMouseLeave }
+}
+
+interface GridProps {
+  numClasses: number
+  long?: boolean
+  maxChars: number
+  children: React.ReactNode
+}
+
+const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
+  <div
+    className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs sm:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:450px] xl:[--grid-base:500px]`}
+    style={
+      {
+        "--num-classes": numClasses,
+        "--grid-size":
+          "min(var(--grid-base), calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-size) - var(--gap)))",
+        "--cell-size": `calc(var(--grid-size) / var(--num-classes) - var(--gap))`,
+        "--label-width": long
+          ? `calc(${maxChars}ch + 2 * var(--label-padding))`
+          : "var(--axis-label-size)",
+        "--label-max-w": "min(var(--label-width), 4em)",
+        "--axis-label-size": "1.5em",
+      } as React.CSSProperties
+    }
+  >
+    {children}
+  </div>
+)
+
+const InnerGrid = ({ children }: { children: React.ReactNode }) => (
+  <div className="w-[var(--grid-size)] aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
+    {children}
+  </div>
+)
+
+const LABEL_FLEX_MAP = {
+  top: "flex-col",
+  bottom: "flex-col-reverse",
+  left: "flex-row",
+  right: "flex-row-reverse",
 }
 
 interface LabelProps {
@@ -153,34 +167,18 @@ interface LabelProps {
   onMouseLeave?: (i: number) => void
 }
 
-function Labels({
-  name,
-  labels,
-  position,
-  long,
-  highlighted,
-  highlightedIsSelected,
-  className = "",
-  onClick,
-  onMouseEnter,
-  onMouseLeave,
-}: LabelProps) {
+function Labels(props: LabelProps) {
+  const { name, labels, position } = props
+  const { long, highlighted, highlightedIsSelected, className = "" } = props
+  const { onClick, onMouseEnter, onMouseLeave } = props
   const orient = position === "top" || position === "bottom" ? "row" : "column"
   return (
     <div
-      className={`flex gap-[var(--gap)] ${
-        position === "top"
-          ? "flex-col"
-          : position === "bottom"
-          ? "flex-col-reverse"
-          : position === "right"
-          ? "flex-row-reverse"
-          : "flex-row"
-      } text-secondary ${className}`}
+      className={`flex gap-[var(--gap)] ${LABEL_FLEX_MAP[position]} text-secondary ${className}`}
     >
       <div
         className={`flex items-center justify-center bg-box-dark ${
-          orient === "column" ? "w-[var(--axis-label-height)]" : ""
+          orient === "column" ? "w-[var(--axis-label-size)]" : ""
         }`}
       >
         <div className={orient === "column" ? "-rotate-90" : ""}>{name}</div>
@@ -188,14 +186,13 @@ function Labels({
       <div
         className={`grid gap-[var(--gap)] ${
           orient === "column"
-            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)] _sm:min-w-[var(--cell-size)]"
+            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))]"
             : `grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
                 long
                   ? "min-h-[var(--label-width)]"
-                  : "min-h-[var(--axis-label-height)]"
+                  : "min-h-[var(--axis-label-size)]"
               }`
         }`}
-        style={{} as React.CSSProperties}
       >
         {labels.map((label, i) => (
           <div
@@ -222,8 +219,8 @@ function Labels({
                 : "justify-center"
             } ${typeof onClick === "function" ? "cursor-pointer" : ""}`}
             onClick={() => onClick?.(i)}
-            onMouseEnter={() => onMouseEnter?.(i)}
-            onMouseLeave={() => onMouseLeave?.(i)}
+            onMouseEnter={!isTouch() ? () => onMouseEnter?.(i) : undefined}
+            onMouseLeave={!isTouch() ? () => onMouseLeave?.(i) : undefined}
           >
             <div className={long && orient === "column" ? "truncate" : ""}>
               {label}
@@ -235,13 +232,15 @@ function Labels({
   )
 }
 
-export interface ConfusionCell {
+type GroupProp = "actual" | "predicted"
+
+interface ConfusionCell {
   count?: number
-  normalized: number
+  normalized?: number
   sampleIdxs: number[]
-  actualClass?: number
-  predictedClass?: number
-  groupProp?: "actualClass" | "predictedClass"
+  actual?: number
+  predicted?: number
+  groupProp?: GroupProp
 }
 
 function useConfusionCells() {
@@ -289,8 +288,8 @@ function useConfusionCells() {
               count,
               sampleIdxs,
               normalized: count / (maxPerCol[colIdx] || Infinity),
-              actualClass: colIdx,
-              predictedClass: rowIdx,
+              actual: colIdx,
+              predicted: rowIdx,
             }
           })
         })
@@ -313,4 +312,11 @@ function useConfusionCells() {
 function getCellColor(normalized: number, isCorrect: boolean) {
   const val = isCorrect ? normalized : -normalized
   return getHighlightColor(val)?.style
+}
+
+function getMaxChars(arr: string[]) {
+  return arr.reduce((acc, label) => {
+    const length = Array.from(label).length // bc emojis count as 2
+    return length > acc ? length : acc
+  }, 0)
 }

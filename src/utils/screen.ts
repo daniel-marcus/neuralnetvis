@@ -101,6 +101,8 @@ export function useInView(
   return [ref, state.inView, state.direction] as const
 }
 
+export const isTouch = () => "ontouchstart" in window
+
 export function useIsTouchDevice() {
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   useEffect(() => {
