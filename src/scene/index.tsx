@@ -26,7 +26,7 @@ export const Scene = (props: SceneProps) => {
       frameloop="demand"
       // resize={{ debounce: 0 }}
       className={`absolute! w-screen! h-[100vh]! select-none ${
-        isActive ? "" : "touch-pinch-zoom! touch-pan-y!"
+        isActive ? "" : "touch-pan-y!"
       } ${(isLocked || isMapView) && !isDebug ? "pointer-events-none!" : ""} ${
         isMapView ? "opacity-0" : ""
       } transition-opacity duration-300`}
