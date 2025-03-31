@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 
 export type TableProps = {
   data: Record<string, ReactNode>
-  title?: string
+  title?: ReactNode
   keyAlign?: "left" | "right"
   valueAlign?: "left" | "right"
 }
