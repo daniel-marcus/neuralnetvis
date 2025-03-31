@@ -5,7 +5,6 @@ import { datasets } from "@/data/datasets"
 import { useDrag } from "@use-gesture/react"
 import { lessonPreviews } from "@/contents"
 import { usePathname, useRouter } from "next/navigation"
-import { useHasLesson } from "./lesson"
 import { useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
@@ -49,15 +48,12 @@ const tiles: TileDef[] = [
 export const TileGrid = () => {
   const active = usePathname()
   const lastActive = useLast(active)
-  const hasLesson = useHasLesson()
   const hasActive = useHasActiveTile()
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   return (
     <div
-      className={`top-[var(--logo-height)] left-0 w-screen ${
-        hasLesson ? "fixed" : "absolute"
-      }`}
+      className={`left-0 w-screen absolute ${hasActive ? "" : ""}`}
       style={
         {
           "--tile-width": "320px",
@@ -112,15 +108,21 @@ function Tile(props: TileProps) {
   const router = useRouter()
   const bind = useDrag(({ tap }) => {
     // allows touch scroll + drag rotate for scene + tap to expand
-    if (tap && !isActive) router.push(props.path)
+    if (tap && !isActive) {
+      useGlobalStore.setState({ scrollPos: window.scrollY })
+      router.push(props.path)
+    }
   })
 
   const [localActive, setLocalActive] = useState(false)
+  const [inTransition, setInTransition] = useState(false)
   useEffect(() => {
     const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
     ref.current?.style.setProperty("--offset-x", `${x}px`)
     ref.current?.style.setProperty("--offset-y", `${y}px`)
     setLocalActive(!!isActive)
+    setInTransition(true)
+    setTimeout(() => setInTransition(false), 500) // --tile-duration
   }, [isActive])
 
   const style = isFeatured ? { "--tile-width": "calc(640px+var(--gap))" } : {}
@@ -137,7 +139,7 @@ function Tile(props: TileProps) {
       <div
         className={`rounded-box bg-background overflow-hidden origin-center flex items-center justify-center ${
           localActive
-            ? "fixed inset-0 w-screen h-[100dvh] z-10 border-transparent!"
+            ? "fixed inset-0 w-screen h-[100dvh] z-10"
             : "relative w-[var(--tile-width)] h-[var(--tile-height)]"
         } ${
           isActive === localActive
@@ -145,9 +147,11 @@ function Tile(props: TileProps) {
             : isActive && !localActive
             ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
             : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
-        } border-2 border-box ${
-          isActive ? "border-transparent!" : "group-hover/tile:border-accent"
-        } `}
+        } border-2 ${
+          isActive || inTransition
+            ? "border-transparent"
+            : "border-box group-hover/tile:border-accent"
+        }`}
       >
         {children}
       </div>

@@ -92,6 +92,7 @@ export type GlobalStoreType = TabsSlice &
     scene: SceneStore
     setScene: (scene: SceneStore) => void
     handLandmarker?: HandLandmarker
+    scrollPos: number // used to restore scroll position when switching from scene back to main
   }
 
 export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
@@ -107,6 +108,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
     get().status.reset()
     set({ scene })
   },
+  scrollPos: 0,
 }))
 
 //

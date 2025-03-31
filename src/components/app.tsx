@@ -11,6 +11,10 @@ export const App = ({ children }: { children?: ReactNode }) => {
   return (
     <>
       <Header />
+      <div
+        id="my-portal"
+        className="absolute z-20 pointer-events-none top-0 left-0 w-[100vw]"
+      />
       <TileGrid />
       {children}
       <LessonGradient />

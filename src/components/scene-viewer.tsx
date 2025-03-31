@@ -1,7 +1,7 @@
-import { Suspense, useMemo, useState, type ReactNode } from "react"
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Scene } from "@/scene"
-import { SceneStoreProvider, useSceneStore } from "@/store"
+import { SceneStoreProvider, useGlobalStore, useSceneStore } from "@/store"
 import { useModel, useTraining } from "@/model"
 import { useDsDef, useDataset, useSample, type Dataset } from "@/data"
 import { VideoControl, VideoWindow } from "./video"
@@ -14,6 +14,7 @@ import { BlurMask } from "./status-bar"
 import { EvaluationView } from "./evaluation"
 import type { TileDef } from "./tile-grid"
 import type { View } from "@/store/view"
+import { createPortal } from "react-dom"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -75,17 +76,30 @@ const DsDescription = () => {
 
 const SceneOverlay = ({ children }: { children: ReactNode }) => {
   const isActive = useSceneStore((s) => s.isActive)
-  return (
+  const [localActive, setLocalActive] = useState(isActive)
+  useEffect(() => {
+    if (!isActive) return
+    window.scrollTo({ top: 0 })
+    setTimeout(() => setLocalActive(true), 500) // --tile-duration
+    return () => {
+      window.scrollTo({ top: useGlobalStore.getState().scrollPos })
+      setLocalActive(false)
+    }
+  }, [isActive])
+  const comp = (
     <div
-      className={`absolute z-50 top-0 left-0 h-full w-full overflow-scroll pointer-events-none ${
-        isActive
-          ? "p-main mt-[calc(var(--header-height)-var(--padding-main))]"
+      className={`relative top-0 left-0 h-full w-full overflow-scroll pointer-events-none ${
+        isActive || (!isActive && localActive)
+          ? "p-main pt-[var(--header-height)]!"
           : "p-4"
-      } transition-transform duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
+      } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
     >
       {children}
     </div>
   )
+  return isActive && localActive
+    ? createPortal(comp, document.querySelector("#my-portal")!)
+    : comp
 }
 
 const SceneButtons = () => {
@@ -114,7 +128,7 @@ export const SceneTitle = ({ title, href, section }: SceneTitleProps) => {
   const toggleDescription = () => setShowDescription((s) => !s)
   const Comp = isActive ? "button" : Link
   const onClick = isActive ? toggleDescription : undefined
-  // if (isActive && section === "learn") return null
+  if (isActive && section === "learn") return null
   return (
     <>
       <Comp
