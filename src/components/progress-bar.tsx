@@ -14,22 +14,25 @@ export const ProgressBar = memo(function ProgressBar() {
       ref={wrapperRef}
       className={`w-full bg-red leading-none overflow-hidden transition-all duration-300 ${
         isHidden ? "opacity-0" : ""
-      } relative z-30`}
+      } relative z-30 [--px-per-char:]`}
     >
       <span
         ref={testRef}
         className={`absolute ${
-          isSpinner ? "animate-move-left-right" : "opacity-0"
+          isSpinner ? "animate-move-left-right text-marker" : "opacity-0"
         }`}
       >
         █
       </span>
-      <div className={isSpinner ? "opacity-30" : ""}>
-        {Array.from({ length }).map((_, i) => (
-          <span key={i} style={{ width: pxPerChar + "px" }}>
-            {(percent ?? 0) >= i / (length - 1) ? "█" : "░"}
-          </span>
-        ))}
+      <div>
+        {Array.from({ length }).map((_, i) => {
+          const checked = (percent ?? 0) >= i / (length - 1)
+          return (
+            <span key={i} className={checked ? "text-marker" : ""}>
+              {checked ? "█" : "░"}
+            </span>
+          )
+        })}
       </div>
     </div>
   )
