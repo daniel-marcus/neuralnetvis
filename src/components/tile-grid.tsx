@@ -4,7 +4,7 @@ import React, { ReactNode, useEffect, useRef, useState } from "react"
 import { datasets } from "@/data/datasets"
 import { useDrag } from "@use-gesture/react"
 import { lessonPreviews } from "@/contents"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
@@ -49,7 +49,6 @@ export const TileGrid = () => {
   const active = usePathname()
   const hasActive = useHasActiveTile()
   const lastActive = useLast(hasActive ? active : undefined)
-  console.log("lastActive", lastActive, active)
   const [localHasActive, setLocalHasActive] = useState(false)
   useEffect(() => setLocalHasActive(hasActive), [hasActive])
   const isDebug = useGlobalStore((s) => s.isDebug)
@@ -109,12 +108,15 @@ function Tile(props: TileProps) {
   const { isActive, className, children, isFeatured } = props
   const ref = useRef<HTMLDivElement>(null)
 
-  const router = useRouter()
   const bind = useDrag(({ tap }) => {
     // allows touch scroll + drag rotate for scene + tap to expand
     if (tap && !isActive) {
       useGlobalStore.setState({ scrollPos: window.scrollY })
-      router.push(props.path, { scroll: true })
+      // TODO: use linkRef (router.push + scroll doesn't work)
+      const link = document.querySelector(
+        `[href="${props.path}"]`
+      ) as HTMLAnchorElement
+      link?.click()
     }
   })
 
