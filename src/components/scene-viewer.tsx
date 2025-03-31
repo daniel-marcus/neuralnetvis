@@ -12,7 +12,7 @@ import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { MapPlot } from "./datavis/map-plot"
 import { BlurMask } from "./status-bar"
 import { EvaluationView } from "./evaluation"
-import type { TileDef } from "./tile-grid"
+import { getTileDuration, type TileDef } from "./tile-grid"
 import type { View } from "@/store/view"
 import { createPortal } from "react-dom"
 
@@ -76,11 +76,11 @@ const DsDescription = () => {
 
 const SceneOverlay = ({ children }: { children: ReactNode }) => {
   const isActive = useSceneStore((s) => s.isActive)
-  const [localActive, setLocalActive] = useState(isActive)
+  const [localActive, setLocalActive] = useState(false)
   useEffect(() => {
     if (!isActive) return
     window.scrollTo({ top: 0 })
-    setTimeout(() => setLocalActive(true), 500) // --tile-duration
+    setTimeout(() => setLocalActive(true), getTileDuration())
     return () => {
       window.scrollTo({ top: useGlobalStore.getState().scrollPos })
       setLocalActive(false)

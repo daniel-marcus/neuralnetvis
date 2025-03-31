@@ -10,6 +10,7 @@ import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useIsScreen, useIsTouchDevice } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
+import { getTileDuration } from "@/components/tile-grid"
 
 interface SceneProps {
   isActive: boolean
@@ -48,7 +49,7 @@ export const SceneInner = ({ isActive }: SceneProps) => {
       camera.updateProjectionMatrix()
       invalidate()
     },
-    config: { duration: 500 }, // sync with --tile-duration
+    config: { duration: getTileDuration() },
   })
   const isTouchDevice = useIsTouchDevice()
   return (

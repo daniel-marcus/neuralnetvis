@@ -47,19 +47,23 @@ const tiles: TileDef[] = [
 
 export const TileGrid = () => {
   const active = usePathname()
-  const lastActive = useLast(active)
   const hasActive = useHasActiveTile()
+  const lastActive = useLast(hasActive ? active : undefined)
+  console.log("lastActive", lastActive, active)
+  const [localHasActive, setLocalHasActive] = useState(false)
+  useEffect(() => setLocalHasActive(hasActive), [hasActive])
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   return (
     <div
-      className={`left-0 w-screen absolute ${hasActive ? "" : ""}`}
+      className={`top-0 left-0 w-screen pt-[var(--logo-height)] ${
+        localHasActive ? "fixed" : "absolute"
+      }`}
       style={
         {
           "--tile-width": "320px",
           "--tile-height": "420px",
           "--gap": "2rem",
-          "--tile-duration": "0.5s",
         } as React.CSSProperties
       }
     >
@@ -122,7 +126,7 @@ function Tile(props: TileProps) {
     ref.current?.style.setProperty("--offset-y", `${y}px`)
     setLocalActive(!!isActive)
     setInTransition(true)
-    setTimeout(() => setInTransition(false), 500) // --tile-duration
+    setTimeout(() => setInTransition(false), getTileDuration()) // --tile-duration
   }, [isActive])
 
   const style = isFeatured ? { "--tile-width": "calc(640px+var(--gap))" } : {}
@@ -188,7 +192,18 @@ export function useSection() {
 function useLast<T>(value: T) {
   const ref = useRef(value)
   useEffect(() => {
-    ref.current = value
+    if (value) ref.current = value
   }, [value])
   return ref.current
+}
+
+export function getTileDuration() {
+  const s = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue(
+      "--tile-duration"
+    )
+  )
+  const ms = s * 1000
+  if (!ms) console.warn("--tile-duration not set!", ms)
+  return ms
 }

@@ -91,6 +91,7 @@
   --header-height: calc(var(--padding-main) * 2 + 1.5rem);
   --logo-height: 92px;
   --slider-value-width: 2.5em;
+  --tile-duration: 0.5s;
 }
 
 body {
