@@ -2,6 +2,7 @@
 
 import { useTfBackend } from "@/model/tf-backend"
 import { useDebugCommands } from "@/utils/debug"
+import { useGlobalStore } from "@/store"
 import { Header, LessonGradient, TileGrid, StatusBar } from "@/components"
 import type { ReactNode } from "react"
 
@@ -11,14 +12,16 @@ export const App = ({ children }: { children?: ReactNode }) => {
   return (
     <>
       <Header />
-      <div
-        id="my-portal"
-        className="absolute z-20 pointer-events-none top-0 left-0 w-[100vw]"
-      />
+      <Portal />
       <TileGrid />
       {children}
       <LessonGradient />
       <StatusBar />
     </>
   )
+}
+
+function Portal() {
+  const ref = useGlobalStore((s) => s.portalRef)
+  return <div ref={ref} className="absolute z-20 pointer-events-none inset-0" />
 }

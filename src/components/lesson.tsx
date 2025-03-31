@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import { useLock } from "@/scene/lock"
 import { Ctas } from "@/contents/elements"
-import { cloneElement, useEffect } from "react"
+import { cloneElement, useEffect, useState } from "react"
 import { useGlobalStore } from "@/store"
 import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
 
@@ -13,17 +13,20 @@ interface LessonProps extends LessonDef {
 
 export const Lesson = (props: LessonProps) => {
   const { content, nextLesson } = props
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => setIsMounted(true), [])
   const children = useContent(content)
-  useTabClose()
   const visLocked = useLock()
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <div
       className={`relative z-20 pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
         visLocked && !isDebug ? "" : "pointer-events-none"
-      }`}
+      } ${
+        isMounted ? "" : "opacity-0"
+      } transition-opacity duration-[calc(2*var(--tile-duration))]`}
     >
-      <div className="p-main lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto">
+      <div className="p-main lesson-width">
         {children}
         <Ctas nextLesson={nextLesson} />
       </div>
@@ -42,11 +45,4 @@ function useContent(content: LessonDef["content"]) {
 export function useHasLesson() {
   const pathname = usePathname()
   return pathname.startsWith("/learn/")
-}
-
-function useTabClose() {
-  const setTab = useGlobalStore((s) => s.setTab)
-  useEffect(() => {
-    setTab(null)
-  }, [setTab])
 }

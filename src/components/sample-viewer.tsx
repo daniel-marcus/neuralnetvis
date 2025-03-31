@@ -38,7 +38,7 @@ export function SampleViewer() {
     <div
       className={`fixed pt-4! bg-gradient-to-b from-transparent via-[1rem] ${
         hasBlur ? "via-black to-black" : "via-background to-background"
-      } transition-colors duration-300 w-screen bottom-4 right-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
+      } transition-colors duration-300 w-screen bottom-0 right-0 pb-4 xl:p-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
     >
       <div
         className={`xl:w-[calc(4*var(--item-size)+1.5rem)] ${

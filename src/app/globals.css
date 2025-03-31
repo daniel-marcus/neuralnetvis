@@ -65,6 +65,9 @@
     font-size: calc((var(--menu-btn-height)) / (7 * var(--logo-lh)));
     line-height: calc(var(--logo-lh) * 1em);
   }
+  .text-ascii-title {
+    @apply text-[min(calc(1.25vw),0.75rem)]/[1.2];
+  }
   .input-appearance {
     /* for Select and TextInput */
     @apply px-2 border-1 border-menu-border rounded-[3px];
@@ -75,6 +78,9 @@
     }
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  .lesson-width {
+    @apply lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto;
   }
 }
 

@@ -7,7 +7,7 @@ import { createModelSlice, ModelSlice } from "./model"
 import { createTrainingSlice, TrainingSlice } from "./training"
 import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
-import { createContext, useContext, useEffect, useRef } from "react"
+import { createContext, createRef, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
@@ -92,6 +92,7 @@ export type GlobalStoreType = TabsSlice &
     scene: SceneStore
     setScene: (scene: SceneStore) => void
     handLandmarker?: HandLandmarker
+    portalRef: React.RefObject<HTMLDivElement | null>
     scrollPos: number // used to restore scroll position when switching from scene back to main
   }
 
@@ -108,6 +109,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
     get().status.reset()
     set({ scene })
   },
+  portalRef: createRef<HTMLDivElement>(),
   scrollPos: 0,
 }))
 

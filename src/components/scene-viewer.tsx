@@ -33,8 +33,8 @@ function SceneViewerInner(props: SceneViewerProps) {
       {dsDef?.task === "regression" && <MapPlot />}
       {dsDef?.hasCam && <VideoWindow />}
       <SampleName />
-      <BlurMask />
       <Scene {...props} />
+      <BlurMask />
       <SceneOverlay>
         <SceneTitle title={title} href={path} section={section} />
         {section === "play" && isActive && <SceneButtons />}
@@ -86,9 +86,10 @@ const SceneOverlay = ({ children }: { children: ReactNode }) => {
       setLocalActive(false)
     }
   }, [isActive])
+  const portalRef = useGlobalStore((s) => s.portalRef)
   const comp = (
     <div
-      className={`relative top-0 left-0 h-full w-full overflow-scroll pointer-events-none ${
+      className={`relative top-0 left-0 h-full w-full pointer-events-none ${
         isActive || (!isActive && localActive)
           ? "p-main pt-[var(--header-height)]!"
           : "p-4"
@@ -97,9 +98,7 @@ const SceneOverlay = ({ children }: { children: ReactNode }) => {
       {children}
     </div>
   )
-  return isActive && localActive
-    ? createPortal(comp, document.querySelector("#my-portal")!)
-    : comp
+  return isActive && localActive ? createPortal(comp, portalRef.current!) : comp
 }
 
 const SceneButtons = () => {
@@ -120,28 +119,58 @@ interface SceneTitleProps {
   title: string
   href: string
   section?: string
+  isActive?: boolean
 }
 
-export const SceneTitle = ({ title, href, section }: SceneTitleProps) => {
+function SceneTitle({ section, ...props }: SceneTitleProps) {
+  const isActive = useSceneStore((s) => s.isActive)
+  const Comp = section === "learn" ? LessonTitle : DsTitle
+  return <Comp {...props} isActive={isActive} />
+}
+
+function LessonTitle({ title, href, isActive }: SceneTitleProps) {
+  return (
+    <div
+      className={`${
+        isActive
+          ? "translate-y-[calc(20vh+var(--logo-height)-var(--padding-main))] w-full lesson-width lg:px-4" // to match original lesson title position
+          : "translate-y-[calc(var(--tile-height)-100%-2rem)]"
+      } transition-translate duration-[var(--tile-duration)]`}
+    >
+      <Link href={href}>
+        <AsciiText
+          className={`${
+            isActive
+              ? "text-ascii-title"
+              : "text-logo pointer-events-auto group-hover/tile:text-white"
+          } [transition-property:all,color] [transition-duration:var(--tile-duration),0s]`}
+        >
+          {title}
+        </AsciiText>
+      </Link>
+    </div>
+  )
+}
+
+function DsTitle({ title, href, section }: SceneTitleProps) {
   const isActive = useSceneStore((s) => s.isActive)
   const [showDescription, setShowDescription] = useState(true)
   const toggleDescription = () => setShowDescription((s) => !s)
-  const Comp = isActive ? "button" : Link
+  const Comp = !isActive ? Link : "button"
   const onClick = isActive ? toggleDescription : undefined
-  if (isActive && section === "learn") return null
   return (
-    <>
+    <div>
       <Comp
         href={href}
         onClick={onClick}
         className={`pointer-events-auto ${
-          section === "learn" ? "absolute bottom-4" : ""
-        } ${isActive ? "hover:text-white" : "group-hover/tile:text-white"}`}
+          isActive ? "hover:text-white" : "group-hover/tile:text-white"
+        }`}
       >
-        <AsciiText className={`text-logo mb-[-2em]`}>{title}</AsciiText>
+        <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>
       </Comp>
-      {isActive && showDescription && <DsDescription />}
-    </>
+      {section === "play" && isActive && showDescription && <DsDescription />}
+    </div>
   )
 }
 

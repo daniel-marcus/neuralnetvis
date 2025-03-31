@@ -3,14 +3,18 @@ import { useScrollCallbacks } from "./block"
 import type { ReactNode } from "react"
 import type { ScrollBlockProps } from "./types"
 
-type HeadProps = { title: string; description?: string } & ScrollBlockProps
+interface HeadProps extends ScrollBlockProps {
+  title: string
+  description?: string
+}
 
 export function Head(props: HeadProps) {
   const { title, description, ...callbacks } = props
   const [ref] = useScrollCallbacks(callbacks)
+  // title is only placeholder here. visible title is SceneTitle
   return (
     <div ref={ref}>
-      <Title>{title}</Title>
+      <Title className={"opacity-0"}>{title}</Title>
       {!!description && <Teaser>{description}</Teaser>}
     </div>
   )
@@ -25,9 +29,7 @@ export function Title({ children, className = "" }: TitleProps) {
   return (
     <div className={`${className}`}>
       <h1 className="hidden">{children}</h1>
-      <AsciiText className="text-[min(1.25vw,0.75rem)]/[1.2]">
-        {children}
-      </AsciiText>
+      <AsciiText className="text-ascii-title">{children}</AsciiText>
     </div>
   )
 }
