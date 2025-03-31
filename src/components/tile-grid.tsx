@@ -114,7 +114,7 @@ function Tile(props: TileProps) {
     // allows touch scroll + drag rotate for scene + tap to expand
     if (tap && !isActive) {
       useGlobalStore.setState({ scrollPos: window.scrollY })
-      router.push(props.path)
+      router.push(props.path, { scroll: true })
     }
   })
 
