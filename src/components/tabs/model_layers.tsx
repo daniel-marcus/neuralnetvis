@@ -3,7 +3,7 @@ import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
 
-const { InputRow, Slider, Select, InlineButton } = Components
+const { InputRow, Slider, Select, Button } = Components
 const { CollapsibleWithTitle, DraggableList } = Components
 
 function getInputComp<T extends keyof LayerConfigMap>(
@@ -198,9 +198,9 @@ export const LayerConfigControl = () => {
           }
         >
           <div className="flex justify-end items-center gap-4">
-            <InlineButton variant="secondary" onClick={resetLayerConfigs}>
+            <Button variant="secondary" onClick={resetLayerConfigs}>
               reset
-            </InlineButton>
+            </Button>
           </div>
         </InputRow>
       </div>

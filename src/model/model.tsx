@@ -13,8 +13,8 @@ import { checkShapeMatch } from "@/data/utils"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
 
-export function useModel(ds?: Dataset, isPreview?: boolean) {
-  const model = useModelCreate(ds, isPreview)
+export function useModel(ds?: Dataset) {
+  const model = useModelCreate(ds)
   useModelDispose(model)
   useModelCompile(model, ds)
   return model
@@ -24,7 +24,8 @@ const previewLayerConfigs: LayerConfigArray = [
   { className: "Dense", config: { units: 10, activation: "relu" } },
 ]
 
-function useModelCreate(ds?: Dataset, isPreview?: boolean) {
+function useModelCreate(ds?: Dataset) {
+  const isPreview = useSceneStore((s) => !s.isActive)
   const model = useSceneStore((s) => s.model)
   const _setModel = useSceneStore((s) => s._setModel)
   const [setModel] = useModelTransition(_setModel)

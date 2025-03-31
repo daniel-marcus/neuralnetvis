@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHandPose } from "@/data"
-import { InlineButton } from "./ui-elements"
+import { Button } from "./ui-elements"
 import { useCanvasUpdate } from "@/data/hand-pose"
 
 export function VideoWindow() {
@@ -74,22 +74,22 @@ export function VideoControl() {
   return (
     <>
       {!isRecording && (
-        <InlineButton onClick={toggleStream} className="h-6">
+        <Button onClick={toggleStream} className="h-6">
           {!!stream ? <>{cameraOffSvg} stop</> : <>{cameraSvg} start</>} video
-        </InlineButton>
+        </Button>
       )}
       {!dsIsUserGenerated && (
-        <InlineButton onClick={() => setTab("data")} variant="secondary">
+        <Button onClick={() => setTab("data")} variant="secondary">
           new dataset
-        </InlineButton>
+        </Button>
       )}
       {dsIsUserGenerated && !!stream && (
-        <InlineButton
+        <Button
           onClick={async () => toggleRecording()}
           variant={isRecording ? "primary" : "secondary"}
         >
           {isRecording ? "cancel recording" : "record samples"}
-        </InlineButton>
+        </Button>
       )}
     </>
   )

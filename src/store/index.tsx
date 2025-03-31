@@ -1,6 +1,6 @@
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
-import { createViewSlice, ViewSlice } from "./view"
+import { createViewSlice, View, ViewSlice } from "./view"
 import { createDataSlice, DataSlice } from "./data"
 import { createStatusSlice, StatusSlice } from "./status"
 import { createModelSlice, ModelSlice } from "./model"
@@ -127,3 +127,4 @@ export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
   getScene().getState().setLayerConfigs(layerConfigs)
 export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
   getScene().getState().vis.setConfig(config)
+export const setView = (view: View) => getScene().setState({ view })

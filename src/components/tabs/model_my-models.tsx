@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import {
   CollapsibleWithTitle,
-  InlineButton,
+  Button,
   InputRowsWrapper,
   TextInput,
 } from "@/components/ui-elements"
@@ -40,15 +40,15 @@ export function MyModels() {
         <div className="flex justify-between gap-2">
           <TextInput onChange={setModelName} value={modelName} />
           <div className="flex gap-2">
-            <InlineButton onClick={saveModel} disabled={!model}>
+            <Button onClick={saveModel} disabled={!model}>
               save
-            </InlineButton>
-            <InlineButton
+            </Button>
+            <Button
               variant="secondary"
               onClick={() => setShowImportForm((i) => !i)}
             >
               import
-            </InlineButton>
+            </Button>
           </div>
         </div>
         {showImportForm && <ImportForm onUploadFinished={onUploadFinished} />}

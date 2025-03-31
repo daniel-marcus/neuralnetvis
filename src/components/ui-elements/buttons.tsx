@@ -1,7 +1,7 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
-interface MenuBtnProps {
+interface MenuButtonProps {
   href?: string
   children: React.ReactNode
   isActive?: boolean
@@ -11,14 +11,14 @@ interface MenuBtnProps {
 }
 
 // TODO: rename
-export const MenuBtn = ({
+export const MenuButton = ({
   href,
   children,
   isActive,
   onClick,
   className = "",
   variant = "default",
-}: MenuBtnProps) => {
+}: MenuButtonProps) => {
   const Component = href ? Link : "button"
   return (
     <Component
@@ -34,7 +34,7 @@ export const MenuBtn = ({
   )
 }
 
-interface InlineButtonProps {
+interface ButtonProps {
   href?: string
   children: React.ReactNode
   onClick?: () => void
@@ -44,7 +44,7 @@ interface InlineButtonProps {
   className?: string
 }
 
-export const InlineButton = ({
+export const Button = ({
   href,
   children,
   onClick,
@@ -52,7 +52,7 @@ export const InlineButton = ({
   type,
   variant = "primary",
   className = "",
-}: InlineButtonProps) => {
+}: ButtonProps) => {
   const Comp = href ? Link : "button"
   return (
     <Comp

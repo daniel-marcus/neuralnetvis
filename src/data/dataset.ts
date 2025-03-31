@@ -13,10 +13,12 @@ import type {
 } from "./types"
 import { preprocessFuncs } from "./preprocess"
 import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 export const DEFAULT_STORE_BATCH_SIZE = 100
 
-export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
+export function useDataset(dsDef?: DatasetDef) {
+  const isPreview = useSceneStore((s) => !s.isActive)
   const ds = useSceneStore((s) => s.ds)
   const setDs = useSceneStore((s) => s.setDs)
   const shouldLoadFullDs = useSceneStore((s) => s.shouldLoadFullDs)
@@ -35,13 +37,17 @@ export function useDataset(dsDef?: DatasetDef, isPreview?: boolean) {
   return ds
 }
 
-export function useDsDef(dsKey?: string): DatasetDef | DatasetMeta | undefined {
+export function useDsDef(dsKey?: string) {
+  const isActive = useSceneStore((s) => s.isActive)
+  const dsKeyFromParams = useSearchParams().get("ds")
   const dsDef = useMemo(() => datasets.find((d) => d.key === dsKey), [dsKey])
   const [dsMetaFromDb, setDsMeta] = useState<DatasetMeta | undefined>(undefined)
   useEffect(() => {
-    if (dsKey) getDsMetaFromDb(dsKey).then(setDsMeta)
-  }, [dsKey])
-  return dsDef || dsMetaFromDb
+    if (!isActive || !dsKeyFromParams) return
+    getDsMetaFromDb(dsKeyFromParams).then(setDsMeta)
+    return () => setDsMeta(undefined)
+  }, [isActive, dsKeyFromParams])
+  return isActive ? dsMetaFromDb ?? dsDef : dsDef
 }
 
 export function getDsPath(dsDef: DatasetDef | DatasetMeta) {

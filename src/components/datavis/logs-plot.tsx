@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from "react"
-import { InlineButton, Table } from "@/components/ui-elements"
+import { Button, Table } from "@/components/ui-elements"
 import { useCurrScene } from "@/store"
 import type { ReactNode, Ref, RefObject } from "react"
 
@@ -142,26 +142,18 @@ const clamp = (val: number, min: number, max: number) =>
 function Metrics({ currMetrics }: { currMetrics: Set<string> }) {
   const logsMetric = useCurrScene((s) => s.logsMetric)
   const setLogsMetric = useCurrScene((s) => s.setLogsMetric)
-  const validationSplit = useCurrScene((s) => s.trainConfig.validationSplit)
   return (
     <div className={`flex mt-2 justify-end`}>
-      {METRICS.filter((m) => currMetrics.has(m)).map((m) => {
-        const isSelected = m === logsMetric
-        const isDisabled = !validationSplit && VAL_METRICS.includes(m)
-        return (
-          <InlineButton
-            key={m}
-            variant="transparent"
-            className={`${isSelected ? "text-white" : ""} ${
-              isDisabled ? "opacity-50 hover:bg-transparent" : ""
-            }`}
-            onClick={() => setLogsMetric(m)}
-            disabled={isDisabled}
-          >
-            {m}
-          </InlineButton>
-        )
-      })}
+      {METRICS.filter((m) => currMetrics.has(m)).map((m) => (
+        <Button
+          key={m}
+          variant="transparent"
+          className={m === logsMetric ? "text-white" : ""}
+          onClick={() => setLogsMetric(m)}
+        >
+          {m}
+        </Button>
+      ))}
     </div>
   )
 }

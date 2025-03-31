@@ -1,7 +1,8 @@
 import { useGlobalStore, useSceneStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
 
-export const SampleSlider = ({ isActive }: { isActive: boolean }) => {
+export const SampleSlider = () => {
+  const isActive = useSceneStore((s) => s.isActive)
   const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
   const hasStatus = useGlobalStore((s) => !!s.status.getCurrent())
   const hasProgressBar =

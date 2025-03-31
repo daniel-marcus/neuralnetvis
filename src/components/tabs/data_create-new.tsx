@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import {
   CollapsibleWithTitle,
   DraggableList,
-  InlineButton,
+  Button,
   InputRow,
   InputRowsWrapper,
   Select,
@@ -101,7 +101,7 @@ export const CreateNewDataset = () => {
               </div>
             ))}
           </DraggableList>
-          <InlineButton
+          <Button
             variant="secondary"
             className="mt-2"
             onClick={() => {
@@ -110,10 +110,10 @@ export const CreateNewDataset = () => {
             }}
           >
             add
-          </InlineButton>
+          </Button>
         </InputRow>
         <div className="mt-4 flex justify-end">
-          <InlineButton onClick={handleCreate}>create</InlineButton>
+          <Button onClick={handleCreate}>create</Button>
         </div>
       </InputRowsWrapper>
     </CollapsibleWithTitle>

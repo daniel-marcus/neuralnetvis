@@ -5,7 +5,7 @@ import { canUseLazyLoading } from "@/model/training"
 import { LogsPlot } from "@/components/datavis/logs-plot"
 
 const { Box, Slider, InputRow, InputRowsWrapper, Checkbox } = Components
-const { Collapsible, CollapsibleWithTitle, Arrow, InlineButton } = Components
+const { Collapsible, CollapsibleWithTitle, Arrow, Button } = Components
 
 export const Train = () => {
   const isTraining = useCurrScene((s) => s.isTraining)
@@ -40,12 +40,12 @@ export const Train = () => {
         </button>
         <div className="flex gap-2">
           {!!batchCount && (
-            <InlineButton variant="secondary" onClick={resetWeights}>
+            <Button variant="secondary" onClick={resetWeights}>
               reset
-            </InlineButton>
+            </Button>
           )}
           {hasTestData && view !== "evaluation" && (
-            <InlineButton
+            <Button
               variant="secondary"
               onClick={() => {
                 toggleTab("train")
@@ -53,11 +53,11 @@ export const Train = () => {
               }}
             >
               evaluate
-            </InlineButton>
+            </Button>
           )}
-          <InlineButton onClick={toggleTraining}>
+          <Button onClick={toggleTraining}>
             {isTraining ? "stop" : "train"}
-          </InlineButton>
+          </Button>
         </div>
       </div>
     </Box>
