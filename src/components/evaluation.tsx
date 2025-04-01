@@ -31,8 +31,6 @@ function ConfusionViewer() {
           onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
         >
           <ConfusionMatrix />
-          <ConfusionMatrix />
-          <ConfusionMatrix />
         </div>
         <SampleViewer />
       </div>
