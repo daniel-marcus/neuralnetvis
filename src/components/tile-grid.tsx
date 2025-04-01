@@ -1,6 +1,12 @@
 "use client"
 
-import React, { ReactNode, useEffect, useRef, useState } from "react"
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import { datasets } from "@/data/datasets"
 import { useDrag } from "@use-gesture/react"
 import { lessonPreviews } from "@/contents"
@@ -110,14 +116,17 @@ function Tile(props: TileProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const setOffsetFromWrapper = useCallback(() => {
+    const rect = ref.current?.getBoundingClientRect()
+    const { x, y } = rect ?? { x: 0, y: 0 }
+    setOffset({ x, y })
+  }, [])
 
   const router = useRouter()
   const bind = useDrag(({ tap }) => {
     // allows touch scroll + drag rotate for scene + tap to expand
     if (tap && !isActive) {
-      const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
-      setOffset({ x, y })
-
+      setOffsetFromWrapper()
       useGlobalStore.setState({ scrollPos: window.scrollY })
       router.push(props.path, { scroll: true })
     }
@@ -126,14 +135,11 @@ function Tile(props: TileProps) {
   const [localActive, setLocalActive] = useState(false)
   const inTransition = useGlobalStore((s) => s.inTileTransition)
   useEffect(() => {
-    if (!isActive) {
-      const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
-      setOffset({ x, y })
-    }
+    if (!isActive) setOffsetFromWrapper()
     setLocalActive(!!isActive)
     setInTransition(true)
     setTimeout(() => setInTransition(false), getTileDuration())
-  }, [isActive])
+  }, [isActive, setOffsetFromWrapper])
 
   return (
     <div

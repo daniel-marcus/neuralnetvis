@@ -5,6 +5,7 @@ import { Table } from "./ui-elements"
 import { isScreen } from "@/utils/screen"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
 import { SampleViewer } from "./sample-viewer"
+import { disableBodyScroll } from "@/utils/disable-body-scroll"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)
@@ -19,10 +20,11 @@ export function EvaluationView() {
 function ConfusionViewer() {
   const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
+  useBodyFreeze(true) // todo: freeze SceneOverlay
   return (
     <div
-      className={`flex-1 ${
-        hasSample ? "pointer-events-none" : "pointer-events-auto"
+      className={`flex-1 ${ACTIVE_SCROLLABLE_CLASS} ${
+        hasSample ? "pointer-events-none" : `pointer-events-auto`
       } overflow-y-scroll overflow-x-clip flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0`}
     >
       <div className="pt-2">
@@ -40,6 +42,28 @@ function ConfusionViewer() {
       </div>
     </div>
   )
+}
+
+export const ACTIVE_SCROLLABLE_CLASS = "active_scrollable"
+function useBodyFreeze(isActive: boolean) {
+  useEffect(() => {
+    if (!isActive) return
+    document.body.classList.add("overflow-hidden")
+    try {
+      // TODO: rewrite disableBodyScroll
+      disableBodyScroll(true, `.${ACTIVE_SCROLLABLE_CLASS}`)
+    } catch (e) {
+      console.warn(e)
+    }
+    return () => {
+      document.body.classList.remove("overflow-hidden")
+      try {
+        disableBodyScroll(false, `.${ACTIVE_SCROLLABLE_CLASS}`)
+      } catch (e) {
+        console.warn(e)
+      }
+    }
+  }, [isActive])
 }
 
 export function Evaluation({ className = "" }) {

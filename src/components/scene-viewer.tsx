@@ -93,13 +93,12 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     }
   }, [isActive, section])
   const portalRef = useGlobalStore((s) => s.portalRef)
-  const ACTIVE_CLASS = "active-scene-overlay"
-  useBodyFreeze(section === "play" && isActive, `.${ACTIVE_CLASS}`)
+  useBodyFreeze(section === "play" && localActive)
   const comp = (
     <div
       className={`absolute top-0 left-0 h-full w-full pointer-events-none max-h-screen ${
         isActive || (!isActive && localActive)
-          ? `p-main pt-[var(--header-height)]! ${ACTIVE_CLASS}`
+          ? `p-main pt-[var(--header-height)]!`
           : "p-4"
       } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
     >
@@ -111,20 +110,26 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     : comp
 }
 
-function useBodyFreeze(isActive: boolean, activeClassName: string) {
+export const ACTIVE_SCROLLABLE_CLASS = "active_scrollable"
+function useBodyFreeze(isActive: boolean) {
   useEffect(() => {
     if (!isActive) return
     document.body.classList.add("overflow-hidden")
-    disableBodyScroll(true, activeClassName)
+    try {
+      // TODO: rewrite disableBodyScroll
+      disableBodyScroll(true, `.${ACTIVE_SCROLLABLE_CLASS}`)
+    } catch (e) {
+      console.warn(e)
+    }
     return () => {
       document.body.classList.remove("overflow-hidden")
       try {
-        disableBodyScroll(false, activeClassName)
+        disableBodyScroll(false, `.${ACTIVE_SCROLLABLE_CLASS}`)
       } catch (e) {
-        console.error(e)
+        console.warn(e)
       }
     }
-  }, [isActive, activeClassName])
+  }, [isActive])
 }
 
 const SceneButtons = () => {
