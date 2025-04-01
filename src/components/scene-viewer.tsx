@@ -12,7 +12,7 @@ import { AsciiText, splitWithThreshold } from "./ui-elements/ascii-text"
 import { MapPlot } from "./datavis/map-plot"
 import { BlurMask } from "./status-bar"
 import { EvaluationView } from "./evaluation"
-import { getTileDuration, type TileDef } from "./tile-grid"
+import { getTileDuration, Section, type TileDef } from "./tile-grid"
 import type { View } from "@/store/view"
 import { createPortal } from "react-dom"
 
@@ -35,7 +35,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       <SampleName />
       <Scene {...props} />
       <BlurMask />
-      <SceneOverlay>
+      <SceneOverlay section={section}>
         <SceneTitle title={title} href={path} section={section} />
         {section === "play" && isActive && <SceneButtons />}
         {view === "evaluation" && <EvaluationView />}
@@ -74,22 +74,27 @@ const DsDescription = () => {
   )
 }
 
-const SceneOverlay = ({ children }: { children: ReactNode }) => {
+type SceneOverlayProps = {
+  children: ReactNode
+  section: Section
+}
+
+const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   const isActive = useSceneStore((s) => s.isActive)
   const [localActive, setLocalActive] = useState(false)
   useEffect(() => {
     if (!isActive) return
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    if (section === "learn") window.scrollTo({ top: 0, behavior: "smooth" })
     setTimeout(() => setLocalActive(true), getTileDuration())
     return () => {
       window.scrollTo({ top: useGlobalStore.getState().scrollPos })
       setLocalActive(false)
     }
-  }, [isActive])
+  }, [isActive, section])
   const portalRef = useGlobalStore((s) => s.portalRef)
   const comp = (
     <div
-      className={`relative top-0 left-0 h-full w-full pointer-events-none ${
+      className={`absolute top-0 left-0 h-full w-full pointer-events-none max-h-screen ${
         isActive || (!isActive && localActive)
           ? "p-main pt-[var(--header-height)]!"
           : "p-4"
@@ -98,7 +103,9 @@ const SceneOverlay = ({ children }: { children: ReactNode }) => {
       {children}
     </div>
   )
-  return isActive && localActive ? createPortal(comp, portalRef.current!) : comp
+  return isActive && localActive && section === "learn"
+    ? createPortal(comp, portalRef.current!)
+    : comp
 }
 
 const SceneButtons = () => {

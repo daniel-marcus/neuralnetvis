@@ -3,15 +3,19 @@
 import { useState } from "react"
 import Headroom from "react-headroom"
 import { Logo } from "./logo"
-import { TabMenu } from "./tab-menu"
+import { TabMenu, useIsPlayMode } from "./tab-menu"
 
 export const Header = () => {
   const [showGradient, setShowGradient] = useState(false)
+  const isPlayMode = useIsPlayMode()
   return (
     <div
-      className={`relative z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
+      className={`${
+        isPlayMode ? "fixed" : "relative"
+      } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom
+        disable={isPlayMode}
         onPin={() => setShowGradient(true)}
         onUnpin={() => setShowGradient(false)}
         onUnfix={() => setShowGradient(false)}

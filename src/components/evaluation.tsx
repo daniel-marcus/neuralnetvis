@@ -20,7 +20,7 @@ function ConfusionViewer() {
   const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
-    <div className="flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0">
+    <div className="flex-1 overflow-y-scroll overflow-x-clip flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0">
       <div className="pt-2">
         <div
           className={`${
@@ -30,6 +30,8 @@ function ConfusionViewer() {
           } transition-transform duration-500 pointer-events-auto`}
           onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
         >
+          <ConfusionMatrix />
+          <ConfusionMatrix />
           <ConfusionMatrix />
         </div>
         <SampleViewer />
