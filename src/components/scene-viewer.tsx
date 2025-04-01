@@ -79,7 +79,7 @@ const SceneOverlay = ({ children }: { children: ReactNode }) => {
   const [localActive, setLocalActive] = useState(false)
   useEffect(() => {
     if (!isActive) return
-    window.scrollTo({ top: 0 })
+    window.scrollTo({ top: 0, behavior: "smooth" })
     setTimeout(() => setLocalActive(true), getTileDuration())
     return () => {
       window.scrollTo({ top: useGlobalStore.getState().scrollPos })
@@ -152,7 +152,7 @@ function LessonTitle({ title, href, isActive }: SceneTitleProps) {
   )
 }
 
-function DsTitle({ title, href, section }: SceneTitleProps) {
+function DsTitle({ title, href }: SceneTitleProps) {
   const isActive = useSceneStore((s) => s.isActive)
   const [showDescription, setShowDescription] = useState(true)
   const toggleDescription = () => setShowDescription((s) => !s)
@@ -169,7 +169,7 @@ function DsTitle({ title, href, section }: SceneTitleProps) {
       >
         <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>
       </Comp>
-      {section === "play" && isActive && showDescription && <DsDescription />}
+      {isActive && showDescription && <DsDescription />}
     </div>
   )
 }
