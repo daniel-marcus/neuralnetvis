@@ -1,4 +1,5 @@
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react"
+import { Suspense, useEffect, useMemo, useState, ReactNode } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Scene } from "@/scene"
 import { SceneStoreProvider, useGlobalStore, useSceneStore } from "@/store"
@@ -13,8 +14,8 @@ import { MapPlot } from "./datavis/map-plot"
 import { BlurMask } from "./status-bar"
 import { EvaluationView } from "./evaluation"
 import { getTileDuration, Section, type TileDef } from "./tile-grid"
+import { disableBodyScroll } from "@/utils/disable-body-scroll"
 import type { View } from "@/store/view"
-import { createPortal } from "react-dom"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -92,11 +93,13 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     }
   }, [isActive, section])
   const portalRef = useGlobalStore((s) => s.portalRef)
+  const ACTIVE_CLASS = "active-scene-overlay"
+  useBodyFreeze(section === "play" && isActive, `.${ACTIVE_CLASS}`)
   const comp = (
     <div
       className={`absolute top-0 left-0 h-full w-full pointer-events-none max-h-screen ${
         isActive || (!isActive && localActive)
-          ? "p-main pt-[var(--header-height)]!"
+          ? `p-main pt-[var(--header-height)]! ${ACTIVE_CLASS}`
           : "p-4"
       } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
     >
@@ -106,6 +109,22 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   return isActive && localActive && section === "learn"
     ? createPortal(comp, portalRef.current!)
     : comp
+}
+
+function useBodyFreeze(isActive: boolean, activeClassName: string) {
+  useEffect(() => {
+    if (!isActive) return
+    document.body.classList.add("overflow-hidden")
+    disableBodyScroll(true, activeClassName)
+    return () => {
+      document.body.classList.remove("overflow-hidden")
+      try {
+        disableBodyScroll(false, activeClassName)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  }, [isActive, activeClassName])
 }
 
 const SceneButtons = () => {

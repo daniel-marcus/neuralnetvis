@@ -57,7 +57,9 @@ export const TileGrid = () => {
   return (
     <div
       className={`top-0 left-0 w-screen pt-[var(--logo-height)] ${
-        hasActive && localHasActive && !inTransition ? "fixed" : "absolute"
+        hasActive && localHasActive && !inTransition
+          ? "fixed max-h-screen! overflow-clip"
+          : "absolute"
       }`}
       style={
         {
