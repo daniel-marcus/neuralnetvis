@@ -166,7 +166,7 @@ function DsTitle({ title, href }: SceneTitleProps) {
   const Comp = !isActive ? Link : "button"
   const onClick = isActive ? toggleDescription : undefined
   return (
-    <div>
+    <>
       <Comp
         href={href}
         onClick={onClick}
@@ -177,7 +177,7 @@ function DsTitle({ title, href }: SceneTitleProps) {
         <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>
       </Comp>
       {isActive && showDescription && <DsDescription />}
-    </div>
+    </>
   )
 }
 
