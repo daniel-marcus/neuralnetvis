@@ -4,8 +4,8 @@ import React, { ReactNode, useEffect, useRef, useState } from "react"
 import { datasets } from "@/data/datasets"
 import { useDrag } from "@use-gesture/react"
 import { lessonPreviews } from "@/contents"
-import { usePathname } from "next/navigation"
-import { useGlobalStore } from "@/store"
+import { usePathname, useRouter } from "next/navigation"
+import { setInTransition, useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
 import { Footer } from "./footer"
@@ -51,12 +51,13 @@ export const TileGrid = () => {
   const lastActive = useLast(hasActive ? active : undefined)
   const [localHasActive, setLocalHasActive] = useState(false)
   useEffect(() => setLocalHasActive(hasActive), [hasActive])
+  const inTransition = useGlobalStore((s) => s.inTileTransition)
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   return (
     <div
       className={`top-0 left-0 w-screen pt-[var(--logo-height)] ${
-        localHasActive ? "fixed" : "absolute"
+        hasActive && localHasActive && !inTransition ? "fixed" : "absolute"
       }`}
       style={
         {
@@ -108,30 +109,31 @@ function Tile(props: TileProps) {
   const { isActive, className, children, isFeatured } = props
   const ref = useRef<HTMLDivElement>(null)
 
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+
+  const router = useRouter()
   const bind = useDrag(({ tap }) => {
     // allows touch scroll + drag rotate for scene + tap to expand
     if (tap && !isActive) {
+      const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
+      setOffset({ x, y })
+
       useGlobalStore.setState({ scrollPos: window.scrollY })
-      // TODO: use linkRef (router.push + scroll doesn't work)
-      const link = document.querySelector(
-        `[href="${props.path}"]`
-      ) as HTMLAnchorElement
-      link?.click()
+      router.push(props.path, { scroll: true })
     }
   })
 
   const [localActive, setLocalActive] = useState(false)
-  const [inTransition, setInTransition] = useState(false)
+  const inTransition = useGlobalStore((s) => s.inTileTransition)
   useEffect(() => {
-    const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
-    ref.current?.style.setProperty("--offset-x", `${x}px`)
-    ref.current?.style.setProperty("--offset-y", `${y}px`)
+    if (!isActive) {
+      const { x, y } = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0 }
+      setOffset({ x, y })
+    }
     setLocalActive(!!isActive)
     setInTransition(true)
-    setTimeout(() => setInTransition(false), getTileDuration()) // --tile-duration
+    setTimeout(() => setInTransition(false), getTileDuration())
   }, [isActive])
-
-  const style = isFeatured ? { "--tile-width": "calc(640px+var(--gap))" } : {}
 
   return (
     <div
@@ -140,7 +142,13 @@ function Tile(props: TileProps) {
         !isActive ? "cursor-pointer" : ""
       } ${props.isFeatured ? "sm:col-span-2" : ""} ${className}`}
       {...bind()}
-      style={style as React.CSSProperties}
+      style={
+        {
+          "--offset-x": `${offset.x}px`,
+          "--offset-y": `${offset.y}px`,
+          "--tile-width": isFeatured ? "calc(640px+var(--gap))" : undefined,
+        } as React.CSSProperties
+      }
     >
       <div
         className={`rounded-box bg-background overflow-hidden origin-center flex items-center justify-center ${
