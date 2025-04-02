@@ -128,7 +128,7 @@ function SampleCanvas({
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const camProps = useCurrScene((s) => s.ds?.camProps)
-  const aspectRatio = camProps?.aspectRatio || 4 / 3
+  const aspectRatio = useCurrScene((s) => s.getAspectRatio())
   const hasCam = !!camProps
   const inputDims = useCurrScene((s) => s.ds?.inputDims)
   useEffect(() => {
@@ -145,7 +145,7 @@ function SampleCanvas({
         hasCam ? "scale-x-[-1] bg-box" : ""
       } `}
       width={hasCam ? VIDEO_BASE_SIZE : inputDims?.[1]}
-      height={hasCam ? (1 / aspectRatio) * VIDEO_BASE_SIZE : inputDims?.[2]}
+      height={hasCam ? VIDEO_BASE_SIZE / aspectRatio : inputDims?.[2]}
       ref={ref}
     />
   )

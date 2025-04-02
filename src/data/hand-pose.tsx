@@ -224,7 +224,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       }
       const ys = { data: Uint8Array.from(yData), shape: [yData.length] }
       recordingY = undefined
-      const aspectRatio = getAspectRatio(stream)
+      const aspectRatio = getAspectRatioFromStream(stream)
       const trainMeta = await addTrainData(ds, xs, ys, undefined, aspectRatio)
       updateMeta("train", trainMeta)
     }
@@ -258,7 +258,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   return [isRecording, toggleRecording] as const
 }
 
-function getAspectRatio(stream: MediaStream) {
+function getAspectRatioFromStream(stream: MediaStream) {
   return stream.getVideoTracks()[0].getSettings().aspectRatio
 }
 

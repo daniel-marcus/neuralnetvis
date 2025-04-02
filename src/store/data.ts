@@ -14,6 +14,7 @@ export interface DataSlice {
   updateMeta: (storeName: Subset, meta: StoreMeta) => void
   totalSamples: (subset?: Subset) => number
   isRegression: () => boolean
+  getAspectRatio: () => number
 
   sampleIdx: number | undefined
   setSampleIdx: (idx: number | undefined) => void
@@ -48,6 +49,8 @@ export const createDataSlice: StateCreator<
   },
   totalSamples: (subset = "train") => get().ds?.[subset].totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
+  getAspectRatio: () =>
+    get().ds?.train.aspectRatio ?? get().ds?.camProps?.aspectRatio ?? 1,
 
   sampleIdx: undefined,
   setSampleIdx: (sampleIdx) => set({ sampleIdx }),
