@@ -40,7 +40,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-headroom": "^3.2.1",
-    "three": "^0.174.0",
+    "three": "^0.175.0",
     "three-stdlib": "^2.35.14",
     "troika-three-text": "^0.52.4",
     "zustand": "^5.0.3"
@@ -58,7 +58,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.1",
     "@types/react-headroom": "^3.2.3",
-    "@types/three": "^0.174.0",
+    "@types/three": "^0.175.0",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.4",
