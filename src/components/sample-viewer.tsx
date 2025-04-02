@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
-import { useSceneStore } from "@/store"
+import { useCurrScene } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useHasBlur } from "./status-bar"
 
 export function SampleViewer() {
-  const idxs = useSceneStore((s) => s.sampleViewerIdxs)
+  const idxs = useCurrScene((s) => s.sampleViewerIdxs)
   const [offset, setOffset] = useState(0)
   const [samples, setSamples] = useState<SampleRaw[]>([])
-  const ds = useSceneStore((s) => s.ds)
-  const subset = useSceneStore((s) => s.subset)
+  const ds = useCurrScene((s) => s.ds)
+  const subset = useCurrScene((s) => s.subset)
   const itemsPerPage = 16
   useEffect(() => {
     setOffset(0)
@@ -29,16 +29,16 @@ export function SampleViewer() {
     }
     getSamples()
   }, [idxs, ds, subset, offset, itemsPerPage])
-  const sampleIdx = useSceneStore((s) => s.sampleIdx)
-  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
-  const hasCam = useSceneStore((s) => s.ds?.hasCam)
+  const sampleIdx = useCurrScene((s) => s.sampleIdx)
+  const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
+  const hasCam = useCurrScene((s) => s.ds?.hasCam)
   const hasBlur = useHasBlur()
   if (!samples.length) return null
   return (
     <div
-      className={`fixed pt-4! bg-gradient-to-b from-transparent via-[1rem] ${
+      className={`-my-4 py-4! bg-gradient-to-b from-transparent via-[1rem] ${
         hasBlur ? "via-black to-black" : "via-background to-background"
-      } transition-colors duration-300 w-screen bottom-0 right-0 pb-4 xl:p-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
+      } transition-colors duration-300 w-screen bottom-0 right-0 xl:fixed xl:p-0 xl:m-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
     >
       <div
         className={`xl:w-[calc(4*var(--item-size)+1.5rem)] ${
@@ -125,8 +125,8 @@ function SampleCanvas({
   isCurrent?: boolean
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
-  const hasCam = useSceneStore((s) => s.ds?.hasCam)
-  const inputDims = useSceneStore((s) => s.ds?.inputDims)
+  const hasCam = useCurrScene((s) => s.ds?.hasCam)
+  const inputDims = useCurrScene((s) => s.ds?.inputDims)
   useEffect(() => {
     const canvas = ref.current
     if (!inputDims || !sample || !canvas) return

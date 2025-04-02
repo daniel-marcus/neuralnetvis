@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Table } from "./ui-elements"
 import { isScreen } from "@/utils/screen"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
-import { SampleViewer } from "./sample-viewer"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)
@@ -25,18 +24,15 @@ function ConfusionViewer() {
         hasSample ? "pointer-events-none" : `pointer-events-auto`
       } flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0`}
     >
-      <div className="pt-2">
-        <div
-          className={`${
-            hasSample
-              ? "pointer-events-auto -translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
-              : ""
-          } transition-transform duration-500`}
-          onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
-        >
-          <ConfusionMatrix />
-        </div>
-        <SampleViewer />
+      <div
+        className={`${
+          hasSample
+            ? "pointer-events-auto -translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
+            : ""
+        } transition-transform duration-500`}
+        onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
+      >
+        <ConfusionMatrix />
       </div>
     </div>
   )
