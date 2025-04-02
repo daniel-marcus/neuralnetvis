@@ -46,7 +46,7 @@ export type Dataset = DatasetMeta & {
 interface DsMapProps {
   center: [number, number]
   zoom: number
-  baseLayer?: GeoJSON.FeatureCollection | GeoJSON.GeometryCollection
+  baseLayer?: GeoJSON.FeatureCollection | GeoJSON.GeometryCollection | string // URL
 }
 
 interface DsCamProps {

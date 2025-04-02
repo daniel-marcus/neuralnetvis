@@ -41,7 +41,7 @@ export const MapPlot = () => {
           ? isEvaluationView
             ? "z-30"
             : isMapView
-            ? "pointer-events-auto!"
+            ? `pointer-events-auto!`
             : "md:translate-x-[25vw]"
           : "grayscale-25 opacity-75"
       } transition-all duration-[var(--tile-duration)] w-[100vw] h-[100dvh]`}
@@ -50,6 +50,9 @@ export const MapPlot = () => {
         layers={layers}
         views={new OrthographicView()}
         controller
+        getCursor={({ isDragging, isHovering }) =>
+          isDragging ? "grabbing" : isHovering ? "pointer" : "grab"
+        }
         {...viewStateProps}
       />
     </div>
@@ -84,14 +87,23 @@ function useLayers() {
 
   const [points, minY] = usePoints()
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   const activePoint = useMemo(() => {
     if (!points || typeof sampleIdx === "undefined") return null
     return points[sampleIdx]
   }, [points, sampleIdx])
 
-  const baseLayer = useMemo(() => {
-    if (!mapProps?.baseLayer) return
-    return projectGeoJSON(mapProps.baseLayer, mapProps.center, mapProps.zoom)
+  const [baseLayer, setBaseLayer] = useState<InputGeoJSON | null>(null)
+  useEffect(() => {
+    async function getBaseLayer() {
+      if (!mapProps || !mapProps.baseLayer) return // || !isActive
+      const geojson =
+        typeof mapProps.baseLayer === "string"
+          ? await fetch(mapProps.baseLayer).then((r) => r.json())
+          : mapProps.baseLayer
+      setBaseLayer(projectGeoJSON(geojson, mapProps.center, mapProps.zoom))
+    }
+    getBaseLayer()
   }, [mapProps])
 
   const subset = useSceneStore((s) => s.subset)
@@ -127,6 +139,10 @@ function useLayers() {
             : d.y >= 0
             ? getColorVals(d.y, POS_BASE)
             : getColorVals(-d.y, NEG_BASE),
+        pickable: view === "map",
+        onClick: ({ index }) => {
+          setSampleIdx(index)
+        },
         updateTriggers: {
           getRadius: [isEvaluationView],
           getPosition: [isEvaluationView],
@@ -196,7 +212,17 @@ function useLayers() {
         iconMapping,
       }),
     ],
-    [activePoint, isEvaluationView, mapProps, points, minY, baseLayer, subset]
+    [
+      activePoint,
+      isEvaluationView,
+      mapProps,
+      points,
+      minY,
+      baseLayer,
+      subset,
+      view,
+      setSampleIdx,
+    ]
   )
 
   return layers

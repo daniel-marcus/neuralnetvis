@@ -1,7 +1,6 @@
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
-import california from "@/data/datasets/california.json"
 import type { DatasetDef } from "@/data/types"
 
 export const californiaHousing: DatasetDef = {
@@ -9,7 +8,7 @@ export const californiaHousing: DatasetDef = {
   name: "California Housing",
   task: "regression",
   description: "Predict housing prices",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-04-02"),
   aboutUrl: "https://keras.io/api/datasets/california_housing/",
   inputDims: [8],
   inputLabels: [
@@ -26,7 +25,7 @@ export const californiaHousing: DatasetDef = {
   mapProps: {
     center: [-120.5, 37],
     zoom: 5.4,
-    baseLayer: california as GeoJSON.GeometryCollection,
+    baseLayer: "/data/california_housing/california.geojson",
   },
   loadPreview: loadData,
 }
