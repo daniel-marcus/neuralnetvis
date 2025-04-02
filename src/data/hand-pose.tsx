@@ -141,15 +141,26 @@ function usePredictLoop(
   }, [stream, hpPredict, ds, setSample, nextSample])
 }
 
+function setCanvasDefaultSize(canvas: HTMLCanvasElement, aspectRatio: number) {
+  canvas.width = 1280
+  canvas.height = 1280 / aspectRatio
+}
+
 export function useCanvasUpdate() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
+  const aspectRatio = useSceneStore((s) => s.getAspectRatio())
+  const stream = useSceneStore((s) => s.stream)
   useEffect(() => {
     if (!canvasRef.current) return
-    // TODO: aspect ratio from dataset?
-    canvasRef.current.width = 1280
-    canvasRef.current.height = 960
-  }, [canvasRef])
+    setCanvasDefaultSize(canvasRef.current, aspectRatio)
+  }, [canvasRef, aspectRatio])
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!stream || !canvas) return
+    // reset canvas to default after stream
+    return () => setCanvasDefaultSize(canvas, aspectRatio)
+  }, [canvasRef, stream, aspectRatio])
 
   const sample = useSceneStore((s) => s.sample)
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
