@@ -65,9 +65,10 @@ export async function getDsMetaFromDb(key: string) {
 function newStoreMeta(
   storeName: "train" | "test",
   totalSamples = 0,
-  yMean?: number
+  yMean?: number,
+  aspectRatio?: number
 ): StoreMeta {
-  return { index: storeName, totalSamples, yMean }
+  return { index: storeName, totalSamples, yMean, aspectRatio }
 }
 
 export async function getDsFromDef(
@@ -153,7 +154,8 @@ async function saveData(
   ys: ParsedLike,
   xsRaw?: ParsedLike,
   sampleNames?: string[],
-  overwrite = true
+  overwrite = true,
+  aspectRatio?: number
 ) {
   const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
 
@@ -187,7 +189,8 @@ async function saveData(
   const totalSamples = oldSamplesX + newSamplesX
   const yMean =
     ds.task === "regression" ? getMean(Array.from(ys.data)) : undefined
-  const storeMeta = newStoreMeta(storeName, totalSamples, yMean)
+  aspectRatio = aspectRatio ?? ds.camProps?.aspectRatio
+  const storeMeta = newStoreMeta(storeName, totalSamples, yMean, aspectRatio)
   await putData<StoreMeta>(dbName, "meta", storeMeta)
   return storeMeta
 }
@@ -200,7 +203,8 @@ export async function addTrainData(
   ds: Dataset | DatasetDef,
   xs: ParsedLike,
   ys: ParsedLike,
-  xsRaw?: ParsedLike
+  xsRaw?: ParsedLike,
+  aspectRatio?: number
 ) {
   const newTrainMeta = await saveData(
     ds,
@@ -209,7 +213,8 @@ export async function addTrainData(
     ys,
     xsRaw,
     undefined,
-    false
+    false,
+    aspectRatio
   )
   return newTrainMeta
 }

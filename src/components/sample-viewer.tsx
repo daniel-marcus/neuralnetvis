@@ -31,7 +31,7 @@ export function SampleViewer() {
   }, [idxs, ds, subset, offset, itemsPerPage])
   const sampleIdx = useCurrScene((s) => s.sampleIdx)
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
-  const hasCam = useCurrScene((s) => s.ds?.hasCam)
+  const hasCam = useCurrScene((s) => !!s.ds?.camProps)
   const hasBlur = useHasBlur()
   if (!samples.length) return null
   return (
@@ -117,6 +117,8 @@ function Pagination({
 
 type ImgShape = [number, number, number]
 
+const VIDEO_BASE_SIZE = 640 // x 480 -> 4:3 aspect ratio
+
 function SampleCanvas({
   sample,
   isCurrent,
@@ -125,7 +127,9 @@ function SampleCanvas({
   isCurrent?: boolean
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
-  const hasCam = useCurrScene((s) => s.ds?.hasCam)
+  const camProps = useCurrScene((s) => s.ds?.camProps)
+  const aspectRatio = camProps?.aspectRatio || 4 / 3
+  const hasCam = !!camProps
   const inputDims = useCurrScene((s) => s.ds?.inputDims)
   useEffect(() => {
     const canvas = ref.current
@@ -140,8 +144,8 @@ function SampleCanvas({
       } rounded-md w-[var(--item-size)] ${
         hasCam ? "scale-x-[-1] bg-box" : ""
       } `}
-      width={hasCam ? 640 : inputDims?.[1]}
-      height={hasCam ? 480 : inputDims?.[2]}
+      width={hasCam ? VIDEO_BASE_SIZE : inputDims?.[1]}
+      height={hasCam ? (1 / aspectRatio) * VIDEO_BASE_SIZE : inputDims?.[2]}
       ref={ref}
     />
   )

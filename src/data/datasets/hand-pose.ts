@@ -7,7 +7,7 @@ const outputLabels = ["👍", "👌", "🤘"]
 export const handPose: DatasetDef = {
   key: "hand-pose",
   name: "Hand Pose",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-04-02"),
   task: "classification",
   description: `Handpose dataset with ${hands} hand and ${outputLabels.length} categories`,
   aboutUrl:
@@ -17,7 +17,9 @@ export const handPose: DatasetDef = {
   preprocessFunc: "normalizeHandLandmarks",
   outputLabels,
   storeBatchSize: 20,
-  hasCam: true,
+  camProps: {
+    aspectRatio: 4 / 3,
+  },
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       ["/data/hand-pose/x_train.npz", "/data/hand-pose/y_train.npz"],

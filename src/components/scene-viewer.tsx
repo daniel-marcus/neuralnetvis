@@ -39,7 +39,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   return (
     <>
       {dsDef?.task === "regression" && <MapPlot />}
-      {dsDef?.hasCam && <VideoWindow />}
+      {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
       <BlurMask />
@@ -132,7 +132,7 @@ const SceneButtons = () => {
       className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto`}
     >
       <LoadFullButton />
-      {ds?.hasCam && <VideoControl />}
+      {!!ds?.camProps && <VideoControl />}
       <ViewSelect />
       <ViewSubsetSelect />
     </div>

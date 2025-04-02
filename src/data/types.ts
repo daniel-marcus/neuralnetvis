@@ -19,7 +19,7 @@ export interface DatasetMeta {
   outputLabels: string[] // length defines the number of output neurons
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
-  hasCam?: boolean
+  camProps?: DsCamProps
   mapProps?: DsMapProps
   loaded: "preview" | "full" // will be set by ds loader
 }
@@ -49,10 +49,15 @@ interface DsMapProps {
   baseLayer?: GeoJSON.FeatureCollection | GeoJSON.GeometryCollection
 }
 
+interface DsCamProps {
+  aspectRatio?: number
+}
+
 export interface StoreMeta {
   index: string // storeName: mnist_1_train
   totalSamples: number
   yMean?: number
+  aspectRatio?: number // for video
 }
 
 export interface DbBatch {

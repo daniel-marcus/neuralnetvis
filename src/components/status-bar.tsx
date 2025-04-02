@@ -6,10 +6,6 @@ import { Table } from "./ui-elements"
 import { SampleViewer } from "./sample-viewer"
 
 export const StatusBar = () => {
-  const hasSampleViewer = useCurrScene(
-    (s) => s.view === "evaluation" && !!s.sampleViewerIdxs.length
-  )
-  console.log("hasSampleViewer", hasSampleViewer)
   return (
     <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none">
       <div className={`-mb-1 relative`}>

@@ -4,7 +4,6 @@ import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
-import { useKeyCommand } from "@/utils/key-command"
 import { addTrainData } from "@/data/dataset"
 import { SampleRaw } from "./types"
 
@@ -177,8 +176,10 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
   const hpTrain = useSceneStore((s) => s.toggleTraining)
+  const stream = useSceneStore((s) => s.stream)
 
   const hpRecordSamples = useCallback(async () => {
+    if (!stream) return
     shouldCancelRecording = false
     const outputSize = ds?.outputLabels.length
     if (!outputSize) return
@@ -223,7 +224,8 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
       }
       const ys = { data: Uint8Array.from(yData), shape: [yData.length] }
       recordingY = undefined
-      const trainMeta = await addTrainData(ds, xs, ys)
+      const aspectRatio = getAspectRatio(stream)
+      const trainMeta = await addTrainData(ds, xs, ys, undefined, aspectRatio)
       updateMeta("train", trainMeta)
     }
 
@@ -239,7 +241,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
     stopRecording()
-  }, [hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
+  }, [stream, hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
 
   const toggleRecording = useCallback(async () => {
     // if (!stream) return
@@ -253,8 +255,11 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     }
   }, [isRecording, startRecording, stopRecording, hpRecordSamples])
 
-  useKeyCommand("r", toggleRecording)
   return [isRecording, toggleRecording] as const
+}
+
+function getAspectRatio(stream: MediaStream) {
+  return stream.getVideoTracks()[0].getSettings().aspectRatio
 }
 
 function useHpTrainConfig() {
