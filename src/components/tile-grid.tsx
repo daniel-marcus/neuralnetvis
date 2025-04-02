@@ -44,7 +44,7 @@ const tiles: TileDef[] = [
   ...datasets.map((dsDef) => ({
     path: getDsPath(dsDef),
     title: dsDef.name,
-    tags: dsDef.hasCam ? [cameraSvg, "dataset"] : ["dataset"],
+    tags: !!dsDef.camProps ? [cameraSvg, "dataset"] : ["dataset"],
     section: "play" as const,
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
