@@ -1,4 +1,11 @@
-import { Suspense, useEffect, useMemo, useState, ReactNode } from "react"
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+  useRef,
+} from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Scene } from "@/scene"
@@ -14,8 +21,8 @@ import { MapPlot } from "./datavis/map-plot"
 import { BlurMask } from "./status-bar"
 import { EvaluationView } from "./evaluation"
 import { getTileDuration, Section, type TileDef } from "./tile-grid"
-import { disableBodyScroll } from "@/utils/disable-body-scroll"
 import type { View } from "@/store/view"
+import { useBodyFreeze } from "@/utils/body-freeze"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -93,12 +100,20 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     }
   }, [isActive, section])
   const portalRef = useGlobalStore((s) => s.portalRef)
-  useBodyFreeze(section === "play" && localActive)
+  const ref = useRef<HTMLDivElement>(null)
+  useBodyFreeze(isActive, ref)
+  useIsScrolledBodyClass(ref, "overlay-scrolled")
+  const view = useSceneStore((s) => s.view)
+  const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
+  const canScroll = view === "evaluation" && !hasSample
   const comp = (
     <div
-      className={`absolute top-0 left-0 h-full w-full pointer-events-none max-h-screen ${
+      ref={ref}
+      className={`absolute top-0 left-0 h-full w-full max-h-screen ${
         isActive || (!isActive && localActive)
-          ? `p-main pt-[var(--header-height)]!`
+          ? `p-main pt-[var(--header-height)]! overflow-x-clip overflow-y-scroll ${
+              canScroll ? "pointer-events-auto" : "pointer-events-none"
+            }`
           : "p-4"
       } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
     >
@@ -108,28 +123,6 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   return isActive && localActive && section === "learn"
     ? createPortal(comp, portalRef.current!)
     : comp
-}
-
-export const ACTIVE_SCROLLABLE_CLASS = "active_scrollable"
-function useBodyFreeze(isActive: boolean) {
-  useEffect(() => {
-    if (!isActive) return
-    document.body.classList.add("overflow-hidden")
-    try {
-      // TODO: rewrite disableBodyScroll
-      disableBodyScroll(true, `.${ACTIVE_SCROLLABLE_CLASS}`)
-    } catch (e) {
-      console.warn(e)
-    }
-    return () => {
-      document.body.classList.remove("overflow-hidden")
-      try {
-        disableBodyScroll(false, `.${ACTIVE_SCROLLABLE_CLASS}`)
-      } catch (e) {
-        console.warn(e)
-      }
-    }
-  }, [isActive])
 }
 
 const SceneButtons = () => {
@@ -286,4 +279,24 @@ function SampleName() {
       </div>
     </div>
   )
+}
+
+function useIsScrolledBodyClass(
+  ref: React.RefObject<HTMLElement | null>,
+  className: string
+) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const onScroll = () => {
+      if (el.scrollTop > 0) document.body.classList.add(className)
+      else document.body.classList.remove(className)
+    }
+    el.addEventListener("scroll", onScroll)
+    onScroll()
+    return () => {
+      el.removeEventListener("scroll", onScroll)
+      document.body.classList.remove(className)
+    }
+  }, [ref, className])
 }

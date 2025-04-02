@@ -23,8 +23,8 @@ export const Header = () => {
         <div className={`flex justify-between items-start`}>
           <div
             className={`${
-              !showGradient ? "hidden" : ""
-            } xl:hidden absolute h-[30vh] inset-0 bg-gradient-to-b from-background
+              !showGradient ? "hidden overlay-scrolled:block!" : ""
+            } xl:hidden! absolute h-[30vh] inset-0 bg-gradient-to-b from-background
            to-transparent z-[-1]`}
           />
           <Logo />

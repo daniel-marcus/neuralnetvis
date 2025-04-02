@@ -55,16 +55,11 @@ export const TileGrid = () => {
   const active = usePathname()
   const hasActive = useHasActiveTile()
   const lastActive = useLast(hasActive ? active : undefined)
-  const [localHasActive, setLocalHasActive] = useState(false)
-  useEffect(() => setLocalHasActive(hasActive), [hasActive])
-  const inTransition = useGlobalStore((s) => s.inTileTransition)
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   return (
     <div
-      className={`top-0 left-0 w-screen pt-[var(--logo-height)] ${
-        hasActive && localHasActive && !inTransition ? "fixed" : "absolute"
-      }`}
+      className={`top-0 left-0 w-screen pt-[var(--logo-height)] absolute`}
       style={
         {
           "--tile-width": "320px",

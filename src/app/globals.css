@@ -43,6 +43,12 @@
   }
 }
 
+@custom-variant overlay-scrolled {
+  body.overlay-scrolled & {
+    @slot;
+  }
+}
+
 @layer utilities {
   .p-main {
     @apply p-[var(--padding-main)];
