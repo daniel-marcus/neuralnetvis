@@ -101,7 +101,7 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   }, [isActive, section])
   const portalRef = useGlobalStore((s) => s.portalRef)
   const ref = useRef<HTMLDivElement>(null)
-  useBodyFreeze(isActive, ref)
+  useBodyFreeze(section === "play" && isActive, ref)
   useIsScrolledBodyClass(ref, "overlay-scrolled")
   const view = useSceneStore((s) => s.view)
   const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
