@@ -5,10 +5,8 @@ import { cifar10 } from "./cifar10"
 import { californiaHousing } from "./california-housing"
 import { autoMpg } from "./auto-mpg"
 import type { DatasetDef } from "@/data/types"
-import { berlinAirbnb } from "../../../public/_dev/berlin-airbnb"
 
 export const datasets: DatasetDef[] = [
-  berlinAirbnb,
   fashionMnist,
   handPose,
   mnist,
