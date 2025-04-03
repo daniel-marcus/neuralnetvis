@@ -11,7 +11,7 @@ import {
 import { PathStyleExtension } from "@deck.gl/extensions"
 import * as tf from "@tensorflow/tfjs"
 import { useEffect, useMemo, useState } from "react"
-import { useGlobalStore, useSceneStore } from "@/store"
+import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { scaleNormalize } from "@/data/utils"
 import { getColorVals, NEG_BASE, POS_BASE } from "@/utils/colors"
 import { getDbDataAsTensors } from "@/data/dataset"
@@ -21,26 +21,26 @@ import {
   OrthographicViewState,
   WebMercatorViewport,
 } from "@deck.gl/core"
+import { Table } from "../ui-elements"
+import { round } from "@/scene/label"
 
 const PLOT_WIDTH = 300
 const PLOT_HEIGHT = PLOT_WIDTH
 
 export const MapPlot = () => {
   const view = useSceneStore((s) => s.view)
-  const isEvaluationView = view === "evaluation"
-  const isMapView = view === "map"
   const isActive = useSceneStore((s) => s.isActive)
-
   const viewStateProps = useViewState()
   const layers = useLayers()
+  useCurrSampleStatus(isActive && view === "map")
 
   return (
     <div
       className={`absolute pointer-events-none ${
         isActive
-          ? isEvaluationView
+          ? view === "evaluation"
             ? "z-30"
-            : isMapView
+            : view === "map"
             ? `pointer-events-auto!`
             : "md:translate-x-[25vw]"
           : "grayscale-25 opacity-75"
@@ -82,7 +82,6 @@ const iconMapping = {
 
 function useLayers() {
   const view = useSceneStore((s) => s.view)
-  const isEvaluationView = view === "evaluation"
   const mapProps = useSceneStore((s) => s.ds?.mapProps)
 
   const [points, minY] = usePoints()
@@ -112,7 +111,7 @@ function useLayers() {
     () => [
       new GeoJsonLayer({
         id: "geojson-layer",
-        visible: !isEvaluationView,
+        visible: view !== "evaluation",
         data: baseLayer ?? [],
         stroked: true,
         filled: false,
@@ -121,32 +120,32 @@ function useLayers() {
       }),
       new ScatterplotLayer<Point>({
         id: `scatterplot-layer-${subset}`,
-        data: !mapProps && !isEvaluationView ? [] : points ?? [],
+        data: !mapProps && view !== "evaluation" ? [] : points ?? [],
         stroked: false,
         filled: true,
         lineWidthMinPixels: 1,
         getPosition: (d: Point) =>
-          isEvaluationView
+          view === "evaluation"
             ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
             : [d.lon, d.lat],
         getRadius: () =>
-          isEvaluationView && points
+          view === "evaluation" && points
             ? Math.max(Math.floor((PLOT_WIDTH / points.length) * 0.8), 1)
             : 0.5,
         getFillColor: (d: Point) =>
-          isEvaluationView
+          view === "evaluation"
             ? [200, 255, 90]
             : d.y >= 0
             ? getColorVals(d.y, POS_BASE)
             : getColorVals(-d.y, NEG_BASE),
         pickable: view === "map",
         onClick: ({ index }) => {
-          setSampleIdx(index === sampleIdx ? undefined : index)
+          setSampleIdx((currIdx) => (index === currIdx ? undefined : index))
         },
         updateTriggers: {
-          getRadius: [isEvaluationView],
-          getPosition: [isEvaluationView],
-          getFillColor: [isEvaluationView],
+          getRadius: [view],
+          getPosition: [view],
+          getFillColor: [view],
         },
         transitions: {
           getRadius: 500,
@@ -156,7 +155,7 @@ function useLayers() {
       }),
       new PathLayer({
         id: "coordinate-axes",
-        visible: isEvaluationView,
+        visible: view === "evaluation",
         data: [
           [xyToPlot([0, 0]), xyToPlot([1, 0])],
           [xyToPlot([0, 0]), xyToPlot([0, 1])],
@@ -167,7 +166,7 @@ function useLayers() {
       }),
       new PathLayer({
         id: "middle-line",
-        visible: isEvaluationView,
+        visible: view === "evaluation",
         data: [[xyToPlot([minY, minY]), xyToPlot([1, 1])]],
         getPath: (d) => d,
         getColor: [255, 20, 100], // [200, 255, 90], //
@@ -177,7 +176,7 @@ function useLayers() {
       }),
       new TextLayer({
         id: "axes-labels",
-        visible: isEvaluationView,
+        visible: view === "evaluation",
         data: [
           {
             label: "actual",
@@ -201,7 +200,7 @@ function useLayers() {
       }),
       new IconLayer<Point>({
         id: "active-point-layer",
-        visible: !!mapProps && !isEvaluationView,
+        visible: !!mapProps && view !== "evaluation",
         data: activePoint ? [activePoint] : [],
         getPosition: (d: Point) => [d.lon, d.lat],
         getIcon: () => "marker",
@@ -212,18 +211,7 @@ function useLayers() {
         iconMapping,
       }),
     ],
-    [
-      activePoint,
-      isEvaluationView,
-      mapProps,
-      points,
-      minY,
-      baseLayer,
-      subset,
-      view,
-      sampleIdx,
-      setSampleIdx,
-    ]
+    [activePoint, mapProps, points, minY, baseLayer, subset, view, setSampleIdx]
   )
 
   return layers
@@ -448,4 +436,25 @@ function usePoints() {
     getAllSamples()
   }, [subset, batchCount, ds, model, backendReady])
   return [points, minY] as const
+}
+
+function useCurrSampleStatus(isActive?: boolean) {
+  const sample = useSceneStore((s) => s.sample)
+  const ds = useSceneStore((s) => s.ds)
+  useEffect(() => {
+    if (!isActive || !sample || !ds?.inputLabels) return
+    const values = sample.rawX ?? sample.X
+    const outputLabel = ds.outputLabels?.[0] ?? "y"
+    const dataEntries = [
+      ...ds.inputLabels.map((label, i) => [label, round(values[i])]),
+      [outputLabel, round(sample.y)],
+    ]
+    const data = Object.fromEntries(dataEntries)
+    const STATUS_ID = "sample-status"
+    if (data)
+      setStatus(<Table data={data} />, undefined, {
+        id: STATUS_ID,
+      })
+    return () => clearStatus(STATUS_ID)
+  }, [isActive, sample, ds])
 }

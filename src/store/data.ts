@@ -5,6 +5,9 @@ import { preprocessSample } from "@/data/sample"
 
 export type Subset = "train" | "test"
 
+type SampleIdx = number | undefined
+type SetterFunc<T> = (oldVal: T) => T
+
 export interface DataSlice {
   shouldLoadFullDs?: boolean
   setLoadFullDs: (shouldLoadFullDs: boolean) => void
@@ -17,7 +20,7 @@ export interface DataSlice {
   getAspectRatio: () => number
 
   sampleIdx: number | undefined
-  setSampleIdx: (idx: number | undefined) => void
+  setSampleIdx: (arg: SampleIdx | SetterFunc<SampleIdx>) => void
   sample?: Sample
   setSample: (sampleRaw?: SampleRaw) => void
   nextSample: (step?: number) => void
@@ -53,7 +56,8 @@ export const createDataSlice: StateCreator<
     get().ds?.train.aspectRatio ?? get().ds?.camProps?.aspectRatio ?? 1,
 
   sampleIdx: undefined,
-  setSampleIdx: (sampleIdx) => set({ sampleIdx }),
+  setSampleIdx: (arg) =>
+    set({ sampleIdx: typeof arg === "function" ? arg(get().sampleIdx) : arg }),
   sample: undefined,
   setSample: (sampleRaw) =>
     set(({ ds }) => ({ sample: preprocessSample(sampleRaw, ds) })),

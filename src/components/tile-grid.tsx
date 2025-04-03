@@ -142,7 +142,7 @@ function Tile(props: TileProps) {
       className={`relative h-[var(--tile-height)] group/tile ${
         !isActive ? "cursor-pointer" : ""
       } ${props.isFeatured ? "sm:col-span-2" : ""} ${className}`}
-      {...bind()}
+      {...(!isActive ? bind() : {})}
       style={
         {
           "--offset-x": `${offset.x}px`,

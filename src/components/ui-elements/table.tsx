@@ -5,6 +5,7 @@ export type TableProps = {
   title?: ReactNode
   keyAlign?: "left" | "right"
   valueAlign?: "left" | "right"
+  className?: string
 }
 
 export const Table = ({
@@ -12,8 +13,9 @@ export const Table = ({
   title,
   keyAlign = "left",
   valueAlign = "right",
+  className = "",
 }: TableProps) => (
-  <table className="table-auto w-full">
+  <table className={`table-auto w-full ${className}`}>
     {!!title && <caption className="whitespace-nowrap">{title}</caption>}
     <tbody>
       {Object.entries(data)

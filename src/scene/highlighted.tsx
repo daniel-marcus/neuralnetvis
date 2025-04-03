@@ -3,8 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { getWorldPos } from "./utils"
 import type { Neuron } from "@/neuron-layers"
-
-import { Mesh } from "three"
+import type { Mesh } from "three"
 
 interface HighlightedProps {
   neuron?: Neuron
