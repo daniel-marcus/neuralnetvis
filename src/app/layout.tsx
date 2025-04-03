@@ -1,15 +1,8 @@
 import { App } from "@/components/app"
-import manifest from "./manifest.json"
+import { metadata } from "./metadata"
 import "./globals.css"
-import type { Metadata } from "next"
 
-export const metadata: Metadata = {
-  title: manifest.name,
-  description: manifest.description,
-  openGraph: {
-    images: [{ url: "https://neuralnetvis.app/images/neuralnetvis-og.png" }],
-  },
-}
+export { metadata }
 
 type LayoutProps = Readonly<{ children: React.ReactNode }>
 
@@ -21,7 +14,7 @@ export default function Layout({ children }: LayoutProps) {
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
-        <meta name="apple-mobile-web-app-title" content={manifest.name} />
+        <meta name="apple-mobile-web-app-title" content={`${metadata.title}`} />
       </head>
       <body className={`antialiased`}>
         <App>{children}</App>

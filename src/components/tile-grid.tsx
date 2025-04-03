@@ -70,7 +70,7 @@ export const TileGrid = () => {
     >
       <div className="w-[var(--tile-width)] sm:w-[calc(2*var(--tile-width)+var(--gap))] lg:w-[calc(3*var(--tile-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-[var(--padding-main)] xs:px-0">
         <SectionIntro
-          className={hasActive ? "opacity-0 pointer-events-none" : ""}
+          className={hasActive ? "hidden pointer-events-none" : ""}
         />
         <div className="flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)]">
           {tiles

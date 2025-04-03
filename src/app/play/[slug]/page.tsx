@@ -1,6 +1,5 @@
 import { datasets } from "@/data/datasets"
-import { metadata } from "@/app/layout"
-import manifest from "@/app/manifest.json"
+import { metadata } from "@/app/metadata"
 import type { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
@@ -10,8 +9,7 @@ export async function generateMetadata(props: { params: Params }) {
   const dsDef = getDsDefFromKey(slug)!
   const { name, description } = dsDef
   return {
-    ...metadata,
-    title: `${name} | ${manifest.name}`,
+    title: `${name} | ${metadata.title}`,
     description,
   } as Metadata
 }

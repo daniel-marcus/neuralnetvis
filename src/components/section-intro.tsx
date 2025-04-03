@@ -1,9 +1,11 @@
 import { ReactNode } from "react"
 import { useSection } from "./tile-grid"
+import { metadata, learnMetadata, playMetadata } from "@/app/metadata"
 
 const introTexts = {
-  play: "Play with neural networks: Pick a dataset, then adjust and train your model",
-  default: "Wrap your head around neural networks and watch machines learn!",
+  learn: learnMetadata.description,
+  play: playMetadata.description,
+  default: metadata.description,
 } as Record<string, ReactNode>
 
 export const SectionIntro = ({ className = "" }) => {

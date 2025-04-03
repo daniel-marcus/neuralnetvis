@@ -1,7 +1,6 @@
 import { Lesson } from "@/components/lesson"
 import { lessonPreviews, lessons } from "@/contents"
-import { metadata } from "@/app/layout"
-import manifest from "@/app/manifest.json"
+import { metadata } from "@/app/metadata"
 import type { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
@@ -11,8 +10,7 @@ export async function generateMetadata(props: { params: Params }) {
   const lesson = getLessonFromSlug(slug) ?? { title: "", description: "" }
   const { title, description } = lesson
   return {
-    ...metadata,
-    title: `${title} | ${manifest.name}`,
+    title: `${title} | ${metadata.title}`,
     description,
   } as Metadata
 }
