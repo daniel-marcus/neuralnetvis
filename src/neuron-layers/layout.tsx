@@ -89,7 +89,7 @@ export function getNeuronPos(
   spacing: number
 ) {
   const total = height * width
-  return layerPos === "output" || (layerPos === "input" && total <= 10)
+  return layerPos === "output" || (layerPos === "input" && width === 1)
     ? getLineXYZ(i, total, spacing)
     : getGroupedGridXYZ(i, height, width, spacing)
 }

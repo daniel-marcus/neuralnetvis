@@ -18,7 +18,8 @@ export function AsciiText({ children, className }: AsciiTextProps) {
 
 const useAsciiText = (input: string) => {
   return useMemo(() => {
-    const textWithLineBreaks = splitWithThreshold(input).join("\n")
+    const sanitizedInput = replaceUmlauts(input)
+    const textWithLineBreaks = splitWithThreshold(sanitizedInput).join("\n")
     return figlet
       .textSync(textWithLineBreaks, {
         font: "Blur Vision ASCII" as Fonts,
@@ -26,6 +27,17 @@ const useAsciiText = (input: string) => {
       .replace(/[░▒]/g, " ")
       .replace(/^.{2}/gm, "")
   }, [input])
+}
+
+function replaceUmlauts(str: string) {
+  return str
+    .replace(/Ä/g, "Ae")
+    .replace(/Ö/g, "Oe")
+    .replace(/Ü/g, "Ue")
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
 }
 
 export function splitWithThreshold(

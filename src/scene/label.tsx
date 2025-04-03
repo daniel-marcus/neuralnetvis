@@ -51,7 +51,7 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
         <NeuronLabel
           side={"right"}
           position={position}
-          size={1}
+          size={neuron.layer.meshParams.labelSize ?? 1}
           color={LABEL_COLOR}
         >
           {round(rawInput)}

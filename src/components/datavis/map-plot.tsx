@@ -141,7 +141,7 @@ function useLayers() {
             : getColorVals(-d.y, NEG_BASE),
         pickable: view === "map",
         onClick: ({ index }) => {
-          setSampleIdx(index)
+          setSampleIdx(index === sampleIdx ? undefined : index)
         },
         updateTriggers: {
           getRadius: [isEvaluationView],
@@ -221,6 +221,7 @@ function useLayers() {
       baseLayer,
       subset,
       view,
+      sampleIdx,
       setSampleIdx,
     ]
   )
