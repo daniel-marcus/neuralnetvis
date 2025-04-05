@@ -35,5 +35,5 @@ export function Title({ children, className = "" }: TitleProps) {
 }
 
 function Teaser({ children }: { children: ReactNode }) {
-  return <div className="pt-12 pb-[50dvh]">{children}</div>
+  return <div className="pt-12 pb-[50dvh] screenshot:opacity-0">{children}</div>
 }

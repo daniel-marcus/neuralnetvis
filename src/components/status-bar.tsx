@@ -7,7 +7,7 @@ import { SampleViewer } from "./sample-viewer"
 
 export const StatusBar = () => {
   return (
-    <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none">
+    <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none screenshot:hidden">
       <div className={`-mb-1 relative`}>
         <div className="flex justify-between items-end relative">
           <NeuronStatus />

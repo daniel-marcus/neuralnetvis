@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { App } from "@/components/app"
 import { metadata } from "./metadata"
 import "./globals.css"
@@ -17,7 +18,9 @@ export default function Layout({ children }: LayoutProps) {
         <meta name="apple-mobile-web-app-title" content={`${metadata.title}`} />
       </head>
       <body className={`antialiased`}>
-        <App>{children}</App>
+        <Suspense>
+          <App>{children}</App>
+        </Suspense>
       </body>
     </html>
   )

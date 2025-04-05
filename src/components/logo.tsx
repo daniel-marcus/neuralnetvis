@@ -10,10 +10,16 @@ export const Logo = () => {
     <Link
       href={"/"}
       prefetch={false}
-      className={`pointer-events-auto text-logo p-main hover:text-white`}
+      className={`pointer-events-auto text-logo p-main hover:text-white ${
+        isPlayMode
+          ? "screenshot:hidden"
+          : !hasLesson
+          ? "screenshot:scale-150 origin-top-left"
+          : ""
+      }`}
       scroll={hasLesson ? true : false}
     >
-      <AsciiText className="">{isPlayMode ? "../" : "Neural"}</AsciiText>
+      <AsciiText>{isPlayMode ? "../" : "Neural"}</AsciiText>
       {!isPlayMode && (
         <div className={`transition-opacity duration-100`}>
           <AsciiText>Net</AsciiText>

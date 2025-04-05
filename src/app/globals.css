@@ -49,6 +49,12 @@
   }
 }
 
+@custom-variant screenshot {
+  body.screenshot & {
+    @slot;
+  }
+}
+
 @layer utilities {
   .p-main {
     @apply p-[var(--padding-main)];
@@ -110,6 +116,13 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-mono);
+}
+
+body.screenshot {
+  --header-height: var(--padding-main);
+  nextjs-portal {
+    display: none;
+  }
 }
 
 button:not([disabled]) {

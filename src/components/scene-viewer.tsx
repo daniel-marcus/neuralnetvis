@@ -72,7 +72,7 @@ const DsDescription = () => {
     <div
       className={`max-w-[300px] mb-2 pointer-events-auto ${
         view !== "model" ? "hidden xl:block" : ""
-      }`}
+      } screenshot:hidden`}
     >
       <p>{ds.description}</p>
       <p>
@@ -129,7 +129,7 @@ const SceneButtons = () => {
   const ds = useSceneStore((s) => s.ds)
   return (
     <div
-      className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto`}
+      className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
     >
       <LoadFullButton />
       {!!ds?.camProps && <VideoControl />}
@@ -188,8 +188,10 @@ function DsTitle({ title, href }: SceneTitleProps) {
         href={href}
         onClick={onClick}
         className={`pointer-events-auto ${
-          isActive ? "hover:text-white" : "group-hover/tile:text-white"
-        }`}
+          isActive
+            ? "hover:text-white screenshot:scale-150"
+            : "group-hover/tile:text-white"
+        } origin-top-left`}
       >
         <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>
       </Comp>

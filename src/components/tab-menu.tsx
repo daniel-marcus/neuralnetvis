@@ -57,7 +57,7 @@ export const TabMenu = () => {
     ? currTab?.parent?.key
     : currTab?.parent?.parent?.key
   return (
-    <div className="pointer-events-auto">
+    <div className="pointer-events-auto screenshot:hidden">
       <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
         <TabButton
           isShown={!!currTab && (!!currTab.children || !!currTab.parent)}

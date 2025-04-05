@@ -1,5 +1,5 @@
-import type { DatasetDef } from "@/data/types"
 import { fetchMutlipleNpzWithProgress } from "../npy-loader"
+import type { DatasetDef } from "@/data/types"
 
 const hands = 1
 const outputLabels = ["👍", "👌", "🤘"]

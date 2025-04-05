@@ -1,6 +1,6 @@
 import { Lesson } from "@/components/lesson"
 import { lessonPreviews, lessons } from "@/contents"
-import { metadata } from "@/app/metadata"
+import { getOgImgUrl, metadata } from "@/app/metadata"
 import type { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
@@ -12,6 +12,9 @@ export async function generateMetadata(props: { params: Params }) {
   return {
     title: `${title} | ${metadata.title}`,
     description,
+    openGraph: {
+      images: [{ url: getOgImgUrl(`learn/${slug}`) }],
+    },
   } as Metadata
 }
 

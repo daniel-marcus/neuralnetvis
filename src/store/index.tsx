@@ -1,3 +1,4 @@
+import { createContext, createRef, useContext, useEffect, useRef } from "react"
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
 import { createViewSlice, View, ViewSlice } from "./view"
@@ -7,7 +8,6 @@ import { createModelSlice, ModelSlice } from "./model"
 import { createTrainingSlice, TrainingSlice } from "./training"
 import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
-import { createContext, createRef, useContext, useEffect, useRef } from "react"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 

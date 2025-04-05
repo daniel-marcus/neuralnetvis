@@ -17,7 +17,7 @@ export const SampleSlider = () => {
     <div
       className={`absolute left-0 ${
         isActive ? "bottom-8" : "bottom-[-2px] leading-[1]"
-      } w-full flex justify-center transition-[bottom] duration-300`}
+      } w-full flex justify-center transition-[bottom] duration-300 screenshot:hidden`}
     >
       <div
         className={`w-full ${

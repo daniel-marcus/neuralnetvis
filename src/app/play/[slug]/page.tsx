@@ -1,5 +1,5 @@
 import { datasets } from "@/data/datasets"
-import { metadata } from "@/app/metadata"
+import { getOgImgUrl, metadata } from "@/app/metadata"
 import type { Metadata } from "next"
 
 type Params = Promise<{ slug: string }>
@@ -11,6 +11,9 @@ export async function generateMetadata(props: { params: Params }) {
   return {
     title: `${name} | ${metadata.title}`,
     description,
+    openGraph: {
+      images: [{ url: getOgImgUrl(`play/${slug}`) }],
+    },
   } as Metadata
 }
 export default async function Page() {
