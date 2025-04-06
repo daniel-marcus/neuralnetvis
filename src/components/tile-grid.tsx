@@ -20,6 +20,7 @@ import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "./video"
 
 export type Section = "learn" | "play"
+const sections = ["learn", "play"] as const
 
 export interface TileDef {
   path: string
@@ -57,6 +58,8 @@ export const TileGrid = () => {
   const lastActive = useLast(hasActive ? active : undefined)
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
+  const is404 = useIs404()
+  if (is404) return null
   return (
     <div
       className={`top-0 left-0 w-screen pt-[var(--logo-height)] absolute`}
@@ -202,6 +205,17 @@ export function useSection() {
   const pathname = usePathname()
   const splits = pathname.split("/")
   return splits.length === 2 ? splits[1] : ""
+}
+
+function useIs404() {
+  const hasActive = useHasActiveTile()
+  const section = useSection()
+  const pathname = usePathname()
+  return (
+    pathname !== "/" &&
+    !hasActive &&
+    (!section || !sections.includes(section as Section))
+  )
 }
 
 function useLast<T>(value: T) {

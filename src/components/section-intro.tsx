@@ -5,14 +5,14 @@ import { metadata, learnMetadata, playMetadata } from "@/app/metadata"
 const introTexts = {
   learn: learnMetadata.description,
   play: playMetadata.description,
-  default: metadata.description,
+  "": metadata.description,
 } as Record<string, ReactNode>
 
 export const SectionIntro = ({ className = "" }) => {
   const section = useSection()
   return (
     <div className={`py-16 screenshot:opacity-0 screenshot:py-8 ${className}`}>
-      {introTexts[section] ?? introTexts.default}
+      {introTexts[section] ?? ""}
     </div>
   )
 }
