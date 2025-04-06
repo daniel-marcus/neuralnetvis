@@ -157,7 +157,7 @@ export const LayerConfigControl = () => {
                 <div className="flex">
                   <button
                     onClick={() => toggleLayerVisibility(layer.config.name!)}
-                    className="pr-3"
+                    className="pr-3 active:text-white"
                   >
                     {isInvisible ? "⍉" : "⌾"}
                   </button>
@@ -169,7 +169,10 @@ export const LayerConfigControl = () => {
                   </div>
                 </div>
                 {!mustBe && (
-                  <button onClick={() => handleRemove(i)} className="px-2">
+                  <button
+                    onClick={() => handleRemove(i)}
+                    className="px-2 active:text-white"
+                  >
                     x
                   </button>
                 )}

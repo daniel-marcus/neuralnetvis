@@ -109,10 +109,10 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   const comp = (
     <div
       ref={ref}
-      className={`absolute top-0 left-0 h-full w-full max-h-screen ${
+      className={`absolute top-0 left-0 h-full w-full max-h-screen pointer-events-none ${
         isActive || (!isActive && localActive)
           ? `p-main pt-[var(--header-height)]! overflow-x-clip overflow-y-scroll ${
-              canScroll ? "pointer-events-auto" : "pointer-events-none"
+              canScroll ? "pointer-events-auto" : ""
             }`
           : "p-4"
       } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
@@ -166,7 +166,7 @@ function LessonTitle({ title, href, isActive }: SceneTitleProps) {
           className={`${
             isActive
               ? "text-ascii-title"
-              : "text-logo pointer-events-auto group-hover/tile:text-white"
+              : "text-logo pointer-events-auto group-hover/tile:text-white active:text-white"
           } [transition-property:all,color] [transition-duration:var(--tile-duration),0s]`}
         >
           {title}
@@ -189,8 +189,8 @@ function DsTitle({ title, href }: SceneTitleProps) {
         onClick={onClick}
         className={`pointer-events-auto ${
           isActive
-            ? "hover:text-white screenshot:scale-150"
-            : "group-hover/tile:text-white"
+            ? "hover:text-white active:text-white screenshot:scale-150"
+            : "group-hover/tile:text-white active:text-white"
         } origin-top-left`}
       >
         <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>

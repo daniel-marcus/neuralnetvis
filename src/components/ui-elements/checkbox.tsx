@@ -9,8 +9,8 @@ export const Checkbox = ({ checked, onChange, mark = "◼" }: CheckboxProps) => 
     [
     <span
       className={`text-accent font-bold inline-block ${
-        checked ? "" : "opacity-0"
-      } transofrm-opacity duration-100`}
+        checked ? "" : "scale-0!"
+      } transition-transform duration-100`}
     >
       {mark}
     </span>

@@ -33,25 +33,32 @@ export const DraggableList = ({
     }))
   }, [api, order, rowHeight])
 
-  const bind = useDrag(({ args: [originalIdx], active, movement: [, y] }) => {
-    const currIdx = order.indexOf(originalIdx)
-    const dragY = currIdx * rowHeight + y
-    const currRow = clamp(Math.round(dragY / rowHeight), 0, children.length - 1)
-    const newOrder = swap(order, currIdx, currRow)
-    const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
-    if (isValidChange) {
-      const min = -currIdx * rowHeight
-      const max = maxHeight - currIdx * rowHeight - rowHeight
-      const constrainedY = rubberbandIfOutOfBounds(y, min, max)
-      api.start(
-        fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight)
+  const bind = useDrag(
+    ({ args: [originalIdx], active, movement: [, y], event, tap }) => {
+      if (!tap) event.stopPropagation()
+      const currIdx = order.indexOf(originalIdx)
+      const dragY = currIdx * rowHeight + y
+      const currRow = clamp(
+        Math.round(dragY / rowHeight),
+        0,
+        children.length - 1
       )
+      const newOrder = swap(order, currIdx, currRow)
+      const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
+      if (isValidChange) {
+        const min = -currIdx * rowHeight
+        const max = maxHeight - currIdx * rowHeight - rowHeight
+        const constrainedY = rubberbandIfOutOfBounds(y, min, max)
+        api.start(
+          fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight)
+        )
+      }
+      if (!active) {
+        if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
+        else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
+      }
     }
-    if (!active) {
-      if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
-      else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
-    }
-  })
+  )
 
   return (
     <div

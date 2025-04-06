@@ -26,7 +26,7 @@ export const NeuronStatus = () => {
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${
         hasStatus ? "hidden sm:flex" : ""
-      } pointer-events-auto`}
+      } pointer-events-auto active:brightness-120`}
       onClick={handleClick}
     >
       <WeightsViewer neuron={selected} />

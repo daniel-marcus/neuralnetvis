@@ -40,18 +40,16 @@ const Status = () => {
   const onClick = status ? () => clearStatus(status.id) : undefined
   return (
     <div
-      className={`p-main rounded-box ${
+      className={`p-main active:brightness-120 rounded-box pointer-events-none ${
         status?.fullscreen
-          ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center pointer-events-none"
+          ? "fixed top-0 left-0 w-screen h-screen flex items-center justify-center"
           : "absolute right-0 bottom-0 sm:relative lg:max-w-[33vw] ml-auto"
       }  ${
-        !!status?.text
-          ? "opacity-100 duration-0 pointer-events-auto"
-          : "opacity-0 duration-300 pointer-events-none"
+        !!status?.text ? "opacity-100 duration-0" : "opacity-0 duration-300"
       } transition ease-in-out text-right`}
     >
       <div
-        className={status?.fullscreen ? "pointer-events-auto" : ""}
+        className={status?.text ? "pointer-events-auto " : ""}
         onClick={onClick}
       >
         {parsedText || keptText.current}

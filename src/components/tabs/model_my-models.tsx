@@ -91,16 +91,24 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
       {savedModels.map((m, i) => (
         <li key={i} className="flex justify-between has-menu-border">
           <button
-            className="flex-1 min-w-0 text-left truncate"
+            className="flex-1 min-w-0 text-left truncate active:text-white"
             onClick={() => loadModel(m)}
           >
             {m}
           </button>
           <div className="flex gap-2 flex-nowrap">
-            <button className="px-2" onClick={() => exportModel(m)}>
+            <button
+              className="px-2 active:text-white"
+              onClick={() => exportModel(m)}
+            >
               export
             </button>
-            <button onClick={() => removeModel(m)}>x</button>
+            <button
+              className="active:text-white"
+              onClick={() => removeModel(m)}
+            >
+              x
+            </button>
           </div>
         </li>
       ))}

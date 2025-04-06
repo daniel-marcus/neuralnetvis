@@ -21,14 +21,14 @@ export const SampleSlider = () => {
     >
       <div
         className={`w-full ${
-          isActive ? "px-4 max-w-full sm:max-w-[380px]" : ""
+          isActive ? "px-4 max-w-[320px] sm:max-w-[380px]" : ""
         } pointer-events-auto ${
           hasProgressBar || !totalSamples || visIsLocked || hasStream
             ? "opacity-0 pointer-events-none"
             : isActive && (hasStatus || hasSelected)
             ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
             : "opacity-[var(--opacity-inactive)] lg:opacity-[var(--opacity-inactive-lg)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
-        } transition-opacity duration-200 group`}
+        } transition-opacity duration-200 group/sample-slider`}
         style={
           {
             "--opacity-active": "1",
@@ -45,7 +45,7 @@ export const SampleSlider = () => {
           yPad={0.25}
         />
         {isActive && (
-          <div className="label pointer-events-none select-none text-left opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-200 flex justify-between">
+          <div className="label pointer-events-none select-none text-left opacity-0 group-hover/sample-slider:opacity-100 group-active/sample-slider:opacity-100 transition-opacity duration-200 flex justify-between">
             <div>
               {(sampleIdx ?? 0) + 1} / {totalSamples}
             </div>

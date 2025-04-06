@@ -105,7 +105,7 @@ const TabButton = ({
       href={href as string}
       className={`p-main cursor-pointer ${
         isActive ? "text-white" : ""
-      } hover:text-white ${
+      } hover:text-white active:text-white ${
         isShown ? "" : "hidden"
       } transition-colors duration-100`}
       onClick={onClick}

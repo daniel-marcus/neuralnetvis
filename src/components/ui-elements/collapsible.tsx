@@ -23,7 +23,7 @@ export const CollapsibleWithTitle = ({
         <div className={`${isOpen ? "text-white" : ""}`}>
           <button
             onClick={() => setIsOpen((o) => !o)}
-            className="w-full text-left p-4"
+            className="w-full text-left p-4 active:text-white"
           >
             <Arrow direction={isOpen ? "down" : "right"} />
             {title}

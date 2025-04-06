@@ -64,7 +64,7 @@ export const Slider = ({
       <div
         ref={sliderRef}
         {...bind()}
-        className="flex-1 py-[var(--y-pad)] overflow-hidden select-none relative cursor-pointer touch-none"
+        className="flex-1 py-[var(--y-pad)] overflow-hidden select-none relative cursor-pointer touch-none group/slider"
         aria-label={`${value}/${max}`}
       >
         {bgContent}
@@ -81,7 +81,7 @@ export const Slider = ({
           </span>
         ))}
         <span
-          className={`absolute top-[var(--y-pad)] left-0 text-accent`}
+          className={`absolute top-[var(--y-pad)] left-0 text-accent group-active/slider:scale-120`}
           style={{
             left: `${currPercent}%`,
             transform: `translateX(-${currPercent}%)`,

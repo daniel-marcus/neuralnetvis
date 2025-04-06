@@ -10,7 +10,7 @@ export const Logo = () => {
     <Link
       href={"/"}
       prefetch={false}
-      className={`pointer-events-auto text-logo p-main hover:text-white ${
+      className={`pointer-events-auto text-logo p-main hover:text-white active:text-white ${
         isPlayMode
           ? "screenshot:hidden"
           : !hasLesson

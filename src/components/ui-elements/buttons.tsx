@@ -59,10 +59,10 @@ export const Button = ({
       href={href as string}
       className={`px-2 ${
         variant === "primary"
-          ? "bg-accent text-white disabled:opacity-50"
+          ? "bg-accent text-white disabled:opacity-50 active:bg-accent-hover"
           : variant === "secondary"
-          ? "bg-secondary"
-          : "hover:text-white"
+          ? "bg-secondary active:text-white"
+          : "hover:text-white active:text-white"
       } rounded-btn ${className}`}
       onClick={onClick}
       disabled={disabled}

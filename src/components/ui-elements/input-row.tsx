@@ -41,7 +41,7 @@ export const InputRow = (props: InputRowProps) => {
           {label ?? ""}
         </div>
         {!!reset && (
-          <button className="px-2" onClick={reset}>
+          <button className="px-2 active:text-white" onClick={reset}>
             ↺
           </button>
         )}

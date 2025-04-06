@@ -64,7 +64,7 @@ export const MyDatasets = () => {
               }`}
             >
               <button
-                className={`flex-1 min-w-0 text-left truncate ${
+                className={`flex-1 min-w-0 text-left truncate active:text-white ${
                   isCurrent ? "disabled pointer-events-none" : ""
                 }`}
                 onClick={() => handleSelect(d.key)}
@@ -73,7 +73,10 @@ export const MyDatasets = () => {
               </button>
               <div>
                 {d.isUserGenerated && (
-                  <button className="px-2" onClick={() => exportDs(d)}>
+                  <button
+                    className="px-2 active:text-white"
+                    onClick={() => exportDs(d)}
+                  >
                     export
                   </button>
                 )}

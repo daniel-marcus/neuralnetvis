@@ -92,7 +92,7 @@ export const CreateNewDataset = () => {
                 />
                 {labels.length > MIN_LABELS && (
                   <button
-                    className="px-2"
+                    className="px-2 active:text-white"
                     onClick={() => setLabels([...labels.toSpliced(i, 1)])}
                   >
                     x
