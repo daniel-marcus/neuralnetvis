@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
-import type { LayerActivations, LayerConfigArray } from "@/model"
+import type { Evaluation, LayerActivations, LayerConfigArray } from "@/model"
 import { setVisConfig } from "."
 import { Neuron, Nid } from "@/neuron-layers"
 import { ActivationStats } from "@/model/activation-stats"
@@ -30,6 +30,10 @@ export interface ModelSlice {
 
   allNeurons: Map<Nid, Neuron>
   setAllNeurons: (neurons: Map<Nid, Neuron>) => void
+
+  evaluation: Evaluation
+  setEvaluation: (props: Partial<Evaluation>) => void
+  resetEvaluation: () => void
 }
 
 export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
@@ -60,4 +64,11 @@ export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
 
   allNeurons: new Map(),
   setAllNeurons: (allNeurons) => set({ allNeurons }),
+
+  evaluation: {},
+  setEvaluation: (props) =>
+    set((state) => ({
+      evaluation: { ...state.evaluation, ...props },
+    })),
+  resetEvaluation: () => set({ evaluation: {} }),
 })

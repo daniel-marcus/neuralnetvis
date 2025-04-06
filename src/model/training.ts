@@ -13,8 +13,6 @@ import {
   useSceneStore,
 } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
-import { calculateRSquared } from "@/data/utils"
-import { Subset } from "@/store/data"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const isTraining = useSceneStore((s) => s.isTraining)
@@ -231,53 +229,4 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   X.dispose()
   y.dispose()
   return { loss, acc }
-}
-
-async function getEvalData(subset: Subset = "test") {
-  const ds = getDs()
-  if (!ds) return
-  return getDbDataAsTensors(ds, subset)
-}
-
-export async function getModelEvaluation(subset: Subset = "test") {
-  const model = getModel()
-  const data = await getEvalData(subset)
-  if (!model || !data) return { loss: undefined, accuracy: undefined }
-  const { X, y } = data
-
-  await tf.ready()
-  const result = model.evaluate(X, y, { batchSize: 64 })
-  const [lossT, accuracyT] = Array.isArray(result) ? result : [result]
-  try {
-    const loss = await lossT.array()
-    const accuracy = await accuracyT?.array()
-    return { loss, accuracy }
-  } catch (e) {
-    console.warn(e)
-    return { loss: undefined, accuracy: undefined }
-  } finally {
-    Object.values(data).forEach((t) => t?.dispose())
-    lossT.dispose()
-    accuracyT?.dispose()
-  }
-}
-
-export async function getPredictions(subset: Subset = "test") {
-  const model = getModel()
-  const data = await getEvalData(subset)
-  if (!model || !data) return
-  const { X, y } = data
-  try {
-    return tf.tidy(() => {
-      const yTrueArr = y.arraySync() as number[]
-      const yPred = (model.predict(X) as tf.Tensor).flatten()
-      const predictions = yPred
-        .arraySync()
-        .map((predicted, i) => ({ predicted, actual: yTrueArr[i] }))
-      const rSquared = calculateRSquared(y, yPred)
-      return { predictions, rSquared }
-    })
-  } finally {
-    Object.values(data).forEach((t) => t?.dispose())
-  }
 }

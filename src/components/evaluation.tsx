@@ -1,18 +1,42 @@
-import { getModelEvaluation, getPredictions } from "@/model/training"
+import { getModelEvaluation, getPredictions } from "@/model/evaluation"
 import { useSceneStore } from "@/store"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Table } from "./ui-elements"
 import { isScreen } from "@/utils/screen"
 import { ConfusionMatrix } from "./datavis/confusion-matrix"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)
+  useEvaluation()
   if (!task) return null
   if (task === "classification") return <ConfusionViewer />
   else
     return (
       <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-[var(--plot-size)] pt-8" />
     ) /* sm:plotsize = PLOT_SIZE * (2 ** zoom) */
+}
+
+function useEvaluation() {
+  // save prediction & evaluation once in store and make them reusable in MapPlot & Evaluation
+  const ds = useSceneStore((s) => s.ds)
+  const subset = useSceneStore((s) => s.subset)
+  const model = useSceneStore((s) => s.model)
+  const batchCount = useSceneStore((s) => s.batchCount)
+  const setEvaluation = useSceneStore((s) => s.setEvaluation)
+  const resetEvaluation = useSceneStore((s) => s.resetEvaluation)
+  useEffect(() => () => resetEvaluation(), [ds, subset, resetEvaluation])
+  useEffect(() => {
+    async function getPreds() {
+      if (!ds || !model) return
+      const { loss, accuracy } = await getModelEvaluation(subset)
+      const { predictions, rSquared } =
+        ds.task === "regression"
+          ? (await getPredictions(ds, model, subset)) ?? {}
+          : {}
+      setEvaluation({ loss, accuracy, rSquared, predictions })
+    }
+    getPreds()
+  }, [ds, subset, model, batchCount, setEvaluation, resetEvaluation])
 }
 
 function ConfusionViewer() {
@@ -36,62 +60,36 @@ function ConfusionViewer() {
   )
 }
 
-export function Evaluation({ className = "" }) {
-  // TODO: resuse predictions between components
-  const data = useEvaluate()
-  return (
-    <div className={`mt-4 ${className}`}>
-      <Table data={data} />
-    </div>
-  )
-}
-
 const LOSS_DICT = {
   meanSquaredError: "MSE",
   meanAbsoluteError: "MAE",
   categoricalCrossentropy: "CCE",
 } as Record<string, string>
 
-function useEvaluate() {
+export function Evaluation({ className = "" }) {
   const ds = useSceneStore((s) => s.ds)
-  const isRegression = useSceneStore((s) => s.isRegression())
   const model = useSceneStore((s) => s.model)
   const subset = useSceneStore((s) => s.subset)
-  const batchCount = useSceneStore((s) => s.batchCount)
+  const { loss, accuracy, rSquared } = useSceneStore((s) => s.evaluation)
 
-  const [data, setData] = useState<Record<string, string | number>>({})
+  const _lossName = typeof model?.loss === "string" ? model.loss : ""
+  const lossName =
+    _lossName && isScreen("sm")
+      ? `(${_lossName})`
+      : _lossName in LOSS_DICT
+      ? `(${LOSS_DICT[_lossName]})`
+      : ""
 
-  useEffect(() => {
-    async function evaluate() {
-      if (!ds || !model) return
-
-      const { loss, accuracy } = await getModelEvaluation(subset)
-      const _lossName = typeof model.loss === "string" ? model.loss : ""
-      const lossName =
-        _lossName && isScreen("sm")
-          ? `(${_lossName})`
-          : _lossName in LOSS_DICT
-          ? `(${LOSS_DICT[_lossName]})`
-          : ""
-      let newData = {
-        Samples: ds[subset].totalSamples,
-        [`Loss ${lossName}`]: loss?.toFixed(3),
-        Accuracy: accuracy?.toFixed(3),
-      } as Record<string, string | number>
-
-      if (isRegression) {
-        const result = await getPredictions(subset)
-        if (result) {
-          newData = {
-            ...newData,
-            "R²": result.rSquared.toFixed(3),
-          }
-        }
-      }
-      setData(newData)
-    }
-    evaluate()
-    return () => setData({})
-  }, [batchCount, ds, model, subset, isRegression])
-  return data
+  return (
+    <div className={`mt-4 ${className}`}>
+      <Table
+        data={{
+          Samples: ds?.[subset].totalSamples,
+          [`Loss ${lossName}`]: loss?.toFixed(3),
+          Accuracy: accuracy?.toFixed(3),
+          "R²": rSquared?.toFixed(3),
+        }}
+      />
+    </div>
+  )
 }

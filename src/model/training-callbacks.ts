@@ -1,7 +1,7 @@
 import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
 import { useGlobalStore, isDebug, getScene } from "@/store"
-import { getModelEvaluation } from "./training"
+import { getModelEvaluation } from "./evaluation"
 import {
   resolveScalarsInLogs,
   type UnresolvedLogs,

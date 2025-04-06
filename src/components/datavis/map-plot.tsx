@@ -66,7 +66,6 @@ interface Point {
   lat: number
   y: number
   yNorm: number
-  yPredNorm: number
 }
 
 const iconMapping = {
@@ -107,6 +106,8 @@ function useLayers() {
 
   const subset = useSceneStore((s) => s.subset)
 
+  const predictions = useSceneStore((s) => s.evaluation.predictions)
+
   const layers = useMemo(
     () => [
       new GeoJsonLayer({
@@ -120,13 +121,15 @@ function useLayers() {
       }),
       new ScatterplotLayer<Point>({
         id: `scatterplot-layer-${subset}`,
-        data: !mapProps && view !== "evaluation" ? [] : points ?? [],
+        data: mapProps || view === "evaluation" ? points ?? [] : [],
         stroked: false,
         filled: true,
         lineWidthMinPixels: 1,
-        getPosition: (d: Point) =>
+        getPosition: (d: Point, { index: idx }) =>
           view === "evaluation"
-            ? Float32Array.from(xyToPlot([d.yNorm, d.yPredNorm]))
+            ? Float32Array.from(
+                xyToPlot([d.yNorm, predictions?.[idx]?.normPredicted ?? 0])
+              )
             : [d.lon, d.lat],
         getRadius: () =>
           view === "evaluation" && points
@@ -144,7 +147,7 @@ function useLayers() {
         },
         updateTriggers: {
           getRadius: [view],
-          getPosition: [view],
+          getPosition: [view, predictions],
           getFillColor: [view],
         },
         transitions: {
@@ -211,7 +214,17 @@ function useLayers() {
         iconMapping,
       }),
     ],
-    [activePoint, mapProps, points, minY, baseLayer, subset, view, setSampleIdx]
+    [
+      activePoint,
+      mapProps,
+      points,
+      minY,
+      baseLayer,
+      subset,
+      view,
+      setSampleIdx,
+      predictions,
+    ]
   )
 
   return layers
@@ -375,7 +388,6 @@ function usePoints() {
   const [minY, setMinY] = useState<number>(0)
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
-  const model = useSceneStore((s) => s.model)
   const batchCount = useSceneStore((s) => s.batchCount)
   useEffect(() => {
     setPoints(null)
@@ -383,16 +395,15 @@ function usePoints() {
   }, [subset])
   useEffect(() => {
     if (!backendReady) return
-    async function getAllSamples() {
-      if (!model || !ds) return
-
+    async function getPoints() {
+      if (!ds) return
       const data = await getDbDataAsTensors(ds, subset, { returnRawX: true })
       if (!data) return
-      const { X, y, XRaw } = data
+      const { y, XRaw } = data
 
       try {
         const [points, minY] = tf.tidy(() => {
-          // assume that lon and lat first two features
+          // assume that lon and lat first two features. TODO: prop names/idxs in dsDef
           const coords = XRaw?.slice([0, 0], [-1, 2]).arraySync() as
             | number[][]
             | undefined
@@ -402,10 +413,6 @@ function usePoints() {
           const _yNorm = y.div(yMax)
           const minY = _yNorm.min().dataSync()[0]
           const yNorm = _yNorm.arraySync() as number[]
-          const yPredNorm = (model.predict(X) as tf.Tensor)
-            .flatten()
-            .div(yMax)
-            .arraySync() as number[]
 
           const projectCoords = (coords: [number, number]) =>
             ds.mapProps
@@ -420,7 +427,6 @@ function usePoints() {
               lat,
               y: yScaled[i],
               yNorm: yNorm[i],
-              yPredNorm: yPredNorm[i],
             }
           })
           return [points, minY]
@@ -433,8 +439,8 @@ function usePoints() {
         Object.values(data).forEach((t) => t?.dispose())
       }
     }
-    getAllSamples()
-  }, [subset, batchCount, ds, model, backendReady])
+    getPoints()
+  }, [subset, batchCount, ds, backendReady])
   return [points, minY] as const
 }
 

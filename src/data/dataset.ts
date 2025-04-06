@@ -27,7 +27,7 @@ export function useDataset(dsDef?: DatasetDef) {
     async function loadDs() {
       if (!dsDef) return
       const ds = await getDsFromDef(dsDef, isPreview, shouldLoadFullDs)
-      setDs(ds)
+      setDs(ds, true)
       if (shouldLoadFullDs && ds.loaded === "full") {
         setLoadFullDs(false)
       }

@@ -71,3 +71,18 @@ type FitDatasetParams = {
 }
 
 export type TypedParams = Params & (FitParams | FitDatasetParams)
+
+// evaluation
+
+export interface Prediction {
+  actual: number
+  predicted: number
+  normPredicted: number // divided by max value of actual y
+}
+
+export interface Evaluation {
+  predictions?: Prediction[]
+  loss?: number
+  accuracy?: number
+  rSquared?: number
+}
