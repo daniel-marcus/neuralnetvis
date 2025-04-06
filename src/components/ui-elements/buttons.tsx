@@ -1,39 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
-interface MenuButtonProps {
-  href?: string
-  children: React.ReactNode
-  isActive?: boolean
-  onClick?: () => void
-  className?: string
-  variant?: "default" | "no-arrow"
-}
-
-// TODO: rename
-export const MenuButton = ({
-  href,
-  children,
-  isActive,
-  onClick,
-  className = "",
-  variant = "default",
-}: MenuButtonProps) => {
-  const Component = href ? Link : "button"
-  return (
-    <Component
-      href={href as string}
-      className={`p-4 ${
-        isActive ? "text-white" : ""
-      } hover:bg-accent-hover text-left rounded-box flex justify-start items-start ${className}`}
-      onClick={onClick}
-    >
-      {variant !== "no-arrow" && <div className="pr-2">&gt; </div>}
-      <div className="flex-1">{children}</div>
-    </Component>
-  )
-}
-
 interface ButtonProps {
   href?: string
   children: React.ReactNode
@@ -79,7 +46,7 @@ export const ExtLink = ({ href, children }: ExtLinkProps) => (
   <a
     href={href}
     rel="noopener"
-    className="text-secondary hover:text-accent"
+    className="text-secondary hover:text-accent active:text-accent"
     target="_blank"
   >
     {children}

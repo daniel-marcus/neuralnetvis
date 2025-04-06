@@ -50,7 +50,7 @@ export function SceneStoreProvider({
 }: SceneProviderProps) {
   const storeRef = useRef<SceneStore>(null)
   if (!storeRef.current) {
-    storeRef.current = createSceneStore(props)
+    storeRef.current = createSceneStore({ isActive, ...props })
   }
   useEffect(() => {
     if (!isActive) return

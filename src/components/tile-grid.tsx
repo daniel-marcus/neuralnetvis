@@ -134,7 +134,7 @@ function Tile(props: TileProps) {
     }
   })
 
-  const [localActive, setLocalActive] = useState(false)
+  const [localActive, setLocalActive] = useState(isActive)
   const inTransition = useGlobalStore((s) => s.inTileTransition)
   useEffect(() => {
     if (!isActive) setOffsetFromWrapper()

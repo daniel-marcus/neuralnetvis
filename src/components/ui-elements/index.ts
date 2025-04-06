@@ -1,6 +1,6 @@
 export { AsciiText } from "./ascii-text"
 export { Box } from "./box"
-export { MenuButton, Button, Arrow, ExtLink } from "./buttons"
+export { Button, Arrow, ExtLink } from "./buttons"
 export { Checkbox } from "./checkbox"
 export { Collapsible, CollapsibleWithTitle } from "./collapsible"
 export { DraggableList } from "./draggable-list"

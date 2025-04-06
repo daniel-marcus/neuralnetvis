@@ -11,7 +11,13 @@ import Link from "next/link"
 import { Scene } from "@/scene"
 import { SceneStoreProvider, useGlobalStore, useSceneStore } from "@/store"
 import { useModel, useTraining } from "@/model"
-import { useDsDef, useDataset, useSample, type Dataset } from "@/data"
+import {
+  useDsDef,
+  useDataset,
+  useSample,
+  type Dataset,
+  DatasetDef,
+} from "@/data"
 import { VideoControl, VideoWindow } from "./video"
 import { SampleSlider } from "./sample-slider"
 import { useInitialState } from "@/utils/initial-state"
@@ -44,7 +50,12 @@ function SceneViewerInner(props: SceneViewerProps) {
       <Scene {...props} />
       <BlurMask />
       <SceneOverlay section={section}>
-        <SceneTitle title={title} href={path} section={section} />
+        <SceneTitle
+          title={title}
+          href={path}
+          section={section}
+          ds={ds ?? dsDef}
+        />
         {section === "play" && isActive && <SceneButtons />}
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
@@ -64,9 +75,8 @@ export const SceneViewer = (props: SceneViewerProps) => {
   )
 }
 
-const DsDescription = () => {
+const DsDescription = ({ ds }: { ds?: Dataset | DatasetDef }) => {
   const view = useSceneStore((s) => s.view)
-  const ds = useSceneStore((s) => s.ds)
   if (!ds) return null
   return (
     <div
@@ -89,7 +99,7 @@ type SceneOverlayProps = {
 
 const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   const isActive = useSceneStore((s) => s.isActive)
-  const [localActive, setLocalActive] = useState(false)
+  const [localActive, setLocalActive] = useState(isActive)
   useEffect(() => {
     if (!isActive) return
     if (section === "learn") window.scrollTo({ top: 0, behavior: "smooth" })
@@ -144,6 +154,7 @@ interface SceneTitleProps {
   href: string
   section?: string
   isActive?: boolean
+  ds?: Dataset | DatasetDef
 }
 
 function SceneTitle({ section, ...props }: SceneTitleProps) {
@@ -176,7 +187,7 @@ function LessonTitle({ title, href, isActive }: SceneTitleProps) {
   )
 }
 
-function DsTitle({ title, href }: SceneTitleProps) {
+function DsTitle({ title, href, ds }: SceneTitleProps) {
   const isActive = useSceneStore((s) => s.isActive)
   const [showDescription, setShowDescription] = useState(true)
   const toggleDescription = () => setShowDescription((s) => !s)
@@ -195,7 +206,7 @@ function DsTitle({ title, href }: SceneTitleProps) {
       >
         <AsciiText className={"text-logo mb-[-2em]"}>{title}</AsciiText>
       </Comp>
-      {isActive && showDescription && <DsDescription />}
+      {isActive && showDescription && <DsDescription ds={ds} />}
     </>
   )
 }
