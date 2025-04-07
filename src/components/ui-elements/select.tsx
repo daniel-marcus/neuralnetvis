@@ -15,6 +15,7 @@ interface SelectProps {
   value?: string | number
   className?: string
   noArrow?: boolean
+  label?: string
 }
 
 export const Select = ({
@@ -24,6 +25,7 @@ export const Select = ({
   value,
   className = "",
   noArrow,
+  label,
 }: SelectProps) => {
   return (
     <div className="relative">
@@ -34,6 +36,7 @@ export const Select = ({
         onChange={(e) => {
           if (onChange) onChange(e.target.value, e)
         }}
+        aria-label={label}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>

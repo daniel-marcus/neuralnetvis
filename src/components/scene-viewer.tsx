@@ -244,6 +244,7 @@ function ViewSelect() {
       options={views}
       value={view}
       onChange={(val) => setView(val as View)}
+      label="view"
     />
   )
 }
@@ -263,6 +264,7 @@ function ViewSubsetSelect() {
       value={subset}
       onChange={(val: string) => setSubset(val as "train" | "test")}
       className="pointer-events-auto"
+      label="subset"
     />
   )
 }
