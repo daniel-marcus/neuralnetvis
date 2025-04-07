@@ -15,7 +15,8 @@
     "lint": "next lint",
     "test": "vitest",
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
-    "screenshot": "node --import @swc-node/register/esm-register screenshot.ts"
+    "screenshot": "node --import @swc-node/register/esm-register screenshot.ts",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@deck.gl/core": "^9.1.8",
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@next/bundle-analyzer": "^15.2.4",
     "@react-spring/types": "^9.7.5",
     "@swc-node/register": "^1.10.10",
     "@tailwindcss/postcss": "^4.1.3",
