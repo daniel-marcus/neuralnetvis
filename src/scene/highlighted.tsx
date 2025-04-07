@@ -10,7 +10,7 @@ interface HighlightedProps {
   thick?: boolean
 }
 
-const COLOR = "rgb(140, 146, 164)"
+const COLOR = "rgb(150, 156, 171)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<Mesh>(null)

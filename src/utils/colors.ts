@@ -27,7 +27,7 @@ const B_COLORS = Array.from({ length: 256 }, (_, i) =>
 )
 const CHANNEL_COLORS = [R_COLORS, G_COLORS, B_COLORS]
 
-const ZERO_BASE = [28, 29, 33] // color-gray / 5
+const ZERO_BASE = [25, 26, 29] //  --color-gray-text / 6
 export const POS_BASE = [255, 20, 100]
 export const NEG_BASE = POS_BASE.toReversed()
 

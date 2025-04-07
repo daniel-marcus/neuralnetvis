@@ -164,7 +164,7 @@ function useLayers() {
           [xyToPlot([0, 0]), xyToPlot([0, 1])],
         ],
         getPath: (d) => d,
-        getColor: [140, 146, 164],
+        getColor: [150, 156, 171],
         getWidth: 0.25,
       }),
       new PathLayer({
@@ -197,7 +197,7 @@ function useLayers() {
         getPosition: (d) => d.pos,
         getPixelOffset: (d) => d.offset,
         getAngle: (d) => d.angle ?? 0,
-        getColor: [140, 146, 164],
+        getColor: [150, 156, 171],
         fontFamily: "Menlo-Regular, Menlo",
         getSize: 16,
       }),
@@ -208,7 +208,7 @@ function useLayers() {
         getPosition: (d: Point) => [d.lon, d.lat],
         getIcon: () => "marker",
         getSize: 40,
-        getColor: [140, 146, 164], // text color
+        getColor: [150, 156, 171], // text color
         opacity: 0.5,
         iconAtlas: "/images/icon-atlas.png",
         iconMapping,
