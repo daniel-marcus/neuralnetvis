@@ -67,6 +67,14 @@ export function useHasBlur() {
 
 export function BlurMask() {
   const hasBlur = useHasBlur()
+  useEffect(() => {
+    if (!hasBlur) return
+    const themeColorTag = document.querySelector("meta[name=theme-color]")
+    const defaultThemeColor = themeColorTag?.getAttribute("content")
+    if (!themeColorTag || !defaultThemeColor) return
+    themeColorTag.setAttribute("content", "#000000")
+    return () => themeColorTag?.setAttribute("content", defaultThemeColor)
+  }, [hasBlur])
   return (
     <div
       className={`fixed top-0 left-0 w-full h-full ${

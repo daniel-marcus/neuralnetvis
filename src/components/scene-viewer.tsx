@@ -48,7 +48,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <Scene {...props} />
-      <BlurMask />
+      {isActive && <BlurMask />}
       <SceneOverlay section={section}>
         <SceneTitle
           title={title}

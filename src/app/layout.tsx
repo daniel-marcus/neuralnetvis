@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { App } from "@/components/app"
 import { metadata } from "./metadata"
+import manifest from "./manifest.json"
 import "./globals.css"
 
 export { metadata }
@@ -16,6 +17,11 @@ export default function Layout({ children }: LayoutProps) {
           content="width=device-width, initial-scale=1.0" // , maximum-scale=1.0, user-scalable=no
         />
         <meta name="apple-mobile-web-app-title" content={`${metadata.title}`} />
+        <meta
+          name="theme-color"
+          content={manifest.theme_color}
+          id="theme-color"
+        />
       </head>
       <body className={`antialiased`}>
         <Suspense>
