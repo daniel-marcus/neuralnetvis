@@ -69,7 +69,7 @@ export function BlurMask() {
   const hasBlur = useHasBlur()
   return (
     <div
-      className={`absolute top-0 left-0 w-full h-full ${
+      className={`fixed top-0 left-0 w-full h-full ${
         hasBlur
           ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
           : "pointer-events-none"
