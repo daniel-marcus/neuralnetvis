@@ -9,6 +9,9 @@ export const ProgressBar = memo(function ProgressBar() {
   const length = Math.ceil(wrapperWidth / pxPerChar)
   const isSpinner = percent === -1
   const isHidden = percent === null
+
+  const checkedLength = Math.ceil((percent ?? 0) * length)
+  const uncheckedLength = length - checkedLength
   return (
     <div
       ref={wrapperRef}
@@ -25,14 +28,10 @@ export const ProgressBar = memo(function ProgressBar() {
         █
       </span>
       <div>
-        {Array.from({ length }).map((_, i) => {
-          const checked = (percent ?? 0) >= i / (length - 1)
-          return (
-            <span key={i} className={checked ? "text-marker" : ""}>
-              {checked ? "█" : "░"}
-            </span>
-          )
-        })}
+        {checkedLength > 0 && (
+          <span className="text-marker">{"█".repeat(checkedLength)}</span>
+        )}
+        {uncheckedLength > 0 && <span>{"░".repeat(uncheckedLength)}</span>}
       </div>
     </div>
   )
