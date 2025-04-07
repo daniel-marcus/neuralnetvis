@@ -122,7 +122,7 @@ const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
       className={`absolute top-0 left-0 h-full w-full max-h-screen pointer-events-none ${
         isActive || (!isActive && localActive)
           ? `p-main pt-[var(--header-height)]! overflow-x-clip overflow-y-scroll ${
-              canScroll ? "pointer-events-auto" : ""
+              canScroll ? "pointer-events-auto!" : ""
             }`
           : "p-4"
       } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
