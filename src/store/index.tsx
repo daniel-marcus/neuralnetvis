@@ -94,7 +94,6 @@ export type GlobalStoreType = TabsSlice &
     handLandmarker?: HandLandmarker
     portalRef: React.RefObject<HTMLDivElement | null>
     scrollPos: number // used to restore scroll position when switching from scene back to main
-    inTileTransition: boolean
   }
 
 export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
@@ -112,7 +111,6 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   },
   portalRef: createRef<HTMLDivElement>(),
   scrollPos: 0,
-  inTileTransition: false,
 }))
 
 //
@@ -123,8 +121,6 @@ export const setStatus: StatusSlice["status"]["update"] = (...args) =>
   useGlobalStore.getState().status.update(...args)
 export const clearStatus: StatusSlice["status"]["clear"] = (id) =>
   useGlobalStore.getState().status.clear(id)
-export const setInTransition = (val: boolean) =>
-  useGlobalStore.setState({ inTileTransition: val })
 
 export const getScene = () => useGlobalStore.getState().scene
 

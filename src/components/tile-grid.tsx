@@ -11,7 +11,7 @@ import { datasets } from "@/data/datasets"
 import { useDrag } from "@use-gesture/react"
 import { lessonPreviews } from "@/contents"
 import { usePathname, useRouter } from "next/navigation"
-import { setInTransition, useGlobalStore } from "@/store"
+import { useGlobalStore } from "@/store"
 import { SceneViewer } from "./scene-viewer"
 import { InitialState } from "@/utils/initial-state"
 import { Footer } from "./footer"
@@ -135,7 +135,7 @@ function Tile(props: TileProps) {
   })
 
   const [localActive, setLocalActive] = useState(isActive)
-  const inTransition = useGlobalStore((s) => s.inTileTransition)
+  const [inTransition, setInTransition] = useState(false)
   useEffect(() => {
     if (!isActive) setOffsetFromWrapper()
     setLocalActive(!!isActive)
