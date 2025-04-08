@@ -6,6 +6,7 @@ import { useSceneStore } from "@/store"
 import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
 import type { ThreeElement } from "@react-three/fiber"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
+import { round } from "@/data/utils"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 // https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
@@ -59,11 +60,6 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
       )}
     </group>
   )
-}
-
-export function round(val: number | undefined, dec = 1) {
-  if (typeof val === "undefined") return
-  return Math.round(val * 10 ** dec) / 10 ** dec
 }
 
 interface NeuronLabelProps {

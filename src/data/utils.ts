@@ -102,3 +102,8 @@ export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {
     return result.dataSync()[0]
   })
 }
+
+export function round(val: number | undefined, dec = 1) {
+  if (typeof val === "undefined") return
+  return Math.round(val * 10 ** dec) / 10 ** dec
+}
