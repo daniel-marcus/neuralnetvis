@@ -32,7 +32,6 @@ export interface TileDef {
 const tiles: TileDef[] = [
   ...lessonPreviews.map((l) => ({
     ...l,
-    // isFeatured: true,
     section: "learn" as const,
     tags: ["lesson"],
     shouldLoadFullDs: true,
@@ -73,7 +72,7 @@ export const TileGrid = () => {
           className={hasActive ? "hidden pointer-events-none" : ""}
         />
         <div
-          className={`flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)]`}
+          className={`flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)] grid-flow-dense`}
         >
           {tiles
             .filter(({ disabled }) => !disabled || isDebug)
