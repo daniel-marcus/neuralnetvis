@@ -1,6 +1,0 @@
-export { App } from "./app"
-export { Footer } from "./footer"
-export { Header } from "./header"
-export { LessonGradient } from "./lesson-gradient"
-export { StatusBar } from "./status-bar"
-export { TileGrid } from "./tile-grid"

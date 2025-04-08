@@ -42,7 +42,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
       {children}
     </div>
   )
-  return isActive && localActive && section === "learn"
+  return isActive && localActive && section === "learn" && portalRef.current
     ? createPortal(comp, portalRef.current!)
     : comp
 }

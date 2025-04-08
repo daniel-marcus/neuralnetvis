@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation"
 import { useTfBackend } from "@/model/tf-backend"
 import { useDebugCommands } from "@/utils/debug"
 import { useGlobalStore } from "@/store"
-import { Header, LessonGradient, TileGrid, StatusBar } from "@/components"
+import { Header } from "./header"
+import { TileGrid } from "./tile-grid"
+import { StatusBar } from "./status-bar"
 
 export const App = ({ children }: { children?: ReactNode }) => {
   useTfBackend()
@@ -17,7 +19,6 @@ export const App = ({ children }: { children?: ReactNode }) => {
       <Portal />
       <TileGrid />
       {children}
-      <LessonGradient />
       <StatusBar />
     </>
   )
