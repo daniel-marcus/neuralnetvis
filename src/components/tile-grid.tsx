@@ -1,23 +1,18 @@
 "use client"
 
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react"
-import { datasets } from "@/data/datasets"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useDrag } from "@use-gesture/react"
+import { datasets } from "@/data/datasets"
 import { lessonPreviews } from "@/contents"
 import { usePathname, useRouter } from "next/navigation"
 import { useGlobalStore } from "@/store"
-import { SceneViewer } from "./scene-viewer"
-import { InitialState } from "@/utils/initial-state"
-import { Footer } from "./footer"
 import { SectionIntro } from "./section-intro"
+import { Footer } from "./footer"
+import { SceneViewer } from "@/scene-views/scene-viewer"
 import { getDsPath } from "@/data/dataset"
-import { cameraSvg } from "./video"
+import { cameraSvg } from "@/scene-views/video"
+import type { ReactNode, CSSProperties } from "react"
+import type { InitialState } from "@/utils/initial-state"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -68,7 +63,7 @@ export const TileGrid = () => {
           "--tile-width": "320px",
           "--tile-height": "420px",
           "--gap": "2rem",
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <div
@@ -155,7 +150,7 @@ function Tile(props: TileProps) {
           "--offset-x": `${offset.x}px`,
           "--offset-y": `${offset.y}px`,
           "--tile-width": isFeatured ? "calc(640px+var(--gap))" : undefined,
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <div

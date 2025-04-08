@@ -5,7 +5,7 @@ import { getDbDataAsTensors } from "@/data/dataset"
 import { getHighlightColor } from "@/utils/colors"
 import { setBackend } from "@/model/tf-backend"
 import { isTouch } from "@/utils/screen"
-import { Evaluation } from "../evaluation"
+import { Evaluation } from "./evaluation"
 
 export const ConfusionMatrix = () => {
   const labels = useSceneStore((s) => s.ds?.outputLabels ?? [])

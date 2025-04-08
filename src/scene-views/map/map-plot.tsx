@@ -21,8 +21,8 @@ import {
   OrthographicViewState,
   WebMercatorViewport,
 } from "@deck.gl/core"
-import { Table } from "../ui-elements"
-import { round } from "@/scene/label"
+import { Table } from "../../components/ui-elements"
+import { round } from "@/scene-views/3d-model/label"
 
 const PLOT_WIDTH = 300
 const PLOT_HEIGHT = PLOT_WIDTH

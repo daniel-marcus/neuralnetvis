@@ -8,10 +8,10 @@ import {
   useGlobalStore,
 } from "@/store"
 import { type InitialState } from "@/utils/initial-state"
-import { LockButton } from "@/scene/lock"
+import { LockButton } from "@/scene-views/3d-model/lock"
 import { Block, Details, Head } from "@/contents/elements"
 import { trainOnBatch } from "@/model/training"
-import { interpolate } from "@/scene/utils"
+import { interpolate } from "@/scene-views/3d-model/utils"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
 import { defaultVisConfig } from "@/store/vis"

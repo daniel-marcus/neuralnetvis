@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import throttle from "lodash.throttle"
 import { useInView } from "@/utils/screen"
 import type { ScrollBlockProps } from "./types"
-import { interpolateCamera } from "@/scene/utils"
+import { interpolateCamera } from "@/scene-views/3d-model/utils"
 
 export function Block(props: ScrollBlockProps) {
   const { children, className, ...scrollProps } = props

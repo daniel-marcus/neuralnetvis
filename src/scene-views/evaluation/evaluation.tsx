@@ -1,9 +1,9 @@
-import { getModelEvaluation, getPredictions } from "@/model/evaluation"
-import { useSceneStore } from "@/store"
 import { useEffect } from "react"
-import { Table } from "./ui-elements"
+import { useSceneStore } from "@/store"
+import { getModelEvaluation, getPredictions } from "@/model/evaluation"
 import { isScreen } from "@/utils/screen"
-import { ConfusionMatrix } from "./datavis/confusion-matrix"
+import { Table } from "@/components/ui-elements"
+import { ConfusionMatrix } from "./confusion-matrix"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)

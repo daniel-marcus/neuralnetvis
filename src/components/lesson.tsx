@@ -1,9 +1,9 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-import { useLock } from "@/scene/lock"
-import { Ctas } from "@/contents/elements"
 import { cloneElement, useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
+import { useLock } from "@/scene-views/3d-model/lock"
+import { Ctas } from "@/contents/elements"
 import { useGlobalStore } from "@/store"
 import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
 

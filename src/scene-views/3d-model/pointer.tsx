@@ -1,5 +1,9 @@
 import { useSceneStore } from "@/store"
-import { useAnimatedPosition, getWorldPos, type Pos } from "@/scene/utils"
+import {
+  useAnimatedPosition,
+  getWorldPos,
+  type Pos,
+} from "@/scene-views/3d-model/utils"
 import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
 import { LABEL_COLOR } from "./label"

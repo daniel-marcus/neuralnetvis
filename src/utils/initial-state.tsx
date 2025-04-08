@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { SceneState, useSceneStore } from "@/store"
-import { moveCameraTo, type Pos } from "@/scene/utils"
+import { moveCameraTo, type Pos } from "@/scene-views/3d-model/utils"
 import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { canUseLazyLoading } from "@/model/training"
-import { LogsPlot } from "@/components/datavis/logs-plot"
+import { LogsPlot } from "@/components/ui-elements/logs-plot"
 
 const { Box, Slider, InputRow, InputRowsWrapper, Checkbox } = Components
 const { Collapsible, CollapsibleWithTitle, Arrow, Button } = Components

@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHandPose } from "@/data"
-import { Button } from "./ui-elements"
+import { Button } from "@/components/ui-elements"
 import { useCanvasUpdate } from "@/data/hand-pose"
 
 export function VideoWindow() {

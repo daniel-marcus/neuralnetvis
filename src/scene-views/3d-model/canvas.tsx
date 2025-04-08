@@ -12,12 +12,12 @@ import { useIsScreen, useIsTouchDevice } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 import { getTileDuration } from "@/components/tile-grid"
 
-interface SceneProps {
+interface CanvasProps {
   isActive: boolean
   dsKey?: string
 }
 
-export const Scene = (props: SceneProps) => {
+export const ThreeCanvas = (props: CanvasProps) => {
   const { isActive } = props
   const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isMapView = useSceneStore((s) => s.view === "map")
@@ -32,12 +32,12 @@ export const Scene = (props: SceneProps) => {
         isMapView ? "opacity-0" : ""
       } transition-opacity duration-300`}
     >
-      <SceneInner {...props} />
+      <CanvasInner {...props} />
     </Canvas>
   )
 }
 
-export const SceneInner = ({ isActive }: SceneProps) => {
+export const CanvasInner = ({ isActive }: CanvasProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const camera = useThree((s) => s.camera)
   const isScreenSm = useIsScreen("sm")

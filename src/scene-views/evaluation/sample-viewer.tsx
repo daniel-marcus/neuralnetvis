@@ -4,7 +4,7 @@ import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useCurrScene } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
-import { useHasBlur } from "./status-bar"
+import { useHasBlur } from "@/scene-views/blur-mask"
 
 export function SampleViewer() {
   const idxs = useCurrScene((s) => s.sampleViewerIdxs)
