@@ -5,7 +5,7 @@ import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData } from "@/data/dataset"
-import { SampleRaw } from "./types"
+import type { SampleRaw } from "./types"
 
 const HP_TRAIN_CONFIG = {
   batchSize: 4,
