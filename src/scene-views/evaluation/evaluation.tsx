@@ -80,12 +80,18 @@ export function Evaluation({ className = "" }) {
       ? `(${LOSS_DICT[_lossName]})`
       : ""
 
+  const rmse =
+    _lossName === "meanSquaredError" && typeof loss === "number"
+      ? Math.sqrt(loss)
+      : undefined
+
   return (
     <div className={`mt-4 ${className}`}>
       <Table
         data={{
           Samples: ds?.[subset].totalSamples,
           [`Loss ${lossName}`]: loss?.toFixed(3),
+          [`Loss (RMSE)`]: rmse?.toFixed(3),
           Accuracy: accuracy?.toFixed(3),
           "R²": rSquared?.toFixed(3),
         }}
