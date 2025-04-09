@@ -35,7 +35,9 @@ export const DraggableList = ({
 
   const bind = useDrag(
     ({ args: [originalIdx], active, movement: [, y], event, tap }) => {
-      if (!tap) event.stopPropagation()
+      if (!tap && event.type === "pointermove") {
+        event.stopPropagation() // don't drag parent (e.g. menu)
+      }
       const currIdx = order.indexOf(originalIdx)
       const dragY = currIdx * rowHeight + y
       const currRow = clamp(
