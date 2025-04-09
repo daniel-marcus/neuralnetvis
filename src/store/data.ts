@@ -38,7 +38,9 @@ export const createDataSlice: StateCreator<
 
   ds: undefined,
   setDs: (ds, setOnlyIfNotLoadedFull) => {
-    if (get().ds?.loaded === "full" && setOnlyIfNotLoadedFull) return
+    const oldDs = get().ds
+    const sameKey = oldDs?.key === ds?.key
+    if (setOnlyIfNotLoadedFull && oldDs?.loaded === "full" && sameKey) return
     set(({ sampleIdx }) => ({
       ds,
       sample: undefined,
