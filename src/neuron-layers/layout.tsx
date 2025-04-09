@@ -45,17 +45,14 @@ export function getMeshParams(
   layerPos: LayerPos,
   units: number
 ): MeshParams {
+  const name = layer.getClassName()
   if (["input", "output"].includes(layerPos)) {
     if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
-  } else if (
-    layer.getClassName() === "Conv2D" ||
-    layer.getClassName() === "MaxPooling2D"
-  ) {
+  } else if (["Conv2D", "MaxPooling2D", "BatchNormalization"].includes(name)) {
+    // BN: only if prevLayer has color channels
     return meshMap.boxTiny
-  } else if (layer.getClassName() === "HandPose") {
-    return meshMap.boxSmall
   } else {
     if (units <= 128) return meshMap.sphere
     else return meshMap.sphereSmall

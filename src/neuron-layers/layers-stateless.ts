@@ -22,7 +22,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         const layerInputNids = getInputNeurons(tfLayer, prevLayer)
 
         const units = getUnits(tfLayer)
-        const meshParams = getMeshParams(tfLayer, layerPos, units)
+        const meshParams =
+          tfLayer.getClassName() === "BatchNormalization" &&
+          prevLayer?.hasColorChannels === false
+            ? prevLayer.meshParams
+            : getMeshParams(tfLayer, layerPos, units)
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
         const outputShape = tfLayer.outputShape as number[]
 
@@ -137,8 +141,9 @@ function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
 
 function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
   if (!prev) return []
-  if (l.getClassName() !== "Conv2D" && l.getClassName() !== "MaxPooling2D") {
-    // fully connected layer / Dense
+  const name = l.getClassName()
+  if (name === "Dense") {
+    // fully connected layer / Dense: each neuron is connected to all neurons in the previous layer
     const shape = prev.tfLayer.outputShape as number[]
     const prevUnits = getUnits(prev.tfLayer)
     return Array.from({ length: getUnits(l) }).map(() =>
@@ -147,47 +152,57 @@ function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
         return getNid(prev.index, index3d)
       })
     )
-  }
+  } else if (name === "BatchNormalization") {
+    // each neuron is connected to 1 neuron in the previous layer
+    const shape = prev.tfLayer.outputShape as number[]
+    return Array.from({ length: getUnits(l) }).map((_, i) => {
+      const index3d = getNeuronIndex3d(i, shape)
+      return [getNid(prev.index, index3d)]
+    })
+  } else if (name === "Conv2D" || name === "MaxPooling2D") {
+    // Conv2D or MaxPooling2D
+    // get the receptive field
+    const [filterHeight, filterWidth] =
+      (l.getConfig().kernelSize as number[]) ??
+      (l.getConfig().poolSize as number[]) ??
+      ([] as number[])
+    const [strideHeight, strideWidth] = (l.getConfig().strides as number[]) ?? [
+      1, 1,
+    ]
+    const filterSize = filterHeight * filterWidth
 
-  // Conv2D or MaxPooling2D
-  // get the receptive field
-  const [filterHeight, filterWidth] =
-    (l.getConfig().kernelSize as number[]) ??
-    (l.getConfig().poolSize as number[]) ??
-    ([] as number[])
-  const [strideHeight, strideWidth] = (l.getConfig().strides as number[]) ?? [
-    1, 1,
-  ]
-  const filterSize = filterHeight * filterWidth
+    const outputShape = l.outputShape as number[]
+    const prevOutputShape = prev.tfLayer.outputShape as number[]
+    const depth = prevOutputShape[3]
 
-  const outputShape = l.outputShape as number[]
-  const prevOutputShape = prev.tfLayer.outputShape as number[]
-  const depth = prevOutputShape[3]
+    const units = getUnits(l)
 
-  const units = getUnits(l)
-
-  const inputNids: Nid[][] = []
-  // TODO: padding?
-  for (let j = 0; j < units; j++) {
-    const unitInputNids: Nid[] = []
-    for (let k = 0; k < filterSize * depth; k++) {
-      const [thisY, thisX, thisDepth] = getNeuronIndex3d(j, outputShape)
-      const depthIndex = k % depth
-      if (l.getClassName() === "MaxPooling2D" && depthIndex !== thisDepth)
-        continue
-      const widthIndex =
-        thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
-      const heightIndex =
-        thisY * strideHeight + Math.floor(k / (depth * filterWidth))
-      const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
-      const inputNid = getNid(prev.index, index3d)
-      if (!inputNid) {
-        console.warn("no inputNid", { index3d })
-        continue
+    const inputNids: Nid[][] = []
+    // TODO: padding?
+    for (let j = 0; j < units; j++) {
+      const unitInputNids: Nid[] = []
+      for (let k = 0; k < filterSize * depth; k++) {
+        const [thisY, thisX, thisDepth] = getNeuronIndex3d(j, outputShape)
+        const depthIndex = k % depth
+        if (l.getClassName() === "MaxPooling2D" && depthIndex !== thisDepth)
+          continue
+        const widthIndex =
+          thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
+        const heightIndex =
+          thisY * strideHeight + Math.floor(k / (depth * filterWidth))
+        const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
+        const inputNid = getNid(prev.index, index3d)
+        if (!inputNid) {
+          console.warn("no inputNid", { index3d })
+          continue
+        }
+        unitInputNids.push(inputNid)
       }
-      unitInputNids.push(inputNid)
+      inputNids.push(unitInputNids)
     }
-    inputNids.push(unitInputNids)
+    return inputNids
+  } else {
+    console.log("Unhandled layer type", name)
+    return []
   }
-  return inputNids
 }

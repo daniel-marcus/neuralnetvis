@@ -20,7 +20,7 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
       setSample(rawSample)
     }
     loadSample()
-  }, [ds, sampleIdx, setSample, backendReady, subset])
+  }, [sampleIdx, ds, setSample, backendReady, subset])
 
   useEffect(() => {
     return () => {

@@ -94,9 +94,13 @@ function useModelDispose(model?: tf.LayersModel) {
     // dispose model on unmount
     if (!model) return
     return () => {
-      clearStatus(MODEL_STATUS_ID)
-      manuallyDisposeUnusedTensors(model)
-      model.dispose()
+      try {
+        clearStatus(MODEL_STATUS_ID)
+        model.dispose()
+        manuallyDisposeUnusedTensors(model)
+      } catch (e) {
+        console.warn(e)
+      }
     }
   }, [model])
 }
@@ -106,7 +110,13 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
   const regVars = Object.values(tf.engine().state.registeredVariables)
   for (const tw of model.trainableWeights) {
     const size = [...(tw.shape as number[])].reduce((a, b) => a * b)
-    const olds = regVars.filter((v) => v.size === size && v.trainable === false)
+    const olds = regVars.filter(
+      (v) =>
+        v.size === size &&
+        v.trainable === false &&
+        !v.name.match(/(BatchNormalization|batch_normalization)/)
+    )
+    // console.log({ olds })
     olds.forEach((v) => tf.dispose(v))
   }
 }
@@ -170,7 +180,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
           : dsInputShape
       model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
     } else if (l.className === "Dense") {
-      const configNew = isOutput // use config from ds for output layer
+      const newConfig = isOutput // use config from ds for output layer
         ? {
             ...config,
             units: ds.outputLabels.length,
@@ -178,7 +188,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
             name: `nnv_Output`,
           }
         : config
-      addDenseWithFlattenIfNeeded(model, configNew as LayerConfigMap["Dense"])
+      addDenseWithFlattenIfNeeded(model, newConfig as LayerConfigMap["Dense"])
     } else if (l.className === "Conv2D") {
       if (!isMultiDim) continue
       model.add(tf.layers.conv2d(config as LayerConfigMap["Conv2D"]))
@@ -192,6 +202,16 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
       )
     } else if (l.className === "Dropout") {
       model.add(tf.layers.dropout(config as LayerConfigMap["Dropout"]))
+    } else if (l.className === "BatchNormalization") {
+      const { axis, ...rest } = config as LayerConfigMap["BatchNormalization"]
+      console.log(
+        `BatchNormalization: Provided axis (${axis} ignored to avoid shape mismatch`
+      )
+      model.add(
+        tf.layers.batchNormalization(
+          rest as LayerConfigMap["BatchNormalization"]
+        )
+      )
     } else if (l.className === "InputLayer") {
       continue // InputLayer is already added w/ config from ds
     } else {

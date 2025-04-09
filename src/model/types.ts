@@ -7,16 +7,18 @@ import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional
 import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
 import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
+import { BatchNormalizationLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/normalization"
 
 // Layers
 
 export type LayerConfigMap = {
+  InputLayer: InputLayerArgs
   Dense: DenseLayerArgs
+  Flatten: FlattenLayerArgs
   Conv2D: ConvLayerArgs
   MaxPooling2D: Pooling2DLayerArgs
-  Flatten: FlattenLayerArgs
   Dropout: DropoutLayerArgs
-  InputLayer: InputLayerArgs
+  BatchNormalization: BatchNormalizationLayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {

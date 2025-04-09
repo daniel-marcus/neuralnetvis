@@ -14,7 +14,8 @@ function getInputComp<T extends keyof LayerConfigMap>(
   isLast: boolean
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
-  if (layerConfig.className === "InputLayer") {
+  const { className } = layerConfig
+  if (className === "InputLayer") {
     const config = layerConfig.config as LayerConfigMap["InputLayer"]
     const [, ...dims] = config.batchInputShape as number[]
     return <div className="text-right">{dims.join(" x ")}</div>
@@ -31,7 +32,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
         onChange={(units) => updateLayerConfig({ ...config, units })}
       />
     )
-  } else if (layerConfig.className === "Conv2D") {
+  } else if (className === "Conv2D") {
     const config = layerConfig.config as LayerConfigMap["Conv2D"]
     return (
       <Slider
@@ -43,11 +44,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
         onChange={(filters) => updateLayerConfig({ ...config, filters })}
       />
     )
-  } else if (layerConfig.className === "MaxPooling2D") {
-    return null
-  } else if (layerConfig.className === "Flatten") {
-    return null
-  } else if (layerConfig.className === "Dropout") {
+  } else if (className === "Dropout") {
     const config = layerConfig.config as LayerConfigMap["Dropout"]
     return (
       <Slider
@@ -59,6 +56,10 @@ function getInputComp<T extends keyof LayerConfigMap>(
         onChange={(rate) => updateLayerConfig({ ...config, rate })}
       />
     )
+  } else if (
+    ["MaxPooling2D", "Flatten", "BatchNormalization"].includes(className)
+  ) {
+    return null
   } else {
     console.log("Unknown layer type", layerConfig)
   }
@@ -67,11 +68,12 @@ function getInputComp<T extends keyof LayerConfigMap>(
 
 const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
   Dense: { units: 64, activation: "relu" },
-  Conv2D: { filters: 4, kernelSize: 3, activation: "relu" },
+  Conv2D: { filters: 4, kernelSize: 3, activation: "relu", padding: "same" },
   MaxPooling2D: { poolSize: 2 },
   Flatten: {},
   Dropout: { rate: 0.2 },
   InputLayer: {}, // will be set from ds shape
+  BatchNormalization: {},
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
@@ -119,6 +121,7 @@ export const LayerConfigControl = () => {
     { value: "Conv2D", disabled: !hasMutliDimInput },
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
+    { value: "BatchNormalization" },
   ]
   const toggleLayerVisibility = useCurrScene((s) => s.vis.toggleLayerVisibility)
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
@@ -154,18 +157,17 @@ export const LayerConfigControl = () => {
               layer.className === "Flatten"
             const label = (
               <div className="flex justify-between">
-                <div className="flex">
+                <div className="flex truncate">
                   <button
                     onClick={() => toggleLayerVisibility(layer.config.name!)}
                     className="pr-3 active:text-white"
                   >
                     {isInvisible ? "⍉" : "⌾"}
                   </button>
-                  <div>
+                  <div className="truncate">
                     {layer.className
                       .replace("InputLayer", "Input")
-                      .replace("MaxPooling2D", "MaxPool")
-                      .replace("Flatten", "Flatten")}
+                      .replace("MaxPooling2D", "MaxPool")}
                   </div>
                 </div>
                 {!mustBe && (

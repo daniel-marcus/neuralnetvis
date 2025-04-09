@@ -4,6 +4,7 @@ import type { Evaluation, LayerActivations, LayerConfigArray } from "@/model"
 import { setVisConfig } from "."
 import { Neuron, Nid } from "@/neuron-layers"
 import { ActivationStats } from "@/model/activation-stats"
+import { DataSlice } from "./data"
 
 export const defaultLayerConfigs: LayerConfigArray = [
   { className: "InputLayer", config: { batchInputShape: [null, 28, 28, 1] } },
@@ -36,13 +37,23 @@ export interface ModelSlice {
   resetEvaluation: () => void
 }
 
-export const createModelSlice: StateCreator<ModelSlice> = (set) => ({
+export const createModelSlice: StateCreator<
+  ModelSlice & DataSlice,
+  [],
+  [],
+  ModelSlice
+> = (set) => ({
   backendReady: false,
 
   model: undefined,
   skipModelCreate: false,
   _setModel: (model) => {
-    set({ model, activationStats: undefined, layerActivations: [] })
+    set({
+      model,
+      // sample: undefined,
+      activationStats: undefined,
+      layerActivations: [],
+    })
   },
   layerConfigs: defaultLayerConfigs,
   setLayerConfigs: (layerConfigs) =>
