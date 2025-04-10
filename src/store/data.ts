@@ -2,11 +2,11 @@ import { StateCreator } from "zustand"
 import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"
 import { preprocessSample } from "@/data/sample"
+import { SetterFunc } from "."
 
 export type Subset = "train" | "test"
 
 type SampleIdx = number | undefined
-type SetterFunc<T> = (oldVal: T) => T
 
 export interface DataSlice {
   shouldLoadFullDs?: boolean

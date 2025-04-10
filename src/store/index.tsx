@@ -11,6 +11,8 @@ import { createVisSlice, VisSlice } from "./vis"
 import { createVideoSlice, VideoSlice } from "./video"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
+export type SetterFunc<T> = (oldVal: T) => T
+
 export type SceneState = ViewSlice &
   DataSlice &
   VideoSlice &

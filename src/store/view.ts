@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand"
 import { DataSlice, Subset } from "./data"
+import { SetterFunc } from "."
 
 export type View = "model" | "evaluation" | "map" | "layers"
 
@@ -11,6 +12,10 @@ export interface ViewSlice {
   setSubset: (subset: Subset) => void
   sampleViewerIdxs: number[]
   setSampleViewerIdxs: (idxs: number[]) => void
+  focussedLayerIdx: number | undefined
+  setFocussedLayerIdx: (
+    arg: number | undefined | SetterFunc<number | undefined>
+  ) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -41,4 +46,9 @@ export const createViewSlice: StateCreator<
     }),
   sampleViewerIdxs: [],
   setSampleViewerIdxs: (idxs) => set({ sampleViewerIdxs: idxs }),
+  focussedLayerIdx: undefined,
+  setFocussedLayerIdx: (arg) =>
+    set(({ focussedLayerIdx }) => ({
+      focussedLayerIdx: typeof arg === "function" ? arg(focussedLayerIdx) : arg,
+    })),
 })

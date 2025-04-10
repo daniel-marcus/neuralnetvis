@@ -63,7 +63,10 @@ export const LayerInspector = () => {
 
 function useLayersFilter(layers: LayerConfigArray) {
   const setVisConfig = useSceneStore((s) => s.vis.setConfig)
-  const [currLayer, setCurrLayer] = useState(0)
+  const currLayer = useSceneStore((s) => s.focussedLayerIdx)
+  const setCurrLayer = useSceneStore((s) => s.setFocussedLayerIdx)
+
+  // const [currLayer, setCurrLayer] = useState(0)
   useEffect(() => {
     const invisibleLayers = layers
       .filter((_, i) => i !== currLayer)
@@ -73,8 +76,14 @@ function useLayersFilter(layers: LayerConfigArray) {
   }, [currLayer, layers, setVisConfig])
 
   useEffect(() => {
-    return () => setVisConfig({ invisibleLayers: [] })
-  }, [setVisConfig])
+    setCurrLayer(0)
+    const actEl = document.activeElement
+    if (actEl && actEl instanceof HTMLElement) actEl.blur()
+    return () => {
+      setVisConfig({ invisibleLayers: [] })
+      setCurrLayer(undefined)
+    }
+  }, [setVisConfig, setCurrLayer])
 
   return [currLayer, setCurrLayer] as const
 }
@@ -102,14 +111,14 @@ function useCameraPos(
 
 function useKeyboardNavigation(
   layers: LayerConfigArray,
-  setCurrLayer: React.Dispatch<React.SetStateAction<number>>
+  setCurrLayer: React.Dispatch<React.SetStateAction<number | undefined>>
 ) {
   const next = useCallback(
     (step = 1) =>
       setCurrLayer((currIdx) => {
         const getNewIdx = (i: number) =>
           (((i + step) % layers.length) + layers.length) % layers.length
-        let newIdx = getNewIdx(currIdx)
+        let newIdx = getNewIdx(currIdx ?? -1)
         while (isNotVisible(layers[newIdx])) {
           newIdx = getNewIdx(newIdx)
         }

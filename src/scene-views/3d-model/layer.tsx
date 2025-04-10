@@ -4,7 +4,6 @@ import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
-import { useOrientation } from "@/utils/screen"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
@@ -16,9 +15,9 @@ export const Layer = (props: LayerProps) => {
   const { layerPos, groups, prevLayer } = props
   const ref = useLayerPos(props)
   const invisible = useIsInvisible(props)
-  const view = useSceneStore((s) => s.view)
   const prevInvisible = useIsInvisible(prevLayer)
-  useDynamicScale(ref, invisible ? 0.0001 : 1, view === "layers")
+  const view = useSceneStore((s) => s.view)
+  useDynamicScale(ref, invisible ? 0.0001 : 1, view === "layers" ? 0 : 300)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
   const showConnections = !invisible && !!prevLayer && !prevInvisible
   if (!props.neurons.length) return null
@@ -38,24 +37,26 @@ export const Layer = (props: LayerProps) => {
 
 function useLayerPos(layer: LayerProps) {
   const { allLayers } = layer
-  const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
-  const visibleLayers = allLayers.filter(
-    (l) => l.neurons.length && !invisibleLayers.includes(l.tfLayer.name)
-  )
+  const visibleLayers = allLayers.filter((l) => l.neurons.length)
   const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
 
-  const orientation = useOrientation()
+  const focussedLayerIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const offset = visibleLayers.findIndex((l) => l.index === focussedLayerIdx)
+
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 
   const position = useMemo(() => {
-    const xShiftN = orientation === "landscape" ? xShift : xShift * 0.8
     if (visibleIdx < 0) return [0, 0, 0]
+    const x =
+      offset >= 0
+        ? ((visibleIdx - offset) * xShift) / 2
+        : visibleIdx * xShift + (visibleLayers.length - 1) * xShift * -0.5
     return [
-      visibleIdx * xShiftN + (visibleLayers.length - 1) * xShiftN * -0.5,
+      x,
       visibleIdx * yShift + (visibleLayers.length - 1) * yShift * -0.5,
       visibleIdx * zShift + (visibleLayers.length - 1) * zShift * -0.5,
     ]
-  }, [visibleIdx, visibleLayers.length, xShift, yShift, zShift, orientation])
+  }, [offset, visibleIdx, visibleLayers.length, xShift, yShift, zShift])
 
   const [ref] = useAnimatedPosition(position, 0.1)
   return ref
@@ -69,7 +70,7 @@ function useIsInvisible(layer?: LayerStateful) {
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
   scale: number = 1,
-  noTransition?: boolean
+  duration = 200
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
   const [isMounted, setIsMounted] = useState(false)
@@ -81,7 +82,7 @@ function useDynamicScale(
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({
     scale: isMounted ? scale : 1,
-    config: { duration: noTransition ? 0 : 150 },
+    config: { duration },
     onChange: ({ value }) => {
       const val = value.scale
       ref.current?.scale.set(val, val, val)

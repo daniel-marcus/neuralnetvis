@@ -18,10 +18,10 @@ import { defaultVisConfig } from "@/store/vis"
 
 export const hmlInitialState: InitialState = {
   layerConfigs: [{ className: "Dense", config: {} }], // output layer
-  cameraPos: [-3, 0, 5],
+  cameraPos: [-14, 0, -18],
   sampleIdx: 50,
   vis: {
-    neuronSpacing: 2.5,
+    neuronSpacing: 2.2,
     xShift: 13,
     invisibleLayers: ["nnv_Output"],
     showPointer: false,
