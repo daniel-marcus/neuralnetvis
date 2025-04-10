@@ -4,7 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, config } from "@react-spring/web"
 import { getThree } from "@/store"
 import type { NeuronDef } from "@/neuron-layers/types"
-import { Three } from "@/store/vis"
+import type { Three } from "@/store/vis"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   // TODO: could use spring here

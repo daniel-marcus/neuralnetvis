@@ -32,8 +32,17 @@ export const HoverConnections = () => {
   const geometry = useMemo(() => new LineSegmentsGeometry(), [])
   const resolution = useMemo(() => new Vector2(512, 512), [])
 
+  const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
+  const prevLayerName = hovered?.layer.prevLayer?.tfLayer.name
+  const prevLayerIsVisible =
+    !!prevLayerName && !invisibleLayers.includes(prevLayerName)
+
   const length = hovered?.inputNeurons?.length ?? 0
-  const show = length > 0 && length < MAX_LINES_PER_LAYER && showLines
+  const show =
+    length > 0 &&
+    length < MAX_LINES_PER_LAYER &&
+    showLines &&
+    prevLayerIsVisible
 
   useEffect(() => {
     // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx

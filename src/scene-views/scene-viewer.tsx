@@ -17,6 +17,7 @@ import { SampleSlider } from "./sample-slider"
 
 import type { TileDef } from "@/components/tile-grid"
 import { SceneButtons } from "./scene-buttons"
+import { LayerInspector } from "./layer-inspector"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -47,7 +48,10 @@ function SceneViewerInner(props: SceneViewerProps) {
         {section === "play" && isActive && <SceneButtons />}
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
-      {section === "play" && view === "model" && <SampleSlider />}
+      {view === "layers" && <LayerInspector />}
+      {section === "play" && ["model", "layers"].includes(view) && (
+        <SampleSlider />
+      )}
     </>
   )
 }
