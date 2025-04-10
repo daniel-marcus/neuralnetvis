@@ -37,19 +37,15 @@ export function scaleNormalize(
 }
 
 export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
-  // normalize between 0 and 1, no negative values
+  // normalize per channel, between -1 and 1
   return tf.tidy(() => {
     const [, height, width, channels] = tensor.shape
     const reshapedTensor = tensor.reshape([height * width, channels])
-    const min = reshapedTensor.min(0)
-    const max = reshapedTensor.max(0)
 
-    // Handle edge case where min === max
-    const range = max.sub(min)
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
-    const safeRange = range.maximum(epsilon)
+    const maxAbs = reshapedTensor.max(0).maximum(epsilon)
 
-    const normalizedTensor = reshapedTensor.sub(min).div(safeRange)
+    const normalizedTensor = reshapedTensor.div(maxAbs)
     return normalizedTensor.reshape([1, height, width, channels])
   })
 }
