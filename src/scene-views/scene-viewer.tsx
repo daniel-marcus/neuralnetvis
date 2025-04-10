@@ -25,7 +25,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const dsDef = useDsDef(dsKey)
   const ds = useDataset(dsDef)
   const model = useModel(ds)
-  useSample(ds, isActive)
+  useSample(ds)
   useTraining(model, ds)
   useInitialState(props.initialState)
   const view = useSceneStore((s) => s.view)

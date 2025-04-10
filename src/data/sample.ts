@@ -1,11 +1,10 @@
-import { useEffect, useCallback } from "react"
+import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { isDebug, useGlobalStore, useSceneStore } from "@/store"
-import { useKeyCommand } from "@/utils/key-command"
 import { getData } from "./db"
 import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
 
-export function useSample(ds?: Dataset, isActive?: boolean) {
+export function useSample(ds?: Dataset) {
   const backendReady = useGlobalStore((s) => s.backendReady)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)
@@ -27,11 +26,6 @@ export function useSample(ds?: Dataset, isActive?: boolean) {
       if (sample?.xTensor) sample.xTensor.dispose()
     }
   }, [sample])
-
-  const next = useSceneStore((s) => s.nextSample)
-  const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowLeft", prev, isActive)
-  useKeyCommand("ArrowRight", next, isActive)
 
   return sample
 }

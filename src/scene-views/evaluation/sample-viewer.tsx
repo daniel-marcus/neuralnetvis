@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useCurrScene } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useHasBlur } from "@/scene-views/blur-mask"
+import { useKeyCommand } from "@/utils/key-command"
 
 export function SampleViewer() {
   const idxs = useCurrScene((s) => s.sampleViewerIdxs)
@@ -33,6 +34,8 @@ export function SampleViewer() {
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
   const hasCam = useCurrScene((s) => !!s.ds?.camProps)
   const hasBlur = useHasBlur()
+  useKeyboardNavigation(idxs, itemsPerPage, setOffset)
+
   if (!samples.length) return null
   return (
     <div
@@ -70,6 +73,37 @@ export function SampleViewer() {
       />
     </div>
   )
+}
+
+function useKeyboardNavigation(
+  idxs: number[],
+  itemsPerPage: number,
+  setOffset: React.Dispatch<React.SetStateAction<number>>
+) {
+  const sampleIdx = useCurrScene((s) => s.sampleIdx)
+  const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
+  const nextLocal = useCallback(
+    (step = 1) =>
+      setSampleIdx((prevIdx) => {
+        const currLocalIdx = prevIdx ? idxs.indexOf(prevIdx) : -1
+        return idxs[currLocalIdx + step]
+      }),
+    [idxs, setSampleIdx]
+  )
+  const prev = useCallback(() => nextLocal(-1), [nextLocal])
+  const next = useCallback(() => nextLocal(1), [nextLocal])
+  useKeyCommand("ArrowLeft", prev, !!idxs.length)
+  useKeyCommand("ArrowRight", next, !!idxs.length)
+  useEffect(() => {
+    // update offset if sampleIdx is not in the current page
+    const localIdx = idxs.indexOf(sampleIdx ?? -1)
+    if (localIdx < 0) return
+    setOffset((currOffset) => {
+      const newOffset = Math.floor(localIdx / itemsPerPage) * itemsPerPage
+      if (currOffset !== newOffset) return newOffset
+      return currOffset
+    })
+  }, [sampleIdx, setOffset, idxs, itemsPerPage])
 }
 
 interface PaginationProps {
@@ -137,6 +171,12 @@ function SampleCanvas({
     if (hasCam) drawHandPoseSampleToCanvas(sample, inputDims, canvas)
     else drawImageSampleToCanvas(sample, inputDims, canvas)
   }, [inputDims, sample, hasCam])
+  useEffect(() => {
+    if (!isCurrent) return
+    const el = ref.current
+    el?.scrollIntoView({ behavior: "smooth" })
+    return () => el?.parentElement?.blur()
+  }, [isCurrent])
   return (
     <canvas
       className={`border-1 bg-blend-multiply ${

@@ -1,5 +1,7 @@
 import { useGlobalStore, useSceneStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
+import { useCallback } from "react"
+import { useKeyCommand } from "@/utils/key-command"
 
 export const SampleSlider = () => {
   const isActive = useSceneStore((s) => s.isActive)
@@ -13,6 +15,12 @@ export const SampleSlider = () => {
   const subset = useSceneStore((s) => s.subset)
   const totalSamples = useSceneStore((s) => s.totalSamples(subset))
   const hasStream = useSceneStore((s) => !!s.stream)
+
+  const next = useSceneStore((s) => s.nextSample)
+  const prev = useCallback(() => next(-1), [next])
+  useKeyCommand("ArrowLeft", prev, isActive)
+  useKeyCommand("ArrowRight", next, isActive)
+
   return (
     <div
       className={`absolute left-0 ${
