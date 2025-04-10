@@ -8,6 +8,7 @@ import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
 import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 import { BatchNormalizationLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/normalization"
+import { RandomRotationLayerArgs } from "./custom-layers"
 
 // Layers
 
@@ -19,6 +20,7 @@ export type LayerConfigMap = {
   MaxPooling2D: Pooling2DLayerArgs
   Dropout: DropoutLayerArgs
   BatchNormalization: BatchNormalizationLayerArgs
+  RandomRotation: RandomRotationLayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {

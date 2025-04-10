@@ -50,8 +50,7 @@ export function getMeshParams(
     if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
-  } else if (["Conv2D", "MaxPooling2D", "BatchNormalization"].includes(name)) {
-    // BN: only if prevLayer has color channels
+  } else if (["Conv2D", "MaxPooling2D"].includes(name)) {
     return meshMap.boxTiny
   } else {
     if (units <= 128) return meshMap.sphere

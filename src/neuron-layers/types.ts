@@ -12,6 +12,9 @@ export type LayerType =
   | "Dense"
   | "Flatten"
   | "MaxPooling2D"
+  | "Dropout"
+  | "BatchNormalization"
+  | "RandomRotation"
 export type LayerPos = "input" | "hidden" | "output"
 
 export interface LayerStateless {

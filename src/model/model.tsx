@@ -12,6 +12,7 @@ import type { LayerConfigArray, LayerConfigMap } from "./types"
 import { checkShapeMatch } from "@/data/utils"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
+import { RandomRotation } from "./custom-layers"
 
 export function useModel(ds?: Dataset) {
   const model = useModelCreate(ds)
@@ -212,6 +213,8 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
           rest as LayerConfigMap["BatchNormalization"]
         )
       )
+    } else if (l.className === "RandomRotation") {
+      model.add(new RandomRotation(config as LayerConfigMap["RandomRotation"]))
     } else if (l.className === "InputLayer") {
       continue // InputLayer is already added w/ config from ds
     } else {

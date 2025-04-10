@@ -28,12 +28,8 @@ export function useActivations(
         const layerActivations = getLayerActivations(model, sample.xTensor)
         const activations = layerActivations.map((layerActivation, i) => {
           const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
-          const layer = model.layers[i]
-          const normalizedFlattened = [
-            "Conv2D",
-            "MaxPooling2D",
-            "BatchNormalization",
-          ].includes(layer.getClassName())
+          const hasDepthDim = typeof layerActivation.shape[3] === "number"
+          const normalizedFlattened = hasDepthDim
             ? normalizeConv2DActivations(
                 layerActivation as tf.Tensor4D
               ).flatten()

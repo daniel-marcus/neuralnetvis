@@ -56,6 +56,20 @@ function getInputComp<T extends keyof LayerConfigMap>(
         onChange={(rate) => updateLayerConfig({ ...config, rate })}
       />
     )
+  } else if (className === "RandomRotation") {
+    const config = layerConfig.config as LayerConfigMap["RandomRotation"]
+    return (
+      <Slider
+        {...sharedSliderProps}
+        min={0}
+        max={0.5}
+        step={0.05}
+        value={config.factor ?? 0.1}
+        onChange={(factor) =>
+          updateLayerConfig({ ...layerConfig.config, factor })
+        }
+      />
+    )
   } else if (
     ["MaxPooling2D", "Flatten", "BatchNormalization"].includes(className)
   ) {
@@ -74,6 +88,7 @@ const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
   Dropout: { rate: 0.2 },
   InputLayer: {}, // will be set from ds shape
   BatchNormalization: {},
+  RandomRotation: { factor: 0.1 },
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
@@ -94,15 +109,19 @@ export const LayerConfigControl = () => {
     if (!selectRef.current) return
     const className = selectRef.current.value
     const newLayer = newDefaultLayer(className as keyof LayerConfigMap)
-    // always insert Conv2D and MaxPooling2D before Flatten
+
     const flattenIdx =
       layerConfigs.findIndex((l) => l.className === "Flatten") ||
       layerConfigs.findIndex((l) => l.className === "Dense")
     const beforeOutputIdx = Math.max(layerConfigs.length - 1, 1)
-    const newLayerConfigs =
+
+    const insertIdx =
       ["MaxPooling2D", "Conv2D"].includes(className) && flattenIdx > -1
-        ? layerConfigs.toSpliced(flattenIdx, 0, newLayer)
-        : layerConfigs.toSpliced(beforeOutputIdx, 0, newLayer)
+        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
+        : className === "RandomRotation"
+        ? 1 // insert RandomRotation after InputLayer
+        : beforeOutputIdx // default
+    const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
     setLayerConfigs(newLayerConfigs)
   }
   const handleRemove = (i: number) => {
@@ -122,6 +141,7 @@ export const LayerConfigControl = () => {
     { value: "MaxPooling2D", disabled: !hasMutliDimInput },
     { value: "Dropout" },
     { value: "BatchNormalization" },
+    { value: "RandomRotation", disabled: !hasMutliDimInput },
   ]
   const toggleLayerVisibility = useCurrScene((s) => s.vis.toggleLayerVisibility)
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
@@ -222,7 +242,7 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
     (l) => l.className === "Dense"
   )
   const lastMultiDimIdx = newLayerConfigs.findLastIndex((l) =>
-    ["Conv2D", "MaxPooling2D"].includes(l.className)
+    ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(l.className)
   )
 
   if (newOrder[0] !== 0) {
@@ -232,7 +252,9 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
     setStatus("Output layer must be the last layer")
     return false
   } else if (lastMultiDimIdx > 0 && flattenIdx < lastMultiDimIdx) {
-    setStatus("Conv2D and MaxPooling2D must come before Flatten")
+    setStatus(
+      "Conv2D, MaxPooling2D, and RandomRotation must come before Flatten"
+    )
     return false
   } else if (firstDenseIdx > 0 && flattenIdx > firstDenseIdx) {
     setStatus("Dense must come after Flatten")

@@ -15,7 +15,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
     const visibleIdxMap = getVisibleIdxMap(model)
     return (
       model.layers.reduce((acc, tfLayer, layerIndex) => {
-        const layerType = tfLayer.getClassName() as LayerType
+        const className = tfLayer.getClassName() as LayerType
         const layerPos = getLayerPos(layerIndex, model)
 
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? 0
@@ -23,18 +23,18 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         const layerInputNids = getInputNeurons(tfLayer, prevLayer)
 
         const units = getUnits(tfLayer)
-        const meshParams =
-          tfLayer.getClassName() === "BatchNormalization" &&
-          prevLayer?.hasColorChannels === false
-            ? prevLayer.meshParams
-            : getMeshParams(tfLayer, layerPos, units)
+        const meshParams = ["BatchNormalization", "RandomRotation"].includes(
+          className
+        )
+          ? prevLayer!.meshParams
+          : getMeshParams(tfLayer, layerPos, units)
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
         const outputShape = tfLayer.outputShape as number[]
 
         const layerStateless: LayerStateless = {
           index: layerIndex,
           visibleIdx,
-          layerType,
+          layerType: className,
           layerPos,
           tfLayer,
           prevLayer,
@@ -144,8 +144,8 @@ function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
 
 function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
   if (!prev) return []
-  const name = l.getClassName()
-  if (name === "Dense") {
+  const className = l.getClassName()
+  if (className === "Dense") {
     // fully connected layer / Dense: each neuron is connected to all neurons in the previous layer
     const shape = prev.tfLayer.outputShape as number[]
     const prevUnits = getUnits(prev.tfLayer)
@@ -155,14 +155,14 @@ function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
         return getNid(prev.index, index3d)
       })
     )
-  } else if (name === "BatchNormalization") {
+  } else if (className === "BatchNormalization") {
     // each neuron is connected to 1 neuron in the previous layer
     const shape = prev.tfLayer.outputShape as number[]
     return Array.from({ length: getUnits(l) }).map((_, i) => {
       const index3d = getNeuronIndex3d(i, shape)
       return [getNid(prev.index, index3d)]
     })
-  } else if (name === "Conv2D" || name === "MaxPooling2D") {
+  } else if (className === "Conv2D" || className === "MaxPooling2D") {
     // Conv2D or MaxPooling2D
     // get the receptive field
     const [filterHeight, filterWidth] =
@@ -204,6 +204,8 @@ function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
       inputNids.push(unitInputNids)
     }
     return inputNids
+  } else if (className === "RandomRotation") {
+    return []
   } else {
     console.log("Unhandled layer type", name)
     return []
