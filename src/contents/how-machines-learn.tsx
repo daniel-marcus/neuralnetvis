@@ -18,7 +18,7 @@ import { defaultVisConfig } from "@/store/vis"
 
 export const hmlInitialState: InitialState = {
   layerConfigs: [{ className: "Dense", config: {} }], // output layer
-  cameraPos: [-14, 0, -18],
+  cameraPos: [-10, 0, -10],
   sampleIdx: 50,
   vis: {
     neuronSpacing: 2.2,
