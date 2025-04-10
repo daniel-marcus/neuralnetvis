@@ -132,3 +132,5 @@ export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
 export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
   getScene().getState().vis.setConfig(config)
 export const setView = (view: View) => getScene().setState({ view })
+export const getInvisibleLayers = () =>
+  getScene().getState().vis.invisibleLayers

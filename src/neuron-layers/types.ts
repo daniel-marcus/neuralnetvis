@@ -76,6 +76,7 @@ export type NeuronDef = {
   inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
   label?: string
   layer: LayerStateless
+  color: ColorObj
 }
 
 export type NeuronState = {

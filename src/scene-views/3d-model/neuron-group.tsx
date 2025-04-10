@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from "react"
+import { useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
 import { useGlobalStore, isDebug, useSceneStore } from "@/store"
@@ -120,7 +120,7 @@ function useNeuronPositions(props: NeuronGroupProps) {
 }
 
 function useColors(meshRef: MeshRef, neurons: Neuron[]) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!meshRef.current) return
     // if (isDebug()) console.log("upd colors")
     if (!meshRef.current.instanceColor) {

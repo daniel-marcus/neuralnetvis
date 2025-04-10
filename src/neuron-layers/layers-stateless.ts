@@ -5,6 +5,7 @@ import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType } from "./types"
 import type { Index3D, Nid, NeuronDef } from "./types"
 import type { InstancedMesh } from "three"
+import { getHighlightColor } from "@/utils/colors"
 
 // here is all data that doesn't change for a given model
 
@@ -81,6 +82,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                   ? ds?.inputLabels?.[index3d[0]]
                   : undefined,
               layer: layerStateless,
+              color: getHighlightColor(0),
             }
           }) ?? []
         const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
@@ -93,6 +95,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
             nids,
             nidsStr,
             meshRef: meshRefs[i],
+            neurons: groupedNeurons,
           }
         })
         const layer = {
