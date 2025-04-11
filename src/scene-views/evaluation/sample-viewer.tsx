@@ -32,7 +32,6 @@ export function SampleViewer() {
   }, [idxs, ds, subset, offset, itemsPerPage])
   const sampleIdx = useCurrScene((s) => s.sampleIdx)
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
-  const hasCam = useCurrScene((s) => !!s.ds?.camProps)
   const hasBlur = useHasBlur()
   useKeyboardNavigation(idxs, itemsPerPage, setOffset)
 
@@ -41,15 +40,11 @@ export function SampleViewer() {
     <div
       className={`-my-4 py-4! bg-gradient-to-b from-transparent via-[1rem] ${
         hasBlur ? "via-black to-black" : "via-background to-background"
-      } transition-colors duration-300 w-screen bottom-0 right-0 xl:fixed xl:p-0 xl:m-0 xl:bg-none xl:w-auto xl:translate-x-0 xl:right-4 xl:top-[50vh] xl:-translate-y-[50%] [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
+      } transition-colors duration-300 w-screen bottom-0 right-0 [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
     >
-      <div
-        className={`xl:w-[calc(4*var(--item-size)+1.5rem)] ${
-          hasCam ? "xl:aspect-[4/3]" : "xl:aspect-square"
-        } flex justify-center items-start xl:justify-end`}
-      >
+      <div className={`flex justify-center items-start`}>
         <div
-          className={`flex items-start justify-start gap-2 overflow-auto no-scrollbar px-4 xl:justify-end xl:flex-wrap xl:px-0 mx-auto xl:mx-0 pointer-events-auto`}
+          className={`flex items-start justify-start gap-2 overflow-auto no-scrollbar px-4 mx-auto  pointer-events-auto`}
         >
           {samples.map((sample, i) => {
             const idx = idxs[offset + i]

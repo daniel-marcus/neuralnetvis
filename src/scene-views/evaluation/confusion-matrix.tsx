@@ -127,7 +127,7 @@ interface GridProps {
 
 const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
   <div
-    className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs md:text-sm xl:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:400px] xl:[--grid-base:500px] lg:max-xl:-mt-[var(--label-width)]`}
+    className={`grid grid-cols-[auto_1fr] gap-[var(--gap)] text-xs md:text-sm xl:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] overflow-hidden pointer-events-auto [--grid-base:400px] xl:[--grid-base:450px] lg:max-xl:-mt-[var(--label-width)]`}
     style={
       {
         "--num-classes": numClasses,
