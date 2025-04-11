@@ -8,6 +8,8 @@ import { useKeyCommand } from "@/utils/key-command"
 const CAMERA_POS = [-40, 0, 0] as [number, number, number]
 const CAMERA_LOOK_AT = [0, 0, 0] as [number, number, number]
 
+const WHEEL_DEG = 45
+
 export const LayerInspector = () => {
   const layers = useModelLayers()
   const [currLayer, setCurrLayer] = useLayersFilter(layers)
@@ -15,9 +17,14 @@ export const LayerInspector = () => {
   useCameraPos(CAMERA_POS, CAMERA_LOOK_AT)
   useKeyboardNavigation(layers, setCurrLayer)
   // TODO: gradients for overscroll
+  const [wheelRotation, setWheelRotation] = useState(0)
+  useEffect(() => {
+    const newRotation = (WHEEL_DEG / layers.length) * (currLayer ?? 0)
+    setWheelRotation(newRotation)
+  }, [currLayer, layers.length])
   return (
     <div
-      className={`fixed top-0 right-0 h-screen flex flex-col items-end justify-center pointer-events-none overflow-visible`}
+      className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
     >
       <div
         className={`absolute top-0 right-0 ${
@@ -31,17 +38,19 @@ export const LayerInspector = () => {
         {isShown ? "Layers >" : "< Layers"}
       </button>
       <ul
-        className={`relative z-10 p-main max-h-[80vh] overflowscroll flex flex-col gap-2 sm:gap-4 text-right max-w-[300px] ${
-          isShown ? "" : "translate-x-full sm:translate-x-0"
-        } transition-transform duration-200`}
+        className={`relative z-10 p-main max-h-[80vh] translate-x-[400px] transition-transform duration-200 flex items-center justify-center w-[1rem] h-[1rem] rounded-[50%] border-1 bg-accent border-accent`}
+        style={{
+          transform: `rotate(${wheelRotation}deg)`,
+        }}
       >
         {layers.map((l, i) => {
           const isCurrent = i === currLayer
           const notVisible = isNotVisible(l)
+          const rotation = (WHEEL_DEG / layers.length) * i
           return (
             <li
               key={i}
-              className={`${
+              className={`absolute flex justify-start items-center _border-1 translate-[0px] w-[1100px] ${
                 notVisible
                   ? "brightness-50"
                   : isCurrent
@@ -51,6 +60,9 @@ export const LayerInspector = () => {
               onClick={
                 isCurrent || notVisible ? undefined : () => setCurrLayer(i)
               }
+              style={{
+                transform: `rotate(-${rotation}deg)`,
+              }}
             >
               {l.className}
             </li>
