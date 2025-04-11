@@ -1,19 +1,14 @@
 import { LayerConfigArray } from "@/model"
 import { useSceneStore } from "@/store"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { moveCameraTo } from "./3d-model/utils"
-import { defaultState } from "@/utils/initial-state"
 import { useKeyCommand } from "@/utils/key-command"
-
-const CAMERA_POS = [-23, 0, 35] as [number, number, number]
-const CAMERA_LOOK_AT = [0, 0, 0] as [number, number, number]
 
 export const LayerWheel = () => {
   const layers = useModelLayers()
   const [currLayer, setCurrLayer] = useLayersFilter(layers)
-  const [isShown] = useState(true)
-  useCameraPos(CAMERA_POS, CAMERA_LOOK_AT)
   const [wheelRotation, setWheelRotation] = useState(0)
+
+  // TODO: hidde btn for mobile
 
   const degPerItem = 3.5
 
@@ -81,9 +76,7 @@ export const LayerWheel = () => {
       className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
     >
       <div
-        className={`absolute top-0 right-0 ${
-          isShown ? "opacity-100 sm:opacity-0" : "opacity-0"
-        } bg-[radial-gradient(ellipse_at_right,var(--background),transparent_75%)] transition-opacity duration-200 w-[75vw] sm:w-[25vw] flex flex-col items-end justify-center h-full`}
+        className={`absolute top-0 right-0 bg-[radial-gradient(ellipse_at_right,var(--background),transparent_75%)] transition-opacity duration-200 w-[75vw] sm:w-[25vw] flex flex-col items-end justify-center h-full`}
       />
       <div
         ref={scrollerRef}
@@ -160,18 +153,6 @@ function useModelLayers() {
     [model]
   )
   return layers
-}
-
-function useCameraPos(
-  pos: [number, number, number],
-  lookAt?: [number, number, number]
-) {
-  useEffect(() => {
-    moveCameraTo(pos, lookAt)
-    return () => {
-      moveCameraTo(defaultState.cameraPos, defaultState.cameraLookAt)
-    }
-  }, [pos, lookAt])
 }
 
 function useKeyboardNavigation(

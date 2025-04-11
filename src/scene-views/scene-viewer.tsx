@@ -37,7 +37,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <ThreeCanvas {...props} />
-      {section === "play" && <LayerWheel />}
+      {section === "play" && isActive && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
         <SceneTitle
