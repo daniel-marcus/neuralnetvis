@@ -36,7 +36,6 @@ function LoadFullButton() {
 
 const VIEWS = [
   { value: "model" },
-  { value: "layers" },
   { value: "evaluation", label: "evaluation" },
   { value: "map", cond: (ds?: Dataset) => !!ds?.mapProps },
 ]

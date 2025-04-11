@@ -17,7 +17,7 @@ import { SampleSlider } from "./sample-slider"
 
 import type { TileDef } from "@/components/tile-grid"
 import { SceneButtons } from "./scene-buttons"
-import { LayerInspector } from "./layer-inspector"
+import { LayerWheel } from "./layer-wheel"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -37,6 +37,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <ThreeCanvas {...props} />
+      {section === "play" && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
         <SceneTitle
@@ -48,10 +49,7 @@ function SceneViewerInner(props: SceneViewerProps) {
         {section === "play" && isActive && <SceneButtons />}
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
-      {view === "layers" && <LayerInspector />}
-      {section === "play" && ["model", "layers"].includes(view) && (
-        <SampleSlider />
-      )}
+      {section === "play" && view === "model" && <SampleSlider />}
     </>
   )
 }

@@ -8,40 +8,65 @@ import { useKeyCommand } from "@/utils/key-command"
 const CAMERA_POS = [-23, 0, 35] as [number, number, number]
 const CAMERA_LOOK_AT = [0, 0, 0] as [number, number, number]
 
-const WHEEL_DEG = 45
-
-export const LayerInspector = () => {
+export const LayerWheel = () => {
   const layers = useModelLayers()
   const [currLayer, setCurrLayer] = useLayersFilter(layers)
   const [isShown] = useState(true)
   useCameraPos(CAMERA_POS, CAMERA_LOOK_AT)
-  useKeyboardNavigation(layers, setCurrLayer)
-  // TODO: gradients for overscroll
   const [wheelRotation, setWheelRotation] = useState(0)
-  const [enableTransition, setEnableTransition] = useState(false)
 
-  const handleClick = (layerIdx: number) => {
-    const newRotation = (WHEEL_DEG / layers.length) * (layerIdx ?? 0)
-    setEnableTransition(true)
-    setCurrLayer(layerIdx)
-    setWheelRotation(newRotation)
-    // TODO: set scroll pos
-    setTimeout(() => {
-      setEnableTransition(false)
-    }, 200)
-  }
+  const degPerItem = 3.5
+
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const jumpTarget = useRef<number | undefined>(undefined)
+
+  const handleClick = useCallback(
+    (layerIdx: number) => {
+      const targetRotation = layerIdx * degPerItem
+      const percent = targetRotation / 360
+      const scroller = scrollerRef.current
+      setCurrLayer(layerIdx)
+      if (scroller) {
+        jumpTarget.current = layerIdx
+        scroller.scrollTo({
+          top: percent * (scroller.scrollHeight - scroller.clientHeight),
+          behavior: "smooth",
+        })
+        setTimeout(() => {
+          jumpTarget.current = undefined
+        }, 500)
+      }
+    },
+    [setCurrLayer]
+  )
+
+  useKeyboardNavigation(currLayer, layers, handleClick)
+
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
-    const onScroll = () => {
+    const onScroll: EventListener = () => {
       if (!(scroller instanceof HTMLDivElement)) return
-      const percent = Math.min(1, scroller.scrollTop / scroller.clientHeight)
-      const newRotation = percent * WHEEL_DEG
+      const percent =
+        scroller.scrollTop / (scroller.scrollHeight - scroller.clientHeight)
 
-      const currItem = Math.floor((newRotation / WHEEL_DEG) * layers.length)
-      if (currItem !== currLayer && !isNotVisible(layers[currItem])) {
-        setCurrLayer(currItem)
+      const maxPercent = ((layers.length - 1) * degPerItem) / 360
+      if (percent > maxPercent) {
+        const maxScroll =
+          maxPercent * (scroller.scrollHeight - scroller.clientHeight)
+        scroller.scrollTop = maxScroll
+        return
+      }
+      const newRotation = percent * 360
+      const newIdx = Math.round(newRotation / degPerItem)
+      if (
+        (typeof jumpTarget.current === "undefined" ||
+          jumpTarget.current === newIdx) &&
+        newIdx !== currLayer &&
+        !!layers[newIdx] &&
+        !isNotVisible(layers[newIdx])
+      ) {
+        setCurrLayer(newIdx)
       }
 
       setWheelRotation(newRotation)
@@ -53,7 +78,7 @@ export const LayerInspector = () => {
   }, [currLayer, setCurrLayer, layers])
   return (
     <div
-      className={`fixed _border-1 top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
+      className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
     >
       <div
         className={`absolute top-0 right-0 ${
@@ -62,41 +87,42 @@ export const LayerInspector = () => {
       />
       <div
         ref={scrollerRef}
-        className="absolute top-0 right-0 w-[300px] h-screen overflow-scroll pointer-events-auto"
+        className="absolute top-0 right-0 w-[150px] h-screen overflow-y-scroll overflow-x-clip pointer-events-none"
       >
         <ul
-          className={`fixed top-[50vh] right-0 translate-y-[-50%] max-h-[80vh] translate-x-[400px] ${
-            enableTransition ? "transition-transform duration-200" : ""
-          } flex items-center justify-center w-[1rem] h-[1rem] rounded-[50%] border-1 bg-accent border-accent`}
-          style={{
-            transform: `rotate(${wheelRotation}deg)`,
-          }}
+          className={`sticky z-10 top-[50vh] left-0 translate-y-[-50%] _translate-x-[400px] flex items-center justify-center w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] _bg-box pointer-events-auto`}
+          style={
+            {
+              transform: `rotate(${wheelRotation}deg)`,
+              "--wheel-radius": "600px",
+            } as React.CSSProperties
+          }
         >
+          <div />
           {layers.map((l, i) => {
-            const degPerItem = WHEEL_DEG / layers.length
             const rotation = degPerItem * i
             const isCurrent = i === currLayer
             const notVisible = isNotVisible(l)
             return (
               <li
                 key={i}
-                className={`absolute flex justify-start items-center _border-1 translate-[0px] w-[1100px] ${
-                  notVisible
-                    ? "brightness-50"
-                    : isCurrent
-                    ? "text-white"
-                    : "cursor-pointer"
+                className={`pl-2 absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)] ${
+                  notVisible ? "brightness-50" : isCurrent ? "text-white" : ""
                 }`}
-                onClick={
-                  isCurrent || notVisible
-                    ? () => setCurrLayer(undefined)
-                    : () => handleClick(i)
-                }
                 style={{
                   transform: `rotate(-${rotation}deg)`,
                 }}
               >
-                {l.className}
+                <button
+                  className="pointer-events-auto"
+                  onClick={
+                    isCurrent || notVisible
+                      ? () => setCurrLayer(undefined)
+                      : () => handleClick(i)
+                  }
+                >
+                  {l.className}
+                </button>
               </li>
             )
           })}
@@ -124,16 +150,6 @@ function useLayersFilter(layers: LayerConfigArray) {
     setVisConfig({ invisibleLayers })
   }, [currLayer, layers, setVisConfig])
 
-  useEffect(() => {
-    setCurrLayer(0)
-    const actEl = document.activeElement
-    if (actEl && actEl instanceof HTMLElement) actEl.blur()
-    return () => {
-      setVisConfig({ invisibleLayers: [] })
-      setCurrLayer(undefined)
-    }
-  }, [setVisConfig, setCurrLayer])
-
   return [currLayer, setCurrLayer] as const
 }
 
@@ -159,25 +175,25 @@ function useCameraPos(
 }
 
 function useKeyboardNavigation(
+  currIdx: number | undefined,
   layers: LayerConfigArray,
-  setCurrLayer: React.Dispatch<React.SetStateAction<number | undefined>>
+  gotoIdx: (i: number) => void
 ) {
   const next = useCallback(
-    (step = 1) =>
-      setCurrLayer((currIdx) => {
-        const getNewIdx = (i: number) =>
-          (((i + step) % layers.length) + layers.length) % layers.length
-        let newIdx = getNewIdx(currIdx ?? -1)
-        while (isNotVisible(layers[newIdx])) {
-          newIdx = getNewIdx(newIdx)
-        }
-        return newIdx
-      }),
-    [layers, setCurrLayer]
+    (step = 1) => {
+      const getNewIdx = (i: number) =>
+        (((i + step) % layers.length) + layers.length) % layers.length
+      let newIdx = getNewIdx(currIdx ?? -1)
+      while (isNotVisible(layers[newIdx])) {
+        newIdx = getNewIdx(newIdx)
+      }
+      gotoIdx(newIdx)
+    },
+    [currIdx, layers, gotoIdx]
   )
   const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowUp", prev)
-  useKeyCommand("ArrowDown", next)
+  useKeyCommand("ArrowUp", prev, true, true)
+  useKeyCommand("ArrowDown", next, true, true)
 }
 
 function isNotVisible(layer: LayerConfigArray[number]) {
