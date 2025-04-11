@@ -7,6 +7,7 @@ export const LayerWheel = () => {
   const layers = useModelLayers()
   const [currLayer, setCurrLayer] = useLayersFilter(layers)
   const [wheelRotation, setWheelRotation] = useState(0)
+  const hasFocussed = typeof currLayer === "number"
 
   // TODO: hidde btn for mobile
 
@@ -76,14 +77,16 @@ export const LayerWheel = () => {
       className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
     >
       <div
-        className={`absolute top-0 right-0 bg-[radial-gradient(ellipse_at_right,var(--background),transparent_75%)] transition-opacity duration-200 w-[75vw] sm:w-[25vw] flex flex-col items-end justify-center h-full`}
+        className={`hidden absolute top-0 right-0 bg-[radial-gradient(ellipse_at_right,var(--background),transparent_75%)] transition-opacity duration-200 w-[75vw] sm:w-[25vw] _flex flex-col items-end justify-center h-full`}
       />
       <div
         ref={scrollerRef}
-        className="absolute top-0 right-0 w-[150px] h-screen overflow-y-scroll overflow-x-clip pointer-events-none"
+        className={`absolute top-0 right-0 w-[110px] sm:w-[150px] h-screen overflow-y-scroll overflow-x-clip pointer-events-none text-sm sm:text-base ${
+          !hasFocussed ? "translate-x-[70px] sm:translate-x-0" : ""
+        } transition-transform duration-200`}
       >
         <ul
-          className={`sticky z-10 top-[50vh] left-0 translate-y-[-50%] _translate-x-[400px] flex items-center justify-center w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] _bg-box pointer-events-auto`}
+          className={`sticky z-10 top-[50vh] left-0 translate-y-[-50%] _translate-x-[400px] flex items-center justify-center w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] _bg-box pointer-events-auto select-none`}
           style={
             {
               transform: `rotate(${wheelRotation}deg)`,
@@ -100,8 +103,8 @@ export const LayerWheel = () => {
               <li
                 key={i}
                 className={`pl-2 absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)] ${
-                  notVisible ? "brightness-50" : isCurrent ? "text-white" : ""
-                }`}
+                  notVisible ? "brightness-50" : ""
+                } ${isCurrent ? "text-white" : ""}`}
                 style={{
                   transform: `rotate(-${rotation}deg)`,
                 }}
