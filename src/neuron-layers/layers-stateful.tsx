@@ -16,15 +16,15 @@ export function useStatefulLayers(
   const isRegression = useSceneStore((s) => s.isRegression())
   const yMean = useSceneStore((s) => s.ds?.train.yMean)
 
-  const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
+  // const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
 
   const [statefulLayers, allNeurons] = useMemo(() => {
     const allNeurons = new Map<Nid, Neuron>()
     const result = statelessLayers.reduce((acc, layer, lIdx) => {
-      if (invisibleLayers.includes(layer.tfLayer.name)) {
+      /* if (invisibleLayers.includes(layer.tfLayer.name)) {
         // skip invisible layers
         return [...acc, layer as LayerStateful]
-      }
+      } */
 
       const { layerPos, layerType } = layer
 
@@ -84,7 +84,7 @@ export function useStatefulLayers(
     sample,
     isRegression,
     yMean,
-    invisibleLayers,
+    // invisibleLayers,
   ])
 
   const setAllNeurons = useSceneStore((s) => s.setAllNeurons)

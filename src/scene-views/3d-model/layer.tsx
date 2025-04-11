@@ -17,7 +17,7 @@ export const Layer = (props: LayerProps) => {
   const invisible = useIsInvisible(props)
   const prevInvisible = useIsInvisible(prevLayer)
   const view = useSceneStore((s) => s.view)
-  useDynamicScale(ref, invisible ? 0.0001 : 1, view === "layers" ? 0 : 300)
+  useDynamicScale(ref, invisible ? (view === "layers" ? 0.1 : 0.0001) : 1, 300)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
   const showConnections = !invisible && !!prevLayer && !prevInvisible
   if (!props.neurons.length) return null
