@@ -1,6 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { useEffect } from "react"
-import { useActivationStats } from "./activation-stats"
+import { ActivationStats } from "./activation-stats"
 import {
   checkShapeMatch,
   normalizeConv2DActivations,
@@ -8,65 +7,51 @@ import {
   scaleNormalize,
 } from "@/data/utils"
 import type { LayerActivations } from "./types"
-import type { Dataset, Sample } from "@/data"
-import { useSceneStore } from "@/store"
+import type { Sample } from "@/data"
 
-export function useActivations(
-  model?: tf.LayersModel,
-  ds?: Dataset,
-  sample?: Sample
+export async function getProcessedActivations(
+  model: tf.LayersModel,
+  sample: Sample,
+  activationStats?: ActivationStats[],
+  isRegression?: boolean
 ) {
-  const isRegression = ds?.task === "regression"
-  const activationStats = useActivationStats(model, ds)
-  const layerActivations = useSceneStore((s) => s.layerActivations)
-  const setLayerActivations = useSceneStore((s) => s.setLayerActivations)
-  useEffect(() => {
-    async function getData() {
-      if (!model || !sample) return
+  await tf.ready()
+  const activationTensors = tf.tidy(() => {
+    const layerActivations = getLayerActivations(model, sample.xTensor)
+    const activations = layerActivations.map((layerActivation, i) => {
+      const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
+      const hasDepthDim = typeof layerActivation.shape[3] === "number"
+      const normalizedFlattened = hasDepthDim
+        ? normalizeConv2DActivations(layerActivation as tf.Tensor4D).flatten()
+        : isRegression && i > 0 && activationStats
+        ? scaleNormalize(
+            flattened,
+            activationStats[i].mean,
+            activationStats[i].std
+          )
+        : normalizeTensor(flattened)
+      return [flattened, normalizedFlattened]
+    })
+    return activations
+  })
 
-      const activationTensors = tf.tidy(() => {
-        const layerActivations = getLayerActivations(model, sample.xTensor)
-        const activations = layerActivations.map((layerActivation, i) => {
-          const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
-          const hasDepthDim = typeof layerActivation.shape[3] === "number"
-          const normalizedFlattened = hasDepthDim
-            ? normalizeConv2DActivations(
-                layerActivation as tf.Tensor4D
-              ).flatten()
-            : isRegression && i > 0 && activationStats
-            ? scaleNormalize(
-                flattened,
-                activationStats[i].mean,
-                activationStats[i].std
-              )
-            : normalizeTensor(flattened)
-          return [flattened, normalizedFlattened]
-        })
-        return activations
+  const newLayerActivations: LayerActivations[] = []
+  try {
+    for (const [actTensor, normActTensor] of activationTensors) {
+      const act = (await actTensor.array()) as number[]
+      const normAct = (await normActTensor.array()) as number[]
+      newLayerActivations.push({
+        activations: act,
+        normalizedActivations: normAct,
       })
-
-      const newLayerActivations: LayerActivations[] = []
-      try {
-        for (const [actTensor, normActTensor] of activationTensors) {
-          const act = (await actTensor.array()) as number[]
-          const normAct = (await normActTensor.array()) as number[]
-          newLayerActivations.push({
-            activations: act,
-            normalizedActivations: normAct,
-          })
-        }
-      } catch (e) {
-        console.log("Error getting activations", e)
-      } finally {
-        activationTensors.flat().forEach((t) => t.dispose())
-      }
-
-      if (newLayerActivations) setLayerActivations(newLayerActivations)
     }
-    getData()
-  }, [model, sample, setLayerActivations, activationStats, isRegression])
-
-  return layerActivations
+    return newLayerActivations
+  } catch (e) {
+    console.log("Error getting activations", e)
+    return []
+  } finally {
+    activationTensors.flat().forEach((t) => t.dispose())
+  }
 }
 
 export function getLayerActivations(

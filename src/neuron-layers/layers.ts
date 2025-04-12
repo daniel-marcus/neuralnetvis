@@ -1,5 +1,5 @@
 import { useStatelessLayers } from "./layers-stateless"
-import { useActivations } from "@/model/activations"
+import { useActivationStats } from "@/model/activation-stats"
 import { useWeights } from "@/model/weights"
 import { useStatefulLayers } from "./layers-stateful"
 import { useNeuronSelect } from "./neuron-select"
@@ -11,9 +11,9 @@ export function useLayers(isPreview?: boolean) {
   const sample = useSceneStore((s) => s.sample)
 
   const _lyrs = useStatelessLayers(model, ds)
-  const activations = useActivations(model, ds, sample)
+  const activationStats = useActivationStats(model, ds)
   const weights = useWeights(model)
-  const _layers = useStatefulLayers(_lyrs, activations, weights, sample)
+  const _layers = useStatefulLayers(_lyrs, activationStats, weights, sample)
   const layers = useNeuronSelect(!isPreview, _layers)
   return layers
 }

@@ -1,10 +1,10 @@
+import { setVisConfig } from "."
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
-import type { Evaluation, LayerActivations, LayerConfigArray } from "@/model"
-import { setVisConfig } from "."
-import { Neuron, Nid } from "@/neuron-layers"
-import { ActivationStats } from "@/model/activation-stats"
-import { DataSlice } from "./data"
+import type { DataSlice } from "./data"
+import type { Evaluation, LayerConfigArray } from "@/model"
+import type { LayerStateful, Neuron, Nid } from "@/neuron-layers"
+import type { ActivationStats } from "@/model/activation-stats"
 
 export const defaultLayerConfigs: LayerConfigArray = [
   { className: "InputLayer", config: { batchInputShape: [null, 28, 28, 1] } },
@@ -24,10 +24,10 @@ export interface ModelSlice {
   resetLayerConfigs: () => void
   resetWeights: () => void
 
-  layerActivations: LayerActivations[]
-  setLayerActivations: (layerActivations: LayerActivations[]) => void
   activationStats?: ActivationStats[]
   setActivationStats: (activationStats?: ActivationStats[]) => void
+  statefulLayers: LayerStateful[]
+  setStatefulLayers: (statefulLayers: LayerStateful[]) => void
 
   allNeurons: Map<Nid, Neuron>
   setAllNeurons: (neurons: Map<Nid, Neuron>) => void
@@ -52,7 +52,6 @@ export const createModelSlice: StateCreator<
       model,
       // sample: undefined,
       activationStats: undefined,
-      layerActivations: [],
     })
   },
   layerConfigs: defaultLayerConfigs,
@@ -68,8 +67,8 @@ export const createModelSlice: StateCreator<
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 
-  layerActivations: [],
-  setLayerActivations: (layerActivations) => set({ layerActivations }),
+  statefulLayers: [],
+  setStatefulLayers: (statefulLayers) => set({ statefulLayers }),
   activationStats: undefined,
   setActivationStats: (activationStats) => set({ activationStats }),
 

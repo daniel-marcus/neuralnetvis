@@ -7,7 +7,6 @@ export function useWeights(model?: tf.LayersModel) {
   const [weightsBiases, setWeightsBiases] = useState<WeightsBiases[]>([])
   const batchCount = useCurrScene((s) => s.batchCount) // used to trigger updates after/during training
   useEffect(() => {
-    if (!model) return
     async function updateWeights() {
       if (!model) return
       const _newStates = model.layers.map((l) => {

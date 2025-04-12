@@ -1,98 +1,131 @@
-import { useEffect, useMemo } from "react"
-import { useSceneStore } from "@/store"
+import { useEffect, useRef, useState } from "react"
+import { getScene, useSceneStore } from "@/store"
+import { getProcessedActivations } from "@/model/activations"
 import { getNeuronColor, getPredictionQualityColor } from "../utils/colors"
-import type { LayerActivations, WeightsBiases } from "@/model"
+import type { WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
 import type { Sample } from "@/data"
+import type { ActivationStats } from "@/model/activation-stats"
 
-// add state to each neuron
+// add activations and other state to each neuron
 
 export function useStatefulLayers(
   statelessLayers: LayerStateless[],
-  activations: LayerActivations[],
+  activationStats: ActivationStats[] | undefined,
   weightsBiases: WeightsBiases[],
   sample?: Sample
 ) {
+  const model = useSceneStore((s) => s.model)
   const isRegression = useSceneStore((s) => s.isRegression())
   const yMean = useSceneStore((s) => s.ds?.train.yMean)
 
-  // const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
+  const statefulLayers = useSceneStore((s) => s.statefulLayers)
+  const setStatefulLayers = useSceneStore((s) => s.setStatefulLayers)
 
-  const [statefulLayers, allNeurons] = useMemo(() => {
-    const allNeurons = new Map<Nid, Neuron>()
-    const result = statelessLayers.reduce((acc, layer, lIdx) => {
-      /* if (invisibleLayers.includes(layer.tfLayer.name)) {
-        // skip invisible layers
-        return [...acc, layer as LayerStateful]
-      } */
+  const focussedIdx = useDeferUnfocussed(sample)
 
-      const { layerPos, layerType } = layer
-
-      const layerActivations = activations?.[lIdx]?.activations
-      const normalizedActivations =
-        layerPos === "output"
-          ? layerActivations
-          : layerType === "Flatten"
-          ? undefined
-          : activations?.[lIdx]?.normalizedActivations
-
-      const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
-
-      const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
-        (neuron, nIdx) => {
-          const activation = layerActivations?.[nIdx]
-          // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
-          const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
-          const rawInput =
-            layer.layerPos === "input" ? sample?.rawX?.[nIdx] : undefined
-
-          const newNeuron = {
-            ...neuron,
-            activation,
-            rawInput,
-            normalizedActivation: normalizedActivations?.[nIdx],
-            weights: weights?.[filterIndex],
-            bias: biases?.[filterIndex],
-          } as Neuron
-          newNeuron.color =
-            isRegression && layerPos === "output"
-              ? getPredictionQualityColor(newNeuron, sample?.y, yMean)
-              : getNeuronColor(newNeuron)
-
-          allNeurons.set(newNeuron.nid, newNeuron)
-
-          return newNeuron
-        }
+  useEffect(() => {
+    async function update() {
+      if (!model || !sample) return
+      const activations = await getProcessedActivations(
+        model,
+        sample,
+        activationStats,
+        isRegression
       )
+      const hasFocussed = typeof focussedIdx === "number"
+      const oldLayers = getScene().getState().statefulLayers
+      const allNeurons = new Map<Nid, Neuron>()
+      const newStatefulLayers = statelessLayers.reduce((acc, layer, lIdx) => {
+        if (hasFocussed && focussedIdx !== layer.index && lIdx > 0) {
+          // skip unfocussed layers: using the layer from previous state or stateless layer
+          const dummy = oldLayers[lIdx] ?? layer
+          return [...acc, dummy as LayerStateful]
+        }
 
-      const _statefulLayer = {
-        ...layer,
-        prevLayer: acc.find((l) => l.visibleIdx === layer.visibleIdx - 1),
-        neurons,
-        maxAbsWeight,
-      } as LayerStateful
+        const { layerPos, layerType } = layer
 
-      const statefulLayer = updateGroups(_statefulLayer)
-      return [...acc, statefulLayer]
-    }, [] as LayerStateful[])
+        const layerActivations = activations?.[lIdx]?.activations
+        const normalizedActivations =
+          layerPos === "output"
+            ? layerActivations
+            : layerType === "Flatten"
+            ? undefined
+            : activations?.[lIdx]?.normalizedActivations
 
-    return [result, allNeurons] as const
+        const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
+
+        const neurons: Neuron[] = statelessLayers[lIdx].neurons.map(
+          (neuron, nIdx) => {
+            const activation = layerActivations?.[nIdx]
+            // Conv2D has parameter sharing: 1 bias per filter + [filterSize] weights
+            const filterIndex = nIdx % layer.numBiases // for dense layers this would be nIdx
+            const rawInput =
+              layer.layerPos === "input" ? sample?.rawX?.[nIdx] : undefined
+
+            const newNeuron = {
+              ...neuron,
+              activation,
+              rawInput,
+              normalizedActivation: normalizedActivations?.[nIdx],
+              weights: weights?.[filterIndex],
+              bias: biases?.[filterIndex],
+            } as Neuron
+            newNeuron.color =
+              isRegression && layerPos === "output"
+                ? getPredictionQualityColor(newNeuron, sample?.y, yMean)
+                : getNeuronColor(newNeuron)
+
+            allNeurons.set(newNeuron.nid, newNeuron)
+
+            return newNeuron
+          }
+        )
+
+        const _statefulLayer = {
+          ...layer,
+          prevLayer: acc.find((l) => l.visibleIdx === layer.visibleIdx - 1),
+          neurons,
+          maxAbsWeight,
+        } as LayerStateful
+
+        const statefulLayer = updateGroups(_statefulLayer)
+        return [...acc, statefulLayer]
+      }, [] as LayerStateful[])
+
+      setStatefulLayers(newStatefulLayers)
+      getScene().getState().setAllNeurons(allNeurons)
+    }
+
+    update()
   }, [
+    model,
     statelessLayers,
-    activations,
+    activationStats,
     weightsBiases,
     sample,
     isRegression,
     yMean,
-    // invisibleLayers,
+    focussedIdx,
+    setStatefulLayers,
   ])
 
-  const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
-  useEffect(() => {
-    setAllNeurons(allNeurons)
-  }, [allNeurons, setAllNeurons])
-
   return statefulLayers
+}
+
+function useDeferUnfocussed(sample?: Sample, ms = 500) {
+  // browse samples faster in single layer view (flat view) by deferring the update for unfocussed layers
+  const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const [shouldDeferOthers, setShouldDeferOthers] = useState(true)
+  const isFlatView = useSceneStore((s) => s.vis.flatView)
+  const timeoutUnset = useRef<NodeJS.Timeout | null>(null)
+  useEffect(() => {
+    if (!isFlatView) return
+    setShouldDeferOthers(true)
+    if (timeoutUnset.current) clearTimeout(timeoutUnset.current)
+    timeoutUnset.current = setTimeout(() => setShouldDeferOthers(false), ms)
+  }, [isFlatView, sample, ms])
+  return isFlatView && shouldDeferOthers ? focussedIdx : undefined
 }
 
 export function updateGroups(statefulLayer: LayerStateful) {

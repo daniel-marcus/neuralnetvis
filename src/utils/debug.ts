@@ -32,10 +32,13 @@ function showStats() {
     numBytesInGPUAllocated: number
     numBytesInGPUFree: number
   }
+  const gpuBytes = memoryInfo.numBytesInGPU
   const data = {
     Backend: tf.getBackend(),
     Memory: `${(memoryInfo.numBytes / 1024 / 1024).toFixed(2)} MB`,
-    GPU: `${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB`,
+    GPU: gpuBytes
+      ? `${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB`
+      : undefined,
     Tensors: memoryInfo.numTensors,
     Geometries: gl?.info.memory.geometries,
   }
