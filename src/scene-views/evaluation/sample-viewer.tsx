@@ -121,7 +121,7 @@ function Pagination({
   const isLastPage = page === totalPages - 1 || totalPages === 0
   return (
     <div
-      className={`w-full max-w-[500px] mx-auto flex justify-between items-center mt-2 pointer-events-auto`}
+      className={`w-full max-w-[380px] mx-auto flex justify-between items-center mt-2 pointer-events-auto`}
     >
       <button
         className={`px-4 py-2 ${isFirstPage ? "opacity-0" : ""}`}
