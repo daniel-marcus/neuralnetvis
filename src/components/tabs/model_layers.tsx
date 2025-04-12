@@ -143,7 +143,6 @@ export const LayerConfigControl = () => {
     { value: "BatchNormalization" },
     { value: "RandomRotation", disabled: !hasMutliDimInput },
   ]
-  const toggleLayerVisibility = useCurrScene((s) => s.vis.toggleLayerVisibility)
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
   return (
     <CollapsibleWithTitle title={"layers"} className="bg-box-solid">
@@ -178,12 +177,6 @@ export const LayerConfigControl = () => {
             const label = (
               <div className="flex justify-between">
                 <div className="flex truncate">
-                  <button
-                    onClick={() => toggleLayerVisibility(layer.config.name!)}
-                    className="pr-3 active:text-white"
-                  >
-                    {isInvisible ? "⍉" : "⌾"}
-                  </button>
                   <div className="truncate">
                     {layer.className
                       .replace("InputLayer", "Input")

@@ -1,7 +1,8 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import { Button } from "@/components/ui-elements"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
@@ -27,6 +28,30 @@ export const LayerWheel = () => {
         currIdx={focussedIdx}
         setCurrIdx={setFocussedIdx}
       />
+      <ToggleFlatViewBtn />
+    </div>
+  )
+}
+
+function ToggleFlatViewBtn() {
+  const isFlatView = useSceneStore((s) => s.vis.flatView)
+  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+  const toggleFlatView = () => setVisConfig({ flatView: !isFlatView })
+  const focussedLayerIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const hasFocussed = typeof focussedLayerIdx === "number"
+  useEffect(() => {
+    if (!hasFocussed) setVisConfig({ flatView: false })
+  }, [hasFocussed, setVisConfig])
+  if (!hasFocussed) return null
+  return (
+    <div className="fixed top-[var(--header-height)] right-[var(--padding-main)]">
+      <Button
+        onClick={toggleFlatView}
+        variant="primary"
+        className="pointer-events-auto "
+      >
+        {isFlatView ? "3D" : "2D"} view
+      </Button>
     </div>
   )
 }

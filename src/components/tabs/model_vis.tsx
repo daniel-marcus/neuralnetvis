@@ -21,12 +21,6 @@ export const VisConfigControl = () => {
   return (
     <CollapsibleWithTitle title="visualization" collapsed>
       <InputRowsWrapper>
-        <InputRow label="flatView" hint="show model in 2D">
-          <Checkbox
-            checked={config.flatView}
-            onChange={(flatView) => setConfig({ flatView })}
-          />
-        </InputRow>
         {SHIFT_PROPS.map((prop) => {
           const value = config[prop]
           const isDefault = getDefault(prop) === value
@@ -37,11 +31,14 @@ export const VisConfigControl = () => {
               label={prop}
               hint={`layer spacing along the ${axis} axis`}
               reset={isDefault ? undefined : () => reset(prop)}
+              className={
+                config.flatView ? "opacity-50 pointer-events-none" : ""
+              }
             >
               <Slider
                 value={value}
-                min={-30}
-                max={30}
+                min={-50}
+                max={50}
                 onChange={(v) => setConfig({ [prop]: v })}
                 showValue
                 markers={[0]}

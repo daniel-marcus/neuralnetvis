@@ -27,7 +27,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
       } transition-transform duration-150 `}
     >
       <div
-        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
+        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-box sm:bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
       >
         <ul
           className={`flex items-center justify-center`}

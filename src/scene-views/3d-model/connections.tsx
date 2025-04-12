@@ -37,12 +37,14 @@ export const HoverConnections = () => {
   const prevLayerIsVisible =
     !!prevLayerName && !invisibleLayers.includes(prevLayerName)
 
+  const isFlatView = useSceneStore((s) => s.vis.flatView)
   const length = hovered?.inputNeurons?.length ?? 0
   const show =
     length > 0 &&
     length < MAX_LINES_PER_LAYER &&
     showLines &&
-    prevLayerIsVisible
+    prevLayerIsVisible &&
+    !isFlatView
 
   useEffect(() => {
     // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx

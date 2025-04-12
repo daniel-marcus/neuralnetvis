@@ -23,8 +23,9 @@ export const Layer = (props: LayerProps) => {
   const scale = invisible ? 0.0001 : hasFocussed ? (isFocussed ? 1 : 0.1) : 1
   useDynamicScale(ref, scale, 300)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
+  const isFlatView = useSceneStore((s) => s.vis.flatView)
   const showConnections =
-    !invisible && !!prevLayer && !prevInvisible && !hasFocussed
+    !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
   if (!props.neurons.length) return null
   return (
     <>
