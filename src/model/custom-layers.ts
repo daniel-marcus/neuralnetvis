@@ -45,3 +45,7 @@ export class RandomRotation extends tf.layers.Layer {
 }
 
 tf.serialization.registerClass(RandomRotation)
+
+export function randomRotation(args: RandomRotationLayerArgs) {
+  return new RandomRotation(args)
+}

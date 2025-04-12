@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from "react"
 import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
+import { layerDefMap } from "@/model/layer-definitions"
 import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
 
 const { InputRow, Slider, Select, Button } = Components
@@ -15,86 +16,46 @@ function getInputComp<T extends keyof LayerConfigMap>(
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
   const { className } = layerConfig
+
+  const layerDef = layerDefMap[className]
+  const config = layerConfig.config as LayerConfigMap[typeof className]
+  // TODO: allow multiple options + other inputTypes
+  const option = layerDef.options?.[0]
+
   if (className === "InputLayer") {
     const config = layerConfig.config as LayerConfigMap["InputLayer"]
     const [, ...dims] = config.batchInputShape as number[]
     return <div className="text-right">{dims.join(" x ")}</div>
-  } else if (layerConfig.className === "Dense") {
-    const config = layerConfig.config as LayerConfigMap["Dense"]
-    if (isLast) return <div className="text-right">{config.units}</div>
+  } else if (className === "Dense" && isLast)
+    return (
+      <div className="text-right">
+        {(config as LayerConfigMap["Dense"]).units!}
+      </div>
+    )
+  else if (option && option.inputType === "slider") {
+    const { name, min, max, step } = option
+    const { transformFromSliderVal, transformToSliderVal } = option
+    const sliderVal =
+      transformToSliderVal?.(config[name] as number) ?? (config[name] as number)
     return (
       <Slider
         {...sharedSliderProps}
-        min={0}
-        max={9} // 2^9 = 512
-        value={Math.log2(config.units)}
-        transform={(v) => 2 ** v}
-        onChange={(units) => updateLayerConfig({ ...config, units })}
+        min={min}
+        max={max}
+        step={step}
+        value={sliderVal}
+        onChange={(val) => updateLayerConfig({ ...config, [option.name]: val })}
+        transform={transformFromSliderVal}
       />
     )
-  } else if (className === "Conv2D") {
-    const config = layerConfig.config as LayerConfigMap["Conv2D"]
-    return (
-      <Slider
-        {...sharedSliderProps}
-        min={0}
-        max={6} // 2^6 = 64
-        value={Math.log2(config.filters)}
-        transform={(v) => 2 ** v}
-        onChange={(filters) => updateLayerConfig({ ...config, filters })}
-      />
-    )
-  } else if (className === "Dropout") {
-    const config = layerConfig.config as LayerConfigMap["Dropout"]
-    return (
-      <Slider
-        {...sharedSliderProps}
-        min={0}
-        max={0.95}
-        step={0.05}
-        value={config.rate}
-        onChange={(rate) => updateLayerConfig({ ...config, rate })}
-      />
-    )
-  } else if (className === "RandomRotation") {
-    const config = layerConfig.config as LayerConfigMap["RandomRotation"]
-    return (
-      <Slider
-        {...sharedSliderProps}
-        min={0}
-        max={0.5}
-        step={0.05}
-        value={config.factor ?? 0.1}
-        onChange={(factor) =>
-          updateLayerConfig({ ...layerConfig.config, factor })
-        }
-      />
-    )
-  } else if (
-    ["MaxPooling2D", "Flatten", "BatchNormalization"].includes(className)
-  ) {
-    return null
-  } else {
-    console.log("Unknown layer type", layerConfig)
-  }
-  return null
-}
-
-const defaultConfigMap: { [K in keyof LayerConfigMap]: LayerConfigMap[K] } = {
-  Dense: { units: 64, activation: "relu" },
-  Conv2D: { filters: 4, kernelSize: 3, activation: "relu", padding: "same" },
-  MaxPooling2D: { poolSize: 2 },
-  Flatten: {},
-  Dropout: { rate: 0.2 },
-  InputLayer: {}, // will be set from ds shape
-  BatchNormalization: {},
-  RandomRotation: { factor: 0.1 },
+  } else return null
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
   className: T
 ): LayerConfig<T> {
-  const layer = { className, config: { ...defaultConfigMap[className] } }
+  const config = layerDefMap[className].defaultConfig
+  const layer = { className, config }
   return layer as LayerConfig<T>
 }
 
@@ -135,13 +96,15 @@ export const LayerConfigControl = () => {
       value: "empty",
       label: "add",
       disabled: true,
-    },
-    { value: "Dense" },
-    { value: "Conv2D", disabled: !hasMutliDimInput },
-    { value: "MaxPooling2D", disabled: !hasMutliDimInput },
-    { value: "Dropout" },
-    { value: "BatchNormalization" },
-    { value: "RandomRotation", disabled: !hasMutliDimInput },
+    }, // TODO: disabled / filter condition in LayerDef?
+    ...Object.keys(layerDefMap)
+      .filter((k) => !["InputLayer", "Flatten"].includes(k))
+      .map((key) => ({
+        value: key,
+        disabled:
+          ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(key) &&
+          !hasMutliDimInput,
+      })),
   ]
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
   return (

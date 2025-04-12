@@ -7,12 +7,12 @@ import {
   useSceneStore,
   clearStatus,
 } from "@/store"
-import type { Dataset, DatasetDef } from "@/data"
-import type { LayerConfigArray, LayerConfigMap } from "./types"
-import { checkShapeMatch } from "@/data/utils"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
-import { RandomRotation } from "./custom-layers"
+import { layerDefMap } from "./layer-definitions"
+import type { Dataset, DatasetDef } from "@/data"
+import type { LayerConfigArray, LayerConfigMap } from "./types"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 export function useModel(ds?: Dataset) {
   const model = useModelCreate(ds)
@@ -155,7 +155,6 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
 }
 
 function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
-  const isMultiDim = ds.inputDims.length >= 2
   const dsInputShape = [null, ...ds.inputDims] as [null, ...number[]]
 
   const model = tf.sequential()
@@ -173,15 +172,12 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
   for (const [i, l] of layerConfigs.entries()) {
     const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
+
     if (l.className === "InputLayer") {
-      config.batchInputShape =
-        !!config.batchInputShape &&
-        checkShapeMatch(config.batchInputShape, dsInputShape)
-          ? config.batchInputShape
-          : dsInputShape
+      config.batchInputShape = dsInputShape
       model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
     } else if (l.className === "Dense") {
-      const newConfig = isOutput // use config from ds for output layer
+      const newConfig = isOutput
         ? {
             ...config,
             units: ds.outputLabels.length,
@@ -190,33 +186,12 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
           }
         : config
       addDenseWithFlattenIfNeeded(model, newConfig as LayerConfigMap["Dense"])
-    } else if (l.className === "Conv2D") {
-      if (!isMultiDim) continue
-      model.add(tf.layers.conv2d(config as LayerConfigMap["Conv2D"]))
-    } else if (l.className === "Flatten") {
-      if (!isMultiDim) continue
-      model.add(tf.layers.flatten(config as LayerConfigMap["Flatten"]))
-    } else if (l.className === "MaxPooling2D") {
-      if (!isMultiDim) continue
-      model.add(
-        tf.layers.maxPooling2d(config as LayerConfigMap["MaxPooling2D"])
-      )
-    } else if (l.className === "Dropout") {
-      model.add(tf.layers.dropout(config as LayerConfigMap["Dropout"]))
-    } else if (l.className === "BatchNormalization") {
-      const { axis, ...rest } = config as LayerConfigMap["BatchNormalization"]
-      console.log(
-        `BatchNormalization: Provided axis (${axis} ignored to avoid shape mismatch`
-      )
-      model.add(
-        tf.layers.batchNormalization(
-          rest as LayerConfigMap["BatchNormalization"]
-        )
-      )
-    } else if (l.className === "RandomRotation") {
-      model.add(new RandomRotation(config as LayerConfigMap["RandomRotation"]))
-    } else if (l.className === "InputLayer") {
-      continue // InputLayer is already added w/ config from ds
+    } else if (l.className in layerDefMap) {
+      const args = config as LayerConfigMap[typeof l.className]
+      const makeLayer = layerDefMap[l.className].constructorFunc as (
+        args: unknown
+      ) => Layer
+      model.add(makeLayer(args))
     } else {
       console.log("Unknown layer", l)
     }

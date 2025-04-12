@@ -9,6 +9,7 @@ import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 import { BatchNormalizationLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/normalization"
 import { RandomRotationLayerArgs } from "./custom-layers"
+import { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 // Layers
 
@@ -26,10 +27,26 @@ export type LayerConfigMap = {
 export type LayerConfig<T extends keyof LayerConfigMap> = {
   className: T
   config: LayerConfigMap[T]
-  isInvisible?: boolean
 }
 
 export type LayerConfigArray = LayerConfig<keyof LayerConfigMap>[]
+
+interface ControlableOption<T extends keyof LayerConfigMap> {
+  name: keyof LayerConfigMap[T]
+  inputType: "slider" // | "select" | "checkbox"
+  min: number // TODO bind to inputType / optional
+  max: number
+  step?: number
+  transformToSliderVal?: (v: number) => number
+  transformFromSliderVal?: (v: number) => number
+}
+
+export interface LayerDef<T extends keyof LayerConfigMap> {
+  constructorFunc: (args: LayerConfigMap[T]) => Layer
+  defaultConfig: LayerConfigMap[T]
+  options?: ControlableOption<T>[]
+  // TODO: constructor, applicableCondition, orderRule, configTransform?
+}
 
 // state
 
