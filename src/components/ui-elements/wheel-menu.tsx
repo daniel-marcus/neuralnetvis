@@ -14,6 +14,8 @@ interface WheelMenuProps {
   items: WheelMenuItem[]
   currIdx: Idx
   setCurrIdx: IdxSetter
+  onScroll?: () => void
+  onScrollEnd?: () => void
 }
 
 export const WheelMenu = (props: WheelMenuProps) => {
@@ -56,7 +58,8 @@ export const WheelMenu = (props: WheelMenuProps) => {
   )
 }
 
-function useWheelInteractions({ items, currIdx, setCurrIdx }: WheelMenuProps) {
+function useWheelInteractions(props: WheelMenuProps) {
+  const { items, currIdx, setCurrIdx, onScroll, onScrollEnd } = props
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
@@ -80,7 +83,16 @@ function useWheelInteractions({ items, currIdx, setCurrIdx }: WheelMenuProps) {
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
-    const onScroll: EventListener = () => {
+    let timeoutId: NodeJS.Timeout
+    const handleScroll: EventListener = () => {
+      const isHumanScroll = typeof jumpTarget.current === "undefined"
+
+      if (isHumanScroll) {
+        onScroll?.()
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => onScrollEnd?.(), 200)
+      }
+
       if (!(scroller instanceof HTMLDivElement)) return
       const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
       const percent = scroller.scrollTop / maxScrollTop
@@ -94,15 +106,15 @@ function useWheelInteractions({ items, currIdx, setCurrIdx }: WheelMenuProps) {
       const newRotation = percent * 360
       setWheelRotation(newRotation)
 
-      if (typeof jumpTarget.current !== "undefined") return
+      if (!isHumanScroll) return
       const newIdx = Math.round(newRotation / degPerItem)
       if (!!items[newIdx] && !items[newIdx].disabled) {
         setCurrIdx(newIdx)
       }
     }
-    scroller.addEventListener("scroll", onScroll)
-    return () => scroller.removeEventListener("scroll", onScroll)
-  }, [setCurrIdx, items])
+    scroller.addEventListener("scroll", handleScroll)
+    return () => scroller.removeEventListener("scroll", handleScroll)
+  }, [setCurrIdx, items, onScroll, onScrollEnd])
 
   useKeyboardNavigation(currIdx, items, onClick)
 
