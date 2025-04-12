@@ -4,6 +4,7 @@ import { RootState } from "@react-three/fiber"
 import { OrbitControls } from "three-stdlib"
 
 export const defaultVisConfig = {
+  flatView: false,
   xShift: 11,
   yShift: 0,
   zShift: 0,
@@ -20,6 +21,7 @@ export const defaultVisConfig = {
 }
 
 export interface VisConfig {
+  flatView: boolean
   xShift: number
   yShift: number
   zShift: number

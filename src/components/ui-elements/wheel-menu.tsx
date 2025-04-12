@@ -56,8 +56,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
   )
 }
 
-function useWheelInteractions(props: WheelMenuProps) {
-  const { items, currIdx, setCurrIdx } = props
+function useWheelInteractions({ items, currIdx, setCurrIdx }: WheelMenuProps) {
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
@@ -77,8 +76,7 @@ function useWheelInteractions(props: WheelMenuProps) {
     [setCurrIdx]
   )
 
-  useKeyboardNavigation(currIdx, items, onClick)
-
+  // onScroll: upd wheelRotation and currIdx + limit scrolling
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
@@ -106,11 +104,13 @@ function useWheelInteractions(props: WheelMenuProps) {
     return () => scroller.removeEventListener("scroll", onScroll)
   }, [setCurrIdx, items])
 
+  useKeyboardNavigation(currIdx, items, onClick)
+
   return [scrollerRef, wheelRotation, onClick] as const
 }
 
 function useKeyboardNavigation(
-  currIdx: number | undefined,
+  currIdx: Idx,
   items: WheelMenuItem[],
   gotoIdx: (i: number) => void
 ) {

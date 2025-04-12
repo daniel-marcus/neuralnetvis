@@ -16,9 +16,15 @@ export const Layer = (props: LayerProps) => {
   const ref = useLayerPos(props)
   const invisible = useIsInvisible(props)
   const prevInvisible = useIsInvisible(prevLayer)
-  useDynamicScale(ref, invisible ? 0.1 : 1, 300)
+  const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const hasFocussed = typeof focussedIdx === "number"
+  const isFocussed = focussedIdx === props.index
+
+  const scale = invisible ? 0.0001 : hasFocussed ? (isFocussed ? 1 : 0.1) : 1
+  useDynamicScale(ref, scale, 300)
   const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
-  const showConnections = !invisible && !!prevLayer && !prevInvisible
+  const showConnections =
+    !invisible && !!prevLayer && !prevInvisible && !hasFocussed
   if (!props.neurons.length) return null
   return (
     <>
@@ -46,15 +52,11 @@ function useLayerPos(layer: LayerProps) {
 
   const position = useMemo(() => {
     if (visibleIdx < 0) return [0, 0, 0]
-    const x =
+    const getCoord = (shift: number) =>
       offset >= 0
-        ? ((visibleIdx - offset) * xShift) / 2
-        : visibleIdx * xShift + (visibleLayers.length - 1) * xShift * -0.5
-    return [
-      x,
-      visibleIdx * yShift + (visibleLayers.length - 1) * yShift * -0.5,
-      visibleIdx * zShift + (visibleLayers.length - 1) * zShift * -0.5,
-    ]
+        ? ((visibleIdx - offset) * shift) / 2
+        : visibleIdx * shift + (visibleLayers.length - 1) * shift * -0.5
+    return [getCoord(xShift), getCoord(yShift), getCoord(zShift)]
   }, [offset, visibleIdx, visibleLayers.length, xShift, yShift, zShift])
 
   const [ref] = useAnimatedPosition(position, 0.1)

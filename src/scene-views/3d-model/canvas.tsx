@@ -8,6 +8,7 @@ import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
+import { useFlatView } from "./flat-view"
 import { useIsScreen, useIsTouchDevice } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 import { getTileDuration } from "@/components/tile-grid"
@@ -52,6 +53,7 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
     config: { duration: getTileDuration() },
   })
   const isTouchDevice = useIsTouchDevice()
+  useFlatView()
   return (
     <>
       <ThreeStoreSetter />

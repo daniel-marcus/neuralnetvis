@@ -21,6 +21,12 @@ export const VisConfigControl = () => {
   return (
     <CollapsibleWithTitle title="visualization" collapsed>
       <InputRowsWrapper>
+        <InputRow label="flatView" hint="show model in 2D">
+          <Checkbox
+            checked={config.flatView}
+            onChange={(flatView) => setConfig({ flatView })}
+          />
+        </InputRow>
         {SHIFT_PROPS.map((prop) => {
           const value = config[prop]
           const isDefault = getDefault(prop) === value
