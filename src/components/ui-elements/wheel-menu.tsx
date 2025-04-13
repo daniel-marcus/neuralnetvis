@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useKeyCommand } from "@/utils/key-command"
-import type { SetterFunc } from "@/store"
 import { isTouch } from "@/utils/screen"
+import type { SetterFunc } from "@/store"
 
 const degPerItem = 6
 
@@ -89,16 +89,14 @@ function useWheelInteractions(props: WheelMenuProps) {
     const handleScroll: EventListener = () => {
       const isHumanScroll = typeof jumpTarget.current === "undefined"
 
-      if (isHumanScroll) {
-        if (!isTouch()) setIsActive(true)
+      if (isHumanScroll && !isTouch()) {
+        setIsActive(true)
         onScroll?.()
         clearTimeout(scrollEndTimeout)
-        if (!isTouch()) {
-          scrollEndTimeout = setTimeout(() => {
-            if (autoHide) setIsActive(false)
-            onScrollEnd?.()
-          }, 300)
-        }
+        scrollEndTimeout = setTimeout(() => {
+          if (autoHide) setIsActive(false)
+          onScrollEnd?.()
+        }, 300)
       }
 
       if (!(scroller instanceof HTMLDivElement)) return
@@ -123,18 +121,25 @@ function useWheelInteractions(props: WheelMenuProps) {
     const onTouchStart = (e: TouchEvent) => {
       if (e.target && "tagName" in e.target && e.target.tagName === "BUTTON")
         return
-      setIsActive((a) => !a)
+      setIsActive(true)
     }
     const onTouchEnd = () => {
       if (autoHide) setIsActive(false)
       onScrollEnd?.()
     }
+    const onTouchMove = () => {
+      setIsActive(true)
+      onScroll?.()
+    }
+
     scroller.addEventListener("scroll", handleScroll)
     scroller.addEventListener("touchstart", onTouchStart)
+    scroller.addEventListener("touchmove", onTouchMove)
     scroller.addEventListener("touchend", onTouchEnd)
     return () => {
       scroller.removeEventListener("scroll", handleScroll)
       scroller.removeEventListener("touchstart", onTouchStart)
+      scroller.removeEventListener("touchmove", onTouchMove)
       scroller.removeEventListener("touchend", onTouchEnd)
     }
   }, [setCurrIdx, items, onScroll, onScrollEnd, autoHide])
