@@ -4,6 +4,7 @@ import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
+import { useLast } from "@/utils/use-last"
 import { NeuronGroup } from "./neuron-group"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
@@ -14,16 +15,14 @@ type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 export const Layer = (props: LayerProps) => {
   const { layerPos, groups, prevLayer } = props
   const ref = useLayerPos(props)
-  const invisible = useIsInvisible(props)
-  const prevInvisible = useIsInvisible(prevLayer)
-  const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
-  const hasFocussed = typeof focussedIdx === "number"
-  const isFocussed = focussedIdx === props.index
-
-  const scale = invisible ? 0.0001 : hasFocussed ? (isFocussed ? 1 : 0.1) : 1
-  useDynamicScale(ref, scale, 300)
-  const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material
   const isFlatView = useSceneStore((s) => s.vis.flatView)
+  const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
+  const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
+  const prevInvisible = useIsInvisible(prevLayer)
+  const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.1 : 1
+  const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
+  useDynamicScale(ref, scale, duration)
+  const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material?
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
   if (!props.neurons.length) return null
@@ -39,6 +38,14 @@ export const Layer = (props: LayerProps) => {
       {showConnections && <Connections layer={props} prevLayer={prevLayer} />}
     </>
   )
+}
+
+function useFocussed(layerIdx: number) {
+  const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const isFocussed = focussedIdx === layerIdx
+  const wasFocussed = useLast(isFocussed)
+  const hasFocussed = typeof focussedIdx === "number"
+  return { isFocussed, wasFocussed, hasFocussed }
 }
 
 function useLayerPos(layer: LayerProps) {

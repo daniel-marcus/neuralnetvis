@@ -13,6 +13,7 @@ import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "@/scene-views/video"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
+import { useLast } from "@/utils/use-last"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -210,14 +211,6 @@ function useIs404() {
     !hasActive &&
     (!section || !sections.includes(section as Section))
   )
-}
-
-function useLast<T>(value: T) {
-  const ref = useRef(value)
-  useEffect(() => {
-    if (value) ref.current = value
-  }, [value])
-  return ref.current
 }
 
 export function getTileDuration() {
