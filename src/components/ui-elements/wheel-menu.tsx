@@ -25,33 +25,44 @@ export const WheelMenu = (props: WheelMenuProps) => {
   return (
     <div
       ref={ref}
-      className={`absolute top-0 right-0 w-[130px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto text-sm sm:text-base ${
-        !isActive ? "translate-x-[calc(66%-2rem)] hover:translate-x-0" : ""
+      className={`absolute top-0 right-0 w-[140px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto ${
+        !isActive ? "translate-x-[calc(70%-2rem)] hover:translate-x-0" : ""
       } transition-transform duration-150 select-none no-scrollbar`}
     >
       <div
-        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-box sm:bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
+        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
       >
         <ul
           className={`flex items-center justify-center`}
           style={{ transform: `rotate(${rotation}deg)` }}
         >
-          {props.items.map(({ label, disabled }, i) => (
-            <li
-              key={i}
-              className={`pl-2 sm:pl-4 absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)]`}
-              style={{ transform: `rotate(-${degPerItem * i}deg)` }}
-            >
-              <button
-                data-active={i === props.currIdx || undefined}
-                className={"data-active:text-white disabled:brightness-50"}
-                onClick={() => onClick(i)}
-                disabled={disabled}
+          {props.items.map(({ label, disabled }, i) => {
+            const isActive = i === props.currIdx
+            return (
+              <li
+                key={i}
+                className={`absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)]`}
+                style={{ transform: `rotate(-${degPerItem * i}deg)` }}
               >
-                {label}
-              </button>
-            </li>
-          ))}
+                <button onClick={() => onClick(i)} disabled={disabled}>
+                  <span
+                    className={`${
+                      isActive ? "text-accent" : "brightness-25"
+                    } px-1`}
+                  >
+                    •
+                  </span>
+                  <span
+                    className={`${
+                      isActive ? "text-white" : disabled ? "brightness-50" : ""
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </div>
       <div className="h-[200vh]" />
@@ -118,8 +129,13 @@ function useWheelInteractions(props: WheelMenuProps) {
         setCurrIdx(newIdx)
       }
     }
+
     const onTouchStart = (e: TouchEvent) => {
-      if (e.target && "tagName" in e.target && e.target.tagName === "BUTTON")
+      if (
+        e.target &&
+        "tagName" in e.target &&
+        ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)
+      )
         return
       setIsActive(true)
     }
