@@ -2,6 +2,8 @@ import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
 import type { ReactElement } from "react"
 import type { LayerPos } from "./types"
+import { getLayerDef, layerDefMap } from "@/model/layers"
+import { LayerConfigMap } from "@/model/layers/types"
 
 export interface LayerLayout {
   geometry: ReactElement
@@ -45,12 +47,16 @@ export function getMeshParams(
   layerPos: LayerPos,
   units: number
 ): MeshParams {
-  const name = layer.getClassName()
+  const className = layer.getClassName()
+  const layerDef =
+    className in layerDefMap
+      ? getLayerDef(className as keyof LayerConfigMap)
+      : undefined
   if (["input", "output"].includes(layerPos)) {
     if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
-  } else if (["Conv2D", "MaxPooling2D"].includes(name)) {
+  } else if (layerDef?.needsMultiDim) {
     return meshMap.boxTiny
   } else {
     if (units <= 128) return meshMap.sphere

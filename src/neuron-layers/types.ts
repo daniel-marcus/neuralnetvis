@@ -15,6 +15,7 @@ export type LayerType =
   | "Dropout"
   | "BatchNormalization"
   | "RandomRotation"
+  | "DepthwiseConv2D" // TODO: keyof ...
 export type LayerPos = "input" | "hidden" | "output"
 
 export interface LayerStateless {

@@ -9,9 +9,9 @@ import {
 } from "@/store"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
-import { layerDefMap } from "./layer-definitions"
+import { getLayerDef, layerDefMap } from "./layers"
 import type { Dataset, DatasetDef } from "@/data"
-import type { LayerConfigArray, LayerConfigMap } from "./types"
+import type { LayerConfigArray, LayerConfigMap } from "@/model/layers/types"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 export function useModel(ds?: Dataset) {
@@ -188,7 +188,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
       addDenseWithFlattenIfNeeded(model, newConfig as LayerConfigMap["Dense"])
     } else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
-      const makeLayer = layerDefMap[l.className].constructorFunc as (
+      const makeLayer = getLayerDef(l.className).constructorFunc as (
         args: unknown
       ) => Layer
       model.add(makeLayer(args))

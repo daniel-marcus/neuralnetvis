@@ -1,11 +1,14 @@
 import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getMeshParams } from "./layout"
+import { getHighlightColor } from "@/utils/colors"
+import { getLayerDef, layerDefMap } from "@/model/layers"
+import type { InstancedMesh } from "three"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType } from "./types"
 import type { Index3D, Nid, NeuronDef } from "./types"
-import type { InstancedMesh } from "three"
-import { getHighlightColor } from "@/utils/colors"
+import type { LayerConfigMap } from "@/model/layers/types"
 
 // here is all data that doesn't change for a given model
 
@@ -20,7 +23,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
 
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? 0
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
-        const layerInputNids = getInputNeurons(tfLayer, prevLayer)
+        const layerInputNids = getInputNids(
+          tfLayer,
+          prevLayer?.tfLayer,
+          prevLayer?.index
+        )
 
         const units = getUnits(tfLayer)
         const meshParams = ["BatchNormalization", "RandomRotation"].includes(
@@ -56,7 +63,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
 
         const neurons =
           Array.from({ length: units }).map((_, neuronIndex) => {
-            const index3d = getNeuronIndex3d(neuronIndex, outputShape)
+            const index3d = getIndex3d(neuronIndex, outputShape)
             const inputNids = layerInputNids?.[neuronIndex] ?? []
             const groupIndex = neuronIndex % groupCount
             const indexInGroup = Math.floor(neuronIndex / groupCount)
@@ -118,11 +125,11 @@ const getVisibleIdxMap = (model: tf.LayersModel) =>
     new Map<number, number>()
   )
 
-function getNid(layerIndex: number, index3d: Index3D) {
+export function getNid(layerIndex: number, index3d: Index3D) {
   return `${layerIndex}_${index3d.join(".")}` as Nid
 }
 
-function getNeuronIndex3d(flatIndex: number, outputShape: number[]) {
+export function getIndex3d(flatIndex: number, outputShape: number[]) {
   const [, , width = 1, depth = 1] = outputShape
   const depthIndex = flatIndex % depth
   const widthIndex = Math.floor(flatIndex / depth) % width
@@ -130,7 +137,7 @@ function getNeuronIndex3d(flatIndex: number, outputShape: number[]) {
   return [heightIndex, widthIndex, depthIndex] as Index3D
 }
 
-function getUnits(layer: tf.layers.Layer) {
+export function getUnits(layer: tf.layers.Layer) {
   if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
   const [, ...dims] = layer.outputShape as number[]
   return dims.reduce((a, b) => a * b, 1)
@@ -142,72 +149,13 @@ function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
   else return "hidden"
 }
 
-function getInputNeurons(l: tf.layers.Layer, prev?: LayerStateless): Nid[][] {
-  if (!prev) return []
+function getInputNids(l: Layer, prev?: Layer, prevIdx?: number): Nid[][] {
+  if (!prev || typeof prevIdx !== "number") return []
   const className = l.getClassName()
-  if (className === "Dense") {
-    // fully connected layer / Dense: each neuron is connected to all neurons in the previous layer
-    const shape = prev.tfLayer.outputShape as number[]
-    const prevUnits = getUnits(prev.tfLayer)
-    return Array.from({ length: getUnits(l) }).map(() =>
-      Array.from({ length: prevUnits }).map((_, i) => {
-        const index3d = getNeuronIndex3d(i, shape)
-        return getNid(prev.index, index3d)
-      })
-    )
-  } else if (className === "BatchNormalization") {
-    // each neuron is connected to 1 neuron in the previous layer
-    const shape = prev.tfLayer.outputShape as number[]
-    return Array.from({ length: getUnits(l) }).map((_, i) => {
-      const index3d = getNeuronIndex3d(i, shape)
-      return [getNid(prev.index, index3d)]
-    })
-  } else if (className === "Conv2D" || className === "MaxPooling2D") {
-    // Conv2D or MaxPooling2D
-    // get the receptive field
-    const [filterHeight, filterWidth] =
-      (l.getConfig().kernelSize as number[]) ??
-      (l.getConfig().poolSize as number[]) ??
-      ([] as number[])
-    const [strideHeight, strideWidth] = (l.getConfig().strides as number[]) ?? [
-      1, 1,
-    ]
-    const filterSize = filterHeight * filterWidth
-
-    const outputShape = l.outputShape as number[]
-    const prevOutputShape = prev.tfLayer.outputShape as number[]
-    const depth = prevOutputShape[3]
-
-    const units = getUnits(l)
-
-    const inputNids: Nid[][] = []
-    // TODO: padding?
-    for (let j = 0; j < units; j++) {
-      const unitInputNids: Nid[] = []
-      for (let k = 0; k < filterSize * depth; k++) {
-        const [thisY, thisX, thisDepth] = getNeuronIndex3d(j, outputShape)
-        const depthIndex = k % depth
-        if (l.getClassName() === "MaxPooling2D" && depthIndex !== thisDepth)
-          continue
-        const widthIndex =
-          thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
-        const heightIndex =
-          thisY * strideHeight + Math.floor(k / (depth * filterWidth))
-        const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
-        const inputNid = getNid(prev.index, index3d)
-        if (!inputNid) {
-          console.warn("no inputNid", { index3d })
-          continue
-        }
-        unitInputNids.push(inputNid)
-      }
-      inputNids.push(unitInputNids)
-    }
-    return inputNids
-  } else if (className === "RandomRotation") {
-    return []
-  } else {
-    console.log("Unhandled layer type", name)
-    return []
-  }
+  const getterFunc =
+    className in layerDefMap
+      ? getLayerDef(className as keyof LayerConfigMap).getInputNids
+      : undefined
+  if (!getterFunc) return []
+  else return getterFunc(l, prev, prevIdx)
 }

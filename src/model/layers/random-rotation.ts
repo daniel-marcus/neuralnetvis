@@ -1,12 +1,34 @@
 import * as tf from "@tensorflow/tfjs"
 import type { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
+import type { LayerDef } from "./types"
+
+export const RandomRotation: LayerDef<"RandomRotation"> = {
+  constructorFunc: randomRotation,
+  defaultConfig: {
+    factor: 0.1,
+  },
+  needsMultiDim: true,
+  options: [
+    {
+      name: "factor",
+      inputType: "slider",
+      min: 0,
+      max: 0.5,
+      step: 0.05,
+    },
+  ],
+}
+
+function randomRotation(args: RandomRotationLayerArgs) {
+  return new RandomRotationLayer(args)
+}
 
 export interface RandomRotationLayerArgs extends LayerArgs {
   factor?: number
   applyAtInference?: boolean
 }
 
-export class RandomRotation extends tf.layers.Layer {
+export class RandomRotationLayer extends tf.layers.Layer {
   factor: number
   applyAtInference: boolean
 
@@ -44,8 +66,4 @@ export class RandomRotation extends tf.layers.Layer {
   }
 }
 
-tf.serialization.registerClass(RandomRotation)
-
-export function randomRotation(args: RandomRotationLayerArgs) {
-  return new RandomRotation(args)
-}
+tf.serialization.registerClass(RandomRotationLayer)

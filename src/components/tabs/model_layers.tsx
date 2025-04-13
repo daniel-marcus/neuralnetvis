@@ -1,8 +1,12 @@
 import { useRef, type ReactNode } from "react"
 import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
-import { layerDefMap } from "@/model/layer-definitions"
-import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model"
+import { getLayerDef, layerDefMap } from "@/model/layers"
+import type {
+  LayerConfig,
+  LayerConfigArray,
+  LayerConfigMap,
+} from "@/model/layers/types"
 
 const { InputRow, Slider, Select, Button } = Components
 const { CollapsibleWithTitle, DraggableList } = Components
@@ -17,7 +21,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
   const { className } = layerConfig
 
-  const layerDef = layerDefMap[className]
+  const layerDef = getLayerDef(className)
   const config = layerConfig.config as LayerConfigMap[typeof className]
   // TODO: allow multiple options + other inputTypes
   const option = layerDef.options?.[0]
@@ -54,7 +58,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
 function newDefaultLayer<T extends keyof LayerConfigMap>(
   className: T
 ): LayerConfig<T> {
-  const config = layerDefMap[className].defaultConfig
+  const config = getLayerDef(className).defaultConfig
   const layer = { className, config }
   return layer as LayerConfig<T>
 }
@@ -68,19 +72,21 @@ export const LayerConfigControl = () => {
   const selectRef = useRef<HTMLSelectElement>(null)
   const handleAdd = () => {
     if (!selectRef.current) return
-    const className = selectRef.current.value
-    const newLayer = newDefaultLayer(className as keyof LayerConfigMap)
+    const className = selectRef.current.value as keyof LayerConfigMap
+    const newLayer = newDefaultLayer(className)
 
     const flattenIdx =
       layerConfigs.findIndex((l) => l.className === "Flatten") ||
       layerConfigs.findIndex((l) => l.className === "Dense")
     const beforeOutputIdx = Math.max(layerConfigs.length - 1, 1)
 
+    const layerDef = getLayerDef(className)
+
     const insertIdx =
-      ["MaxPooling2D", "Conv2D"].includes(className) && flattenIdx > -1
-        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
-        : className === "RandomRotation"
+      className === "RandomRotation"
         ? 1 // insert RandomRotation after InputLayer
+        : layerDef.needsMultiDim && flattenIdx > -1
+        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
         : beforeOutputIdx // default
     const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
     setLayerConfigs(newLayerConfigs)
@@ -102,7 +108,7 @@ export const LayerConfigControl = () => {
       .map((key) => ({
         value: key,
         disabled:
-          ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(key) &&
+          getLayerDef(key as keyof LayerConfigMap).needsMultiDim &&
           !hasMutliDimInput,
       })),
   ]
