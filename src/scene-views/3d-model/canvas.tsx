@@ -9,7 +9,7 @@ import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useFlatView } from "./flat-view"
-import { useIsScreen, useIsTouchDevice } from "@/utils/screen"
+import { useIsScreen, isTouch } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 import { getTileDuration } from "@/components/tile-grid"
 
@@ -52,7 +52,6 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
     },
     config: { duration: getTileDuration() },
   })
-  const isTouchDevice = useIsTouchDevice()
   useFlatView()
   return (
     <>
@@ -65,9 +64,9 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
       <OrbitControls
         makeDefault
         target={defaultState.cameraLookAt}
-        enableZoom={isActive || isTouchDevice}
-        minPolarAngle={isActive || !isTouchDevice ? 0 : Math.PI / 2}
-        maxPolarAngle={isActive || !isTouchDevice ? Math.PI : Math.PI / 2}
+        enableZoom={isActive || isTouch()}
+        minPolarAngle={isActive || !isTouch() ? 0 : Math.PI / 2}
+        maxPolarAngle={isActive || !isTouch() ? Math.PI : Math.PI / 2}
         rotateSpeed={isActive ? 1 : 1.5}
       />
       <DebugUtils />

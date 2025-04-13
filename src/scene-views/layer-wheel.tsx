@@ -20,6 +20,7 @@ export const LayerWheel = () => {
         setCurrIdx={setFocussedIdx}
         onScroll={enter3d}
         onScrollEnd={enter2d}
+        autoHide={true}
       />
     </div>
   )

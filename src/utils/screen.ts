@@ -102,14 +102,3 @@ export function useInView(
 }
 
 export const isTouch = () => "ontouchstart" in window
-
-export function useIsTouchDevice() {
-  const [isTouchDevice, setIsTouchDevice] = useState(false)
-  useEffect(() => {
-    function check() {
-      setIsTouchDevice("ontouchstart" in window)
-    }
-    check()
-  }, [])
-  return isTouchDevice
-}

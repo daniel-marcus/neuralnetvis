@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useKeyCommand } from "@/utils/key-command"
 import type { SetterFunc } from "@/store"
+import { isTouch } from "@/utils/screen"
 
 const degPerItem = 6
 
@@ -16,24 +17,24 @@ interface WheelMenuProps {
   setCurrIdx: IdxSetter
   onScroll?: () => void
   onScrollEnd?: () => void
+  autoHide?: boolean
 }
 
 export const WheelMenu = (props: WheelMenuProps) => {
-  const [scrollerRef, wheelRotation, onClick] = useWheelInteractions(props)
-  const hasCurrIdx = typeof props.currIdx === "number"
+  const [ref, rotation, onClick, isActive] = useWheelInteractions(props)
   return (
     <div
-      ref={scrollerRef}
+      ref={ref}
       className={`absolute top-0 right-0 w-[130px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto text-sm sm:text-base ${
-        !hasCurrIdx ? "translate-x-[calc(66%-2rem)] hover:translate-x-0" : ""
-      } transition-transform duration-150 `}
+        !isActive ? "translate-x-[calc(66%-2rem)] hover:translate-x-0" : ""
+      } transition-transform duration-150 select-none no-scrollbar`}
     >
       <div
         className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-box sm:bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
       >
         <ul
           className={`flex items-center justify-center`}
-          style={{ transform: `rotate(${wheelRotation}deg)` }}
+          style={{ transform: `rotate(${rotation}deg)` }}
         >
           {props.items.map(({ label, disabled }, i) => (
             <li
@@ -59,7 +60,8 @@ export const WheelMenu = (props: WheelMenuProps) => {
 }
 
 function useWheelInteractions(props: WheelMenuProps) {
-  const { items, currIdx, setCurrIdx, onScroll, onScrollEnd } = props
+  const { items, currIdx, setCurrIdx, onScroll, onScrollEnd, autoHide } = props
+  const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
@@ -83,14 +85,20 @@ function useWheelInteractions(props: WheelMenuProps) {
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
-    let timeoutId: NodeJS.Timeout
+    let scrollEndTimeout: NodeJS.Timeout
     const handleScroll: EventListener = () => {
       const isHumanScroll = typeof jumpTarget.current === "undefined"
 
       if (isHumanScroll) {
+        if (!isTouch()) setIsActive(true)
         onScroll?.()
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => onScrollEnd?.(), 200)
+        clearTimeout(scrollEndTimeout)
+        if (!isTouch()) {
+          scrollEndTimeout = setTimeout(() => {
+            if (autoHide) setIsActive(false)
+            onScrollEnd?.()
+          }, 300)
+        }
       }
 
       if (!(scroller instanceof HTMLDivElement)) return
@@ -112,13 +120,28 @@ function useWheelInteractions(props: WheelMenuProps) {
         setCurrIdx(newIdx)
       }
     }
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.target && "tagName" in e.target && e.target.tagName === "BUTTON")
+        return
+      setIsActive((a) => !a)
+    }
+    const onTouchEnd = () => {
+      if (autoHide) setIsActive(false)
+      onScrollEnd?.()
+    }
     scroller.addEventListener("scroll", handleScroll)
-    return () => scroller.removeEventListener("scroll", handleScroll)
-  }, [setCurrIdx, items, onScroll, onScrollEnd])
+    scroller.addEventListener("touchstart", onTouchStart)
+    scroller.addEventListener("touchend", onTouchEnd)
+    return () => {
+      scroller.removeEventListener("scroll", handleScroll)
+      scroller.removeEventListener("touchstart", onTouchStart)
+      scroller.removeEventListener("touchend", onTouchEnd)
+    }
+  }, [setCurrIdx, items, onScroll, onScrollEnd, autoHide])
 
   useKeyboardNavigation(currIdx, items, onClick)
 
-  return [scrollerRef, wheelRotation, onClick] as const
+  return [scrollerRef, wheelRotation, onClick, isActive] as const
 }
 
 function useKeyboardNavigation(
