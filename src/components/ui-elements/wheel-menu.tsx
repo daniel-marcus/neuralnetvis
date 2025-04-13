@@ -98,7 +98,8 @@ function useWheelInteractions(props: WheelMenuProps) {
     if (!scroller) return
     let scrollEndTimeout: NodeJS.Timeout
     const handleScroll: EventListener = () => {
-      const isHumanScroll = typeof jumpTarget.current === "undefined"
+      const isHumanScroll =
+        typeof jumpTarget.current === "undefined" && scroller.scrollTop > 0
 
       if (isHumanScroll && !isTouch()) {
         setIsActive(true)
@@ -141,11 +142,23 @@ function useWheelInteractions(props: WheelMenuProps) {
     }
     const onTouchEnd = () => {
       if (autoHide) setIsActive(false)
-      onScrollEnd?.()
+      if (jumpTarget.current !== -1) {
+        onScrollEnd?.()
+      }
     }
     const onTouchMove = () => {
-      setIsActive(true)
+      if (scroller.scrollTop < -20) {
+        setCurrIdx(undefined)
+        jumpTarget.current = -1
+        clearTimeout(scrollEndTimeout)
+        scrollEndTimeout = setTimeout(
+          () => (jumpTarget.current = undefined),
+          500
+        )
+        return
+      }
       onScroll?.()
+      setIsActive(true)
     }
 
     scroller.addEventListener("scroll", handleScroll)
