@@ -116,16 +116,18 @@ export function useStatefulLayers(
 function useDeferUnfocussed(sample?: Sample, ms = 500) {
   // browse samples faster in single layer view (flat view) by deferring the update for unfocussed layers
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
-  const [shouldDeferOthers, setShouldDeferOthers] = useState(true)
+  const [allowOthers, setAllowOthers] = useState(false)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const timeoutUnset = useRef<NodeJS.Timeout | null>(null)
+  const lastSample = useRef<Sample | undefined>(sample)
   useEffect(() => {
-    if (!isFlatView) return
-    setShouldDeferOthers(true)
+    lastSample.current = sample
     if (timeoutUnset.current) clearTimeout(timeoutUnset.current)
-    timeoutUnset.current = setTimeout(() => setShouldDeferOthers(false), ms)
-  }, [isFlatView, sample, ms])
-  return isFlatView && shouldDeferOthers ? focussedIdx : undefined
+    timeoutUnset.current = setTimeout(() => setAllowOthers(true), ms)
+    return () => setAllowOthers(false)
+  }, [sample, ms])
+  const isNewSample = lastSample.current !== sample
+  return isFlatView && (isNewSample || !allowOthers) ? focussedIdx : undefined
 }
 
 export function updateGroups(statefulLayer: LayerStateful) {
