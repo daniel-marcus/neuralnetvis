@@ -247,6 +247,7 @@ export async function getDbDataAsTensors(
   const batches = await getAll<DbBatch>(ds.key, type, range)
   if (!batches.length) return
   const isClassification = ds.task === "classification"
+  await tf.ready()
   return tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xs))
     const shapeX = [-1, ...ds.inputDims] // -1 for unknown batch size

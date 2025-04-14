@@ -50,7 +50,7 @@ export type TypedParams = Params & (FitParams | FitDatasetParams)
 export interface Prediction {
   actual: number
   predicted: number
-  normPredicted: number // divided by max value of actual y
+  normPredicted: number // divided by max value of actual y (for regression only)
 }
 
 export interface Evaluation {

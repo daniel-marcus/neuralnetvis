@@ -33,9 +33,7 @@ function useEvaluation() {
       if (!ds || !model) return
       const { loss, accuracy } = await getModelEvaluation(subset)
       const { predictions, rSquared } =
-        ds.task === "regression"
-          ? (await getPredictions(ds, model, subset)) ?? {}
-          : {}
+        (await getPredictions(ds, model, subset)) ?? {}
       setEvaluation({ loss, accuracy, rSquared, predictions })
     }
     getPreds()
@@ -47,19 +45,22 @@ function ConfusionViewer() {
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
     <>
-      <div
-        className={`flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0 pointer-events-none`}
-      >
+      <div className={`pointer-events-none pb-8`}>
         <div
           className={`pointer-events-auto ${
             hasSample
-              ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
+              ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-10 max-w-screen max-h-screen overflow-clip"
               : ""
-          } transition-transform duration-500`}
+          } transition-transform duration-500 mx-auto`}
           onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
         >
           <ConfusionMatrix />
         </div>
+        {!hasSample && (
+          <div className="sticky left-0 w-screen p-main">
+            <Evaluation className="my-4 max-w-[500px] mx-auto" />
+          </div>
+        )}
       </div>
       <Portal target={sampleViewerPortal}>
         <SampleViewer />

@@ -6,7 +6,7 @@ export const cifar10: DatasetDef = {
   name: "CIFAR-10",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-04-14"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   inputDims: [32, 32, 3],
   preprocessFunc: "normalizeImage",
@@ -25,12 +25,12 @@ export const cifar10: DatasetDef = {
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([
-        "/data/cifar10_20k/x_train_1.npz",
-        "/data/cifar10_20k/x_train_2.npz",
-        "/data/cifar10_20k/x_train_3.npz",
-        "/data/cifar10_20k/y_train.npz",
-        "/data/cifar10_20k/x_test.npz",
-        "/data/cifar10_20k/y_test.npz",
+        "/data/cifar10_18k/x_train_1.npz",
+        "/data/cifar10_18k/x_train_2.npz",
+        "/data/cifar10_18k/x_train_3.npz",
+        "/data/cifar10_18k/y_train.npz",
+        "/data/cifar10_18k/x_test.npz",
+        "/data/cifar10_18k/y_test.npz",
       ])
     const [, ...dims] = xTrain1.shape
     const length = xTrain1.shape[0] + xTrain2.shape[0] + xTrain3.shape[0]
@@ -55,8 +55,8 @@ export const cifar10: DatasetDef = {
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       [
-        "/data/cifar10_20k/x_train_preview.npz",
-        "/data/cifar10_20k/y_train_preview.npz",
+        "/data/cifar10_18k/x_train_preview.npz",
+        "/data/cifar10_18k/y_train_preview.npz",
       ],
       true
     )

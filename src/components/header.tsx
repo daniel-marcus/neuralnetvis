@@ -24,7 +24,7 @@ export const Header = () => {
           <div
             className={`${
               !showGradient ? "hidden overlay-scrolled:block!" : ""
-            } xl:hidden! absolute h-[30vh] inset-0 bg-gradient-to-b from-background
+            } xl:hidden absolute h-[120px] overlay-scrolled:h-[var(--header-height)] inset-0 bg-gradient-to-b from-background
            to-transparent z-[-1]`}
           />
           <Logo />

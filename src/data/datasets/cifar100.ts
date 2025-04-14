@@ -115,12 +115,12 @@ export const cifar100: DatasetDef = {
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([
-        "/_dev/data/cifar100/x_train_1.npz",
-        "/_dev/data/cifar100/x_train_2.npz",
-        "/_dev/data/cifar100/x_train_3.npz",
-        "/_dev/data/cifar100/y_train.npz",
-        "/_dev/data/cifar100/x_test.npz",
-        "/_dev/data/cifar100/y_test.npz",
+        "/data/cifar100_18k/x_train_1.npz",
+        "/data/cifar100_18k/x_train_2.npz",
+        "/data/cifar100_18k/x_train_3.npz",
+        "/data/cifar100_18k/y_train.npz",
+        "/data/cifar100_18k/x_test.npz",
+        "/data/cifar100_18k/y_test.npz",
       ])
     const [, ...dims] = xTrain1.shape
     const length = xTrain1.shape[0] + xTrain2.shape[0] + xTrain3.shape[0]
@@ -145,8 +145,8 @@ export const cifar100: DatasetDef = {
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       [
-        "/_dev/data/cifar100/x_train_preview.npz",
-        "/_dev/data/cifar100/y_train_preview.npz",
+        "/data/cifar100_18k/x_train_preview.npz",
+        "/data/cifar100_18k/y_train_preview.npz",
       ],
       true
     )

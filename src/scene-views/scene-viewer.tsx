@@ -44,13 +44,19 @@ function SceneViewerInner(props: SceneViewerProps) {
       {section === "play" && isActive && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
-        <SceneTitle
-          title={title}
-          href={path}
-          section={section}
-          ds={ds ?? dsDef}
-        />
-        {section === "play" && isActive && <SceneButtons />}
+        <div
+          className={`w-full ${
+            isActive ? "sticky left-0 p-main pt-[var(--header-height)]!" : "p-4"
+          }`}
+        >
+          <SceneTitle
+            title={title}
+            href={path}
+            section={section}
+            ds={ds ?? dsDef}
+          />
+          {section === "play" && isActive && <SceneButtons />}
+        </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
       {section === "play" && view === "model" && <SampleSlider />}

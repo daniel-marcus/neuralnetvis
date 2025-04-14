@@ -12,7 +12,7 @@ export const datasets: DatasetDef[] = [
   handPose,
   mnist,
   californiaHousing,
-  cifar100,
   cifar10,
   autoMpg,
+  cifar100,
 ] as const

@@ -6,8 +6,12 @@ import type { Subset } from "@/store/data"
 import type { Prediction } from "./types"
 import { Dataset } from "@/data"
 
-async function getEvalData(ds: Dataset, subset: Subset = "test") {
-  return getDbDataAsTensors(ds, subset)
+async function getEvalData(
+  ds: Dataset,
+  subset: Subset = "test",
+  noOneHot = false
+) {
+  return getDbDataAsTensors(ds, subset, { noOneHot })
 }
 
 export async function getModelEvaluation(subset: Subset = "test") {
@@ -46,15 +50,18 @@ export async function getPredictions(
   model: tf.LayersModel,
   subset: Subset = "test"
 ): Promise<PredictionResult | undefined> {
-  // for regression only
   if (!ds) return
-  const data = await getEvalData(ds, subset)
+  const data = await getEvalData(ds, subset, true) // TODO: share with getModelEvaluation
   if (!model || !data) return
   const { X, y } = data
   try {
     const result = tf.tidy(() => {
       const yTrueArr = y.arraySync() as number[]
-      const yPred = (model.predict(X) as tf.Tensor).flatten()
+      const _yPred = model.predict(X) as tf.Tensor // .flatten()
+      const yPred =
+        ds.task === "classification"
+          ? _yPred.argMax(1).flatten()
+          : _yPred.flatten()
       const yPredNorm = yPred.div(y.max()).arraySync() as number[]
       const predictions = yPred.arraySync().map((predicted, i) => ({
         actual: yTrueArr[i],

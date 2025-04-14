@@ -166,7 +166,7 @@ function Tile(props: TileProps) {
             : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
         } border-2 ${
           isActive || inTransition
-            ? "border-transparent"
+            ? "border-transparent! border-0!"
             : "border-box group-hover/tile:border-accent"
         }`}
       >

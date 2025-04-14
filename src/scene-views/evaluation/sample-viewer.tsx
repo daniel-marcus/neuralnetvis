@@ -4,7 +4,7 @@ import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useCurrScene } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
-import { useHasBlur } from "@/scene-views/blur-mask"
+import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
 
 export function SampleViewer() {
@@ -32,7 +32,7 @@ export function SampleViewer() {
   }, [idxs, ds, subset, offset, itemsPerPage])
   const sampleIdx = useCurrScene((s) => s.sampleIdx)
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
-  const hasBlur = useHasBlur()
+  const hasBlur = !!useMaskMode()
   useKeyboardNavigation(idxs, itemsPerPage, setOffset)
 
   if (!samples.length) return null
