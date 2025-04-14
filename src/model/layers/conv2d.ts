@@ -13,6 +13,7 @@ export const Conv2D: LayerDef<"Conv2D"> = {
     padding: "same",
   },
   needsMultiDim: true,
+  isUserAddable: true,
   options: [
     {
       name: "filters",

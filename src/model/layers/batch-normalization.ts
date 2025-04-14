@@ -10,6 +10,7 @@ export const BatchNormalization: LayerDef<"BatchNormalization"> = {
     return tf.layers.batchNormalization(rest)
   },
   defaultConfig: {},
+  isUserAddable: true,
   getInputNids: (l, prev, prevIdx) => {
     // each neuron is connected to 1 neuron in the previous layer
     const shape = prev.outputShape as number[]

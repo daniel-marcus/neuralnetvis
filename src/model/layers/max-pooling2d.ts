@@ -8,6 +8,7 @@ export const MaxPooling2D: LayerDef<"MaxPooling2D"> = {
     poolSize: 2,
   },
   needsMultiDim: true,
+  isUserAddable: true,
   getInputNids: (l, prev, prevIdx) =>
     getConv2DInputNids(l, prev, prevIdx, true),
 }

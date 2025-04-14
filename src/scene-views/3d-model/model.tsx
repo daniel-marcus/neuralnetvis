@@ -21,6 +21,8 @@ export const Model = () => {
 function HoverComponents() {
   const selected = useSelected()
   const hovered = useHovered()
+  const isInteractive = useSceneStore((s) => s.vis.isInteractive)
+  if (!isInteractive) return null
   return (
     <>
       <HoverConnections />

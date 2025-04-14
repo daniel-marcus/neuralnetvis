@@ -11,7 +11,10 @@ import { RandomRotationLayerArgs } from "./random-rotation"
 import { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import { Nid } from "@/neuron-layers"
 import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional_depthwise"
+import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
+import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
 
+// TODO: import from tfjs layers
 export type LayerConfigMap = {
   InputLayer: InputLayerArgs
   Dense: DenseLayerArgs
@@ -22,6 +25,8 @@ export type LayerConfigMap = {
   BatchNormalization: BatchNormalizationLayerArgs
   RandomRotation: RandomRotationLayerArgs
   DepthwiseConv2D: DepthwiseConv2DLayerArgs
+  ReLU: ReLULayerArgs
+  ZeroPadding2D: ZeroPadding2DLayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {
@@ -53,5 +58,7 @@ export interface LayerDef<T extends keyof LayerConfigMap> {
   options?: ControlableOption<T>[]
   getInputNids?: GetInputNeuronsFunc
   needsMultiDim?: boolean // TODO: better name?
-  // TODO: getInputNids, applicableCondition, orderRule, configTransform?,
+  isInvisible?: boolean
+  isUserAddable?: boolean
+  // TODO: applicableCondition, orderRule, configTransform?,
 }

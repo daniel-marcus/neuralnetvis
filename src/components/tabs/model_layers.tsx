@@ -104,7 +104,7 @@ export const LayerConfigControl = () => {
       disabled: true,
     }, // TODO: disabled / filter condition in LayerDef?
     ...Object.keys(layerDefMap)
-      .filter((k) => !["InputLayer", "Flatten"].includes(k))
+      .filter((k) => layerDefMap[k as keyof LayerConfigMap].isUserAddable)
       .map((key) => ({
         value: key,
         disabled:

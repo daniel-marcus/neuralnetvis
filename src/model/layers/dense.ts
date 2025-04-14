@@ -18,6 +18,7 @@ export const Dense: LayerDef<"Dense"> = {
       transformFromSliderVal: (v) => 2 ** v,
     },
   ],
+  isUserAddable: true,
   getInputNids: (l, prev, prevIdx) => {
     // fully connected layer / Dense: each neuron is connected to all neurons in the previous layer
     const shape = prev.outputShape as number[]

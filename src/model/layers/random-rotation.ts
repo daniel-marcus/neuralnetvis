@@ -8,6 +8,7 @@ export const RandomRotation: LayerDef<"RandomRotation"> = {
     factor: 0.1,
   },
   needsMultiDim: true,
+  isUserAddable: true,
   options: [
     {
       name: "factor",

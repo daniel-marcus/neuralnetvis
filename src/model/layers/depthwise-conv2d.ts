@@ -11,7 +11,7 @@ export const DepthwiseConv2D: LayerDef<"DepthwiseConv2D"> = {
     padding: "same",
   },
   needsMultiDim: true,
-
+  isUserAddable: true,
   options: [
     {
       name: "depthMultiplier",

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo } from "react"
 import { useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import { getLayerDef } from "@/model/layers"
+import { LayerConfigMap } from "@/model/layers/types"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
@@ -46,5 +48,8 @@ const layer2WheelItem = (layer: Layer) => ({
 })
 
 function isNotVisible(layer: Layer) {
-  return ["Flatten", "Dropout"].includes(layer.getClassName())
+  const className = layer.getClassName()
+  const layerDef = getLayerDef(className as keyof LayerConfigMap)
+  if (layerDef?.isInvisible) return true
+  // return ["Flatten", "Dropout"].includes(layer.getClassName())
 }

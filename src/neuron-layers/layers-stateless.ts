@@ -30,11 +30,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         )
 
         const units = getUnits(tfLayer)
-        const meshParams = ["BatchNormalization", "RandomRotation"].includes(
-          className
-        )
-          ? prevLayer!.meshParams
-          : getMeshParams(tfLayer, layerPos, units)
+        const meshParams =
+          ["BatchNormalization", "RandomRotation"].includes(className) &&
+          !!prevLayer
+            ? prevLayer.meshParams
+            : getMeshParams(tfLayer, layerPos, units)
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
         const outputShape = tfLayer.outputShape as number[]
 
@@ -138,7 +138,10 @@ export function getIndex3d(flatIndex: number, outputShape: number[]) {
 }
 
 export function getUnits(layer: tf.layers.Layer) {
-  if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
+  const className = layer.getClassName()
+  const layerDef = getLayerDef(className as keyof LayerConfigMap)
+  if (layerDef?.isInvisible) return 0
+  // if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
   const [, ...dims] = layer.outputShape as number[]
   return dims.reduce((a, b) => a * b, 1)
 }

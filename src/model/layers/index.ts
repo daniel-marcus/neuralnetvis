@@ -7,6 +7,8 @@ import { InputLayer } from "./input-layer"
 import { BatchNormalization } from "./batch-normalization"
 import { RandomRotation } from "./random-rotation"
 import { DepthwiseConv2D } from "./depthwise-conv2d"
+import { ReLU } from "./relu"
+import { ZeroPadding2D } from "./zero-padding2d"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -19,6 +21,8 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   BatchNormalization,
   RandomRotation,
   DepthwiseConv2D,
+  ReLU,
+  ZeroPadding2D,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(

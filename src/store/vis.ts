@@ -16,6 +16,7 @@ export const defaultVisConfig = {
   lineActivationThreshold: 0.5,
   invisibleLayers: [],
   isLocked: false,
+  isInteractive: true,
   lightsOn: true,
   lightIntensity: 1,
 }
@@ -33,6 +34,7 @@ export interface VisConfig {
   lineActivationThreshold: number
   invisibleLayers: string[]
   isLocked: boolean
+  isInteractive: boolean // node hover and click
   lightsOn: boolean
   lightIntensity: number
 }

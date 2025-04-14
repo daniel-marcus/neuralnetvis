@@ -171,8 +171,9 @@ function useInteractions(groupedNeurons: Neuron[]) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
   const isActive = useSceneStore((s) => s.isActive)
+  const isInteractive = useSceneStore((s) => s.vis.isInteractive)
   const eventHandlers = useMemo(() => {
-    if (!isActive) return
+    if (!isActive || !isInteractive) return
     const result = {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         if (e.buttons) return
@@ -190,6 +191,6 @@ function useInteractions(groupedNeurons: Neuron[]) {
       },
     }
     return result
-  }, [isActive, groupedNeurons, toggleHovered, toggleSelected])
+  }, [isActive, isInteractive, groupedNeurons, toggleHovered, toggleSelected])
   return eventHandlers
 }

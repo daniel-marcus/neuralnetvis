@@ -6,6 +6,8 @@ export const Dropout: LayerDef<"Dropout"> = {
   defaultConfig: {
     rate: 0.2,
   },
+  isInvisible: true,
+  isUserAddable: true,
   options: [
     {
       name: "rate",

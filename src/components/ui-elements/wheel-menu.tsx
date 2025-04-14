@@ -5,7 +5,7 @@ import { useKeyCommand } from "@/utils/key-command"
 import { isTouch } from "@/utils/screen"
 import type { SetterFunc } from "@/store"
 
-const degPerItem = 6
+const DEFAULT_DEG_PER_ITEM = 6
 
 type WheelMenuItem = { label: ReactNode; disabled?: boolean }
 type Idx = number | undefined
@@ -21,7 +21,14 @@ interface WheelMenuProps {
 }
 
 export const WheelMenu = (props: WheelMenuProps) => {
-  const [ref, rotation, onClick, isActive] = useWheelInteractions(props)
+  const degPerItem = Math.min(
+    DEFAULT_DEG_PER_ITEM,
+    Math.floor(360 / props.items.length)
+  )
+  const [ref, rotation, onClick, isActive] = useWheelInteractions(
+    props,
+    degPerItem
+  )
   return (
     <div
       ref={ref}
@@ -70,7 +77,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
   )
 }
 
-function useWheelInteractions(props: WheelMenuProps) {
+function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   const { items, currIdx, setCurrIdx, onScroll, onScrollEnd, autoHide } = props
   const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
@@ -89,7 +96,7 @@ function useWheelInteractions(props: WheelMenuProps) {
       scroller.scrollTo({ top, behavior: "smooth" })
       setTimeout(() => (jumpTarget.current = undefined), 500)
     },
-    [setCurrIdx]
+    [setCurrIdx, degPerItem]
   )
 
   // onScroll: upd wheelRotation and currIdx + limit scrolling
@@ -171,7 +178,7 @@ function useWheelInteractions(props: WheelMenuProps) {
       scroller.removeEventListener("touchmove", onTouchMove)
       scroller.removeEventListener("touchend", onTouchEnd)
     }
-  }, [setCurrIdx, items, onScroll, onScrollEnd, autoHide])
+  }, [setCurrIdx, items, onScroll, onScrollEnd, autoHide, degPerItem])
 
   useKeyboardNavigation(currIdx, items, onClick)
 

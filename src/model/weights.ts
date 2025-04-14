@@ -9,16 +9,22 @@ export function useWeights(model?: tf.LayersModel) {
   useEffect(() => {
     async function updateWeights() {
       if (!model) return
-      const _newStates = model.layers.map((l) => {
-        return tf.tidy(() => {
-          const [_weights, biases] = l.getWeights()
-          const numWeights = _weights?.shape[_weights?.shape.length - 1]
-          const weights = _weights?.transpose().reshape([numWeights, -1])
-          const maxAbsWeight = // needed only for dense connections
-            l.getClassName() === "Dense" ? _weights?.abs().max() : undefined
-          return { weights, biases, maxAbsWeight } as const
+      let _newStates = []
+      try {
+        _newStates = model.layers.map((l) => {
+          return tf.tidy(() => {
+            const [_weights, biases] = l.getWeights()
+            const numWeights = _weights?.shape[_weights?.shape.length - 1]
+            const weights = _weights?.transpose().reshape([numWeights, -1])
+            const maxAbsWeight = // needed only for dense connections
+              l.getClassName() === "Dense" ? _weights?.abs().max() : undefined
+            return { weights, biases, maxAbsWeight } as const
+          })
         })
-      })
+      } catch (e) {
+        console.log("Error getting weights", e)
+        return
+      }
 
       try {
         const newStates = await Promise.all(
