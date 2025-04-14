@@ -1,17 +1,14 @@
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
+import { getLayerDef, layerDefMap } from "@/model/layers"
+import type { LayerConfigMap } from "@/model/layers/types"
 import type { ReactElement } from "react"
 import type { LayerPos } from "./types"
-import { getLayerDef, layerDefMap } from "@/model/layers"
-import { LayerConfigMap } from "@/model/layers/types"
 
 export interface LayerLayout {
   geometry: ReactElement
   spacing: number
 }
-
-type OutputOrient = "horizontal" | "vertical"
-export const OUTPUT_ORIENT: OutputOrient = "vertical"
 
 export type MeshParams = {
   geometry: THREE.BoxGeometry | THREE.SphereGeometry
@@ -64,7 +61,7 @@ export function getMeshParams(
   }
 }
 
-const MAX_SINGLE_COL_HEIGHT = 10
+const MAX_SINGLE_COL_HEIGHT = 25
 
 export function getGridSize(
   height: number,
@@ -72,12 +69,6 @@ export function getGridSize(
   neuronSpacing: number = 1.8,
   additionalSpacing = 0
 ) {
-  const total = height * width
-  if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
-    // 1D column as 2D grid when > 10 neurons
-    width = Math.ceil(Math.sqrt(total))
-    height = Math.ceil(total / width)
-  }
   const totalHeight = height * neuronSpacing + additionalSpacing
   const totalWidth = width * neuronSpacing + additionalSpacing
   return [totalHeight, totalWidth]
@@ -90,44 +81,36 @@ export function getNeuronPos(
   width: number = 1,
   spacing: number
 ) {
-  const total = height * width
-  return layerPos === "output" || (layerPos === "input" && width === 1)
-    ? getLineXYZ(i, total, spacing)
-    : getGroupedGridXYZ(i, height, width, spacing)
+  const mustBeColumn =
+    layerPos === "output" || (layerPos === "input" && width === 1)
+  return getGridXYZ(i, height, width, spacing, mustBeColumn)
 }
 
-export function getGroupedGridXYZ(
+function getGridXYZ(
   i: number,
   height: number,
   width: number,
-  spacing: number
+  spacing: number,
+  forceColumns = false
 ): [number, number, number] {
   const total = height * width
-  if (width === 1 && total > MAX_SINGLE_COL_HEIGHT) {
-    // 1D column as 2D grid when > 10 neurons
-    width = Math.ceil(Math.sqrt(total))
-    height = Math.ceil(total / width)
+  let zSpacing = spacing
+  if (width === 1) {
+    if (forceColumns) {
+      height = Math.min(MAX_SINGLE_COL_HEIGHT, height)
+      width = Math.ceil(total / height)
+      zSpacing = 5
+    } else {
+      // convert 1D column to 2D grid
+      width = Math.ceil(Math.sqrt(total))
+      height = Math.ceil(total / width)
+    }
   }
-  const NEURON_SPACING = spacing
-  const offsetY = (height - 1) * NEURON_SPACING * 0.5
-  const offsetZ = (width - 1) * NEURON_SPACING * -0.5
+  const offsetY = (height - 1) * spacing * 0.5
+  const offsetZ = (width - 1) * zSpacing * -0.5
 
-  const y = -1 * Math.floor(i / width) * NEURON_SPACING + offsetY // row
-  const z = (i % width) * NEURON_SPACING + offsetZ // column
+  const y = -1 * Math.floor(i / width) * spacing + offsetY // row
+  const z = (i % width) * zSpacing + offsetZ // column
 
   return [0, y, z] as const
-}
-
-function getLineXYZ(
-  i: number,
-  total: number,
-  spacing: number,
-  orient: OutputOrient = "vertical"
-): [number, number, number] {
-  const NEURON_SPACING = spacing
-  const offsetY = (total - 1) * NEURON_SPACING * -0.5
-  const factor = orient === "vertical" ? -1 : 1 // reverse
-  const y = (i * NEURON_SPACING + offsetY) * factor
-  const z = 0
-  return orient === "vertical" ? ([0, y, z] as const) : ([0, z, y] as const)
 }

@@ -15,7 +15,6 @@ export async function getProcessedActivations(
   activationStats?: ActivationStats[],
   isRegression?: boolean
 ) {
-  await tf.ready()
   const activationTensors = tf.tidy(() => {
     const layerActivations = getLayerActivations(model, sample.xTensor)
     const activations = layerActivations.map((layerActivation, i) => {
@@ -61,14 +60,19 @@ export function getLayerActivations(
   const inputDimsModel = model.layers[0].batchInputShape.slice(1)
   const inputDimsSample = inputTensor.shape.slice(1)
   if (!checkShapeMatch(inputDimsModel, inputDimsSample)) return []
-  return tf.tidy(() => {
-    const tmpModel = tf.model({
-      inputs: model.input,
-      outputs: model.layers.flatMap((layer) => layer.output),
+  try {
+    return tf.tidy(() => {
+      const tmpModel = tf.model({
+        inputs: model.input,
+        outputs: model.layers.flatMap((layer) => layer.output),
+      })
+      const layerActivations = tmpModel.predict(
+        inputTensor
+      ) as tf.Tensor<tf.Rank>[]
+      return layerActivations
     })
-    const layerActivations = tmpModel.predict(
-      inputTensor
-    ) as tf.Tensor<tf.Rank>[]
-    return layerActivations
-  })
+  } catch (e) {
+    console.log("Error getting activations", e)
+    return []
+  }
 }

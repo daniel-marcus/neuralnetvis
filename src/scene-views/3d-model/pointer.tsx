@@ -4,7 +4,7 @@ import {
   getWorldPos,
   type Pos,
 } from "@/scene-views/3d-model/utils"
-import { OUTPUT_ORIENT, getNeuronPos } from "@/neuron-layers/layout"
+import { getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./neuron-group"
 import { LABEL_COLOR } from "./label"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
@@ -29,7 +29,6 @@ export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
 
 export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
   // can be used for custom pointing later
-
   if (!pointedNeuron) return null
   const v = getWorldPos(pointedNeuron)
   if (!v) return null
@@ -45,7 +44,7 @@ interface PointerProps {
 
 export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
   const [x, y, z] = position
-  const pointerPosition = getPointerPos(x, y, z, size * 1.7)
+  const pointerPosition = [x, y, z + size * 1.7] as Pos
   const [ref] = useAnimatedPosition(pointerPosition, 0.6)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
@@ -53,7 +52,7 @@ export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
     <customText
       ref={ref}
       position={pointerPosition}
-      text={"☜"} // ·
+      text={"☜"}
       fontSize={size}
       color={color}
       anchorX="left"
@@ -61,9 +60,4 @@ export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
       rotation={[0, -Math.PI / 2, 0]}
     />
   )
-}
-
-function getPointerPos(x: number, y: number, z: number, offset = 1): Pos {
-  if (OUTPUT_ORIENT === "vertical") return [x, y, z + offset]
-  else return [x, y + 5, z]
 }

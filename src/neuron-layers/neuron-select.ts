@@ -2,9 +2,9 @@ import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
 import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
-import { getHighlightColor } from "../utils/colors"
-import type { LayerStateful, Nid } from "./types"
+import { getHighlightColor } from "@/utils/colors"
 import { updateGroups } from "./layers-stateful"
+import type { LayerStateful, Nid } from "./types"
 
 export function useNeuronSelect(
   isActive: boolean,

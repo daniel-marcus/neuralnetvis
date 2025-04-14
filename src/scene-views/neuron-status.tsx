@@ -5,8 +5,8 @@ import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
-import { Table } from "../components/ui-elements"
-import { useHasLesson } from "../components/lesson"
+import { Table } from "@/components/ui-elements"
+import { useHasLesson } from "@/components/lesson"
 import type { Neuron } from "@/neuron-layers/types"
 
 export const NeuronStatus = () => {

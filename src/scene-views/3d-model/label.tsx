@@ -3,10 +3,9 @@ import { useFrame, useThree, extend } from "@react-three/fiber"
 import * as THREE from "three"
 import { Text } from "troika-three-text"
 import { useSceneStore } from "@/store"
-import { OUTPUT_ORIENT } from "@/neuron-layers/layout"
+import { round } from "@/data/utils"
 import type { ThreeElement } from "@react-three/fiber"
 import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
-import { round } from "@/data/utils"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 // https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
@@ -102,13 +101,7 @@ export const NeuronLabel = ({
       fontSize={size ?? 1}
       font={"/fonts/Menlo-Regular.woff"}
       color={color}
-      anchorX={
-        OUTPUT_ORIENT === "vertical"
-          ? side === "left"
-            ? "right"
-            : "left"
-          : "center"
-      }
+      anchorX={side === "left" ? "right" : "left"}
       anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
     />
@@ -123,7 +116,5 @@ function getTextPos(
   size = 1
 ): [number, number, number] {
   const factor = side === "right" ? 1 : -1
-  return OUTPUT_ORIENT === "vertical"
-    ? [x, y, z + size * 3.5 * factor]
-    : [x, y + 3, z]
+  return [x, y, z + size * 3.5 * factor]
 }
