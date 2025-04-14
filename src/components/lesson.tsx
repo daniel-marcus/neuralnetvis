@@ -1,6 +1,6 @@
 "use client"
 
-import { cloneElement, useEffect, useState } from "react"
+import { cloneElement, createRef, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { useGlobalStore } from "@/store"
 import { useLock } from "@/scene-views/3d-model/lock"
@@ -34,6 +34,17 @@ export const Lesson = (props: LessonProps) => {
         </div>
       </div>
     </>
+  )
+}
+
+export const lessonOverlayPortal = createRef<HTMLDivElement>()
+
+export function LessonOverlayPortal() {
+  return (
+    <div
+      ref={lessonOverlayPortal}
+      className="absolute z-20 pointer-events-none inset-0"
+    />
   )
 }
 

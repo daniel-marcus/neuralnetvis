@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useCurrScene, useSceneStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "../utils/colors"
 import type { LayerStateful, Nid } from "./types"
@@ -50,17 +50,17 @@ export function useNeuronSelect(
 }
 
 export function useHovered() {
-  const hoveredNid = useCurrScene((s) => s.hoveredNid)
+  const hoveredNid = useSceneStore((s) => s.hoveredNid)
   return useNeuron(hoveredNid)
 }
 
 export function useSelected() {
-  const selectedNid = useCurrScene((s) => s.selectedNid)
+  const selectedNid = useSceneStore((s) => s.selectedNid)
   return useNeuron(selectedNid)
 }
 
 function useNeuron(nid?: Nid) {
-  const allNeurons = useCurrScene((s) => s.allNeurons)
+  const allNeurons = useSceneStore((s) => s.allNeurons)
   return useMemo(
     () => (nid ? allNeurons.get(nid) : undefined),
     [allNeurons, nid]

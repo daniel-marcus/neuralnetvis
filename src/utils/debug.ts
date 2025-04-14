@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import * as tf from "@tensorflow/tfjs"
 import { getThreadsCount } from "@tensorflow/tfjs-backend-wasm"
 import { useGlobalStore, isDebug, setStatus, getThree, getScene } from "@/store"
@@ -51,4 +53,13 @@ function showStats() {
   const tfVars = tfEngine.state.registeredVariables
   const wasmThreads = getThreadsCount()
   console.log({ appState, scene, glInfo, tfEngine, tfVars, wasmThreads })
+}
+
+export function useScreenshotBodyClass() {
+  const searchParams = useSearchParams()
+  const isScreenshot = typeof searchParams.get("screenshot") === "string"
+  useEffect(() => {
+    if (isScreenshot) document.body.classList.add("screenshot")
+    return () => document.body.classList.remove("screenshot")
+  }, [isScreenshot])
 }

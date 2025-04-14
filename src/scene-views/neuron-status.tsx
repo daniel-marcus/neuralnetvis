@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { SphereGeometry } from "three"
-import { useCurrScene, useGlobalStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/utils/colors"
@@ -13,15 +13,15 @@ export const NeuronStatus = () => {
   const _hovered = useHovered()
   const _selected = useSelected()
   const selected = _hovered ?? _selected
-  const toggleSelected = useCurrScene((s) => s.toggleSelected)
+  const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
   const hasLesson = useHasLesson()
-  const visLocked = useCurrScene((s) => s.vis.isLocked)
+  const visLocked = useSceneStore((s) => s.vis.isLocked)
   const handleClick = (e: React.MouseEvent) => {
     if ("tagName" in e.target && e.target.tagName === "BUTTON") return
     toggleSelected(null)
   }
-  if (!selected || (hasLesson && visLocked)) return <div />
+  if (!selected || (hasLesson && visLocked)) return null
   return (
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${

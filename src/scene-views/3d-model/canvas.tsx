@@ -53,6 +53,7 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
     config: { duration: getTileDuration() },
   })
   useFlatView()
+
   return (
     <>
       <ThreeStoreSetter />

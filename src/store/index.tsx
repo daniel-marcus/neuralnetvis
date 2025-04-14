@@ -1,4 +1,4 @@
-import { createContext, createRef, useContext, useEffect, useRef } from "react"
+import { createContext, useContext, useEffect, useRef } from "react"
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
 import { createViewSlice, View, ViewSlice } from "./view"
@@ -94,7 +94,6 @@ export type GlobalStoreType = TabsSlice &
     scene: SceneStore
     setScene: (scene: SceneStore) => void
     handLandmarker?: HandLandmarker
-    portalRef: React.RefObject<HTMLDivElement | null>
     scrollPos: number // used to restore scroll position when switching from scene back to main
   }
 
@@ -111,7 +110,6 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
     get().status.reset()
     set({ scene })
   },
-  portalRef: createRef<HTMLDivElement>(),
   scrollPos: 0,
 }))
 

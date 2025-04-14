@@ -18,11 +18,18 @@ export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   if (!showPointer || !neuron) return null
   const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
   const position = getNeuronPos(neuron.index, layerPos, height, width, spacing)
-  return <Pointer position={position} color={LABEL_COLOR} />
+  return (
+    <Pointer
+      position={position}
+      color={LABEL_COLOR}
+      size={meshParams.labelSize}
+    />
+  )
 }
 
 export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
   // can be used for custom pointing later
+
   if (!pointedNeuron) return null
   const v = getWorldPos(pointedNeuron)
   if (!v) return null
@@ -33,30 +40,30 @@ export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
 interface PointerProps {
   position: Pos
   color: string
+  size?: number
 }
 
-export const Pointer = ({ position, color }: PointerProps) => {
+export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
   const [x, y, z] = position
-  const pointerPosition = getPointerPos(x, y, z)
+  const pointerPosition = getPointerPos(x, y, z, size * 1.7)
   const [ref] = useAnimatedPosition(pointerPosition, 0.6)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
   return (
     <customText
       ref={ref}
-      position={getPointerPos(x, y, z)}
+      position={pointerPosition}
       text={"☜"} // ·
-      fontSize={1}
+      fontSize={size}
       color={color}
-      anchorX="center"
+      anchorX="left"
       anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
     />
   )
 }
 
-function getPointerPos(x: number, y: number, z: number): Pos {
-  if (OUTPUT_ORIENT === "vertical")
-    return [x, y - 0.1, z + 2.2] // [x, y, z + 2.5]
+function getPointerPos(x: number, y: number, z: number, offset = 1): Pos {
+  if (OUTPUT_ORIENT === "vertical") return [x, y, z + offset]
   else return [x, y + 5, z]
 }

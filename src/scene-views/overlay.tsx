@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { getTileDuration, type Section } from "@/components/tile-grid"
 import { useBodyFreeze } from "@/utils/body-freeze"
+import { lessonOverlayPortal } from "@/components/lesson"
 
 type SceneOverlayProps = {
   children: ReactNode
@@ -21,7 +22,6 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
       setLocalActive(false)
     }
   }, [isActive, section])
-  const portalRef = useGlobalStore((s) => s.portalRef)
   const ref = useRef<HTMLDivElement>(null)
   useBodyFreeze(section === "play" && isActive, ref)
   useIsScrolledBodyClass(ref, "overlay-scrolled")
@@ -42,8 +42,9 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
       {children}
     </div>
   )
-  return isActive && localActive && section === "learn" && portalRef.current
-    ? createPortal(comp, portalRef.current!)
+  const shouldUsePortal = isActive && localActive && section === "learn"
+  return shouldUsePortal && lessonOverlayPortal.current
+    ? createPortal(comp, lessonOverlayPortal.current!)
     : comp
 }
 

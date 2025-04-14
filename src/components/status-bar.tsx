@@ -1,20 +1,21 @@
-import React, { useRef, useEffect, ReactNode, useMemo } from "react"
+import React, { useRef, useEffect, ReactNode, useMemo, createRef } from "react"
 import { clearStatus, useGlobalStore } from "@/store"
-import { NeuronStatus } from "../scene-views/neuron-status"
 import { ProgressBar } from "./progress-bar"
 import { Table } from "./ui-elements"
-import { SampleViewer } from "@/scene-views/evaluation/sample-viewer"
+
+export const neuronStatusPortal = createRef<HTMLDivElement>()
+export const sampleViewerPortal = createRef<HTMLDivElement>()
 
 export const StatusBar = () => {
   return (
     <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none screenshot:hidden">
       <div className={`-mb-1 relative`}>
         <div className="flex justify-between items-end relative">
-          <NeuronStatus />
+          <div ref={neuronStatusPortal} />
           <Status />
         </div>
       </div>
-      <SampleViewer />
+      <div ref={sampleViewerPortal} />
       <ProgressBar />
     </div>
   )

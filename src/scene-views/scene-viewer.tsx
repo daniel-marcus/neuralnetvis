@@ -15,9 +15,13 @@ import { SceneOverlay } from "./overlay"
 import { SceneTitle } from "./title"
 import { SampleSlider } from "./sample-slider"
 
-import type { TileDef } from "@/components/tile-grid"
 import { SceneButtons } from "./scene-buttons"
 import { LayerWheel } from "./layer-wheel"
+import { NeuronStatus } from "./neuron-status"
+import { neuronStatusPortal } from "@/components/status-bar"
+import { Portal } from "@/components/portal"
+
+import type { TileDef } from "@/components/tile-grid"
 
 type SceneViewerProps = TileDef & { isActive: boolean }
 
@@ -50,6 +54,11 @@ function SceneViewerInner(props: SceneViewerProps) {
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
       {section === "play" && view === "model" && <SampleSlider />}
+      {section === "play" && isActive && (
+        <Portal target={neuronStatusPortal}>
+          <NeuronStatus />
+        </Portal>
+      )}
     </>
   )
 }

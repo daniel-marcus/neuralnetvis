@@ -4,6 +4,9 @@ import { getModelEvaluation, getPredictions } from "@/model/evaluation"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { ConfusionMatrix } from "./confusion-matrix"
+import { SampleViewer } from "./sample-viewer"
+import { Portal } from "@/components/portal"
+import { sampleViewerPortal } from "@/components/status-bar"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)
@@ -43,20 +46,25 @@ function ConfusionViewer() {
   const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
-    <div
-      className={`flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0 pointer-events-none`}
-    >
+    <>
       <div
-        className={`pointer-events-auto ${
-          hasSample
-            ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
-            : ""
-        } transition-transform duration-500`}
-        onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
+        className={`flex w-[calc(100vw-2*var(--padding-main))] justify-center xl:fixed xl:inset-0 xl:max-h-screen xl:min-h-screen xl:items-center pb-32 xl:p-0 pointer-events-none`}
       >
-        <ConfusionMatrix />
+        <div
+          className={`pointer-events-auto ${
+            hasSample
+              ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-50 "
+              : ""
+          } transition-transform duration-500`}
+          onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
+        >
+          <ConfusionMatrix />
+        </div>
       </div>
-    </div>
+      <Portal target={sampleViewerPortal}>
+        <SampleViewer />
+      </Portal>
+    </>
   )
 }
 

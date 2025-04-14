@@ -10,12 +10,14 @@ export const ThreeStoreSetter = () => {
 
 function useThreeStoreSetter() {
   // make three available outside of the render context
-  const { camera, invalidate, gl, controls: _controls } = useThree()
+  const camera = useThree((s) => s.camera)
+  const gl = useThree((s) => s.gl)
+  const invalidate = useThree((s) => s.invalidate)
+  const controls = useThree((s) => s.controls) as OrbitControls
   const setThree = useSceneStore((s) => s.setThree)
   useEffect(() => {
-    const controls = _controls as OrbitControls
     const three = { camera, invalidate, gl, controls }
     setThree(three)
-  }, [camera, invalidate, gl, _controls, setThree])
+  }, [camera, invalidate, gl, controls, setThree])
   return null
 }
