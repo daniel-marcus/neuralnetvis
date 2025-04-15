@@ -13,7 +13,7 @@ import type { LayerStateful } from "@/neuron-layers/types"
 type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
 
 export const Layer = (props: LayerProps) => {
-  const { layerPos, groups, prevLayer } = props
+  const { layerPos, groups, prevLayer, hasColorChannels } = props
   const ref = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
@@ -22,7 +22,7 @@ export const Layer = (props: LayerProps) => {
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.1 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(ref, scale, duration)
-  const [material, addBlend] = useAdditiveBlending(props.hasColorChannels) // TODO: share material?
+  const [material, addBlend] = useAdditiveBlending(hasColorChannels) // TODO: share material?
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
   if (!props.neurons.length) return null
@@ -30,15 +30,30 @@ export const Layer = (props: LayerProps) => {
     <>
       <group ref={ref} renderOrder={addBlend ? -1 : undefined}>
         {/* render layer w/ additive blending first (mixed colors) to avoid transparency to other objects */}
-        {groups.map((group, i) => (
-          <NeuronGroup key={i} {...props} group={group} material={material} />
-        ))}
+        {!hasColorChannels ? (
+          <NeuronGroup
+            {...props}
+            group={props.layerGroup}
+            material={material}
+          />
+        ) : (
+          groups.map((group, i) => (
+            <NeuronGroup key={i} {...props} group={group} material={material} />
+          ))
+        )}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
       {showConnections && <Connections layer={props} prevLayer={prevLayer} />}
     </>
   )
 }
+
+/* 
+{groups.map((group, i) => (
+          <NeuronGroup key={i} {...props} group={group} material={material} />
+        ))}
+
+*/
 
 function useFocussed(layerIdx: number) {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)

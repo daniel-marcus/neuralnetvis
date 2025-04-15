@@ -32,6 +32,7 @@ export interface LayerStateless {
   hasLabels?: boolean
   hasColorChannels: boolean
   groups: GroupDef[]
+  layerGroup: GroupDef
 }
 
 export interface LayerStateful extends LayerStateless {
@@ -39,6 +40,7 @@ export interface LayerStateful extends LayerStateless {
   maxAbsWeight?: number
   prevLayer?: LayerStateful
   groups: GroupStateful[]
+  layerGroup: GroupStateful
 }
 
 // Types for Groups

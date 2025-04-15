@@ -37,6 +37,8 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
         const outputShape = tfLayer.outputShape as number[]
 
+        const hasColorChannels = layerPos === "input" && outputShape[3] === 3
+
         const layerStateless: LayerStateless = {
           index: layerIndex,
           visibleIdx,
@@ -49,9 +51,16 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
             (layerPos === "output" && !!ds?.outputLabels?.length),
-          hasColorChannels: layerPos === "input" && outputShape[3] === 3,
+          hasColorChannels,
           neurons: [],
           groups: [],
+          layerGroup: {
+            // as dummy here
+            index: 0,
+            nids: [],
+            nidsStr: "",
+            meshRef: createRef<InstancedMesh>(),
+          },
         }
 
         const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
@@ -74,7 +83,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 layerIndex,
                 groupIndex,
                 indexInGroup,
-                meshRef: meshRefs[groupIndex],
+                meshRef: hasColorChannels ? meshRefs[groupIndex] : meshRefs[0], // non-color layers share 1 instanced mesh now
                 visibleLayerIndex: visibleIdx,
                 inputNids,
                 inputNeurons: prevLayer
@@ -107,11 +116,19 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
             neurons: groupedNeurons,
           }
         })
+        const layerGroup = {
+          index: 0,
+          nids: neurons.map((n) => n.nid),
+          nidsStr: neurons.map((n) => n.nid).join(","),
+          meshRef: meshRefs[0],
+          neurons,
+        }
         const layer = {
           ...layerStateless,
           neurons,
           neuronsMap,
           groups,
+          layerGroup,
         }
         return [...acc, layer]
       }, [] as LayerStateless[]) ?? []
@@ -121,7 +138,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   return layers
 }
 
-const MAX_HIDDEN_LAYERS = 10
+const MAX_HIDDEN_LAYERS = 30
 
 function shouldSkip(layerIdx: number, totalLayers: number) {
   // avoid browser crash with too large models

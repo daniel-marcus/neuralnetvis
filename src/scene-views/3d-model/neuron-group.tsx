@@ -83,13 +83,8 @@ export function useGroupPosition(props: NeuronGroupProps) {
   const [, height, width = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
-    const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
-    const groupsPerRow = Math.ceil(Math.sqrt(groupCount))
-    const groupsPerColumn = Math.ceil(groupCount / groupsPerRow)
-    const offsetY = (groupsPerColumn - 1) * gHeight * 0.5
-    const offsetZ = (groupsPerRow - 1) * gWidth * -0.5
-    const y = -1 * Math.floor(groupIndex / groupsPerRow) * gHeight + offsetY // row
-    const z = (groupIndex % groupsPerRow) * gWidth + offsetZ // column
+    const [gHeight] = getGridSize(height, width, spacing, GRID_SPACING)
+
     const SPLIT_COLORS_OFFSET = 0.05 // to avoid z-fighting
     return layerPos === "input" && hasColorChannels
       ? splitColors
@@ -103,7 +98,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
             groupIndex * SPLIT_COLORS_OFFSET,
             groupIndex * SPLIT_COLORS_OFFSET,
           ]
-      : [0, y, z]
+      : [0, 0, 0]
   }, [
     groupIndex,
     groupCount,
@@ -119,16 +114,18 @@ export function useGroupPosition(props: NeuronGroupProps) {
 }
 
 function useNeuronPositions(props: NeuronGroupProps) {
-  const { layerPos, group, meshParams, tfLayer } = props
+  const { layerPos, group, meshParams, tfLayer, hasColorChannels } = props
   const spacing = useNeuronSpacing(meshParams)
-  const [, height, width = 1] = tfLayer.outputShape as number[]
+  const [, height, width = 1, _channels = 1] = tfLayer.outputShape as number[]
   const tempObj = useMemo(() => new THREE.Object3D(), [])
 
+  const channels = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
+
   const positions = useMemo(() => {
-    return Array.from({ length: height * width }, (_, i) =>
-      getNeuronPos(i, layerPos, height, width, spacing)
+    return Array.from({ length: height * width * channels }, (_, i) =>
+      getNeuronPos(i, layerPos, height, width, channels, spacing)
     )
-  }, [layerPos, spacing, height, width])
+  }, [layerPos, spacing, height, width, channels])
 
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {

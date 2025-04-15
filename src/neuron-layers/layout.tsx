@@ -1,6 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
-import { getLayerDef } from "@/model/layers"
 import type { ReactElement } from "react"
 import type { LayerPos } from "./types"
 
@@ -44,16 +43,16 @@ export function getMeshParams(
   units: number
 ): MeshParams {
   const className = layer.getClassName()
-  const layerDef = getLayerDef(className)
+  // const layerDef = getLayerDef(className)
   if (["input", "output"].includes(layerPos)) {
     if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
-  } else if (layerDef?.needsMultiDim) {
-    return meshMap.boxTiny
-  } else {
+  } else if (className === "Dense") {
     if (units <= 128) return meshMap.sphere
     else return meshMap.sphereSmall
+  } else {
+    return meshMap.boxTiny
   }
 }
 
@@ -75,11 +74,30 @@ export function getNeuronPos(
   layerPos: LayerPos,
   height: number,
   width: number = 1,
+  channels: number = 1,
   spacing: number
 ) {
   const mustBeColumn =
-    layerPos === "output" || (layerPos === "input" && width === 1)
-  return getGridXYZ(i, height, width, spacing, mustBeColumn)
+    (layerPos === "output" || layerPos === "input") && width === 1
+  if (channels === 1) return getGridXYZ(i, height, width, spacing, mustBeColumn)
+  else {
+    const idx = Math.floor(i / channels)
+    const [x, _y, _z] = getGridXYZ(idx, height, width, spacing, mustBeColumn)
+
+    const groupIndex = i % channels
+
+    const GRID_SPACING = 0.3
+    const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
+    const groupsPerRow = Math.ceil(Math.sqrt(channels))
+    const groupsPerColumn = Math.ceil(channels / groupsPerRow)
+    const offsetY = (groupsPerColumn - 1) * gHeight * 0.5
+    const offsetZ = (groupsPerRow - 1) * gWidth * -0.5
+    const y =
+      _y + -1 * Math.floor(groupIndex / groupsPerRow) * gHeight + offsetY // row
+    const z = _z + (groupIndex % groupsPerRow) * gWidth + offsetZ // column
+
+    return [x, y, z] as [number, number, number]
+  }
 }
 
 function getGridXYZ(
@@ -108,5 +126,5 @@ function getGridXYZ(
   const y = -1 * Math.floor(i / width) * spacing + offsetY // row
   const z = (i % width) * zSpacing + offsetZ // column
 
-  return [0, y, z] as const
+  return [0, y, z] as [number, number, number]
 }

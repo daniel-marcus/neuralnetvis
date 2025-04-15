@@ -16,14 +16,12 @@ export function YPointer({ outputLayer }: { outputLayer: LayerStateful }) {
   const spacing = useNeuronSpacing(meshParams)
   const showPointer = useSceneStore((s) => s.vis.showPointer)
   if (!showPointer || !neuron) return null
-  const [, height, width = 1] = outputLayer.tfLayer.outputShape as number[]
-  const position = getNeuronPos(neuron.index, layerPos, height, width, spacing)
+  const { index } = neuron
+  const [, height, width = 1, channels = 1] = outputLayer.tfLayer
+    .outputShape as number[]
+  const pos = getNeuronPos(index, layerPos, height, width, channels, spacing)
   return (
-    <Pointer
-      position={position}
-      color={LABEL_COLOR}
-      size={meshParams.labelSize}
-    />
+    <Pointer position={pos} color={LABEL_COLOR} size={meshParams.labelSize} />
   )
 }
 

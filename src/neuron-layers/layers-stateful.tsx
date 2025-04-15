@@ -136,6 +136,10 @@ export function updateGroups(statefulLayer: LayerStateful) {
     ...group,
     neurons: groupedNeurons[group.index],
   }))
+  statefulLayer.layerGroup = {
+    ...statefulLayer.layerGroup,
+    neurons: statefulLayer.neurons,
+  }
   return statefulLayer
 }
 

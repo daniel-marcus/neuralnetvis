@@ -1,11 +1,13 @@
 import { useRef } from "react"
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
-import type { SpotLight } from "three"
+import { SpotLightHelper, type SpotLight } from "three"
+import { useHelper } from "@react-three/drei"
 
 export const Lights = () => {
   const ref1 = useRef<SpotLight>(null!)
-  // useHelper(ref1, SpotLightHelper)
+  const isDebug = useGlobalStore((s) => s.isDebug)
+  useHelper(isDebug && ref1, SpotLightHelper)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   const lightIntensity = useSceneStore((s) => s.vis.lightIntensity)
   const toggleLights = useSceneStore((s) => s.vis.toggleLights)
@@ -15,7 +17,7 @@ export const Lights = () => {
       <ambientLight intensity={Math.PI * 0.7} />
       <spotLight
         ref={ref1}
-        position={[-100, 20, -20]}
+        position={[-500, 20, -20]}
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
