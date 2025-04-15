@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo } from "react"
 import { useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
-import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import { getLayerDef } from "@/model/layers"
-import { LayerConfigMap } from "@/model/layers/types"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
@@ -11,7 +10,10 @@ export const LayerWheel = () => {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   const items = useMemo(() => layers.map(layer2WheelItem), [layers])
-  const [enter2d, enter3d] = useAutoFlatView(typeof focussedIdx === "number")
+  const view = useSceneStore((s) => s.view)
+  const [enter2d, enter3d] = useAutoFlatView(
+    typeof focussedIdx === "number" && view !== "graph"
+  )
   return (
     <div
       className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
@@ -20,8 +22,8 @@ export const LayerWheel = () => {
         items={items}
         currIdx={focussedIdx}
         setCurrIdx={setFocussedIdx}
-        onScroll={enter3d}
-        onScrollEnd={enter2d}
+        onScroll={view !== "graph" ? enter3d : undefined}
+        onScrollEnd={view !== "graph" ? enter2d : undefined}
         autoHide={true}
       />
     </div>
@@ -49,7 +51,7 @@ const layer2WheelItem = (layer: Layer) => ({
 
 function isNotVisible(layer: Layer) {
   const className = layer.getClassName()
-  const layerDef = getLayerDef(className as keyof LayerConfigMap)
+  const layerDef = getLayerDef(className)
   if (layerDef?.isInvisible) return true
   // return ["Flatten", "Dropout"].includes(layer.getClassName())
 }

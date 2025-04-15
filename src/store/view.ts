@@ -2,7 +2,7 @@ import type { StateCreator } from "zustand"
 import { DataSlice, Subset } from "./data"
 import { SetterFunc } from "."
 
-export type View = "model" | "evaluation" | "map"
+export type View = "model" | "evaluation" | "map" | "graph" // model -> layers
 
 export interface ViewSlice {
   isActive: boolean

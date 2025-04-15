@@ -2,13 +2,12 @@ import { createRef, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getMeshParams } from "./layout"
 import { getHighlightColor } from "@/utils/colors"
-import { getLayerDef, layerDefMap } from "@/model/layers"
+import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType } from "./types"
 import type { Index3D, Nid, NeuronDef } from "./types"
-import type { LayerConfigMap } from "@/model/layers/types"
 
 // here is all data that doesn't change for a given model
 
@@ -61,37 +60,40 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           createRef<InstancedMesh>()
         )
 
-        const neurons =
-          Array.from({ length: units }).map((_, neuronIndex) => {
-            const index3d = getIndex3d(neuronIndex, outputShape)
-            const inputNids = layerInputNids?.[neuronIndex] ?? []
-            const groupIndex = neuronIndex % groupCount
-            const indexInGroup = Math.floor(neuronIndex / groupCount)
-            return {
-              nid: getNid(layerIndex, index3d),
-              index: neuronIndex,
-              index3d,
-              layerIndex,
-              groupIndex,
-              indexInGroup,
-              meshRef: meshRefs[groupIndex],
-              visibleLayerIndex: visibleIdx,
-              inputNids,
-              inputNeurons: prevLayer
-                ? (inputNids
-                    .map((nid) => prevLayer.neuronsMap?.get(nid))
-                    .filter(Boolean) as NeuronDef[])
-                : [],
-              label:
-                layerPos === "output"
-                  ? ds?.outputLabels?.[neuronIndex]
-                  : layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
-                  ? ds?.inputLabels?.[index3d[0]]
-                  : undefined,
-              layer: layerStateless,
-              color: getHighlightColor(0),
-            }
-          }) ?? []
+        const neurons = shouldSkip(layerIndex, model.layers.length)
+          ? []
+          : Array.from({ length: units }).map((_, neuronIndex) => {
+              const index3d = getIndex3d(neuronIndex, outputShape)
+              const inputNids = layerInputNids?.[neuronIndex] ?? []
+              const groupIndex = neuronIndex % groupCount
+              const indexInGroup = Math.floor(neuronIndex / groupCount)
+              return {
+                nid: getNid(layerIndex, index3d),
+                index: neuronIndex,
+                index3d,
+                layerIndex,
+                groupIndex,
+                indexInGroup,
+                meshRef: meshRefs[groupIndex],
+                visibleLayerIndex: visibleIdx,
+                inputNids,
+                inputNeurons: prevLayer
+                  ? (inputNids
+                      .map((nid) => prevLayer.neuronsMap?.get(nid))
+                      .filter(Boolean) as NeuronDef[])
+                  : [],
+                label:
+                  layerPos === "output"
+                    ? ds?.outputLabels?.[neuronIndex]
+                    : layerPos === "input" &&
+                      index3d[1] === 0 &&
+                      index3d[2] === 0
+                    ? ds?.inputLabels?.[index3d[0]]
+                    : undefined,
+                layer: layerStateless,
+                color: getHighlightColor(0),
+              }
+            }) ?? []
         const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
         const groups = Array.from({ length: groupCount }).map((_, i) => {
           const groupedNeurons = neurons.filter((n) => n.groupIndex === i)
@@ -119,6 +121,14 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   return layers
 }
 
+const MAX_HIDDEN_LAYERS = 10
+
+function shouldSkip(layerIdx: number, totalLayers: number) {
+  // avoid browser crash with too large models
+  if (layerIdx === 0 || layerIdx === totalLayers - 1) return false
+  else return layerIdx > MAX_HIDDEN_LAYERS
+}
+
 const getVisibleIdxMap = (model: tf.LayersModel) =>
   model.layers.reduce(
     (map, layer, index) => (getUnits(layer) ? map.set(index, map.size) : map),
@@ -139,7 +149,7 @@ export function getIndex3d(flatIndex: number, outputShape: number[]) {
 
 export function getUnits(layer: tf.layers.Layer) {
   const className = layer.getClassName()
-  const layerDef = getLayerDef(className as keyof LayerConfigMap)
+  const layerDef = getLayerDef(className)
   if (layerDef?.isInvisible) return 0
   // if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
   const [, ...dims] = layer.outputShape as number[]
@@ -155,10 +165,7 @@ function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
 function getInputNids(l: Layer, prev?: Layer, prevIdx?: number): Nid[][] {
   if (!prev || typeof prevIdx !== "number") return []
   const className = l.getClassName()
-  const getterFunc =
-    className in layerDefMap
-      ? getLayerDef(className as keyof LayerConfigMap).getInputNids
-      : undefined
+  const getterFunc = getLayerDef(className)?.getInputNids
   if (!getterFunc) return []
   else return getterFunc(l, prev, prevIdx)
 }

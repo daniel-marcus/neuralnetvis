@@ -188,10 +188,10 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
       addDenseWithFlattenIfNeeded(model, newConfig as LayerConfigMap["Dense"])
     } else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
-      const makeLayer = getLayerDef(l.className).constructorFunc as (
+      const makeLayer = getLayerDef(l.className)?.constructorFunc as (
         args: unknown
       ) => Layer
-      model.add(makeLayer(args))
+      if (makeLayer) model.add(makeLayer(args))
     } else {
       console.log("Unknown layer", l)
     }

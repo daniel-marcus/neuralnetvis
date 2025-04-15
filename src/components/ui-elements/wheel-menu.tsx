@@ -72,7 +72,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
           })}
         </ul>
       </div>
-      <div className="h-[200vh]" />
+      <div className="h-[calc(200vh+1000px)]" />
     </div>
   )
 }
@@ -119,7 +119,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       }
 
       if (!(scroller instanceof HTMLDivElement)) return
-      const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
+      const maxScrollTop = scroller.scrollHeight - scroller.clientHeight - 1000 // -1000px to keep wheel always fixed (although it is "sticky"; "fixed" didn't work)
       const percent = scroller.scrollTop / maxScrollTop
 
       const maxPercent = ((items.length - 1) * degPerItem) / 360

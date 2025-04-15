@@ -38,6 +38,7 @@ const VIEWS = [
   { value: "model" },
   { value: "evaluation", label: "evaluation" },
   { value: "map", cond: (ds?: Dataset) => !!ds?.mapProps },
+  { value: "graph" },
 ]
 
 export function ViewSelect() {

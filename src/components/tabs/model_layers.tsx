@@ -24,7 +24,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
   const layerDef = getLayerDef(className)
   const config = layerConfig.config as LayerConfigMap[typeof className]
   // TODO: allow multiple options + other inputTypes
-  const option = layerDef.options?.[0]
+  const option = layerDef?.options?.[0]
 
   if (className === "InputLayer") {
     const config = layerConfig.config as LayerConfigMap["InputLayer"]
@@ -58,7 +58,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
 function newDefaultLayer<T extends keyof LayerConfigMap>(
   className: T
 ): LayerConfig<T> {
-  const config = getLayerDef(className).defaultConfig
+  const config = getLayerDef(className)?.defaultConfig ?? {}
   const layer = { className, config }
   return layer as LayerConfig<T>
 }
@@ -85,7 +85,7 @@ export const LayerConfigControl = () => {
     const insertIdx =
       className === "RandomRotation"
         ? 1 // insert RandomRotation after InputLayer
-        : layerDef.needsMultiDim && flattenIdx > -1
+        : layerDef?.needsMultiDim && flattenIdx > -1
         ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
         : beforeOutputIdx // default
     const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
@@ -104,12 +104,10 @@ export const LayerConfigControl = () => {
       disabled: true,
     }, // TODO: disabled / filter condition in LayerDef?
     ...Object.keys(layerDefMap)
-      .filter((k) => layerDefMap[k as keyof LayerConfigMap].isUserAddable)
+      .filter((key) => getLayerDef(key)?.isUserAddable)
       .map((key) => ({
         value: key,
-        disabled:
-          getLayerDef(key as keyof LayerConfigMap).needsMultiDim &&
-          !hasMutliDimInput,
+        disabled: getLayerDef(key)?.needsMultiDim && !hasMutliDimInput,
       })),
   ]
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)

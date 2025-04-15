@@ -12,6 +12,8 @@ import { useFlatView } from "./flat-view"
 import { useIsScreen, isTouch } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 import { getTileDuration } from "@/components/tile-grid"
+import { Graph } from "../graph"
+import { useKeyCommand } from "@/utils/key-command"
 
 interface CanvasProps {
   isActive: boolean
@@ -54,6 +56,11 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
   })
   useFlatView()
 
+  const view = useSceneStore((s) => s.view)
+  const autoRotate = useSceneStore((s) => s.vis.autoRotate)
+  const toggleAutoRotate = useSceneStore((s) => s.vis.toggleAutoRotate)
+  useKeyCommand("r", toggleAutoRotate, isActive)
+
   return (
     <>
       <ThreeStoreSetter />
@@ -69,10 +76,11 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
         minPolarAngle={isActive || !isTouch() ? 0 : Math.PI / 2}
         maxPolarAngle={isActive || !isTouch() ? Math.PI : Math.PI / 2}
         rotateSpeed={isActive ? 1 : 1.5}
+        autoRotate={autoRotate}
       />
       <DebugUtils />
       <Lights />
-      <Model />
+      {view === "graph" ? <Graph /> : <Model />}
     </>
   )
 }

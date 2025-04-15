@@ -1,7 +1,7 @@
-import { StateCreator } from "zustand"
+import type { StateCreator } from "zustand"
 import type { HighlightProp } from "@/neuron-layers/types"
-import { RootState } from "@react-three/fiber"
-import { OrbitControls } from "three-stdlib"
+import type { RootState } from "@react-three/fiber"
+import type { OrbitControls } from "three-stdlib"
 
 export const defaultVisConfig = {
   flatView: false,
@@ -19,6 +19,7 @@ export const defaultVisConfig = {
   isInteractive: true,
   lightsOn: true,
   lightIntensity: 1,
+  autoRotate: false,
 }
 
 export interface VisConfig {
@@ -37,6 +38,7 @@ export interface VisConfig {
   isInteractive: boolean // node hover and click
   lightsOn: boolean
   lightIntensity: number
+  autoRotate: boolean
 }
 
 interface VisActions {
@@ -46,6 +48,7 @@ interface VisActions {
   reset: (prop: keyof VisConfig) => void
   toggleLocked: () => void
   toggleLights: () => void
+  toggleAutoRotate: () => void
 }
 
 export interface Three {
@@ -82,6 +85,8 @@ export const createVisSlice: StateCreator<VisSlice> = (set) => ({
       set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
     toggleLights: () =>
       set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
+    toggleAutoRotate: () =>
+      set(({ vis }) => ({ vis: { ...vis, autoRotate: !vis.autoRotate } })),
   },
   three: undefined,
   setThree: (three) => set({ three }),
