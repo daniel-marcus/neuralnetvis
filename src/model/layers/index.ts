@@ -30,8 +30,6 @@ export function getLayerDef<T extends keyof LayerConfigMap>(
 ): LayerDef<T> | undefined {
   const layerDef =
     className in layerDefMap ? layerDefMap[className as T] : undefined
-  if (!layerDef) {
-    console.warn(`Layer definition for ${className} not found`)
-  }
+  // if (!layerDef) console.warn(`Layer definition for ${className} not found`)
   return layerDef
 }

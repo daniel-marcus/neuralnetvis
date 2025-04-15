@@ -22,11 +22,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
 
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? 0
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
-        const layerInputNids = getInputNids(
-          tfLayer,
-          prevLayer?.tfLayer,
-          prevLayer?.index
-        )
+
+        const layerInputNids =
+          model.layers.length > 5
+            ? [] // TODO: load input nids on demand only?
+            : getInputNids(tfLayer, prevLayer?.tfLayer, prevLayer?.index)
 
         const units = getUnits(tfLayer)
         const meshParams =
@@ -126,7 +126,8 @@ const MAX_HIDDEN_LAYERS = 10
 function shouldSkip(layerIdx: number, totalLayers: number) {
   // avoid browser crash with too large models
   if (layerIdx === 0 || layerIdx === totalLayers - 1) return false
-  else return layerIdx > MAX_HIDDEN_LAYERS
+  const result = layerIdx > MAX_HIDDEN_LAYERS
+  return result
 }
 
 const getVisibleIdxMap = (model: tf.LayersModel) =>

@@ -10,7 +10,7 @@ interface HighlightedProps {
   thick?: boolean
 }
 
-const COLOR = "rgb(150, 156, 171)"
+const COLOR = "white" // "rgb(150, 156, 171)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<Mesh>(null)
@@ -25,10 +25,10 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
   if (!neuron) return null
   const { geometry } = neuron.layer.meshParams
   return (
-    <mesh ref={ref} scale={thick ? 1.1 : 1.05}>
+    <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
       <primitive object={geometry} attach={"geometry"} />
       <MeshDiscardMaterial />
-      <Outlines color={COLOR} />
+      <Outlines color={COLOR} transparent opacity={0.2} />
     </mesh>
   )
 }

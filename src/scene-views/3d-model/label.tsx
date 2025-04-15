@@ -33,7 +33,7 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
   const layerPos = neuron.layer.layerPos
   if (!label || !position) return null
   return (
-    <group>
+    <group renderOrder={-1}>
       <NeuronLabel
         side={layerPos === "input" ? "left" : "right"}
         position={position}

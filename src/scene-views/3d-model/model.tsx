@@ -21,9 +21,12 @@ export const Model = () => {
 function HoverComponents() {
   const selected = useSelected()
   const hovered = useHovered()
-  const isInteractive = useSceneStore((s) => s.vis.isInteractive)
-  if (!isInteractive) return null
+  const hasFocussedLayer = useSceneStore(
+    (s) => typeof s.focussedLayerIdx === "number"
+  )
+  if (!hasFocussedLayer) return null
   return (
+    // TODO: fix hover connections
     <>
       <HoverConnections />
       <Highlighted neuron={selected} thick />

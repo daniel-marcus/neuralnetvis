@@ -36,6 +36,7 @@ export const Graph = () => {
           : "rgb(100, 20, 180)"
       }
       nodeResolution={32}
+      linkDirectionalParticles={2}
       onNodeHover={(node) => setStatus(node ? node.className : "")}
       onNodeClick={(node) => setFocussedLayerIdx(node ? node.index : undefined)}
       onEngineTick={invalidate}

@@ -21,10 +21,7 @@ interface WheelMenuProps {
 }
 
 export const WheelMenu = (props: WheelMenuProps) => {
-  const degPerItem = Math.min(
-    DEFAULT_DEG_PER_ITEM,
-    Math.floor(360 / props.items.length)
-  )
+  const degPerItem = Math.min(DEFAULT_DEG_PER_ITEM, 356 / props.items.length)
   const [ref, rotation, onClick, isActive] = useWheelInteractions(
     props,
     degPerItem

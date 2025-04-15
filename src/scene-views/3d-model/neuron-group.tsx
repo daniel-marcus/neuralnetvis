@@ -1,8 +1,15 @@
-import { useEffect, useLayoutEffect, useMemo } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
-import { useGlobalStore, isDebug, useSceneStore } from "@/store"
-import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
+import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
+import {
+  useGlobalStore,
+  isDebug,
+  useSceneStore,
+  setStatus,
+  clearStatus,
+} from "@/store"
+import { Pos, useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
@@ -13,24 +20,43 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const positions = useNeuronPositions(props)
   useColors(group.meshRef, group.neurons)
   // useScale(group.meshRef, group.nidsStr, props.index, group.index)
-  const { onPointerOut, ...otherEvHandlers } =
-    useInteractions(group.neurons) ?? {}
+
+  const isActive = useSceneStore((s) => s.isActive)
+  const hasFocussedLayer = useSceneStore(
+    (s) => typeof s.focussedLayerIdx === "number"
+  )
+  const layerIdx = props.index
+  const [measureRef, hoverMesh] = useLayerInteractions(
+    layerIdx,
+    positions,
+    isActive && !hasFocussedLayer,
+    `${props.layerType} (${props.tfLayer.outputShape.slice(1).join("x")})`
+  )
+  const eventHandlers = useNeuronInteractions(
+    group.neurons,
+    isActive && hasFocussedLayer
+  )
+
   const renderOrder =
     props.layerPos === "input"
       ? 0 - group.index // reversed order for color blending
       : undefined
-  // useHelper(groupRef, THREE.BoxHelper, "cyan")
+
   return (
-    <group ref={groupRef} onPointerOut={onPointerOut} renderOrder={renderOrder}>
-      <instancedMesh
-        ref={group.meshRef}
-        name={`layer_${props.index}_group_${group.index}`}
-        args={[, , group.neurons.length]}
-        {...otherEvHandlers}
-      >
-        <primitive object={meshParams.geometry} attach={"geometry"} />
-        <primitive object={material} attach={"material"} />
-      </instancedMesh>
+    <group ref={groupRef}>
+      <group ref={measureRef}>
+        <instancedMesh
+          ref={group.meshRef}
+          name={`layer_${props.index}_group_${group.index}`}
+          args={[, , group.neurons.length]}
+          renderOrder={renderOrder}
+          {...eventHandlers}
+        >
+          <primitive object={meshParams.geometry} attach={"geometry"} />
+          <primitive object={material} attach={"material"} />
+        </instancedMesh>
+      </group>
+      {hoverMesh}
       {props.hasLabels &&
         group.neurons.map((n, i) => (
           <NeuronLabels key={n.nid} neuron={n} position={positions[i]} />
@@ -167,18 +193,18 @@ function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
   }, [meshRef, selectedNid, invalidate, nids, tempMatrix, tempScale])
 } */
 
-function useInteractions(groupedNeurons: Neuron[]) {
+function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
-  const isActive = useSceneStore((s) => s.isActive)
-  const isInteractive = useSceneStore((s) => s.vis.isInteractive)
   const eventHandlers = useMemo(() => {
-    if (!isActive || !isInteractive) return
-    const result = {
+    if (!isActive) return {}
+    return {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation()
         if (e.buttons) return
         document.body.style.cursor = "pointer"
         toggleHovered(groupedNeurons[e.instanceId as number])
+        return
       },
       onPointerOut: () => {
         document.body.style.cursor = "default"
@@ -190,7 +216,69 @@ function useInteractions(groupedNeurons: Neuron[]) {
         toggleSelected(neuron)
       },
     }
-    return result
-  }, [isActive, isInteractive, groupedNeurons, toggleHovered, toggleSelected])
+  }, [isActive, groupedNeurons, toggleHovered, toggleSelected])
   return eventHandlers
+}
+
+const LAYER_HOVER_STATUS = "layer-hover-status"
+
+function useLayerInteractions(
+  layerIdx: number,
+  positions: Pos[],
+  isActive: boolean,
+  name: string
+) {
+  const measureRef = useRef<THREE.Mesh>(null)
+  const [isHovered, setIsHovered] = useState(false)
+  useEffect(() => {
+    if (!isActive) return
+    return () => {
+      setIsHovered(false)
+      clearStatus(LAYER_HOVER_STATUS)
+    }
+  }, [isActive])
+  const size = useSize(measureRef, positions, 0.2)
+  const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
+  const hoverMesh = isActive ? (
+    <mesh
+      onPointerMove={(e) => {
+        e.stopPropagation()
+        if (e.buttons) return
+        document.body.style.cursor = "pointer"
+        setStatus(name, undefined, { id: LAYER_HOVER_STATUS })
+        setIsHovered(true)
+      }}
+      onPointerLeave={() => {
+        document.body.style.cursor = "default"
+        clearStatus(LAYER_HOVER_STATUS)
+        setIsHovered(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        setFocussedIdx((oldIdx) => (oldIdx === layerIdx ? undefined : layerIdx))
+      }}
+    >
+      <boxGeometry args={size} />
+      <MeshDiscardMaterial />
+      <Outlines color={"white"} transparent opacity={isHovered ? 0.2 : 0} />
+    </mesh>
+  ) : null
+  return [measureRef, hoverMesh] as const
+}
+
+function useSize(
+  ref: React.RefObject<THREE.Mesh | null>,
+  updTrigger: Pos[],
+  padding = 0
+) {
+  const bBox = useMemo(() => new THREE.Box3(), [])
+  const sizeVec = useMemo(() => new THREE.Vector3(), [])
+  const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
+  useEffect(() => {
+    if (!ref.current || !updTrigger) return
+    bBox.setFromObject(ref.current)
+    bBox.getSize(sizeVec)
+    setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
+  }, [ref, bBox, sizeVec, padding, updTrigger])
+  return size
 }

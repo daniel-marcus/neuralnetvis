@@ -115,7 +115,9 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
       (v) =>
         v.size === size &&
         v.trainable === false &&
-        !v.name.match(/(BatchNormalization|batch_normalization)/)
+        !v.name.match(
+          /(BatchNormalization|batch_normalization|moving_mean|moving_variance)/
+        )
     )
     // console.log({ olds })
     olds.forEach((v) => tf.dispose(v))
