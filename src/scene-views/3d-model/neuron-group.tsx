@@ -254,7 +254,7 @@ function useLayerInteractions(
   const status = (
     <>
       <p>{name}</p>
-      <p>Double click to open</p>
+      <p>{isTouch() ? "Double tap" : "Click"} to focus</p>
     </>
   )
 
@@ -270,8 +270,7 @@ function useLayerInteractions(
     clearStatus(LAYER_HOVER_STATUS)
     setIsHovered(false)
   }
-  const onClick = () => {
-    if (!isTouch()) return
+  const onTap = () => {
     if (!isHovered) {
       setIsHovered(true)
       setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
@@ -282,17 +281,15 @@ function useLayerInteractions(
   }
   const onDoubleClick = () => setFocussedIdx(layerIdx)
 
-  const interactions = isActive
-    ? {
-        onPointerMove,
-        onPointerLeave,
-        onClick,
-        onDoubleClick,
-      }
-    : { onDoubleClick }
+  const interactions = {
+    onPointerMove,
+    onPointerLeave,
+    onClick: isTouch() ? onTap : onDoubleClick,
+    onDoubleClick,
+  }
 
   const hoverMesh = (
-    <mesh {...interactions}>
+    <mesh {...(isActive ? interactions : {})}>
       <boxGeometry args={size} />
       <MeshDiscardMaterial />
       <Outlines color={"white"} transparent opacity={isHovered ? 0.2 : 0} />

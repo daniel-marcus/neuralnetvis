@@ -14,6 +14,7 @@ export const SceneButtons = () => {
       {!!ds?.camProps && <VideoControl />}
       <ViewSelect />
       <ViewSubsetSelect />
+      <ShowAllLayersBtn />
     </div>
   )
 }
@@ -34,14 +35,20 @@ function LoadFullButton() {
   )
 }
 
-const VIEWS = [
-  { value: "model" },
-  { value: "evaluation", label: "evaluation" },
+type ViewOption = {
+  value: View
+  label?: string
+  cond?: (ds?: Dataset) => boolean
+}
+
+const VIEWS: ViewOption[] = [
+  { value: "layers", label: "layers view" },
+  { value: "graph", label: "graph view" },
   { value: "map", cond: (ds?: Dataset) => !!ds?.mapProps },
-  { value: "graph" },
+  { value: "evaluation", label: "evaluation" },
 ]
 
-export function ViewSelect() {
+function ViewSelect() {
   const view = useSceneStore((s) => s.view)
   const setView = useSceneStore((s) => s.setView)
   const ds = useSceneStore((s) => s.ds)
@@ -57,22 +64,37 @@ export function ViewSelect() {
   )
 }
 
-export function ViewSubsetSelect() {
+function ViewSubsetSelect() {
   const ds = useSceneStore((s) => s.ds)
+  const view = useSceneStore((s) => s.view)
   const subset = useSceneStore((s) => s.subset)
   const setSubset = useSceneStore((s) => s.setSubset)
-  if (!ds) return null
+  if (!ds || view !== "evaluation") return null
   const subsets = (["train", "test"] as const).filter(
     (s) => ds[s].totalSamples > 0
   )
   if (subsets.length < 2) return null
   return (
     <Select
-      options={subsets.map((s) => ({ value: s, label: s }))}
+      options={subsets.map((s) => ({ value: s, label: `${s} data` }))}
       value={subset}
-      onChange={(val: string) => setSubset(val as "train" | "test")}
+      onChange={(val) => setSubset(val as (typeof subsets)[number])}
       className="pointer-events-auto"
       label="subset"
     />
+  )
+}
+
+function ShowAllLayersBtn() {
+  const view = useSceneStore((s) => s.view)
+  const hasFocussed = useSceneStore(
+    (s) => typeof s.focussedLayerIdx === "number"
+  )
+  const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
+  if (view !== "layers" || !hasFocussed) return null
+  return (
+    <Button onClick={() => setFocussedIdx(undefined)} variant="secondary">
+      &lt; back
+    </Button>
   )
 }

@@ -59,7 +59,7 @@ function SceneViewerInner(props: SceneViewerProps) {
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
-      {section === "play" && view === "model" && <SampleSlider />}
+      {section === "play" && view === "layers" && <SampleSlider />}
       {section === "play" && isActive && (
         <Portal target={neuronStatusPortal}>
           <NeuronStatus />

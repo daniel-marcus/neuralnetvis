@@ -41,7 +41,7 @@ export class UpdateCb extends CustomCallback {
         if (this.silent) {
           const scene = getScene().getState()
           const processedSamples = (this.params.samples ?? 0) - 1
-          if (scene.view === "model") this.next(processedSamples) // update view
+          if (scene.view === "layers") this.next(processedSamples) // update view
           scene.setBatchCount((c) => c + processedSamples) // update weights
         }
       },

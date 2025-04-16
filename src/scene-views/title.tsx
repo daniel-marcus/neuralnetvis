@@ -72,7 +72,7 @@ const DsDescription = ({ ds }: { ds?: Dataset | DatasetDef }) => {
   return (
     <div
       className={`max-w-[300px] mb-2 pointer-events-auto ${
-        view !== "model" ? "hidden" : ""
+        view === "evaluation" ? "hidden" : ""
       } screenshot:hidden`}
     >
       <p>{ds.description}</p>

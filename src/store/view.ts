@@ -2,7 +2,7 @@ import type { StateCreator } from "zustand"
 import { DataSlice, Subset } from "./data"
 import { SetterFunc } from "."
 
-export type View = "model" | "evaluation" | "map" | "graph" // model -> layers
+export type View = "layers" | "graph" | "map" | "evaluation"
 
 export interface ViewSlice {
   isActive: boolean
@@ -29,13 +29,13 @@ export const createViewSlice: StateCreator<
   ViewSlice
 > = (set) => ({
   isActive: false,
-  view: "model",
+  view: "layers",
   setView: (view) =>
-    set(({ sampleIdx, ds, subset }) => {
+    set(({ sampleIdx, ds }) => {
       const hasTestData = !!ds?.test.totalSamples
       return {
         view,
-        subset: view === "evaluation" && hasTestData ? "test" : subset,
+        subset: view === "evaluation" && hasTestData ? "test" : "train",
         sampleIdx: view === "evaluation" ? undefined : sampleIdx,
       }
     }),
