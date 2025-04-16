@@ -2,8 +2,28 @@ import { useRef, useEffect } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { getWorldPos } from "./utils"
+import { HoverConnections } from "./connections"
+import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
+import { useSceneStore } from "@/store"
 import type { Neuron } from "@/neuron-layers"
 import type { Mesh } from "three"
+
+export function HoverComponents() {
+  const selected = useSelected()
+  const hovered = useHovered()
+  const hasFocussedLayer = useSceneStore(
+    (s) => typeof s.focussedLayerIdx === "number"
+  )
+  if (!hasFocussedLayer) return null
+  return (
+    // TODO: fix hover connections
+    <>
+      <HoverConnections />
+      <Highlighted neuron={selected} thick />
+      <Highlighted neuron={hovered} />
+    </>
+  )
+}
 
 interface HighlightedProps {
   neuron?: Neuron

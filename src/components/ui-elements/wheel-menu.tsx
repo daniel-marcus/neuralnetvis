@@ -137,9 +137,9 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
     const onTouchStart = (e: TouchEvent) => {
       if (
-        e.target &&
-        "tagName" in e.target &&
-        ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)
+        (e.target instanceof HTMLElement &&
+          ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)) ||
+        e.touches.length >= 2
       )
         return
       setIsActive(true)

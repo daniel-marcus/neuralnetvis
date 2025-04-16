@@ -68,19 +68,14 @@ function useLayerPos(layer: LayerProps) {
   const visibleLayers = allLayers.filter((l) => l.neurons.length)
   const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
 
-  const focussedLayerIdx = useSceneStore((s) => s.focussedLayerIdx)
-  const offset = visibleLayers.findIndex((l) => l.index === focussedLayerIdx)
-
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 
   const position = useMemo(() => {
     if (visibleIdx < 0) return [0, 0, 0]
     const getCoord = (shift: number) =>
-      offset >= 0
-        ? ((visibleIdx - offset) * shift) / 2
-        : visibleIdx * shift + (visibleLayers.length - 1) * shift * -0.5
+      visibleIdx * shift + (visibleLayers.length - 1) * shift * -0.5
     return [getCoord(xShift), getCoord(yShift), getCoord(zShift)]
-  }, [offset, visibleIdx, visibleLayers.length, xShift, yShift, zShift])
+  }, [visibleIdx, visibleLayers.length, xShift, yShift, zShift])
 
   const [ref] = useAnimatedPosition(position, 0.1)
   return ref

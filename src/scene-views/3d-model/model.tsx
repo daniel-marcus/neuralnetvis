@@ -1,15 +1,17 @@
-import { useLayers } from "@/neuron-layers"
-import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
-import { Layer } from "./layer"
-import { HoverConnections } from "./connections"
-import { Highlighted } from "./highlighted"
+import { useMemo } from "react"
+import { useLayers, type LayerStateful } from "@/neuron-layers"
 import { useSceneStore } from "@/store"
+import { useAnimatedPosition } from "./utils"
+import { Layer } from "./layer"
+import { HoverComponents } from "./highlighted"
 
 export const Model = () => {
   const isActive = useSceneStore((s) => s.isActive)
   const layers = useLayers(!isActive)
+  const position = useModelOffset(layers)
+  const [ref] = useAnimatedPosition(position, 0.1)
   return (
-    <group>
+    <group ref={ref}>
       {layers.map((l, _, arr) => (
         <Layer key={`${l.tfLayer.name}`} {...l} allLayers={arr} />
       ))}
@@ -18,19 +20,18 @@ export const Model = () => {
   )
 }
 
-function HoverComponents() {
-  const selected = useSelected()
-  const hovered = useHovered()
-  const hasFocussedLayer = useSceneStore(
-    (s) => typeof s.focussedLayerIdx === "number"
+function useModelOffset(layers: LayerStateful[]) {
+  const visibleLayers = layers.filter((l) => l.neurons.length)
+  const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const hasFocussed = typeof focusIdx === "number"
+  const focusVisibleIdx = visibleLayers.findIndex((l) => l.index === focusIdx)
+  const center = (visibleLayers.length - 1) * 0.5
+  const offset = !hasFocussed ? 0 : center - focusVisibleIdx
+
+  const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
+  const position = useMemo(
+    () => [offset * xShift, offset * yShift, offset * zShift],
+    [offset, xShift, yShift, zShift]
   )
-  if (!hasFocussedLayer) return null
-  return (
-    // TODO: fix hover connections
-    <>
-      <HoverConnections />
-      <Highlighted neuron={selected} thick />
-      <Highlighted neuron={hovered} />
-    </>
-  )
+  return position
 }
