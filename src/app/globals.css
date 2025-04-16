@@ -82,7 +82,7 @@
   }
   .input-appearance {
     /* for Select and TextInput */
-    @apply px-2 border-1 border-menu-border rounded-[3px];
+    @apply h-6.5 px-2 border-1 border-menu-border rounded-[3px];
   }
   .no-scrollbar {
     &::-webkit-scrollbar {

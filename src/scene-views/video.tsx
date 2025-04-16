@@ -74,7 +74,7 @@ export function VideoControl() {
   return (
     <>
       {!isRecording && (
-        <Button onClick={toggleStream} className="h-6">
+        <Button onClick={toggleStream}>
           {!!stream ? <>{cameraOffSvg} stop</> : <>{cameraSvg} start</>} video
         </Button>
       )}

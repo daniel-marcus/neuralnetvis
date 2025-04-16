@@ -69,7 +69,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           createRef<InstancedMesh>()
         )
 
-        const neurons = shouldSkip(layerIndex, model.layers.length)
+        const neurons = shouldSkip(visibleIdx, visibleIdxMap.size)
           ? []
           : Array.from({ length: units }).map((_, neuronIndex) => {
               const index3d = getIndex3d(neuronIndex, outputShape)
@@ -138,12 +138,17 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   return layers
 }
 
-const MAX_HIDDEN_LAYERS = 30
+const MAX_VISIBLE_LAYERS = 50
 
-function shouldSkip(layerIdx: number, totalLayers: number) {
+function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
   // avoid browser crash with too large models
-  if (layerIdx === 0 || layerIdx === totalLayers - 1) return false
-  const result = layerIdx > MAX_HIDDEN_LAYERS
+  if (visibleIdx === 0 || visibleIdx === totalVisibleLayers - 1) return false
+  const result = visibleIdx > MAX_VISIBLE_LAYERS
+  if (result) {
+    console.log(
+      `Max visible layers exceeded. Skipping layer ${visibleIdx}/${totalVisibleLayers}`
+    )
+  }
   return result
 }
 

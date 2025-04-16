@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { useSceneStore } from "@/store"
+import { getVisConfig, useSceneStore } from "@/store"
 import { getCameraPos, moveCameraTo } from "./utils"
 import { defaultState } from "@/utils/initial-state"
 
@@ -12,18 +12,22 @@ export function useFlatView() {
   const lastFlatCameraX = useRef(FLAT_VIEW_CAMERA_X)
   useEffect(() => {
     if (!isActive) return
+    // remember shift values to restore in cleanup
+    const xShift = getVisConfig("xShift")
+    const yShift = getVisConfig("yShift")
+    const zShift = getVisConfig("zShift")
+
     const timeoutId = setTimeout(
-      () => setVisConfig({ xShift: 0, yShift: -50, zShift: 0 }),
-      1000
+      // when wheel browsing is finished, spread layers on y axis for flat transitions
+      () => setVisConfig({ xShift: 0, yShift: -30, zShift: 0 }),
+      1500
     )
     moveCameraTo([lastFlatCameraX.current, 0, 0], [0, 0, 0])
     return () => {
       clearTimeout(timeoutId)
       lastFlatCameraX.current = getCameraPos()?.[0] ?? FLAT_VIEW_CAMERA_X
       moveCameraTo(defaultState.cameraPos, [0, 0, 0])
-      resetVisConfig("xShift")
-      resetVisConfig("yShift")
-      resetVisConfig("zShift")
+      setVisConfig({ xShift, yShift, zShift })
     }
   }, [isActive, setVisConfig, resetVisConfig])
 }

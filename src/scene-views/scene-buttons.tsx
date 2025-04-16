@@ -93,7 +93,11 @@ function ShowAllLayersBtn() {
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   if (view !== "layers" || !hasFocussed) return null
   return (
-    <Button onClick={() => setFocussedIdx(undefined)} variant="secondary">
+    <Button
+      onClick={() => setFocussedIdx(undefined)}
+      variant="transparent"
+      className="border-menu-border!"
+    >
       &lt; back
     </Button>
   )

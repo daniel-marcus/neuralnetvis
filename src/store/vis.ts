@@ -41,9 +41,10 @@ export interface VisConfig {
 
 interface VisActions {
   setConfig: (newConfig: Partial<VisConfig>) => void
+  getConfig: <T extends keyof VisConfig>(key: T) => VisConfig[T]
   toggleLayerVisibility: (layerName: string) => void
-  getDefault: (prop: keyof VisConfig) => VisConfig[keyof VisConfig]
-  reset: (prop: keyof VisConfig) => void
+  getDefault: <T extends keyof VisConfig>(key: T) => VisConfig[T]
+  reset: <T extends keyof VisConfig>(key: T) => void
   toggleLocked: () => void
   toggleLights: () => void
   toggleAutoRotate: () => void
@@ -62,11 +63,12 @@ export type VisSlice = {
   setThree: (three: Three) => void
 }
 
-export const createVisSlice: StateCreator<VisSlice> = (set) => ({
+export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
   vis: {
     ...defaultVisConfig,
     setConfig: (newConfig) =>
       set(({ vis }) => ({ vis: { ...vis, ...newConfig } })),
+    getConfig: (key) => get().vis[key],
     toggleLayerVisibility: (layerName) =>
       set(({ vis }) => ({
         vis: {
@@ -76,9 +78,9 @@ export const createVisSlice: StateCreator<VisSlice> = (set) => ({
             : vis.invisibleLayers.concat(layerName),
         },
       })),
-    getDefault: (prop) => defaultVisConfig[prop],
-    reset: (prop) =>
-      set(({ vis }) => ({ vis: { ...vis, [prop]: defaultVisConfig[prop] } })),
+    getDefault: (key) => defaultVisConfig[key],
+    reset: (key) =>
+      set(({ vis }) => ({ vis: { ...vis, [key]: defaultVisConfig[key] } })),
     toggleLocked: () =>
       set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
     toggleLights: () =>

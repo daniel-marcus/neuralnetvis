@@ -21,7 +21,7 @@ export const Conv2D: LayerDef<"Conv2D"> = {
       min: 0,
       max: 6, // 2^6 = 64
       transformToSliderVal: (v) => Math.log2(v),
-      transformFromSliderVal: (v) => 2 ** v,
+      transformFromSliderVal: (v) => Math.round(2 ** v),
     },
   ],
   getInputNids: getConv2DInputNids,

@@ -24,7 +24,7 @@ export const Button = ({
   return (
     <Comp
       href={href as string}
-      className={`px-2 ${
+      className={`px-2 h-6.5 border-1 border-transparent ${
         variant === "primary"
           ? "bg-accent text-white disabled:brightness-50 active:bg-accent-hover"
           : variant === "secondary"

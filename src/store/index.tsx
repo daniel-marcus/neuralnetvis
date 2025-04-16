@@ -113,7 +113,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   scrollPos: 0,
 }))
 
-//
+// shortcut getters and setters to use from everywhere
 
 export const isDebug = () => useGlobalStore.getState().isDebug
 export const setTab = useGlobalStore.getState().setTab
@@ -131,6 +131,8 @@ export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
   getScene().getState().setLayerConfigs(layerConfigs)
 export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
   getScene().getState().vis.setConfig(config)
+export const getVisConfig: VisSlice["vis"]["getConfig"] = (key) =>
+  getScene().getState().vis.getConfig(key)
 export const setView = (view: View) => getScene().setState({ view })
 export const getInvisibleLayers = () =>
   getScene().getState().vis.invisibleLayers

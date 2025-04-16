@@ -19,7 +19,7 @@ export const Layer = (props: LayerProps) => {
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
   const prevInvisible = useIsInvisible(prevLayer)
-  const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.1 : 1
+  const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(ref, scale, duration)
   const [material, addBlend] = useAdditiveBlending(hasColorChannels) // TODO: share material?
@@ -47,13 +47,6 @@ export const Layer = (props: LayerProps) => {
     </>
   )
 }
-
-/* 
-{groups.map((group, i) => (
-          <NeuronGroup key={i} {...props} group={group} material={material} />
-        ))}
-
-*/
 
 function useFocussed(layerIdx: number) {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)

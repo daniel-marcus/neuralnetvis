@@ -17,7 +17,7 @@ export const Lights = () => {
       <ambientLight intensity={Math.PI * 0.7} />
       <spotLight
         ref={ref1}
-        position={[-500, 20, -20]}
+        position={[-1000, 20, -20]}
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
