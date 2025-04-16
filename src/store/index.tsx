@@ -62,7 +62,7 @@ export function SceneStoreProvider({
       useGlobalStore.getState().setScene(dummySceneStore)
       storeRef.current?.setState({
         isActive: false,
-        view: "model",
+        view: "layers",
         subset: "train",
       })
     }
