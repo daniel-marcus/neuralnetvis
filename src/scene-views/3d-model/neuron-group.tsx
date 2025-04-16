@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
@@ -13,6 +20,7 @@ import { Pos, useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
+import { isTouch } from "@/utils/screen"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
   const { meshParams, group, material } = props
@@ -226,40 +234,70 @@ function useLayerInteractions(
   name: string
 ) {
   const measureRef = useRef<THREE.Mesh>(null)
-  const [isHovered, setIsHovered] = useState(false)
+  const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
+  const isHovered = hoveredIdx === layerIdx
+  const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
+  const setIsHovered = useCallback(
+    (hovered: boolean) => setHoveredLayerIdx(hovered ? layerIdx : undefined),
+    [setHoveredLayerIdx, layerIdx]
+  )
   useEffect(() => {
     if (!isActive) return
     return () => {
       setIsHovered(false)
       clearStatus(LAYER_HOVER_STATUS)
     }
-  }, [isActive])
+  }, [isActive, setIsHovered])
   const size = useSize(measureRef, positions, 0.2)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
-  const hoverMesh = isActive ? (
-    <mesh
-      onPointerMove={(e) => {
-        e.stopPropagation()
-        if (e.buttons) return
-        document.body.style.cursor = "pointer"
-        setStatus(name, undefined, { id: LAYER_HOVER_STATUS })
-        setIsHovered(true)
-      }}
-      onPointerLeave={() => {
-        document.body.style.cursor = "default"
-        clearStatus(LAYER_HOVER_STATUS)
-        setIsHovered(false)
-      }}
-      onClick={(e) => {
-        e.stopPropagation()
-        setFocussedIdx((oldIdx) => (oldIdx === layerIdx ? undefined : layerIdx))
-      }}
-    >
+
+  const status = (
+    <>
+      <p>{name}</p>
+      <p>Double click to open</p>
+    </>
+  )
+
+  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    if (e.buttons) return
+    document.body.style.cursor = "pointer"
+    setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
+    if (!isTouch()) setIsHovered(true)
+  }
+  const onPointerLeave = () => {
+    document.body.style.cursor = "default"
+    clearStatus(LAYER_HOVER_STATUS)
+    setIsHovered(false)
+  }
+  const onClick = () => {
+    if (!isTouch()) return
+    if (!isHovered) {
+      setIsHovered(true)
+      setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
+    } else {
+      setIsHovered(false)
+      clearStatus(LAYER_HOVER_STATUS)
+    }
+  }
+  const onDoubleClick = () => setFocussedIdx(layerIdx)
+
+  const interactions = isActive
+    ? {
+        onPointerMove,
+        onPointerLeave,
+        onClick,
+        onDoubleClick,
+      }
+    : { onDoubleClick }
+
+  const hoverMesh = (
+    <mesh {...interactions}>
       <boxGeometry args={size} />
       <MeshDiscardMaterial />
       <Outlines color={"white"} transparent opacity={isHovered ? 0.2 : 0} />
     </mesh>
-  ) : null
+  )
   return [measureRef, hoverMesh] as const
 }
 

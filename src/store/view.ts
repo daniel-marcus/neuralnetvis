@@ -16,6 +16,10 @@ export interface ViewSlice {
   setFocussedLayerIdx: (
     arg: number | undefined | SetterFunc<number | undefined>
   ) => void
+  hoveredLayerIdx: number | undefined
+  setHoveredLayerIdx: (
+    arg: number | undefined | SetterFunc<number | undefined>
+  ) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -50,5 +54,10 @@ export const createViewSlice: StateCreator<
   setFocussedLayerIdx: (arg) =>
     set(({ focussedLayerIdx }) => ({
       focussedLayerIdx: typeof arg === "function" ? arg(focussedLayerIdx) : arg,
+    })),
+  hoveredLayerIdx: undefined,
+  setHoveredLayerIdx: (arg) =>
+    set(({ hoveredLayerIdx }) => ({
+      hoveredLayerIdx: typeof arg === "function" ? arg(hoveredLayerIdx) : arg,
     })),
 })
