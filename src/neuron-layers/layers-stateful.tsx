@@ -93,8 +93,8 @@ export function useStatefulLayers(
         return [...acc, statefulLayer]
       }, [] as LayerStateful[])
 
-      setStatefulLayers(newStatefulLayers)
       getScene().getState().setAllNeurons(allNeurons)
+      setStatefulLayers(newStatefulLayers)
     }
 
     update()
@@ -138,7 +138,7 @@ export function updateGroups(statefulLayer: LayerStateful) {
   }))
   statefulLayer.layerGroup = {
     ...statefulLayer.layerGroup,
-    neurons: statefulLayer.neurons,
+    neurons: [...statefulLayer.neurons],
   }
   return statefulLayer
 }
