@@ -24,6 +24,8 @@ export function useStatefulLayers(
 
   const focussedIdx = useDeferUnfocussed(sample)
 
+  const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
+
   useEffect(() => {
     async function update() {
       if (!model || !sample) return
@@ -93,7 +95,7 @@ export function useStatefulLayers(
         return [...acc, statefulLayer]
       }, [] as LayerStateful[])
 
-      getScene().getState().setAllNeurons(allNeurons)
+      setAllNeurons(allNeurons)
       setStatefulLayers(newStatefulLayers)
     }
 
@@ -108,6 +110,7 @@ export function useStatefulLayers(
     yMean,
     focussedIdx,
     setStatefulLayers,
+    setAllNeurons,
   ])
 
   return statefulLayers
