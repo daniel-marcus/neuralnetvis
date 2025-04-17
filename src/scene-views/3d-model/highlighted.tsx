@@ -3,7 +3,6 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { getWorldPos } from "./utils"
 import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
-import { useSceneStore } from "@/store"
 import { HoverConnections } from "./connections"
 import type { Neuron } from "@/neuron-layers"
 import type { Mesh } from "three"
@@ -11,12 +10,10 @@ import type { Mesh } from "three"
 export function HoverComponents() {
   const selected = useSelected()
   const hovered = useHovered()
-  const hasFocussedLayer = useSceneStore(
+  /* const hasFocussedLayer = useSceneStore(
     (s) => typeof s.focussedLayerIdx === "number"
-  )
-  if (!hasFocussedLayer) return null
+  ) */
   return (
-    // TODO: fix hover connections
     <>
       <HoverConnections />
       <Highlighted neuron={selected} thick />
@@ -30,7 +27,7 @@ interface HighlightedProps {
   thick?: boolean
 }
 
-const COLOR = "white" // "rgb(150, 156, 171)"
+const COLOR = "rgb(150, 156, 171)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<Mesh>(null)
@@ -48,7 +45,7 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
     <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
       <primitive object={geometry} attach={"geometry"} />
       <MeshDiscardMaterial />
-      <Outlines color={COLOR} transparent opacity={0.2} />
+      <Outlines color={COLOR} />
     </mesh>
   )
 }

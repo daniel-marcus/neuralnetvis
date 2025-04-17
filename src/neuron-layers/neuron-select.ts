@@ -5,6 +5,7 @@ import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/utils/colors"
 import { updateGroups } from "./layers-stateful"
 import type { LayerStateful, Nid } from "./types"
+import { getLayerDef } from "@/model/layers"
 
 export function useNeuronSelect(
   isActive: boolean,
@@ -61,10 +62,16 @@ export function useSelected() {
 
 function useNeuron(nid?: Nid) {
   const allNeurons = useSceneStore((s) => s.allNeurons)
-  return useMemo(
-    () => (nid ? allNeurons.get(nid) : undefined),
-    [allNeurons, nid]
-  )
+  return useMemo(() => {
+    if (!nid) return undefined
+    const neuron = allNeurons.get(nid)
+    if (!neuron) return undefined
+    const layerDef = getLayerDef(neuron.layer.layerType)
+    if (layerDef?.getInputNids) {
+      // TODO: getInputNeurons for single neuron
+    }
+    return neuron
+  }, [allNeurons, nid])
 }
 
 export function getWeightedInputs(

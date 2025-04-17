@@ -38,12 +38,13 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
 }
 
 export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
-  const { meshRef, indexInGroup } = neuron
+  const { meshRef, index, indexInGroup } = neuron
+  const idx = neuron.layer.hasColorChannels ? indexInGroup : index
   if (!meshRef?.current) return
   const worldPos = new THREE.Vector3()
   const tempMatrix = new THREE.Matrix4()
   const tempWorldMatrix = new THREE.Matrix4()
-  meshRef.current.getMatrixAt(indexInGroup, tempMatrix)
+  meshRef.current.getMatrixAt(idx, tempMatrix)
   tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
   tempWorldMatrix.decompose(
     worldPos,

@@ -202,20 +202,20 @@ function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
-    if (!isActive) return {}
     return {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
-        e.stopPropagation()
+        // e.stopPropagation()
         if (e.buttons) return
         document.body.style.cursor = "pointer"
         toggleHovered(groupedNeurons[e.instanceId as number])
         return
       },
       onPointerOut: () => {
-        document.body.style.cursor = "default"
+        if (isActive) document.body.style.cursor = "default"
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
+        // if (!isActive) return
         const neuron = groupedNeurons[e.instanceId as number]
         if (useGlobalStore.getState().isDebug) console.log(neuron)
         toggleSelected(neuron)
@@ -254,12 +254,12 @@ function useLayerInteractions(
   const status = (
     <>
       <p>{name}</p>
-      <p>{isTouch() ? "Double tap" : "Click"} to focus</p>
+      <p>Double click to focus</p>
     </>
   )
 
-  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
+  const onPointerOver = (e: ThreeEvent<PointerEvent>) => {
+    // e.stopPropagation()
     if (e.buttons) return
     document.body.style.cursor = "pointer"
     setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
@@ -282,9 +282,9 @@ function useLayerInteractions(
   const onDoubleClick = () => setFocussedIdx(layerIdx)
 
   const interactions = {
-    onPointerMove,
+    onPointerOver,
     onPointerLeave,
-    onClick: isTouch() ? onTap : onDoubleClick,
+    onClick: isTouch() ? onTap : undefined,
     onDoubleClick,
   }
 

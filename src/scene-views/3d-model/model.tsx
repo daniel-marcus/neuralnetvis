@@ -11,12 +11,14 @@ export const Model = () => {
   const position = useModelOffset(layers)
   const [ref] = useAnimatedPosition(position, 0.1)
   return (
-    <group ref={ref}>
-      {layers.map((l, _, arr) => (
-        <Layer key={`${l.tfLayer.name}`} {...l} allLayers={arr} />
-      ))}
+    <>
+      <group ref={ref}>
+        {layers.map((l, _, arr) => (
+          <Layer key={`${l.tfLayer.name}`} {...l} allLayers={arr} />
+        ))}
+      </group>
       {isActive && <HoverComponents />}
-    </group>
+    </>
   )
 }
 

@@ -39,6 +39,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
 
         const hasColorChannels = layerPos === "input" && outputShape[3] === 3
 
+        const layerMeshRef = createRef<InstancedMesh>()
         const layerStateless: LayerStateless = {
           index: layerIndex,
           visibleIdx,
@@ -59,7 +60,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
             index: 0,
             nids: [],
             nidsStr: "",
-            meshRef: createRef<InstancedMesh>(),
+            meshRef: layerMeshRef,
           },
         }
 
@@ -83,7 +84,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 layerIndex,
                 groupIndex,
                 indexInGroup,
-                meshRef: hasColorChannels ? meshRefs[groupIndex] : meshRefs[0], // non-color layers share 1 instanced mesh now
+                meshRef: hasColorChannels ? meshRefs[groupIndex] : layerMeshRef, // non-color layers share 1 instanced mesh now
                 visibleLayerIndex: visibleIdx,
                 inputNids,
                 inputNeurons: prevLayer
@@ -120,7 +121,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           index: 0,
           nids: neurons.map((n) => n.nid),
           nidsStr: neurons.map((n) => n.nid).join(","),
-          meshRef: meshRefs[0],
+          meshRef: layerMeshRef,
           neurons,
         }
         const layer = {
