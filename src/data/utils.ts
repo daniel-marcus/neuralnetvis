@@ -53,10 +53,11 @@ export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
 export function normalizeWithSign(values: number[] | undefined) {
   // returns values between -1 and 1 and keeps the sign
   if (typeof values === "undefined") return values
-  if (values.length === 0) return []
-  const maxAbs = Math.max(...values.map(Math.abs))
-  if (maxAbs === 0) return values.map(() => 0)
-  return values.map((v) => v / maxAbs)
+  return tf.tidy(() => {
+    const tensor = tf.tensor1d(values)
+    const normalized = normalizeTensor(tensor)
+    return normalized.arraySync() as number[]
+  })
 }
 
 export class StandardScaler {

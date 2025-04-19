@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { SphereGeometry } from "three"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
@@ -59,12 +59,17 @@ const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
     (s) => s.scene?.getState().vis?.highlightProp
   )
   const isScreenSm = isScreen("sm")
-  if (highlightProp === "weights") return null // will be duplication
 
   const { prevLayer } = neuron.layer
-  if (!neuron.weights?.length || !prevLayer) return null
+
   // normalize in group?
-  const weights = normalizeWithSign(neuron.weights) ?? []
+  const weights = useMemo(
+    () => normalizeWithSign(neuron.weights) ?? [],
+    [neuron]
+  )
+
+  if (!neuron.weights?.length || !prevLayer) return null
+  if (highlightProp === "weights") return null // will be duplication
 
   const prevShape = prevLayer.tfLayer.outputShape as number[]
   const [, prevHeight, prevWidth, groupCount = 1] = prevShape
