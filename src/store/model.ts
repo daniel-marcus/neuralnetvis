@@ -62,7 +62,7 @@ export const createModelSlice: StateCreator<
       // status: { ...status, percent: -1 }, // trigger spinner
     })),
   resetLayerConfigs: () => {
-    set({ layerConfigs: defaultLayerConfigs })
+    set({ layerConfigs: [...defaultLayerConfigs] })
     setVisConfig({ invisibleLayers: [] })
   },
   resetWeights: () =>
