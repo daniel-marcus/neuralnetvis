@@ -205,6 +205,7 @@ function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
     return {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         // e.stopPropagation()
+        if (!isActive) return
         if (e.buttons) return
         document.body.style.cursor = "pointer"
         toggleHovered(groupedNeurons[e.instanceId as number])
@@ -215,7 +216,7 @@ function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
         toggleHovered(null)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
-        // if (!isActive) return
+        if (!isActive) return
         const neuron = groupedNeurons[e.instanceId as number]
         if (useGlobalStore.getState().isDebug) console.log(neuron)
         toggleSelected(neuron)
@@ -259,7 +260,7 @@ function useLayerInteractions(
   )
 
   const onPointerOver = (e: ThreeEvent<PointerEvent>) => {
-    // e.stopPropagation()
+    e.stopPropagation()
     if (e.buttons) return
     document.body.style.cursor = "pointer"
     setStatus(status, undefined, { id: LAYER_HOVER_STATUS })

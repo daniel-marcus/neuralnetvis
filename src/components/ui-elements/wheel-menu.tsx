@@ -31,10 +31,14 @@ export const WheelMenu = (props: WheelMenuProps) => {
       ref={ref}
       className={`absolute top-0 right-0 w-[140px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto ${
         !isActive ? "translate-x-[calc(70%-2rem)] hover:translate-x-0" : ""
-      } transition-transform duration-150 select-none no-scrollbar`}
+      } transition-transform duration-200 select-none no-scrollbar`}
     >
       <div
-        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl flex items-center justify-center [--wheel-radius:450px]`}
+        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background ${
+          isActive
+            ? "shadow-accent shadow-xl"
+            : "shadow-accent-hover shadow-2xl"
+        } transition-[box-shadow] duration-400 flex items-center justify-center [--wheel-radius:450px]`}
       >
         <ul
           className={`flex items-center justify-center`}
@@ -69,7 +73,14 @@ export const WheelMenu = (props: WheelMenuProps) => {
           })}
         </ul>
       </div>
-      <div className="h-[calc(200vh+1000px)]" />
+      <div
+        className="h-[calc(200vh+var(--scroll-padding))]"
+        style={
+          {
+            "--scroll-padding": `${SCROLL_PADDING}px`,
+          } as React.CSSProperties
+        }
+      />
     </div>
   )
 }
@@ -82,19 +93,20 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   const jumpTarget = useRef<Idx>(undefined)
 
   const onClick = useCallback(
-    (idx: number) => {
-      const targetRotation = idx * degPerItem
-      const percent = targetRotation / 360
-      const scroller = scrollerRef.current
-      setCurrIdx((oldIdx) => (idx === oldIdx ? undefined : idx))
-      if (!scroller) return
-      jumpTarget.current = idx
-      const top = percent * getMaxScroll(scroller)
-      scroller.scrollTo({ top, behavior: "smooth" })
-      setTimeout(() => (jumpTarget.current = undefined), 500)
-    },
-    [setCurrIdx, degPerItem]
+    (idx: number) => setCurrIdx((oldIdx) => (idx === oldIdx ? undefined : idx)),
+    [setCurrIdx]
   )
+
+  useEffect(() => {
+    const scroller = scrollerRef.current
+    if (!scroller || typeof currIdx !== "number" || isActive) return
+    const targetRotation = currIdx * degPerItem
+    const percent = targetRotation / 360
+    jumpTarget.current = currIdx
+    const top = percent * getMaxScroll(scroller)
+    scroller.scrollTo({ top, behavior: "smooth" })
+    setTimeout(() => (jumpTarget.current = undefined), 1000)
+  }, [currIdx, degPerItem, isActive])
 
   // onScroll: upd wheelRotation and currIdx + limit scrolling
   useEffect(() => {

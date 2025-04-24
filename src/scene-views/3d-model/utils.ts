@@ -103,7 +103,8 @@ export function interpolate(from: number, to: number, percent: number): number {
   return from + (to - from) * percent
 }
 
-const MAX_X_WIDTH = 200 // in three.js units
+const MAX_X_WIDTH = 250 // in three.js units
+const MIN_X_SHIFT = 2
 
 export function useDynamicXShift() {
   // use smaller xShift for models with many layers
@@ -115,8 +116,9 @@ export function useDynamicXShift() {
       isVisible(l, arr[i + 1])
     )
     const dynamicXShift = Math.round(MAX_X_WIDTH / visibleLayers.length)
-    const clampedXShift = clamp(dynamicXShift, 1, defaultVisConfig.xShift)
+    const defaultXShift = defaultVisConfig.xShift
+    const clampedXShift = clamp(dynamicXShift, MIN_X_SHIFT, defaultXShift)
     setVisConfig({ xShift: clampedXShift })
-    return () => setVisConfig({ xShift: defaultVisConfig.xShift })
+    return () => setVisConfig({ xShift: defaultXShift })
   }, [model, setVisConfig])
 }
