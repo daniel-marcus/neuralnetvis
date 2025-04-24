@@ -9,10 +9,10 @@ export const LayerWheel = () => {
   const layers = useMemo(() => model?.layers ?? [], [model])
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
-  const isLayersView = useSceneStore((s) => s.view === "layers")
+  const isGraphView = useSceneStore((s) => s.view === "graph")
   const items = useMemo(
-    () => layers.map((l) => layer2WheelItem(l, isLayersView)),
-    [layers, isLayersView]
+    () => layers.map((l) => layer2WheelItem(l, !isGraphView)),
+    [layers, isGraphView]
   )
   const view = useSceneStore((s) => s.view)
   const [enter2d, enter3d] = useAutoFlatView(
