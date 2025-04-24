@@ -100,7 +100,12 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
   useEffect(() => {
     const scroller = scrollerRef.current
-    if (!scroller || typeof currIdx !== "number" || userInteraction.current)
+    if (
+      !scroller ||
+      typeof currIdx !== "number" ||
+      userInteraction.current ||
+      jumpTarget.current === -1
+    )
       return
     const targetRotation = currIdx * degPerItem
     const percent = targetRotation / 360
