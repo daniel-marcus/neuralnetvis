@@ -1,4 +1,5 @@
 import {
+  ActivationLayerArgs,
   DenseLayerArgs,
   DropoutLayerArgs,
   FlattenLayerArgs,
@@ -27,6 +28,7 @@ export type LayerConfigMap = {
   DepthwiseConv2D: DepthwiseConv2DLayerArgs
   ReLU: ReLULayerArgs
   ZeroPadding2D: ZeroPadding2DLayerArgs
+  Activation: ActivationLayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {

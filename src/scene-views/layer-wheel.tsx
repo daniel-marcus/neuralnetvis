@@ -9,7 +9,11 @@ export const LayerWheel = () => {
   const layers = useMemo(() => model?.layers ?? [], [model])
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
-  const items = useMemo(() => layers.map(layer2WheelItem), [layers])
+  const isLayersView = useSceneStore((s) => s.view === "layers")
+  const items = useMemo(
+    () => layers.map((l) => layer2WheelItem(l, isLayersView)),
+    [layers, isLayersView]
+  )
   const view = useSceneStore((s) => s.view)
   const [enter2d, enter3d] = useAutoFlatView(
     typeof focussedIdx === "number" && view !== "graph"
@@ -44,7 +48,7 @@ export function useAutoFlatView(active: boolean) {
   return [enter2d, enter3d] as const
 }
 
-const layer2WheelItem = (layer: Layer, i: number, arr: Layer[]) => ({
+const layer2WheelItem = (layer: Layer, filterInvisible?: boolean) => ({
   label: layer.getClassName(),
-  disabled: !isVisible(layer, arr[i + 1]),
+  disabled: filterInvisible && !isVisible(layer),
 })

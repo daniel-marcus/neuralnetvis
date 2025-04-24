@@ -105,7 +105,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
     jumpTarget.current = currIdx
     const top = percent * getMaxScroll(scroller)
     scroller.scrollTo({ top, behavior: "smooth" })
-    setTimeout(() => (jumpTarget.current = undefined), 1000)
+    setTimeout(() => (jumpTarget.current = undefined), 700)
   }, [currIdx, degPerItem, isActive])
 
   // onScroll: upd wheelRotation and currIdx + limit scrolling

@@ -6,8 +6,10 @@ import { useHelper } from "@react-three/drei"
 
 export const Lights = () => {
   const ref1 = useRef<SpotLight>(null!)
+  const ref2 = useRef<SpotLight>(null!)
   const isDebug = useGlobalStore((s) => s.isDebug)
   useHelper(isDebug && ref1, SpotLightHelper)
+  useHelper(isDebug && ref2, SpotLightHelper)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   const lightIntensity = useSceneStore((s) => s.vis.lightIntensity)
   const toggleLights = useSceneStore((s) => s.vis.toggleLights)
@@ -24,12 +26,12 @@ export const Lights = () => {
         intensity={lightsOn ? lightIntensity * Math.PI : 0}
       />
       <spotLight
-        position={[100, -20, 20]}
+        ref={ref2}
+        position={[1000, -20, 20]}
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
         intensity={(Math.PI / 3) * 2}
-        // color="rgb(100,20,255)"
         color="#ff0000"
       />
     </>

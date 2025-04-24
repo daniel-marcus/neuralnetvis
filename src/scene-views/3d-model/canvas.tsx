@@ -68,6 +68,7 @@ export const CanvasInner = ({ isActive }: CanvasProps) => {
         makeDefault
         position={defaultState.cameraPos}
         zoom={0.1}
+        far={5000}
       />
       <OrbitControls
         makeDefault
