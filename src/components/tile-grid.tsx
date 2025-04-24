@@ -13,7 +13,7 @@ import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "@/scene-views/video"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
-import { useLast } from "@/utils/use-last"
+import { useLast } from "@/utils/helpers"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const

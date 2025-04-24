@@ -89,7 +89,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       setCurrIdx((oldIdx) => (idx === oldIdx ? undefined : idx))
       if (!scroller) return
       jumpTarget.current = idx
-      const top = percent * (scroller.scrollHeight - scroller.clientHeight)
+      const top = percent * getMaxScroll(scroller)
       scroller.scrollTo({ top, behavior: "smooth" })
       setTimeout(() => (jumpTarget.current = undefined), 500)
     },
@@ -116,7 +116,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       }
 
       if (!(scroller instanceof HTMLDivElement)) return
-      const maxScrollTop = scroller.scrollHeight - scroller.clientHeight - 1000 // -1000px to keep wheel always fixed (although it is "sticky"; "fixed" didn't work)
+      const maxScrollTop = getMaxScroll(scroller)
       const percent = scroller.scrollTop / maxScrollTop
 
       const maxPercent = ((items.length - 1) * degPerItem) / 360
@@ -180,6 +180,12 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   useKeyboardNavigation(currIdx, items, onClick)
 
   return [scrollerRef, wheelRotation, onClick, isActive] as const
+}
+
+const SCROLL_PADDING = 1000 // px; to keep wheel always fixed (although it is "sticky")
+
+function getMaxScroll(scroller: HTMLDivElement) {
+  return scroller.scrollHeight - scroller.clientHeight - SCROLL_PADDING
 }
 
 function useKeyboardNavigation(

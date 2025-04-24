@@ -1,6 +1,7 @@
 import { ReactElement, useEffect, useMemo } from "react"
 import { useSprings, animated } from "@react-spring/web"
 import { rubberbandIfOutOfBounds, useDrag } from "@use-gesture/react"
+import { clamp } from "@/utils/helpers"
 
 // reference: https://codesandbox.io/p/sandbox/zfy9p
 
@@ -127,8 +128,4 @@ function swap<T>(array: T[], fromIndex: number, toIndex: number): T[] {
   newArray.splice(toIndex, 0, removed)
 
   return newArray
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
 }

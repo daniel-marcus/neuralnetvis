@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from "react"
 import { Button, Table } from "@/components/ui-elements"
 import { useCurrScene } from "@/store"
+import { clamp } from "@/utils/helpers"
 import type { ReactNode, Ref, RefObject } from "react"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
@@ -135,9 +136,6 @@ function updElPos(el: HTMLElement, x: number, y: number) {
   el.style.left = `${x}px`
   el.style.top = `${y}px`
 }
-
-const clamp = (val: number, min: number, max: number) =>
-  Math.max(min, Math.min(val, max))
 
 function Metrics({ currMetrics }: { currMetrics: Set<string> }) {
   const logsMetric = useCurrScene((s) => s.logsMetric)

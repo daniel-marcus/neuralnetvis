@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, config } from "@react-spring/web"
-import { getThree } from "@/store"
+import { getThree, useSceneStore } from "@/store"
 import type { NeuronDef } from "@/neuron-layers/types"
-import type { Three } from "@/store/vis"
+import { defaultVisConfig, type Three } from "@/store/vis"
+import { isVisible } from "@/neuron-layers/layers-stateless"
+import { clamp } from "@/utils/helpers"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   // TODO: could use spring here
@@ -99,4 +101,22 @@ export function interpolateCamera(from: Pos, to: Pos, percent: number) {
 export function interpolate(from: number, to: number, percent: number): number {
   percent = Math.max(0, Math.min(1, percent))
   return from + (to - from) * percent
+}
+
+const MAX_X_WIDTH = 200 // in three.js units
+
+export function useDynamicXShift() {
+  // use smaller xShift for models with many layers
+  const model = useSceneStore((s) => s.model)
+  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+  useEffect(() => {
+    if (!model) return
+    const visibleLayers = model.layers.filter((l, i, arr) =>
+      isVisible(l, arr[i + 1])
+    )
+    const dynamicXShift = Math.round(MAX_X_WIDTH / visibleLayers.length)
+    const clampedXShift = clamp(dynamicXShift, 1, defaultVisConfig.xShift)
+    setVisConfig({ xShift: clampedXShift })
+    return () => setVisConfig({ xShift: defaultVisConfig.xShift })
+  }, [model, setVisConfig])
 }

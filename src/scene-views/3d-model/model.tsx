@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { useLayers, type LayerStateful } from "@/neuron-layers"
 import { useSceneStore } from "@/store"
-import { useAnimatedPosition } from "./utils"
+import { useAnimatedPosition, useDynamicXShift } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./highlighted"
 
@@ -10,6 +10,7 @@ export const Model = () => {
   const layers = useLayers(!isActive)
   const position = useModelOffset(layers)
   const [ref] = useAnimatedPosition(position, 0.1)
+  useDynamicXShift()
   return (
     <>
       <group ref={ref}>
