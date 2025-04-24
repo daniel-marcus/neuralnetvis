@@ -31,11 +31,11 @@ export const createViewSlice: StateCreator<
   isActive: false,
   view: "layers",
   setView: (view) =>
-    set(({ sampleIdx, ds }) => {
+    set(({ sampleIdx, ds, subset }) => {
       const hasTestData = !!ds?.test.totalSamples
       return {
         view,
-        subset: view === "evaluation" && hasTestData ? "test" : "train",
+        subset: view === "evaluation" && hasTestData ? "test" : subset,
         sampleIdx: view === "evaluation" ? undefined : sampleIdx,
       }
     }),

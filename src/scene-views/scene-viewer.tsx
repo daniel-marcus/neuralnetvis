@@ -35,9 +35,10 @@ function SceneViewerInner(props: SceneViewerProps) {
   useInitialState(props.initialState)
   const view = useSceneStore((s) => s.view)
   const title = section === "play" && dsDef ? dsDef.name : props.title
+  const showMap = dsDef?.task === "regression" && view !== "graph"
   return (
     <>
-      {dsDef?.task === "regression" && <MapPlot />}
+      {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <ThreeCanvas {...props} />
