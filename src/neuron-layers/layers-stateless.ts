@@ -20,7 +20,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         const className = tfLayer.getClassName() as LayerType
         const layerPos = getLayerPos(layerIndex, model)
 
-        const visibleIdx = visibleIdxMap.get(layerIndex) ?? 0
+        const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
 
         const layerInputNids =
@@ -135,14 +135,14 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
       }, [] as LayerStateless[]) ?? []
     )
   }, [model, ds])
-
   return layers
 }
 
-const MAX_VISIBLE_LAYERS = 50
+const MAX_VISIBLE_LAYERS = 70
 
 function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
   // avoid browser crash with too large models
+  if (visibleIdx === -1) return true
   if (visibleIdx === 0 || visibleIdx === totalVisibleLayers - 1) return false
   const result = visibleIdx > MAX_VISIBLE_LAYERS
   if (result) {
@@ -153,11 +153,23 @@ function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
   return result
 }
 
-const getVisibleIdxMap = (model: tf.LayersModel) =>
-  model.layers.reduce(
-    (map, layer, index) => (getUnits(layer) ? map.set(index, map.size) : map),
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function isVisible(layer: Layer, next?: Layer) {
+  const className = layer.getClassName()
+  const layerDef = getLayerDef(className)
+  if (layerDef?.isInvisible) return false
+  // const nextClassName = next?.getClassName() ?? ""
+  // if (["ReLU"].includes(nextClassName)) return false
+  return true
+}
+
+const getVisibleIdxMap = (model: tf.LayersModel) => {
+  return model.layers.reduce(
+    (map, layer, i, arr) =>
+      isVisible(layer, arr[i + 1]) ? map.set(i, map.size) : map,
     new Map<number, number>()
   )
+}
 
 export function getNid(layerIndex: number, index3d: Index3D) {
   return `${layerIndex}_${index3d.join(".")}` as Nid
@@ -171,11 +183,7 @@ export function getIndex3d(flatIndex: number, outputShape: number[]) {
   return [heightIndex, widthIndex, depthIndex] as Index3D
 }
 
-export function getUnits(layer: tf.layers.Layer) {
-  const className = layer.getClassName()
-  const layerDef = getLayerDef(className)
-  if (layerDef?.isInvisible) return 0
-  // if (["Flatten", "Dropout"].includes(layer.getClassName())) return 0
+export function getUnits(layer: Layer) {
   const [, ...dims] = layer.outputShape as number[]
   return dims.reduce((a, b) => a * b, 1)
 }

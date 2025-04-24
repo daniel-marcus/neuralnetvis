@@ -25,7 +25,7 @@ export const Layer = (props: LayerProps) => {
   const [material, addBlend] = useAdditiveBlending(hasColorChannels) // TODO: share material?
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
-  if (!props.neurons.length) return null
+  if (!props.neurons.length || props.visibleIdx === -1) return null
   return (
     <>
       <group ref={ref} renderOrder={addBlend ? -1 : undefined}>
@@ -58,7 +58,9 @@ function useFocussed(layerIdx: number) {
 
 function useLayerPos(layer: LayerProps) {
   const { allLayers } = layer
-  const visibleLayers = allLayers.filter((l) => l.neurons.length)
+  const visibleLayers = allLayers.filter(
+    (l) => l.visibleIdx >= 0 && l.neurons.length
+  )
   const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
 
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)

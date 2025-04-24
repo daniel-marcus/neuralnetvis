@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react"
 import { useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
-import { getLayerDef } from "@/model/layers"
+import { isVisible } from "@/neuron-layers/layers-stateless"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 export const LayerWheel = () => {
@@ -44,14 +44,7 @@ export function useAutoFlatView(active: boolean) {
   return [enter2d, enter3d] as const
 }
 
-const layer2WheelItem = (layer: Layer) => ({
+const layer2WheelItem = (layer: Layer, i: number, arr: Layer[]) => ({
   label: layer.getClassName(),
-  disabled: isNotVisible(layer),
+  disabled: !isVisible(layer, arr[i + 1]),
 })
-
-function isNotVisible(layer: Layer) {
-  const className = layer.getClassName()
-  const layerDef = getLayerDef(className)
-  if (layerDef?.isInvisible) return true
-  // return ["Flatten", "Dropout"].includes(layer.getClassName())
-}

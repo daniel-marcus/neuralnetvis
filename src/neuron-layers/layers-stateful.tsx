@@ -45,14 +45,10 @@ export function useStatefulLayers(
           return [...acc, dummy as LayerStateful]
         }
 
-        const { layerPos, layerType } = layer
-
         const layerActivations = activations?.[lIdx]?.activations
         const normalizedActivations =
-          layerPos === "output"
+          layer.layerPos === "output"
             ? layerActivations
-            : layerType === "Flatten"
-            ? undefined
             : activations?.[lIdx]?.normalizedActivations
 
         const { weights, biases, maxAbsWeight } = weightsBiases[lIdx] ?? {}
@@ -74,7 +70,7 @@ export function useStatefulLayers(
               bias: biases?.[filterIndex],
             } as Neuron
             newNeuron.color =
-              isRegression && layerPos === "output"
+              isRegression && layer.layerPos === "output"
                 ? getPredictionQualityColor(newNeuron, sample?.y, yMean)
                 : getNeuronColor(newNeuron)
 

@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react"
 import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { getLayerDef, layerDefMap } from "@/model/layers"
+import { isVisible } from "@/neuron-layers/layers-stateless"
 import type {
   LayerConfig,
   LayerConfigArray,
@@ -111,6 +112,7 @@ export const LayerConfigControl = () => {
       })),
   ]
   const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
+  if (!model) return null
   return (
     <CollapsibleWithTitle title={"layers"} className="bg-box-solid">
       <div className="flex flex-col gap-4">
@@ -136,7 +138,7 @@ export const LayerConfigControl = () => {
 
             const isInvisible =
               invisibleLayers.includes(layer.config.name ?? "") ||
-              layer.className === "Flatten"
+              !isVisible(model.layers[i], model.layers[i + 1])
             const mustBe =
               i === 0 ||
               i === layerConfigs.length - 1 ||
