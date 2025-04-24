@@ -43,7 +43,7 @@ export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
     const reshapedTensor = tensor.reshape([height * width, channels])
 
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
-    const maxAbs = reshapedTensor.max(0).maximum(epsilon)
+    const maxAbs = reshapedTensor.abs().max(0).maximum(epsilon)
 
     const normalizedTensor = reshapedTensor.div(maxAbs)
     return normalizedTensor.reshape([1, height, width, channels])
