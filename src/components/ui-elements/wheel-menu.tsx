@@ -91,6 +91,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
+  const userInteraction = useRef(false)
 
   const onClick = useCallback(
     (idx: number) => setCurrIdx((oldIdx) => (idx === oldIdx ? undefined : idx)),
@@ -99,14 +100,15 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
   useEffect(() => {
     const scroller = scrollerRef.current
-    if (!scroller || typeof currIdx !== "number" || isActive) return
+    if (!scroller || typeof currIdx !== "number" || userInteraction.current)
+      return
     const targetRotation = currIdx * degPerItem
     const percent = targetRotation / 360
     jumpTarget.current = currIdx
     const top = percent * getMaxScroll(scroller)
     scroller.scrollTo({ top, behavior: "smooth" })
     setTimeout(() => (jumpTarget.current = undefined), 700)
-  }, [currIdx, degPerItem, isActive])
+  }, [currIdx, degPerItem])
 
   // onScroll: upd wheelRotation and currIdx + limit scrolling
   useEffect(() => {
@@ -119,10 +121,12 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
       if (isHumanScroll && !isTouch()) {
         setIsActive(true)
+        userInteraction.current = true
         onScroll?.()
         clearTimeout(scrollEndTimeout)
         scrollEndTimeout = setTimeout(() => {
           if (autoHide) setIsActive(false)
+          userInteraction.current = false
           onScrollEnd?.()
         }, 300)
       }
@@ -154,9 +158,11 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         e.touches.length >= 2
       )
         return
+      userInteraction.current = true
       setIsActive(true)
     }
     const onTouchEnd = () => {
+      userInteraction.current = false
       if (autoHide) setIsActive(false)
       if (jumpTarget.current !== -1) {
         onScrollEnd?.()
