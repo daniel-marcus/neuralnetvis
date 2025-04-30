@@ -48,6 +48,7 @@ interface VisActions {
   toggleLocked: () => void
   toggleLights: () => void
   toggleAutoRotate: () => void
+  setFlatView: (flatView: boolean) => void
 }
 
 export interface Three {
@@ -87,6 +88,8 @@ export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
       set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
     toggleAutoRotate: () =>
       set(({ vis }) => ({ vis: { ...vis, autoRotate: !vis.autoRotate } })),
+    setFlatView: (flatView) =>
+      set(({ vis }) => ({ vis: { ...vis, flatView } })),
   },
   three: undefined,
   setThree: (three) => set({ three }),

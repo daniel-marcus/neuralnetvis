@@ -136,3 +136,7 @@ export const getVisConfig: VisSlice["vis"]["getConfig"] = (key) =>
 export const setView = (view: View) => getScene().setState({ view })
 export const getInvisibleLayers = () =>
   getScene().getState().vis.invisibleLayers
+
+export function useHasFocussedLayer() {
+  return useSceneStore((s) => typeof s.focussedLayerIdx === "number")
+}

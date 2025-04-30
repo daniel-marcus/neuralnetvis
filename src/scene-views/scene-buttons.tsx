@@ -1,4 +1,4 @@
-import { useSceneStore } from "@/store"
+import { useHasFocussedLayer, useSceneStore } from "@/store"
 import { VideoControl } from "./video"
 import { Button, Select } from "@/components/ui-elements"
 import type { Dataset } from "@/data"
@@ -87,9 +87,7 @@ function ViewSubsetSelect() {
 
 function ShowAllLayersBtn() {
   const view = useSceneStore((s) => s.view)
-  const hasFocussed = useSceneStore(
-    (s) => typeof s.focussedLayerIdx === "number"
-  )
+  const hasFocussed = useHasFocussedLayer()
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   if (view !== "layers" || !hasFocussed) return null
   return (

@@ -10,9 +10,7 @@ import type { Mesh } from "three"
 export function HoverComponents() {
   const selected = useSelected()
   const hovered = useHovered()
-  /* const hasFocussedLayer = useSceneStore(
-    (s) => typeof s.focussedLayerIdx === "number"
-  ) */
+  /* const hasFocussedLayer = useHasFocussedLayer() */
   return (
     <>
       <HoverConnections />

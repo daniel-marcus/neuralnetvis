@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand"
-import { DataSlice, Subset } from "./data"
-import { SetterFunc } from "."
+import type { DataSlice, Subset } from "./data"
+import type { SetterFunc } from "."
 
 export type View = "layers" | "graph" | "map" | "evaluation"
 

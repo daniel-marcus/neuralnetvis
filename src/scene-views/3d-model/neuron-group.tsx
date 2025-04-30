@@ -15,6 +15,7 @@ import {
   useSceneStore,
   setStatus,
   clearStatus,
+  useHasFocussedLayer,
 } from "@/store"
 import { Pos, useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
@@ -30,9 +31,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   // useScale(group.meshRef, group.nidsStr, props.index, group.index)
 
   const isActive = useSceneStore((s) => s.isActive)
-  const hasFocussedLayer = useSceneStore(
-    (s) => typeof s.focussedLayerIdx === "number"
-  )
+  const hasFocussedLayer = useHasFocussedLayer()
   const layerIdx = props.index
   const [measureRef, hoverMesh] = useLayerInteractions(
     layerIdx,

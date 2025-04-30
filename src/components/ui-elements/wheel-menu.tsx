@@ -15,7 +15,7 @@ interface WheelMenuProps {
   items: WheelMenuItem[]
   currIdx: Idx
   setCurrIdx: IdxSetter
-  onScroll?: () => void
+  onScrollStart?: () => void
   onScrollEnd?: () => void
   autoHide?: boolean
 }
@@ -86,7 +86,8 @@ export const WheelMenu = (props: WheelMenuProps) => {
 }
 
 function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
-  const { items, currIdx, setCurrIdx, onScroll, onScrollEnd, autoHide } = props
+  const { items, currIdx, setCurrIdx, onScrollStart, onScrollEnd, autoHide } =
+    props
   const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -126,8 +127,10 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
       if (isHumanScroll && !isTouch()) {
         setIsActive(true)
-        userInteraction.current = true
-        onScroll?.()
+        if (!userInteraction.current) {
+          onScrollStart?.()
+          userInteraction.current = true
+        }
         clearTimeout(scrollEndTimeout)
         scrollEndTimeout = setTimeout(() => {
           if (autoHide) setIsActive(false)
@@ -163,7 +166,6 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         e.touches.length >= 2
       )
         return
-      userInteraction.current = true
       setIsActive(true)
     }
     const onTouchEnd = () => {
@@ -174,6 +176,10 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       }
     }
     const onTouchMove = () => {
+      if (!userInteraction.current) {
+        onScrollStart?.()
+        userInteraction.current = true
+      }
       if (scroller.scrollTop < -20) {
         setCurrIdx(undefined)
         jumpTarget.current = -1
@@ -184,7 +190,6 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         )
         return
       }
-      onScroll?.()
       setIsActive(true)
     }
 
@@ -198,7 +203,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       scroller.removeEventListener("touchmove", onTouchMove)
       scroller.removeEventListener("touchend", onTouchEnd)
     }
-  }, [setCurrIdx, items, onScroll, onScrollEnd, autoHide, degPerItem])
+  }, [setCurrIdx, items, onScrollStart, onScrollEnd, autoHide, degPerItem])
 
   useKeyboardNavigation(currIdx, items, onClick)
 
