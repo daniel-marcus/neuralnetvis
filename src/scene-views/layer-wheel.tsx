@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useHasFocussedLayer, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers-stateless"
@@ -34,21 +34,20 @@ export const LayerWheel = () => {
 
 export function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)
-  const isScrolling = useRef(false)
+  const hasFocussed = useHasFocussedLayer()
+  const [isScrolling, setIsScrolling] = useState(false)
   const onScrollStart = useCallback(() => {
-    isScrolling.current = true
+    setIsScrolling(true)
     setFlatView(false)
   }, [setFlatView])
   const onScrollEnd = useCallback(() => {
-    isScrolling.current = false
-    setFlatView(true)
-  }, [setFlatView])
+    setIsScrolling(false)
+  }, [])
 
-  const hasFocussed = useHasFocussedLayer()
   useEffect(() => {
-    if (!isActive || isScrolling.current) return
+    if (!isActive || isScrolling) return
     setFlatView(hasFocussed ? true : false)
-  }, [isActive, hasFocussed, setFlatView])
+  }, [isActive, isScrolling, hasFocussed, setFlatView])
 
   return isActive ? { onScrollStart, onScrollEnd } : {}
 }

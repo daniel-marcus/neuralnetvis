@@ -30,7 +30,11 @@ export const WheelMenu = (props: WheelMenuProps) => {
     <div
       ref={ref}
       className={`absolute top-0 right-0 w-[140px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto ${
-        !isActive ? "translate-x-[calc(70%-2rem)] hover:translate-x-0" : ""
+        !props.items.length
+          ? "translate-x-full"
+          : !isActive
+          ? "translate-x-[calc(70%-2rem)] hover:translate-x-0"
+          : ""
       } transition-transform duration-200 select-none no-scrollbar`}
     >
       <div
@@ -50,7 +54,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
               <li
                 key={i}
                 className={`absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)]`}
-                style={{ transform: `rotate(-${degPerItem * i}deg)` }}
+                style={{ transform: `rotate(-${degPerItem * (i + 1)}deg)` }}
               >
                 <button onClick={() => onClick(i)} disabled={disabled}>
                   <span
@@ -101,14 +105,9 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
   useEffect(() => {
     const scroller = scrollerRef.current
-    if (
-      !scroller ||
-      typeof currIdx !== "number" ||
-      userInteraction.current ||
-      jumpTarget.current === -1
-    )
+    if (!scroller || typeof currIdx !== "number" || userInteraction.current)
       return
-    const targetRotation = currIdx * degPerItem
+    const targetRotation = (currIdx + 1) * degPerItem // +1 because 0 is empty (unselect)
     const percent = targetRotation / 360
     jumpTarget.current = currIdx
     const top = percent * getMaxScroll(scroller)
@@ -122,19 +121,18 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
     if (!scroller) return
     let scrollEndTimeout: NodeJS.Timeout
     const handleScroll: EventListener = () => {
-      const isHumanScroll =
-        typeof jumpTarget.current === "undefined" && scroller.scrollTop > 0
+      const isHumanScroll = typeof jumpTarget.current === "undefined"
 
       if (isHumanScroll && !isTouch()) {
-        setIsActive(true)
         if (!userInteraction.current) {
-          onScrollStart?.()
           userInteraction.current = true
+          setIsActive(true)
+          onScrollStart?.()
         }
         clearTimeout(scrollEndTimeout)
         scrollEndTimeout = setTimeout(() => {
-          if (autoHide) setIsActive(false)
           userInteraction.current = false
+          if (autoHide) setIsActive(false)
           onScrollEnd?.()
         }, 300)
       }
@@ -143,7 +141,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       const maxScrollTop = getMaxScroll(scroller)
       const percent = scroller.scrollTop / maxScrollTop
 
-      const maxPercent = ((items.length - 1) * degPerItem) / 360
+      const maxPercent = ((items.length + 1) * degPerItem) / 360 // +1 for overscroll
       if (percent > maxPercent) {
         scroller.scrollTop = maxPercent * maxScrollTop
         return
@@ -153,9 +151,9 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       setWheelRotation(newRotation)
 
       if (!isHumanScroll) return
-      const newIdx = Math.round(newRotation / degPerItem)
-      if (!!items[newIdx] && !items[newIdx].disabled) {
-        setCurrIdx(newIdx)
+      const newIdx = Math.round((newRotation - degPerItem) / degPerItem)
+      if (!items[newIdx]?.disabled) {
+        setCurrIdx(!!items[newIdx] ? newIdx : undefined)
       }
     }
 
@@ -171,26 +169,14 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
     const onTouchEnd = () => {
       userInteraction.current = false
       if (autoHide) setIsActive(false)
-      if (jumpTarget.current !== -1) {
-        onScrollEnd?.()
-      }
+      onScrollEnd?.()
     }
     const onTouchMove = () => {
       if (!userInteraction.current) {
-        onScrollStart?.()
         userInteraction.current = true
+        setIsActive(true)
+        onScrollStart?.()
       }
-      if (scroller.scrollTop < -20) {
-        setCurrIdx(undefined)
-        jumpTarget.current = -1
-        clearTimeout(scrollEndTimeout)
-        scrollEndTimeout = setTimeout(
-          () => (jumpTarget.current = undefined),
-          500
-        )
-        return
-      }
-      setIsActive(true)
     }
 
     scroller.addEventListener("scroll", handleScroll)
