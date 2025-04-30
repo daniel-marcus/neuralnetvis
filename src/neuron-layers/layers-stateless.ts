@@ -24,7 +24,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
 
         const layerInputNids =
-          model.layers.length > 5
+          model.layers.length > 5 || (prevLayer?.neurons.length ?? 0) > 1000
             ? [] // TODO: load input nids on demand only?
             : getInputNids(tfLayer, prevLayer?.tfLayer, prevLayer?.index)
 

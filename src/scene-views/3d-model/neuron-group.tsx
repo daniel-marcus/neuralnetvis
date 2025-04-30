@@ -102,8 +102,8 @@ export function useGroupPosition(props: NeuronGroupProps) {
           ] // spread on y-axis
         : [
             groupIndex * SPLIT_COLORS_OFFSET,
-            groupIndex * SPLIT_COLORS_OFFSET,
-            groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * SPLIT_COLORS_OFFSET,
+            -groupIndex * SPLIT_COLORS_OFFSET,
           ]
       : [0, 0, 0]
   }, [

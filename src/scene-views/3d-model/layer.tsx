@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useLast } from "@/utils/helpers"
 import { NeuronGroup } from "./neuron-group"
@@ -22,7 +22,7 @@ export const Layer = (props: LayerProps) => {
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(ref, scale, duration)
-  const [material, addBlend] = useAdditiveBlending(hasColorChannels) // TODO: share material?
+  const [material, addBlend] = useAdditiveBlending(hasColorChannels)
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
   if (!props.neurons.length || props.visibleIdx === -1) return null
@@ -105,14 +105,20 @@ function useDynamicScale(
   })
 }
 
-export function useAdditiveBlending(hasColorChannels: boolean) {
+const basicMaterial = new THREE.MeshBasicMaterial()
+const standardMaterial = new THREE.MeshStandardMaterial()
+const blendingMaterial = new THREE.MeshBasicMaterial({
+  blending: THREE.AdditiveBlending,
+})
+
+function useAdditiveBlending(hasColorChannels: boolean) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const active = hasColorChannels && !splitColors
-  const material = useMemo(() => new THREE.MeshStandardMaterial(), [])
-  useEffect(() => {
-    const blending = active ? THREE.AdditiveBlending : THREE.NormalBlending
-    material.blending = blending
-    material.needsUpdate = true
-  }, [material, active])
+  const isDebug = useGlobalStore((s) => s.isDebug)
+  const material = active
+    ? blendingMaterial
+    : isDebug
+    ? basicMaterial
+    : standardMaterial
   return [material, active] as const
 }

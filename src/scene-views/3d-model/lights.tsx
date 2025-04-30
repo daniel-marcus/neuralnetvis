@@ -16,7 +16,9 @@ export const Lights = () => {
   useKeyCommand("L", toggleLights)
   return (
     <>
-      <ambientLight intensity={Math.PI * 0.7} />
+      <ambientLight
+        intensity={Math.PI * 0.7} // 1
+      />
       <spotLight
         ref={ref1}
         position={[-1000, 20, -20]}
