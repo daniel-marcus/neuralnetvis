@@ -31,7 +31,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   const comp = (
     <div
       ref={ref}
-      className={`absolute top-0 left-0 h-full w-full max-h-screen pointer-events-none ${
+      className={`absolute top-0 left-0 h-full w-full max-h-screen pointer-events-none select-none ${
         isActive
           ? `overflow-auto ${canScroll ? "pointer-events-auto!" : ""}`
           : ""

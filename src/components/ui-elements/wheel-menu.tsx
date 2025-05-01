@@ -35,7 +35,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
             : isActive
             ? "shadow-accent translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
             : "shadow-accent-hover translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
-        } shadow-xl transition-[color_translate] duration-200 flex items-center justify-center [--wheel-radius:450px]`}
+        } shadow-xl transition-[color_translate] duration-200 flex items-center justify-center [--wheel-radius:450px] select-none`}
         ref={wheelRef}
       >
         <ul
@@ -153,6 +153,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         e.touches.length >= 2
       )
         return
+      e.preventDefault()
       setIsActive(true)
     }
     const onTouchMove = (e: TouchEvent) => {
