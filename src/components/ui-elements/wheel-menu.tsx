@@ -30,10 +30,12 @@ export const WheelMenu = (props: WheelMenuProps) => {
     >
       <div
         className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background ${
-          isActive
-            ? "shadow-accent shadow-xl translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
-            : "shadow-accent-hover shadow-2xl translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
-        } transition-[box-shadow_transform] duration-200 flex items-center justify-center [--wheel-radius:450px]`}
+          !props.items.length
+            ? "translate-x-full"
+            : isActive
+            ? "shadow-accent translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
+            : "shadow-accent-hover translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
+        } shadow-xl transition-[color_translate] duration-200 flex items-center justify-center [--wheel-radius:450px]`}
         ref={wheelRef}
       >
         <ul
