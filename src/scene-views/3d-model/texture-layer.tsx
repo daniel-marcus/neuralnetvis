@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useCallback, useMemo, useRef } from "react"
 import * as THREE from "three"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 import { useLayerInteractions } from "./neuron-group"
@@ -189,19 +189,26 @@ function useCachedGeometry(heightBoxes: number, widthBoxes: number) {
 
   const id = `${heightBoxes}-${widthBoxes}`
 
-  const getGeometry = (id: string): THREE.BoxGeometry => {
-    if (geometries.current.has(id)) {
-      return geometries.current.get(id)!
-    }
+  const getGeometry = useCallback(
+    (id: string): THREE.BoxGeometry => {
+      if (geometries.current.has(id)) {
+        return geometries.current.get(id)!
+      }
 
-    const geom = new THREE.BoxGeometry(0.2, heightBoxes * 0.2, widthBoxes * 0.2)
-    updateUvMapping(geom, heightBoxes, widthBoxes)
+      const geom = new THREE.BoxGeometry(
+        0.2,
+        heightBoxes * 0.2,
+        widthBoxes * 0.2
+      )
+      updateUvMapping(geom, heightBoxes, widthBoxes)
 
-    geometries.current.set(id, geom)
-    return geom
-  }
+      geometries.current.set(id, geom)
+      return geom
+    },
+    [heightBoxes, widthBoxes]
+  )
 
-  const geometry = useMemo(() => getGeometry(id), [id])
+  const geometry = useMemo(() => getGeometry(id), [id, getGeometry])
   return geometry
 }
 

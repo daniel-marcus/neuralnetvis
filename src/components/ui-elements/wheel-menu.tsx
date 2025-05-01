@@ -29,13 +29,13 @@ export const WheelMenu = (props: WheelMenuProps) => {
       className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px]`}
     >
       <div
-        className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background ${
+        className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 ${
           !props.items.length
-            ? "translate-x-full"
+            ? "translate-x-full after:opacity-0"
             : isActive
-            ? "shadow-accent translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
-            : "shadow-accent-hover translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
-        } shadow-xl transition-[color_translate] duration-200 flex items-center justify-center [--wheel-radius:450px] select-none`}
+            ? "after:opacity-100 translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
+            : "after:opacity-0 translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
+        } transition-transform duration-200 flex items-center justify-center [--wheel-radius:450px] select-none`}
         ref={wheelRef}
       >
         <ul
