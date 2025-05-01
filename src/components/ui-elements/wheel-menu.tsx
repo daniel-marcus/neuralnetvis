@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useKeyCommand } from "@/utils/key-command"
-import { isTouch } from "@/utils/screen"
 import type { SetterFunc } from "@/store"
 
 const DEFAULT_DEG_PER_ITEM = 6
@@ -22,31 +21,24 @@ interface WheelMenuProps {
 
 export const WheelMenu = (props: WheelMenuProps) => {
   const degPerItem = Math.min(DEFAULT_DEG_PER_ITEM, 356 / props.items.length)
-  const [ref, rotation, onClick, isActive] = useWheelInteractions(
-    props,
-    degPerItem
-  )
+  const [scrollerRef, wheelRef, rotation, onClick, isActive] =
+    useWheelInteractions(props, degPerItem)
   return (
     <div
-      ref={ref}
-      className={`absolute top-0 right-0 w-[140px] sm:w-[190px] h-screen overflow-y-scroll overflow-x-clip pointer-events-auto ${
-        !props.items.length
-          ? "translate-x-full"
-          : !isActive
-          ? "translate-x-[calc(70%-2rem)] hover:translate-x-0"
-          : ""
-      } transition-transform duration-200 select-none no-scrollbar`}
+      ref={scrollerRef} // hidden scroll container
+      className={`absolute border-1 top-0 right-[-10px] h-screen overflow-y-scroll _overflow-x-clip pointer-events-auto select-none no-scrollbar w-[10px] transition-transform duration-200`}
     >
       <div
-        className={`sticky top-[50vh] translate-x-[2rem] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background ${
+        className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background ${
           isActive
-            ? "shadow-accent shadow-xl"
-            : "shadow-accent-hover shadow-2xl"
-        } transition-[box-shadow] duration-400 flex items-center justify-center [--wheel-radius:450px]`}
+            ? "shadow-accent shadow-xl translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
+            : "shadow-accent-hover shadow-2xl translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
+        } transition-[box-shadow_transform] duration-200 flex items-center justify-center [--wheel-radius:450px]`}
+        ref={wheelRef}
       >
         <ul
           className={`flex items-center justify-center`}
-          style={{ transform: `rotate(${rotation}deg)` }}
+          style={{ transform: `rotate(${rotation.toFixed(2)}deg)` }}
         >
           {props.items.map(({ label, disabled }, i) => {
             const isActive = i === props.currIdx
@@ -77,14 +69,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
           })}
         </ul>
       </div>
-      <div
-        className="h-[calc(200vh+var(--scroll-padding))]"
-        style={
-          {
-            "--scroll-padding": `${SCROLL_PADDING}px`,
-          } as React.CSSProperties
-        }
-      />
+      <div className="h-[300vh]" />
     </div>
   )
 }
@@ -95,6 +80,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const wheelRef = useRef<HTMLDivElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
   const userInteraction = useRef(false)
 
@@ -103,61 +89,62 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
     [setCurrIdx]
   )
 
+  // on external currIdx change: auto scroll to the target item
   useEffect(() => {
     const scroller = scrollerRef.current
-    if (!scroller || typeof currIdx !== "number" || userInteraction.current)
-      return
-    const targetRotation = (currIdx + 1) * degPerItem // +1 because 0 is empty (unselect)
+    if (!scroller || userInteraction.current) return
+    const targetIdx = currIdx ?? -1
+    const targetRotation = (targetIdx + 1) * degPerItem // +1 because 0 is empty (unselect)
     const percent = targetRotation / 360
-    jumpTarget.current = currIdx
+    jumpTarget.current = targetIdx
     const top = percent * getMaxScroll(scroller)
     scroller.scrollTo({ top, behavior: "smooth" })
-    setTimeout(() => (jumpTarget.current = undefined), 700)
   }, [currIdx, degPerItem])
 
-  // onScroll: upd wheelRotation and currIdx + limit scrolling
+  // set up event listeners
   useEffect(() => {
     const scroller = scrollerRef.current
-    if (!scroller) return
-    let scrollEndTimeout: NodeJS.Timeout
+    const wheel = wheelRef.current
+    if (!scroller || !wheel) return
+
+    const startScroll = () => {
+      jumpTarget.current = undefined
+      userInteraction.current = true
+      setIsActive(true)
+      onScrollStart?.()
+    }
+    const endScroll = () => {
+      userInteraction.current = false
+      if (autoHide) setIsActive(false)
+      onScrollEnd?.()
+    }
+
     const handleScroll: EventListener = () => {
-      const isHumanScroll = typeof jumpTarget.current === "undefined"
-
-      if (isHumanScroll && !isTouch()) {
-        if (!userInteraction.current) {
-          userInteraction.current = true
-          setIsActive(true)
-          onScrollStart?.()
-        }
-        clearTimeout(scrollEndTimeout)
-        scrollEndTimeout = setTimeout(() => {
-          userInteraction.current = false
-          if (autoHide) setIsActive(false)
-          onScrollEnd?.()
-        }, 300)
-      }
-
       if (!(scroller instanceof HTMLDivElement)) return
-      const maxScrollTop = getMaxScroll(scroller)
-      const percent = scroller.scrollTop / maxScrollTop
 
-      const maxPercent = ((items.length + 1) * degPerItem) / 360 // +1 for overscroll
+      // limit scroll and update wheel rotation
+      const maxScrollTop = getMaxScroll(scroller)
+      const maxPercent = (items.length * degPerItem) / 360
+      const percent = scroller.scrollTop / maxScrollTop
       if (percent > maxPercent) {
         scroller.scrollTop = maxPercent * maxScrollTop
         return
       }
-
       const newRotation = percent * 360
       setWheelRotation(newRotation)
 
-      if (!isHumanScroll) return
+      // update currIdx for human scroll
+      const isHumanScroll = typeof jumpTarget.current === "undefined"
       const newIdx = Math.round((newRotation - degPerItem) / degPerItem)
-      if (!items[newIdx]?.disabled) {
+      if (isHumanScroll && !items[newIdx]?.disabled)
         setCurrIdx(!!items[newIdx] ? newIdx : undefined)
-      }
     }
 
+    let startY: number | null = null
+    let startScrollTop: number = 0
     const onTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY
+      startScrollTop = scroller.scrollTop
       if (
         (e.target instanceof HTMLElement &&
           ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)) ||
@@ -166,40 +153,45 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         return
       setIsActive(true)
     }
-    const onTouchEnd = () => {
-      userInteraction.current = false
-      if (autoHide) setIsActive(false)
-      onScrollEnd?.()
-    }
-    const onTouchMove = () => {
-      if (!userInteraction.current) {
-        userInteraction.current = true
-        setIsActive(true)
-        onScrollStart?.()
+    const onTouchMove = (e: TouchEvent) => {
+      if (!userInteraction.current) startScroll()
+      if (e.touches.length === 1 && startY !== null) {
+        const currentY = e.touches[0].clientY
+        const deltaY = currentY - startY
+        scroller.scrollTop = startScrollTop - deltaY
+        e.preventDefault()
       }
     }
 
+    let wheelEndTimeout: NodeJS.Timeout
+    const handleWheel = (e: WheelEvent) => {
+      if (!userInteraction.current) startScroll()
+      clearTimeout(wheelEndTimeout)
+      wheelEndTimeout = setTimeout(endScroll, 300)
+      scroller.scrollTop += e.deltaY
+    }
+
     scroller.addEventListener("scroll", handleScroll)
-    scroller.addEventListener("touchstart", onTouchStart)
-    scroller.addEventListener("touchmove", onTouchMove)
-    scroller.addEventListener("touchend", onTouchEnd)
+    wheel.addEventListener("wheel", handleWheel)
+    wheel.addEventListener("touchstart", onTouchStart)
+    wheel.addEventListener("touchmove", onTouchMove)
+    wheel.addEventListener("touchend", endScroll)
     return () => {
       scroller.removeEventListener("scroll", handleScroll)
-      scroller.removeEventListener("touchstart", onTouchStart)
-      scroller.removeEventListener("touchmove", onTouchMove)
-      scroller.removeEventListener("touchend", onTouchEnd)
+      wheel.removeEventListener("wheel", handleWheel)
+      wheel.removeEventListener("touchstart", onTouchStart)
+      wheel.removeEventListener("touchmove", onTouchMove)
+      wheel.removeEventListener("touchend", endScroll)
     }
   }, [setCurrIdx, items, onScrollStart, onScrollEnd, autoHide, degPerItem])
 
   useKeyboardNavigation(currIdx, items, onClick)
 
-  return [scrollerRef, wheelRotation, onClick, isActive] as const
+  return [scrollerRef, wheelRef, wheelRotation, onClick, isActive] as const
 }
 
-const SCROLL_PADDING = 1000 // px; to keep wheel always fixed (although it is "sticky")
-
 function getMaxScroll(scroller: HTMLDivElement) {
-  return scroller.scrollHeight - scroller.clientHeight - SCROLL_PADDING
+  return scroller.scrollHeight - scroller.clientHeight
 }
 
 function useKeyboardNavigation(

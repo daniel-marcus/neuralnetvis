@@ -17,18 +17,14 @@ export const LayerWheel = () => {
   const view = useSceneStore((s) => s.view)
   const { onScrollStart, onScrollEnd } = useAutoFlatView(view !== "graph")
   return (
-    <div
-      className={`fixed top-0 right-0 h-screen flex flex-col items-start justify-center pointer-events-none overflow-visible`}
-    >
-      <WheelMenu
-        items={items}
-        currIdx={focussedIdx}
-        setCurrIdx={setFocussedIdx}
-        onScrollStart={onScrollStart}
-        onScrollEnd={onScrollEnd}
-        autoHide={true}
-      />
-    </div>
+    <WheelMenu
+      items={items}
+      currIdx={focussedIdx}
+      setCurrIdx={setFocussedIdx}
+      onScrollStart={onScrollStart}
+      onScrollEnd={onScrollEnd}
+      autoHide={true}
+    />
   )
 }
 
@@ -36,17 +32,12 @@ export function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)
   const hasFocussed = useHasFocussedLayer()
   const [isScrolling, setIsScrolling] = useState(false)
-  const onScrollStart = useCallback(() => {
-    setIsScrolling(true)
-    setFlatView(false)
-  }, [setFlatView])
-  const onScrollEnd = useCallback(() => {
-    setIsScrolling(false)
-  }, [])
+  const onScrollStart = useCallback(() => setIsScrolling(true), [])
+  const onScrollEnd = useCallback(() => setIsScrolling(false), [])
 
   useEffect(() => {
-    if (!isActive || isScrolling) return
-    setFlatView(hasFocussed ? true : false)
+    if (!isActive) return
+    setFlatView(hasFocussed && !isScrolling ? true : false)
   }, [isActive, isScrolling, hasFocussed, setFlatView])
 
   return isActive ? { onScrollStart, onScrollEnd } : {}
