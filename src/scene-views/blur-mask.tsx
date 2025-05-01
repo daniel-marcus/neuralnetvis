@@ -37,7 +37,7 @@ export function BlurMask() {
           : maskMode === "dark"
           ? "bg-background grayscale-100"
           : ""
-      } transition-all duration-300 pointer-events-none`}
+      } transition duration-300 pointer-events-none`}
     />
   )
 }

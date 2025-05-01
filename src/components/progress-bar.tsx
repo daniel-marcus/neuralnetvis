@@ -15,7 +15,7 @@ export const ProgressBar = memo(function ProgressBar() {
   return (
     <div
       ref={wrapperRef}
-      className={`w-full bg-red leading-none overflow-hidden transition-all duration-300 ${
+      className={`w-full bg-red leading-none overflow-hidden transition-opacity duration-300 ${
         isHidden ? "opacity-0" : ""
       } relative z-30 [--px-per-char:]`}
     >
