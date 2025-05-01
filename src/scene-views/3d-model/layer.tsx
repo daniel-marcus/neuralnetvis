@@ -6,6 +6,7 @@ import { useGlobalStore, useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useLast } from "@/utils/helpers"
 import { NeuronGroup } from "./neuron-group"
+import { TextureLayer } from "./texture-layer"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
@@ -25,22 +26,30 @@ export const Layer = (props: LayerProps) => {
   const [material, addBlend] = useAdditiveBlending(hasColorChannels)
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
+
+  const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
   if (!props.neurons.length || props.visibleIdx === -1) return null
+
+  const textureLayer = <TextureLayer {...props} />
+  const instancedLayer = (
+    <NeuronGroup {...props} group={props.layerGroup} material={material} />
+  )
   return (
     <>
       <group ref={ref} renderOrder={addBlend ? -1 : undefined}>
         {/* render layer w/ additive blending first (mixed colors) to avoid transparency to other objects */}
-        {!hasColorChannels ? (
-          <NeuronGroup
-            {...props}
-            group={props.layerGroup}
-            material={material}
-          />
-        ) : (
-          groups.map((group, i) => (
-            <NeuronGroup key={i} {...props} group={group} material={material} />
-          ))
-        )}
+        {hasColorChannels
+          ? groups.map((group, i) => (
+              <NeuronGroup
+                key={i}
+                {...props}
+                group={group}
+                material={material}
+              />
+            ))
+          : hasChannels && layerPos === "hidden" && !isFocussed
+          ? textureLayer // TODO: LOD?
+          : instancedLayer}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
       {showConnections && <Connections layer={props} prevLayer={prevLayer} />}

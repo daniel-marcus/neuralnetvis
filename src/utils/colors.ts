@@ -5,26 +5,23 @@ export type ColorObj = {
   rgb: number[] // for meshes
   three: THREE.Color // for label
   style: string // for css
+  rgbArr: number[] // for textures
 }
 
-function toColorObj(colorStr: string): ColorObj {
+function toColorObj(r: number, g: number, b: number): ColorObj {
+  const colorStr = `rgb(${r}, ${g}, ${b})`
   const threeColor = new THREE.Color(colorStr)
   return {
     rgb: threeColor.toArray(),
     three: threeColor,
     style: colorStr,
+    rgbArr: [r, g, b],
   }
 }
 
-const R_COLORS = Array.from({ length: 256 }, (_, i) =>
-  toColorObj(`rgb(${i},0,0)`)
-)
-const G_COLORS = Array.from({ length: 256 }, (_, i) =>
-  toColorObj(`rgb(0,${i},0)`)
-)
-const B_COLORS = Array.from({ length: 256 }, (_, i) =>
-  toColorObj(`rgb(0,0,${i})`)
-)
+const R_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(i, 0, 0))
+const G_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, i, 0))
+const B_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, 0, i))
 const CHANNEL_COLORS = [R_COLORS, G_COLORS, B_COLORS]
 
 const ZERO_BASE = [25, 26, 29] //  --color-gray-text / 6
@@ -43,7 +40,7 @@ function newColorArr(base: number[]) {
   return Array.from({ length: 256 }, (_, i) => {
     const val = i / 255
     const [a, b, c] = getColorVals(val, base)
-    return toColorObj(`rgb(${a}, ${b}, ${c})`)
+    return toColorObj(a, b, c)
   })
 }
 

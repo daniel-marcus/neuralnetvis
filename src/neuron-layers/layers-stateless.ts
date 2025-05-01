@@ -138,7 +138,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   return layers
 }
 
-const MAX_VISIBLE_LAYERS = 70
+const MAX_VISIBLE_LAYERS = 100
 
 function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
   // avoid browser crash with too large models

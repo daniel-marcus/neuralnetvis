@@ -20,7 +20,12 @@ import {
 import { Pos, useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
+import type {
+  Neuron,
+  MeshRef,
+  NeuronGroupProps,
+  LayerStateful,
+} from "@/neuron-layers/types"
 import { isTouch } from "@/utils/screen"
 
 export const NeuronGroup = (props: NeuronGroupProps) => {
@@ -34,10 +39,9 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
   const hasFocussedLayer = useHasFocussedLayer()
   const layerIdx = props.index
   const [measureRef, hoverMesh] = useLayerInteractions(
-    layerIdx,
-    positions,
+    props,
     isActive && !hasFocussedLayer,
-    `${props.layerType} (${props.tfLayer.outputShape.slice(1).join("x")})`
+    positions
   )
   const eventHandlers = useNeuronInteractions(
     group.neurons,
@@ -227,19 +231,18 @@ function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
-function useLayerInteractions(
-  layerIdx: number,
-  positions: Pos[],
+export function useLayerInteractions(
+  layer: LayerStateful,
   isActive: boolean,
-  name: string
+  updTrigger?: Pos[] | number // as update trigger for useSize hook
 ) {
   const measureRef = useRef<THREE.Mesh>(null)
   const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
-  const isHovered = hoveredIdx === layerIdx
+  const isHovered = hoveredIdx === layer.index
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
   const setIsHovered = useCallback(
-    (hovered: boolean) => setHoveredLayerIdx(hovered ? layerIdx : undefined),
-    [setHoveredLayerIdx, layerIdx]
+    (hovered: boolean) => setHoveredLayerIdx(hovered ? layer.index : undefined),
+    [setHoveredLayerIdx, layer.index]
   )
   useEffect(() => {
     if (!isActive) return
@@ -248,9 +251,11 @@ function useLayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const size = useSize(measureRef, positions, 0.2)
+  const size = useSize(measureRef, 0.2, updTrigger)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
+  const { layerType, tfLayer } = layer
+  const name = `${layerType} (${tfLayer.outputShape.slice(1).join("x")})`
   const status = (
     <>
       <p>{name}</p>
@@ -279,7 +284,7 @@ function useLayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }
-  const onDoubleClick = () => setFocussedIdx(layerIdx)
+  const onDoubleClick = () => setFocussedIdx(layer.index)
 
   const interactions = {
     onPointerOver,
@@ -292,7 +297,12 @@ function useLayerInteractions(
     <mesh {...(isActive ? interactions : {})}>
       <boxGeometry args={size} />
       <MeshDiscardMaterial />
-      <Outlines color={"white"} transparent opacity={isHovered ? 0.2 : 0} />
+      <Outlines
+        color={"white"}
+        transparent
+        opacity={isHovered ? 0.2 : 0}
+        // renderOrder={-1}
+      />
     </mesh>
   )
   return [measureRef, hoverMesh] as const
@@ -300,8 +310,8 @@ function useLayerInteractions(
 
 function useSize(
   ref: React.RefObject<THREE.Mesh | null>,
-  updTrigger: Pos[],
-  padding = 0
+  padding = 0,
+  updTrigger?: Pos[] | number
 ) {
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
