@@ -37,7 +37,6 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussedLayer = useHasFocussedLayer()
-  const layerIdx = props.index
   const [measureRef, hoverMesh] = useLayerInteractions(
     props,
     isActive && !hasFocussedLayer,
