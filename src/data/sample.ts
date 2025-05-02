@@ -9,11 +9,7 @@ export function useSample(ds?: Dataset) {
   const backendReady = useGlobalStore((s) => s.backendReady)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)
-  const _setSample = useSceneStore((s) => s.setSample)
-  const setSample = useMemo(
-    () => throttle(_setSample, 30, { trailing: true }),
-    [_setSample]
-  )
+  const setSample = useSceneStore((s) => s.setSample)
   const subset = useSceneStore((s) => s.subset)
 
   useEffect(() => {
