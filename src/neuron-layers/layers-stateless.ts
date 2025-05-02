@@ -1,4 +1,4 @@
-import { createRef, useMemo } from "react"
+import { createRef, useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getMeshParams } from "./layout"
 import { getHighlightColor } from "@/utils/colors"
@@ -6,16 +6,19 @@ import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { DatasetDef } from "@/data"
-import type { LayerPos, LayerStateless, LayerType } from "./types"
+import type { LayerPos, LayerStateless, LayerType, Neuron } from "./types"
 import type { Index3D, Nid, NeuronDef } from "./types"
+import { useSceneStore } from "@/store"
 
 // here is all data that doesn't change for a given model
 
 export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
-  const layers = useMemo(() => {
-    if (!model) return []
+  const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
+  const [layers, allNeurons] = useMemo(() => {
+    const allNeurons = new Map<Nid, Neuron>()
+    if (!model) return [[], allNeurons] as const
     const visibleIdxMap = getVisibleIdxMap(model)
-    return (
+    const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const className = tfLayer.getClassName() as LayerType
         const layerPos = getLayerPos(layerIndex, model)
@@ -77,7 +80,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
               const inputNids = layerInputNids?.[neuronIndex] ?? []
               const groupIndex = neuronIndex % groupCount
               const indexInGroup = Math.floor(neuronIndex / groupCount)
-              return {
+              const neuron = {
                 nid: getNid(layerIndex, index3d),
                 index: neuronIndex,
                 index3d,
@@ -103,8 +106,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 layer: layerStateless,
                 color: getHighlightColor(0),
               }
+
+              allNeurons.set(neuron.nid, neuron)
+              return neuron
             }) ?? []
-        const neuronsMap = new Map(neurons.map((n) => [n.nid, n]))
+        const neuronsMap = new Map(neurons.map((n) => [n.nid, n])) // ?? TODO: still needed?
         const groups = Array.from({ length: groupCount }).map((_, i) => {
           const groupedNeurons = neurons.filter((n) => n.groupIndex === i)
           const nids = groupedNeurons.map((n) => n.nid)
@@ -133,8 +139,11 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
         }
         return [...acc, layer]
       }, [] as LayerStateless[]) ?? []
-    )
+    return [newLayers, allNeurons] as const
   }, [model, ds])
+  useEffect(() => {
+    setAllNeurons(allNeurons)
+  }, [allNeurons, setAllNeurons])
   return layers
 }
 

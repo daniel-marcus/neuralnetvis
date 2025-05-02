@@ -1,9 +1,8 @@
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { getData } from "./db"
 import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
-import throttle from "lodash.throttle"
 
 export function useSample(ds?: Dataset) {
   const backendReady = useGlobalStore((s) => s.backendReady)

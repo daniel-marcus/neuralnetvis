@@ -10,6 +10,7 @@ import {
   clearStatus,
   useHasFocussedLayer,
 } from "@/store"
+import { useLayerActivations } from "@/model/activations"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { useAnimatedPosition, useSize, Pos } from "@/scene-views/3d-model/utils"
 import { isTouch } from "@/utils/screen"
@@ -20,9 +21,7 @@ import type {
   NeuronGroupProps,
   LayerStateful,
 } from "@/neuron-layers/types"
-import { useLayerActivations } from "@/model/activations"
-import { LayerActivations } from "@/model"
-import { getHighlightColor } from "@/utils/colors"
+import type { LayerActivations } from "@/model"
 
 type InstancedLayerProps = NeuronGroupProps & {
   invisible?: boolean

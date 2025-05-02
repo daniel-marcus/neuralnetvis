@@ -3,9 +3,9 @@ import * as tf from "@tensorflow/tfjs"
 import { isDebug, useSceneStore } from "@/store"
 import { checkShapeMatch, normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/utils/colors"
-import { updateGroups } from "./layers-stateful"
-import type { LayerStateful, Nid } from "./types"
-import { getLayerDef } from "@/model/layers"
+import { updateGroups } from "./layers-stateful-DEPRECATED"
+import { getLayerWeights } from "@/model/weights"
+import type { LayerStateful, Neuron, Nid } from "./types"
 
 export function useNeuronSelect(
   isActive: boolean,
@@ -62,16 +62,38 @@ export function useSelected() {
 
 function useNeuron(nid?: Nid) {
   const allNeurons = useSceneStore((s) => s.allNeurons)
+  const activations = useSceneStore((s) => s.activations)
+  const rawX = useSceneStore((s) => s.sample?.rawX)
   return useMemo(() => {
     if (!nid) return undefined
     const neuron = allNeurons.get(nid)
     if (!neuron) return undefined
-    const layerDef = getLayerDef(neuron.layer.layerType)
-    if (layerDef?.getInputNids) {
-      // TODO: getInputNeurons for single neuron
+
+    // TODO: add some state here: weights, biases, etc.
+    const nIdx = neuron.index
+    const layerActivations = activations[neuron.layer.index]
+    const { weights, biases } = getLayerWeights(neuron.layer.tfLayer)
+    const filterIdx = nIdx % neuron.layer.numBiases // for dense layers this would be nIdx
+    //const layerDef = getLayerDef(neuron.layer.layerType)
+    // const prevLayer = neuron.layer.prevLayer
+    const statefulNeuron: Neuron = {
+      ...neuron,
+      activation: layerActivations?.activations[nIdx],
+      normalizedActivation: layerActivations?.normalizedActivations[nIdx],
+      weights: weights?.[filterIdx],
+      bias: biases?.[filterIdx],
+      rawInput: neuron.layer.layerPos === "input" ? rawX?.[nIdx] : undefined,
+      /* inputNeurons: prevLayer
+        ? layerDef?.getInputNids?.(
+            neuron.layer.tfLayer,
+            prevLayer.tfLayer,
+            prevLayer.index
+          )[nIdx] // ??
+        : [], */
     }
-    return neuron
-  }, [allNeurons, nid])
+
+    return statefulNeuron
+  }, [allNeurons, nid, activations, rawX])
 }
 
 export function getWeightedInputs(

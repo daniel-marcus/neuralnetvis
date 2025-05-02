@@ -39,7 +39,7 @@ export function useActivations(
       setActivations(newActivations)
     }
     update()
-  }, [model, sample, activationStats, setActivations])
+  }, [model, sample, activationStats, isRegression, setActivations])
 
   return activations
 }

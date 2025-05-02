@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { getScene, isDebug, useSceneStore } from "@/store"
-import { getProcessedActivations } from "@/model/activations"
+import { getScene, useSceneStore } from "@/store"
 import { getNeuronColor, getPredictionQualityColor } from "../utils/colors"
 import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
 import type { Sample } from "@/data"
-import type { ActivationStats } from "@/model/activation-stats"
 
 // add activations and other state to each neuron
 
