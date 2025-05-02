@@ -220,7 +220,7 @@ function useKeyboardNavigation(
 }
 
 // returns a funtion that is throttled by requestAnimationFrame
-function rafThrottle<T extends (...args: any[]) => void>(
+function rafThrottle<T extends (...args: never[]) => void>(
   fn: T
 ): (...args: Parameters<T>) => void {
   let ticking = false

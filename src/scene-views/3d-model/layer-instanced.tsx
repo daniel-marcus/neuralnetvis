@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { ThreeEvent } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
