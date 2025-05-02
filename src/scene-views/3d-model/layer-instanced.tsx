@@ -19,7 +19,7 @@ import type {
   Neuron,
   MeshRef,
   NeuronGroupProps,
-  LayerStateful,
+  LayerStateless,
 } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
 
@@ -224,7 +224,7 @@ function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
 export function useLayerInteractions(
-  layer: LayerStateful,
+  layer: LayerStateless,
   isActive: boolean,
   updTrigger?: Pos[] | number // as update trigger for useSize hook
 ) {

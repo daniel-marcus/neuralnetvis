@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useSceneStore } from "@/store"
-import { useLayers, type LayerStateful } from "@/neuron-layers"
+import { useLayers, type LayerStateless } from "@/neuron-layers"
 import { useAnimatedPosition, useDynamicXShift } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./highlighted"
@@ -27,7 +27,7 @@ export const Model = () => {
   )
 }
 
-function useModelOffset(layers: LayerStateful[]) {
+function useModelOffset(layers: LayerStateless[]) {
   const visibleLayers = layers.filter((l) => l.neurons.length)
   const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
   const hasFocussed = typeof focusIdx === "number"

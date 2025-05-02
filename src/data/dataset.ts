@@ -65,10 +65,9 @@ export async function getDsMetaFromDb(key: string) {
 function newStoreMeta(
   storeName: "train" | "test",
   totalSamples = 0,
-  yMean?: number,
   aspectRatio?: number
 ): StoreMeta {
-  return { index: storeName, totalSamples, yMean, aspectRatio }
+  return { index: storeName, totalSamples, aspectRatio }
 }
 
 export async function getDsFromDef(
@@ -187,16 +186,10 @@ async function saveData(
   await putDataBatches(dbName, storeName, batches)
 
   const totalSamples = oldSamplesX + newSamplesX
-  const yMean =
-    ds.task === "regression" ? getMean(Array.from(ys.data)) : undefined
   aspectRatio = aspectRatio ?? ds.camProps?.aspectRatio
-  const storeMeta = newStoreMeta(storeName, totalSamples, yMean, aspectRatio)
+  const storeMeta = newStoreMeta(storeName, totalSamples, aspectRatio)
   await putData<StoreMeta>(dbName, "meta", storeMeta)
   return storeMeta
-}
-
-function getMean(arr: number[]) {
-  return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
 export async function addTrainData(

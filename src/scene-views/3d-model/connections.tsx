@@ -11,15 +11,17 @@ import {
 import { useSceneStore } from "@/store"
 import { useHovered } from "@/neuron-layers/neuron-select"
 import { getWorldPos, type Pos } from "./utils"
-import type { LayerStateful, Neuron, NeuronDef } from "@/neuron-layers/types"
+import type { LayerStateless, Neuron } from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
-const MIN_LINE_WIDTH = 0.1
-const MAX_LINE_WIDTH = 3
+// const MIN_LINE_WIDTH = 0.1
+// const MAX_LINE_WIDTH = 3
+
+// TODO: deal with LayerStateless ...
 
 type NeuronConnectionsProps = {
-  layer: LayerStateful
-  prevLayer: LayerStateful
+  layer: LayerStateless
+  prevLayer: LayerStateless
 }
 
 export const HoverConnections = () => {
@@ -103,19 +105,14 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
     ["Conv2D"].includes(prevLayer.layerType)
   const isRegression = useSceneStore((s) => s.isRegression())
   const invalidate = useThree(({ invalidate }) => invalidate)
-  useEffect(() => {
-    invalidate()
-  }, [showLines, invalidate])
-  const lineActivationThreshold = useSceneStore(
-    (s) => s.vis.lineActivationThreshold
-  )
+  useEffect(invalidate, [showLines, invalidate])
   if (isRegression || isConvOrMaxPool || !showLines) return null
 
-  const connections = getConnections(
+  const connections: DynamicLineProps[] = [] /*  getConnections(
     layer,
     prevLayer.neurons,
     lineActivationThreshold
-  )
+  ) */
   return (
     <group name={`layer_${layer.index}_connections`}>
       {connections.map((connectionProps, i) => {
@@ -125,12 +122,14 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   )
 }
 
+// TODO!
+/* 
 function getConnections(
-  layer: LayerStateful,
+  layer: LayerStateless,
   prevNeurons: Neuron[],
   lineActivationThreshold: number
 ) {
-  const layerMaxWeight = layer.maxAbsWeight ?? 1
+  const layerMaxWeight = 1 // layer.maxAbsWeight ?? 1 // TODO!
 
   const connections: DynamicLineProps[] = []
   for (const neuron of layer.neurons) {
@@ -158,11 +157,11 @@ function getConnections(
         .sort((a, b) => b.width! - a.width!)
         .slice(0, MAX_LINES_PER_LAYER)
     : connections
-}
+} */
 
 interface DynamicLineProps {
-  from: NeuronDef
-  to: NeuronDef
+  from: Neuron
+  to: Neuron
   toPoint?: Vector3 // alternatvie to meshRef
   width?: number
 }

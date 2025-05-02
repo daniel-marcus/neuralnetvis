@@ -7,7 +7,7 @@ import { getHighlightColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
-import type { Neuron } from "@/neuron-layers/types"
+import type { NeuronStateful } from "@/neuron-layers/types"
 
 export const NeuronStatus = () => {
   const _hovered = useHovered()
@@ -35,7 +35,7 @@ export const NeuronStatus = () => {
   )
 }
 
-const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
+const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
   const { nid, activation, bias, weights, rawInput } = neuron
   const isDebug = useGlobalStore((s) => s.isDebug)
   const data = {
@@ -53,7 +53,7 @@ const NeuronInfo = ({ neuron }: { neuron: Neuron }) => {
   )
 }
 
-const WeightsViewer = ({ neuron }: { neuron: Neuron }) => {
+const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const [currGroup, setCurrGroup] = useState(0)
   const highlightProp = useGlobalStore(
     (s) => s.scene?.getState().vis?.highlightProp

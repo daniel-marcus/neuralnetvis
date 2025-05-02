@@ -4,7 +4,7 @@ import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { DataSlice } from "./data"
 import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
-import type { LayerStateful, Neuron, Nid } from "@/neuron-layers"
+import type { Neuron, Nid } from "@/neuron-layers"
 import type { ActivationStats } from "@/model/activation-stats"
 
 export const defaultLayerConfigs: LayerConfigArray = [
@@ -30,9 +30,6 @@ export interface ModelSlice {
 
   activations: LayerActivations[]
   setActivations: (activations: LayerActivations[]) => void
-
-  statefulLayers: LayerStateful[]
-  setStatefulLayers: (statefulLayers: LayerStateful[]) => void
 
   allNeurons: Map<Nid, Neuron>
   setAllNeurons: (neurons: Map<Nid, Neuron>) => void
@@ -77,9 +74,6 @@ export const createModelSlice: StateCreator<
 
   activations: [],
   setActivations: (activations) => set({ activations }),
-
-  statefulLayers: [],
-  setStatefulLayers: (statefulLayers) => set({ statefulLayers }),
 
   allNeurons: new Map(),
   setAllNeurons: (allNeurons) => set({ allNeurons }),

@@ -9,10 +9,10 @@ import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
-import type { LayerStateful } from "@/neuron-layers/types"
+import type { LayerStateless } from "@/neuron-layers/types"
 
 export const Layer = (
-  props: LayerStateful & { allLayers: LayerStateful[] }
+  props: LayerStateless & { allLayers: LayerStateless[] }
 ) => {
   const { layerPos, groups, prevLayer, hasColorChannels } = props
   const ref = useLayerPos(props, props.allLayers)
@@ -60,7 +60,7 @@ function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: LayerStateful, allLayers: LayerStateful[]) {
+function useLayerPos(layer: LayerStateless, allLayers: LayerStateless[]) {
   const visibleLayers = allLayers.filter(
     (l) => l.visibleIdx >= 0 && l.neurons.length
   )
@@ -79,7 +79,7 @@ function useLayerPos(layer: LayerStateful, allLayers: LayerStateful[]) {
   return ref
 }
 
-function useIsInvisible(layer?: LayerStateful) {
+function useIsInvisible(layer?: LayerStateless) {
   const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
   return invisibleLayers.includes(layer?.tfLayer.name ?? "")
 }

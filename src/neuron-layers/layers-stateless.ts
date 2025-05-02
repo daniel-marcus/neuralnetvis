@@ -7,7 +7,7 @@ import type { InstancedMesh } from "three"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType, Neuron } from "./types"
-import type { Index3D, Nid, NeuronDef } from "./types"
+import type { Index3D, Nid } from "./types"
 import { useSceneStore } from "@/store"
 
 // here is all data that doesn't change for a given model
@@ -16,7 +16,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
   const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
   const [layers, allNeurons] = useMemo(() => {
     const allNeurons = new Map<Nid, Neuron>()
-    if (!model) return [[], allNeurons] as const
+    if (!model) return [[] as LayerStateless[], allNeurons] as const
     const visibleIdxMap = getVisibleIdxMap(model)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
@@ -64,6 +64,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
             nids: [],
             nidsStr: "",
             meshRef: layerMeshRef,
+            neurons: [],
           },
         }
 
@@ -93,7 +94,7 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 inputNeurons: prevLayer
                   ? (inputNids
                       .map((nid) => prevLayer.neuronsMap?.get(nid))
-                      .filter(Boolean) as NeuronDef[])
+                      .filter(Boolean) as Neuron[])
                   : [],
                 label:
                   layerPos === "output"

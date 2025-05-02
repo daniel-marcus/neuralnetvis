@@ -14,6 +14,7 @@ export type LayerType =
   | "MaxPooling2D"
   | "Dropout"
   | "BatchNormalization"
+  | "LayerNormalization"
   | "RandomRotation"
   | "DepthwiseConv2D" // TODO: keyof ...
 export type LayerPos = "input" | "hidden" | "output"
@@ -27,39 +28,28 @@ export interface LayerStateless {
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
   prevLayer?: LayerStateless
-  neurons: NeuronDef[]
-  neuronsMap?: Map<Nid, NeuronDef>
+  neurons: Neuron[]
+  neuronsMap?: Map<Nid, Neuron>
   hasLabels?: boolean
   hasColorChannels: boolean
-  groups: GroupDef[]
-  layerGroup: GroupDef
-}
-
-export interface LayerStateful extends LayerStateless {
-  neurons: Neuron[]
-  maxAbsWeight?: number
-  prevLayer?: LayerStateful
-  groups: GroupStateful[]
-  layerGroup: GroupStateful
+  groups: Group[]
+  layerGroup: Group
 }
 
 // Types for Groups
 
 export type MeshRef = RefObject<THREE.InstancedMesh | null>
 
-export interface GroupDef {
+export interface Group {
   index: number
   nids: Nid[]
   nidsStr: string // for deps optimization
   meshRef: MeshRef
-}
-
-export interface GroupStateful extends GroupDef {
   neurons: Neuron[]
 }
 
-export type NeuronGroupProps = LayerStateful & {
-  group: GroupStateful
+export type NeuronGroupProps = LayerStateless & {
+  group: Group
 }
 
 // Types for Neurons
@@ -68,7 +58,7 @@ export type Nid = string // layerIndex_{index3d.join(".")}
 
 export type Index3D = [number, number, number] // height, width, depth
 
-export type NeuronDef = {
+export type Neuron = {
   index: number
   index3d: Index3D
   nid: Nid
@@ -77,8 +67,8 @@ export type NeuronDef = {
   indexInGroup: number
   meshRef: MeshRef
   visibleLayerIndex: number
-  inputNids?: Nid[]
-  inputNeurons?: NeuronDef[] // for Conv2D: neurons in the receptive field
+  inputNids?: Nid[] // TODO: calculate on demand
+  inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field
   label?: string
   layer: LayerStateless
   color: ColorObj
@@ -93,6 +83,6 @@ export type NeuronState = {
   color: ColorObj
 }
 
-export type Neuron = NeuronDef & NeuronState
+export type NeuronStateful = Neuron & NeuronState
 
 export type HighlightProp = "weights" | "weightedInputs" | null

@@ -3,7 +3,7 @@ import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, config } from "@react-spring/web"
 import { getThree, useSceneStore } from "@/store"
-import type { NeuronDef } from "@/neuron-layers/types"
+import type { Neuron } from "@/neuron-layers/types"
 import { defaultVisConfig, type Three } from "@/store/vis"
 import { isVisible } from "@/neuron-layers/layers-stateless"
 import { clamp } from "@/utils/helpers"
@@ -39,7 +39,7 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
   return [ref, isAnimating] as const
 }
 
-export function getWorldPos(neuron: NeuronDef): THREE.Vector3 | undefined {
+export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
   const { meshRef, index, indexInGroup } = neuron
   const idx = neuron.layer.hasColorChannels ? indexInGroup : index
   if (!meshRef?.current) return

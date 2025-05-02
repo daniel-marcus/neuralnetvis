@@ -30,6 +30,12 @@ export function useSample(ds?: Dataset) {
   return sample
 }
 
+export function useRawInput(layerIdx: number, neuronIdx: number) {
+  const sample = useSceneStore((s) => s.sample)
+  if (layerIdx !== 0) return undefined
+  return sample?.rawX?.[neuronIdx]
+}
+
 export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
   if (!sampleRaw || !ds) return
   const name = sampleRaw.name

@@ -1,5 +1,4 @@
 import * as THREE from "three"
-import type { Neuron } from "@/neuron-layers/types"
 
 export type ColorObj = {
   rgb: number[] // for meshes
@@ -55,13 +54,6 @@ export function getChannelColor(rgbIdx: number, val: number) {
   return CHANNEL_COLORS[rgbIdx][normalizeTo(val, 255)]
 }
 
-export function getNeuronColor(n: Omit<Neuron, "color">) {
-  // deprecated
-  return n.layer.hasColorChannels
-    ? CHANNEL_COLORS[n.index % 3][normalizeTo(n.normalizedActivation, 255)]
-    : getHighlightColor(n.normalizedActivation ?? 0)
-}
-
 export function getHighlightColor(val: number) {
   // val between -1 and 1
   const absVal = normalizeTo(Math.abs(val), 255)
@@ -69,22 +61,22 @@ export function getHighlightColor(val: number) {
 }
 
 export function getPredictionQualityColor(
-  n: Omit<Neuron, "color">,
-  y?: number,
+  yPred?: number, // activation
+  yTrue?: number,
   yMean?: number
 ) {
   if (
-    typeof y === "undefined" ||
-    typeof yMean === "undefined" ||
-    typeof n.activation === "undefined"
+    typeof yPred === "undefined" ||
+    typeof yTrue === "undefined" ||
+    typeof yMean === "undefined"
   )
     return POS_HIGHLIGHT_COLORS[0]
 
-  const squaredResidualMean = (y - yMean) ** 2
-  const squaredResidual = (y - n.activation) ** 2
+  const squaredResidual = (yTrue - yPred) ** 2
+  const squaredResidualMean = (yTrue - yMean) ** 2
   const rSquared = 1 - squaredResidual / squaredResidualMean
   const colorVal = Math.min(normalizeTo(Math.abs(rSquared), 255), 255)
-  // if (rSquared > 0) console.log({ rSquared, squaredResidual }, n.activation, y)
+  // if (rSquared > 0) console.log({ rSquared, squaredResidual }, yPred, y)
   return rSquared >= 0
     ? POS_HIGHLIGHT_COLORS[colorVal]
     : NEG_HIGHLIGHT_COLORS[colorVal]

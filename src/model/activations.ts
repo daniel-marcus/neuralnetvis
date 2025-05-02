@@ -10,7 +10,11 @@ import type { LayerActivations } from "./types"
 import type { Sample } from "@/data"
 import { useEffect, useMemo } from "react"
 import { isDebug, useSceneStore } from "@/store"
-import { getChannelColor, getHighlightColor } from "@/utils/colors"
+import {
+  getChannelColor,
+  getHighlightColor,
+  getPredictionQualityColor,
+} from "@/utils/colors"
 
 export function useActivations(
   sample?: Sample,
@@ -51,6 +55,14 @@ export function useLayerActivations(
   return useMemo(() => activations[layerIdx], [activations, layerIdx])
 }
 
+export function useActivation(layerIdx: number, neuronIdx: number) {
+  const activations = useLayerActivations(layerIdx)
+  return useMemo(() => {
+    if (!activations) return undefined
+    return activations.activations[neuronIdx]
+  }, [activations, neuronIdx])
+}
+
 export async function getProcessedActivations(
   model: tf.LayersModel,
   sample: Sample,
@@ -85,11 +97,20 @@ export async function getProcessedActivations(
       const act = (await actTensor.array()) as number[]
       const normAct = (await normActTensor.array()) as number[]
       const hasColorChannels = i === 0 && model.layers[i].outputShape[3] === 3
+      const isRegressionOutput = isRegression && i === model.layers.length - 1
       newLayerActivations.push({
         activations: act,
         normalizedActivations: normAct,
         colors: normAct.map((a, nIdx) =>
-          hasColorChannels ? getChannelColor(nIdx % 3, a) : getHighlightColor(a)
+          hasColorChannels
+            ? getChannelColor(nIdx % 3, a)
+            : isRegressionOutput
+            ? getPredictionQualityColor(
+                act[nIdx],
+                sample.y,
+                activationStats?.[i].mean.dataSync()[0]
+              )
+            : getHighlightColor(a)
         ),
       })
     }

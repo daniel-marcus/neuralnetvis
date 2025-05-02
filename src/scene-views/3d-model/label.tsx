@@ -5,7 +5,9 @@ import { Text } from "troika-three-text"
 import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"
 import type { ThreeElement } from "@react-three/fiber"
-import type { NeuronDef, NeuronState } from "@/neuron-layers/types"
+import type { Neuron } from "@/neuron-layers/types"
+import { useActivation } from "@/model/activations"
+import { useRawInput } from "@/data/sample"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 // https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
@@ -20,18 +22,19 @@ declare module "@react-three/fiber" {
 export const LABEL_COLOR = "rgb(150, 156, 171)"
 
 interface NeuronLabelsProps {
-  neuron: NeuronDef & NeuronState
+  neuron: Neuron
   position?: [number, number, number]
 }
 
 export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
-  const { label, rawInput, activation } = neuron
+  const activation = useActivation(neuron.layer.index, neuron.index)
+  const rawInput = useRawInput(neuron.layer.index, neuron.index)
   const trainingY = useSceneStore((s) => s.sample?.y)
   const isRegression = useSceneStore((s) => s.isRegression())
   const showValueLabel =
-    !!label && typeof rawInput !== "undefined" && isRegression
+    !!neuron.label && typeof rawInput !== "undefined" && isRegression
   const layerPos = neuron.layer.layerPos
-  if (!label || !position) return null
+  if (!neuron.label || !position) return null
   return (
     <group renderOrder={-1}>
       <NeuronLabel
@@ -41,10 +44,10 @@ export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
         color={LABEL_COLOR}
       >
         {layerPos === "output" && isRegression
-          ? `${label}\n${round(activation)} (predicted)\n${round(
+          ? `${neuron.label}\n${round(activation)} (predicted)\n${round(
               trainingY
             )} (actual)`
-          : label}
+          : neuron.label}
       </NeuronLabel>
       {showValueLabel && (
         <NeuronLabel
