@@ -47,7 +47,7 @@
     "three": "^0.176.0",
     "three-stdlib": "^2.36.0",
     "troika-three-text": "^0.52.4",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -71,7 +71,7 @@
     "fake-indexeddb": "^6.0.0",
     "happy-dom": "^17.4.6",
     "postcss": "^8.5.3",
-    "puppeteer": "^24.7.2",
+    "puppeteer": "^24.8.0",
     "tailwindcss": "^4.1.5",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^5.8.3",
