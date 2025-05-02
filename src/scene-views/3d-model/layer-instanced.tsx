@@ -22,7 +22,6 @@ import type {
 } from "@/neuron-layers/types"
 import { useLayerActivations } from "@/model/activations"
 import { LayerActivations } from "@/model"
-import { getActivation } from "@tensorflow/tfjs-layers/dist/activations"
 import { getHighlightColor } from "@/utils/colors"
 
 type InstancedLayerProps = NeuronGroupProps & {
@@ -30,13 +29,13 @@ type InstancedLayerProps = NeuronGroupProps & {
 }
 
 export const InstancedLayer = (props: InstancedLayerProps) => {
-  const { meshParams, group, invisible } = props
-  const material = useMaterial(props.hasColorChannels)
+  const { meshParams, group, invisible, hasColorChannels } = props
+  const material = useMaterial(hasColorChannels)
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
 
   const activations = useLayerActivations(props.index)
-  useColors(group.meshRef, props.units, activations)
+  useColors(group.meshRef, group.neurons, hasColorChannels, activations)
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussed = useHasFocussedLayer()
@@ -168,22 +167,22 @@ function useNeuronPositions(props: NeuronGroupProps) {
 
 function useColors(
   meshRef: MeshRef,
-  units: number,
+  neurons: Neuron[],
+  hasColorChannels: boolean,
   activations?: LayerActivations
 ) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
 
-    const allActivations = activations?.normalizedActivations ?? []
+    const allColors = activations?.colors ?? []
     // if (isDebug()) console.log("upd colors")
     if (!meshRef.current.instanceColor) {
-      const newArr = new Float32Array(units * 3).fill(0)
+      const newArr = new Float32Array(neurons.length * 3).fill(0)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
       meshRef.current.instanceColor = newAttr
     }
-    for (const [i, a] of allActivations.entries()) {
-      // TODO: color layer
-      const color = getHighlightColor(a ?? 0)
+    for (const [i, n] of neurons.entries()) {
+      const color = allColors[n.index]
       // if (n.color) meshRef.current.setColorAt(i, n.color)
       if (color) {
         meshRef.current.instanceColor.array[i * 3] = color.rgb[0]
@@ -192,7 +191,7 @@ function useColors(
       }
     }
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, units, activations])
+  }, [meshRef, neurons, activations, hasColorChannels])
 }
 
 function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {

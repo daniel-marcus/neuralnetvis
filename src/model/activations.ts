@@ -10,6 +10,7 @@ import type { LayerActivations } from "./types"
 import type { Sample } from "@/data"
 import { useEffect, useMemo } from "react"
 import { isDebug, useSceneStore } from "@/store"
+import { getChannelColor, getHighlightColor } from "@/utils/colors"
 
 export function useActivations(
   sample?: Sample,
@@ -61,6 +62,7 @@ export async function getProcessedActivations(
     const activations = layerActivations.map((layerActivation, i) => {
       const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
       const hasDepthDim = typeof layerActivation.shape[3] === "number"
+      const isSoftmax = model.layers[i].getConfig().activation === "softmax"
       const normalizedFlattened = hasDepthDim
         ? normalizeConv2DActivations(layerActivation as tf.Tensor4D).flatten()
         : isRegression && i > 0 && activationStats
@@ -69,6 +71,8 @@ export async function getProcessedActivations(
             activationStats[i].mean,
             activationStats[i].std
           )
+        : isSoftmax
+        ? flattened
         : normalizeTensor(flattened)
       return [flattened, normalizedFlattened]
     })
@@ -77,12 +81,16 @@ export async function getProcessedActivations(
 
   const newLayerActivations: LayerActivations[] = []
   try {
-    for (const [actTensor, normActTensor] of activationTensors) {
+    for (const [i, [actTensor, normActTensor]] of activationTensors.entries()) {
       const act = (await actTensor.array()) as number[]
       const normAct = (await normActTensor.array()) as number[]
+      const hasColorChannels = i === 0 && model.layers[i].outputShape[3] === 3
       newLayerActivations.push({
         activations: act,
         normalizedActivations: normAct,
+        colors: normAct.map((a, nIdx) =>
+          hasColorChannels ? getChannelColor(nIdx % 3, a) : getHighlightColor(a)
+        ),
       })
     }
     return newLayerActivations

@@ -27,7 +27,6 @@ export interface LayerStateless {
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
   prevLayer?: LayerStateless
-  units: number // neuronCount
   neurons: NeuronDef[]
   neuronsMap?: Map<Nid, NeuronDef>
   hasLabels?: boolean

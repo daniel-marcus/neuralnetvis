@@ -51,7 +51,12 @@ function normalizeTo(val?: number, max = 255) {
   return Math.ceil((val ?? 0) * max)
 }
 
+export function getChannelColor(rgbIdx: number, val: number) {
+  return CHANNEL_COLORS[rgbIdx][normalizeTo(val, 255)]
+}
+
 export function getNeuronColor(n: Omit<Neuron, "color">) {
+  // deprecated
   return n.layer.hasColorChannels
     ? CHANNEL_COLORS[n.index % 3][normalizeTo(n.normalizedActivation, 255)]
     : getHighlightColor(n.normalizedActivation ?? 0)

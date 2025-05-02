@@ -15,7 +15,11 @@ export const Model = () => {
     <>
       <group ref={ref}>
         {layers.map((l, _, arr) => (
-          <Layer key={`${l.tfLayer.name}_${l.units}`} {...l} allLayers={arr} />
+          <Layer
+            key={`${l.tfLayer.name}_${l.neurons.length}`}
+            {...l}
+            allLayers={arr}
+          />
         ))}
       </group>
       {isActive && <HoverComponents />}

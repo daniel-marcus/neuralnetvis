@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useRef } from "react"
 import * as THREE from "three"
-import type { LayerStateful, Neuron } from "@/neuron-layers/types"
+import type { LayerStateful } from "@/neuron-layers/types"
 import { useLayerInteractions } from "./layer-instanced"
-import { useSceneStore } from "@/store"
 import { LayerActivations } from "@/model"
-import { getHighlightColor, getNeuronColor } from "@/utils/colors"
 import { useLayerActivations } from "@/model/activations"
 
 const BOX_SIZE = 1 // including BOX_GAP
@@ -71,12 +69,10 @@ function generateActivationTexture(
         // Get activation value (HWC order)
         const idx = h * (width * channels) + w * channels + channel
 
-        const normalizedActivation =
-          layerActivations?.normalizedActivations[idx] ?? 0
-        const color = getHighlightColor(normalizedActivation)
+        const color = layerActivations?.colors[idx]
 
         // Get color and calculate pixel positions
-        const [r, g, b] = color.rgbArr
+        const [r, g, b] = color?.rgbArr ?? [0, 0, 0]
         const squareX = w * BOX_SIZE // 4px + 1px gap
         const squareY = h * BOX_SIZE
 
