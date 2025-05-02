@@ -7,7 +7,10 @@ import {
 import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
 import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
 import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
-import { BatchNormalizationLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/normalization"
+import {
+  BatchNormalizationLayerArgs,
+  LayerNormalizationLayerArgs,
+} from "@tensorflow/tfjs-layers/dist/layers/normalization"
 import { RandomRotationLayerArgs } from "./random-rotation"
 import { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import { Nid } from "@/neuron-layers"
@@ -24,6 +27,7 @@ export type LayerConfigMap = {
   MaxPooling2D: Pooling2DLayerArgs
   Dropout: DropoutLayerArgs
   BatchNormalization: BatchNormalizationLayerArgs
+  LayerNormalization: LayerNormalizationLayerArgs
   RandomRotation: RandomRotationLayerArgs
   DepthwiseConv2D: DepthwiseConv2DLayerArgs
   ReLU: ReLULayerArgs

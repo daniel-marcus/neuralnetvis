@@ -5,6 +5,7 @@ import { Flatten } from "./flatten"
 import { Dropout } from "./dropout"
 import { InputLayer } from "./input-layer"
 import { BatchNormalization } from "./batch-normalization"
+import { LayerNormalization } from "./layer-normalization"
 import { RandomRotation } from "./random-rotation"
 import { DepthwiseConv2D } from "./depthwise-conv2d"
 import { ReLU } from "./relu"
@@ -20,6 +21,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   Dropout,
   InputLayer,
   BatchNormalization,
+  LayerNormalization,
   RandomRotation,
   DepthwiseConv2D,
   ReLU,
