@@ -5,15 +5,13 @@ import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { useLast } from "@/utils/helpers"
-import { NeuronGroup } from "./neuron-group"
-import { TextureLayer } from "./texture-layer"
+import { InstancedLayer } from "./layer-instanced"
+import { TexturedLayer } from "./layer-textured"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
 
-type LayerProps = LayerStateful & { allLayers: LayerStateful[] }
-
-export const Layer = (props: LayerProps) => {
+export const Layer = (props: LayerStateful) => {
   const { layerPos, groups, prevLayer, hasColorChannels } = props
   const ref = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
@@ -23,32 +21,26 @@ export const Layer = (props: LayerProps) => {
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(ref, scale, duration)
-  const [material, addBlend] = useAdditiveBlending(hasColorChannels)
   const showConnections =
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
 
   const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
-  const isClose = useIsClose(ref, 30) // TODO: fix flickering when switchgin between texture and instanced layers
-  if (!props.neurons.length || props.visibleIdx === -1) return null
+  const isClose = useIsClose(ref, 30) // TODO: fix flickering when switching
+  const showTextured =
+    !!hasChannels && layerPos === "hidden" && !isFocussed && !isClose
 
-  const textureLayer = <TextureLayer {...props} />
-  const instancedLayer = (
-    <NeuronGroup {...props} group={props.layerGroup} material={material} />
-  )
+  const textureLayer = <TexturedLayer {...props} />
+  const instancedLayer = <InstancedLayer {...props} group={props.layerGroup} />
+
+  if (!props.neurons.length || props.visibleIdx === -1) return null
   return (
     <>
-      <group ref={ref} renderOrder={addBlend ? -1 : undefined}>
-        {/* render layer w/ additive blending first (mixed colors) to avoid transparency to other objects */}
+      <group ref={ref}>
         {hasColorChannels
           ? groups.map((group, i) => (
-              <NeuronGroup
-                key={i}
-                {...props}
-                group={group}
-                material={material}
-              />
+              <InstancedLayer key={i} {...props} group={group} />
             ))
-          : hasChannels && layerPos === "hidden" && !isClose && !isFocussed
+          : showTextured
           ? textureLayer
           : instancedLayer}
         {layerPos === "output" && <YPointer outputLayer={props} />}
@@ -66,8 +58,8 @@ function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: LayerProps) {
-  const { allLayers } = layer
+function useLayerPos(layer: LayerStateful) {
+  const allLayers = useSceneStore((s) => s.statefulLayers)
   const visibleLayers = allLayers.filter(
     (l) => l.visibleIdx >= 0 && l.neurons.length
   )
@@ -113,16 +105,4 @@ function useDynamicScale(
       invalidate()
     },
   })
-}
-
-const standardMaterial = new THREE.MeshStandardMaterial()
-const blendingMaterial = new THREE.MeshBasicMaterial({
-  blending: THREE.AdditiveBlending,
-})
-
-function useAdditiveBlending(hasColorChannels: boolean) {
-  const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const active = hasColorChannels && !splitColors
-  const material = active ? blendingMaterial : standardMaterial
-  return [material, active] as const
 }

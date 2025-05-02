@@ -123,20 +123,36 @@ export function useDynamicXShift() {
   }, [model, setVisConfig])
 }
 
+export function useSize(
+  ref: React.RefObject<THREE.Object3D | null>,
+  padding = 0,
+  updTrigger?: Pos[] | number
+): [[number, number, number], THREE.Box3] {
+  const bBox = useMemo(() => new THREE.Box3(), [])
+  const sizeVec = useMemo(() => new THREE.Vector3(), [])
+  const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
+  useEffect(() => {
+    if (!ref.current || !updTrigger) return
+    bBox.setFromObject(ref.current)
+    bBox.getSize(sizeVec)
+    setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
+  }, [ref, bBox, sizeVec, padding, updTrigger])
+  return [size, bBox] as const
+}
+
 export function useIsClose(
-  meshRef: React.RefObject<THREE.Object3D | null>,
+  ref: React.RefObject<THREE.Object3D | null>,
   threshold: number
 ): boolean {
   const camera = useThree((s) => s.camera)
   const [isClose, setIsClose] = useState(false)
   const isCloseRef = useRef(false)
-  const tempVector = useMemo(() => new THREE.Vector3(), [])
+  const bBox = useMemo(() => new THREE.Box3(), [])
 
   useFrame(() => {
-    if (!meshRef.current) return
-
-    meshRef.current.getWorldPosition(tempVector)
-    const distance = tempVector.distanceTo(camera.position)
+    if (!ref.current) return
+    bBox.setFromObject(ref.current)
+    const distance = bBox.distanceToPoint(camera.position)
 
     if (distance < threshold !== isCloseRef.current) {
       isCloseRef.current = distance < threshold

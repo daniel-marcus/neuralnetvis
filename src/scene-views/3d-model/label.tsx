@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react"
+import { memo, useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import * as THREE from "three"
 import { Text } from "troika-three-text"
@@ -70,43 +70,38 @@ interface NeuronLabelProps {
 
 // reference: https://github.com/pmndrs/drei/blob/master/src/core/Text.tsx
 
-export const NeuronLabel = ({
-  position: [x, y, z] = [0, 0, 0],
-  side = "right",
-  color,
-  size,
-  children,
-}: NeuronLabelProps) => {
-  const labelRef = useRef<THREE.Object3D & CustomText>(null)
-  const camera = useThree((s) => s.camera)
-  useFrame(() => {
-    if (labelRef.current) {
-      labelRef.current.lookAt(camera.position)
-    }
-  })
-  const invalidate = useThree(({ invalidate }) => invalidate)
-  const lightsOn = useSceneStore((s) => s.vis.lightsOn)
-  useLayoutEffect(() => {
-    if (!labelRef.current) return
-    labelRef.current.sync(() => {
-      invalidate()
-    })
-  }, [labelRef, invalidate, children, lightsOn])
-  if (!lightsOn) return null
-  return (
-    <customText
-      ref={labelRef}
-      text={children}
-      position={getTextPos(x, y, z, side, size)}
-      fontSize={size ?? 1}
-      font={"/fonts/Menlo-Regular.woff"}
-      color={color}
-      anchorX={side === "left" ? "right" : "left"}
-      anchorY="middle"
-      rotation={[0, -Math.PI / 2, 0]}
-    />
-  )
-}
+export const NeuronLabel = memo(
+  ({
+    position: [x, y, z] = [0, 0, 0],
+    side = "right",
+    color,
+    size,
+    children,
+  }: NeuronLabelProps) => {
+    const labelRef = useRef<THREE.Object3D & CustomText>(null)
+    const camera = useThree((s) => s.camera)
+    const invalidate = useThree((s) => s.invalidate)
+    useFrame(() => labelRef.current?.lookAt(camera.position))
+    const lightsOn = useSceneStore((s) => s.vis.lightsOn)
+    useLayoutEffect(() => {
+      labelRef.current?.sync(invalidate)
+    }, [labelRef, invalidate, children, lightsOn])
+    if (!lightsOn) return null
+    return (
+      <customText
+        ref={labelRef}
+        text={children}
+        position={getTextPos(x, y, z, side, size)}
+        fontSize={size ?? 1}
+        font={"/fonts/Menlo-Regular.woff"}
+        color={color}
+        anchorX={side === "left" ? "right" : "left"}
+        anchorY="middle"
+        rotation={[0, -Math.PI / 2, 0]}
+      />
+    )
+  }
+)
 
 function getTextPos(
   x: number,

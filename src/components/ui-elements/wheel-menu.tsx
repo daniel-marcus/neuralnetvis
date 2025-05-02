@@ -156,7 +156,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       e.preventDefault()
       setIsActive(true)
     }
-    const onTouchMove = (e: TouchEvent) => {
+    const onTouchMove = rafThrottle((e: TouchEvent) => {
       if (!userInteraction.current) startScroll()
       if (e.touches.length === 1 && startY !== null) {
         const currentY = e.touches[0].clientY
@@ -164,7 +164,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         scroller.scrollTop = startScrollTop - deltaY
         e.preventDefault()
       }
-    }
+    })
 
     let wheelEndTimeout: NodeJS.Timeout
     const handleWheel = (e: WheelEvent) => {
@@ -217,4 +217,23 @@ function useKeyboardNavigation(
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowUp", prev, true, true)
   useKeyCommand("ArrowDown", next, true, true)
+}
+
+// returns a funtion that is throttled by requestAnimationFrame
+function rafThrottle<T extends (...args: any[]) => void>(
+  fn: T
+): (...args: Parameters<T>) => void {
+  let ticking = false
+  let lastArgs: Parameters<T>
+
+  return function (...args: Parameters<T>) {
+    lastArgs = args
+    if (!ticking) {
+      ticking = true
+      requestAnimationFrame(() => {
+        fn(...lastArgs)
+        ticking = false
+      })
+    }
+  }
 }

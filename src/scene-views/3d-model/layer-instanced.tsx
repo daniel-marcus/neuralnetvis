@@ -17,8 +17,9 @@ import {
   clearStatus,
   useHasFocussedLayer,
 } from "@/store"
-import { Pos, useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
+import { useAnimatedPosition, useSize, Pos } from "@/scene-views/3d-model/utils"
+import { isTouch } from "@/utils/screen"
 import { NeuronLabels } from "./label"
 import type {
   Neuron,
@@ -26,25 +27,28 @@ import type {
   NeuronGroupProps,
   LayerStateful,
 } from "@/neuron-layers/types"
-import { isTouch } from "@/utils/screen"
 
-export const NeuronGroup = (props: NeuronGroupProps) => {
-  const { meshParams, group, material } = props
+type InstancedLayerProps = NeuronGroupProps & {
+  invisible?: boolean
+}
+
+export const InstancedLayer = (props: InstancedLayerProps) => {
+  const { meshParams, group, invisible } = props
+  const material = useMaterial(props.hasColorChannels)
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
   useColors(group.meshRef, group.neurons)
-  // useScale(group.meshRef, group.nidsStr, props.index, group.index)
 
   const isActive = useSceneStore((s) => s.isActive)
-  const hasFocussedLayer = useHasFocussedLayer()
+  const hasFocussed = useHasFocussedLayer()
   const [measureRef, hoverMesh] = useLayerInteractions(
     props,
-    isActive && !hasFocussedLayer,
+    isActive && !hasFocussed,
     positions
   )
   const eventHandlers = useNeuronInteractions(
     group.neurons,
-    isActive && hasFocussedLayer
+    isActive && hasFocussed && !invisible
   )
 
   const renderOrder =
@@ -60,6 +64,7 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
           name={`layer_${props.index}_group_${group.index}`}
           args={[, , group.neurons.length]}
           renderOrder={renderOrder}
+          visible={!invisible}
           {...eventHandlers}
         >
           <primitive object={meshParams.geometry} attach={"geometry"} />
@@ -73,6 +78,16 @@ export const NeuronGroup = (props: NeuronGroupProps) => {
         ))}
     </group>
   )
+}
+
+const standardMaterial = new THREE.MeshStandardMaterial()
+const blendingMaterial = new THREE.MeshBasicMaterial({
+  blending: THREE.AdditiveBlending,
+})
+
+function useMaterial(hasColorChannels: boolean) {
+  const splitColors = useSceneStore((s) => s.vis.splitColors)
+  return hasColorChannels && !splitColors ? blendingMaterial : standardMaterial
 }
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
@@ -153,11 +168,11 @@ function useNeuronPositions(props: NeuronGroupProps) {
 }
 
 function useColors(meshRef: MeshRef, neurons: Neuron[]) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!meshRef.current) return
     // if (isDebug()) console.log("upd colors")
     if (!meshRef.current.instanceColor) {
-      const newArr = new Float32Array(neurons.length * 3)
+      const newArr = new Float32Array(neurons.length * 3).fill(0)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
       meshRef.current.instanceColor = newAttr
     }
@@ -172,33 +187,6 @@ function useColors(meshRef: MeshRef, neurons: Neuron[]) {
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, neurons])
 }
-
-/* 
-function useScale(meshRef: MeshRef, nids: string, lIdx: number, gIdx: number) {
-  // use string to avoid unnecessary updates
-  const { selectedNid } = useLocalSelected(lIdx, gIdx)
-  const invalidate = useThree(({ invalidate }) => invalidate)
-  const tempMatrix = useMemo(() => new THREE.Matrix4(), [])
-  const tempScale = useMemo(() => new THREE.Matrix4(), [])
-  useEffect(() => {
-    if (!meshRef.current) return
-    if (isDebug()) console.log("upd scale")
-    const base = 1
-    const highlight = 1.5
-    for (const [i, nid] of nids.split(",").entries()) {
-      meshRef.current.getMatrixAt(i, tempMatrix)
-      const elements = tempMatrix.elements
-      const currentScale = Math.cbrt(elements[0] * elements[5] * elements[10])
-      const targetScale = nid === selectedNid ? base * highlight : base
-      const scaleFactor = targetScale / currentScale
-      tempScale.makeScale(scaleFactor, scaleFactor, scaleFactor)
-      tempMatrix.multiply(tempScale)
-      meshRef.current.setMatrixAt(i, tempMatrix)
-    }
-    meshRef.current.instanceMatrix.needsUpdate = true
-    invalidate()
-  }, [meshRef, selectedNid, invalidate, nids, tempMatrix, tempScale])
-} */
 
 function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
@@ -250,7 +238,7 @@ export function useLayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const size = useSize(measureRef, 0.2, updTrigger)
+  const [size] = useSize(measureRef, 0.2, updTrigger)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
   const { layerType, tfLayer } = layer
@@ -305,21 +293,4 @@ export function useLayerInteractions(
     </mesh>
   )
   return [measureRef, hoverMesh] as const
-}
-
-function useSize(
-  ref: React.RefObject<THREE.Mesh | null>,
-  padding = 0,
-  updTrigger?: Pos[] | number
-) {
-  const bBox = useMemo(() => new THREE.Box3(), [])
-  const sizeVec = useMemo(() => new THREE.Vector3(), [])
-  const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
-  useEffect(() => {
-    if (!ref.current || !updTrigger) return
-    bBox.setFromObject(ref.current)
-    bBox.getSize(sizeVec)
-    setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
-  }, [ref, bBox, sizeVec, padding, updTrigger])
-  return size
 }

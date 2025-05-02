@@ -5,7 +5,7 @@ import {
   type Pos,
 } from "@/scene-views/3d-model/utils"
 import { getNeuronPos } from "@/neuron-layers/layout"
-import { useNeuronSpacing } from "./neuron-group"
+import { useNeuronSpacing } from "./layer-instanced"
 import { LABEL_COLOR } from "./label"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
 

@@ -1,6 +1,6 @@
 import { useMemo } from "react"
-import { useLayers, type LayerStateful } from "@/neuron-layers"
 import { useSceneStore } from "@/store"
+import { useLayers, type LayerStateful } from "@/neuron-layers"
 import { useAnimatedPosition, useDynamicXShift } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./highlighted"
@@ -14,8 +14,8 @@ export const Model = () => {
   return (
     <>
       <group ref={ref}>
-        {layers.map((l, _, arr) => (
-          <Layer key={`${l.tfLayer.name}`} {...l} allLayers={arr} />
+        {layers.map((l) => (
+          <Layer key={`${l.tfLayer.name}`} {...l} />
         ))}
       </group>
       {isActive && <HoverComponents />}

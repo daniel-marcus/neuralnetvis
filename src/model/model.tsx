@@ -177,6 +177,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
 
     if (l.className === "InputLayer") {
       config.batchInputShape = dsInputShape
+      config.name = `nnv_InputLayer`
       model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
     } else if (l.className === "Dense") {
       const newConfig = isOutput

@@ -60,7 +60,6 @@ export interface GroupStateful extends GroupDef {
 
 export type NeuronGroupProps = LayerStateful & {
   group: GroupStateful
-  material: THREE.Material
 }
 
 // Types for Neurons

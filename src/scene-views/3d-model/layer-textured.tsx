@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useRef } from "react"
 import * as THREE from "three"
 import type { LayerStateful, Neuron } from "@/neuron-layers/types"
-import { useLayerInteractions } from "./neuron-group"
+import { useLayerInteractions } from "./layer-instanced"
 
 const BOX_SIZE = 1 // including BOX_GAP
 const BOX_GAP = 0
 const GROUP_GAP = 1
 
-export function TextureLayer(props: LayerStateful) {
+export function TexturedLayer(props: LayerStateful) {
   const [texture, heightBoxes, widthBoxes] = useActivationTexture(props)
   const geometry = useCachedGeometry(heightBoxes, widthBoxes)
   const [ref, hoverMesh] = useLayerInteractions(props, true, heightBoxes)
