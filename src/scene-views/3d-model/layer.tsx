@@ -3,7 +3,7 @@ import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useGlobalStore, useSceneStore } from "@/store"
-import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
+import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { useLast } from "@/utils/helpers"
 import { NeuronGroup } from "./neuron-group"
 import { TextureLayer } from "./texture-layer"
@@ -28,6 +28,7 @@ export const Layer = (props: LayerProps) => {
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
 
   const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
+  const isClose = useIsClose(ref, 30) // TODO: fix flickering when switchgin between texture and instanced layers
   if (!props.neurons.length || props.visibleIdx === -1) return null
 
   const textureLayer = <TextureLayer {...props} />
@@ -47,8 +48,8 @@ export const Layer = (props: LayerProps) => {
                 material={material}
               />
             ))
-          : hasChannels && layerPos === "hidden" && !isFocussed
-          ? textureLayer // TODO: LOD?
+          : hasChannels && layerPos === "hidden" && !isClose && !isFocussed
+          ? textureLayer
           : instancedLayer}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
@@ -114,7 +115,6 @@ function useDynamicScale(
   })
 }
 
-const basicMaterial = new THREE.MeshBasicMaterial()
 const standardMaterial = new THREE.MeshStandardMaterial()
 const blendingMaterial = new THREE.MeshBasicMaterial({
   blending: THREE.AdditiveBlending,
@@ -124,10 +124,6 @@ function useAdditiveBlending(hasColorChannels: boolean) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const active = hasColorChannels && !splitColors
   const isDebug = useGlobalStore((s) => s.isDebug)
-  const material = active
-    ? blendingMaterial
-    : isDebug
-    ? basicMaterial
-    : standardMaterial
+  const material = active ? blendingMaterial : standardMaterial
   return [material, active] as const
 }

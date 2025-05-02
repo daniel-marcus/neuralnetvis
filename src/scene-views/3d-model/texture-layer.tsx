@@ -5,7 +5,7 @@ import { useLayerInteractions } from "./neuron-group"
 
 const BOX_SIZE = 1 // including BOX_GAP
 const BOX_GAP = 0
-const GROUP_GAP = 2
+const GROUP_GAP = 1
 
 export function TextureLayer(props: LayerStateful) {
   const [texture, heightBoxes, widthBoxes] = useActivationTexture(props)
@@ -195,6 +195,7 @@ function useCachedGeometry(heightBoxes: number, widthBoxes: number) {
         return geometries.current.get(id)!
       }
 
+      // TODO: adjust w/ neuron box size?
       const geom = new THREE.BoxGeometry(
         0.2,
         heightBoxes * 0.2,

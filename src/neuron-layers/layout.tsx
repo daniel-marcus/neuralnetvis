@@ -86,7 +86,7 @@ export function getNeuronPos(
 
     const groupIndex = i % channels
 
-    const GRID_SPACING = 0.3
+    const GRID_SPACING = 0.2
     const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
     const groupsPerRow = Math.ceil(Math.sqrt(channels))
     const groupsPerColumn = Math.ceil(channels / groupsPerRow)

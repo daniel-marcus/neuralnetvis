@@ -122,3 +122,27 @@ export function useDynamicXShift() {
     return () => setVisConfig({ xShift: defaultXShift })
   }, [model, setVisConfig])
 }
+
+export function useIsClose(
+  meshRef: React.RefObject<THREE.Object3D | null>,
+  threshold: number
+): boolean {
+  const camera = useThree((s) => s.camera)
+  const [isClose, setIsClose] = useState(false)
+  const isCloseRef = useRef(false)
+  const tempVector = useMemo(() => new THREE.Vector3(), [])
+
+  useFrame(() => {
+    if (!meshRef.current) return
+
+    meshRef.current.getWorldPosition(tempVector)
+    const distance = tempVector.distanceTo(camera.position)
+
+    if (distance < threshold !== isCloseRef.current) {
+      isCloseRef.current = distance < threshold
+      setIsClose(isCloseRef.current)
+    }
+  })
+
+  return isClose
+}
