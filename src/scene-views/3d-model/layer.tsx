@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
-import { useGlobalStore, useSceneStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { useLast } from "@/utils/helpers"
 import { NeuronGroup } from "./neuron-group"
@@ -123,7 +123,6 @@ const blendingMaterial = new THREE.MeshBasicMaterial({
 function useAdditiveBlending(hasColorChannels: boolean) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const active = hasColorChannels && !splitColors
-  const isDebug = useGlobalStore((s) => s.isDebug)
   const material = active ? blendingMaterial : standardMaterial
   return [material, active] as const
 }
