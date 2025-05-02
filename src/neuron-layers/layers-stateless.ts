@@ -47,7 +47,6 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           layerPos,
           tfLayer,
           prevLayer,
-          units,
           numBiases,
           meshParams,
           hasLabels:
