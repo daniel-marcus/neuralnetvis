@@ -52,9 +52,8 @@ function normalizeTo(val?: number, max = 255) {
 }
 
 export function getNeuronColor(n: Omit<Neuron, "color">) {
-  const colorVal = normalizeTo(n.normalizedActivation, 255)
   return n.layer.hasColorChannels
-    ? CHANNEL_COLORS[n.index % 3][colorVal]
+    ? CHANNEL_COLORS[n.index % 3][normalizeTo(n.normalizedActivation, 255)]
     : getHighlightColor(n.normalizedActivation ?? 0)
 }
 

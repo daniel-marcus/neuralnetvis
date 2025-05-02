@@ -11,9 +11,11 @@ import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { LayerStateful } from "@/neuron-layers/types"
 
-export const Layer = (props: LayerStateful) => {
+export const Layer = (
+  props: LayerStateful & { allLayers: LayerStateful[] }
+) => {
   const { layerPos, groups, prevLayer, hasColorChannels } = props
-  const ref = useLayerPos(props)
+  const ref = useLayerPos(props, props.allLayers)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
@@ -58,8 +60,7 @@ function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: LayerStateful) {
-  const allLayers = useSceneStore((s) => s.statefulLayers)
+function useLayerPos(layer: LayerStateful, allLayers: LayerStateful[]) {
   const visibleLayers = allLayers.filter(
     (l) => l.visibleIdx >= 0 && l.neurons.length
   )

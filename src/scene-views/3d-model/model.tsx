@@ -7,15 +7,15 @@ import { HoverComponents } from "./highlighted"
 
 export const Model = () => {
   const isActive = useSceneStore((s) => s.isActive)
-  const layers = useLayers(!isActive)
+  const layers = useLayers() // !isActive
   const position = useModelOffset(layers)
   const [ref] = useAnimatedPosition(position, 0.1)
   useDynamicXShift()
   return (
     <>
       <group ref={ref}>
-        {layers.map((l) => (
-          <Layer key={`${l.tfLayer.name}`} {...l} />
+        {layers.map((l, _, arr) => (
+          <Layer key={`${l.tfLayer.name}_${l.units}`} {...l} allLayers={arr} />
         ))}
       </group>
       {isActive && <HoverComponents />}

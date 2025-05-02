@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useKeyCommand } from "@/utils/key-command"
 import type { SetterFunc } from "@/store"
+import { rafThrottle } from "@/utils/helpers"
 
 const DEFAULT_DEG_PER_ITEM = 6
 
@@ -217,23 +218,4 @@ function useKeyboardNavigation(
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowUp", prev, true, true)
   useKeyCommand("ArrowDown", next, true, true)
-}
-
-// returns a funtion that is throttled by requestAnimationFrame
-function rafThrottle<T extends (...args: never[]) => void>(
-  fn: T
-): (...args: Parameters<T>) => void {
-  let ticking = false
-  let lastArgs: Parameters<T>
-
-  return function (...args: Parameters<T>) {
-    lastArgs = args
-    if (!ticking) {
-      ticking = true
-      requestAnimationFrame(() => {
-        fn(...lastArgs)
-        ticking = false
-      })
-    }
-  }
 }

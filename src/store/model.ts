@@ -2,7 +2,7 @@ import { setVisConfig } from "."
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { DataSlice } from "./data"
-import type { Evaluation } from "@/model"
+import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
 import type { LayerStateful, Neuron, Nid } from "@/neuron-layers"
 import type { ActivationStats } from "@/model/activation-stats"
@@ -27,6 +27,10 @@ export interface ModelSlice {
 
   activationStats?: ActivationStats[]
   setActivationStats: (activationStats?: ActivationStats[]) => void
+
+  activations: LayerActivations[]
+  setActivations: (activations: LayerActivations[]) => void
+
   statefulLayers: LayerStateful[]
   setStatefulLayers: (statefulLayers: LayerStateful[]) => void
 
@@ -68,10 +72,14 @@ export const createModelSlice: StateCreator<
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 
-  statefulLayers: [],
-  setStatefulLayers: (statefulLayers) => set({ statefulLayers }),
   activationStats: undefined,
   setActivationStats: (activationStats) => set({ activationStats }),
+
+  activations: [],
+  setActivations: (activations) => set({ activations }),
+
+  statefulLayers: [],
+  setStatefulLayers: (statefulLayers) => set({ statefulLayers }),
 
   allNeurons: new Map(),
   setAllNeurons: (allNeurons) => set({ allNeurons }),

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import { getScene, useSceneStore } from "@/store"
+import { getScene, isDebug, useSceneStore } from "@/store"
 import { getProcessedActivations } from "@/model/activations"
 import { getNeuronColor, getPredictionQualityColor } from "../utils/colors"
-import type { WeightsBiases } from "@/model"
+import type { LayerActivations, WeightsBiases } from "@/model"
 import type { LayerStateful, LayerStateless, Neuron, Nid } from "./types"
 import type { Sample } from "@/data"
 import type { ActivationStats } from "@/model/activation-stats"
@@ -11,7 +11,7 @@ import type { ActivationStats } from "@/model/activation-stats"
 
 export function useStatefulLayers(
   statelessLayers: LayerStateless[],
-  activationStats: ActivationStats[] | undefined,
+  activations: LayerActivations[],
   weightsBiases: WeightsBiases[],
   sample?: Sample
 ) {
@@ -29,12 +29,7 @@ export function useStatefulLayers(
   useEffect(() => {
     async function update() {
       if (!model || !sample) return
-      const activations = await getProcessedActivations(
-        model,
-        sample,
-        activationStats,
-        isRegression
-      )
+
       const hasFocussed = typeof focussedIdx === "number"
       const oldLayers = getScene().getState().statefulLayers
       const allNeurons = new Map<Nid, Neuron>()
@@ -99,7 +94,7 @@ export function useStatefulLayers(
   }, [
     model,
     statelessLayers,
-    activationStats,
+    activations,
     weightsBiases,
     sample,
     isRegression,

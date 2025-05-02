@@ -1,14 +1,19 @@
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { getData } from "./db"
 import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
+import throttle from "lodash.throttle"
 
 export function useSample(ds?: Dataset) {
   const backendReady = useGlobalStore((s) => s.backendReady)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)
-  const setSample = useSceneStore((s) => s.setSample)
+  const _setSample = useSceneStore((s) => s.setSample)
+  const setSample = useMemo(
+    () => throttle(_setSample, 30, { trailing: true }),
+    [_setSample]
+  )
   const subset = useSceneStore((s) => s.subset)
 
   useEffect(() => {

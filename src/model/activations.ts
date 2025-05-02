@@ -8,6 +8,47 @@ import {
 } from "@/data/utils"
 import type { LayerActivations } from "./types"
 import type { Sample } from "@/data"
+import { useEffect, useMemo } from "react"
+import { isDebug, useSceneStore } from "@/store"
+
+export function useActivations(
+  sample?: Sample,
+  activationStats?: ActivationStats[]
+) {
+  const model = useSceneStore((s) => s.model)
+  const isRegression = useSceneStore((s) => s.isRegression())
+
+  const activations = useSceneStore((s) => s.activations)
+  const setActivations = useSceneStore((s) => s.setActivations)
+
+  useEffect(() => {
+    async function update() {
+      if (!model || !sample) return
+
+      const startTime = performance.now()
+      await tf.ready()
+      const newActivations = await getProcessedActivations(
+        model,
+        sample,
+        activationStats,
+        isRegression
+      )
+      const endTime = performance.now()
+      if (isDebug()) console.log(`Activations took ${endTime - startTime}ms`)
+      setActivations(newActivations)
+    }
+    update()
+  }, [model, sample, activationStats, setActivations])
+
+  return activations
+}
+
+export function useLayerActivations(
+  layerIdx: number
+): LayerActivations | undefined {
+  const activations = useSceneStore((s) => s.activations)
+  return useMemo(() => activations[layerIdx], [activations, layerIdx])
+}
 
 export async function getProcessedActivations(
   model: tf.LayersModel,
