@@ -10,21 +10,17 @@ import {
 } from "three-stdlib"
 import { useSceneStore } from "@/store"
 import { getWorldPos, type Pos } from "./utils"
-import type {
-  LayerStateless,
-  Neuron,
-  NeuronStateful,
-} from "@/neuron-layers/types"
+import type { NeuronLayer, Neuron, NeuronStateful } from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
 // const MIN_LINE_WIDTH = 0.1
 // const MAX_LINE_WIDTH = 3
 
-// TODO: deal with LayerStateless ...
+// TODO: deal with NeuronLayer ...
 
 type NeuronConnectionsProps = {
-  layer: LayerStateless
-  prevLayer: LayerStateless
+  layer: NeuronLayer
+  prevLayer: NeuronLayer
 }
 
 export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
@@ -128,7 +124,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
 // TODO!
 /* 
 function getConnections(
-  layer: LayerStateless,
+  layer: NeuronLayer,
   prevNeurons: Neuron[],
   lineActivationThreshold: number
 ) {

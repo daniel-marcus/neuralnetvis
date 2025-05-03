@@ -2,7 +2,7 @@ import { useRef, type ReactNode } from "react"
 import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { getLayerDef, layerDefMap } from "@/model/layers"
-import { isVisible } from "@/neuron-layers/layers-stateless"
+import { isVisible } from "@/neuron-layers/layers"
 import type {
   LayerConfig,
   LayerConfigArray,

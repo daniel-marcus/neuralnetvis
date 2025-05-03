@@ -7,9 +7,9 @@ import {
 import { getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./layer-instanced"
 import { LABEL_COLOR } from "./label"
-import type { LayerStateless, Neuron } from "@/neuron-layers/types"
+import type { NeuronLayer, Neuron } from "@/neuron-layers/types"
 
-export function YPointer({ outputLayer }: { outputLayer: LayerStateless }) {
+export function YPointer({ outputLayer }: { outputLayer: NeuronLayer }) {
   const trainingY = useSceneStore((s) => s.sample?.y)
   const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
   const { layerPos, meshParams } = outputLayer

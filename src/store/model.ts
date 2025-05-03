@@ -6,6 +6,7 @@ import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
 import type { Neuron, Nid } from "@/neuron-layers"
 import type { ActivationStats } from "@/model/activation-stats"
+import { ViewSlice } from "./view"
 
 export const defaultLayerConfigs: LayerConfigArray = [
   { className: "InputLayer", config: { batchInputShape: [null, 28, 28, 1] } },
@@ -40,7 +41,7 @@ export interface ModelSlice {
 }
 
 export const createModelSlice: StateCreator<
-  ModelSlice & DataSlice,
+  ModelSlice & DataSlice & ViewSlice,
   [],
   [],
   ModelSlice
@@ -54,6 +55,8 @@ export const createModelSlice: StateCreator<
       model,
       // sample: undefined,
       activationStats: undefined,
+      activations: [],
+      focussedLayerIdx: undefined,
     })
   },
   layerConfigs: defaultLayerConfigs,

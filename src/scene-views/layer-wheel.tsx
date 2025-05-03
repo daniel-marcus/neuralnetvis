@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useHasFocussedLayer, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
-import { isVisible } from "@/neuron-layers/layers-stateless"
+import { isVisible } from "@/neuron-layers/layers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 export const LayerWheel = () => {

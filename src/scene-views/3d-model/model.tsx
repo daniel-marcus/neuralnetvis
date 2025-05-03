@@ -1,25 +1,23 @@
 import { useMemo } from "react"
 import { useSceneStore } from "@/store"
-import { useLayers, type LayerStateless } from "@/neuron-layers"
+import { useLayers, type NeuronLayer } from "@/neuron-layers"
+import { useActivations } from "@/model/activations"
 import { useAnimatedPosition, useDynamicXShift } from "./utils"
 import { Layer } from "./layer"
-import { HoverComponents } from "./highlighted"
+import { HoverComponents } from "./interactions"
 
 export const Model = () => {
   const isActive = useSceneStore((s) => s.isActive)
-  const layers = useLayers() // !isActive
-  const position = useModelOffset(layers)
+  const visibleLayers = useLayers()
+  const position = useModelOffset(visibleLayers)
   const [ref] = useAnimatedPosition(position, 0.1)
-  useDynamicXShift()
+  useDynamicXShift(visibleLayers.length)
+  useActivations()
   return (
     <>
       <group ref={ref}>
-        {layers.map((l, _, arr) => (
-          <Layer
-            key={`${l.tfLayer.name}_${l.neurons.length}`}
-            {...l}
-            allLayers={arr}
-          />
+        {visibleLayers.map((l, _, arr) => (
+          <Layer key={l.lid} {...l} visibleLayers={arr} />
         ))}
       </group>
       {isActive && <HoverComponents />}
@@ -27,8 +25,7 @@ export const Model = () => {
   )
 }
 
-function useModelOffset(layers: LayerStateless[]) {
-  const visibleLayers = layers.filter((l) => l.neurons.length)
+function useModelOffset(visibleLayers: NeuronLayer[]) {
   const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
   const hasFocussed = typeof focusIdx === "number"
   const focusVisibleIdx = visibleLayers.findIndex((l) => l.index === focusIdx)

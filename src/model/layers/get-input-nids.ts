@@ -1,4 +1,4 @@
-import { getIndex3d, getNid, getUnits } from "@/neuron-layers/layers-stateless"
+import { getIndex3d, getNid, getUnits } from "@/neuron-layers/layers"
 import type { GetInputNidsFunc } from "./types"
 import type { Index3D, Nid } from "@/neuron-layers"
 

@@ -5,7 +5,6 @@ import { Controller, config } from "@react-spring/web"
 import { getThree, useSceneStore } from "@/store"
 import type { Neuron } from "@/neuron-layers/types"
 import { defaultVisConfig, type Three } from "@/store/vis"
-import { isVisible } from "@/neuron-layers/layers-stateless"
 import { clamp } from "@/utils/helpers"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
@@ -106,37 +105,31 @@ export function interpolate(from: number, to: number, percent: number): number {
 const MAX_X_WIDTH = 300 // in three.js units
 const MIN_X_SHIFT = 2
 
-export function useDynamicXShift() {
-  // use smaller xShift for models with many layers
-  const model = useSceneStore((s) => s.model)
+// use smaller xShift for models with many layers
+export function useDynamicXShift(numVisibleLayers: number) {
   const setVisConfig = useSceneStore((s) => s.vis.setConfig)
   useEffect(() => {
-    if (!model) return
-    const visibleLayers = model.layers.filter((l, i, arr) =>
-      isVisible(l, arr[i + 1])
-    )
-    const dynamicXShift = Math.round(MAX_X_WIDTH / visibleLayers.length)
+    const dynamicXShift = Math.round(MAX_X_WIDTH / numVisibleLayers)
     const defaultXShift = defaultVisConfig.xShift
     const clampedXShift = clamp(dynamicXShift, MIN_X_SHIFT, defaultXShift)
     setVisConfig({ xShift: clampedXShift })
     return () => setVisConfig({ xShift: defaultXShift })
-  }, [model, setVisConfig])
+  }, [numVisibleLayers, setVisConfig])
 }
 
 export function useSize(
   ref: React.RefObject<THREE.Object3D | null>,
-  padding = 0,
-  updTrigger?: Pos[] | number
+  padding = 0
 ): [[number, number, number], THREE.Box3] {
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
   useEffect(() => {
-    if (!ref.current || !updTrigger) return
+    if (!ref.current) return //  || !updTrigger
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
-  }, [ref, bBox, sizeVec, padding, updTrigger])
+  }, [ref, bBox, sizeVec, padding])
   return [size, bBox] as const
 }
 

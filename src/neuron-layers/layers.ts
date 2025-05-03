@@ -1,15 +1,185 @@
-import { useStatelessLayers } from "./layers-stateless"
-import { useActivationStats } from "@/model/activation-stats"
+import { createRef, useEffect, useMemo } from "react"
+import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
-import { useActivations } from "@/model/activations"
+import { getMeshParams } from "./layout"
+import { getLayerDef } from "@/model/layers"
+import type { InstancedMesh } from "three"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import type { LayerPos, NeuronLayer, LayerType, Neuron } from "./types"
+import type { Index3D, Nid } from "./types"
 
+// returns an array of all visible layers
 export function useLayers() {
-  const ds = useSceneStore((s) => s.ds)
   const model = useSceneStore((s) => s.model)
-  const sample = useSceneStore((s) => s.sample)
+  const ds = useSceneStore((s) => s.ds)
+  const setAllNeurons = useSceneStore((s) => s.setAllNeurons)
+  const [layers, allNeurons] = useMemo(() => {
+    const allNeurons = new Map<Nid, Neuron>()
+    if (!model) return [[] as NeuronLayer[], allNeurons] as const
+    const visibleIdxMap = getVisibleIdxMap(model)
+    const newLayers =
+      model.layers.reduce((acc, tfLayer, layerIndex) => {
+        const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
+        if (shouldSkip(visibleIdx, visibleIdxMap.size)) return acc
 
-  const layers = useStatelessLayers(model, ds)
-  const activationStats = useActivationStats(model, ds)
-  useActivations(sample, activationStats)
+        const className = tfLayer.getClassName() as LayerType
+        const layerPos = getLayerPos(layerIndex, model)
+
+        const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
+
+        const units = getUnits(tfLayer)
+        const meshParams =
+          ["BatchNormalization", "RandomRotation"].includes(className) &&
+          !!prevLayer
+            ? prevLayer.meshParams
+            : getMeshParams(tfLayer, layerPos, units)
+        const numBiases = (tfLayer.getConfig().filters as number) ?? units
+        const outputShape = tfLayer.outputShape as number[]
+
+        const hasColorChannels = layerPos === "input" && outputShape[3] === 3
+
+        const layerMeshRef = createRef<InstancedMesh>()
+        const layerStateless: NeuronLayer = {
+          lid: `${tfLayer.name}_${units}`,
+          index: layerIndex,
+          visibleIdx,
+          layerType: className,
+          layerPos,
+          tfLayer,
+          prevLayer,
+          numBiases,
+          meshParams,
+          hasLabels:
+            (layerPos === "input" && !!ds?.inputLabels?.length) ||
+            (layerPos === "output" && !!ds?.outputLabels?.length),
+          hasColorChannels,
+          neurons: [],
+          groups: [],
+          layerGroup: {
+            // as dummy here
+            index: 0,
+            nids: [],
+            nidsStr: "",
+            meshRef: layerMeshRef,
+            neurons: [],
+          },
+        }
+
+        const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
+
+        const meshRefs = Array.from({ length: groupCount }).map(() =>
+          createRef<InstancedMesh>()
+        )
+
+        const neurons =
+          Array.from({ length: units }).map((_, neuronIndex) => {
+            const index3d = getIndex3d(neuronIndex, outputShape)
+            const groupIndex = neuronIndex % groupCount
+            const indexInGroup = Math.floor(neuronIndex / groupCount)
+            const neuron = {
+              nid: getNid(layerIndex, index3d),
+              index: neuronIndex,
+              index3d,
+              groupIndex,
+              indexInGroup,
+              layer: layerStateless,
+              meshRef: hasColorChannels ? meshRefs[groupIndex] : layerMeshRef, // non-color layers share 1 instanced mesh now
+              label:
+                layerPos === "output"
+                  ? ds?.outputLabels?.[neuronIndex]
+                  : layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
+                  ? ds?.inputLabels?.[index3d[0]]
+                  : undefined,
+              inputNids: [], // will be calculated on demand in useNeuron
+              inputNeurons: [],
+            }
+
+            allNeurons.set(neuron.nid, neuron)
+            return neuron
+          }) ?? []
+        const neuronsMap = new Map(neurons.map((n) => [n.nid, n])) // ?? TODO: still needed?
+        const groups = Array.from({ length: groupCount }).map((_, i) => {
+          const groupedNeurons = neurons.filter((n) => n.groupIndex === i)
+          const nids = groupedNeurons.map((n) => n.nid)
+          const nidsStr = nids.join(",")
+          return {
+            index: i,
+            nids,
+            nidsStr,
+            meshRef: meshRefs[i],
+            neurons: groupedNeurons,
+          }
+        })
+        const layerGroup = {
+          index: 0,
+          nids: neurons.map((n) => n.nid),
+          nidsStr: neurons.map((n) => n.nid).join(","),
+          meshRef: layerMeshRef,
+          neurons,
+        }
+        const layer = {
+          ...layerStateless,
+          neurons,
+          neuronsMap,
+          groups,
+          layerGroup,
+        }
+        return [...acc, layer]
+      }, [] as NeuronLayer[]) ?? []
+    return [newLayers, allNeurons] as const
+  }, [model, ds])
+  useEffect(() => {
+    setAllNeurons(allNeurons)
+  }, [allNeurons, setAllNeurons])
   return layers
+}
+
+const MAX_VISIBLE_LAYERS = 100
+
+// avoid browser crash with too large models
+function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
+  if (visibleIdx === -1) return true
+  if (visibleIdx === totalVisibleLayers - 1) return false // always include output layer
+  const result = visibleIdx > MAX_VISIBLE_LAYERS
+  if (result) {
+    const msg = `Max visible layers exceeded. Skipping layer ${visibleIdx}/${totalVisibleLayers}`
+    console.log(msg)
+  }
+  return result
+}
+
+export function isVisible(layer: Layer) {
+  const className = layer.getClassName()
+  const layerDef = getLayerDef(className)
+  return !layerDef?.isInvisible
+}
+
+const getVisibleIdxMap = (model: tf.LayersModel) => {
+  return model.layers.reduce(
+    (map, layer, i) => (isVisible(layer) ? map.set(i, map.size) : map),
+    new Map<number, number>()
+  )
+}
+
+export function getNid(layerIndex: number, index3d: Index3D) {
+  return `${layerIndex}_${index3d.join(".")}` as Nid
+}
+
+export function getIndex3d(flatIndex: number, outputShape: number[]) {
+  const [, , width = 1, depth = 1] = outputShape
+  const depthIndex = flatIndex % depth
+  const widthIndex = Math.floor(flatIndex / depth) % width
+  const heightIndex = Math.floor(flatIndex / (depth * width))
+  return [heightIndex, widthIndex, depthIndex] as Index3D
+}
+
+export function getUnits(layer: Layer) {
+  const [, ...dims] = layer.outputShape as number[]
+  return dims.reduce((a, b) => a * b, 1)
+}
+
+function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
+  if (layerIndex === 0) return "input"
+  else if (layerIndex === model.layers.length - 1) return "output"
+  else return "hidden"
 }

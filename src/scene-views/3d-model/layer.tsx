@@ -9,13 +9,13 @@ import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { YPointer } from "./pointer"
 import { Connections } from "./connections"
-import type { LayerStateless } from "@/neuron-layers/types"
+import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = (
-  props: LayerStateless & { allLayers: LayerStateless[] }
+  props: NeuronLayer & { visibleLayers: NeuronLayer[] }
 ) => {
   const { layerPos, groups, prevLayer, hasColorChannels } = props
-  const ref = useLayerPos(props, props.allLayers)
+  const ref = useLayerPos(props, props.visibleLayers)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
@@ -60,12 +60,8 @@ function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: LayerStateless, allLayers: LayerStateless[]) {
-  const visibleLayers = allLayers.filter(
-    (l) => l.visibleIdx >= 0 && l.neurons.length
-  )
-  const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
-
+function useLayerPos(layer: NeuronLayer, visibleLayers: NeuronLayer[]) {
+  const visibleIdx = layer.visibleIdx
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 
   const position = useMemo(() => {
@@ -79,7 +75,7 @@ function useLayerPos(layer: LayerStateless, allLayers: LayerStateless[]) {
   return ref
 }
 
-function useIsInvisible(layer?: LayerStateless) {
+function useIsInvisible(layer?: NeuronLayer) {
   const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
   return invisibleLayers.includes(layer?.tfLayer.name ?? "")
 }

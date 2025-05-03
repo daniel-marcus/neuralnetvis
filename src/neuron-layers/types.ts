@@ -9,7 +9,8 @@ import type { LayerConfigMap } from "@/model/layers/types"
 export type LayerType = keyof LayerConfigMap // keyof typeof tf.layers?
 export type LayerPos = "input" | "hidden" | "output"
 
-export interface LayerStateless {
+export interface NeuronLayer {
+  lid: string // for React keys: `${tfLayer.name}_${units}`
   index: number
   visibleIdx: number // to find neighbours throu "invisible" layers (e.g. Flatten)
   layerType: LayerType
@@ -17,7 +18,7 @@ export interface LayerStateless {
   tfLayer: tf.layers.Layer
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
-  prevLayer?: LayerStateless
+  prevLayer?: NeuronLayer
   neurons: Neuron[]
   neuronsMap?: Map<Nid, Neuron>
   hasLabels?: boolean
@@ -38,7 +39,7 @@ export interface Group {
   neurons: Neuron[]
 }
 
-export type NeuronGroupProps = LayerStateless & {
+export type NeuronGroupProps = NeuronLayer & {
   group: Group
 }
 
@@ -54,7 +55,7 @@ export type Neuron = {
   nid: Nid
   groupIndex: number
   indexInGroup: number
-  layer: LayerStateless
+  layer: NeuronLayer
   meshRef: MeshRef
   label?: string
   inputNids?: Nid[]

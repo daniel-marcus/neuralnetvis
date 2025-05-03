@@ -1,18 +1,18 @@
 import { useCallback, useMemo, useRef } from "react"
 import * as THREE from "three"
-import type { LayerStateless } from "@/neuron-layers/types"
-import { useLayerInteractions } from "./layer-instanced"
-import { LayerActivations } from "@/model"
 import { useLayerActivations } from "@/model/activations"
+import { useLayerInteractions } from "./interactions"
+import type { NeuronLayer } from "@/neuron-layers/types"
+import type { LayerActivations } from "@/model"
 
 const BOX_SIZE = 1 // including BOX_GAP
 const BOX_GAP = 0
 const GROUP_GAP = 1
 
-export function TexturedLayer(props: LayerStateless) {
+export function TexturedLayer(props: NeuronLayer) {
   const [texture, heightBoxes, widthBoxes] = useActivationTexture(props)
   const geometry = useCachedGeometry(heightBoxes, widthBoxes)
-  const [ref, hoverMesh] = useLayerInteractions(props, true, heightBoxes)
+  const [ref, hoverMesh] = useLayerInteractions(props, true)
   return (
     <group>
       <mesh ref={ref}>
@@ -24,7 +24,7 @@ export function TexturedLayer(props: LayerStateless) {
   )
 }
 
-function useActivationTexture(layer: LayerStateless) {
+function useActivationTexture(layer: NeuronLayer) {
   const layerActivations = useLayerActivations(layer.index)
   const [, height, width, channels] = layer.tfLayer.outputShape as number[]
   return useMemo(

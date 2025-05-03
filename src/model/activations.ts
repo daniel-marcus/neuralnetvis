@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { ActivationStats } from "./activation-stats"
+import { ActivationStats, useActivationStats } from "./activation-stats"
 import {
   checkShapeMatch,
   normalizeConv2DActivations,
@@ -16,14 +16,12 @@ import {
   getPredictionQualityColor,
 } from "@/utils/colors"
 
-export function useActivations(
-  sample?: Sample,
-  activationStats?: ActivationStats[]
-) {
+export function useActivations() {
   const model = useSceneStore((s) => s.model)
+  const ds = useSceneStore((s) => s.ds)
+  const sample = useSceneStore((s) => s.sample)
+  const activationStats = useActivationStats(model, ds)
   const isRegression = useSceneStore((s) => s.isRegression())
-
-  const activations = useSceneStore((s) => s.activations)
   const setActivations = useSceneStore((s) => s.setActivations)
 
   useEffect(() => {
@@ -44,8 +42,6 @@ export function useActivations(
     }
     update()
   }, [model, sample, activationStats, isRegression, setActivations])
-
-  return activations
 }
 
 export function useLayerActivations(

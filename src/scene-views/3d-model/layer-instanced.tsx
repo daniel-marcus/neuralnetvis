@@ -1,67 +1,39 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
-import { ThreeEvent } from "@react-three/fiber"
-import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
-import {
-  useGlobalStore,
-  isDebug,
-  useSceneStore,
-  setStatus,
-  clearStatus,
-  useHasFocussedLayer,
-} from "@/store"
+import { useSceneStore, useHasFocussedLayer, isDebug } from "@/store"
 import { useLayerActivations } from "@/model/activations"
+import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
+import { useLayerInteractions, useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
-import { useAnimatedPosition, useSize, Pos } from "@/scene-views/3d-model/utils"
-import { isTouch } from "@/utils/screen"
 import { NeuronLabels } from "./label"
-import type {
-  Neuron,
-  MeshRef,
-  NeuronGroupProps,
-  LayerStateless,
-} from "@/neuron-layers/types"
+import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
 
-type InstancedLayerProps = NeuronGroupProps & {
-  invisible?: boolean
-}
-
-export const InstancedLayer = (props: InstancedLayerProps) => {
-  const { meshParams, group, invisible, hasColorChannels } = props
+export const InstancedLayer = (props: NeuronGroupProps) => {
+  const { meshParams, group, hasColorChannels, hasLabels } = props
+  const { neurons } = group
   const material = useMaterial(hasColorChannels)
   const groupRef = useGroupPosition(props)
   const positions = useNeuronPositions(props)
-
   const activations = useLayerActivations(props.index)
   useColors(group.meshRef, group.neurons, hasColorChannels, activations)
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussed = useHasFocussedLayer()
-  const [measureRef, hoverMesh] = useLayerInteractions(
-    props,
-    isActive && !hasFocussed,
-    positions
-  )
-  const eventHandlers = useNeuronInteractions(
-    group.neurons,
-    isActive && !invisible && hasFocussed
-  )
+  const noFocussed = isActive && !hasFocussed
+  const [measureRef, hoverMesh] = useLayerInteractions(props, noFocussed)
+  const eventHandlers = useNeuronInteractions(neurons, isActive && hasFocussed)
 
-  const renderOrder =
-    props.layerPos === "input"
-      ? 0 - group.index // reversed order for color blending
-      : undefined
-
+  // reversed render order for color blending
+  const renderOrder = props.layerPos === "input" ? 0 - group.index : undefined
   return (
     <group ref={groupRef}>
       <group ref={measureRef}>
         <instancedMesh
           ref={group.meshRef}
           name={`layer_${props.index}_group_${group.index}`}
-          args={[, , group.neurons.length]}
+          args={[, , neurons.length]}
           renderOrder={renderOrder}
-          visible={!invisible}
           {...eventHandlers}
         >
           <primitive object={meshParams.geometry} attach={"geometry"} />
@@ -69,8 +41,8 @@ export const InstancedLayer = (props: InstancedLayerProps) => {
         </instancedMesh>
       </group>
       {hoverMesh}
-      {props.hasLabels &&
-        group.neurons.map((n, i) => (
+      {hasLabels &&
+        neurons.map((n, i) => (
           <NeuronLabels key={n.nid} neuron={n} position={positions[i]} />
         ))}
     </group>
@@ -191,111 +163,4 @@ function useColors(
     }
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, neurons, activations, hasColorChannels])
-}
-
-function useNeuronInteractions(groupedNeurons: Neuron[], isActive: boolean) {
-  const toggleSelected = useSceneStore((s) => s.toggleSelected)
-  const toggleHovered = useSceneStore((s) => s.toggleHovered)
-  const eventHandlers = useMemo(() => {
-    return {
-      onPointerOver: (e: ThreeEvent<PointerEvent>) => {
-        // e.stopPropagation()
-        if (!isActive) return
-        if (e.buttons) return
-        document.body.style.cursor = "pointer"
-        toggleHovered(groupedNeurons[e.instanceId as number])
-        return
-      },
-      onPointerOut: () => {
-        if (isActive) document.body.style.cursor = "default"
-        toggleHovered(null)
-      },
-      onClick: (e: ThreeEvent<PointerEvent>) => {
-        if (!isActive) return
-        const neuron = groupedNeurons[e.instanceId as number]
-        if (useGlobalStore.getState().isDebug) console.log(neuron)
-        toggleSelected(neuron)
-      },
-    }
-  }, [isActive, groupedNeurons, toggleHovered, toggleSelected])
-  return eventHandlers
-}
-
-const LAYER_HOVER_STATUS = "layer-hover-status"
-
-export function useLayerInteractions(
-  layer: LayerStateless,
-  isActive: boolean,
-  updTrigger?: Pos[] | number // as update trigger for useSize hook
-) {
-  const measureRef = useRef<THREE.Mesh>(null)
-  const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
-  const isHovered = hoveredIdx === layer.index
-  const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
-  const setIsHovered = useCallback(
-    (hovered: boolean) => setHoveredLayerIdx(hovered ? layer.index : undefined),
-    [setHoveredLayerIdx, layer.index]
-  )
-  useEffect(() => {
-    if (!isActive) return
-    return () => {
-      setIsHovered(false)
-      clearStatus(LAYER_HOVER_STATUS)
-    }
-  }, [isActive, setIsHovered])
-  const [size] = useSize(measureRef, 0.2, updTrigger)
-  const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
-
-  const { layerType, tfLayer } = layer
-  const name = `${layerType} (${tfLayer.outputShape.slice(1).join("x")})`
-  const status = (
-    <>
-      <p>{name}</p>
-      <p>Double click to focus</p>
-    </>
-  )
-
-  const onPointerOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    if (e.buttons) return
-    document.body.style.cursor = "pointer"
-    setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
-    if (!isTouch()) setIsHovered(true)
-  }
-  const onPointerLeave = () => {
-    document.body.style.cursor = "default"
-    clearStatus(LAYER_HOVER_STATUS)
-    setIsHovered(false)
-  }
-  const onTap = () => {
-    if (!isHovered) {
-      setIsHovered(true)
-      setStatus(status, undefined, { id: LAYER_HOVER_STATUS })
-    } else {
-      setIsHovered(false)
-      clearStatus(LAYER_HOVER_STATUS)
-    }
-  }
-  const onDoubleClick = () => setFocussedIdx(layer.index)
-
-  const interactions = {
-    onPointerOver,
-    onPointerLeave,
-    onClick: isTouch() ? onTap : undefined,
-    onDoubleClick,
-  }
-
-  const hoverMesh = (
-    <mesh {...(isActive ? interactions : {})}>
-      <boxGeometry args={size} />
-      <MeshDiscardMaterial />
-      <Outlines
-        color={"white"}
-        transparent
-        opacity={isHovered ? 0.2 : 0}
-        // renderOrder={-1}
-      />
-    </mesh>
-  )
-  return [measureRef, hoverMesh] as const
 }
