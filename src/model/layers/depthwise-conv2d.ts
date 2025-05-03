@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { getConv2DInputNids } from "./conv2d"
+import { getReceptiveFieldInputNids } from "./get-input-nids"
 import type { LayerDef } from "./types"
 
 export const DepthwiseConv2D: LayerDef<"DepthwiseConv2D"> = {
@@ -20,9 +20,7 @@ export const DepthwiseConv2D: LayerDef<"DepthwiseConv2D"> = {
       max: 10,
     },
   ],
-  getInputNids: (
-    l,
-    prev,
-    prevIdx // TODO: adjust for higher depthMultiplier
-  ) => getConv2DInputNids(l, prev, prevIdx, true),
+  // TODO: adjust for higher depthMultiplier ?
+  getInputNids: (l, nIdx, prevLayer, prevLayerIdx) =>
+    getReceptiveFieldInputNids(l, nIdx, prevLayer, prevLayerIdx, true),
 }

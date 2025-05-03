@@ -1,14 +1,13 @@
 import { createRef, useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
-import { getHighlightColor } from "@/utils/colors"
 import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { DatasetDef } from "@/data"
 import type { LayerPos, LayerStateless, LayerType, Neuron } from "./types"
 import type { Index3D, Nid } from "./types"
-import { useSceneStore } from "@/store"
 
 // here is all data that doesn't change for a given model
 
@@ -25,11 +24,6 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
 
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
-
-        const layerInputNids =
-          model.layers.length > 5 || (prevLayer?.neurons.length ?? 0) > 1000
-            ? [] // TODO: load input nids on demand only?
-            : getInputNids(tfLayer, prevLayer?.tfLayer, prevLayer?.index)
 
         const units = getUnits(tfLayer)
         const meshParams =
@@ -78,7 +72,6 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
           ? []
           : Array.from({ length: units }).map((_, neuronIndex) => {
               const index3d = getIndex3d(neuronIndex, outputShape)
-              const inputNids = layerInputNids?.[neuronIndex] ?? []
               const groupIndex = neuronIndex % groupCount
               const indexInGroup = Math.floor(neuronIndex / groupCount)
               const neuron = {
@@ -90,12 +83,8 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 indexInGroup,
                 meshRef: hasColorChannels ? meshRefs[groupIndex] : layerMeshRef, // non-color layers share 1 instanced mesh now
                 visibleLayerIndex: visibleIdx,
-                inputNids,
-                inputNeurons: prevLayer
-                  ? (inputNids
-                      .map((nid) => prevLayer.neuronsMap?.get(nid))
-                      .filter(Boolean) as Neuron[])
-                  : [],
+                inputNids: [], // will be calculated on demand in useNeuron
+                inputNeurons: [],
                 label:
                   layerPos === "output"
                     ? ds?.outputLabels?.[neuronIndex]
@@ -105,7 +94,6 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                     ? ds?.inputLabels?.[index3d[0]]
                     : undefined,
                 layer: layerStateless,
-                color: getHighlightColor(0),
               }
 
               allNeurons.set(neuron.nid, neuron)
@@ -202,12 +190,4 @@ function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
   if (layerIndex === 0) return "input"
   else if (layerIndex === model.layers.length - 1) return "output"
   else return "hidden"
-}
-
-function getInputNids(l: Layer, prev?: Layer, prevIdx?: number): Nid[][] {
-  if (!prev || typeof prevIdx !== "number") return []
-  const className = l.getClassName()
-  const getterFunc = getLayerDef(className)?.getInputNids
-  if (!getterFunc) return []
-  else return getterFunc(l, prev, prevIdx)
 }

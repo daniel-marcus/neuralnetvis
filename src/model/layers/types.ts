@@ -18,7 +18,7 @@ import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/co
 import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
 import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
 
-// TODO: import from tfjs layers
+// TODO: import from tfjs layers?
 export type LayerConfigMap = {
   InputLayer: InputLayerArgs
   Dense: DenseLayerArgs
@@ -52,17 +52,19 @@ interface ControlableOption<T extends keyof LayerConfigMap> {
   transformFromSliderVal?: (v: number) => number
 }
 
-type GetInputNeuronsFunc = (
+export type GetInputNidsFunc = (
   layer: Layer,
-  prev: Layer,
-  prevIdx: number
-) => Nid[][]
+  neuronIdx: number,
+  prevLayer: Layer,
+  prevLayerIdx: number,
+  depthwise?: boolean // for DepthwiseConv2D and MaxPooling2D
+) => Nid[]
 
 export interface LayerDef<T extends keyof LayerConfigMap> {
   constructorFunc: (args: LayerConfigMap[T]) => Layer
   defaultConfig: LayerConfigMap[T]
   options?: ControlableOption<T>[]
-  getInputNids?: GetInputNeuronsFunc
+  getInputNids?: GetInputNidsFunc
   needsMultiDim?: boolean // TODO: better name?
   isInvisible?: boolean
   isUserAddable?: boolean

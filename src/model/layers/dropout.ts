@@ -1,4 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
+import { getOneToOneInputNids } from "./get-input-nids"
 import type { LayerDef } from "./types"
 
 export const Dropout: LayerDef<"Dropout"> = {
@@ -17,4 +18,5 @@ export const Dropout: LayerDef<"Dropout"> = {
       step: 0.05,
     },
   ],
+  getInputNids: getOneToOneInputNids,
 }

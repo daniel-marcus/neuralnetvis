@@ -45,7 +45,7 @@ export const InstancedLayer = (props: InstancedLayerProps) => {
   )
   const eventHandlers = useNeuronInteractions(
     group.neurons,
-    isActive && hasFocussed && !invisible
+    isActive && !invisible && hasFocussed
   )
 
   const renderOrder =

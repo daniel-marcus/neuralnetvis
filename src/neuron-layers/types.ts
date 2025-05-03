@@ -2,21 +2,11 @@ import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
 import type { RefObject } from "react"
 import type { MeshParams } from "@/neuron-layers/layout"
-import { ColorObj } from "../utils/colors"
+import type { LayerConfigMap } from "@/model/layers/types"
 
 // Types for Layers
 
-export type LayerType =
-  | "InputLayer"
-  | "Conv2D"
-  | "Dense"
-  | "Flatten"
-  | "MaxPooling2D"
-  | "Dropout"
-  | "BatchNormalization"
-  | "LayerNormalization"
-  | "RandomRotation"
-  | "DepthwiseConv2D" // TODO: keyof ...
+export type LayerType = keyof LayerConfigMap // keyof typeof tf.layers?
 export type LayerPos = "input" | "hidden" | "output"
 
 export interface LayerStateless {
@@ -71,7 +61,6 @@ export type Neuron = {
   inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field
   label?: string
   layer: LayerStateless
-  color: ColorObj
 }
 
 export type NeuronState = {
@@ -80,7 +69,6 @@ export type NeuronState = {
   normalizedActivation?: number
   weights?: number[]
   bias?: number
-  color: ColorObj
 }
 
 export type NeuronStateful = Neuron & NeuronState

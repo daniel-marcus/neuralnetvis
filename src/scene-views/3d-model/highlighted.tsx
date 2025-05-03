@@ -13,7 +13,7 @@ export function HoverComponents() {
   /* const hasFocussedLayer = useHasFocussedLayer() */
   return (
     <>
-      <HoverConnections />
+      <HoverConnections hovered={hovered} />
       <Highlighted neuron={selected} thick />
       <Highlighted neuron={hovered} />
     </>

@@ -9,9 +9,12 @@ import {
   LineSegmentsGeometry,
 } from "three-stdlib"
 import { useSceneStore } from "@/store"
-import { useHovered } from "@/neuron-layers/neuron-select"
 import { getWorldPos, type Pos } from "./utils"
-import type { LayerStateless, Neuron } from "@/neuron-layers/types"
+import type {
+  LayerStateless,
+  Neuron,
+  NeuronStateful,
+} from "@/neuron-layers/types"
 
 const MAX_LINES_PER_LAYER = 1000
 // const MIN_LINE_WIDTH = 0.1
@@ -24,8 +27,8 @@ type NeuronConnectionsProps = {
   prevLayer: LayerStateless
 }
 
-export const HoverConnections = () => {
-  const hovered = useHovered()
+export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
+  if (hovered) console.log(hovered)
   const showLines = useSceneStore((s) => s.vis.showLines)
   // const hoverOrigin = useGlobalStore((s) => s.hoverOrigin)
 
