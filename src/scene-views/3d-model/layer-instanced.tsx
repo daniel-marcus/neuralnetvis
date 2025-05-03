@@ -69,40 +69,24 @@ export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
 }
 
 export function useGroupPosition(props: NeuronGroupProps) {
-  const { group, layerPos, meshParams, hasColorChannels } = props
-  const groupIndex = group.index
-  const groupCount = props.groups.length
+  const { group, meshParams, hasColorChannels } = props
+  const groupIdx = group.index
+  const numGroups = props.groups.length
   const spacing = useNeuronSpacing(meshParams)
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const [, height, width = 1] = props.tfLayer.outputShape as number[]
+  const [, h, w = 1] = props.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
-    const [gHeight] = getGridSize(height, width, spacing, GRID_SPACING)
+    const [gHeight] = getGridSize(h, w, spacing, GRID_SPACING)
 
-    const SPLIT_COLORS_OFFSET = 0.05 // to avoid z-fighting
-    return layerPos === "input" && hasColorChannels
+    const OFFSET = 0.05 // to avoid z-fighting
+    const splitY = -groupIdx * gHeight + (numGroups - 1) * gHeight * 0.5
+    return hasColorChannels
       ? splitColors
-        ? [
-            -groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * gHeight + (groupCount - 1) * gHeight * 0.5,
-            groupIndex * SPLIT_COLORS_OFFSET,
-          ] // spread on y-axis
-        : [
-            groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * SPLIT_COLORS_OFFSET,
-            -groupIndex * SPLIT_COLORS_OFFSET,
-          ]
+        ? [-groupIdx * OFFSET, splitY, groupIdx * OFFSET] // spread on y-axis
+        : [groupIdx * OFFSET, -groupIdx * OFFSET, -groupIdx * OFFSET]
       : [0, 0, 0]
-  }, [
-    groupIndex,
-    groupCount,
-    layerPos,
-    spacing,
-    splitColors,
-    height,
-    width,
-    hasColorChannels,
-  ])
+  }, [groupIdx, numGroups, spacing, splitColors, h, w, hasColorChannels])
   const [groupRef] = useAnimatedPosition(position, 0.1)
   return groupRef
 }
@@ -110,16 +94,15 @@ export function useGroupPosition(props: NeuronGroupProps) {
 function useNeuronPositions(props: NeuronGroupProps) {
   const { layerPos, group, meshParams, tfLayer, hasColorChannels } = props
   const spacing = useNeuronSpacing(meshParams)
-  const [, height, width = 1, _channels = 1] = tfLayer.outputShape as number[]
+  const [, h, w = 1, _channels = 1] = tfLayer.outputShape as number[]
   const tempObj = useMemo(() => new THREE.Object3D(), [])
 
-  const channels = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
+  const c = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
 
   const positions = useMemo(() => {
-    return Array.from({ length: height * width * channels }, (_, i) =>
-      getNeuronPos(i, layerPos, height, width, channels, spacing)
-    )
-  }, [layerPos, spacing, height, width, channels])
+    const arr = Array.from({ length: h * w * c })
+    return arr.map((_, i) => getNeuronPos(i, layerPos, h, w, c, spacing))
+  }, [layerPos, spacing, h, w, c])
 
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
@@ -146,7 +129,6 @@ function useColors(
     if (!meshRef.current) return
 
     const allColors = activations?.colors ?? []
-    // if (isDebug()) console.log("upd colors")
     if (!meshRef.current.instanceColor) {
       const newArr = new Float32Array(neurons.length * 3).fill(0)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
@@ -154,7 +136,6 @@ function useColors(
     }
     for (const [i, n] of neurons.entries()) {
       const color = allColors[n.index]
-      // if (n.color) meshRef.current.setColorAt(i, n.color)
       if (color) {
         meshRef.current.instanceColor.array[i * 3] = color.rgb[0]
         meshRef.current.instanceColor.array[i * 3 + 1] = color.rgb[1]

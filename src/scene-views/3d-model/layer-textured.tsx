@@ -39,41 +39,31 @@ function generateActivationTexture(
   width = 1,
   channels = 1
 ) {
-  // Calculate grid dimensions
   const gridCols = Math.ceil(Math.sqrt(channels))
   const gridRows = Math.ceil(channels / gridCols)
 
-  // Calculate per-channel dimensions including internal gaps
   const channelWidth = width * BOX_SIZE - BOX_GAP
   const channelHeight = height * BOX_SIZE - BOX_GAP
 
-  // Calculate total texture size with inter-channel gaps
   const totalWidth = gridCols * channelWidth + (gridCols - 1) * GROUP_GAP
   const totalHeight = gridRows * channelHeight + (gridRows - 1) * GROUP_GAP
-  // const sideSize = Math.max(totalWidth, totalHeight)
 
-  // Create RGBA buffer (initialize with black transparent)
   const data = new Uint8Array(totalWidth * totalHeight * 4).fill(0)
 
-  // Populate texture data
   for (let channel = 0; channel < channels; channel++) {
     const gridX = channel % gridCols
     const gridY = Math.floor(channel / gridCols)
 
-    // Calculate channel block position
     const blockX = gridX * (channelWidth + GROUP_GAP)
     const blockY = gridY * (channelHeight + GROUP_GAP)
 
     for (let h = 0; h < height; h++) {
       for (let w = 0; w < width; w++) {
-        // Get activation value (HWC order)
         const idx = h * (width * channels) + w * channels + channel
+        const [r, g, b] = layerActivations?.colors[idx]?.rgbArr ?? [0, 0, 0]
+        const a = 255
 
-        const color = layerActivations?.colors[idx]
-
-        // Get color and calculate pixel positions
-        const [r, g, b] = color?.rgbArr ?? [0, 0, 0]
-        const squareX = w * BOX_SIZE // 4px + 1px gap
+        const squareX = w * BOX_SIZE
         const squareY = h * BOX_SIZE
 
         // Draw colored square
@@ -85,18 +75,14 @@ function generateActivationTexture(
             if (x >= totalWidth || y >= totalHeight) continue
 
             const flippedY = totalHeight - 1 - y // bc/ three.js texture pixels start bottom-left
-            const dataIndex = (flippedY * totalWidth + x) * 4
-            data[dataIndex] = r // Red
-            data[dataIndex + 1] = g // Green
-            data[dataIndex + 2] = b // Blue
-            data[dataIndex + 3] = 255 // Alpha
+            const offset = (flippedY * totalWidth + x) * 4
+            data.set([r, g, b, a], offset)
           }
         }
       }
     }
   }
 
-  // Create and return texture
   const texture = new THREE.DataTexture(
     data,
     totalWidth,
@@ -119,91 +105,40 @@ function updateUvMapping(
 ) {
   // https://discoverthreejs.com/book/first-steps/textures-intro/
   const box = BOX_SIZE - BOX_GAP
-  const textureHeight = heightBoxes * BOX_SIZE - BOX_GAP
-  const textureWidth = widthBoxes * BOX_SIZE - BOX_GAP
+  const height = heightBoxes * BOX_SIZE - BOX_GAP
+  const width = widthBoxes * BOX_SIZE - BOX_GAP
 
   const first = (base: number) => box / base
   const last = (base: number) => (base - box) / base
-  // Access the UV attribute
-  const uvAttribute = geometry.attributes.uv
-  const uvArray = uvAttribute.array
 
-  // back (mirror)
-  uvArray.set(
-    [
-      ...[1, 1],
-      ...[0, 1], //
-      ...[1, 0],
-      ...[0, 0],
-    ],
-    0
-  )
+  const uvAttr = geometry.attributes.uv
+  type UV = [number, number]
+  const uvSet = (uv1: UV, uv2: UV, uv3: UV, uv4: UV, offset: number) =>
+    uvAttr.array.set([...uv1, ...uv2, ...uv3, ...uv4], offset)
 
-  // top
-  uvArray.set(
-    [
-      ...[0, 1],
-      ...[0, last(textureHeight)],
-      ...[1, 1],
-      ...[1, last(textureHeight)], //
-    ],
-    16
-  )
+  const o = { BACK: 0, TOP: 16, BOTTOM: 24, RIGHT: 32, LEFT: 40 }
 
-  // bottom
-  uvArray.set(
-    [
-      ...[1, first(textureHeight)],
-      ...[1, 0],
-      ...[0, first(textureHeight)],
-      ...[0, 0], //
-    ],
-    24
-  )
+  uvSet([1, 1], [0, 1], [1, 0], [0, 0], o.BACK)
+  uvSet([0, 1], [0, last(height)], [1, 1], [1, last(height)], o.TOP)
+  uvSet([1, first(height)], [1, 0], [0, first(height)], [0, 0], o.BOTTOM)
+  uvSet([last(width), 1], [1, 1], [last(width), 0], [1, 0], o.RIGHT)
+  uvSet([0, 1], [first(width), 1], [0, 0], [first(width), 0], o.LEFT)
 
-  // right side
-  uvArray.set(
-    [
-      ...[last(textureWidth), 1],
-      ...[1, 1], //
-      ...[last(textureWidth), 0],
-      ...[1, 0],
-    ],
-    32
-  )
-
-  // left side
-  uvArray.set(
-    [
-      ...[0, 1],
-      ...[first(textureWidth), 1], //
-      ...[0, 0],
-      ...[first(textureWidth), 0],
-    ],
-    40
-  )
-
-  geometry.attributes.uv.needsUpdate = true
+  uvAttr.needsUpdate = true
 }
 
+// reuse geometries for same size
 function useCachedGeometry(heightBoxes: number, widthBoxes: number) {
-  // reuse geometries for same size
   const geometries = useRef(new Map<string, THREE.BoxGeometry>())
-
   const id = `${heightBoxes}-${widthBoxes}`
 
   const getGeometry = useCallback(
     (id: string): THREE.BoxGeometry => {
-      if (geometries.current.has(id)) {
-        return geometries.current.get(id)!
-      }
+      if (geometries.current.has(id)) return geometries.current.get(id)!
 
-      // TODO: adjust w/ neuron box size?
-      const geom = new THREE.BoxGeometry(
-        0.2,
-        heightBoxes * 0.2,
-        widthBoxes * 0.2
-      )
+      const BOX_SIZE_THREE = 0.2 // TODO: adjust w/ neuron box size?
+      const size = [1, heightBoxes, widthBoxes].map((v) => v * BOX_SIZE_THREE)
+      const geom = new THREE.BoxGeometry(...size)
       updateUvMapping(geom, heightBoxes, widthBoxes)
 
       geometries.current.set(id, geom)
