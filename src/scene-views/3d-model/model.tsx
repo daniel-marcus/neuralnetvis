@@ -10,7 +10,7 @@ export const Model = () => {
   const isActive = useSceneStore((s) => s.isActive)
   const visibleLayers = useLayers()
   const position = useModelOffset(visibleLayers)
-  const ref = useAnimatedPosition(position, 0.1)
+  const [ref] = useAnimatedPosition(position, 0.1)
   useDynamicXShift(visibleLayers.length)
   useActivations()
   return (
