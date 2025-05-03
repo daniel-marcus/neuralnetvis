@@ -87,7 +87,7 @@ export function useGroupPosition(props: NeuronGroupProps) {
         : [groupIdx * OFFSET, -groupIdx * OFFSET, -groupIdx * OFFSET]
       : [0, 0, 0]
   }, [groupIdx, numGroups, spacing, splitColors, h, w, hasColorChannels])
-  const [groupRef] = useAnimatedPosition(position, 0.1)
+  const groupRef = useAnimatedPosition(position, 0.1)
   return groupRef
 }
 

@@ -1,9 +1,5 @@
 import { useSceneStore } from "@/store"
-import {
-  useAnimatedPosition,
-  getWorldPos,
-  type Pos,
-} from "@/scene-views/3d-model/utils"
+import { getWorldPos, type Pos } from "@/scene-views/3d-model/utils"
 import { getNeuronPos } from "@/neuron-layers/layout"
 import { useNeuronSpacing } from "./layer-instanced"
 import { LABEL_COLOR } from "./label"
@@ -43,12 +39,10 @@ interface PointerProps {
 export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
   const [x, y, z] = position
   const pointerPosition = [x, y, z + size * 1.7] as Pos
-  const [ref] = useAnimatedPosition(pointerPosition, 0.6)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
   return (
     <customText
-      ref={ref}
       position={pointerPosition}
       text={"☜"}
       fontSize={size}
