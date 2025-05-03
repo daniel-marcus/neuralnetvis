@@ -52,15 +52,13 @@ export type Neuron = {
   index: number
   index3d: Index3D
   nid: Nid
-  layerIndex: number
   groupIndex: number
   indexInGroup: number
-  meshRef: MeshRef
-  visibleLayerIndex: number
-  inputNids?: Nid[] // TODO: calculate on demand
-  inputNeurons?: Neuron[] // for Conv2D: neurons in the receptive field
-  label?: string
   layer: LayerStateless
+  meshRef: MeshRef
+  label?: string
+  inputNids?: Nid[]
+  inputNeurons?: Neuron[]
 }
 
 export type NeuronState = {

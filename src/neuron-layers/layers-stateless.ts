@@ -78,13 +78,10 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                 nid: getNid(layerIndex, index3d),
                 index: neuronIndex,
                 index3d,
-                layerIndex,
                 groupIndex,
                 indexInGroup,
+                layer: layerStateless,
                 meshRef: hasColorChannels ? meshRefs[groupIndex] : layerMeshRef, // non-color layers share 1 instanced mesh now
-                visibleLayerIndex: visibleIdx,
-                inputNids: [], // will be calculated on demand in useNeuron
-                inputNeurons: [],
                 label:
                   layerPos === "output"
                     ? ds?.outputLabels?.[neuronIndex]
@@ -93,7 +90,8 @@ export function useStatelessLayers(model?: tf.LayersModel, ds?: DatasetDef) {
                       index3d[2] === 0
                     ? ds?.inputLabels?.[index3d[0]]
                     : undefined,
-                layer: layerStateless,
+                inputNids: [], // will be calculated on demand in useNeuron
+                inputNeurons: [],
               }
 
               allNeurons.set(neuron.nid, neuron)
