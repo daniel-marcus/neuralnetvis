@@ -27,7 +27,7 @@ export const Layer = (
     !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
 
   const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
-  const isClose = useIsClose(ref, 30) // TODO: fix flickering when switching
+  const isClose = useIsClose(ref, 40)
   const showTextured =
     !!hasChannels && layerPos === "hidden" && !isFocussed && !isClose
 

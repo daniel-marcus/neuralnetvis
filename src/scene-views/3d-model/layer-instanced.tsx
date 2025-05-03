@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
-import { useSceneStore, useHasFocussedLayer, isDebug } from "@/store"
+import { useSceneStore, useHasFocussedLayer } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useLayerInteractions, useNeuronInteractions } from "./interactions"
@@ -107,7 +107,6 @@ function useNeuronPositions(props: NeuronGroupProps) {
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!group.meshRef.current) return
-    if (isDebug()) console.log("upd pos")
     for (const [i, position] of positions.entries()) {
       tempObj.position.set(...position)
       tempObj.updateMatrix()
@@ -137,9 +136,10 @@ function useColors(
     for (const [i, n] of neurons.entries()) {
       const color = allColors[n.index]
       if (color) {
-        meshRef.current.instanceColor.array[i * 3] = color.rgb[0]
-        meshRef.current.instanceColor.array[i * 3 + 1] = color.rgb[1]
-        meshRef.current.instanceColor.array[i * 3 + 2] = color.rgb[2]
+        const offset = i * 3
+        meshRef.current.instanceColor.array[offset] = color.rgb[0]
+        meshRef.current.instanceColor.array[offset + 1] = color.rgb[1]
+        meshRef.current.instanceColor.array[offset + 2] = color.rgb[2]
       }
     }
     meshRef.current.instanceColor.needsUpdate = true

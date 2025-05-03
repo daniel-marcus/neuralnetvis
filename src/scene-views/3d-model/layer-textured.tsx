@@ -1,17 +1,14 @@
-import { useCallback, useMemo, useRef } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useLayerInteractions } from "./interactions"
 import type { NeuronLayer } from "@/neuron-layers/types"
-import type { LayerActivations } from "@/model"
 
-const BOX_SIZE = 1 // including BOX_GAP
-const BOX_GAP = 0
-const GROUP_GAP = 1
+const GROUP_GAP = 1 // texture pixel between groups
 
 export function TexturedLayer(props: NeuronLayer) {
-  const [texture, heightBoxes, widthBoxes] = useActivationTexture(props)
-  const geometry = useCachedGeometry(heightBoxes, widthBoxes)
+  const texture = useActivationTexture(props)
+  const geometry = useCachedGeometry(texture)
   const [ref, hoverMesh] = useLayerInteractions(props, true)
   return (
     <group>
@@ -27,89 +24,77 @@ export function TexturedLayer(props: NeuronLayer) {
 function useActivationTexture(layer: NeuronLayer) {
   const layerActivations = useLayerActivations(layer.index)
   const [, height, width, channels] = layer.tfLayer.outputShape as number[]
-  return useMemo(
-    () => generateActivationTexture(layerActivations, height, width, channels),
-    [layerActivations, height, width, channels]
-  )
-}
 
-function generateActivationTexture(
-  layerActivations: LayerActivations | undefined,
-  height: number,
-  width = 1,
-  channels = 1
-) {
-  const gridCols = Math.ceil(Math.sqrt(channels))
-  const gridRows = Math.ceil(channels / gridCols)
+  const texture = useMemo(() => {
+    const gridCols = Math.ceil(Math.sqrt(channels))
+    const gridRows = Math.ceil(channels / gridCols)
 
-  const channelWidth = width * BOX_SIZE - BOX_GAP
-  const channelHeight = height * BOX_SIZE - BOX_GAP
+    const texWidth = gridCols * width + (gridCols - 1) * GROUP_GAP
+    const texHeight = gridRows * height + (gridRows - 1) * GROUP_GAP
 
-  const totalWidth = gridCols * channelWidth + (gridCols - 1) * GROUP_GAP
-  const totalHeight = gridRows * channelHeight + (gridRows - 1) * GROUP_GAP
+    const data = new Uint8Array(texWidth * texHeight * 4).fill(0)
+    const args = [data, texWidth, texHeight, THREE.RGBAFormat] as const
+    const texture = new THREE.DataTexture(...args)
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  }, [height, width, channels])
 
-  const data = new Uint8Array(totalWidth * totalHeight * 4).fill(0)
+  useEffect(() => {
+    return () => texture.dispose()
+  }, [texture])
 
-  for (let channel = 0; channel < channels; channel++) {
-    const gridX = channel % gridCols
-    const gridY = Math.floor(channel / gridCols)
+  useLayoutEffect(() => {
+    const gridCols = Math.ceil(Math.sqrt(channels))
 
-    const blockX = gridX * (channelWidth + GROUP_GAP)
-    const blockY = gridY * (channelHeight + GROUP_GAP)
+    const { width: texWidth, height: texHeight } = texture.image
+    const data = texture.image.data as Uint8Array
+    const data32 = new Uint32Array(data.buffer)
 
-    for (let h = 0; h < height; h++) {
-      for (let w = 0; w < width; w++) {
-        const idx = h * (width * channels) + w * channels + channel
-        const [r, g, b] = layerActivations?.colors[idx]?.rgbArr ?? [0, 0, 0]
-        const a = 255
+    // y values are flipped bc/ three.js texture pixels start bottom-left
+    const flippedYOffsets = new Int32Array(texHeight)
+    for (let y = 0; y < texHeight; y++) {
+      flippedYOffsets[y] = (texHeight - 1 - y) * texWidth * 4
+    }
 
-        const squareX = w * BOX_SIZE
-        const squareY = h * BOX_SIZE
+    for (let channel = 0; channel < channels; channel++) {
+      const gridX = channel % gridCols
+      const gridY = (channel / gridCols) | 0 // like Math.floor but faster
 
-        // Draw colored square
-        for (let dy = 0; dy < BOX_SIZE - BOX_GAP; dy++) {
-          for (let dx = 0; dx < BOX_SIZE - BOX_GAP; dx++) {
-            const x = blockX + squareX + dx
-            const y = blockY + squareY + dy
+      const blockX = gridX * (width + GROUP_GAP)
+      const blockY = gridY * (height + GROUP_GAP)
 
-            if (x >= totalWidth || y >= totalHeight) continue
+      for (let h = 0; h < height; h++) {
+        const y = blockY + h
+        const rowOffset = flippedYOffsets[y]
 
-            const flippedY = totalHeight - 1 - y // bc/ three.js texture pixels start bottom-left
-            const offset = (flippedY * totalWidth + x) * 4
-            data.set([r, g, b, a], offset)
-          }
+        for (let w = 0; w < width; w++) {
+          const x = blockX + w
+          const offset = rowOffset + x * 4
+
+          const idx = h * (width * channels) + w * channels + channel
+          const rgba = layerActivations?.colors[idx]?.rgba ?? [0, 0, 0, 0]
+          const [r, g, b, a] = rgba
+          const packed = (a << 24) | (b << 16) | (g << 8) | r
+          data32[offset >>> 2] = packed // pack rgba into 32-bit int -> 1 single write instead of 4
+          // data.set(rgba, offset) // 4 writes
         }
       }
     }
-  }
 
-  const texture = new THREE.DataTexture(
-    data,
-    totalWidth,
-    totalHeight,
-    THREE.RGBAFormat
-  )
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.needsUpdate = true
+    texture.needsUpdate = true
+  }, [layerActivations, height, width, channels, texture])
 
-  const heightBoxes = Math.ceil(totalHeight / BOX_SIZE)
-  const widthBoxes = Math.ceil(totalWidth / BOX_SIZE)
-
-  return [texture, heightBoxes, widthBoxes] as const
+  return texture
 }
 
 function updateUvMapping(
   geometry: THREE.BufferGeometry,
-  heightBoxes: number,
-  widthBoxes: number
+  width: number,
+  height: number
 ) {
   // https://discoverthreejs.com/book/first-steps/textures-intro/
-  const box = BOX_SIZE - BOX_GAP
-  const height = heightBoxes * BOX_SIZE - BOX_GAP
-  const width = widthBoxes * BOX_SIZE - BOX_GAP
-
-  const first = (base: number) => box / base
-  const last = (base: number) => (base - box) / base
+  const first = (base: number) => 1 / base
+  const last = (base: number) => (base - 1) / base
 
   const uvAttr = geometry.attributes.uv
   type UV = [number, number]
@@ -127,24 +112,26 @@ function updateUvMapping(
   uvAttr.needsUpdate = true
 }
 
+const geometryCache = new Map<string, THREE.BoxGeometry>()
+
 // reuse geometries for same size
-function useCachedGeometry(heightBoxes: number, widthBoxes: number) {
-  const geometries = useRef(new Map<string, THREE.BoxGeometry>())
-  const id = `${heightBoxes}-${widthBoxes}`
+function useCachedGeometry(texture: THREE.DataTexture) {
+  const { width, height } = texture.image
+  const id = `${width}-${height}`
 
   const getGeometry = useCallback(
     (id: string): THREE.BoxGeometry => {
-      if (geometries.current.has(id)) return geometries.current.get(id)!
+      if (geometryCache.has(id)) return geometryCache.get(id)!
 
       const BOX_SIZE_THREE = 0.2 // TODO: adjust w/ neuron box size?
-      const size = [1, heightBoxes, widthBoxes].map((v) => v * BOX_SIZE_THREE)
+      const size = [1, height, width].map((v) => v * BOX_SIZE_THREE)
       const geom = new THREE.BoxGeometry(...size)
-      updateUvMapping(geom, heightBoxes, widthBoxes)
+      updateUvMapping(geom, width, height)
 
-      geometries.current.set(id, geom)
+      geometryCache.set(id, geom)
       return geom
     },
-    [heightBoxes, widthBoxes]
+    [width, height]
   )
 
   const geometry = useMemo(() => getGeometry(id), [id, getGeometry])

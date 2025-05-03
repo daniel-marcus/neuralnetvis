@@ -1,10 +1,10 @@
 import * as THREE from "three"
 
 export type ColorObj = {
-  rgb: number[] // for meshes
+  rgb: number[] // as THREE.Color.toArray() for meshes
   three: THREE.Color // for label
   style: string // for css
-  rgbArr: number[] // for textures
+  rgba: number[] // for textures (0-255)
 }
 
 function toColorObj(r: number, g: number, b: number): ColorObj {
@@ -14,7 +14,7 @@ function toColorObj(r: number, g: number, b: number): ColorObj {
     rgb: threeColor.toArray(),
     three: threeColor,
     style: colorStr,
-    rgbArr: [r, g, b],
+    rgba: [r, g, b, 255],
   }
 }
 

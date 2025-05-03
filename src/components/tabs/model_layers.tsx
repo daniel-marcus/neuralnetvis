@@ -138,7 +138,7 @@ export const LayerConfigControl = () => {
 
             const isInvisible =
               invisibleLayers.includes(layer.config.name ?? "") ||
-              !isVisible(model.layers[i], model.layers[i + 1])
+              !isVisible(model.layers[i])
             const mustBe =
               i === 0 ||
               i === layerConfigs.length - 1 ||

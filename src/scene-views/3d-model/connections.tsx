@@ -16,15 +16,7 @@ const MAX_LINES_PER_LAYER = 1000
 // const MIN_LINE_WIDTH = 0.1
 // const MAX_LINE_WIDTH = 3
 
-// TODO: deal with NeuronLayer ...
-
-type NeuronConnectionsProps = {
-  layer: NeuronLayer
-  prevLayer: NeuronLayer
-}
-
 export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
-  if (hovered) console.log(hovered)
   const showLines = useSceneStore((s) => s.vis.showLines)
   // const hoverOrigin = useGlobalStore((s) => s.hoverOrigin)
 
@@ -97,6 +89,12 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
   )
 }
 
+type NeuronConnectionsProps = {
+  layer: NeuronLayer
+  prevLayer: NeuronLayer
+}
+
+// TODO: deal with statelesss NeuronLayer ...
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const showLines = useSceneStore((s) => s.vis.showLines)
   const isConvOrMaxPool =
