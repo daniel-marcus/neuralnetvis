@@ -38,7 +38,7 @@ Pretrained models from Python Tensorflow can be exported via [tfjs-converter](ht
 │   └── contents/       # lessons and specific UI elements for lessons
 │   └── data/           # dataset definitions and all logic related to loading and storing datasets
 │   └── model/          # everything related to TensorFlow.js and ML: model creation, training, activations, weights and biases
-│   └── neuron-layers/  # here is where the current state get's poured into layers of neurons
+│   └── neuron-layers/  # here is where internal layer and neuron representations are generated for a given model
 │   └── scene-views/    # 3d-model rendering with three.js, evaluation view, deck.gl map and other scene-specific components
 │   └── store/          # a global Zustand store for UI settings and scoped stores for every scene
 │   └── utils/          # everything else
