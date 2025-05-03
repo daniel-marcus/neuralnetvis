@@ -71,7 +71,7 @@ function useLayerPos(layer: NeuronLayer, visibleLayers: NeuronLayer[]) {
     return [getCoord(xShift), getCoord(yShift), getCoord(zShift)]
   }, [visibleIdx, visibleLayers.length, xShift, yShift, zShift])
 
-  const [ref] = useAnimatedPosition(position, 0.1)
+  const ref = useAnimatedPosition(position, 0.1)
   return ref
 }
 

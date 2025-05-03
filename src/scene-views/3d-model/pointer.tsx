@@ -43,13 +43,13 @@ interface PointerProps {
 export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
   const [x, y, z] = position
   const pointerPosition = [x, y, z + size * 1.7] as Pos
-  const [ref] = useAnimatedPosition(pointerPosition, 0.6)
+  const ref = useAnimatedPosition(pointerPosition, 0.6)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
   return (
     <customText
       ref={ref}
-      position={pointerPosition}
+      // position={pointerPosition}
       text={"☜"}
       fontSize={size}
       color={color}
