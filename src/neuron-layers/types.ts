@@ -16,6 +16,7 @@ export interface NeuronLayer {
   layerType: LayerType
   layerPos: LayerPos
   tfLayer: tf.layers.Layer
+  numNeurons: number
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshParams: MeshParams
   prevLayer?: NeuronLayer
@@ -37,10 +38,6 @@ export interface Group {
   nidsStr: string // for deps optimization
   meshRef: MeshRef
   neurons: Neuron[]
-}
-
-export type NeuronGroupProps = NeuronLayer & {
-  group: Group
 }
 
 // Types for Neurons

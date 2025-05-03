@@ -47,6 +47,7 @@ export function useLayers() {
           layerPos,
           tfLayer,
           prevLayer,
+          numNeurons: units,
           numBiases,
           meshParams,
           hasLabels:
@@ -71,32 +72,38 @@ export function useLayers() {
           createRef<InstancedMesh>()
         )
 
-        const neurons =
-          Array.from({ length: units }).map((_, neuronIndex) => {
-            const index3d = getIndex3d(neuronIndex, outputShape)
-            const groupIndex = neuronIndex % groupCount
-            const indexInGroup = Math.floor(neuronIndex / groupCount)
-            const neuron = {
-              nid: getNid(layerIndex, index3d),
-              index: neuronIndex,
-              index3d,
-              groupIndex,
-              indexInGroup,
-              layer: layerStateless,
-              meshRef: hasColorChannels ? meshRefs[groupIndex] : layerMeshRef, // non-color layers share 1 instanced mesh now
-              label:
-                layerPos === "output"
-                  ? ds?.outputLabels?.[neuronIndex]
-                  : layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
-                  ? ds?.inputLabels?.[index3d[0]]
-                  : undefined,
-              inputNids: [], // will be calculated on demand in useNeuron
-              inputNeurons: [],
-            }
+        const neurons = // TODO: get rid of neurons to speed up loading for large models
+          units > 10000
+            ? []
+            : Array.from({ length: units }).map((_, neuronIndex) => {
+                const index3d = getIndex3d(neuronIndex, outputShape)
+                const groupIndex = neuronIndex % groupCount
+                const indexInGroup = Math.floor(neuronIndex / groupCount)
+                const neuron = {
+                  nid: getNid(layerIndex, index3d),
+                  index: neuronIndex,
+                  index3d,
+                  groupIndex,
+                  indexInGroup,
+                  layer: layerStateless,
+                  meshRef: hasColorChannels
+                    ? meshRefs[groupIndex]
+                    : layerMeshRef, // non-color layers share 1 instanced mesh now
+                  label:
+                    layerPos === "output"
+                      ? ds?.outputLabels?.[neuronIndex]
+                      : layerPos === "input" &&
+                        index3d[1] === 0 &&
+                        index3d[2] === 0
+                      ? ds?.inputLabels?.[index3d[0]]
+                      : undefined,
+                  inputNids: [], // will be calculated on demand in useNeuron
+                  inputNeurons: [],
+                }
 
-            allNeurons.set(neuron.nid, neuron)
-            return neuron
-          }) ?? []
+                allNeurons.set(neuron.nid, neuron)
+                return neuron
+              }) ?? []
         const neuronsMap = new Map(neurons.map((n) => [n.nid, n])) // ?? TODO: still needed?
         const groups = Array.from({ length: groupCount }).map((_, i) => {
           const groupedNeurons = neurons.filter((n) => n.groupIndex === i)

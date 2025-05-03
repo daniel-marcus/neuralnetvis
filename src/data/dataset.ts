@@ -51,10 +51,13 @@ export function useDsDef(dsKey?: string) {
 }
 
 export function getDsPath(dsDef: DatasetDef | DatasetMeta) {
-  if (dsDef.parentKey) {
+  if (datasets.find((d) => d.key === dsDef.key)) {
+    return `/play/${dsDef.key}`
+  } else {
     const params = new URLSearchParams({ ds: dsDef.key })
-    return `/play/${dsDef.parentKey}?${params.toString()}`
-  } else return `/play/${dsDef.key}`
+    // mnist as fallback just to open one of the existing tiles
+    return `/play/${dsDef.parentKey ?? "mnist"}?${params.toString()}`
+  }
 }
 
 export async function getDsMetaFromDb(key: string) {

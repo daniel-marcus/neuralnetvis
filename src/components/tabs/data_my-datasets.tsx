@@ -48,7 +48,8 @@ export const MyDatasets = () => {
     const dsDef =
       datasets.find((d) => d.key === dsKey) || (await getDsMetaFromDb(dsKey))
     if (dsDef) {
-      router.push(getDsPath(dsDef))
+      const path = getDsPath(dsDef)
+      router.push(path)
     }
   }
   return (

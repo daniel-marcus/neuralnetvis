@@ -6,17 +6,24 @@ import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useLayerInteractions, useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import type { Neuron, MeshRef, NeuronGroupProps } from "@/neuron-layers/types"
+import type { Group, MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
 
-export const InstancedLayer = (props: NeuronGroupProps) => {
-  const { meshParams, group, hasColorChannels, hasLabels } = props
-  const { neurons } = group
+type InstancedLayerProps = NeuronLayer & {
+  channelIdx?: number
+}
+
+export const InstancedLayer = (props: InstancedLayerProps) => {
+  const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
+  const { channelIdx, groups, layerGroup } = props
+  const group = typeof channelIdx === "number" ? groups[channelIdx] : layerGroup
+  const units = hasColorChannels ? numNeurons / 3 : numNeurons
+  const { neurons, meshRef } = group
   const material = useMaterial(hasColorChannels)
-  const groupRef = useGroupPosition(props)
-  const positions = useNeuronPositions(props)
+  const groupRef = useGroupPosition(props, group)
+  const positions = useNeuronPositions(props, group)
   const activations = useLayerActivations(props.index)
-  useColors(group.meshRef, group.neurons, hasColorChannels, activations)
+  useColors(meshRef, numNeurons, activations, hasColorChannels, channelIdx)
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussed = useHasFocussedLayer()
@@ -30,9 +37,9 @@ export const InstancedLayer = (props: NeuronGroupProps) => {
     <group ref={groupRef}>
       <group ref={measureRef}>
         <instancedMesh
-          ref={group.meshRef}
+          ref={meshRef}
           name={`layer_${props.index}_group_${group.index}`}
-          args={[, , neurons.length]}
+          args={[, , units]}
           renderOrder={renderOrder}
           {...eventHandlers}
         >
@@ -68,13 +75,13 @@ export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
   return spacing
 }
 
-export function useGroupPosition(props: NeuronGroupProps) {
-  const { group, meshParams, hasColorChannels } = props
+export function useGroupPosition(layer: NeuronLayer, group: Group) {
+  const { meshParams, hasColorChannels } = layer
   const groupIdx = group.index
-  const numGroups = props.groups.length
+  const numGroups = layer.groups.length
   const spacing = useNeuronSpacing(meshParams)
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const [, h, w = 1] = props.tfLayer.outputShape as number[]
+  const [, h, w = 1] = layer.tfLayer.outputShape as number[]
   const position = useMemo(() => {
     const GRID_SPACING = 0.6
     const [gHeight] = getGridSize(h, w, spacing, GRID_SPACING)
@@ -91,8 +98,8 @@ export function useGroupPosition(props: NeuronGroupProps) {
   return groupRef
 }
 
-function useNeuronPositions(props: NeuronGroupProps) {
-  const { layerPos, group, meshParams, tfLayer, hasColorChannels } = props
+function useNeuronPositions(props: NeuronLayer, group: Group) {
+  const { layerPos, meshParams, tfLayer, hasColorChannels } = props
   const spacing = useNeuronSpacing(meshParams)
   const [, h, w = 1, _channels = 1] = tfLayer.outputShape as number[]
   const tempObj = useMemo(() => new THREE.Object3D(), [])
@@ -120,21 +127,24 @@ function useNeuronPositions(props: NeuronGroupProps) {
 
 function useColors(
   meshRef: MeshRef,
-  neurons: Neuron[],
-  hasColorChannels: boolean,
-  activations?: LayerActivations
+  numNeurons: number,
+  activations?: LayerActivations,
+  hasColorChannels?: boolean,
+  channelIdx = 0
 ) {
   useLayoutEffect(() => {
     if (!meshRef.current) return
 
     const allColors = activations?.colors ?? []
     if (!meshRef.current.instanceColor) {
-      const newArr = new Float32Array(neurons.length * 3).fill(0)
+      const newArr = new Float32Array(numNeurons * 3).fill(0)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
       meshRef.current.instanceColor = newAttr
     }
-    for (const [i, n] of neurons.entries()) {
-      const color = allColors[n.index]
+    const numChannels = hasColorChannels ? 3 : 1
+    for (let i = 0; i < numNeurons; i += 1) {
+      const idx = i * numChannels + channelIdx
+      const color = allColors[idx]
       if (color) {
         const offset = i * 3
         meshRef.current.instanceColor.array[offset] = color.rgb[0]
@@ -143,5 +153,5 @@ function useColors(
       }
     }
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, neurons, activations, hasColorChannels])
+  }, [meshRef, numNeurons, activations, hasColorChannels])
 }

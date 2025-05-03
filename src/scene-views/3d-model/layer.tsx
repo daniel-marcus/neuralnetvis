@@ -28,23 +28,25 @@ export const Layer = (
 
   const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
   const isClose = useIsClose(ref, 40)
-  const showTextured =
-    !!hasChannels && layerPos === "hidden" && !isFocussed && !isClose
-
+  const isSuperLarge = props.numNeurons > 10000
+  const showInstanced =
+    layerPos !== "hidden" ||
+    !hasChannels ||
+    (isFocussed && isFlatView) ||
+    (isClose && !isSuperLarge)
   const textureLayer = <TexturedLayer {...props} />
-  const instancedLayer = <InstancedLayer {...props} group={props.layerGroup} />
+  const instancedLayer = <InstancedLayer {...props} />
 
-  if (!props.neurons.length || props.visibleIdx === -1) return null
   return (
     <>
       <group ref={ref}>
         {hasColorChannels
-          ? groups.map((group, i) => (
-              <InstancedLayer key={i} {...props} group={group} />
+          ? groups.map((_, i) => (
+              <InstancedLayer key={i} {...props} channelIdx={i} />
             ))
-          : showTextured
-          ? textureLayer
-          : instancedLayer}
+          : showInstanced
+          ? instancedLayer
+          : textureLayer}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
       {showConnections && <Connections layer={props} prevLayer={prevLayer} />}
