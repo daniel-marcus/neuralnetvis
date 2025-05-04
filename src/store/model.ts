@@ -28,8 +28,10 @@ export interface ModelSlice {
   activationStats?: ActivationStats[]
   setActivationStats: (activationStats?: ActivationStats[]) => void
 
-  activations: LayerActivations[]
-  setActivations: (activations: LayerActivations[]) => void
+  activations: {
+    [layerIdx: number]: LayerActivations | undefined
+  }
+  setActivations: (activations: Record<number, LayerActivations>) => void
 
   evaluation: Evaluation
   setEvaluation: (props: Partial<Evaluation>) => void
@@ -51,7 +53,7 @@ export const createModelSlice: StateCreator<
       model,
       // sample: undefined,
       activationStats: undefined,
-      activations: [],
+      activations: {},
       focussedLayerIdx: undefined,
     })
   },
@@ -71,8 +73,12 @@ export const createModelSlice: StateCreator<
   activationStats: undefined,
   setActivationStats: (activationStats) => set({ activationStats }),
 
-  activations: [],
-  setActivations: (activations) => set({ activations }),
+  activations: {},
+  setActivations: (newActivations) => {
+    set(({ activations }) => ({
+      activations: { ...activations, ...newActivations },
+    }))
+  },
 
   evaluation: {},
   setEvaluation: (props) =>

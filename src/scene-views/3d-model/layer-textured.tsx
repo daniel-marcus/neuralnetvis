@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo } from "react"
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useLayerInteractions } from "./interactions"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-const GROUP_GAP = 1 // texture pixel between cells
+const CELL_GAP = 1 // texture pixel between cells
 
-export function TexturedLayer(props: NeuronLayer) {
+export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const texture = useActivationTexture(props)
   const geometry = useCachedGeometry(texture)
   const [ref, hoverMesh] = useLayerInteractions(props, true)
@@ -19,7 +19,7 @@ export function TexturedLayer(props: NeuronLayer) {
       {hoverMesh}
     </group>
   )
-}
+})
 
 function useActivationTexture(layer: NeuronLayer) {
   const layerActivations = useLayerActivations(layer.index)
@@ -29,8 +29,8 @@ function useActivationTexture(layer: NeuronLayer) {
     const gridCols = Math.ceil(Math.sqrt(channels))
     const gridRows = Math.ceil(channels / gridCols)
 
-    const texWidth = gridCols * width + (gridCols - 1) * GROUP_GAP
-    const texHeight = gridRows * height + (gridRows - 1) * GROUP_GAP
+    const texWidth = gridCols * width + (gridCols - 1) * CELL_GAP
+    const texHeight = gridRows * height + (gridRows - 1) * CELL_GAP
 
     const data = new Uint8Array(texWidth * texHeight * 4).fill(0)
     const args = [data, texWidth, texHeight, THREE.RGBAFormat] as const
@@ -54,8 +54,8 @@ function useActivationTexture(layer: NeuronLayer) {
       const gridX = channel % gridCols
       const gridY = (channel / gridCols) | 0 // like Math.floor but faster
 
-      const blockX = gridX * (width + GROUP_GAP)
-      const blockY = gridY * (height + GROUP_GAP)
+      const blockX = gridX * (width + CELL_GAP)
+      const blockY = gridY * (height + CELL_GAP)
 
       for (let h = 0; h < height; h++) {
         const y = blockY + h

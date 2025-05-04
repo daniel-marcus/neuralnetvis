@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from "react"
+import { memo, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useSceneStore, useHasFocussedLayer } from "@/store"
 import { useLayerActivations } from "@/model/activations"
@@ -13,7 +13,9 @@ type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
 }
 
-export const InstancedLayer = (props: InstancedLayerProps) => {
+export const InstancedLayer = memo(function InstancedLayer(
+  props: InstancedLayerProps
+) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
   const { index, channelIdx = 0, meshRefs } = props // TODO: rm neurons
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
@@ -59,7 +61,7 @@ export const InstancedLayer = (props: InstancedLayerProps) => {
         ))}
     </group>
   )
-}
+})
 
 const standardMaterial = new THREE.MeshStandardMaterial()
 const blendingMaterial = new THREE.MeshBasicMaterial({

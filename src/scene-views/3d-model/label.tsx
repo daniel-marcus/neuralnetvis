@@ -33,21 +33,21 @@ export function NeuronLabels({
   layer,
   position,
 }: NeuronLabelsProps) {
+  const { layerPos } = layer
   const activation = useActivation(layer.index, neuronIdx)
+  const trainingY = useSceneStore((s) => s.sample?.y) // TODO separate comps for RegressionOutput etc. to reduce re-renders
   const rawInput = useRawInput(layer.index, neuronIdx)
-  const trainingY = useSceneStore((s) => s.sample?.y)
   const isRegression = useSceneStore((s) => s.isRegression())
   const ds = useSceneStore((s) => s.ds)
   const index3d = getIndex3d(neuronIdx, layer.tfLayer.outputShape as number[])
   const label =
-    layer.layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
+    layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
       ? ds?.inputLabels?.[index3d[0]]
-      : layer.layerPos === "output"
+      : layerPos === "output"
       ? ds?.outputLabels?.[neuronIdx]
       : null
   const showValueLabel =
     !!label && typeof rawInput !== "undefined" && isRegression
-  const layerPos = layer.layerPos
   if (!label || !position) return null
   return (
     <group renderOrder={-1}>

@@ -8,13 +8,14 @@ import {
 } from "@/data/utils"
 import type { LayerActivations } from "./types"
 import type { Sample } from "@/data"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { isDebug, useSceneStore } from "@/store"
 import {
   getChannelColor,
   getHighlightColor,
   getPredictionQualityColor,
 } from "@/utils/colors"
+import { NeuronLayer } from "@/neuron-layers"
 
 export function useActivations() {
   const model = useSceneStore((s) => s.model)
@@ -23,15 +24,25 @@ export function useActivations() {
   const activationStats = useActivationStats(model, ds)
   const isRegression = useSceneStore((s) => s.isRegression())
   const setActivations = useSceneStore((s) => s.setActivations)
-
+  const visibleLayers = useSceneStore((s) => s.allLayers)
+  const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const lastSample = useRef<Sample | undefined>(undefined)
   useEffect(() => {
     async function update() {
-      if (!model || !sample) return
+      if (!model || !sample || !visibleLayers.length) return
+      const hasFocussed = typeof focussedIdx === "number"
+      if (hasFocussed && sample === lastSample.current) return
+      lastSample.current = sample
+
+      const layers = hasFocussed
+        ? visibleLayers.filter((l) => l.index === focussedIdx)
+        : visibleLayers
 
       const startTime = performance.now()
       await tf.ready()
       const newActivations = await getProcessedActivations(
         model,
+        layers,
         sample,
         activationStats,
         isRegression
@@ -41,14 +52,21 @@ export function useActivations() {
       setActivations(newActivations)
     }
     update()
-  }, [model, sample, activationStats, isRegression, setActivations])
+  }, [
+    visibleLayers,
+    focussedIdx,
+    model,
+    sample,
+    activationStats,
+    isRegression,
+    setActivations,
+  ])
 }
 
 export function useLayerActivations(
   layerIdx: number
 ): LayerActivations | undefined {
-  const activations = useSceneStore((s) => s.activations)
-  return useMemo(() => activations[layerIdx], [activations, layerIdx])
+  return useSceneStore((s) => s.activations[layerIdx])
 }
 
 export function useActivation(layerIdx: number, neuronIdx: number) {
@@ -59,25 +77,28 @@ export function useActivation(layerIdx: number, neuronIdx: number) {
   }, [activations, neuronIdx])
 }
 
-export async function getProcessedActivations(
+async function getProcessedActivations(
   model: tf.LayersModel,
+  layers: NeuronLayer[],
   sample: Sample,
   activationStats?: ActivationStats[],
   isRegression?: boolean
 ) {
+  const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   const activationTensors = tf.tidy(() => {
-    const layerActivations = getLayerActivations(model, sample.xTensor)
-    const activations = layerActivations.map((layerActivation, i) => {
-      const flattened = layerActivation.reshape([-1]) as tf.Tensor1D
-      const hasDepthDim = typeof layerActivation.shape[3] === "number"
-      const isSoftmax = model.layers[i].getConfig().activation === "softmax"
+    const allActivations = getLayerActivations(model, sample.xTensor, outputs)
+    const activations = layers.map((layer, i) => {
+      const layerActivations = allActivations[i]
+      const flattened = layerActivations.reshape([-1]) as tf.Tensor1D
+      const hasDepthDim = typeof layer.tfLayer.outputShape[3] === "number"
+      const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
       const normalizedFlattened = hasDepthDim
-        ? normalizeConv2DActivations(layerActivation as tf.Tensor4D).flatten()
-        : isRegression && i > 0 && activationStats
+        ? normalizeConv2DActivations(layerActivations as tf.Tensor4D).flatten()
+        : isRegression && layer.layerPos !== "input" && activationStats
         ? scaleNormalize(
             flattened,
-            activationStats[i].mean,
-            activationStats[i].std
+            activationStats[layer.index].mean,
+            activationStats[layer.index].std
           )
         : isSoftmax
         ? flattened
@@ -87,21 +108,21 @@ export async function getProcessedActivations(
     return activations
   })
 
-  const newLayerActivations: LayerActivations[] = []
+  const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
-    for (const [i, [actTensor, normActTensor]] of activationTensors.entries()) {
+    for (const [i, layer] of layers.entries()) {
+      const [actTensor, normActTensor] = activationTensors[i]
       const act = (await actTensor.data()) as Float32Array
       const normAct = (await normActTensor.data()) as Float32Array
 
-      const hasColorChannels = i === 0 && model.layers[i].outputShape[3] === 3
-      const isRegressionOutput = isRegression && i === model.layers.length - 1
+      const isRegressionOutput = isRegression && layer.layerPos === "output"
 
       const rgbColors = new Float32Array(normAct.length * 3)
       const rgbaColors = new Uint32Array(normAct.length)
 
       for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
         const a = normAct[nIdx]
-        const color = hasColorChannels
+        const color = layer.hasColorChannels
           ? getChannelColor(nIdx % 3, a)
           : isRegressionOutput
           ? getPredictionQualityColor(
@@ -114,12 +135,12 @@ export async function getProcessedActivations(
         rgbaColors[nIdx] = color.rgba
       }
 
-      newLayerActivations.push({
+      newLayerActivations[layer.index] = {
         activations: act,
         normalizedActivations: normAct,
         rgbColors,
         rgbaColors,
-      })
+      }
     }
     return newLayerActivations
   } catch (e) {
@@ -132,7 +153,8 @@ export async function getProcessedActivations(
 
 export function getLayerActivations(
   model: tf.LayersModel,
-  inputTensor: tf.Tensor
+  inputTensor: tf.Tensor,
+  outputs?: tf.SymbolicTensor[]
 ) {
   const inputDimsModel = model.layers[0].batchInputShape.slice(1)
   const inputDimsSample = inputTensor.shape.slice(1)
@@ -141,7 +163,7 @@ export function getLayerActivations(
     return tf.tidy(() => {
       const tmpModel = tf.model({
         inputs: model.input,
-        outputs: model.layers.flatMap((layer) => layer.output),
+        outputs: outputs ?? model.layers.flatMap((layer) => layer.output),
       })
       const result = tmpModel.predict(inputTensor)
       return Array.isArray(result) ? result : [result]
