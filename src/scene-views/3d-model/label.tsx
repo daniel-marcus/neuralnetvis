@@ -4,11 +4,11 @@ import * as THREE from "three"
 import { Text } from "troika-three-text"
 import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"
-import type { ThreeElement } from "@react-three/fiber"
-import type { NeuronLayer } from "@/neuron-layers/types"
 import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
 import { getIndex3d } from "@/neuron-layers/neurons"
+import type { ThreeElement } from "@react-three/fiber"
+import type { NeuronLayer } from "@/neuron-layers/types"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 // https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
