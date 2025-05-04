@@ -21,7 +21,8 @@ export const lessons: LessonDef[] = [
   {
     title: "How do machines learn?",
     slug: "how-machines-learn",
-    description: "Some basics about machine learning",
+    description:
+      "Let's train a neural network to recognize handwritten digits (test content)",
     content: IntroNetworks,
     dsKey: "mnist",
     initialState: hmlInitialState,

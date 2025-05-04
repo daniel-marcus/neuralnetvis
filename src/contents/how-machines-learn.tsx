@@ -36,7 +36,7 @@ export const IntroNetworks = (): LessonContent => {
     <main>
       <Head
         title="How do machines learn?"
-        description="Let's train a neural network to recognize handwritten digits"
+        description="Let's train a neural network to recognize handwritten digits (test content)"
         cameraPos={hmlInitialState.cameraPos}
         onScroll={({ percent }) => {
           const initSpacing = hmlInitialState.vis!.neuronSpacing!
