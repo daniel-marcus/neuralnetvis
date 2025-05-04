@@ -153,5 +153,5 @@ function useColors(
       }
     }
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, numNeurons, activations, hasColorChannels])
+  }, [meshRef, numNeurons, activations, hasColorChannels, channelIdx])
 }
