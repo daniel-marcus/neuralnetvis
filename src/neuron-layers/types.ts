@@ -40,8 +40,8 @@ export type Neuron = {
   indexInChannel: number
   layer: NeuronLayer
   meshRef: MeshRef
-  inputNids?: Nid[]
-  inputNeurons?: Neuron[]
+  inputNids: Nid[]
+  inputNeurons: Neuron[]
 }
 
 export type NeuronState = {

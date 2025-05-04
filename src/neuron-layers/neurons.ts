@@ -36,6 +36,16 @@ export function createNeuron(nid?: Nid): Neuron | undefined {
   const { hasColorChannels, tfLayer } = layer
   const numChannels = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
   const channelIdx = neuronIdx % numChannels
+  const layerDef = getLayerDef(layer.layerType)
+  const prevLayer = layer.prevLayer
+  const inputNids = prevLayer
+    ? layerDef?.getInputNids?.(
+        layer.tfLayer,
+        neuronIdx,
+        prevLayer.tfLayer,
+        prevLayer.index
+      ) ?? []
+    : []
   const neuron: Neuron = {
     index: neuronIdx,
     nid,
@@ -44,6 +54,8 @@ export function createNeuron(nid?: Nid): Neuron | undefined {
     channelIdx,
     indexInChannel: Math.floor(neuronIdx / numChannels),
     meshRef: hasColorChannels ? layer.meshRefs[channelIdx] : layer.meshRefs[0],
+    inputNids,
+    inputNeurons: inputNids.map(createNeuron).filter(Boolean) as Neuron[],
   }
   return neuron
 }
@@ -59,16 +71,6 @@ function makeStateful(
   const { weights: _weights, biases } = getLayerWeights(neuron.layer.tfLayer)
   const weights = _weights?.[filterIdx]
   const bias = biases?.[filterIdx]
-  const layerDef = getLayerDef(neuron.layer.layerType)
-  const prevLayer = neuron.layer.prevLayer
-  const inputNids = prevLayer
-    ? layerDef?.getInputNids?.(
-        neuron.layer.tfLayer,
-        nIdx,
-        prevLayer.tfLayer,
-        prevLayer.index
-      ) ?? []
-    : []
   const statefulNeuron: NeuronStateful = {
     ...neuron,
     activation: layerActivations?.activations[nIdx],
@@ -76,8 +78,6 @@ function makeStateful(
     weights,
     bias,
     rawInput: neuron.layer.layerPos === "input" ? rawX?.[nIdx] : undefined,
-    inputNids,
-    inputNeurons: inputNids.map(createNeuron).filter(Boolean) as Neuron[],
   }
   return statefulNeuron
 }
