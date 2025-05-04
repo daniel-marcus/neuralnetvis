@@ -58,18 +58,18 @@ function useActivationTexture(layer: NeuronLayer) {
 
       for (let h = 0; h < height; h++) {
         const y = blockY + h
-        const rowOffset = y * texWidth * 4
+        const rowOffset = y * texWidth
 
         for (let w = 0; w < width; w++) {
           const x = blockX + w
-          const offset = rowOffset + x * 4
+          const offset = rowOffset + x
 
           const idx = h * (width * channels) + w * channels + channel
           const rgba = layerActivations?.colors[idx]?.rgba ?? [0, 0, 0, 0]
           const [r, g, b, a] = rgba
           const packed = (a << 24) | (b << 16) | (g << 8) | r
-          data32[offset >>> 2] = packed // pack rgba into 32-bit int -> 1 single write instead of 4
-          // data.set(rgba, offset) // 4 writes
+          data32[offset] = packed // pack rgba into 32-bit int -> 1 single write instead of 4
+          // data.set(rgba, offset * 4) // 4 writes
         }
       }
     }
