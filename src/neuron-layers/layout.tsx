@@ -84,17 +84,16 @@ export function getNeuronPos(
     const idx = Math.floor(i / channels)
     const [x, _y, _z] = getGridXYZ(idx, height, width, spacing, mustBeColumn)
 
-    const groupIndex = i % channels
+    const channelIdx = i % channels
 
     const GRID_SPACING = 0.2
     const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
-    const groupsPerRow = Math.ceil(Math.sqrt(channels))
-    const groupsPerColumn = Math.ceil(channels / groupsPerRow)
-    const offsetY = (groupsPerColumn - 1) * gHeight * 0.5
-    const offsetZ = (groupsPerRow - 1) * gWidth * -0.5
-    const y =
-      _y + -1 * Math.floor(groupIndex / groupsPerRow) * gHeight + offsetY // row
-    const z = _z + (groupIndex % groupsPerRow) * gWidth + offsetZ // column
+    const cellsPerRow = Math.ceil(Math.sqrt(channels))
+    const cellsPerColumn = Math.ceil(channels / cellsPerRow)
+    const offsetY = (cellsPerColumn - 1) * gHeight * 0.5
+    const offsetZ = (cellsPerRow - 1) * gWidth * -0.5
+    const y = _y + -1 * Math.floor(channelIdx / cellsPerRow) * gHeight + offsetY // row
+    const z = _z + (channelIdx % cellsPerRow) * gWidth + offsetZ // column
 
     return [x, y, z] as [number, number, number]
   }

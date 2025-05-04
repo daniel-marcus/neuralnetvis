@@ -143,10 +143,8 @@ export function getLayerActivations(
         inputs: model.input,
         outputs: model.layers.flatMap((layer) => layer.output),
       })
-      const layerActivations = tmpModel.predict(
-        inputTensor
-      ) as tf.Tensor<tf.Rank>[]
-      return layerActivations
+      const result = tmpModel.predict(inputTensor)
+      return Array.isArray(result) ? result : [result]
     })
   } catch (e) {
     console.log("Error getting activations", e)

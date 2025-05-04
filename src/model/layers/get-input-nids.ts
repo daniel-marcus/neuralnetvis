@@ -1,6 +1,7 @@
-import { getIndex3d, getNid, getUnits } from "@/neuron-layers/layers"
+import { getUnits } from "@/neuron-layers/layers"
+import { getFlatIndex, getIndex3d, getNid } from "@/neuron-layers/neurons"
 import type { GetInputNidsFunc } from "./types"
-import type { Index3D, Nid } from "@/neuron-layers"
+import type { Nid } from "@/neuron-layers"
 
 // reusable getInputNids functions
 
@@ -13,11 +14,9 @@ export const getFullyConnectedInputNids: GetInputNidsFunc = (
   prevLayerIdx
 ) => {
   // each neuron is connected to all neurons in the previous layer
-  const shape = prevLayer.outputShape as number[]
   const prevUnits = getUnits(prevLayer)
   return Array.from({ length: prevUnits }).map((_, i) => {
-    const index3d = getIndex3d(i, shape)
-    return getNid(prevLayerIdx, index3d)
+    return getNid(prevLayerIdx, i)
   })
 }
 
@@ -26,12 +25,10 @@ export const getFullyConnectedInputNids: GetInputNidsFunc = (
 export const getOneToOneInputNids: GetInputNidsFunc = (
   _,
   nIdx,
-  prevLayer,
+  __,
   prevLayerIdx
 ) => {
-  const shape = prevLayer.outputShape as number[]
-  const index3d = getIndex3d(nIdx, shape)
-  return [getNid(prevLayerIdx, index3d)]
+  return [getNid(prevLayerIdx, nIdx)]
 }
 
 // for Conv2D, DepthwiseConv2D, MaxPooling2D etc
@@ -54,20 +51,19 @@ export const getReceptiveFieldInputNids: GetInputNidsFunc = (
   const filterSize = filterHeight * filterWidth
 
   const outputShape = l.outputShape as number[]
-  const prevOutputShape = prevLayer.outputShape as number[]
-  const depth = prevOutputShape[3]
+  const prevShape = prevLayer.outputShape as number[]
+  const depth = prevShape[3]
 
   const inputNids: Nid[] = []
   for (let k = 0; k < filterSize * depth; k++) {
     const [thisY, thisX, thisDepth] = getIndex3d(nIdx, outputShape)
-    const depthIndex = k % depth
-    if (depthwise && depthIndex !== thisDepth) continue
-    const widthIndex =
-      thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
-    const heightIndex =
+    const depthIdx = k % depth
+    if (depthwise && depthIdx !== thisDepth) continue
+    const widthIdx = thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
+    const heightIdx =
       thisY * strideHeight + Math.floor(k / (depth * filterWidth))
-    const index3d = [heightIndex, widthIndex, depthIndex] as Index3D
-    const inputNid = getNid(prevLayerIdx, index3d)
+    const flatIndex = getFlatIndex(heightIdx, widthIdx, depthIdx, prevShape)
+    const inputNid = getNid(prevLayerIdx, flatIndex)
     inputNids.push(inputNid)
   }
 

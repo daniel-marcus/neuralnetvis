@@ -2,13 +2,14 @@ import { useRef, useEffect, useCallback, useMemo } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
-import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
+import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
-import { clearStatus, isDebug, setStatus, useSceneStore } from "@/store"
+import { clearStatus, setStatus, useSceneStore } from "@/store"
 import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
 import type { Mesh } from "three"
+import { getNid } from "@/neuron-layers/neurons"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
@@ -86,8 +87,9 @@ export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
 }
 
 export function useNeuronInteractions(
-  groupedNeurons: Neuron[],
-  isActive: boolean
+  layerIdx: number,
+  isActive: boolean,
+  channelIdx = 0
 ) {
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
@@ -98,21 +100,23 @@ export function useNeuronInteractions(
         if (!isActive) return
         if (e.buttons) return
         document.body.style.cursor = "pointer"
-        toggleHovered(groupedNeurons[e.instanceId as number])
+        const neuronIdx = (e.instanceId as number) + channelIdx
+        const nid = getNid(layerIdx, neuronIdx)
+        toggleHovered(nid)
         return
       },
       onPointerOut: () => {
         if (isActive) document.body.style.cursor = "default"
-        toggleHovered(null)
+        toggleHovered(undefined)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
         if (!isActive) return
-        const neuron = groupedNeurons[e.instanceId as number]
-        if (isDebug()) console.log(neuron)
-        toggleSelected(neuron)
+        const neuronIdx = (e.instanceId as number) + channelIdx
+        const nid = getNid(layerIdx, neuronIdx)
+        toggleSelected(nid)
       },
     }
-  }, [isActive, groupedNeurons, toggleHovered, toggleSelected])
+  }, [isActive, layerIdx, channelIdx, toggleHovered, toggleSelected])
   return eventHandlers
 }
 

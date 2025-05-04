@@ -5,9 +5,10 @@ import { Text } from "troika-three-text"
 import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"
 import type { ThreeElement } from "@react-three/fiber"
-import type { Neuron } from "@/neuron-layers/types"
+import type { NeuronLayer } from "@/neuron-layers/types"
 import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
+import { getIndex3d } from "@/neuron-layers/neurons"
 
 // https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
 // https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
@@ -22,38 +23,51 @@ declare module "@react-three/fiber" {
 export const LABEL_COLOR = "rgb(150, 156, 171)"
 
 interface NeuronLabelsProps {
-  neuron: Neuron
+  neuronIdx: number
+  layer: NeuronLayer
   position?: [number, number, number]
 }
 
-export function NeuronLabels({ neuron, position }: NeuronLabelsProps) {
-  const activation = useActivation(neuron.layer.index, neuron.index)
-  const rawInput = useRawInput(neuron.layer.index, neuron.index)
+export function NeuronLabels({
+  neuronIdx,
+  layer,
+  position,
+}: NeuronLabelsProps) {
+  const activation = useActivation(layer.index, neuronIdx)
+  const rawInput = useRawInput(layer.index, neuronIdx)
   const trainingY = useSceneStore((s) => s.sample?.y)
   const isRegression = useSceneStore((s) => s.isRegression())
+  const ds = useSceneStore((s) => s.ds)
+  const index3d = getIndex3d(neuronIdx, layer.tfLayer.outputShape as number[])
+  const label =
+    layer.layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
+      ? ds?.inputLabels?.[index3d[0]]
+      : layer.layerPos === "output"
+      ? ds?.outputLabels?.[neuronIdx]
+      : null
   const showValueLabel =
-    !!neuron.label && typeof rawInput !== "undefined" && isRegression
-  const layerPos = neuron.layer.layerPos
-  if (!neuron.label || !position) return null
+    !!label && typeof rawInput !== "undefined" && isRegression
+  const layerPos = layer.layerPos
+  if (!label || !position) return null
   return (
     <group renderOrder={-1}>
       <NeuronLabel
         side={layerPos === "input" ? "left" : "right"}
         position={position}
-        size={neuron.layer.meshParams.labelSize ?? 1}
+        size={layer.meshParams.labelSize ?? 1}
         color={LABEL_COLOR}
       >
         {layerPos === "output" && isRegression
-          ? `${neuron.label}\n${round(activation)} (predicted)\n${round(
+          ? `${label}\n${round(activation)} (predicted)\n${round(
               trainingY
             )} (actual)`
-          : neuron.label}
+          : label}
       </NeuronLabel>
       {showValueLabel && (
         <NeuronLabel
           side={"right"}
           position={position}
-          size={neuron.layer.meshParams.labelSize ?? 1}
+          size={layer.meshParams.labelSize ?? 1}
           color={LABEL_COLOR}
         >
           {round(rawInput)}

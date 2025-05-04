@@ -1,15 +1,18 @@
 import type { StateCreator } from "zustand"
 import type { Vector3 } from "three"
-import type { Neuron, Nid } from "@/neuron-layers"
+import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 
 export interface NeuronsSlice {
+  allLayers: NeuronLayer[]
+  setAllLayers: (layers: NeuronLayer[]) => void
+
   hoveredNid?: Nid
   selectedNid?: Nid
   setHoveredNid: (nid?: Nid) => void
   setSelectedNid: (nid?: Nid) => void
 
-  toggleHovered: (n: Neuron | null) => void
-  toggleSelected: (n: Neuron | null) => void
+  toggleHovered: (nid?: Nid) => void
+  toggleSelected: (nid?: Nid) => void
 
   // for experimental texture layer
   hoverOrigin?: Vector3
@@ -17,19 +20,21 @@ export interface NeuronsSlice {
 }
 
 export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
-  allNeurons: new Map(),
+  allLayers: [],
+  setAllLayers: (layers) => set({ allLayers: layers }),
+
   hoveredNid: undefined,
   selectedNid: undefined,
   setHoveredNid: (nid) => set({ hoveredNid: nid }),
   setSelectedNid: (nid) => set({ selectedNid: nid }),
 
-  toggleSelected: (n) =>
+  toggleSelected: (nid) =>
     set(({ selectedNid }) => ({
-      selectedNid: n?.nid === selectedNid ? undefined : n?.nid,
+      selectedNid: nid === selectedNid ? undefined : nid,
     })),
-  toggleHovered: (n) =>
+  toggleHovered: (nid) =>
     set(({ hoveredNid }) => ({
-      hoveredNid: n?.nid === hoveredNid ? undefined : n?.nid,
+      hoveredNid: nid === hoveredNid ? undefined : nid,
     })),
 
   setHovered: (hovered, hoverOrigin) =>

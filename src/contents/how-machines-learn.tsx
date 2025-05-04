@@ -1,20 +1,16 @@
 "use client"
 
-import {
-  clearStatus,
-  getThree,
-  setStatus,
-  useCurrScene,
-  useGlobalStore,
-} from "@/store"
-import { type InitialState } from "@/utils/initial-state"
+import { useCurrScene, useGlobalStore } from "@/store"
+import { setStatus, clearStatus, getThree } from "@/store"
 import { LockButton } from "@/scene-views/3d-model/lock"
 import { Block, Details, Head } from "@/contents/elements"
 import { trainOnBatch } from "@/model/training"
 import { interpolate } from "@/scene-views/3d-model/utils"
+import { defaultVisConfig } from "@/store/vis"
+import { getNid } from "@/neuron-layers/neurons"
 import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "."
-import { defaultVisConfig } from "@/store/vis"
+import type { InitialState } from "@/utils/initial-state"
 
 export const hmlInitialState: InitialState = {
   layerConfigs: [{ className: "Dense", config: {} }], // output layer
@@ -71,8 +67,8 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         cameraPos={[0, 0, 40]}
         onScroll={({ percent }) => {
-          const idx = Math.round(percent * 10)
-          const nid = `2_${idx}.0.0`
+          const idx = Math.round(percent * 9)
+          const nid = getNid(2, idx)
           setHoveredNid(nid)
         }}
         onLeave={() => {
@@ -99,7 +95,7 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={scrollTrain}
         onEnter={() => {
           setVisConfig({ highlightProp: "weights" })
-          setSelectedNid(`2_3.0.0`)
+          setSelectedNid(getNid(2, 2))
         }}
         onLeave={() => {
           clearStatus(SCROLL_TRAIN_STATUS_ID)

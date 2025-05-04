@@ -11,11 +11,9 @@ import { YPointer } from "./pointer"
 import { Connections } from "./connections"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-export const Layer = (
-  props: NeuronLayer & { visibleLayers: NeuronLayer[] }
-) => {
-  const { layerPos, groups, prevLayer, hasColorChannels } = props
-  const ref = useLayerPos(props, props.visibleLayers)
+export const Layer = (props: NeuronLayer) => {
+  const { layerPos, prevLayer, hasColorChannels } = props
+  const ref = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
@@ -41,7 +39,7 @@ export const Layer = (
     <>
       <group ref={ref}>
         {hasColorChannels
-          ? groups.map((_, i) => (
+          ? Array.from({ length: 3 }).map((_, i) => (
               <InstancedLayer key={i} {...props} channelIdx={i} />
             ))
           : showInstanced
@@ -62,7 +60,8 @@ function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: NeuronLayer, visibleLayers: NeuronLayer[]) {
+function useLayerPos(layer: NeuronLayer) {
+  const visibleLayers = useSceneStore((s) => s.allLayers)
   const visibleIdx = layer.visibleIdx
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 

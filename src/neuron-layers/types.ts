@@ -9,6 +9,8 @@ import type { LayerConfigMap } from "@/model/layers/types"
 export type LayerType = keyof LayerConfigMap // keyof typeof tf.layers?
 export type LayerPos = "input" | "hidden" | "output"
 
+export type MeshRef = RefObject<THREE.InstancedMesh | null>
+
 export interface NeuronLayer {
   lid: string // for React keys: `${tfLayer.name}_${units}`
   index: number
@@ -18,43 +20,26 @@ export interface NeuronLayer {
   tfLayer: tf.layers.Layer
   numNeurons: number
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
+  meshRefs: MeshRef[] // color layers: 1 per channel, otherwise 1 for layer
   meshParams: MeshParams
   prevLayer?: NeuronLayer
-  neurons: Neuron[]
-  neuronsMap?: Map<Nid, Neuron>
   hasLabels?: boolean
   hasColorChannels: boolean
-  groups: Group[]
-  layerGroup: Group
-}
-
-// Types for Groups
-
-export type MeshRef = RefObject<THREE.InstancedMesh | null>
-
-export interface Group {
-  index: number
-  nids: Nid[]
-  nidsStr: string // for deps optimization
-  meshRef: MeshRef
-  neurons: Neuron[]
 }
 
 // Types for Neurons
 
-export type Nid = string // layerIndex_{index3d.join(".")}
-
+export type Nid = string // layerIndex_neuronIndex
 export type Index3D = [number, number, number] // height, width, depth
 
 export type Neuron = {
   index: number
-  index3d: Index3D
   nid: Nid
-  groupIndex: number
-  indexInGroup: number
+  index3d: Index3D
+  channelIdx: number
+  indexInChannel: number
   layer: NeuronLayer
   meshRef: MeshRef
-  label?: string
   inputNids?: Nid[]
   inputNeurons?: Neuron[]
 }

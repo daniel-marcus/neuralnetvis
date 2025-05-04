@@ -137,6 +137,7 @@ export const setView = (view: View) => getScene().setState({ view })
 export const getInvisibleLayers = () =>
   getScene().getState().vis.invisibleLayers
 
+export const getLayers = () => getScene().getState().allLayers
 export function useHasFocussedLayer() {
   return useSceneStore((s) => typeof s.focussedLayerIdx === "number")
 }

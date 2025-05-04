@@ -10,13 +10,12 @@ import { LABEL_COLOR } from "./label"
 import type { NeuronLayer, Neuron } from "@/neuron-layers/types"
 
 export function YPointer({ outputLayer }: { outputLayer: NeuronLayer }) {
-  const trainingY = useSceneStore((s) => s.sample?.y)
-  const neuron = outputLayer.neurons.find((n) => n.index === trainingY)
   const { layerPos, meshParams } = outputLayer
+  const trainingY = useSceneStore((s) => s.sample?.y)
   const spacing = useNeuronSpacing(meshParams)
   const showPointer = useSceneStore((s) => s.vis.showPointer)
-  if (!showPointer || !neuron) return null
-  const { index } = neuron
+  if (!showPointer || typeof trainingY !== "number") return null
+  const index = trainingY
   const [, height, width = 1, channels = 1] = outputLayer.tfLayer
     .outputShape as number[]
   const pos = getNeuronPos(index, layerPos, height, width, channels, spacing)
@@ -49,7 +48,6 @@ export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
   return (
     <customText
       ref={ref}
-      // position={pointerPosition}
       text={"☜"}
       fontSize={size}
       color={color}

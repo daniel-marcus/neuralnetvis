@@ -8,16 +8,16 @@ import { HoverComponents } from "./interactions"
 
 export const Model = () => {
   const isActive = useSceneStore((s) => s.isActive)
-  const visibleLayers = useLayers()
-  const position = useModelOffset(visibleLayers)
+  const layers = useLayers()
+  const position = useModelOffset(layers)
   const ref = useAnimatedPosition(position, 0.1)
-  useDynamicXShift(visibleLayers.length)
+  useDynamicXShift(layers.length)
   useActivations()
   return (
     <>
       <group ref={ref}>
-        {visibleLayers.map((l, _, arr) => (
-          <Layer key={l.lid} {...l} visibleLayers={arr} />
+        {layers.map((l) => (
+          <Layer key={l.lid} {...l} />
         ))}
       </group>
       {isActive && <HoverComponents />}

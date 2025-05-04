@@ -4,7 +4,7 @@ import { useLayerActivations } from "@/model/activations"
 import { useLayerInteractions } from "./interactions"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-const GROUP_GAP = 1 // texture pixel between groups
+const GROUP_GAP = 1 // texture pixel between cells
 
 export function TexturedLayer(props: NeuronLayer) {
   const texture = useActivationTexture(props)
@@ -44,6 +44,7 @@ function useActivationTexture(layer: NeuronLayer) {
   }, [texture])
 
   const pixelMap = useMemo(() => {
+    // map every activation index to the corresponding offset in the texture buffer
     const map = new Uint32Array(width * height * channels)
 
     const gridCols = Math.ceil(Math.sqrt(channels))
@@ -72,6 +73,7 @@ function useActivationTexture(layer: NeuronLayer) {
   }, [width, height, channels, texture.image.width])
 
   useLayoutEffect(() => {
+    // update pixel colors in the texture
     const data32 = new Uint32Array(texture.image.data.buffer)
     const rgbaColors = layerActivations?.rgbaColors ?? []
 

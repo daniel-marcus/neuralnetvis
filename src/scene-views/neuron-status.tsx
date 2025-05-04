@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { SphereGeometry } from "three"
 import { useGlobalStore, useSceneStore } from "@/store"
-import { useHovered, useSelected } from "@/neuron-layers/neuron-select"
+import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { normalizeWithSign } from "@/data/utils"
 import { getHighlightColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
@@ -19,7 +19,7 @@ export const NeuronStatus = () => {
   const visLocked = useSceneStore((s) => s.vis.isLocked)
   const handleClick = (e: React.MouseEvent) => {
     if ("tagName" in e.target && e.target.tagName === "BUTTON") return
-    toggleSelected(null)
+    toggleSelected(undefined)
   }
   if (!selected || (hasLesson && visLocked)) return null
   return (
@@ -36,10 +36,10 @@ export const NeuronStatus = () => {
 }
 
 const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
-  const { nid, activation, bias, weights, rawInput } = neuron
+  const { index3d, activation, bias, weights, rawInput } = neuron
   const isDebug = useGlobalStore((s) => s.isDebug)
   const data = {
-    Neuron: nid,
+    Neuron: `${neuron.layer.index}_${index3d.join(".")}`,
     Weights: weights?.length,
     Bias: bias?.toFixed(2),
     Activation: activation?.toFixed(2),

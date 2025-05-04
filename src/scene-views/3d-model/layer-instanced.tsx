@@ -6,7 +6,7 @@ import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useLayerInteractions, useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import type { Group, MeshRef, NeuronLayer } from "@/neuron-layers/types"
+import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
 
 type InstancedLayerProps = NeuronLayer & {
@@ -15,13 +15,12 @@ type InstancedLayerProps = NeuronLayer & {
 
 export const InstancedLayer = (props: InstancedLayerProps) => {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { channelIdx, groups, layerGroup } = props
-  const group = typeof channelIdx === "number" ? groups[channelIdx] : layerGroup
+  const { index, channelIdx = 0, meshRefs } = props // TODO: rm neurons
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
-  const { neurons, meshRef } = group
+  const meshRef = hasColorChannels ? meshRefs[channelIdx] : meshRefs[0]
   const material = useMaterial(hasColorChannels)
-  const groupRef = useGroupPosition(props, group)
-  const positions = useNeuronPositions(props, group)
+  const groupRef = useGroupPosition(props, channelIdx)
+  const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
   useColors(meshRef, numNeurons, activations, hasColorChannels, channelIdx)
 
@@ -29,16 +28,17 @@ export const InstancedLayer = (props: InstancedLayerProps) => {
   const hasFocussed = useHasFocussedLayer()
   const noFocussed = isActive && !hasFocussed
   const [measureRef, hoverMesh] = useLayerInteractions(props, noFocussed)
-  const eventHandlers = useNeuronInteractions(neurons, isActive && hasFocussed)
+  const interactive = isActive && hasFocussed
+  const eventHandlers = useNeuronInteractions(index, interactive, channelIdx)
 
   // reversed render order for color blending
-  const renderOrder = props.layerPos === "input" ? 0 - group.index : undefined
+  const renderOrder = hasColorChannels ? 0 - channelIdx : undefined
   return (
     <group ref={groupRef}>
       <group ref={measureRef}>
         <instancedMesh
           ref={meshRef}
-          name={`layer_${props.index}_group_${group.index}`}
+          name={`layer_${props.index}_group_${channelIdx}`}
           args={[, , units]}
           renderOrder={renderOrder}
           {...eventHandlers}
@@ -49,8 +49,13 @@ export const InstancedLayer = (props: InstancedLayerProps) => {
       </group>
       {hoverMesh}
       {hasLabels &&
-        neurons.map((n, i) => (
-          <NeuronLabels key={n.nid} neuron={n} position={positions[i]} />
+        Array.from({ length: numNeurons }).map((_, i) => (
+          <NeuronLabels
+            key={i}
+            layer={props}
+            neuronIdx={i}
+            position={positions[i]}
+          />
         ))}
     </group>
   )
@@ -75,10 +80,10 @@ export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
   return spacing
 }
 
-export function useGroupPosition(layer: NeuronLayer, group: Group) {
+export function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
+  // only used for color channels
   const { meshParams, hasColorChannels } = layer
-  const groupIdx = group.index
-  const numGroups = layer.groups.length
+  const numChannels = hasColorChannels ? 3 : 1
   const spacing = useNeuronSpacing(meshParams)
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const [, h, w = 1] = layer.tfLayer.outputShape as number[]
@@ -87,18 +92,18 @@ export function useGroupPosition(layer: NeuronLayer, group: Group) {
     const [gHeight] = getGridSize(h, w, spacing, GRID_SPACING)
 
     const OFFSET = 0.05 // to avoid z-fighting
-    const splitY = -groupIdx * gHeight + (numGroups - 1) * gHeight * 0.5
+    const splitY = -channelIdx * gHeight + (numChannels - 1) * gHeight * 0.5
     return hasColorChannels
       ? splitColors
-        ? [-groupIdx * OFFSET, splitY, groupIdx * OFFSET] // spread on y-axis
-        : [groupIdx * OFFSET, -groupIdx * OFFSET, -groupIdx * OFFSET]
+        ? [-channelIdx * OFFSET, splitY, channelIdx * OFFSET] // spread on y-axis
+        : [channelIdx * OFFSET, -channelIdx * OFFSET, -channelIdx * OFFSET]
       : [0, 0, 0]
-  }, [groupIdx, numGroups, spacing, splitColors, h, w, hasColorChannels])
+  }, [channelIdx, numChannels, spacing, splitColors, h, w, hasColorChannels])
   const groupRef = useAnimatedPosition(position, 0.1)
   return groupRef
 }
 
-function useNeuronPositions(props: NeuronLayer, group: Group) {
+function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   const { layerPos, meshParams, tfLayer, hasColorChannels } = props
   const spacing = useNeuronSpacing(meshParams)
   const [, h, w = 1, _channels = 1] = tfLayer.outputShape as number[]
@@ -113,14 +118,14 @@ function useNeuronPositions(props: NeuronLayer, group: Group) {
 
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
-    if (!group.meshRef.current) return
+    if (!meshRef.current) return
     for (const [i, position] of positions.entries()) {
       tempObj.position.set(...position)
       tempObj.updateMatrix()
-      group.meshRef.current?.setMatrixAt(i, tempObj.matrix)
+      meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }
-    group.meshRef.current.instanceMatrix.needsUpdate = true
-  }, [group.meshRef, tempObj, positions])
+    meshRef.current.instanceMatrix.needsUpdate = true
+  }, [meshRef, tempObj, positions])
 
   return positions
 }
