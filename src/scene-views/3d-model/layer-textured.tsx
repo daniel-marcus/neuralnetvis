@@ -46,15 +46,8 @@ function useActivationTexture(layer: NeuronLayer) {
   useLayoutEffect(() => {
     const gridCols = Math.ceil(Math.sqrt(channels))
 
-    const { width: texWidth, height: texHeight } = texture.image
-    const data = texture.image.data as Uint8Array
-    const data32 = new Uint32Array(data.buffer)
-
-    // y values are flipped bc/ three.js texture pixels start bottom-left
-    const flippedYOffsets = new Int32Array(texHeight)
-    for (let y = 0; y < texHeight; y++) {
-      flippedYOffsets[y] = (texHeight - 1 - y) * texWidth * 4
-    }
+    const { width: texWidth } = texture.image
+    const data32 = new Uint32Array(texture.image.data.buffer)
 
     for (let channel = 0; channel < channels; channel++) {
       const gridX = channel % gridCols
@@ -65,7 +58,7 @@ function useActivationTexture(layer: NeuronLayer) {
 
       for (let h = 0; h < height; h++) {
         const y = blockY + h
-        const rowOffset = flippedYOffsets[y]
+        const rowOffset = y * texWidth * 4
 
         for (let w = 0; w < width; w++) {
           const x = blockX + w
@@ -98,16 +91,19 @@ function updateUvMapping(
 
   const uvAttr = geometry.attributes.uv
   type UV = [number, number]
+  // lt, rt, lb, rb
   const uvSet = (uv1: UV, uv2: UV, uv3: UV, uv4: UV, offset: number) =>
     uvAttr.array.set([...uv1, ...uv2, ...uv3, ...uv4], offset)
 
-  const o = { BACK: 0, TOP: 16, BOTTOM: 24, RIGHT: 32, LEFT: 40 }
+  // front means face left (-x) here
+  const o = { BACK: 0, FRONT: 8, TOP: 16, BOTTOM: 24, RIGHT: 32, LEFT: 40 }
 
-  uvSet([1, 1], [0, 1], [1, 0], [0, 0], o.BACK)
-  uvSet([0, 1], [0, last(height)], [1, 1], [1, last(height)], o.TOP)
-  uvSet([1, first(height)], [1, 0], [0, first(height)], [0, 0], o.BOTTOM)
-  uvSet([last(width), 1], [1, 1], [last(width), 0], [1, 0], o.RIGHT)
-  uvSet([0, 1], [first(width), 1], [0, 0], [first(width), 0], o.LEFT)
+  uvSet([0, 0], [1, 0], [0, 1], [1, 1], o.FRONT) // upside down bc/ textures start at bottom left
+  uvSet([1, 0], [0, 0], [1, 1], [0, 1], o.BACK)
+  uvSet([0, first(height)], [0, 0], [1, first(height)], [1, 0], o.TOP)
+  uvSet([1, 1], [1, last(height)], [0, 1], [0, last(height)], o.BOTTOM)
+  uvSet([last(width), 0], [1, 0], [last(width), 1], [1, 1], o.RIGHT)
+  uvSet([0, 0], [first(width), 0], [0, 1], [first(width), 1], o.LEFT)
 
   uvAttr.needsUpdate = true
 }
