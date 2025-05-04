@@ -26,7 +26,7 @@ export const Layer = (props: NeuronLayer) => {
 
   const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
   const isClose = useIsClose(ref, 40)
-  const isSuperLarge = props.numNeurons > 10000
+  const isSuperLarge = props.numNeurons > 30000
   const showInstanced =
     layerPos !== "hidden" ||
     !hasChannels ||

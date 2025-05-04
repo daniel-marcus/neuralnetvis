@@ -26,7 +26,7 @@ export function useActivationStats(model?: tf.LayersModel, ds?: Dataset) {
       if (!data) return
       const { X } = data
       const statsTensors = tf.tidy(() =>
-        getLayerActivations(model, X).map((la) => {
+        getLayerActivations(model, X)?.map((la) => {
           const min = la.min(0)
           const max = la.max(0)
           const { mean, variance } = tf.moments(la, 0)

@@ -88,7 +88,8 @@ async function getProcessedActivations(
   const activationTensors = tf.tidy(() => {
     const allActivations = getLayerActivations(model, sample.xTensor, outputs)
     const activations = layers.map((layer, i) => {
-      const layerActivations = allActivations[i]
+      const layerActivations = allActivations?.[i]
+      if (!layerActivations) return
       const flattened = layerActivations.reshape([-1]) as tf.Tensor1D
       const hasDepthDim = typeof layer.tfLayer.outputShape[3] === "number"
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
@@ -111,6 +112,7 @@ async function getProcessedActivations(
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     for (const [i, layer] of layers.entries()) {
+      if (!activationTensors[i]) continue
       const [actTensor, normActTensor] = activationTensors[i]
       const act = (await actTensor.data()) as Float32Array
       const normAct = (await normActTensor.data()) as Float32Array
@@ -147,7 +149,7 @@ async function getProcessedActivations(
     console.log("Error getting activations", e)
     return []
   } finally {
-    activationTensors.flat().forEach((t) => t.dispose())
+    activationTensors.flat().forEach((t) => t?.dispose())
   }
 }
 
@@ -158,7 +160,7 @@ export function getLayerActivations(
 ) {
   const inputDimsModel = model.layers[0].batchInputShape.slice(1)
   const inputDimsSample = inputTensor.shape.slice(1)
-  if (!checkShapeMatch(inputDimsModel, inputDimsSample)) return []
+  if (!checkShapeMatch(inputDimsModel, inputDimsSample)) return
   try {
     return tf.tidy(() => {
       const tmpModel = tf.model({
@@ -168,8 +170,7 @@ export function getLayerActivations(
       const result = tmpModel.predict(inputTensor)
       return Array.isArray(result) ? result : [result]
     })
-  } catch (e) {
-    console.log("Error getting activations", e)
-    return []
+  } catch {
+    return
   }
 }
