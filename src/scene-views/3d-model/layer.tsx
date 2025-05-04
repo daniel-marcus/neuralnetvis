@@ -34,7 +34,7 @@ export const Layer = (
     !hasChannels ||
     (isFocussed && isFlatView) ||
     (isClose && !isSuperLarge)
-  const textureLayer = <TexturedLayer {...props} />
+  const texturedLayer = <TexturedLayer {...props} />
   const instancedLayer = <InstancedLayer {...props} />
 
   return (
@@ -46,7 +46,7 @@ export const Layer = (
             ))
           : showInstanced
           ? instancedLayer
-          : textureLayer}
+          : texturedLayer}
         {layerPos === "output" && <YPointer outputLayer={props} />}
       </group>
       {showConnections && <Connections layer={props} prevLayer={prevLayer} />}

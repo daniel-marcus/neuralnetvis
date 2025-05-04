@@ -4,7 +4,7 @@ export type ColorObj = {
   rgb: number[] // as THREE.Color.toArray (float) for instanced meshes
   three: THREE.Color // for label
   style: string // for css
-  rgba: number // packed Uint32 for textures (0-255)
+  rgba: number // packed Uint32 for textures
 }
 
 function toColorObj(r: number, g: number, b: number, a = 255): ColorObj {
