@@ -1,20 +1,20 @@
 import * as THREE from "three"
 
 export type ColorObj = {
-  rgb: number[] // as THREE.Color.toArray() for meshes
+  rgb: number[] // as THREE.Color.toArray (float) for instanced meshes
   three: THREE.Color // for label
   style: string // for css
-  rgba: number[] // for textures (0-255)
+  rgba: number // packed Uint32 for textures (0-255)
 }
 
-function toColorObj(r: number, g: number, b: number): ColorObj {
+function toColorObj(r: number, g: number, b: number, a = 255): ColorObj {
   const colorStr = `rgb(${r}, ${g}, ${b})`
   const threeColor = new THREE.Color(colorStr)
   return {
     rgb: threeColor.toArray(),
     three: threeColor,
     style: colorStr,
-    rgba: [r, g, b, 255],
+    rgba: (a << 24) | (b << 16) | (g << 8) | r,
   }
 }
 
@@ -38,8 +38,8 @@ export function getColorVals(val: number, base: number[]) {
 function newColorArr(base: number[]) {
   return Array.from({ length: 256 }, (_, i) => {
     const val = i / 255
-    const [a, b, c] = getColorVals(val, base)
-    return toColorObj(a, b, c)
+    const [r, g, b] = getColorVals(val, base)
+    return toColorObj(r, g, b)
   })
 }
 

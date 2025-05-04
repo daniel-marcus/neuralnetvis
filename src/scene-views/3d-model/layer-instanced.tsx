@@ -135,22 +135,20 @@ function useColors(
   useLayoutEffect(() => {
     if (!meshRef.current) return
 
-    const allColors = activations?.colors ?? []
     if (!meshRef.current.instanceColor) {
       const newArr = new Float32Array(numNeurons * 3).fill(0)
       const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
       meshRef.current.instanceColor = newAttr
     }
+    const allColors = activations?.rgbColors
+    if (!allColors) return
     const numChannels = hasColorChannels ? 3 : 1
     for (let i = 0; i < numNeurons; i += 1) {
       const idx = i * numChannels + channelIdx
-      const color = allColors[idx]
-      if (color) {
-        const offset = i * 3
-        meshRef.current.instanceColor.array[offset] = color.rgb[0]
-        meshRef.current.instanceColor.array[offset + 1] = color.rgb[1]
-        meshRef.current.instanceColor.array[offset + 2] = color.rgb[2]
-      }
+      const offset = i * 3
+      meshRef.current.instanceColor.array[offset] = allColors[idx * 3]
+      meshRef.current.instanceColor.array[offset + 1] = allColors[idx * 3 + 1]
+      meshRef.current.instanceColor.array[offset + 2] = allColors[idx * 3 + 2]
     }
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, numNeurons, activations, hasColorChannels, channelIdx])

@@ -1,12 +1,12 @@
-import { ColorObj } from "@/utils/colors"
 import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 
 // state
 
 export interface LayerActivations {
-  activations: number[] // [neuronIdx]
-  normalizedActivations: number[]
-  colors: ColorObj[]
+  activations: Float32Array // [neuronIdx]
+  normalizedActivations: Float32Array
+  rgbColors: Float32Array // for instanced mesh
+  rgbaColors: Uint32Array // for texture
 }
 
 export interface WeightsBiases {

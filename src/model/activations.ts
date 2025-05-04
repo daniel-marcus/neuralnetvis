@@ -90,24 +90,35 @@ export async function getProcessedActivations(
   const newLayerActivations: LayerActivations[] = []
   try {
     for (const [i, [actTensor, normActTensor]] of activationTensors.entries()) {
-      const act = (await actTensor.array()) as number[]
-      const normAct = (await normActTensor.array()) as number[]
+      const act = (await actTensor.data()) as Float32Array
+      const normAct = (await normActTensor.data()) as Float32Array
+
       const hasColorChannels = i === 0 && model.layers[i].outputShape[3] === 3
       const isRegressionOutput = isRegression && i === model.layers.length - 1
+
+      const rgbColors = new Float32Array(normAct.length * 3)
+      const rgbaColors = new Uint32Array(normAct.length)
+
+      for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
+        const a = normAct[nIdx]
+        const color = hasColorChannels
+          ? getChannelColor(nIdx % 3, a)
+          : isRegressionOutput
+          ? getPredictionQualityColor(
+              act[nIdx],
+              sample.y,
+              activationStats?.[i].mean.dataSync()[0]
+            )
+          : getHighlightColor(a)
+        rgbColors.set(color.rgb, nIdx * 3)
+        rgbaColors[nIdx] = color.rgba
+      }
+
       newLayerActivations.push({
         activations: act,
         normalizedActivations: normAct,
-        colors: normAct.map((a, nIdx) =>
-          hasColorChannels
-            ? getChannelColor(nIdx % 3, a)
-            : isRegressionOutput
-            ? getPredictionQualityColor(
-                act[nIdx],
-                sample.y,
-                activationStats?.[i].mean.dataSync()[0]
-              )
-            : getHighlightColor(a)
-        ),
+        rgbColors,
+        rgbaColors,
       })
     }
     return newLayerActivations

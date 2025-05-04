@@ -43,11 +43,11 @@ function useActivationTexture(layer: NeuronLayer) {
     return () => texture.dispose()
   }, [texture])
 
-  useLayoutEffect(() => {
-    const gridCols = Math.ceil(Math.sqrt(channels))
+  const pixelMap = useMemo(() => {
+    const map = new Uint32Array(width * height * channels)
 
-    const { width: texWidth } = texture.image
-    const data32 = new Uint32Array(texture.image.data.buffer)
+    const gridCols = Math.ceil(Math.sqrt(channels))
+    const texWidth = texture.image.width
 
     for (let channel = 0; channel < channels; channel++) {
       const gridX = channel % gridCols
@@ -63,19 +63,24 @@ function useActivationTexture(layer: NeuronLayer) {
         for (let w = 0; w < width; w++) {
           const x = blockX + w
           const offset = rowOffset + x
-
           const idx = h * (width * channels) + w * channels + channel
-          const rgba = layerActivations?.colors[idx]?.rgba ?? [0, 0, 0, 0]
-          const [r, g, b, a] = rgba
-          const packed = (a << 24) | (b << 16) | (g << 8) | r
-          data32[offset] = packed // pack rgba into 32-bit int -> 1 single write instead of 4
-          // data.set(rgba, offset * 4) // 4 writes
+          map[idx] = offset
         }
       }
     }
+    return map
+  }, [width, height, channels, texture.image.width])
+
+  useLayoutEffect(() => {
+    const data32 = new Uint32Array(texture.image.data.buffer)
+    const rgbaColors = layerActivations?.rgbaColors ?? []
+
+    for (let i = 0; i < rgbaColors.length; i++) {
+      data32[pixelMap[i]] = rgbaColors[i]
+    }
 
     texture.needsUpdate = true
-  }, [layerActivations, height, width, channels, texture])
+  }, [texture, pixelMap, layerActivations])
 
   return texture
 }
