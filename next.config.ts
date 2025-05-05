@@ -1,4 +1,5 @@
 import withBundleAnalyzer from "@next/bundle-analyzer"
+// import TerserPlugin from "terser-webpack-plugin"
 import { version } from "./package.json"
 import type { NextConfig } from "next"
 
@@ -24,10 +25,22 @@ const nextConfig: NextConfig = {
     }
     return config
   },
-  experimental: {
-    turbo: {
-      minify: false,
-    },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
+      },
+      {
+        source: "/wasm/:path*",
+        headers: [
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+        ],
+      },
+    ]
   }, */
 }
 

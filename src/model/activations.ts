@@ -32,7 +32,8 @@ export function useActivations() {
       const args = [model, layers, sample, actStats, isRegression] as const
       const newActivations = await getProcessedActivations(...args)
       const endTime = performance.now()
-      if (isDebug()) console.log(`Activations took ${endTime - startTime}ms`)
+      if (isDebug())
+        console.log(`>>> activations total: ${endTime - startTime}ms`)
       setActivations(newActivations)
     }
     update()
@@ -57,10 +58,17 @@ async function getProcessedActivations(
   const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   await tf.ready()
   const activationTensors = tf.tidy(() => {
+    const start = performance.now()
     const allActivations = getLayerActivations(model, sample.xTensor, outputs)
-    const activations = layers.map((layer, i) => {
+    const end = performance.now()
+    if (isDebug()) console.log(`inference: ${end - start}ms`)
+    const activations: (tf.Tensor[] | undefined)[] = []
+    for (const [i, layer] of layers.entries()) {
       const layerActivations = allActivations?.[i]
-      if (!layerActivations) return
+      if (!layerActivations) {
+        activations.push(undefined)
+        continue
+      }
       const flattened = layerActivations.reshape([-1]) as tf.Tensor1D
       const hasDepthDim = typeof layer.tfLayer.outputShape[3] === "number"
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
@@ -72,13 +80,16 @@ async function getProcessedActivations(
         : isSoftmax
         ? flattened
         : normalize(flattened)
-      return [flattened, normalizedFlattened]
-    })
+      activations.push([flattened, normalizedFlattened])
+    }
+    const end2 = performance.now()
+    if (isDebug()) console.log(`normalization: ${end2 - end}ms`)
     return activations
   })
 
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
+    const start = performance.now()
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors[i]) continue
       const [actTensor, normActTensor] = activationTensors[i]
@@ -98,12 +109,13 @@ async function getProcessedActivations(
           : isRegressionOutput && stats
           ? getPredQualColor(act[nIdx], sample.y, stats.mean.dataSync()[0])
           : getActColor(a)
-
+        if (!color) continue
         if (layer.hasColorChannels) {
           // for color layers we need a different order: [...allRed, ...allGreen, ...allBlue]
           // see useColorArray in layer-instanced.tsx for details
           const channelIdx = nIdx % 3
           const channelOffset = channelIdx * layer.numNeurons
+          if (!color) continue
           rgbColors[channelOffset + nIdx] = color.rgb[channelIdx]
         } else {
           rgbColors[nIdx * 3] = color.rgb[0]
@@ -120,6 +132,8 @@ async function getProcessedActivations(
         rgbaColors,
       }
     }
+    const end = performance.now()
+    if (isDebug()) console.log(`download/colors: ${end - start}ms`)
     return newLayerActivations
   } catch (e) {
     console.log("Error getting activations", e)
