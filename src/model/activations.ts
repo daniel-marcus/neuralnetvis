@@ -98,7 +98,9 @@ async function getProcessedActivations(
           : isRegressionOutput && stats
           ? getPredQualColor(act[nIdx], sample.y, stats.mean.dataSync()[0])
           : getActColor(a)
-        rgbColors.set(color.rgb, nIdx * 3)
+        rgbColors[nIdx * 3] = color.rgb[0]
+        rgbColors[nIdx * 3 + 1] = color.rgb[1]
+        rgbColors[nIdx * 3 + 2] = color.rgb[2]
         rgbaColors[nIdx] = color.rgba
       }
 
