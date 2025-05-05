@@ -3,7 +3,7 @@ import { SphereGeometry } from "three"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { normalizeWithSign } from "@/data/utils"
-import { getHighlightColor } from "@/utils/colors"
+import { getActColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
@@ -181,7 +181,7 @@ const WeightsGridCanvas = ({
         weights.forEach((w, i) => {
           const x = (i % cols) * (ps + gap) + ps / 2
           const y = Math.floor(i / cols) * (ps + gap) + ps / 2
-          const color = getHighlightColor(w).style
+          const color = getActColor(w).style
           ctx.fillStyle = color
           if (isRounded) {
             ctx.beginPath()

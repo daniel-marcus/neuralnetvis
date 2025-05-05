@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { getDbDataAsTensors } from "@/data/dataset"
-import { getHighlightColor } from "@/utils/colors"
+import { getActColor } from "@/utils/colors"
 import { setBackend } from "@/model/tf-backend"
 import { isTouch } from "@/utils/screen"
 
@@ -367,7 +367,7 @@ function useConfusionCells() {
 
 function getCellColor(normalized: number, isCorrect: boolean) {
   const val = isCorrect ? normalized : -normalized
-  return getHighlightColor(val)?.style
+  return getActColor(val)?.style
 }
 
 function getMaxChars(arr: string[]) {

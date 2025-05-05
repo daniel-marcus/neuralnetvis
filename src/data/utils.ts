@@ -1,6 +1,6 @@
 import * as tf from "@tensorflow/tfjs"
 
-export function normalizeTensor(tensor: tf.Tensor): tf.Tensor {
+export function normalize(tensor: tf.Tensor): tf.Tensor {
   // normalization between -1 and 1, keeps sign
   return tf.tidy(() => {
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
@@ -32,11 +32,11 @@ export function scaleNormalize(
     const mean = _mean ?? tensor.mean()
     const std = _std ?? tf.moments(tensor).variance.sqrt()
     const scaled = tensor.sub(mean).div(std)
-    return normalizeTensor(scaled)
+    return normalize(scaled)
   })
 }
 
-export function normalizeConv2DActivations(tensor: tf.Tensor4D): tf.Tensor4D {
+export function channelNormalize(tensor: tf.Tensor4D): tf.Tensor4D {
   // normalize per channel, between -1 and 1
   return tf.tidy(() => {
     const [, height, width, channels] = tensor.shape
@@ -55,7 +55,7 @@ export function normalizeWithSign(values: number[] | undefined) {
   if (typeof values === "undefined") return values
   return tf.tidy(() => {
     const tensor = tf.tensor1d(values)
-    const normalized = normalizeTensor(tensor)
+    const normalized = normalize(tensor)
     return normalized.arraySync() as number[]
   })
 }
@@ -82,12 +82,6 @@ export class StandardScaler {
     this.fit(tensor)
     return this.transform(tensor)
   }
-}
-
-type Shape = (number | null)[]
-
-export function checkShapeMatch(s1: Shape, s2: Shape) {
-  return s1.every((value, idx) => value === s2[idx])
 }
 
 export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {

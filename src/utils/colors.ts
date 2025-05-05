@@ -54,13 +54,13 @@ export function getChannelColor(rgbIdx: number, val: number) {
   return CHANNEL_COLORS[rgbIdx][normalizeTo(val, 255)]
 }
 
-export function getHighlightColor(val: number) {
+export function getActColor(val: number) {
   // val between -1 and 1
   const absVal = normalizeTo(Math.abs(val), 255)
   return val >= 0 ? POS_HIGHLIGHT_COLORS[absVal] : NEG_HIGHLIGHT_COLORS[absVal]
 }
 
-export function getPredictionQualityColor(
+export function getPredQualColor(
   yPred?: number, // activation
   yTrue?: number,
   yMean?: number
