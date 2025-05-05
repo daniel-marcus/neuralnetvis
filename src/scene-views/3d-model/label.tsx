@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useRef } from "react"
+import { memo, useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
 import * as THREE from "three"
 import { Text } from "troika-three-text"
@@ -26,73 +26,69 @@ interface NeuronLabelsProps {
   neuronIdx: number
   layer: NeuronLayer
   position?: [number, number, number]
+  size?: number
+  label?: string
 }
 
-export function NeuronLabels({
-  neuronIdx,
-  layer,
-  position,
-}: NeuronLabelsProps) {
-  const { layerPos } = layer
-  const activation = useActivation(layer.index, neuronIdx)
-  const trainingY = useSceneStore((s) => s.sample?.y) // TODO separate comps for RegressionOutput etc. to reduce re-renders
-  const rawInput = useRawInput(layer.index, neuronIdx)
+export function NeuronLabels(props: NeuronLabelsProps) {
+  const layerPos = props.layer.layerPos
   const isRegression = useSceneStore((s) => s.isRegression())
+  const label = useLabelFromDs(props.layer, props.neuronIdx)
+  if (isRegression) {
+    const Comp = layerPos === "input" ? InputValueLabel : OutputValueLabel
+    return <Comp {...props} label={label} />
+  }
+  const side = layerPos === "input" ? "left" : "right"
+  return <NeuronLabel {...props} text={label} side={side} />
+}
+
+function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
   const ds = useSceneStore((s) => s.ds)
-  const index3d = getIndex3d(neuronIdx, layer.tfLayer.outputShape as number[])
-  const label =
-    layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
+  return useMemo(() => {
+    const index3d = getIndex3d(neuronIdx, layer.tfLayer.outputShape as number[])
+    return layer.layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
       ? ds?.inputLabels?.[index3d[0]]
-      : layerPos === "output"
+      : layer.layerPos === "output"
       ? ds?.outputLabels?.[neuronIdx]
-      : null
-  const showValueLabel =
-    !!label && typeof rawInput !== "undefined" && isRegression
-  if (!label || !position) return null
+      : undefined
+  }, [layer, neuronIdx, ds])
+}
+
+function InputValueLabel(props: NeuronLabelsProps) {
+  const rawInput = useRawInput(props.layer.index, props.neuronIdx)
   return (
     <group renderOrder={-1}>
-      <NeuronLabel
-        side={layerPos === "input" ? "left" : "right"}
-        position={position}
-        size={layer.meshParams.labelSize ?? 1}
-        color={LABEL_COLOR}
-      >
-        {layerPos === "output" && isRegression
-          ? `${label}\n${round(activation)} (predicted)\n${round(
-              trainingY
-            )} (actual)`
-          : label}
-      </NeuronLabel>
-      {showValueLabel && (
-        <NeuronLabel
-          side={"right"}
-          position={position}
-          size={layer.meshParams.labelSize ?? 1}
-          color={LABEL_COLOR}
-        >
-          {round(rawInput)}
-        </NeuronLabel>
-      )}
+      <NeuronLabel side="left" {...props} text={props.label} />
+      <NeuronLabel {...props} text={round(rawInput)} />
     </group>
   )
 }
 
+function OutputValueLabel(props: NeuronLabelsProps) {
+  const activation = useActivation(props.layer.index, props.neuronIdx)
+  const trainingY = useSceneStore((s) => s.sample?.y)
+  const text = `${props.label}\n${round(activation)} (predicted)\n${round(
+    trainingY
+  )} (actual)`
+  return <NeuronLabel side="right" {...props} text={text} />
+}
+
 interface NeuronLabelProps {
+  text?: string | number
   position?: [number, number, number]
   side?: "left" | "right"
   color?: THREE.Color | string
-  children?: string | number // React.ReactNode
   size?: number
 }
 
 // reference: https://github.com/pmndrs/drei/blob/master/src/core/Text.tsx
 
 export const NeuronLabel = memo(function NeuronLabel({
+  text,
   position: [x, y, z] = [0, 0, 0],
   side = "right",
-  color,
-  size,
-  children,
+  color = LABEL_COLOR,
+  size = 1,
 }: NeuronLabelProps) {
   const labelRef = useRef<THREE.Object3D & CustomText>(null)
   const camera = useThree((s) => s.camera)
@@ -101,14 +97,15 @@ export const NeuronLabel = memo(function NeuronLabel({
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   useLayoutEffect(() => {
     labelRef.current?.sync(invalidate)
-  }, [labelRef, invalidate, children, lightsOn])
+  }, [labelRef, invalidate, text, lightsOn])
+  const zOffset = side === "right" ? 3.5 : -3.5
   if (!lightsOn) return null
   return (
     <customText
       ref={labelRef}
-      text={children}
-      position={getTextPos(x, y, z, side, size)}
-      fontSize={size ?? 1}
+      text={text}
+      position={[x, y, z + size * zOffset]}
+      fontSize={size}
       font={"/fonts/Menlo-Regular.woff"}
       color={color}
       anchorX={side === "left" ? "right" : "left"}
@@ -117,14 +114,3 @@ export const NeuronLabel = memo(function NeuronLabel({
     />
   )
 })
-
-function getTextPos(
-  x: number,
-  y: number,
-  z: number,
-  side: "left" | "right" = "right",
-  size = 1
-): [number, number, number] {
-  const factor = side === "right" ? 1 : -1
-  return [x, y, z + size * 3.5 * factor]
-}

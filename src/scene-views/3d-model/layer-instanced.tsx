@@ -57,6 +57,7 @@ export const InstancedLayer = memo(function InstancedLayer(
             layer={props}
             neuronIdx={i}
             position={positions[i]}
+            size={meshParams.labelSize}
           />
         ))}
     </group>
