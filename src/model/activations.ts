@@ -128,8 +128,6 @@ async function getProcessedActivations(
       newLayerActivations[layer.index] = {
         activations: act,
         normalizedActivations: normAct,
-        rgbColors,
-        rgbaColors,
       }
     }
     const end = performance.now()

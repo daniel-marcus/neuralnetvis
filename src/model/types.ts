@@ -5,8 +5,6 @@ import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 export interface LayerActivations {
   activations: Float32Array // [neuronIdx]
   normalizedActivations: Float32Array
-  rgbColors: Float32Array // for instanced mesh
-  rgbaColors: Uint32Array // for texture
 }
 
 export interface WeightsBiases {

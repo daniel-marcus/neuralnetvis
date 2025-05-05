@@ -5,13 +5,8 @@ import { backendForTraining, setBackend } from "./tf-backend"
 import { getAll } from "@/data/db"
 import { UpdateCb, ProgressCb, LogsPlotCb, DebugCb } from "./training-callbacks"
 import { getDbDataAsTensors } from "@/data/dataset"
-import {
-  getDs,
-  getModel,
-  useGlobalStore,
-  isDebug,
-  useSceneStore,
-} from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
+import { getDs, getModel, isDebug } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
