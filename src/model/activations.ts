@@ -87,8 +87,8 @@ async function getProcessedActivations(
 
       const isRegressionOutput = isRegression && layer.layerPos === "output"
 
-      const rgbColors = new Float32Array(normAct.length * 3)
-      const rgbaColors = new Uint32Array(normAct.length)
+      // reuse color buffers from layer to avoid reallocating
+      const { rgbColors, rgbaColors } = layer
 
       const stats = activationStats?.[layer.index]
       for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
@@ -98,9 +98,18 @@ async function getProcessedActivations(
           : isRegressionOutput && stats
           ? getPredQualColor(act[nIdx], sample.y, stats.mean.dataSync()[0])
           : getActColor(a)
-        rgbColors[nIdx * 3] = color.rgb[0]
-        rgbColors[nIdx * 3 + 1] = color.rgb[1]
-        rgbColors[nIdx * 3 + 2] = color.rgb[2]
+
+        if (layer.hasColorChannels) {
+          // for color layers we need a different order: [...allRed, ...allGreen, ...allBlue]
+          // see useColorArray in layer-instanced.tsx for details
+          const channelIdx = nIdx % 3
+          const channelOffset = channelIdx * layer.numNeurons
+          rgbColors[channelOffset + nIdx] = color.rgb[channelIdx]
+        } else {
+          rgbColors[nIdx * 3] = color.rgb[0]
+          rgbColors[nIdx * 3 + 1] = color.rgb[1]
+          rgbColors[nIdx * 3 + 2] = color.rgb[2]
+        }
         rgbaColors[nIdx] = color.rgba
       }
 

@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useMemo } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useSceneStore, useHasFocussedLayer } from "@/store"
 import { useLayerActivations } from "@/model/activations"
@@ -17,14 +17,15 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, meshRefs } = props // TODO: rm neurons
+  const { index, channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = hasColorChannels ? meshRefs[channelIdx] : meshRefs[0]
   const material = useMaterial(hasColorChannels)
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
-  useColors(meshRef, numNeurons, activations, hasColorChannels, channelIdx)
+  const colorArray = useColorArray(props)
+  useColors(meshRef, activations)
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussed = useHasFocussedLayer()
@@ -47,6 +48,10 @@ export const InstancedLayer = memo(function InstancedLayer(
         >
           <primitive object={meshParams.geometry} attach={"geometry"} />
           <primitive object={material} attach={"material"} />
+          <instancedBufferAttribute
+            args={[colorArray, 3]}
+            attach="instanceColor"
+          />
         </instancedMesh>
       </group>
       {hoverMesh}
@@ -133,31 +138,23 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(
-  meshRef: MeshRef,
-  numNeurons: number,
-  activations?: LayerActivations,
-  hasColorChannels?: boolean,
-  channelIdx = 0
-) {
-  useLayoutEffect(() => {
-    if (!meshRef.current) return
-
-    if (!meshRef.current.instanceColor) {
-      const newArr = new Float32Array(numNeurons * 3).fill(0)
-      const newAttr = new THREE.InstancedBufferAttribute(newArr, 3)
-      meshRef.current.instanceColor = newAttr
-    }
-    const allColors = activations?.rgbColors
-    if (!allColors) return
-    const numChannels = hasColorChannels ? 3 : 1
-    for (let i = 0; i < numNeurons; i += 1) {
-      const idx = i * numChannels + channelIdx
-      const offset = i * 3
-      meshRef.current.instanceColor.array[offset] = allColors[idx * 3]
-      meshRef.current.instanceColor.array[offset + 1] = allColors[idx * 3 + 1]
-      meshRef.current.instanceColor.array[offset + 2] = allColors[idx * 3 + 2]
-    }
+function useColors(meshRef: MeshRef, activations?: LayerActivations) {
+  useEffect(() => {
+    if (!meshRef.current || !meshRef.current.instanceColor) return
+    // activations is only used as reactive trigger here
+    // color buffer is directly changed in useActivations
     meshRef.current.instanceColor.needsUpdate = true
-  }, [meshRef, numNeurons, activations, hasColorChannels, channelIdx])
+  }, [meshRef, activations])
+}
+
+function useColorArray(props: InstancedLayerProps): Float32Array {
+  // for color layers: create a new view on the layer color buffer that includes only the values for the given channelIdx
+  // layer color buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
+  const { hasColorChannels, channelIdx = 0, numNeurons, rgbColors } = props
+  return useMemo(() => {
+    if (!hasColorChannels) return rgbColors
+    const offset = channelIdx * numNeurons * 4 // 4 bytes per float32 value
+    const length = numNeurons
+    return new Float32Array(rgbColors.buffer, offset, length)
+  }, [hasColorChannels, rgbColors, channelIdx, numNeurons])
 }

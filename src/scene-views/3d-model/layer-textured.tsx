@@ -52,7 +52,7 @@ function useActivationTexture(layer: NeuronLayer) {
 
     for (let channel = 0; channel < channels; channel++) {
       const gridX = channel % gridCols
-      const gridY = (channel / gridCols) | 0 // like Math.floor but faster
+      const gridY = Math.floor(channel / gridCols)
 
       const blockX = gridX * (width + CELL_GAP)
       const blockY = gridY * (height + CELL_GAP)
