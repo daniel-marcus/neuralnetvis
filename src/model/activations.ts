@@ -90,7 +90,7 @@ async function getProcessedActivations(
       const rgbColors = new Float32Array(normAct.length * 3)
       const rgbaColors = new Uint32Array(normAct.length)
 
-      const stats = activationStats?.[i]
+      const stats = activationStats?.[layer.index]
       for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
         const a = normAct[nIdx]
         const color = layer.hasColorChannels
