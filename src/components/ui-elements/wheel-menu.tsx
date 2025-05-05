@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useKeyCommand } from "@/utils/key-command"
 import type { SetterFunc } from "@/store"
-import { rafThrottle } from "@/utils/helpers"
 
 const DEFAULT_DEG_PER_ITEM = 6
 
@@ -27,7 +26,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
   return (
     <div
       ref={scrollerRef} // hidden scroll container
-      className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px]`}
+      className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none`}
     >
       <div
         className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] ${
@@ -154,18 +153,21 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
         e.touches.length >= 2
       )
         return
-      e.preventDefault()
-      setIsActive(true)
+      startScroll()
     }
-    const onTouchMove = rafThrottle((e: TouchEvent) => {
+    const onTouchMove = (e: TouchEvent) => {
       if (!userInteraction.current) startScroll()
       if (e.touches.length === 1 && startY !== null) {
+        e.preventDefault()
         const currentY = e.touches[0].clientY
         const deltaY = currentY - startY
-        scroller.scrollTop = startScrollTop - deltaY
-        e.preventDefault()
+        scroller.scrollTop = Math.max(startScrollTop - deltaY, 0)
       }
-    })
+    }
+    const onTouchEnd = () => {
+      startY = null
+      endScroll()
+    }
 
     let wheelEndTimeout: NodeJS.Timeout
     const handleWheel = (e: WheelEvent) => {
@@ -178,14 +180,14 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
     scroller.addEventListener("scroll", handleScroll)
     wheel.addEventListener("wheel", handleWheel)
     wheel.addEventListener("touchstart", onTouchStart)
-    wheel.addEventListener("touchmove", onTouchMove)
-    wheel.addEventListener("touchend", endScroll)
+    wheel.addEventListener("touchmove", onTouchMove, { passive: false })
+    wheel.addEventListener("touchend", onTouchEnd)
     return () => {
       scroller.removeEventListener("scroll", handleScroll)
       wheel.removeEventListener("wheel", handleWheel)
       wheel.removeEventListener("touchstart", onTouchStart)
       wheel.removeEventListener("touchmove", onTouchMove)
-      wheel.removeEventListener("touchend", endScroll)
+      wheel.removeEventListener("touchend", onTouchEnd)
     }
   }, [setCurrIdx, items, onScrollStart, onScrollEnd, autoHide, degPerItem])
 
