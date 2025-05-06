@@ -2,17 +2,19 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useLayerInteractions } from "./interactions"
+import { useNeuronSpacing } from "./layer-instanced"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const texture = useActivationTexture(props)
+  const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   const [ref, hoverMesh] = useLayerInteractions(props, true)
   return (
     <group>
-      <mesh ref={ref}>
+      <mesh ref={ref} scale={[size, spacedSize, spacedSize]}>
         <primitive object={geometry} attach="geometry" />
         <meshStandardMaterial map={texture} transparent />
       </mesh>
@@ -127,8 +129,7 @@ function useCachedGeometry(texture: THREE.DataTexture) {
     (id: string): THREE.BoxGeometry => {
       if (geometryCache.has(id)) return geometryCache.get(id)!
 
-      const BOX_SIZE_THREE = 0.2 // TODO: adjust w/ neuron box size?
-      const size = [1, height, width].map((v) => v * BOX_SIZE_THREE)
+      const size = [1, height, width]
       const geom = new THREE.BoxGeometry(...size)
       updateUvMapping(geom, width, height)
 

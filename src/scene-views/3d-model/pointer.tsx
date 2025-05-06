@@ -12,13 +12,13 @@ import type { NeuronLayer, Neuron } from "@/neuron-layers/types"
 export function YPointer({ outputLayer }: { outputLayer: NeuronLayer }) {
   const { layerPos, meshParams } = outputLayer
   const trainingY = useSceneStore((s) => s.sample?.y)
-  const spacing = useNeuronSpacing(meshParams)
+  const { spacedSize } = useNeuronSpacing(meshParams)
   const showPointer = useSceneStore((s) => s.vis.showPointer)
   if (!showPointer || typeof trainingY !== "number") return null
   const index = trainingY
   const [, height, width = 1, channels = 1] = outputLayer.tfLayer
     .outputShape as number[]
-  const pos = getNeuronPos(index, layerPos, height, width, channels, spacing)
+  const pos = getNeuronPos(index, layerPos, height, width, channels, spacedSize)
   return (
     <Pointer position={pos} color={LABEL_COLOR} size={meshParams.labelSize} />
   )

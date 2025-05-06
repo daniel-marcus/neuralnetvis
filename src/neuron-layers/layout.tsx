@@ -8,8 +8,8 @@ export interface LayerLayout {
   spacing: number
 }
 
-export type MeshParams = {
-  geometry: THREE.BoxGeometry | THREE.SphereGeometry
+export interface MeshParams {
+  geometry: THREE.BufferGeometry
   spacingFactor?: number
   labelSize?: number
 }
@@ -17,11 +17,11 @@ export type MeshParams = {
 const meshMap: Record<string, MeshParams> = {
   sphere: {
     geometry: new THREE.SphereGeometry(0.6, 32, 32),
-    spacingFactor: 2.7,
+    spacingFactor: 1.4,
   },
   sphereSmall: {
     geometry: new THREE.SphereGeometry(0.35, 32, 32),
-    spacingFactor: 2.3,
+    spacingFactor: 1.2,
   },
   boxBig: {
     geometry: new THREE.BoxGeometry(2, 2, 2),

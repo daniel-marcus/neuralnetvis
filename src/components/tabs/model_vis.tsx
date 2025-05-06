@@ -60,7 +60,7 @@ export const VisConfigControl = () => {
               value={config.neuronSpacing}
               min={1}
               max={5}
-              step={0.001}
+              step={0.1}
               onChange={(neuronSpacing) => setConfig({ neuronSpacing })}
               showValue
             />
