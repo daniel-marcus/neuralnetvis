@@ -57,7 +57,7 @@ function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
 function InputValueLabel(props: NeuronLabelsProps) {
   const rawInput = useRawInput(props.layer.index, props.neuronIdx)
   return (
-    <group renderOrder={-1}>
+    <group>
       <NeuronLabel side="left" {...props} text={props.label} />
       <NeuronLabel {...props} text={round(rawInput)} />
     </group>
@@ -111,6 +111,7 @@ export const NeuronLabel = memo(function NeuronLabel({
       anchorX={side === "left" ? "right" : "left"}
       anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
+      renderOrder={-1}
     />
   )
 })

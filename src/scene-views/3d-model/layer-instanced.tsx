@@ -102,8 +102,7 @@ export function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const [, h, w = 1] = layer.tfLayer.outputShape as number[]
   const position = useMemo(() => {
-    const GRID_SPACING = 0.6
-    const [gHeight] = getGridSize(h, w, spacedSize, GRID_SPACING)
+    const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
 
     const OFFSET = 0.05 // to avoid z-fighting
     const splitY = -channelIdx * gHeight + (numChannels - 1) * gHeight * 0.5

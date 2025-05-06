@@ -1,12 +1,6 @@
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three"
-import type { ReactElement } from "react"
 import type { LayerPos } from "./types"
-
-export interface LayerLayout {
-  geometry: ReactElement
-  spacing: number
-}
 
 export interface MeshParams {
   geometry: THREE.BufferGeometry
@@ -61,11 +55,11 @@ const MAX_SINGLE_COL_HEIGHT = 25
 export function getGridSize(
   height: number,
   width: number,
-  neuronSpacing: number = 1.8,
+  cellSize: number,
   additionalSpacing = 0
 ) {
-  const totalHeight = height * neuronSpacing + additionalSpacing
-  const totalWidth = width * neuronSpacing + additionalSpacing
+  const totalHeight = height * cellSize + additionalSpacing
+  const totalWidth = width * cellSize + additionalSpacing
   return [totalHeight, totalWidth]
 }
 
@@ -75,19 +69,19 @@ export function getNeuronPos(
   height: number,
   width: number = 1,
   channels: number = 1,
-  spacing: number
+  spacedSize: number
 ) {
   const mustBeColumn =
     (layerPos === "output" || layerPos === "input") && width === 1
-  if (channels === 1) return getGridXYZ(i, height, width, spacing, mustBeColumn)
+  if (channels === 1)
+    return getGridXYZ(i, height, width, spacedSize, mustBeColumn)
   else {
     const idx = Math.floor(i / channels)
-    const [x, _y, _z] = getGridXYZ(idx, height, width, spacing, mustBeColumn)
+    const [x, _y, _z] = getGridXYZ(idx, height, width, spacedSize, mustBeColumn)
 
     const channelIdx = i % channels
 
-    const GRID_SPACING = 0.2
-    const [gHeight, gWidth] = getGridSize(height, width, spacing, GRID_SPACING)
+    const [gHeight, gWidth] = getGridSize(height, width, spacedSize, spacedSize)
     const cellsPerRow = Math.ceil(Math.sqrt(channels))
     const cellsPerColumn = Math.ceil(channels / cellsPerRow)
     const offsetY = (cellsPerColumn - 1) * gHeight * 0.5
@@ -112,7 +106,7 @@ function getGridXYZ(
     if (forceColumns) {
       height = Math.min(MAX_SINGLE_COL_HEIGHT, height)
       width = Math.ceil(total / height)
-      zSpacing = 5
+      zSpacing = 5 // space between columns
     } else {
       // convert 1D column to 2D grid
       width = Math.ceil(Math.sqrt(total))
