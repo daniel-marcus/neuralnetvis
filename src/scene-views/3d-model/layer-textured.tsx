@@ -74,15 +74,16 @@ function useActivationTexture(layer: NeuronLayer) {
 
   useLayoutEffect(() => {
     // update pixel colors in the texture
+    // layerActivations only used as update trigger here
     const data32 = new Uint32Array(texture.image.data.buffer)
-    const rgbaColors = layerActivations?.rgbaColors ?? []
+    const rgbaColors = layer.rgbaColors
 
     for (let i = 0; i < rgbaColors.length; i++) {
       data32[pixelMap[i]] = rgbaColors[i]
     }
 
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations])
+  }, [texture, pixelMap, layerActivations, layer.rgbaColors])
 
   return texture
 }
