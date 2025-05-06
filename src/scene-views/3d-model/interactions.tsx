@@ -121,9 +121,10 @@ export function useNeuronInteractions(
 }
 
 export function HoverComponents() {
+  const isActive = useSceneStore((s) => s.isActive)
   const selected = useSelected()
   const hovered = useHovered()
-  /* const hasFocussedLayer = useHasFocussedLayer() */
+  if (!isActive) return null
   return (
     <>
       <HoverConnections hovered={hovered} />

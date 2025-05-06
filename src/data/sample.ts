@@ -4,7 +4,8 @@ import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { getData } from "./db"
 import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
 
-export function useSample(ds?: Dataset) {
+export function useSample() {
+  const ds = useSceneStore((s) => s.ds)
   const backendReady = useGlobalStore((s) => s.backendReady)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const sample = useSceneStore((s) => s.sample)

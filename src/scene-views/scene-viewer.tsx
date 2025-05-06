@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { SceneStoreProvider, useSceneStore } from "@/store"
-import { useDsDef, useDataset, useSample } from "@/data"
+import { useDsDef, useDataset } from "@/data"
 import { useModel, useTraining } from "@/model"
 import { useInitialState } from "@/utils/initial-state"
 
@@ -30,7 +30,6 @@ function SceneViewerInner(props: SceneViewerProps) {
   const dsDef = useDsDef(dsKey)
   const ds = useDataset(dsDef)
   const model = useModel(ds)
-  useSample(ds)
   useTraining(model, ds)
   useInitialState(props.initialState)
   const view = useSceneStore((s) => s.view)

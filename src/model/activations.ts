@@ -1,17 +1,17 @@
 import { useEffect, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { useSample, type Sample } from "@/data"
 import { useActivationStats, type ActivationStats } from "./activation-stats"
 import { normalize, channelNormalize, scaleNormalize } from "@/data/utils"
 import { useSceneStore, isDebug } from "@/store"
 import { getChannelColor, getActColor, getPredQualColor } from "@/utils/colors"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
-import type { Sample } from "@/data"
 
-export function useActivations() {
+export function ActivationUpdater() {
+  const sample = useSample()
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
-  const sample = useSceneStore((s) => s.sample)
   const actStats = useActivationStats(model, ds)
   const isRegression = useSceneStore((s) => s.isRegression())
   const setActivations = useSceneStore((s) => s.setActivations)
@@ -38,6 +38,7 @@ export function useActivations() {
     }
     update()
   }, [_layers, focusIdx, model, sample, actStats, isRegression, setActivations])
+  return null
 }
 
 export function useLayerActivations(layerIdx: number) {
