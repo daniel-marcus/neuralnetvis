@@ -3,7 +3,7 @@ import * as THREE from "three"
 import { useSceneStore, useHasFocussedLayer } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
-import { useLayerInteractions, useNeuronInteractions } from "./interactions"
+import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
@@ -24,13 +24,11 @@ export const InstancedLayer = memo(function InstancedLayer(
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
-  const colorArray = useColorArray(props)
+  const colorArr = useColorArray(props)
   useColors(meshRef, activations)
 
   const isActive = useSceneStore((s) => s.isActive)
   const hasFocussed = useHasFocussedLayer()
-  const noFocussed = isActive && !hasFocussed
-  const [measureRef, hoverMesh] = useLayerInteractions(props, noFocussed)
   const interactive = isActive && hasFocussed
   const eventHandlers = useNeuronInteractions(index, interactive, channelIdx)
 
@@ -38,23 +36,17 @@ export const InstancedLayer = memo(function InstancedLayer(
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined
   return (
     <group ref={groupRef}>
-      <group ref={measureRef}>
-        <instancedMesh
-          ref={meshRef}
-          name={`layer_${props.index}_group_${channelIdx}`}
-          args={[, , units]}
-          renderOrder={renderOrder}
-          {...eventHandlers}
-        >
-          <primitive object={meshParams.geometry} attach={"geometry"} />
-          <primitive object={material} attach={"material"} />
-          <instancedBufferAttribute
-            args={[colorArray, 3]}
-            attach="instanceColor"
-          />
-        </instancedMesh>
-      </group>
-      {hoverMesh}
+      <instancedMesh
+        ref={meshRef}
+        name={`layer_${props.index}_group_${channelIdx}`}
+        args={[, , units]}
+        renderOrder={renderOrder}
+        {...eventHandlers}
+      >
+        <primitive object={meshParams.geometry} attach={"geometry"} />
+        <primitive object={material} attach={"material"} />
+        <instancedBufferAttribute args={[colorArr, 3]} attach="instanceColor" />
+      </instancedMesh>
       {hasLabels &&
         Array.from({ length: numNeurons }).map((_, i) => (
           <NeuronLabels

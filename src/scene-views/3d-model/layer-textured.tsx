@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
-import { useLayerInteractions } from "./interactions"
 import { useNeuronSpacing } from "./layer-instanced"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
@@ -11,15 +10,11 @@ export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const texture = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
-  const [ref, hoverMesh] = useLayerInteractions(props, true)
   return (
-    <group>
-      <mesh ref={ref} scale={[size, spacedSize, spacedSize]}>
-        <primitive object={geometry} attach="geometry" />
-        <meshStandardMaterial map={texture} transparent />
-      </mesh>
-      {hoverMesh}
-    </group>
+    <mesh scale={[size, spacedSize, spacedSize]}>
+      <primitive object={geometry} attach="geometry" />
+      <meshStandardMaterial map={texture} transparent />
+    </mesh>
   )
 })
 

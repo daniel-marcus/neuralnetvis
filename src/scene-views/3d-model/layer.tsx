@@ -4,52 +4,56 @@ import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
+import { useLayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { YPointer } from "./pointer"
-import { Connections } from "./connections"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = (props: NeuronLayer) => {
-  const { layerPos, prevLayer, hasColorChannels } = props
-  const ref = useLayerPos(props)
+  const { hasFocussed } = useFocussed(props.index)
+  const isInteractive = useSceneStore((s) => s.isActive) && !hasFocussed
+  const [measureRef, hoverComp] = useLayerInteractions(props, isInteractive)
+  const LayerComp = useLod(props, measureRef)
+  const separateChannels = props.hasColorChannels ? 3 : 1
+  return (
+    <LayerScaler {...props}>
+      <group ref={measureRef}>
+        {Array.from({ length: separateChannels }).map((_, i) => (
+          <LayerComp key={i} {...props} channelIdx={i} />
+        ))}
+      </group>
+      {hoverComp}
+      {props.layerPos === "output" && <YPointer outputLayer={props} />}
+    </LayerScaler>
+  )
+}
+
+interface LayerScalerProps extends NeuronLayer {
+  children: React.ReactNode
+}
+
+function LayerScaler(props: LayerScalerProps) {
+  const posRef = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
-  const prevInvisible = useIsInvisible(prevLayer)
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
-  useDynamicScale(ref, scale, duration)
-  const showConnections =
-    !invisible && !!prevLayer && !prevInvisible && !hasFocussed && !isFlatView
+  useDynamicScale(posRef, scale, duration)
+  return <group ref={posRef}>{props.children}</group>
+}
 
-  const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
+function useLod(layer: NeuronLayer, ref: React.RefObject<THREE.Mesh | null>) {
+  // Level-of-Detail rendering: use less expensive TexturedLayer for distant & large layers
+  const hasChannels = (layer.tfLayer.outputShape[3] as number) ?? 1 > 1
   const isClose = useIsClose(ref, 40)
-  const isSuperLarge = props.numNeurons > 30000
-  const showInstanced =
-    layerPos !== "hidden" ||
-    !hasChannels ||
-    (isFocussed && isFlatView) ||
-    (isClose && !isSuperLarge)
-  const texturedLayer = <TexturedLayer {...props} />
-  const instancedLayer = <InstancedLayer {...props} />
-
-  return (
-    <>
-      <group ref={ref}>
-        {hasColorChannels
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <InstancedLayer key={i} {...props} channelIdx={i} />
-            ))
-          : showInstanced
-          ? instancedLayer
-          : texturedLayer}
-        {layerPos === "output" && <YPointer outputLayer={props} />}
-      </group>
-      {showConnections && <Connections layer={props} prevLayer={prevLayer} />}
-    </>
-  )
+  const isSuperLarge = layer.numNeurons > 30000
+  const alwaysInstanced = layer.hasColorChannels || !hasChannels
+  const showInstanced = alwaysInstanced || (isClose && !isSuperLarge)
+  const LayerComp = showInstanced ? InstancedLayer : TexturedLayer
+  return LayerComp
 }
 
 function useFocussed(layerIdx: number) {
