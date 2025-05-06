@@ -69,7 +69,7 @@ async function getProcessedActivations(
         activations.push(undefined)
         continue
       }
-      const flattened = layerActivations.reshape([-1]) as tf.Tensor1D
+      const flattened = layerActivations.flatten()
       const hasDepthDim = typeof layer.tfLayer.outputShape[3] === "number"
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
       const stats = activationStats?.[layer.index]
@@ -82,8 +82,7 @@ async function getProcessedActivations(
         : normalize(flattened)
       activations.push([flattened, normalizedFlattened])
     }
-    const end2 = performance.now()
-    if (isDebug()) console.log(`normalization: ${end2 - end}ms`)
+    if (isDebug()) console.log(`normalization: ${performance.now() - end}ms`)
     return activations
   })
 
