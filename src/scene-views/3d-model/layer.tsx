@@ -1,20 +1,18 @@
-import { useEffect, useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
-import { useLayerInteractions } from "./interactions"
+import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { YPointer } from "./pointer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-export const Layer = (props: NeuronLayer) => {
-  const { hasFocussed } = useFocussed(props.index)
-  const isInteractive = useSceneStore((s) => s.isActive) && !hasFocussed
-  const [measureRef, hoverComp] = useLayerInteractions(props, isInteractive)
+export const Layer = memo(function Layer(props: NeuronLayer) {
+  const measureRef = useRef<THREE.Mesh | null>(null)
   const LayerComp = useLod(props, measureRef)
   const separateChannels = props.hasColorChannels ? 3 : 1
   return (
@@ -24,11 +22,11 @@ export const Layer = (props: NeuronLayer) => {
           <LayerComp key={i} {...props} channelIdx={i} />
         ))}
       </group>
-      {hoverComp}
+      <LayerInteractions {...props} measureRef={measureRef} />
       {props.layerPos === "output" && <YPointer outputLayer={props} />}
     </LayerScaler>
   )
-}
+})
 
 interface LayerScalerProps extends NeuronLayer {
   children: React.ReactNode
@@ -53,10 +51,13 @@ function useLod(layer: NeuronLayer, ref: React.RefObject<THREE.Mesh | null>) {
   const alwaysInstanced = layer.hasColorChannels || !hasChannels
   const showInstanced = alwaysInstanced || (isClose && !isSuperLarge)
   const LayerComp = showInstanced ? InstancedLayer : TexturedLayer
+  useEffect(() => {
+    console.log("switchin") // TODO: reduce switches
+  }, [showInstanced])
   return LayerComp
 }
 
-function useFocussed(layerIdx: number) {
+export function useFocussed(layerIdx: number) {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const isFocussed = focussedIdx === layerIdx
   const wasFocussed = useLast(isFocussed)

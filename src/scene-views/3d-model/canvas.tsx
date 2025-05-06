@@ -28,7 +28,6 @@ export const ThreeCanvas = (props: CanvasProps) => {
   return (
     <Canvas
       frameloop="demand"
-      // resize={{ debounce: 0 }}
       className={`absolute! w-screen! h-[100vh]! select-none ${
         isActive ? "" : "touch-pan-y!"
       } ${(isLocked || isMapView) && !isDebug ? "pointer-events-none!" : ""} ${

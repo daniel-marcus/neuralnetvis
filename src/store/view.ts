@@ -1,6 +1,7 @@
 import type { StateCreator } from "zustand"
 import type { DataSlice, Subset } from "./data"
 import type { SetterFunc } from "."
+import type { NeuronsSlice } from "./neurons"
 
 export type View = "layers" | "graph" | "map" | "evaluation"
 
@@ -23,7 +24,7 @@ export interface ViewSlice {
 }
 
 export const createViewSlice: StateCreator<
-  ViewSlice & DataSlice,
+  ViewSlice & DataSlice & NeuronsSlice,
   [],
   [],
   ViewSlice
@@ -54,6 +55,8 @@ export const createViewSlice: StateCreator<
   setFocussedLayerIdx: (arg) =>
     set(({ focussedLayerIdx }) => ({
       focussedLayerIdx: typeof arg === "function" ? arg(focussedLayerIdx) : arg,
+      hoveredNid: undefined,
+      selectedNid: undefined,
     })),
   hoveredLayerIdx: undefined,
   setHoveredLayerIdx: (arg) =>

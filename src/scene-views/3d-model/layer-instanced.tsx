@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
-import { useSceneStore, useHasFocussedLayer } from "@/store"
+import { useSceneStore, useHasFocussed } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
@@ -26,12 +26,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const activations = useLayerActivations(props.index)
   const colorArr = useColorArray(props)
   useColors(meshRef, activations)
-
-  const isActive = useSceneStore((s) => s.isActive)
-  const hasFocussed = useHasFocussedLayer()
-  const interactive = isActive && hasFocussed
-  const eventHandlers = useNeuronInteractions(index, interactive, channelIdx)
-
+  const eventHandlers = useNeuronInteractions(index, channelIdx)
   // reversed render order for color blending
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined
   return (

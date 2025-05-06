@@ -1,26 +1,30 @@
-import { useRef, useEffect, useCallback, useMemo } from "react"
+import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
 import * as THREE from "three"
 import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
-import { clearStatus, setStatus, useSceneStore } from "@/store"
+import { setStatus, clearStatus } from "@/store"
+import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
+import { getNid } from "@/neuron-layers/neurons"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
 import type { Mesh } from "three"
-import { getNid } from "@/neuron-layers/neurons"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
-export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
-  const measureRef = useRef<THREE.Mesh>(null)
+export function LayerInteractions(
+  props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> }
+) {
+  const hasFocussed = useHasFocussed()
+  const isActive = useSceneStore((s) => s.isActive) && !hasFocussed
   const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
-  const isHovered = hoveredIdx === layer.index
+  const isHovered = hoveredIdx === props.index
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
   const setIsHovered = useCallback(
-    (hovered: boolean) => setHoveredLayerIdx(hovered ? layer.index : undefined),
-    [setHoveredLayerIdx, layer.index]
+    (hovered: boolean) => setHoveredLayerIdx(hovered ? props.index : undefined),
+    [setHoveredLayerIdx, props.index]
   )
   useEffect(() => {
     if (!isActive) return
@@ -29,10 +33,10 @@ export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const [size] = useSize(measureRef, 0.2)
+  const [size] = useSize(props.measureRef, 0.2)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
-  const { layerType, tfLayer } = layer
+  const { layerType, tfLayer } = props
   const name = `${layerType} (${tfLayer.outputShape.slice(1).join("x")})`
   const status = (
     <>
@@ -62,7 +66,7 @@ export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
       clearStatus(LAYER_HOVER_STATUS)
     }
   }
-  const onDoubleClick = () => setFocussedIdx(layer.index)
+  const onDoubleClick = () => setFocussedIdx(props.index)
 
   const interactions = {
     onPointerOver,
@@ -71,7 +75,7 @@ export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
     onDoubleClick,
   }
 
-  const hoverMesh = (
+  return (
     <mesh {...(isActive ? interactions : {})}>
       <boxGeometry args={size} />
       <MeshDiscardMaterial />
@@ -83,21 +87,16 @@ export function useLayerInteractions(layer: NeuronLayer, isActive: boolean) {
       />
     </mesh>
   )
-  return [measureRef, hoverMesh] as const
 }
 
-export function useNeuronInteractions(
-  layerIdx: number,
-  isActive: boolean,
-  channelIdx = 0
-) {
+export function useNeuronInteractions(layerIdx: number, channelIdx = 0) {
+  const isActive = useSceneStore((s) => s.isActive)
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
     return {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         // e.stopPropagation()
-        if (!isActive) return
         if (e.buttons) return
         document.body.style.cursor = "pointer"
         const neuronIdx = (e.instanceId as number) + channelIdx
@@ -106,18 +105,19 @@ export function useNeuronInteractions(
         return
       },
       onPointerOut: () => {
-        if (isActive) document.body.style.cursor = "default"
+        document.body.style.cursor = "default"
         toggleHovered(undefined)
       },
       onClick: (e: ThreeEvent<PointerEvent>) => {
-        if (!isActive) return
+        const focussedIdx = getScene().getState().focussedLayerIdx
+        if (layerIdx !== focussedIdx) return
         const neuronIdx = (e.instanceId as number) + channelIdx
         const nid = getNid(layerIdx, neuronIdx)
         toggleSelected(nid)
       },
     }
-  }, [isActive, layerIdx, channelIdx, toggleHovered, toggleSelected])
-  return eventHandlers
+  }, [layerIdx, channelIdx, toggleHovered, toggleSelected])
+  return isActive ? eventHandlers : undefined
 }
 
 export function HoverComponents() {
