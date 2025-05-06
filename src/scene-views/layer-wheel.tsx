@@ -31,7 +31,8 @@ export const LayerWheel = () => {
 export function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)
   const hasFocussed = useHasFocussed()
-  const [isScrolling, setIsScrolling] = useState(false)
+  const isScrolling = useSceneStore((s) => s.isScrolling)
+  const setIsScrolling = useSceneStore((s) => s.setIsScrolling)
   const onScrollStart = useCallback(() => setIsScrolling(true), [])
   const onScrollEnd = useCallback(() => setIsScrolling(false), [])
 

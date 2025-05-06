@@ -21,6 +21,8 @@ export interface ViewSlice {
   setHoveredLayerIdx: (
     arg: number | undefined | SetterFunc<number | undefined>
   ) => void
+  isScrolling: boolean
+  setIsScrolling: (isScrolling: boolean) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -63,4 +65,6 @@ export const createViewSlice: StateCreator<
     set(({ hoveredLayerIdx }) => ({
       hoveredLayerIdx: typeof arg === "function" ? arg(hoveredLayerIdx) : arg,
     })),
+  isScrolling: false,
+  setIsScrolling: (isScrolling) => set({ isScrolling }),
 })

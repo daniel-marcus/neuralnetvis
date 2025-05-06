@@ -13,13 +13,12 @@ import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = memo(function Layer(props: NeuronLayer) {
   const measureRef = useRef<THREE.Mesh | null>(null)
-  const LayerComp = useLod(props, measureRef)
   const separateChannels = props.hasColorChannels ? 3 : 1
   return (
     <LayerScaler {...props}>
       <group ref={measureRef}>
         {Array.from({ length: separateChannels }).map((_, i) => (
-          <LayerComp key={i} {...props} channelIdx={i} />
+          <LodComp key={i} {...props} channelIdx={i} measureRef={measureRef} />
         ))}
       </group>
       <LayerInteractions {...props} measureRef={measureRef} />
@@ -43,18 +42,25 @@ function LayerScaler(props: LayerScalerProps) {
   return <group ref={posRef}>{props.children}</group>
 }
 
-function useLod(layer: NeuronLayer, ref: React.RefObject<THREE.Mesh | null>) {
+interface LodCompProps extends NeuronLayer {
+  channelIdx?: number
+  measureRef: React.RefObject<THREE.Mesh | null>
+}
+
+function LodComp(props: LodCompProps) {
   // Level-of-Detail rendering: use less expensive TexturedLayer for distant & large layers
-  const hasChannels = (layer.tfLayer.outputShape[3] as number) ?? 1 > 1
-  const isClose = useIsClose(ref, 40)
-  const isSuperLarge = layer.numNeurons > 30000
-  const alwaysInstanced = layer.hasColorChannels || !hasChannels
-  const showInstanced = alwaysInstanced || (isClose && !isSuperLarge)
+  const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
+  const isClose = useIsClose(props.measureRef, 40)
+  const { isFocussed, hasFocussed } = useFocussed(props.index)
+  const isScrolling = useSceneStore((s) => s.isScrolling)
+  const isSuperLarge = props.numNeurons > 30000
+  const alwaysInstanced = props.hasColorChannels || !hasChannels
+  const showInstanced =
+    alwaysInstanced ||
+    (isFocussed && !isScrolling) ||
+    (isClose && !hasFocussed && !isSuperLarge && !isScrolling)
   const LayerComp = showInstanced ? InstancedLayer : TexturedLayer
-  useEffect(() => {
-    console.log("switchin") // TODO: reduce switches
-  }, [showInstanced])
-  return LayerComp
+  return <LayerComp {...props} />
 }
 
 export function useFocussed(layerIdx: number) {
