@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
@@ -32,9 +32,9 @@ export function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)
   const hasFocussed = useHasFocussed()
   const isScrolling = useSceneStore((s) => s.isScrolling)
-  const setIsScrolling = useSceneStore((s) => s.setIsScrolling)
-  const onScrollStart = useCallback(() => setIsScrolling(true), [])
-  const onScrollEnd = useCallback(() => setIsScrolling(false), [])
+  const setScrolling = useSceneStore((s) => s.setIsScrolling)
+  const onScrollStart = useCallback(() => setScrolling(true), [setScrolling])
+  const onScrollEnd = useCallback(() => setScrolling(false), [setScrolling])
 
   useEffect(() => {
     if (!isActive) return

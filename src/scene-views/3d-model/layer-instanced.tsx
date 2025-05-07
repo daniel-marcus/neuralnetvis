@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
-import { useSceneStore, useHasFocussed } from "@/store"
+import { useSceneStore } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
