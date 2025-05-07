@@ -68,6 +68,7 @@ export interface DbBatch {
 }
 
 export interface SampleRaw {
+  index: number
   X: number[]
   y?: number
   rawX?: number[]

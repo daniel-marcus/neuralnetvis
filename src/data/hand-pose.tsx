@@ -129,7 +129,7 @@ function usePredictLoop(
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
       if (!isTraning) {
         const { X } = await hpPredict()
-        if (X) setSample({ X, y: recordingY })
+        if (X) setSample({ X, y: recordingY, index: Date.now() })
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }

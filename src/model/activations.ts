@@ -1,44 +1,75 @@
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
+import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useActivationStats, type ActivationStats } from "./activation-stats"
 import { normalize, channelNormalize, scaleNormalize } from "@/data/utils"
-import { useSceneStore, isDebug } from "@/store"
+import { useSceneStore, isDebug, getScene } from "@/store"
 import { getChannelColor, getActColor, getPredQualColor } from "@/utils/colors"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
+
+type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 
 export function ActivationUpdater() {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
   const actStats = useActivationStats(model, ds)
-  const isRegression = useSceneStore((s) => s.isRegression())
+  const isRegr = useSceneStore((s) => s.isRegression())
   const setActivations = useSceneStore((s) => s.setActivations)
-  const _layers = useSceneStore((s) => s.allLayers)
-  const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
-  const lastSample = useRef<Sample | undefined>(undefined)
-  useEffect(() => {
-    async function update() {
-      if (!model || !sample || !_layers.length) return
-      const hasFocussed = typeof focusIdx === "number"
-      if (hasFocussed && sample === lastSample.current) return
-      lastSample.current = sample
+  const layers = useSceneStore((s) => s.allLayers)
+  const focusIdx = useFlatViewFocussed()
+  const invalidate = useThree((s) => s.invalidate)
 
-      const focusFilter = (l: NeuronLayer) => l.index === focusIdx
-      const layers = hasFocussed ? _layers.filter(focusFilter) : _layers
+  // keep track which layers already show the current sample
+  const updateTracker = useRef<UpdateTracker>(new Map())
 
-      const startTime = performance.now()
-      const args = [model, layers, sample, actStats, isRegression] as const
+  const maybeUpdate = useCallback(
+    async (sample?: Sample, focusIdx?: number) => {
+      if (!model || !sample) return
+
+      const updatedLayers = updateTracker.current.get(sample.index) ?? new Set()
+      const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.index)
+      const isFocussed = (l: NeuronLayer) => l.index === focusIdx
+      const layersToUpdate =
+        typeof focusIdx === "number"
+          ? layers.filter((l) => isFocussed(l) && needsUpdate(l))
+          : layers.filter(needsUpdate)
+
+      if (!layersToUpdate.length) return
+
+      const t0 = performance.now()
+      const args = [model, layersToUpdate, sample, actStats, isRegr] as const
       const newActivations = await getProcessedActivations(...args)
-      const endTime = performance.now()
-      if (isDebug())
-        console.log(`>>> activations total: ${endTime - startTime}ms`)
+      const dt = performance.now() - t0
+      if (isDebug()) console.log(`>> total: ${dt}ms (${layersToUpdate.length})`)
+
       setActivations(newActivations)
-    }
-    update()
-  }, [_layers, focusIdx, model, sample, actStats, isRegression, setActivations])
+      invalidate()
+
+      const newUpdated = new Set(updatedLayers)
+      layersToUpdate.forEach((l) => newUpdated.add(l.index))
+      updateTracker.current.set(sample.index, newUpdated)
+    },
+    [model, layers, actStats, isRegr, setActivations, invalidate]
+  )
+
+  // reset update tracker when model changes
+  useEffect(() => updateTracker.current.clear(), [maybeUpdate])
+
+  useEffect(() => {
+    maybeUpdate(sample, focusIdx)
+  }, [sample, focusIdx, maybeUpdate])
+
   return null
+}
+
+function useFlatViewFocussed() {
+  // avoid updates during scrolling when focusIdx changes often
+  const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
+  const isFlatView = useSceneStore((s) => s.vis.flatView)
+  return isFlatView ? focusIdx : undefined
 }
 
 export function useLayerActivations(layerIdx: number) {
@@ -59,10 +90,10 @@ async function getProcessedActivations(
   const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   await tf.ready()
   const activationTensors = tf.tidy(() => {
-    const start = performance.now()
+    const t0 = performance.now()
     const allActivations = getLayerActivations(model, sample.xTensor, outputs)
-    const end = performance.now()
-    if (isDebug()) console.log(`inference: ${end - start}ms`)
+    const t1 = performance.now()
+    if (isDebug()) console.log(`inference: ${t1 - t0}ms`)
     const activations: (tf.Tensor[] | undefined)[] = []
     for (const [i, layer] of layers.entries()) {
       const layerActivations = allActivations?.[i]
@@ -83,7 +114,7 @@ async function getProcessedActivations(
         : normalize(flattened)
       activations.push([flattened, normalizedFlattened])
     }
-    if (isDebug()) console.log(`normalization: ${performance.now() - end}ms`)
+    if (isDebug()) console.log(`normalization: ${performance.now() - t1}ms`)
     return activations
   })
 

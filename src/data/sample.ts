@@ -39,14 +39,13 @@ export function useRawInput(layerIdx: number, neuronIdx: number) {
 
 export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
   if (!sampleRaw || !ds) return
-  const name = sampleRaw.name
   const rawX = sampleRaw.rawX ?? sampleRaw.X
   const xTensor = tf.tidy(() => {
     const tensor = tf.tensor(sampleRaw.X, [1, ...ds.inputDims])
     return ds.preprocess ? ds.preprocess(tensor) : tensor
   })
   const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
-  const sample: Sample = { X, y: sampleRaw.y, rawX, xTensor, name }
+  const sample: Sample = { ...sampleRaw, X, rawX, xTensor }
   return sample
 }
 
@@ -78,6 +77,7 @@ export async function getSample(
   const y = batch.ys[sampleIdx]
   const name = batch.sampleNames?.[sampleIdx]
   const result: SampleRaw = {
+    index: sampleIdx,
     X: Array.from(X),
     y,
     rawX: rawX ? Array.from(rawX) : undefined,
