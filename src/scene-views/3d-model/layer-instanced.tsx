@@ -25,7 +25,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
-  const colorArr = useColorArray(props)
+  const colorArr = useColorData(props)
   useColors(meshRef, activations)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   // reversed render order for color blending
@@ -156,20 +156,20 @@ function useColors(meshRef: MeshRef, activations?: LayerActivations) {
     if (!meshRef.current || !meshRef.current.instanceColor) return
     // activations is only used as reactive trigger here
     // color buffer is directly changed in useActivations
-    console.log("updating colors")
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, activations])
 }
 
-function useColorArray(props: InstancedLayerProps): Float32Array {
+function useColorData(props: InstancedLayerProps): Float32Array {
   // for color layers: create a new view on the layer color buffer that includes only the values for the given channelIdx
   // layer color buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
-  const { hasColorChannels, channelIdx = 0, numNeurons, rgbColors } = props
+  const { hasColorChannels, channelIdx = 0, numNeurons } = props
+  const { normalizedActivations } = props
   return useMemo(() => {
-    if (!hasColorChannels) return rgbColors
+    if (!hasColorChannels) return normalizedActivations
     const units = numNeurons / 3
     const offset = channelIdx * units * 4 // 4 bytes per float32 value
     const length = units
-    return new Float32Array(rgbColors.buffer, offset, length)
-  }, [hasColorChannels, rgbColors, channelIdx, numNeurons])
+    return new Float32Array(normalizedActivations.buffer, offset, length)
+  }, [hasColorChannels, normalizedActivations, channelIdx, numNeurons])
 }

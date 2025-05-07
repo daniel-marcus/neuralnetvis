@@ -128,17 +128,19 @@ async function getProcessedActivations(
       const normAct = (await normActTensor.data()) as Float32Array
 
       // reuse color buffers from layer to avoid reallocating
-      const { rgbColors } = layer
+      const { normalizedActivations } = layer
 
       if (layer.hasColorChannels) {
         for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
           const channelIdx = nIdx % 3
           const channelOffset = channelIdx * layer.numNeurons
           const newIdx = Math.floor((channelOffset + nIdx) / 3)
-          rgbColors[newIdx] = normAct[nIdx]
+          normalizedActivations[newIdx] = normAct[nIdx]
+          // TODO: maybe not the best idea to change order if other components want to use this?
+          // see useColorData in layer-instanced.tsx
         }
       } else {
-        rgbColors.set(normAct)
+        normalizedActivations.set(normAct)
       }
 
       /* 
