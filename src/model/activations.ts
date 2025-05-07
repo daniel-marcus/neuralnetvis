@@ -123,16 +123,28 @@ async function getProcessedActivations(
     const start = performance.now()
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors[i]) continue
-      const [actTensor, normActTensor] = activationTensors[i]
-      const act = (await actTensor.data()) as Float32Array
+      const [, normActTensor] = activationTensors[i]
+      // const act = (await actTensor.data()) as Float32Array
       const normAct = (await normActTensor.data()) as Float32Array
 
-      const isRegressionOutput = isRegression && layer.layerPos === "output"
-
       // reuse color buffers from layer to avoid reallocating
-      const { rgbColors, rgbaColors } = layer
+      const { rgbColors } = layer
 
+      if (layer.hasColorChannels) {
+        for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
+          const channelIdx = nIdx % 3
+          const channelOffset = channelIdx * layer.numNeurons
+          const newIdx = Math.floor((channelOffset + nIdx) / 3)
+          rgbColors[newIdx] = normAct[nIdx]
+        }
+      } else {
+        rgbColors.set(normAct)
+      }
+
+      /* 
+      const isRegressionOutput = isRegression && layer.layerPos === "output"
       const stats = activationStats?.[layer.index]
+
       for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
         const a = normAct[nIdx]
         const color = layer.hasColorChannels
@@ -149,15 +161,17 @@ async function getProcessedActivations(
           if (!color) continue
           rgbColors[channelOffset + nIdx] = color.rgb[channelIdx]
         } else {
+          rgbColors[nIdx] = a
           rgbColors[nIdx * 3] = color.rgb[0]
           rgbColors[nIdx * 3 + 1] = color.rgb[1]
           rgbColors[nIdx * 3 + 2] = color.rgb[2]
         }
         rgbaColors[nIdx] = color.rgba
       }
+      */
 
       newLayerActivations[layer.index] = {
-        activations: act,
+        activations: normAct,
         normalizedActivations: normAct,
       }
     }

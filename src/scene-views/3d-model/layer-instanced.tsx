@@ -8,6 +8,7 @@ import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
+import { createShaderMaterial } from "./materials"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -20,7 +21,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const { index, channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = hasColorChannels ? meshRefs[channelIdx] : meshRefs[0]
-  const material = useMaterial(hasColorChannels)
+  const material = useMaterial(hasColorChannels, channelIdx)
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
@@ -29,6 +30,14 @@ export const InstancedLayer = memo(function InstancedLayer(
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   // reversed render order for color blending
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined
+
+  useEffect(() => {
+    if (meshRef.current) {
+      // Mark the instanceMatrix as dynamic for updates
+      meshRef.current.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    }
+  }, [])
+
   return (
     <group ref={groupRef}>
       <instancedMesh
@@ -40,7 +49,7 @@ export const InstancedLayer = memo(function InstancedLayer(
       >
         <primitive object={meshParams.geometry} attach={"geometry"} />
         <primitive object={material} attach={"material"} />
-        <instancedBufferAttribute args={[colorArr, 3]} attach="instanceColor" />
+        <instancedBufferAttribute args={[colorArr, 1]} attach="instanceColor" />
       </instancedMesh>
       {hasLabels &&
         Array.from({ length: numNeurons }).map((_, i) => (
@@ -56,14 +65,26 @@ export const InstancedLayer = memo(function InstancedLayer(
   )
 })
 
-const standardMaterial = new THREE.MeshStandardMaterial()
-const blendingMaterial = new THREE.MeshBasicMaterial({
-  blending: THREE.AdditiveBlending,
-})
+const rMaterial = createShaderMaterial({ addBlend: true, basePos: [255, 0, 0] })
+const gMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 255, 0] })
+const bMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 0, 255] })
+const blendingMaterials = [rMaterial, gMaterial, bMaterial]
+const activationMaterial = createShaderMaterial()
 
-function useMaterial(hasColorChannels: boolean) {
+function useMaterial(hasColorChannels: boolean, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  return hasColorChannels && !splitColors ? blendingMaterial : standardMaterial
+  const material = hasColorChannels
+    ? blendingMaterials[channelIdx]
+    : activationMaterial
+
+  useEffect(() => {
+    if (!hasColorChannels) return
+    material.blending = splitColors
+      ? THREE.NormalBlending
+      : THREE.AdditiveBlending
+  }, [material, splitColors, hasColorChannels])
+
+  return material
 }
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
@@ -135,6 +156,7 @@ function useColors(meshRef: MeshRef, activations?: LayerActivations) {
     if (!meshRef.current || !meshRef.current.instanceColor) return
     // activations is only used as reactive trigger here
     // color buffer is directly changed in useActivations
+    console.log("updating colors")
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, activations])
 }
@@ -145,8 +167,9 @@ function useColorArray(props: InstancedLayerProps): Float32Array {
   const { hasColorChannels, channelIdx = 0, numNeurons, rgbColors } = props
   return useMemo(() => {
     if (!hasColorChannels) return rgbColors
-    const offset = channelIdx * numNeurons * 4 // 4 bytes per float32 value
-    const length = numNeurons
+    const units = numNeurons / 3
+    const offset = channelIdx * units * 4 // 4 bytes per float32 value
+    const length = units
     return new Float32Array(rgbColors.buffer, offset, length)
   }, [hasColorChannels, rgbColors, channelIdx, numNeurons])
 }
