@@ -5,7 +5,6 @@ import { useSample, type Sample } from "@/data"
 import { useActivationStats, type ActivationStats } from "./activation-stats"
 import { normalize, channelNormalize, scaleNormalize } from "@/data/utils"
 import { useSceneStore, isDebug } from "@/store"
-import { getChannelColor, getActColor, getPredQualColor } from "@/utils/colors"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 
@@ -50,6 +49,7 @@ export function ActivationUpdater() {
 
       const newUpdated = new Set(updatedLayers)
       layersToUpdate.forEach((l) => newUpdated.add(l.index))
+      updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
     [model, layers, actStats, isRegr, setActivations, invalidate]
@@ -123,11 +123,11 @@ async function getProcessedActivations(
     const start = performance.now()
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors[i]) continue
-      const [, normActTensor] = activationTensors[i]
-      // const act = (await actTensor.data()) as Float32Array
+      const [actTensor, normActTensor] = activationTensors[i]
+      const act = (await actTensor.data()) as Float32Array
       const normAct = (await normActTensor.data()) as Float32Array
 
-      // reuse color buffers from layer to avoid reallocating
+      // reuse buffers from layer to avoid reallocating
       const { normalizedActivations } = layer
 
       if (layer.hasColorChannels) {
@@ -143,38 +143,9 @@ async function getProcessedActivations(
         normalizedActivations.set(normAct)
       }
 
-      /* 
-      const isRegressionOutput = isRegression && layer.layerPos === "output"
-      const stats = activationStats?.[layer.index]
-
-      for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
-        const a = normAct[nIdx]
-        const color = layer.hasColorChannels
-          ? getChannelColor(nIdx % 3, a)
-          : isRegressionOutput && stats
-          ? getPredQualColor(act[nIdx], sample.y, stats.mean.dataSync()[0])
-          : getActColor(a)
-        if (!color) continue
-        if (layer.hasColorChannels) {
-          // for color layers we need a different order: [...allRed, ...allGreen, ...allBlue]
-          // see useColorArray in layer-instanced.tsx for details
-          const channelIdx = nIdx % 3
-          const channelOffset = channelIdx * layer.numNeurons
-          if (!color) continue
-          rgbColors[channelOffset + nIdx] = color.rgb[channelIdx]
-        } else {
-          rgbColors[nIdx] = a
-          rgbColors[nIdx * 3] = color.rgb[0]
-          rgbColors[nIdx * 3 + 1] = color.rgb[1]
-          rgbColors[nIdx * 3 + 2] = color.rgb[2]
-        }
-        rgbaColors[nIdx] = color.rgba
-      }
-      */
-
       newLayerActivations[layer.index] = {
-        activations: normAct,
-        normalizedActivations: normAct,
+        activations: act,
+        normalizedActivations,
       }
     }
     const end = performance.now()

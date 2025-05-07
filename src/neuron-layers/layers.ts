@@ -60,8 +60,6 @@ export function useLayers() {
             (layerPos === "output" && !!ds?.outputLabels?.length),
           hasColorChannels,
           normalizedActivations: new Float32Array(units),
-          rgbColors: new Float32Array(units), //  * 3), // to be replaced
-          rgbaColors: new Uint32Array(units), // to be replaced
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
@@ -71,7 +69,7 @@ export function useLayers() {
   return layers
 }
 
-const MAX_VISIBLE_LAYERS = 100
+const MAX_VISIBLE_LAYERS = 200
 
 // avoid browser crash with too large models
 function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {

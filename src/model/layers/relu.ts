@@ -5,6 +5,6 @@ import { LayerDef } from "./types"
 export const ReLU: LayerDef<"ReLU"> = {
   constructorFunc: tf.layers.reLU,
   defaultConfig: {},
-  isInvisible: true,
+  // isInvisible: true,
   getInputNids: getOneToOneInputNids,
 }

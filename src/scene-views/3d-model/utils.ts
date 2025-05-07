@@ -93,7 +93,7 @@ export function interpolate(from: number, to: number, percent: number): number {
   return from + (to - from) * percent
 }
 
-const MAX_X_WIDTH = 300 // in three.js units
+const MAX_X_WIDTH = 500 // in three.js units
 const MIN_X_SHIFT = 2
 
 // use smaller xShift for models with many layers

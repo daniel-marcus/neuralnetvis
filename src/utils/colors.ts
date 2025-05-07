@@ -1,5 +1,7 @@
 import * as THREE from "three"
 
+// colors are now caluclated in the shader, see materials.ts
+
 export type ColorObj = {
   rgb: number[] // as THREE.Color.toArray (float) for instanced meshes
   three: THREE.Color // for label
@@ -23,7 +25,7 @@ const G_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, i, 0))
 const B_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, 0, i))
 const CHANNEL_COLORS = [R_COLORS, G_COLORS, B_COLORS]
 
-export const ZERO_BASE = [30, 31, 34] //  --color-gray-text / x
+export const ZERO_BASE = [30, 31, 34] //  --color-gray-text / x // brighter: [30, 31, 34] // darker: [25, 26, 29]
 export const POS_BASE = [255, 20, 100] // --color-primary
 export const NEG_BASE = POS_BASE.toReversed()
 

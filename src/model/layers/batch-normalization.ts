@@ -10,7 +10,7 @@ export const BatchNormalization: LayerDef<"BatchNormalization"> = {
     return tf.layers.batchNormalization(rest)
   },
   defaultConfig: {},
-  isInvisible: true,
+  // isInvisible: true,
   isUserAddable: true,
   getInputNids: getOneToOneInputNids,
 }

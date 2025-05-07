@@ -1,5 +1,7 @@
-import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 import * as THREE from "three"
+import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
+
+const TONE_MAPPED = true
 
 interface CustomShaderMaterialProps extends THREE.MaterialParameters {
   baseZero?: number[] // [r, g, b] for base color
@@ -25,17 +27,16 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
 
   const material = new MaterialClass({ ...rest, blending })
 
+  material.toneMapped = TONE_MAPPED
+
   material.userData.uniforms = {
     baseZero: { value: normalizeColor(baseZero) },
     basePos: { value: normalizeColor(basePos) },
     baseNeg: { value: normalizeColor(baseNeg) },
   }
 
-  // Inject shader customization
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.baseZero = material.userData.uniforms.baseZero
-    shader.uniforms.basePos = material.userData.uniforms.basePos
-    shader.uniforms.baseNeg = material.userData.uniforms.baseNeg
+    shader.uniforms = { ...shader.uniforms, ...material.userData.uniforms }
 
     shader.vertexShader = shader.vertexShader.replace(
       `#include <common>`,
@@ -63,6 +64,81 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
       `diffuseColor.rgb = vColor;`
     )
   }
+  return material
+}
+
+interface CustomShaderMaterialForTextureProps
+  extends CustomShaderMaterialProps {
+  activationTexture: THREE.Texture
+}
+
+export function createShaderMaterialForTexture({
+  activationTexture,
+  baseZero = ZERO_BASE,
+  basePos = POS_BASE,
+  baseNeg = NEG_BASE,
+  ...rest
+}: CustomShaderMaterialForTextureProps): THREE.MeshStandardMaterial {
+  const material = new THREE.MeshStandardMaterial({ ...rest })
+
+  material.toneMapped = TONE_MAPPED
+  material.transparent = true
+
+  material.userData.uniforms = {
+    activationTex: { value: activationTexture },
+    baseZero: { value: normalizeColor(baseZero) },
+    basePos: { value: normalizeColor(basePos) },
+    baseNeg: { value: normalizeColor(baseNeg) },
+  }
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms = { ...shader.uniforms, ...material.userData.uniforms }
+
+    shader.vertexShader = shader.vertexShader.replace(
+      `#include <common>`,
+      `
+        #include <common>
+        varying vec2 vUv;
+      `
+    )
+
+    shader.vertexShader = shader.vertexShader.replace(
+      `#include <uv_vertex>`,
+      `
+        #include <uv_vertex>
+        vUv = uv;
+      `
+    )
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      `#include <common>`,
+      `
+        #include <common>
+        uniform sampler2D activationTex;
+        uniform vec3 baseZero;
+        uniform vec3 basePos;
+        uniform vec3 baseNeg;
+        varying vec2 vUv;
+      `
+    )
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      `#include <color_fragment>`,
+      `
+        float activation = texture2D(activationTex, vUv).r;
+
+        if (activation < -900.0) {
+          discard;
+        }
+
+        vec3 base = activation >= 0.0 ? basePos : baseNeg;
+        float val = abs(activation);
+        vec3 srgbColor = mix(baseZero, base, val);
+        diffuseColor.rgb = pow(srgbColor, vec3(2.2));
+      `
+    )
+  }
+
   return material
 }
 

@@ -64,6 +64,7 @@ export function SceneStoreProvider({
         isActive: false,
         view: "layers",
         subset: "train",
+        focussedLayerIdx: undefined,
       })
     }
   }, [isActive])

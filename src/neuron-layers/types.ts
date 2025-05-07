@@ -25,9 +25,7 @@ export interface NeuronLayer {
   prevLayer?: NeuronLayer
   hasLabels?: boolean
   hasColorChannels: boolean
-  normalizedActivations: Float32Array
-  rgbColors: Float32Array // for instanced mesh
-  rgbaColors: Uint32Array // for texture
+  normalizedActivations: Float32Array // used for activation colors
 }
 
 // Types for Neurons

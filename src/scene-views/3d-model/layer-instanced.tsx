@@ -28,16 +28,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const colorArr = useColorData(props)
   useColors(meshRef, activations)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
-  // reversed render order for color blending
-  const renderOrder = hasColorChannels ? 0 - channelIdx : undefined
-
-  useEffect(() => {
-    if (meshRef.current) {
-      // Mark the instanceMatrix as dynamic for updates
-      meshRef.current.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    }
-  }, [])
-
+  const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
     <group ref={groupRef}>
       <instancedMesh

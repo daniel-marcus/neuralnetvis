@@ -3,17 +3,18 @@ import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import type { NeuronLayer } from "@/neuron-layers/types"
+import { createShaderMaterialForTexture } from "./materials"
 
 const CELL_GAP = 1 // texture pixel between cells
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
-  const texture = useActivationTexture(props)
+  const [texture, material] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   return (
     <mesh scale={[size, spacedSize, spacedSize]}>
       <primitive object={geometry} attach="geometry" />
-      <meshStandardMaterial map={texture} transparent />
+      <primitive object={material} attach="material" />
     </mesh>
   )
 })
@@ -29,12 +30,23 @@ function useActivationTexture(layer: NeuronLayer) {
     const texWidth = gridCols * width + (gridCols - 1) * CELL_GAP
     const texHeight = gridRows * height + (gridRows - 1) * CELL_GAP
 
-    const data = new Uint8Array(texWidth * texHeight * 4).fill(0)
-    const args = [data, texWidth, texHeight, THREE.RGBAFormat] as const
-    const texture = new THREE.DataTexture(...args)
-    texture.colorSpace = THREE.SRGBColorSpace
+    // use -999.0 as marker for empty (transparent) pixels
+    const data = new Float32Array(texWidth * texHeight * 4).fill(-999.0)
+
+    const texture = new THREE.DataTexture(
+      data,
+      texWidth,
+      texHeight,
+      THREE.RedFormat,
+      THREE.FloatType
+    )
+    // texture.colorSpace = THREE.SRGBColorSpace
     return texture
   }, [height, width, channels])
+
+  const material = useMemo(() => {
+    return createShaderMaterialForTexture({ activationTexture: texture })
+  }, [texture])
 
   useEffect(() => {
     return () => texture.dispose()
@@ -72,17 +84,17 @@ function useActivationTexture(layer: NeuronLayer) {
   useLayoutEffect(() => {
     // update pixel colors in the texture
     // layerActivations only used as update trigger here
-    const data32 = new Uint32Array(texture.image.data.buffer)
-    const rgbaColors = layer.rgbaColors
+    const data = texture.image.data as Float32Array
+    const activations = layer.normalizedActivations
 
-    for (let i = 0; i < rgbaColors.length; i++) {
-      data32[pixelMap[i]] = rgbaColors[i]
+    for (let i = 0; i < activations.length; i++) {
+      data[pixelMap[i]] = activations[i]
     }
 
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer.rgbaColors])
+  }, [texture, pixelMap, layerActivations, layer.normalizedActivations])
 
-  return texture
+  return [texture, material] as const
 }
 
 function updateUvMapping(
