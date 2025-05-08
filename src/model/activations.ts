@@ -94,58 +94,36 @@ async function getProcessedActivations(
     const allActivations = getLayerActivations(model, sample.xTensor, outputs)
     const t1 = performance.now()
     if (isDebug()) console.log(`inference: ${t1 - t0}ms`)
-    const activations: (tf.Tensor[] | undefined)[] = []
-    for (const [i, layer] of layers.entries()) {
-      const layerActivations = allActivations?.[i]
-      if (!layerActivations) {
-        activations.push(undefined)
-        continue
-      }
-      const flattened = layerActivations.flatten()
-      const hasDepthDim = typeof layer.tfLayer.outputShape[3] === "number"
-      const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
-      const stats = activationStats?.[layer.index]
-      const normalizedFlattened = hasDepthDim
-        ? channelNormalize(layerActivations as tf.Tensor4D).flatten()
-        : isRegression && layer.layerPos !== "input" && !!stats
-        ? scaleNormalize(flattened, stats.mean, stats.std)
-        : isSoftmax
-        ? flattened
-        : normalize(flattened)
-      activations.push([flattened, normalizedFlattened])
-    }
-    if (isDebug()) console.log(`normalization: ${performance.now() - t1}ms`)
-    return activations
+    return allActivations
   })
 
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
     for (const [i, layer] of layers.entries()) {
-      if (!activationTensors[i]) continue
-      const [actTensor, normActTensor] = activationTensors[i]
+      if (!activationTensors?.[i]) continue
+      const actTensor = activationTensors[i] as tf.Tensor
       const act = (await actTensor.data()) as Float32Array
-      const normAct = (await normActTensor.data()) as Float32Array
+      // const normAct = (await normActTensor.data()) as Float32Array
 
       // reuse buffers from layer to avoid reallocating
-      const { normalizedActivations } = layer
+      const { activations } = layer
 
       if (layer.hasColorChannels) {
-        for (let nIdx = 0; nIdx < normAct.length; nIdx += 1) {
+        for (let nIdx = 0; nIdx < act.length; nIdx += 1) {
           const channelIdx = nIdx % 3
           const channelOffset = channelIdx * layer.numNeurons
           const newIdx = Math.floor((channelOffset + nIdx) / 3)
-          normalizedActivations[newIdx] = normAct[nIdx]
+          activations[newIdx] = act[nIdx]
           // TODO: maybe not the best idea to change order if other components want to use this?
           // see useColorData in layer-instanced.tsx
         }
       } else {
-        normalizedActivations.set(normAct)
+        activations.set(act)
       }
 
       newLayerActivations[layer.index] = {
         activations: act,
-        normalizedActivations,
       }
     }
     const end = performance.now()
@@ -155,7 +133,7 @@ async function getProcessedActivations(
     console.log("Error getting activations", e)
     return {}
   } finally {
-    activationTensors.flat().forEach((t) => t?.dispose())
+    activationTensors?.forEach((t) => t?.dispose())
   }
 }
 

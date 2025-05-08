@@ -4,6 +4,8 @@ import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import type { NeuronLayer } from "@/neuron-layers/types"
 import { createShaderMaterialForTexture } from "./materials"
+import { minimum } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import { norm } from "@tensorflow/tfjs"
 
 const CELL_GAP = 1 // texture pixel between cells
 
@@ -82,17 +84,25 @@ function useActivationTexture(layer: NeuronLayer) {
   }, [width, height, channels, texture.image.width])
 
   useLayoutEffect(() => {
+    if (!layerActivations) return
     // update pixel colors in the texture
     // layerActivations only used as update trigger here
     const data = texture.image.data as Float32Array
-    const activations = layer.normalizedActivations
+    const { activations } = layer
 
     for (let i = 0; i < activations.length; i++) {
       data[pixelMap[i]] = activations[i]
     }
 
+    const maxAbs = activations.reduce(
+      (max, val) => Math.max(max, Math.abs(val)),
+      0
+    )
+
+    material.userData.uniforms.maxAbsActivation.value = maxAbs
+
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer.normalizedActivations])
+  }, [texture, pixelMap, layerActivations, layer, material])
 
   return [texture, material] as const
 }

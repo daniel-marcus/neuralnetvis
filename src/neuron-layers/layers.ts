@@ -59,7 +59,7 @@ export function useLayers() {
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
             (layerPos === "output" && !!ds?.outputLabels?.length),
           hasColorChannels,
-          normalizedActivations: new Float32Array(units),
+          activations: new Float32Array(units),
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []

@@ -33,6 +33,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
     baseZero: { value: normalizeColor(baseZero) },
     basePos: { value: normalizeColor(basePos) },
     baseNeg: { value: normalizeColor(baseNeg) },
+    maxAbsActivation: { value: Infinity },
   }
 
   material.onBeforeCompile = (shader) => {
@@ -45,6 +46,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
         uniform vec3 baseZero;
         uniform vec3 basePos;
         uniform vec3 baseNeg;
+        uniform float maxAbsActivation;
         `
     )
 
@@ -52,16 +54,18 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
       `#include <color_vertex>`,
       `
         float activation = instanceColor.r;
-        vec3 base = activation >= 0.0 ? basePos : baseNeg;
-        float val = abs(activation);
+        float epsilon = 1e-6;
+        float normalized = activation / max(maxAbsActivation, epsilon);
+        vec3 base = normalized >= 0.0 ? basePos : baseNeg;
+        float val = abs(normalized);
         vec3 srgbColor = mix(baseZero, base, val);
-        vColor = pow(srgbColor, vec3(2.2));
+        vColor = srgbColor;
         `
     )
 
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <color_fragment>`,
-      `diffuseColor.rgb = vColor;`
+      `diffuseColor.rgb = pow(vColor, vec3(2.2));` // gamma correction
     )
   }
   return material
@@ -86,6 +90,7 @@ export function createShaderMaterialForTexture({
 
   material.userData.uniforms = {
     activationTex: { value: activationTexture },
+    maxAbsActivation: { value: 1 },
     baseZero: { value: normalizeColor(baseZero) },
     basePos: { value: normalizeColor(basePos) },
     baseNeg: { value: normalizeColor(baseNeg) },
@@ -115,6 +120,9 @@ export function createShaderMaterialForTexture({
       `
         #include <common>
         uniform sampler2D activationTex;
+
+        uniform float maxAbsActivation;
+
         uniform vec3 baseZero;
         uniform vec3 basePos;
         uniform vec3 baseNeg;
@@ -125,14 +133,17 @@ export function createShaderMaterialForTexture({
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <color_fragment>`,
       `
-        float activation = texture2D(activationTex, vUv).r;
+        float raw = texture2D(activationTex, vUv).r;
 
-        if (activation < -900.0) {
+        if (raw < -900.0) {
           discard;
         }
 
-        vec3 base = activation >= 0.0 ? basePos : baseNeg;
-        float val = abs(activation);
+        float epsilon = 1e-6;
+        float normalized = raw / max(maxAbsActivation, epsilon);
+
+        vec3 base = normalized >= 0.0 ? basePos : baseNeg;
+        float val = abs(normalized);
         vec3 srgbColor = mix(baseZero, base, val);
         diffuseColor.rgb = pow(srgbColor, vec3(2.2));
       `

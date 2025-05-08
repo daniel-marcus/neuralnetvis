@@ -9,6 +9,7 @@ import { NeuronLabels } from "./label"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
 import { createShaderMaterial } from "./materials"
+import { ReadableStreamDefaultController } from "stream/web"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -60,13 +61,22 @@ const rMaterial = createShaderMaterial({ addBlend: true, basePos: [255, 0, 0] })
 const gMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 255, 0] })
 const bMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 0, 255] })
 const blendingMaterials = [rMaterial, gMaterial, bMaterial]
-const activationMaterial = createShaderMaterial()
+// const activationMaterial = createShaderMaterial()
 
 function useMaterial(hasColorChannels: boolean, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const material = hasColorChannels
-    ? blendingMaterials[channelIdx]
-    : activationMaterial
+  const material = useMemo(() => {
+    return hasColorChannels
+      ? blendingMaterials[channelIdx]
+      : createShaderMaterial() // activationMaterial recreated for every layer to save custom uniforms (maxAbsActivation)
+  }, [hasColorChannels, channelIdx])
+
+  useEffect(() => {
+    if (hasColorChannels) return
+    return () => {
+      material.dispose()
+    }
+  }, [material, hasColorChannels])
 
   useEffect(() => {
     if (!hasColorChannels) return
@@ -143,10 +153,18 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 }
 
 function useColors(meshRef: MeshRef, activations?: LayerActivations) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!meshRef.current || !meshRef.current.instanceColor) return
+    if (!activations) return
     // activations is only used as reactive trigger here
     // color buffer is directly changed in useActivations
+
+    const maxAbs = activations.activations.reduce(
+      (max, val) => Math.max(max, Math.abs(val)),
+      0
+    )
+    const material = meshRef.current.material as THREE.Material
+    material.userData.uniforms.maxAbsActivation.value = maxAbs
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, activations])
 }
@@ -155,12 +173,12 @@ function useColorData(props: InstancedLayerProps): Float32Array {
   // for color layers: create a new view on the layer color buffer that includes only the values for the given channelIdx
   // layer color buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
   const { hasColorChannels, channelIdx = 0, numNeurons } = props
-  const { normalizedActivations } = props
+  const { activations } = props
   return useMemo(() => {
-    if (!hasColorChannels) return normalizedActivations
+    if (!hasColorChannels) return activations
     const units = numNeurons / 3
     const offset = channelIdx * units * 4 // 4 bytes per float32 value
     const length = units
-    return new Float32Array(normalizedActivations.buffer, offset, length)
-  }, [hasColorChannels, normalizedActivations, channelIdx, numNeurons])
+    return new Float32Array(activations.buffer, offset, length)
+  }, [hasColorChannels, activations, channelIdx, numNeurons])
 }

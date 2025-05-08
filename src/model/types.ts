@@ -4,7 +4,6 @@ import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 
 export interface LayerActivations {
   activations: Float32Array // [neuronIdx]
-  normalizedActivations: Float32Array
 }
 
 export interface WeightsBiases {

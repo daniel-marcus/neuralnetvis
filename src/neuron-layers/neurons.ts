@@ -77,7 +77,6 @@ function makeStateful(
   const statefulNeuron: NeuronStateful = {
     ...neuron,
     activation: layerActivations?.activations[nIdx],
-    normalizedActivation: layerActivations?.normalizedActivations[nIdx],
     weights,
     bias,
     rawInput: neuron.layer.layerPos === "input" ? rawX?.[nIdx] : undefined,

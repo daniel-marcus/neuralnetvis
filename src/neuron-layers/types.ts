@@ -25,7 +25,7 @@ export interface NeuronLayer {
   prevLayer?: NeuronLayer
   hasLabels?: boolean
   hasColorChannels: boolean
-  normalizedActivations: Float32Array // used for activation colors
+  activations: Float32Array // used for activation colors
 }
 
 // Types for Neurons
@@ -48,7 +48,6 @@ export type Neuron = {
 export type NeuronState = {
   rawInput?: number
   activation?: number
-  normalizedActivation?: number
   weights?: number[]
   bias?: number
 }
