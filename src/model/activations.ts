@@ -3,6 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
+import { useActivationStats } from "./activation-stats"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 
@@ -11,6 +12,7 @@ type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 export function ActivationUpdater() {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
+  useActivationStats()
   const setActivations = useSceneStore((s) => s.setActivations)
   const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()

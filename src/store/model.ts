@@ -25,8 +25,10 @@ export interface ModelSlice {
   resetLayerConfigs: () => void
   resetWeights: () => void
 
-  activationStats?: ActivationStats[]
-  setActivationStats: (activationStats?: ActivationStats[]) => void
+  activationStats: { [layerIdx: number]: ActivationStats | undefined }
+  setActivationStats: (
+    activationStats?: Record<number, ActivationStats>
+  ) => void
 
   activations: {
     [layerIdx: number]: LayerActivations | undefined
@@ -52,7 +54,7 @@ export const createModelSlice: StateCreator<
     set({
       model,
       // sample: undefined,
-      activationStats: undefined,
+      activationStats: {},
       activations: {},
       focussedLayerIdx: undefined,
     })
@@ -70,7 +72,7 @@ export const createModelSlice: StateCreator<
   resetWeights: () =>
     set(({ layerConfigs }) => ({ layerConfigs: [...layerConfigs] })), // trigger rebuild of model
 
-  activationStats: undefined,
+  activationStats: {},
   setActivationStats: (activationStats) => set({ activationStats }),
 
   activations: {},

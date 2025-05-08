@@ -61,7 +61,6 @@ const rMaterial = createShaderMaterial({ addBlend: true, basePos: [255, 0, 0] })
 const gMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 255, 0] })
 const bMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 0, 255] })
 const blendingMaterials = [rMaterial, gMaterial, bMaterial]
-// const activationMaterial = createShaderMaterial()
 
 function useMaterial(layer: NeuronLayer, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
