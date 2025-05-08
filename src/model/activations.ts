@@ -99,17 +99,16 @@ async function getActivations(
       const actTensor = activationTensors[i] as tf.Tensor
       const act = (await actTensor.data()) as Float32Array
 
-      // reuse buffers from layer to avoid reallocating
-      const { activations } = layer
+      // reuse buffer from layer to avoid reallocating
+      const { activations, channelActivations } = layer
 
       if (layer.hasColorChannels) {
+        // different order in color layers: [...allRed, ...allGreen, ...allBlue]
+        // see channelViews() in neuron-layers/layers.ts
         for (let nIdx = 0; nIdx < act.length; nIdx += 1) {
           const channelIdx = nIdx % 3
-          const channelOffset = channelIdx * layer.numNeurons
-          const newIdx = Math.floor((channelOffset + nIdx) / 3)
-          activations[newIdx] = act[nIdx]
-          // TODO: maybe not the best idea to change order if other components want to use this?
-          // see useColorData in layer-instanced.tsx
+          const idxInChannel = Math.floor(nIdx / 3)
+          channelActivations[channelIdx][idxInChannel] = act[nIdx] // TODO: switch dims in tensor above?
         }
       } else {
         activations.set(act)

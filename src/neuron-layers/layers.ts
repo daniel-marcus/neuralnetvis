@@ -43,6 +43,10 @@ export function useLayers() {
           createRef<InstancedMesh>()
         )
 
+        const activations = new Float32Array(units)
+        const channels = hasColorChannels ? 3 : 1
+        const channelActivations = channelViews(activations, units, channels)
+
         const layer: NeuronLayer = {
           lid: `${tfLayer.name}_${units}`,
           index: layerIndex,
@@ -59,7 +63,8 @@ export function useLayers() {
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
             (layerPos === "output" && !!ds?.outputLabels?.length),
           hasColorChannels,
-          activations: new Float32Array(units),
+          activations,
+          channelActivations,
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
@@ -67,6 +72,16 @@ export function useLayers() {
     return () => setLayers([])
   }, [model, ds, setLayers])
   return layers
+}
+
+function channelViews(activations: Float32Array, units: number, channels = 3) {
+  // for color layers: create a new view on the layer activations buffer that includes only the values for the given channelIdx
+  // layer activations buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
+  const channelUnits = units / channels
+  return Array.from({ length: channels }).map((_, channelIdx) => {
+    const offset = channelIdx * channelUnits * 4
+    return new Float32Array(activations.buffer, offset, channelUnits)
+  })
 }
 
 const MAX_VISIBLE_LAYERS = 200

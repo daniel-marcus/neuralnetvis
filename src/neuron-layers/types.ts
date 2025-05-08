@@ -25,7 +25,8 @@ export interface NeuronLayer {
   prevLayer?: NeuronLayer
   hasLabels?: boolean
   hasColorChannels: boolean
-  activations: Float32Array // used for activation colors
+  activations: Float32Array // used for activation colors, reused for performance = not reactive
+  channelActivations: Float32Array[] // sliced view on activations for color channels
 }
 
 // Types for Neurons

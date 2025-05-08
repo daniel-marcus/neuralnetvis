@@ -19,14 +19,14 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, meshRefs } = props
+  const { index, channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
-  const meshRef = hasColorChannels ? meshRefs[channelIdx] : meshRefs[0]
+  const meshRef = meshRefs[channelIdx]
+  const colorArr = channelActivations[channelIdx]
   const material = useMaterial(props, channelIdx)
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
-  const colorArr = useColorData(props)
   useColors(meshRef, activations)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
@@ -64,10 +64,9 @@ const blendingMaterials = [rMaterial, gMaterial, bMaterial]
 
 function useMaterial(layer: NeuronLayer, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const { hasColorChannels } = layer
+  const { hasColorChannels, layerPos } = layer
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
   const isRegression = useSceneStore((s) => s.isRegression())
-  const { layerPos } = layer
 
   const material = useMemo(() => {
     const { NONE, PER_LAYER_MAX_ABS, PER_NEURON_SCALE_NORM } = Normalization
@@ -174,18 +173,4 @@ function useColors(meshRef: MeshRef, activations?: LayerActivations) {
     material.userData.uniforms.maxAbsActivation.value = maxAbs
     meshRef.current.instanceColor.needsUpdate = true
   }, [meshRef, activations])
-}
-
-function useColorData(props: InstancedLayerProps): Float32Array {
-  // for color layers: create a new view on the layer color buffer that includes only the values for the given channelIdx
-  // layer color buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
-  const { hasColorChannels, channelIdx = 0, numNeurons } = props
-  const { activations } = props
-  return useMemo(() => {
-    if (!hasColorChannels) return activations
-    const units = numNeurons / 3
-    const offset = channelIdx * units * 4 // 4 bytes per float32 value
-    const length = units
-    return new Float32Array(activations.buffer, offset, length)
-  }, [hasColorChannels, activations, channelIdx, numNeurons])
 }
