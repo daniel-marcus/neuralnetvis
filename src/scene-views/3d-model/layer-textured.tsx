@@ -2,10 +2,9 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
-import type { NeuronLayer } from "@/neuron-layers/types"
 import { createShaderMaterialForTexture } from "./materials"
-import { minimum } from "@tensorflow/tfjs-layers/dist/exports_layers"
-import { norm } from "@tensorflow/tfjs"
+import { getMaxAbs } from "@/data/utils"
+import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
 
@@ -94,13 +93,8 @@ function useActivationTexture(layer: NeuronLayer) {
       data[pixelMap[i]] = activations[i]
     }
 
-    const maxAbs = activations.reduce(
-      (max, val) => Math.max(max, Math.abs(val)),
-      0
-    )
-
+    const maxAbs = getMaxAbs(activations)
     material.userData.uniforms.maxAbsActivation.value = maxAbs
-
     texture.needsUpdate = true
   }, [texture, pixelMap, layerActivations, layer, material])
 

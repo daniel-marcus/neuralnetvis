@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
-import { useActivationStats, type ActivationStats } from "./activation-stats"
-import { normalize, channelNormalize, scaleNormalize } from "@/data/utils"
 import { useSceneStore, isDebug } from "@/store"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
@@ -13,9 +11,6 @@ type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 export function ActivationUpdater() {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
-  const ds = useSceneStore((s) => s.ds)
-  const actStats = useActivationStats(model, ds)
-  const isRegr = useSceneStore((s) => s.isRegression())
   const setActivations = useSceneStore((s) => s.setActivations)
   const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
@@ -39,8 +34,7 @@ export function ActivationUpdater() {
       if (!layersToUpdate.length) return
 
       const t0 = performance.now()
-      const args = [model, layersToUpdate, sample, actStats, isRegr] as const
-      const newActivations = await getProcessedActivations(...args)
+      const newActivations = await getActivations(model, layersToUpdate, sample)
       const dt = performance.now() - t0
       if (isDebug()) console.log(`>> total: ${dt}ms (${layersToUpdate.length})`)
 
@@ -52,7 +46,7 @@ export function ActivationUpdater() {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [model, layers, actStats, isRegr, setActivations, invalidate]
+    [model, layers, setActivations, invalidate]
   )
 
   // reset update tracker when model changes
@@ -80,12 +74,10 @@ export function useActivation(layerIdx: number, neuronIdx: number) {
   return useSceneStore((s) => s.activations[layerIdx]?.activations[neuronIdx])
 }
 
-async function getProcessedActivations(
+async function getActivations(
   model: tf.LayersModel,
   layers: NeuronLayer[],
-  sample: Sample,
-  activationStats?: ActivationStats[],
-  isRegression?: boolean
+  sample: Sample
 ) {
   const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   await tf.ready()
@@ -104,7 +96,6 @@ async function getProcessedActivations(
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
       const act = (await actTensor.data()) as Float32Array
-      // const normAct = (await normActTensor.data()) as Float32Array
 
       // reuse buffers from layer to avoid reallocating
       const { activations } = layer

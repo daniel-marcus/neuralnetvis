@@ -98,3 +98,7 @@ export function round(val: number | undefined, dec = 1) {
   if (typeof val === "undefined") return
   return Math.round(val * 10 ** dec) / 10 ** dec
 }
+
+export function getMaxAbs(vals: Float32Array) {
+  return vals.reduce((max, val) => Math.max(max, Math.abs(val)), 0)
+}

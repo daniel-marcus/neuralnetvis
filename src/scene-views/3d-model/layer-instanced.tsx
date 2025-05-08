@@ -6,10 +6,10 @@ import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
+import { createShaderMaterial } from "./materials"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
-import { createShaderMaterial } from "./materials"
-import { ReadableStreamDefaultController } from "stream/web"
+import { getMaxAbs } from "@/data/utils"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -159,10 +159,7 @@ function useColors(meshRef: MeshRef, activations?: LayerActivations) {
     // activations is only used as reactive trigger here
     // color buffer is directly changed in useActivations
 
-    const maxAbs = activations.activations.reduce(
-      (max, val) => Math.max(max, Math.abs(val)),
-      0
-    )
+    const maxAbs = getMaxAbs(activations.activations)
     const material = meshRef.current.material as THREE.Material
     material.userData.uniforms.maxAbsActivation.value = maxAbs
     meshRef.current.instanceColor.needsUpdate = true
