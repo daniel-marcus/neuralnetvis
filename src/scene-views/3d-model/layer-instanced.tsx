@@ -6,10 +6,10 @@ import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import { createShaderMaterial } from "./materials"
+import { createShaderMaterial, Normalization } from "./materials"
+import { getMaxAbs } from "@/data/utils"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import type { LayerActivations } from "@/model"
-import { getMaxAbs } from "@/data/utils"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -22,7 +22,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const { index, channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = hasColorChannels ? meshRefs[channelIdx] : meshRefs[0]
-  const material = useMaterial(hasColorChannels, channelIdx)
+  const material = useMaterial(props, channelIdx)
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
@@ -63,20 +63,25 @@ const bMaterial = createShaderMaterial({ addBlend: true, basePos: [0, 0, 255] })
 const blendingMaterials = [rMaterial, gMaterial, bMaterial]
 // const activationMaterial = createShaderMaterial()
 
-function useMaterial(hasColorChannels: boolean, channelIdx = 0) {
+function useMaterial(layer: NeuronLayer, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
+  const { hasColorChannels } = layer
+  const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
+
   const material = useMemo(() => {
+    const { NONE, PER_LAYER_MAX_ABS } = Normalization
+    const normalization = isSoftmax ? NONE : PER_LAYER_MAX_ABS
     return hasColorChannels
       ? blendingMaterials[channelIdx]
-      : createShaderMaterial() // activationMaterial recreated for every layer to save custom uniforms (maxAbsActivation)
-  }, [hasColorChannels, channelIdx])
+      : createShaderMaterial({ normalization }) // activationMaterial recreated for every layer to save custom uniforms (maxAbsActivation)
+  }, [hasColorChannels, channelIdx, isSoftmax])
 
   useEffect(() => {
-    if (hasColorChannels) return
+    if (layer.hasColorChannels) return
     return () => {
       material.dispose()
     }
-  }, [material, hasColorChannels])
+  }, [material, layer])
 
   useEffect(() => {
     if (!hasColorChannels) return

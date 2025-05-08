@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 
 export function normalize(tensor: tf.Tensor): tf.Tensor {
-  // normalization between -1 and 1, keeps sign
+  // max-abs-normalization between -1 and 1, keeps sign
   return tf.tidy(() => {
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
     const maxAbs = tensor.abs().max().maximum(epsilon)

@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
-import { createShaderMaterialForTexture } from "./materials"
+import { createShaderMaterialForTexture, Normalization } from "./materials"
 import { getMaxAbs } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
@@ -46,7 +46,10 @@ function useActivationTexture(layer: NeuronLayer) {
   }, [height, width, channels])
 
   const material = useMemo(() => {
-    return createShaderMaterialForTexture({ activationTexture: texture })
+    return createShaderMaterialForTexture({
+      activationTexture: texture,
+      normalization: Normalization.PER_LAYER_MAX_ABS,
+    })
   }, [texture])
 
   useEffect(() => {

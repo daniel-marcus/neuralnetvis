@@ -3,11 +3,21 @@ import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 
 const TONE_MAPPED = true
 
+export const Normalization = {
+  NONE: 0,
+  PER_LAYER_MAX_ABS: 1,
+  // TODO: scale normalization for regression?
+} as const
+
+export type NormalizationType =
+  (typeof Normalization)[keyof typeof Normalization]
+
 interface CustomShaderMaterialProps extends THREE.MaterialParameters {
   baseZero?: number[] // [r, g, b] for base color
   basePos?: number[] // [r, g, b] for positive activation color
   baseNeg?: number[] // [r, g, b] for negative activation color
   addBlend?: boolean // use additive blending for color channels
+  normalization?: NormalizationType
 }
 
 export function createShaderMaterial(args?: CustomShaderMaterialProps) {
@@ -16,6 +26,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
     basePos = POS_BASE,
     baseNeg = NEG_BASE,
     addBlend = false,
+    normalization = Normalization.NONE,
     ...rest
   } = args ?? {}
 
@@ -34,6 +45,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
     basePos: { value: normalizeColor(basePos) },
     baseNeg: { value: normalizeColor(baseNeg) },
     maxAbsActivation: { value: Infinity },
+    normalizationMode: { value: normalization },
   }
 
   material.onBeforeCompile = (shader) => {
@@ -47,6 +59,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
         uniform vec3 basePos;
         uniform vec3 baseNeg;
         uniform float maxAbsActivation;
+        uniform float normalizationMode;
         `
     )
 
@@ -54,11 +67,12 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
       `#include <color_vertex>`,
       `
         float activation = instanceColor.r;
-        float epsilon = 1e-6;
-        float normalized = activation / max(maxAbsActivation, epsilon);
-        vec3 base = normalized >= 0.0 ? basePos : baseNeg;
-        float val = abs(normalized);
-        vec3 srgbColor = mix(baseZero, base, val);
+        float colorValue = activation;
+        if (int(normalizationMode) == ${Normalization.PER_LAYER_MAX_ABS}) {
+          colorValue = activation / max(maxAbsActivation, 1e-6);
+        }
+        vec3 base = colorValue >= 0.0 ? basePos : baseNeg;
+        vec3 srgbColor = mix(baseZero, base, abs(colorValue));
         vColor = srgbColor;
         `
     )
@@ -81,6 +95,7 @@ export function createShaderMaterialForTexture({
   baseZero = ZERO_BASE,
   basePos = POS_BASE,
   baseNeg = NEG_BASE,
+  normalization = Normalization.NONE,
   ...rest
 }: CustomShaderMaterialForTextureProps): THREE.MeshStandardMaterial {
   const material = new THREE.MeshStandardMaterial({ ...rest })
@@ -90,10 +105,11 @@ export function createShaderMaterialForTexture({
 
   material.userData.uniforms = {
     activationTex: { value: activationTexture },
-    maxAbsActivation: { value: 1 },
     baseZero: { value: normalizeColor(baseZero) },
     basePos: { value: normalizeColor(basePos) },
     baseNeg: { value: normalizeColor(baseNeg) },
+    maxAbsActivation: { value: Infinity },
+    normalizationMode: { value: normalization },
   }
 
   material.onBeforeCompile = (shader) => {
@@ -120,12 +136,11 @@ export function createShaderMaterialForTexture({
       `
         #include <common>
         uniform sampler2D activationTex;
-
-        uniform float maxAbsActivation;
-
         uniform vec3 baseZero;
         uniform vec3 basePos;
         uniform vec3 baseNeg;
+        uniform float maxAbsActivation;
+        uniform float normalizationMode;
         varying vec2 vUv;
       `
     )
@@ -133,18 +148,16 @@ export function createShaderMaterialForTexture({
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <color_fragment>`,
       `
-        float raw = texture2D(activationTex, vUv).r;
-
-        if (raw < -900.0) {
+        float activation = texture2D(activationTex, vUv).r;
+        if (activation < -900.0) {
           discard;
         }
-
-        float epsilon = 1e-6;
-        float normalized = raw / max(maxAbsActivation, epsilon);
-
-        vec3 base = normalized >= 0.0 ? basePos : baseNeg;
-        float val = abs(normalized);
-        vec3 srgbColor = mix(baseZero, base, val);
+        float colorValue = activation;
+        if (int(normalizationMode) == ${Normalization.PER_LAYER_MAX_ABS}) {
+          colorValue = activation / max(maxAbsActivation, 1e-6);
+        }
+        vec3 base = colorValue >= 0.0 ? basePos : baseNeg;
+        vec3 srgbColor = mix(baseZero, base, abs(colorValue));
         diffuseColor.rgb = pow(srgbColor, vec3(2.2));
       `
     )
