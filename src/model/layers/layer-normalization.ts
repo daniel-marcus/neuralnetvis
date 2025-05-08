@@ -5,7 +5,7 @@ import type { LayerDef } from "./types"
 export const LayerNormalization: LayerDef<"LayerNormalization"> = {
   constructorFunc: tf.layers.layerNormalization,
   defaultConfig: {},
-  isInvisible: true,
+  // isInvisible: true,
   isUserAddable: true,
   getInputNids: getOneToOneInputNids,
 }
