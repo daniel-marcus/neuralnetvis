@@ -9,7 +9,7 @@ import { getDbDataAsTensors } from "@/data/dataset"
 export interface ActivationStats {
   mean: Float32Array
   std: Float32Array
-} // tensors have values for each neuron in the layer
+} // arrays with values for each neuron in the layer
 
 export function useActivationStats() {
   const model = useSceneStore((s) => s.model)
@@ -27,11 +27,11 @@ export function useActivationStats() {
       const statsTensors = tf.tidy(
         () =>
           getLayerActivations(model, X)?.map((la) => {
-            const min = la.min(0)
-            const max = la.max(0)
+            // const min = la.min(0)
+            // const max = la.max(0)
             const { mean, variance } = tf.moments(la, 0)
             const std = variance.sqrt().add(1e-7)
-            return { min, max, mean, std }
+            return { mean, std }
           }) ?? []
       )
       try {

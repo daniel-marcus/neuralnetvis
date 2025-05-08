@@ -66,14 +66,20 @@ function useMaterial(layer: NeuronLayer, channelIdx = 0) {
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const { hasColorChannels } = layer
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
+  const isRegression = useSceneStore((s) => s.isRegression())
+  const { layerPos } = layer
 
   const material = useMemo(() => {
-    const { NONE, PER_LAYER_MAX_ABS } = Normalization
-    const normalization = isSoftmax ? NONE : PER_LAYER_MAX_ABS
+    const { NONE, PER_LAYER_MAX_ABS, PER_NEURON_SCALE_NORM } = Normalization
+    const normalization = isSoftmax
+      ? NONE
+      : isRegression && layerPos !== "input"
+      ? PER_NEURON_SCALE_NORM
+      : PER_LAYER_MAX_ABS
     return hasColorChannels
       ? blendingMaterials[channelIdx]
       : createShaderMaterial({ normalization }) // activationMaterial recreated for every layer to save custom uniforms (maxAbsActivation)
-  }, [hasColorChannels, channelIdx, isSoftmax])
+  }, [hasColorChannels, channelIdx, isSoftmax, isRegression, layerPos])
 
   useEffect(() => {
     if (layer.hasColorChannels) return

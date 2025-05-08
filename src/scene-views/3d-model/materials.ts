@@ -6,7 +6,7 @@ const TONE_MAPPED = true
 export const Normalization = {
   NONE: 0,
   PER_LAYER_MAX_ABS: 1,
-  // TODO: scale normalization for regression?
+  PER_NEURON_SCALE_NORM: 1, // TODO 2
 } as const
 
 export type NormalizationType =
