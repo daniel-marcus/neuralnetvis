@@ -53,7 +53,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
 
     shader.vertexShader = shader.vertexShader.replace(
       `#include <common>`,
-      `
+      /* glsl */ `
         #include <common>
         uniform vec3 baseZero;
         uniform vec3 basePos;
@@ -65,7 +65,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
 
     shader.vertexShader = shader.vertexShader.replace(
       `#include <color_vertex>`,
-      `
+      /* glsl */ `
         float activation = instanceColor.r;
         float colorValue = activation;
         if (int(normalizationMode) == ${Normalization.PER_LAYER_MAX_ABS}) {
@@ -79,7 +79,7 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
 
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <color_fragment>`,
-      `diffuseColor.rgb = pow(vColor, vec3(2.2));` // gamma correction
+      /* glsl */ `diffuseColor.rgb = pow(vColor, vec3(2.2));` // gamma correction
     )
   }
   return material
@@ -117,7 +117,7 @@ export function createShaderMaterialForTexture({
 
     shader.vertexShader = shader.vertexShader.replace(
       `#include <common>`,
-      `
+      /* glsl */ `
         #include <common>
         varying vec2 vUv;
       `
@@ -125,7 +125,7 @@ export function createShaderMaterialForTexture({
 
     shader.vertexShader = shader.vertexShader.replace(
       `#include <uv_vertex>`,
-      `
+      /* glsl */ `
         #include <uv_vertex>
         vUv = uv;
       `
@@ -133,7 +133,7 @@ export function createShaderMaterialForTexture({
 
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <common>`,
-      `
+      /* glsl */ `
         #include <common>
         uniform sampler2D activationTex;
         uniform vec3 baseZero;
@@ -147,7 +147,7 @@ export function createShaderMaterialForTexture({
 
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <color_fragment>`,
-      `
+      /* glsl */ `
         float activation = texture2D(activationTex, vUv).r;
         if (activation < -900.0) {
           discard;
