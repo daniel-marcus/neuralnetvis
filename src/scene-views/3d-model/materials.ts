@@ -166,6 +166,6 @@ export function createShaderMaterialForTexture({
   return material
 }
 
-function normalizeColor(arr: number[]) {
+export function normalizeColor(arr: number[]) {
   return new THREE.Color(...arr.map((v) => v / 255))
 }

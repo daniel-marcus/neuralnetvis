@@ -6,7 +6,6 @@ import { Header } from "./header"
 import { TileGrid } from "./tile-grid"
 import { StatusBar } from "./status-bar"
 import { LessonOverlayPortal } from "./lesson"
-import { WebGpuTest } from "./webgpu-test"
 
 export const App = ({ children }: { children?: React.ReactNode }) => {
   useTfBackend()
