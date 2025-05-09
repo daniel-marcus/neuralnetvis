@@ -1,32 +1,15 @@
-import { act, memo, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
-
-import {
-  mix,
-  storage,
-  instanceIndex,
-  uniform,
-  vec3,
-  max,
-  float,
-  abs,
-  pow,
-  Fn,
-  uniformArray,
-} from "three/tsl"
-
+import { uniform } from "three/tsl"
 import { useSceneStore } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import { createShaderMaterial, normalizeColor } from "./materials-glsl"
 import { getMaxAbs } from "@/data/utils"
-import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
-import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 import { activationColor } from "./materials-tsl"
-import { ac } from "vitest/dist/chunks/reporters.d.DG9VKi4m.js"
+import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -39,7 +22,6 @@ export const InstancedLayer = memo(function InstancedLayer(
   const { index, channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
 
-  const actArr = channelActivations[channelIdx]
   const meshRef = meshRefs[channelIdx]
 
   const groupRef = useGroupPosition(props, channelIdx)

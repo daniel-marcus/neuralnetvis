@@ -1,24 +1,13 @@
-import { memo, useLayoutEffect, useMemo, useRef } from "react"
-import { useFrame, useThree, extend } from "@react-three/fiber"
+import { memo, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
-import { Text } from "troika-three-text"
+import { useFrame, useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"
 import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
 import { getIndex3d } from "@/neuron-layers/neurons"
-import type { ThreeElement } from "@react-three/fiber"
+import { text2Canvas } from "./text-to-canvas"
 import type { NeuronLayer } from "@/neuron-layers/types"
-
-// https://r3f.docs.pmnd.rs/tutorials/typescript#extending-threeelements
-// https://github.com/pmndrs/react-three-fiber/releases/tag/v9.0.0
-class CustomText extends Text {}
-extend({ CustomText })
-declare module "@react-three/fiber" {
-  interface ThreeElements {
-    customText: ThreeElement<typeof CustomText>
-  }
-}
 
 export const LABEL_COLOR = "rgb(150, 156, 171)"
 
@@ -77,11 +66,9 @@ interface NeuronLabelProps {
   text?: string | number
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: THREE.Color | string
+  color?: string // THREE.Color |
   size?: number
 }
-
-// reference: https://github.com/pmndrs/drei/blob/master/src/core/Text.tsx
 
 export const NeuronLabel = memo(function NeuronLabel({
   text,
@@ -90,28 +77,43 @@ export const NeuronLabel = memo(function NeuronLabel({
   color = LABEL_COLOR,
   size = 1,
 }: NeuronLabelProps) {
-  const labelRef = useRef<THREE.Object3D & CustomText>(null)
+  const labelRef = useRef<THREE.Object3D>(null)
+
   const camera = useThree((s) => s.camera)
-  const invalidate = useThree((s) => s.invalidate)
   useFrame(() => labelRef.current?.lookAt(camera.position))
+
+  const zOffset = side === "right" ? 3 : -3
+
+  const [texture, scale, anchorPos] = useMemo(() => {
+    text = text?.toString() ?? ""
+    const align = side === "left" ? "right" : "left"
+    const fontFace = "Menlo-Regular"
+    const [canvas, numLines] = text2Canvas({ text, fontFace, color, align })
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    const yScale = numLines
+    const xScale = (canvas.width / canvas.height) * yScale
+    const scale = [xScale, yScale, 0] as [number, number, number]
+    const anchorOffset = side === "left" ? -xScale / 2 : xScale / 2
+    const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
+
+    return [texture, scale, anchorPos] as const
+  }, [text, color, side])
+
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
-  useLayoutEffect(() => {
-    labelRef.current?.sync(invalidate)
-  }, [labelRef, invalidate, text, lightsOn])
-  const zOffset = side === "right" ? 3.5 : -3.5
   if (!lightsOn) return null
+
+  // spriteNodeMaterial didn't work with sprite.center, so using meshBasicMaterial + camera lookAt
   return (
-    <customText
-      ref={labelRef}
-      text={text}
+    <group
       position={[x, y, z + size * zOffset]}
-      fontSize={size}
-      font={"/fonts/Menlo-Regular.woff"}
-      color={color}
-      anchorX={side === "left" ? "right" : "left"}
-      anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
-      renderOrder={-1}
-    />
+      ref={labelRef}
+      scale={size}
+    >
+      <sprite ref={labelRef} position={anchorPos} scale={scale}>
+        <meshBasicMaterial map={texture} transparent />
+      </sprite>
+    </group>
   )
 })
