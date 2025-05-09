@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { act, memo, useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
 
 import {
@@ -11,6 +11,8 @@ import {
   float,
   abs,
   pow,
+  Fn,
+  uniformArray,
 } from "three/tsl"
 
 import { useSceneStore } from "@/store"
@@ -19,10 +21,12 @@ import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import { createShaderMaterial, normalizeColor } from "./materials"
+import { createShaderMaterial, normalizeColor } from "./materials-glsl"
 import { getMaxAbs } from "@/data/utils"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
+import { activationColor } from "./materials-tsl"
+import { ac } from "vitest/dist/chunks/reporters.d.DG9VKi4m.js"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -32,9 +36,10 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, meshRefs } = props
+  const { index, channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
 
+  const actArr = channelActivations[channelIdx]
   const meshRef = meshRefs[channelIdx]
 
   const groupRef = useGroupPosition(props, channelIdx)
@@ -48,18 +53,12 @@ export const InstancedLayer = memo(function InstancedLayer(
     <group ref={groupRef}>
       <instancedMesh
         ref={meshRef}
-        name={`layer_${props.index}_group_${channelIdx}`}
+        name={`layer_${props.index}_channel_${channelIdx}`}
         args={[meshParams.geometry, material, units]}
         renderOrder={renderOrder}
         {...eventHandlers}
       ></instancedMesh>
-    </group>
-  )
-})
-
-/*
       {hasLabels &&
-        false &&
         Array.from({ length: numNeurons }).map((_, i) => (
           <NeuronLabels
             key={i}
@@ -68,7 +67,10 @@ export const InstancedLayer = memo(function InstancedLayer(
             position={positions[i]}
             size={meshParams.labelSize}
           />
-        ))}*/
+        ))}
+    </group>
+  )
+})
 
 export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
   const neuronSpacing = useSceneStore((s) => s.vis.neuronSpacing)
@@ -134,69 +136,43 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-const baseZero = uniform(vec3(...normalizeColor(ZERO_BASE)))
-const basePos = uniform(vec3(...normalizeColor(POS_BASE)))
-const baseNeg = uniform(vec3(...normalizeColor(NEG_BASE)))
-const baseR = uniform(vec3(1, 0, 0))
-const baseG = uniform(vec3(0, 1, 0))
-const baseB = uniform(vec3(0, 0, 1))
-const colorBases = [baseR, baseG, baseB]
-
-const newStandardMaterial = () => new THREE.MeshStandardNodeMaterial()
-const newBlendMaterial = () =>
-  new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
-
 function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
-  const { channelActivations, hasColorChannels } = layer
-  const activationsArr = channelActivations[channelIdx]
+  const { hasColorChannels, channelActivations } = layer
+
+  const actArr = channelActivations[channelIdx]
+  const storageAttr = useMemo(
+    () => new THREE.StorageInstancedBufferAttribute(actArr, 1),
+    [actArr]
+  )
+  const maxAbsNode = useMemo(() => uniform(999), [])
 
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const material = useMemo(() => {
-    if (hasColorChannels && !splitColors) return newBlendMaterial()
-    return newStandardMaterial()
-    // TODO resuse materials? or dispose correctly?
-  }, [hasColorChannels, splitColors, channelIdx])
-
-  const maxAbsRef = useRef(uniform(1.0))
-
-  const attr = useMemo(
-    () => new THREE.StorageBufferAttribute(activationsArr, 1),
-    [activationsArr]
-  )
-
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
 
-  useEffect(() => {
-    if (!meshRef.current) return
-    meshRef.current.geometry.setAttribute("activations", attr)
-
-    const maxAbs = maxAbsRef.current
-    const activation = storage(attr).element(instanceIndex)
-
-    // TODO: scale normalization for regression
-    const normalized = isSoftmax
-      ? activation
-      : activation.div(max(maxAbs, float(1e-6)))
-
-    const baseNode = hasColorChannels
-      ? colorBases[channelIdx]
-      : normalized.greaterThanEqual(float(0)).select(basePos, baseNeg)
-
-    const srgbColorNode = mix(baseZero, baseNode, abs(normalized))
-    const gammaCorrectedNode = pow(srgbColorNode, float(2.2))
-
-    material.colorNode = gammaCorrectedNode
-  }, [meshRef, material, isSoftmax, hasColorChannels, channelIdx])
+  const material = useMemo(() => {
+    // TODO resuse materials? or dispose correctly?
+    const material = hasColorChannels
+      ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
+      : new THREE.MeshStandardNodeMaterial()
+    storageAttr.needsUpdate = true
+    material.colorNode = activationColor(
+      storageAttr,
+      maxAbsNode, // move to userData
+      !isSoftmax,
+      hasColorChannels ? channelIdx : undefined
+    )
+    return material
+  }, [storageAttr, maxAbsNode, isSoftmax, hasColorChannels, channelIdx])
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
-  useLayoutEffect(() => {
-    // activations is only used as reactive trigger here
-    // color buffer is directly changed in useActivations
-    if (!meshRef.current || !activationUpdTrigger) return
-    maxAbsRef.current.value = getMaxAbs(activationUpdTrigger.activations)
-    attr.needsUpdate = true
-  }, [meshRef, activationUpdTrigger, attr])
+  useEffect(() => {
+    if (!activationUpdTrigger) return
+    // const maxAbs = getMaxAbs(activationUpdTrigger.activations)
+    maxAbsNode.value = getMaxAbs(activationUpdTrigger.activations)
+    storageAttr.needsUpdate = true
+    console.log(meshRef.current)
+  }, [storageAttr, activationUpdTrigger, maxAbsNode])
 
   return material
 }

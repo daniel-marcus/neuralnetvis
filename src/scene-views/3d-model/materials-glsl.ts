@@ -1,8 +1,6 @@
 import * as THREE from "three/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 
-const TONE_MAPPED = true
-
 export const Normalization = {
   NONE: 0,
   PER_LAYER_MAX_ABS: 1,
@@ -37,8 +35,6 @@ export function createShaderMaterial(args?: CustomShaderMaterialProps) {
     : THREE.MeshStandardMaterial
 
   const material = new MaterialClass({ ...rest, blending })
-
-  material.toneMapped = TONE_MAPPED
 
   material.userData.uniforms = {
     baseZero: { value: normalizeColor(baseZero) },
@@ -100,7 +96,6 @@ export function createShaderMaterialForTexture({
 }: CustomShaderMaterialForTextureProps): THREE.MeshStandardMaterial {
   const material = new THREE.MeshStandardMaterial({ ...rest })
 
-  material.toneMapped = TONE_MAPPED
   material.transparent = true
 
   material.userData.uniforms = {
