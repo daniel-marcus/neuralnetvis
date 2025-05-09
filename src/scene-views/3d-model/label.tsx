@@ -66,7 +66,7 @@ interface NeuronLabelProps {
   text?: string | number
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: string // THREE.Color |
+  color?: string
   size?: number
 }
 

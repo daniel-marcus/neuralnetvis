@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { uniform } from "three/tsl"
 import { useSceneStore } from "@/store"
@@ -19,16 +19,12 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, channelActivations, meshRefs } = props
+  const { index, channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
-
   const meshRef = meshRefs[channelIdx]
-
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
-
-  const material = useColors(props, meshRef, channelIdx)
-
+  const material = useColors(props, channelIdx)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
@@ -118,7 +114,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
+function useColors(layer: NeuronLayer, channelIdx: number) {
   const { hasColorChannels, channelActivations } = layer
 
   const actArr = channelActivations[channelIdx]
@@ -126,9 +122,8 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
     () => new THREE.StorageInstancedBufferAttribute(actArr, 1),
     [actArr]
   )
-  const maxAbsNode = useMemo(() => uniform(999), [])
+  const maxAbsNode = useMemo(() => uniform(999.0), [])
 
-  const splitColors = useSceneStore((s) => s.vis.splitColors)
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
 
   const material = useMemo(() => {
@@ -139,7 +134,7 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
     storageAttr.needsUpdate = true
     material.colorNode = activationColor(
       storageAttr,
-      maxAbsNode, // move to userData
+      maxAbsNode, // TODO: move to userData to make material reusable
       !isSoftmax,
       hasColorChannels ? channelIdx : undefined
     )
@@ -150,10 +145,8 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
 
   useEffect(() => {
     if (!activationUpdTrigger) return
-    // const maxAbs = getMaxAbs(activationUpdTrigger.activations)
     maxAbsNode.value = getMaxAbs(activationUpdTrigger.activations)
     storageAttr.needsUpdate = true
-    console.log(meshRef.current)
   }, [storageAttr, activationUpdTrigger, maxAbsNode])
 
   return material
