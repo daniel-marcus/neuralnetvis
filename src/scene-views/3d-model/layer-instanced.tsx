@@ -137,9 +137,14 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 const baseZero = uniform(vec3(...normalizeColor(ZERO_BASE)))
 const basePos = uniform(vec3(...normalizeColor(POS_BASE)))
 const baseNeg = uniform(vec3(...normalizeColor(NEG_BASE)))
+const baseR = uniform(vec3(1, 0, 0))
+const baseG = uniform(vec3(0, 1, 0))
+const baseB = uniform(vec3(0, 0, 1))
+const colorBases = [baseR, baseG, baseB]
 
 const newStandardMaterial = () => new THREE.MeshStandardNodeMaterial()
-const newBasicMaterial = () => new THREE.MeshBasicNodeMaterial()
+const newBlendMaterial = () =>
+  new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
 
 function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
   const { channelActivations, hasColorChannels } = layer
@@ -147,7 +152,7 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
 
   const splitColors = useSceneStore((s) => s.vis.splitColors)
   const material = useMemo(() => {
-    if (hasColorChannels && !splitColors) return newBasicMaterial()
+    if (hasColorChannels && !splitColors) return newBlendMaterial()
     return newStandardMaterial()
     // TODO resuse materials? or dispose correctly?
   }, [hasColorChannels, splitColors, channelIdx])
@@ -168,19 +173,20 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
     const maxAbs = maxAbsRef.current
     const activation = storage(attr).element(instanceIndex)
 
+    // TODO: scale normalization for regression
     const normalized = isSoftmax
       ? activation
       : activation.div(max(maxAbs, float(1e-6)))
 
-    const baseNode = normalized
-      .greaterThanEqual(float(0))
-      .select(basePos, baseNeg)
+    const baseNode = hasColorChannels
+      ? colorBases[channelIdx]
+      : normalized.greaterThanEqual(float(0)).select(basePos, baseNeg)
 
     const srgbColorNode = mix(baseZero, baseNode, abs(normalized))
     const gammaCorrectedNode = pow(srgbColorNode, float(2.2))
 
     material.colorNode = gammaCorrectedNode
-  }, [meshRef, material, isSoftmax])
+  }, [meshRef, material, isSoftmax, hasColorChannels, channelIdx])
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
