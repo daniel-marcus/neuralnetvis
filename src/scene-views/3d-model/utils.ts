@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, config } from "@react-spring/web"
 import { getThree, useSceneStore } from "@/store"

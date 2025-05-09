@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import type { RefObject } from "react"
 import type { MeshParams } from "@/neuron-layers/layout"
 import type { LayerConfigMap } from "@/model/layers/types"

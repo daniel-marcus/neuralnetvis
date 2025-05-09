@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import { createShaderMaterialForTexture, Normalization } from "./materials"

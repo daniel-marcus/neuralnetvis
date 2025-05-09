@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
@@ -10,7 +10,7 @@ import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
 import { getNid } from "@/neuron-layers/neurons"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
-import type { Mesh } from "three"
+import type { Mesh } from "three/webgpu"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
@@ -74,17 +74,21 @@ export function LayerInteractions(
     onClick: isTouch() ? onTap : undefined,
     onDoubleClick,
   }
-
-  return (
-    <mesh {...(isActive ? interactions : {})}>
-      <boxGeometry args={size} />
-      <MeshDiscardMaterial />
+  /* 
+  
       <Outlines
-        color={"white"}
+        color={"white"} // <MeshDiscardMaterial />
         transparent
         opacity={isHovered ? 0.2 : 0}
         // renderOrder={-1}
       />
+  
+  */
+
+  return (
+    <mesh {...(isActive ? interactions : {})}>
+      <boxGeometry args={size} />
+      <meshBasicNodeMaterial color="hotpink" />
     </mesh>
   )
 }
@@ -125,9 +129,9 @@ export function HoverComponents() {
   const selected = useSelected()
   const hovered = useHovered()
   if (!isActive) return null
+  // <HoverConnections hovered={hovered} />
   return (
     <>
-      <HoverConnections hovered={hovered} />
       <Highlighted neuron={selected} thick />
       <Highlighted neuron={hovered} />
     </>
@@ -153,11 +157,16 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
   })
   if (!neuron) return null
   const { geometry } = neuron.layer.meshParams
+  /* 
+  
+      <MeshDiscardMaterial />
+      <Outlines color={COLOR} />
+  
+  */
   return (
     <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
       <primitive object={geometry} attach={"geometry"} />
-      <MeshDiscardMaterial />
-      <Outlines color={COLOR} />
+      <meshBasicNodeMaterial />
     </mesh>
   )
 }

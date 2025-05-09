@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { SphereGeometry } from "three"
+import { SphereGeometry } from "three/webgpu"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { normalizeWithSign } from "@/data/utils"

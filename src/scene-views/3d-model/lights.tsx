@@ -1,7 +1,7 @@
 import { useRef } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useKeyCommand } from "@/utils/key-command"
-import { SpotLightHelper, type SpotLight } from "three"
+import { SpotLightHelper, type SpotLight } from "three/webgpu"
 import { useHelper } from "@react-three/drei"
 
 export const Lights = () => {

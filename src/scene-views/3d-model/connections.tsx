@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Color, Line, Vector2, Vector3 } from "three"
+import { Color, Line, Vector2, Vector3 } from "three/webgpu"
 import {
   Line2,
   LineGeometry,

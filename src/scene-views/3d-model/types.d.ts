@@ -1,5 +1,5 @@
 declare module "troika-three-text" {
-  import * as THREE from "three"
+  import * as THREE from "three/webgpu"
 
   class Text extends THREE.Object3D {
     text?: string | number

@@ -1,6 +1,12 @@
 "use client"
 
-import { Canvas, useThree } from "@react-three/fiber"
+import * as THREE from "three/webgpu"
+import {
+  Canvas,
+  extend,
+  ThreeToJSXElements,
+  useThree,
+} from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
@@ -15,6 +21,12 @@ import { getTileDuration } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 
+declare module "@react-three/fiber" {
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
+}
+
+extend(THREE as any)
+
 interface CanvasProps {
   isActive: boolean
   dsKey?: string
@@ -28,6 +40,11 @@ export const ThreeCanvas = (props: CanvasProps) => {
   return (
     <Canvas
       frameloop="demand"
+      gl={async (props) => {
+        const renderer = new THREE.WebGPURenderer(props as any)
+        await renderer.init()
+        return renderer
+      }}
       className={`absolute! w-screen! h-[100vh]! select-none ${
         isActive ? "" : "touch-pan-y!"
       } ${(isLocked || isMapView) && !isDebug ? "pointer-events-none!" : ""} ${

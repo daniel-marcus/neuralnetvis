@@ -1,4 +1,4 @@
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 
 // colors are now caluclated in the shader, see materials.ts
 

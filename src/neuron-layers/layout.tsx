@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import type { LayerPos } from "./types"
 
 export interface MeshParams {

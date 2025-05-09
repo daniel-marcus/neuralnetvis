@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
@@ -27,23 +27,20 @@ export const InstancedLayer = memo(function InstancedLayer(
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const activations = useLayerActivations(props.index)
-  useColors(meshRef, activations)
+  // useColors(meshRef, activations)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
     <group ref={groupRef}>
-      <instancedMesh
+      <instancedMesh // instancedMesh
         ref={meshRef}
-        name={`layer_${props.index}_group_${channelIdx}`}
-        args={[, , units]}
+        // name={`layer_${props.index}_group_${channelIdx}`}
+        args={[meshParams.geometry, material, units]} // units
         renderOrder={renderOrder}
-        {...eventHandlers}
-      >
-        <primitive object={meshParams.geometry} attach={"geometry"} />
-        <primitive object={material} attach={"material"} />
-        <instancedBufferAttribute args={[colorArr, 1]} attach="instanceColor" />
-      </instancedMesh>
+        {...eventHandlers} // <primitive object={material} attach={"material"} /> <instancedBufferAttribute args={[colorArr, 1]} attach="instanceColor" />
+      ></instancedMesh>
       {hasLabels &&
+        false &&
         Array.from({ length: numNeurons }).map((_, i) => (
           <NeuronLabels
             key={i}
@@ -69,6 +66,7 @@ function useMaterial(layer: NeuronLayer, channelIdx = 0) {
   const isRegression = useSceneStore((s) => s.isRegression())
 
   const material = useMemo(() => {
+    return new THREE.MeshStandardNodeMaterial()
     const { NONE, PER_LAYER_MAX_ABS, PER_NEURON_SCALE_NORM } = Normalization
     const normalization = isSoftmax
       ? NONE

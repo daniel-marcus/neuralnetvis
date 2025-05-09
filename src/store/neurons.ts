@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand"
-import type { Vector3 } from "three"
+import type { Vector3 } from "three/webgpu"
 import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 
 export interface NeuronsSlice {

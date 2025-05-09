@@ -1,6 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree, extend } from "@react-three/fiber"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { Text } from "troika-three-text"
 import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { useThree, useFrame } from "@react-three/fiber"
 import { Stats } from "@react-three/drei"
 import { getThree, useGlobalStore } from "@/store"

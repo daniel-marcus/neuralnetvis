@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react"
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
@@ -21,11 +21,12 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
           <LodComp key={i} {...props} channelIdx={i} measureRef={measureRef} />
         ))}
       </group>
-      <LayerInteractions {...props} measureRef={measureRef} />
-      {props.layerPos === "output" && <YPointer outputLayer={props} />}
     </LayerScaler>
   )
 })
+
+/* <LayerInteractions {...props} measureRef={measureRef} />
+      {props.layerPos === "output" && <YPointer outputLayer={props} />} */
 
 interface LayerScalerProps extends NeuronLayer {
   children: React.ReactNode

@@ -1,4 +1,4 @@
-import * as THREE from "three"
+import * as THREE from "three/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 
 const TONE_MAPPED = true

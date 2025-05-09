@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
 import { getLayerDef } from "@/model/layers"
-import type { InstancedMesh } from "three"
+import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { LayerPos, NeuronLayer, LayerType } from "./types"
 
