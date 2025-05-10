@@ -6,12 +6,13 @@ import { useNeuronSpacing } from "./layer-instanced"
 import { getMaxAbs } from "@/data/utils"
 import { getTextureMaterial } from "./materials"
 import type { NeuronLayer } from "@/neuron-layers/types"
+import { uniform } from "three/tsl"
 
 const CELL_GAP = 1 // texture pixel between cells
 
-interface UserDataTextured {
+export interface UserDataTextured {
   // dataTexture: THREE.DataTexture
-  maxAbs: number
+  maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
 }
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
@@ -19,9 +20,11 @@ export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const [texture, material] = useActivationTexture(props, meshRef)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
-  const userData: UserDataTextured = {
-    maxAbs: 999.0,
-  }
+  const userData: UserDataTextured = useMemo(() => {
+    return {
+      maxAbs: uniform(999.0),
+    }
+  }, [])
   return (
     <mesh
       ref={meshRef}
@@ -109,7 +112,8 @@ function useActivationTexture(
       data[pixelMap[i]] = activations[i]
     }
 
-    meshRef.current.userData.maxAbs = getMaxAbs(activations)
+    const userData = meshRef.current.userData as UserDataTextured
+    userData.maxAbs.value = getMaxAbs(activations)
     texture.needsUpdate = true
   }, [texture, pixelMap, layerActivations, layer, meshRef])
 

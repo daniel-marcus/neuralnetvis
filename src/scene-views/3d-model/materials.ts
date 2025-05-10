@@ -3,6 +3,8 @@ import { abs, max, mix, pow, vec3, Fn, If, Discard } from "three/tsl"
 import { instancedBufferAttribute, texture, userData } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
+import { UserData } from "./layer-instanced"
+import { UserDataTextured } from "./layer-textured"
 
 export const Normalization = {
   NONE: 0,
@@ -38,15 +40,14 @@ function createActivationMaterial(hasColors: boolean, channelIdx: number) {
 
 function activationColor(hasColors: boolean, channelIdx: number) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
-  // @ts-expect-error missing type TODO
+  // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
-    const { activations } = object.userData
+    const { activations, maxAbs } = object.userData as UserData
     const activation = instancedBufferAttribute(activations, "float")
-    const maxAbsNode = userData("maxAbs", "float")
     const normalizationMode = userData("normalization", "int")
     const normalizedNode = normalizationMode
       .greaterThanEqual(1)
-      .select(activation.div(max(maxAbsNode, 1e-6)), activation)
+      .select(activation.div(max(maxAbs, 1e-6)), activation)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
@@ -65,13 +66,14 @@ export function getTextureMaterial(texture: THREE.DataTexture) {
 }
 
 export function activationColorTexture(map: THREE.DataTexture) {
-  return Fn(() => {
+  // @ts-expect-error function not fully typed
+  return Fn(({ object }) => {
+    const { maxAbs } = object.userData as UserDataTextured
     const activationNode = texture(map).r
     If(activationNode.lessThan(-900.0), () => {
       Discard()
     })
-    const maxAbsNode = userData("maxAbs", "float")
-    const normalizedNode = activationNode.div(max(maxAbsNode, 1e-6))
+    const normalizedNode = activationNode.div(max(maxAbs, 1e-6))
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(basePos, baseNeg)

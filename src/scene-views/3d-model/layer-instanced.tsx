@@ -8,15 +8,16 @@ import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import { getMaxAbs } from "@/data/utils"
 import { getMaterial, Normalization, NormalizationType } from "./materials"
+import { uniform } from "three/tsl"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
 }
 
-interface UserData {
-  activations: THREE.InstancedBufferAttribute
-  maxAbs: number
+export interface UserData {
+  activations: THREE.StorageInstancedBufferAttribute
+  maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
   normalization: NormalizationType
 }
 
@@ -30,16 +31,20 @@ export const InstancedLayer = memo(function InstancedLayer(
 
   const activations = useMemo(() => {
     const actArr = channelActivations[channelIdx]
-    return new THREE.InstancedBufferAttribute(actArr, 1)
+    const attr = new THREE.StorageInstancedBufferAttribute(actArr, 1)
+    return attr
   }, [channelActivations, channelIdx])
 
   const isSoftmax = props.tfLayer.getConfig().activation === "softmax"
-  const { PER_LAYER_MAX_ABS, NONE } = Normalization
-  const userData: UserData = {
-    activations,
-    maxAbs: 0,
-    normalization: isSoftmax ? NONE : PER_LAYER_MAX_ABS,
-  }
+  const userData: UserData = useMemo(() => {
+    const { PER_LAYER_MAX_ABS, NONE } = Normalization
+    const maxAbs = uniform(999.0)
+    return {
+      activations,
+      maxAbs,
+      normalization: isSoftmax ? NONE : PER_LAYER_MAX_ABS,
+    }
+  }, [])
 
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
@@ -147,9 +152,10 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
   useLayoutEffect(() => {
     if (!meshRef.current?.userData.activations || !activationUpdTrigger) return
     const maxAbs = getMaxAbs(activationUpdTrigger.activations)
-    meshRef.current.userData.maxAbs = maxAbs
-    meshRef.current.userData.activations.needsUpdate = true
-    // console.log(meshRef.current)
+    const userData = meshRef.current.userData as UserData
+    userData.maxAbs.value = maxAbs
+    userData.activations.needsUpdate = true
+    // console.log(meshRef.current, maxAbs)
   }, [activationUpdTrigger, meshRef])
 
   return material
