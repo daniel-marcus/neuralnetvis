@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
@@ -70,6 +70,12 @@ interface NeuronLabelProps {
   size?: number
 }
 
+interface LabelState {
+  texture: THREE.CanvasTexture
+  scale: [number, number, number]
+  anchorPos: [number, number, number]
+}
+
 export const NeuronLabel = memo(function NeuronLabel({
   text,
   position: [x, y, z] = [0, 0, 0],
@@ -84,7 +90,10 @@ export const NeuronLabel = memo(function NeuronLabel({
 
   const zOffset = side === "right" ? 3 : -3
 
-  const [texture, scale, anchorPos] = useMemo(() => {
+  const [labelState, setLabelState] = useState<LabelState | undefined>(
+    undefined
+  )
+  useEffect(() => {
     const t = text?.toString() ?? ""
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
@@ -96,12 +105,15 @@ export const NeuronLabel = memo(function NeuronLabel({
     const scale = [xScale, yScale, 0] as [number, number, number]
     const anchorOffset = side === "left" ? -xScale / 2 : xScale / 2
     const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
-
-    return [texture, scale, anchorPos] as const
+    setLabelState({ texture, scale, anchorPos })
+    return () => {
+      // texture.dispose()
+    }
   }, [text, color, side])
 
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
-  if (!lightsOn) return null
+  if (!lightsOn || !labelState) return null
+  const { texture, scale, anchorPos } = labelState
 
   // spriteNodeMaterial didn't work with sprite.center, so using meshBasicMaterial + camera lookAt
   return (

@@ -16,7 +16,7 @@ import { getTileDuration } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import type { ThreeToJSXElements } from "@react-three/fiber"
-import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
+import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -34,14 +34,16 @@ export const ThreeCanvas = (props: CanvasProps) => {
   const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isMapView = useSceneStore((s) => s.view === "map")
   const isDebug = useGlobalStore((s) => s.isDebug)
-  if (!isActive) return null
+  const gpuDevice = useGlobalStore((s) => s.gpuDevice)
+  if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
   return (
     <Canvas
       frameloop="demand"
-      gl={async (props) => {
-        const renderer = new THREE.WebGPURenderer(
-          props as unknown as WebGPURendererParameters
-        )
+      gl={async (renderProps) => {
+        const renderer = new THREE.WebGPURenderer({
+          ...(renderProps as WebGPURendererParameters),
+          device: gpuDevice ? gpuDevice : undefined,
+        })
         await renderer.init()
         return renderer
       }}
