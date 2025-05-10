@@ -4,7 +4,7 @@ import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
-// import { LayerInteractions } from "./interactions"
+import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
@@ -16,6 +16,7 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
   const separateChannels = props.hasColorChannels ? 3 : 1
   return (
     <LayerScaler {...props}>
+      <LayerInteractions {...props} measureRef={measureRef} />
       <group ref={measureRef}>
         {Array.from({ length: separateChannels }).map((_, i) => (
           <LodComp key={i} {...props} channelIdx={i} measureRef={measureRef} />
@@ -25,7 +26,7 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
   )
 })
 
-/* <LayerInteractions {...props} measureRef={measureRef} />
+/* 
       {props.layerPos === "output" && <YPointer outputLayer={props} />} */
 
 interface LayerScalerProps extends NeuronLayer {

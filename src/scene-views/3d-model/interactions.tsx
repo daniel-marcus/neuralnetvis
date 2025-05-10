@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
-// import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
 import { setStatus, clearStatus } from "@/store"
@@ -74,8 +73,7 @@ export function LayerInteractions(
     onClick: isTouch() ? onTap : undefined,
     onDoubleClick,
   }
-  /* 
-  
+  /*
       <Outlines
         color={"white"} // <MeshDiscardMaterial />
         transparent
@@ -84,11 +82,15 @@ export function LayerInteractions(
       />
   
   */
-
   return (
-    <mesh {...(isActive ? interactions : {})}>
+    <mesh {...(isActive ? interactions : {})} renderOrder={-1}>
       <boxGeometry args={size} />
-      <meshBasicNodeMaterial color="hotpink" />
+      <meshBasicMaterial
+        color="white"
+        transparent
+        opacity={isHovered ? 0.02 : 0}
+        depthWrite={false}
+      />
     </mesh>
   )
 }
@@ -166,7 +168,12 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
   return (
     <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
       <primitive object={geometry} attach={"geometry"} />
-      <meshBasicNodeMaterial />
+      <meshBasicMaterial
+        color="white"
+        transparent
+        opacity={0.02}
+        depthWrite={false}
+      />
     </mesh>
   )
 }

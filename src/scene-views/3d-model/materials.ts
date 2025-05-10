@@ -1,5 +1,6 @@
 import * as THREE from "three/webgpu"
-import { abs, max, mix, pow, vec3, Fn, If, Discard, select } from "three/tsl"
+import { abs, max, mix, pow, vec3, vec4 } from "three/tsl"
+import { Fn, If, Discard, select } from "three/tsl"
 import { instancedBufferAttribute, texture } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
@@ -83,3 +84,8 @@ export function activationColorTexture(map: THREE.DataTexture) {
     return colorNode
   })()
 }
+
+// https://github.com/pmndrs/drei/blob/master/src/materials/DiscardMaterial.tsx
+export const discardMaterial = new THREE.NodeMaterial()
+discardMaterial.transparent = true
+discardMaterial.colorNode = vec4(0, 0, 0, 0)
