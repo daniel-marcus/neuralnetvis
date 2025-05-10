@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
+import { uniform } from "three/tsl"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
-import { createShaderMaterialForTexture, Normalization } from "./materials-glsl"
 import { getMaxAbs } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers/types"
+import { activationColorTexture } from "./materials-tsl"
 
 const CELL_GAP = 1 // texture pixel between cells
 
@@ -45,12 +46,15 @@ function useActivationTexture(layer: NeuronLayer) {
     return texture
   }, [height, width, channels])
 
+  const maxAbsNode = useMemo(() => uniform(999.0), [])
+
   const material = useMemo(() => {
-    return createShaderMaterialForTexture({
-      activationTexture: texture,
-      normalization: Normalization.PER_LAYER_MAX_ABS,
-    })
-  }, [texture])
+    const material = new THREE.MeshStandardNodeMaterial()
+    material.transparent = true
+    material.map = texture
+    material.colorNode = activationColorTexture(texture, maxAbsNode)
+    return material
+  }, [texture, maxAbsNode])
 
   useEffect(() => {
     return () => texture.dispose()
@@ -96,10 +100,9 @@ function useActivationTexture(layer: NeuronLayer) {
       data[pixelMap[i]] = activations[i]
     }
 
-    const maxAbs = getMaxAbs(activations)
-    material.userData.uniforms.maxAbsActivation.value = maxAbs
+    maxAbsNode.value = getMaxAbs(activations)
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer, material])
+  }, [texture, pixelMap, layerActivations, layer, material, maxAbsNode])
 
   return [texture, material] as const
 }

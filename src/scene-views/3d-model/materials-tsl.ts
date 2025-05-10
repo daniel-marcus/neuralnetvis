@@ -1,23 +1,9 @@
 import * as THREE from "three/webgpu"
-import {
-  abs,
-  float,
-  Fn,
-  instanceIndex,
-  max,
-  mix,
-  pow,
-  storage,
-  uniform,
-  userData,
-  vec3,
-} from "three/tsl"
+import { abs, max, mix, pow, texture, uniform, uv, vec3 } from "three/tsl"
+import { storage, instanceIndex } from "three/tsl"
+import { Fn, If, Discard } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
-
-// dependencies: hasColorChannels, channelIdx, splitColors, isSoftmax
-// what can vary: basePos, normalization, material class
-// default:
 
 const baseZero = uniform(vec3(...normalizeColor(ZERO_BASE)))
 const basePos = uniform(vec3(...normalizeColor(POS_BASE)))
@@ -44,6 +30,25 @@ export const activationColor = (
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
+    const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
+    const colorNode = pow(srgbColor, vec3(2.2))
+    return colorNode
+  })()
+}
+
+export const activationColorTexture = (
+  map: THREE.DataTexture,
+  maxAbsNode: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
+) => {
+  return Fn(() => {
+    const activationNode = texture(map, uv()).r
+    If(activationNode.lessThan(-900.0), () => {
+      Discard()
+    })
+    const normalizedNode = activationNode.div(max(maxAbsNode, 1e-6))
+    const baseNode = normalizedNode
+      .greaterThanEqual(0.0)
+      .select(basePos, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     const colorNode = pow(srgbColor, vec3(2.2))
     return colorNode

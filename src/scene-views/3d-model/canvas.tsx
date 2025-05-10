@@ -1,12 +1,7 @@
 "use client"
 
 import * as THREE from "three/webgpu"
-import {
-  Canvas,
-  extend,
-  ThreeToJSXElements,
-  useThree,
-} from "@react-three/fiber"
+import { Canvas, extend, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
@@ -20,6 +15,7 @@ import { defaultState } from "@/utils/initial-state"
 import { getTileDuration } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
+import type { ThreeToJSXElements } from "@react-three/fiber"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -37,7 +33,7 @@ export const ThreeCanvas = (props: CanvasProps) => {
   const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isMapView = useSceneStore((s) => s.view === "map")
   const isDebug = useGlobalStore((s) => s.isDebug)
-  if (!isActive) return null
+  // if (!isActive) return null
   return (
     <Canvas
       frameloop="demand"
