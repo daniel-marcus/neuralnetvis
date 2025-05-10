@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   env: {
     APP_VERSION: version,
   },
+  // eslint: { ignoreDuringBuilds: true },
   /*
   // Disable `typeofs` transformation for multi-threaded tfjs-backend-wasm (see: https://github.com/tensorflow/tfjs/tree/master/tfjs-backend-wasm#js-minification)
   webpack(config, { isServer }) {

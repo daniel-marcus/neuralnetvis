@@ -27,7 +27,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, channelActivations, meshRefs } = props
+  const { channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
 
@@ -47,12 +47,12 @@ export const InstancedLayer = memo(function InstancedLayer(
       maxAbs,
       normalization,
     }
-  }, [])
+  }, [isSoftmax, activations])
 
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const material = useColors(props, meshRef, channelIdx)
-  const eventHandlers = useNeuronInteractions(index, channelIdx)
+  const eventHandlers = useNeuronInteractions(props.index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
     <group ref={groupRef}>
