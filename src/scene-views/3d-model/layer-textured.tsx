@@ -1,27 +1,50 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo } from "react"
+import {
+  memo,
+  RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react"
 import * as THREE from "three/webgpu"
-import { uniform } from "three/tsl"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getMaxAbs } from "@/data/utils"
+import { getTextureMaterial } from "./materials"
 import type { NeuronLayer } from "@/neuron-layers/types"
-import { activationColorTexture } from "./materials"
 
 const CELL_GAP = 1 // texture pixel between cells
 
+interface UserDataTextured {
+  // dataTexture: THREE.DataTexture
+  maxAbs: number
+}
+
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
-  const [texture, material] = useActivationTexture(props)
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [texture, material] = useActivationTexture(props, meshRef)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
+  const userData: UserDataTextured = {
+    maxAbs: 999.0,
+  }
   return (
-    <mesh scale={[size, spacedSize, spacedSize]}>
+    <mesh
+      ref={meshRef}
+      scale={[size, spacedSize, spacedSize]}
+      userData={userData}
+    >
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />
     </mesh>
   )
 })
 
-function useActivationTexture(layer: NeuronLayer) {
+function useActivationTexture(
+  layer: NeuronLayer,
+  meshRef: RefObject<THREE.Mesh | null>
+) {
   const layerActivations = useLayerActivations(layer.index)
   const [, height, width, channels] = layer.tfLayer.outputShape as number[]
 
@@ -46,19 +69,12 @@ function useActivationTexture(layer: NeuronLayer) {
     return texture
   }, [height, width, channels])
 
-  const maxAbsNode = useMemo(() => uniform(999.0), [])
-
-  const material = useMemo(() => {
-    const material = new THREE.MeshStandardNodeMaterial()
-    material.transparent = true
-    material.map = texture
-    material.colorNode = activationColorTexture(texture, maxAbsNode)
-    return material
-  }, [texture, maxAbsNode])
-
+  const material = useMemo(() => getTextureMaterial(texture), [texture])
   useEffect(() => {
-    return () => texture.dispose()
-  }, [texture])
+    return () => {
+      material.dispose()
+    }
+  }, [material])
 
   const pixelMap = useMemo(() => {
     // map every activation index to the corresponding offset in the texture buffer
@@ -90,7 +106,7 @@ function useActivationTexture(layer: NeuronLayer) {
   }, [width, height, channels, texture.image.width])
 
   useLayoutEffect(() => {
-    if (!layerActivations) return
+    if (!meshRef.current || !layerActivations) return
     // update pixel colors in the texture
     // layerActivations only used as update trigger here
     const data = texture.image.data as Float32Array
@@ -100,9 +116,9 @@ function useActivationTexture(layer: NeuronLayer) {
       data[pixelMap[i]] = activations[i]
     }
 
-    maxAbsNode.value = getMaxAbs(activations)
+    meshRef.current.userData.maxAbs = getMaxAbs(activations)
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer, material, maxAbsNode])
+  }, [texture, pixelMap, layerActivations, layer])
 
   return [texture, material] as const
 }

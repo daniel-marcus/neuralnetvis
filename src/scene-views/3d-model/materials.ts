@@ -1,19 +1,8 @@
 import * as THREE from "three/webgpu"
-import {
-  abs,
-  instancedBufferAttribute,
-  max,
-  mix,
-  pow,
-  texture,
-  userData,
-  uv,
-  vec3,
-} from "three/tsl"
-import { Fn, If, Discard } from "three/tsl"
+import { abs, max, mix, pow, vec3, Fn, If, Discard } from "three/tsl"
+import { instancedBufferAttribute, texture, userData } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
-import { create } from "domain"
 
 export const Normalization = {
   NONE: 0,
@@ -67,15 +56,21 @@ function activationColor(hasColors: boolean, channelIdx: number) {
   })()
 }
 
-export const activationColorTexture = (
-  map: THREE.DataTexture,
-  maxAbsNode: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
-) => {
+export function getTextureMaterial(texture: THREE.DataTexture) {
+  const material = new THREE.MeshStandardNodeMaterial()
+  material.transparent = true
+  material.map = texture
+  material.colorNode = activationColorTexture(texture)
+  return material
+}
+
+function activationColorTexture(map: THREE.DataTexture) {
   return Fn(() => {
-    const activationNode = texture(map, uv()).r
+    const activationNode = texture(map).r
     If(activationNode.lessThan(-900.0), () => {
       Discard()
     })
+    const maxAbsNode = userData("maxAbs", "float")
     const normalizedNode = activationNode.div(max(maxAbsNode, 1e-6))
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)

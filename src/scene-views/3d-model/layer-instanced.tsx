@@ -149,7 +149,7 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
     const maxAbs = getMaxAbs(activationUpdTrigger.activations)
     meshRef.current.userData.maxAbs = maxAbs
     meshRef.current.userData.activations.needsUpdate = true
-    console.log(meshRef.current)
+    // console.log(meshRef.current)
   }, [activationUpdTrigger, meshRef])
 
   return material
