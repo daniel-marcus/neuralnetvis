@@ -1,13 +1,13 @@
 import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
-import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
+// import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
 import { setStatus, clearStatus } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
-import { HoverConnections } from "./connections"
+// import { HoverConnections } from "./connections"
 import { getNid } from "@/neuron-layers/neurons"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
 import type { Mesh } from "three/webgpu"
@@ -143,7 +143,7 @@ interface HighlightedProps {
   thick?: boolean
 }
 
-const COLOR = "rgb(150, 156, 171)"
+// const COLOR = "rgb(150, 156, 171)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<Mesh>(null)

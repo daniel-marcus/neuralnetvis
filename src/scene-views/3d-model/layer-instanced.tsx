@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo } from "react"
+import { memo, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useLayerActivations } from "@/model/activations"
@@ -144,7 +144,7 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!meshRef.current?.userData.activations || !activationUpdTrigger) return
     const maxAbs = getMaxAbs(activationUpdTrigger.activations)
     meshRef.current.userData.maxAbs = maxAbs

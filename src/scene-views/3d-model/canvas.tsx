@@ -16,6 +16,7 @@ import { getTileDuration } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import type { ThreeToJSXElements } from "@react-three/fiber"
+import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -38,7 +39,9 @@ export const ThreeCanvas = (props: CanvasProps) => {
     <Canvas
       frameloop="demand"
       gl={async (props) => {
-        const renderer = new THREE.WebGPURenderer(props as any)
+        const renderer = new THREE.WebGPURenderer(
+          props as unknown as WebGPURendererParameters
+        )
         await renderer.init()
         return renderer
       }}

@@ -1,12 +1,5 @@
-import {
-  memo,
-  RefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { memo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
@@ -118,7 +111,7 @@ function useActivationTexture(
 
     meshRef.current.userData.maxAbs = getMaxAbs(activations)
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer])
+  }, [texture, pixelMap, layerActivations, layer, meshRef])
 
   return [texture, material] as const
 }

@@ -85,10 +85,10 @@ export const NeuronLabel = memo(function NeuronLabel({
   const zOffset = side === "right" ? 3 : -3
 
   const [texture, scale, anchorPos] = useMemo(() => {
-    text = text?.toString() ?? ""
+    const t = text?.toString() ?? ""
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
-    const [canvas, numLines] = text2Canvas({ text, fontFace, color, align })
+    const [canvas, numLines] = text2Canvas({ text: t, fontFace, color, align })
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
     const yScale = numLines

@@ -4,11 +4,11 @@ import { useThree } from "@react-three/fiber"
 import { useSpring } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
-import { LayerInteractions } from "./interactions"
+// import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
-import { YPointer } from "./pointer"
+// import { YPointer } from "./pointer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = memo(function Layer(props: NeuronLayer) {

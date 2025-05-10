@@ -39,13 +39,15 @@ interface PointerProps {
   size?: number
 }
 
-export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
+export const Pointer = ({ position, size = 1 }: PointerProps) => {
   const [x, y, z] = position
   const pointerPosition = [x, y, z + size * 1.7] as Pos
   const ref = useAnimatedPosition(pointerPosition, 0.6)
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
-  return (
+  // TODO
+  return <group ref={ref} />
+  /* return (
     <customText
       ref={ref}
       text={"☜"}
@@ -55,5 +57,5 @@ export const Pointer = ({ position, color, size = 1 }: PointerProps) => {
       anchorY="middle"
       rotation={[0, -Math.PI / 2, 0]}
     />
-  )
+  ) */
 }
