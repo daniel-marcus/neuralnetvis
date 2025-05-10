@@ -1,6 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
-import { uniform } from "three/tsl"
 import { useSceneStore } from "@/store"
 import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
@@ -10,9 +9,16 @@ import { NeuronLabels } from "./label"
 import { getMaxAbs } from "@/data/utils"
 import { activationColor } from "./materials-tsl"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
+import { Normalization } from "./materials-glsl"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
+}
+
+interface UserData {
+  activations: THREE.InstancedBufferAttribute
+  maxAbs: number
+  normalization: (typeof Normalization)[keyof typeof Normalization]
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -22,7 +28,20 @@ export const InstancedLayer = memo(function InstancedLayer(
   const { index, channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
-  const actArr = channelActivations[channelIdx]
+
+  const activations = useMemo(() => {
+    const actArr = channelActivations[channelIdx]
+    return new THREE.InstancedBufferAttribute(actArr, 1)
+  }, [channelActivations, channelIdx])
+
+  const isSoftmax = props.tfLayer.getConfig().activation === "softmax"
+  const { PER_LAYER_MAX_ABS, NONE } = Normalization
+  const userData: UserData = {
+    activations,
+    maxAbs: 0,
+    normalization: isSoftmax ? NONE : PER_LAYER_MAX_ABS,
+  }
+
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
   const material = useColors(props, meshRef, channelIdx)
@@ -35,13 +54,9 @@ export const InstancedLayer = memo(function InstancedLayer(
         name={`layer_${props.index}_channel_${channelIdx}`}
         args={[meshParams.geometry, material, units]}
         renderOrder={renderOrder}
+        userData={userData}
         {...eventHandlers}
-      >
-        <instancedBufferAttribute
-          attach="userData-activations"
-          args={[actArr, 1]}
-        />
-      </instancedMesh>
+      />
       {hasLabels &&
         Array.from({ length: numNeurons }).map((_, i) => (
           <NeuronLabels
@@ -121,11 +136,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 }
 
 function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
-  const { hasColorChannels, channelActivations } = layer
-
-  const maxAbsNode = useMemo(() => uniform(999.0), [])
-
-  const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
+  const { hasColorChannels } = layer
 
   const material = useMemo(() => {
     // TODO resuse materials? or dispose correctly?
@@ -133,20 +144,20 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
       ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
       : new THREE.MeshStandardNodeMaterial()
     material.colorNode = activationColor(
-      maxAbsNode, // TODO: move to userData to make material reusable
-      !isSoftmax,
       hasColorChannels ? channelIdx : undefined
     )
     return material
-  }, [maxAbsNode, isSoftmax, hasColorChannels, channelIdx])
+  }, [hasColorChannels, channelIdx])
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
   useEffect(() => {
     if (!meshRef.current?.userData.activations || !activationUpdTrigger) return
-    maxAbsNode.value = getMaxAbs(activationUpdTrigger.activations)
+    const maxAbs = getMaxAbs(activationUpdTrigger.activations)
+    meshRef.current.userData.maxAbs = maxAbs
     meshRef.current.userData.activations.needsUpdate = true
-  }, [activationUpdTrigger, maxAbsNode, meshRef])
+    console.log(meshRef.current)
+  }, [activationUpdTrigger, meshRef])
 
   return material
 }
