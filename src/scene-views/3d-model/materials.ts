@@ -64,7 +64,7 @@ export function getTextureMaterial(texture: THREE.DataTexture) {
   return material
 }
 
-function activationColorTexture(map: THREE.DataTexture) {
+export function activationColorTexture(map: THREE.DataTexture) {
   return Fn(() => {
     const activationNode = texture(map).r
     If(activationNode.lessThan(-900.0), () => {
