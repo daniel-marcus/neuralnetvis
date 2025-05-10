@@ -18,7 +18,9 @@ type InstancedLayerProps = NeuronLayer & {
 export interface UserData {
   activations: THREE.StorageInstancedBufferAttribute
   maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
-  normalization: NormalizationType
+  normalization: THREE.TSL.ShaderNodeObject<
+    THREE.UniformNode<NormalizationType>
+  >
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -39,10 +41,11 @@ export const InstancedLayer = memo(function InstancedLayer(
   const userData: UserData = useMemo(() => {
     const { PER_LAYER_MAX_ABS, NONE } = Normalization
     const maxAbs = uniform(999.0)
+    const normalization = uniform(isSoftmax ? NONE : PER_LAYER_MAX_ABS)
     return {
       activations,
       maxAbs,
-      normalization: isSoftmax ? NONE : PER_LAYER_MAX_ABS,
+      normalization,
     }
   }, [])
 

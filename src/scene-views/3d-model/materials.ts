@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu"
-import { abs, max, mix, pow, vec3, Fn, If, Discard } from "three/tsl"
+import { abs, max, mix, pow, vec3, Fn, If, Discard, select } from "three/tsl"
 import { instancedBufferAttribute, texture, userData } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
@@ -38,16 +38,17 @@ function createActivationMaterial(hasColors: boolean, channelIdx: number) {
   return material
 }
 
-function activationColor(hasColors: boolean, channelIdx: number) {
+export function activationColor(hasColors: boolean, channelIdx: number) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
-    const { activations, maxAbs } = object.userData as UserData
+    const { activations, maxAbs, normalization } = object.userData as UserData
     const activation = instancedBufferAttribute(activations, "float")
-    const normalizationMode = userData("normalization", "int")
-    const normalizedNode = normalizationMode
-      .greaterThanEqual(1)
-      .select(activation.div(max(maxAbs, 1e-6)), activation)
+    const normalizedNode = select(
+      normalization,
+      activation.div(max(maxAbs, 1e-6)),
+      activation
+    )
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
