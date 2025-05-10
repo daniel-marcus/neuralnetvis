@@ -19,12 +19,13 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { index, channelIdx = 0, meshRefs } = props
+  const { index, channelIdx = 0, channelActivations, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
+  const actArr = channelActivations[channelIdx]
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
-  const material = useColors(props, channelIdx)
+  const material = useColors(props, meshRef, channelIdx)
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
@@ -35,7 +36,12 @@ export const InstancedLayer = memo(function InstancedLayer(
         args={[meshParams.geometry, material, units]}
         renderOrder={renderOrder}
         {...eventHandlers}
-      ></instancedMesh>
+      >
+        <instancedBufferAttribute
+          attach="userData-activations"
+          args={[actArr, 1]}
+        />
+      </instancedMesh>
       {hasLabels &&
         Array.from({ length: numNeurons }).map((_, i) => (
           <NeuronLabels
@@ -114,14 +120,9 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(layer: NeuronLayer, channelIdx: number) {
+function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
   const { hasColorChannels, channelActivations } = layer
 
-  const actArr = channelActivations[channelIdx]
-  const storageAttr = useMemo(
-    () => new THREE.StorageInstancedBufferAttribute(actArr, 1),
-    [actArr]
-  )
   const maxAbsNode = useMemo(() => uniform(999.0), [])
 
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
@@ -131,23 +132,21 @@ function useColors(layer: NeuronLayer, channelIdx: number) {
     const material = hasColorChannels
       ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
       : new THREE.MeshStandardNodeMaterial()
-    storageAttr.needsUpdate = true
     material.colorNode = activationColor(
-      storageAttr,
       maxAbsNode, // TODO: move to userData to make material reusable
       !isSoftmax,
       hasColorChannels ? channelIdx : undefined
     )
     return material
-  }, [storageAttr, maxAbsNode, isSoftmax, hasColorChannels, channelIdx])
+  }, [maxAbsNode, isSoftmax, hasColorChannels, channelIdx])
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
   useEffect(() => {
-    if (!activationUpdTrigger) return
+    if (!meshRef.current?.userData.activations || !activationUpdTrigger) return
     maxAbsNode.value = getMaxAbs(activationUpdTrigger.activations)
-    storageAttr.needsUpdate = true
-  }, [storageAttr, activationUpdTrigger, maxAbsNode])
+    meshRef.current.userData.activations.needsUpdate = true
+  }, [activationUpdTrigger, maxAbsNode, meshRef])
 
   return material
 }

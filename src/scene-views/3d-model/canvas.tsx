@@ -33,7 +33,7 @@ export const ThreeCanvas = (props: CanvasProps) => {
   const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isMapView = useSceneStore((s) => s.view === "map")
   const isDebug = useGlobalStore((s) => s.isDebug)
-  // if (!isActive) return null
+  if (!isActive) return null
   return (
     <Canvas
       frameloop="demand"

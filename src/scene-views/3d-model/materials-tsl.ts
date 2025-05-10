@@ -1,5 +1,16 @@
 import * as THREE from "three/webgpu"
-import { abs, max, mix, pow, texture, uniform, uv, vec3 } from "three/tsl"
+import {
+  abs,
+  instancedBufferAttribute,
+  max,
+  mix,
+  pow,
+  texture,
+  uniform,
+  userData,
+  uv,
+  vec3,
+} from "three/tsl"
 import { storage, instanceIndex } from "three/tsl"
 import { Fn, If, Discard } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
@@ -14,16 +25,18 @@ const baseB = uniform(vec3(0, 0, 1))
 const colorBases = [baseR, baseG, baseB]
 
 export const activationColor = (
-  st: THREE.StorageInstancedBufferAttribute,
   maxAbsNode: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>,
   normalize: boolean,
   channelIdx?: number
 ) => {
   const posBase =
     typeof channelIdx === "number" ? colorBases[channelIdx] : basePos
-  return Fn(() => {
-    const activations = storage(st)
-    const activationNode = activations.element(instanceIndex)
+  // @ts-expect-error missing type
+  return Fn(({ object }) => {
+    const activationNode = instancedBufferAttribute(
+      object.userData.activations,
+      "float"
+    )
     const normalizedNode = normalize
       ? activationNode.div(max(maxAbsNode, 1e-6))
       : activationNode
