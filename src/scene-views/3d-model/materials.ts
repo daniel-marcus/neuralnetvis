@@ -13,6 +13,16 @@ import {
 import { Fn, If, Discard } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
+import { create } from "domain"
+
+export const Normalization = {
+  NONE: 0,
+  PER_LAYER_MAX_ABS: 1,
+  PER_NEURON_SCALE_NORM: 1, // TODO 2
+} as const
+
+export type NormalizationType =
+  (typeof Normalization)[keyof typeof Normalization]
 
 const baseZero = vec3(...normalizeColor(ZERO_BASE))
 const basePos = vec3(...normalizeColor(POS_BASE))
@@ -22,9 +32,23 @@ const baseG = vec3(0, 1, 0)
 const baseB = vec3(0, 0, 1)
 const colorBases = [baseR, baseG, baseB]
 
-export const activationColor = (channelIdx?: number) => {
-  const posBase =
-    typeof channelIdx === "number" ? colorBases[channelIdx] : basePos
+const standardMaterial = createActivationMaterial(false, 0)
+const colorMaterials = [0, 1, 2].map((i) => createActivationMaterial(true, i))
+
+export function getMaterial(hasColors: boolean, channelIdx: number) {
+  return hasColors ? colorMaterials[channelIdx] : standardMaterial
+}
+
+function createActivationMaterial(hasColors: boolean, channelIdx: number) {
+  const material = hasColors
+    ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
+    : new THREE.MeshStandardNodeMaterial()
+  material.colorNode = activationColor(hasColors, channelIdx)
+  return material
+}
+
+function activationColor(hasColors: boolean, channelIdx: number) {
+  const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error missing type TODO
   return Fn(({ object }) => {
     const { activations } = object.userData

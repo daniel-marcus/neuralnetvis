@@ -1,14 +1,6 @@
 import * as THREE from "three/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
-
-export const Normalization = {
-  NONE: 0,
-  PER_LAYER_MAX_ABS: 1,
-  PER_NEURON_SCALE_NORM: 1, // TODO 2
-} as const
-
-export type NormalizationType =
-  (typeof Normalization)[keyof typeof Normalization]
+import { Normalization, type NormalizationType } from "./materials"
 
 interface CustomShaderMaterialProps extends THREE.MaterialParameters {
   baseZero?: number[] // [r, g, b] for base color

@@ -5,7 +5,7 @@ import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getMaxAbs } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers/types"
-import { activationColorTexture } from "./materials-tsl"
+import { activationColorTexture } from "./materials"
 
 const CELL_GAP = 1 // texture pixel between cells
 

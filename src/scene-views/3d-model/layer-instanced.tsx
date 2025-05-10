@@ -7,9 +7,8 @@ import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import { getMaxAbs } from "@/data/utils"
-import { activationColor } from "./materials-tsl"
+import { getMaterial, Normalization, NormalizationType } from "./materials"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
-import { Normalization } from "./materials-glsl"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
@@ -18,7 +17,7 @@ type InstancedLayerProps = NeuronLayer & {
 interface UserData {
   activations: THREE.InstancedBufferAttribute
   maxAbs: number
-  normalization: (typeof Normalization)[keyof typeof Normalization]
+  normalization: NormalizationType
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -138,16 +137,10 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
   const { hasColorChannels } = layer
 
-  const material = useMemo(() => {
-    // TODO resuse materials? or dispose correctly?
-    const material = hasColorChannels
-      ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
-      : new THREE.MeshStandardNodeMaterial()
-    material.colorNode = activationColor(
-      hasColorChannels ? channelIdx : undefined
-    )
-    return material
-  }, [hasColorChannels, channelIdx])
+  const material = useMemo(
+    () => getMaterial(hasColorChannels, channelIdx),
+    [hasColorChannels, channelIdx]
+  )
 
   const activationUpdTrigger = useLayerActivations(layer.index)
 
