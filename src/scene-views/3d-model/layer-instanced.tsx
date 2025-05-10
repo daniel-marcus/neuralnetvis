@@ -58,7 +58,7 @@ export const InstancedLayer = memo(function InstancedLayer(
     <group ref={groupRef}>
       <instancedMesh
         ref={meshRef}
-        name={`layer_${props.index}_channel_${channelIdx}`}
+        name={`${props.lid}_channel_${channelIdx}`}
         args={[meshParams.geometry, material, units]}
         renderOrder={renderOrder}
         userData={userData}

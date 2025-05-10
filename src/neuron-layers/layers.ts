@@ -48,7 +48,7 @@ export function useLayers() {
         const channelActivations = channelViews(activations, units, channels)
 
         const layer: NeuronLayer = {
-          lid: `${tfLayer.name}_${units}`,
+          lid: `${model.name}_${tfLayer.name}_${units}`,
           index: layerIndex,
           visibleIdx,
           layerType: className,
