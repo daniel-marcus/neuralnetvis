@@ -29,8 +29,8 @@ function useGPUDevice() {
   useEffect(() => {
     async function initGPU() {
       const adapter = await navigator.gpu?.requestAdapter()
-      const device = await adapter?.requestDevice()
-      useGlobalStore.setState({ gpuDevice: device })
+      const gpuDevice = await adapter?.requestDevice()
+      useGlobalStore.setState({ gpuDevice })
     }
     initGPU()
   }, [])

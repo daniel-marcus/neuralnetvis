@@ -45,10 +45,11 @@ function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
 
 function InputValueLabel(props: NeuronLabelsProps) {
   const rawInput = useRawInput(props.layer.index, props.neuronIdx)
+  if (typeof rawInput !== "number") return null
   return (
     <group>
       <NeuronLabel side="left" {...props} text={props.label} />
-      <NeuronLabel {...props} text={round(rawInput)} />
+      <NeuronLabel {...props} text={`${round(rawInput)}`} />
     </group>
   )
 }
@@ -56,14 +57,14 @@ function InputValueLabel(props: NeuronLabelsProps) {
 function OutputValueLabel(props: NeuronLabelsProps) {
   const activation = useActivation(props.layer.index, props.neuronIdx)
   const trainingY = useSceneStore((s) => s.sample?.y)
-  const text = `${props.label}\n${round(activation)} (predicted)\n${round(
-    trainingY
-  )} (actual)`
+  if (typeof activation !== "number") return null
+  let text = `${props.label}\n ${round(activation)} (predicted)`
+  if (typeof trainingY === "number") text += `\n${round(trainingY)} (actual)`
   return <NeuronLabel side="right" {...props} text={text} />
 }
 
 interface NeuronLabelProps {
-  text?: string | number
+  text?: string
   position?: [number, number, number]
   side?: "left" | "right"
   color?: string
@@ -88,32 +89,35 @@ export const NeuronLabel = memo(function NeuronLabel({
   const camera = useThree((s) => s.camera)
   useFrame(() => labelRef.current?.lookAt(camera.position))
 
-  const zOffset = side === "right" ? 3 : -3
-
-  const [labelState, setLabelState] = useState<LabelState | undefined>(
-    undefined
-  )
+  const [labelState, setLabelState] = useState<LabelState | undefined>()
+  const [canvas, setCanvas] = useState<HTMLCanvasElement | undefined>()
   useEffect(() => {
-    const t = text?.toString() ?? ""
+    const canvas = document.createElement("canvas")
+    setCanvas(canvas)
+  }, [])
+  useEffect(() => {
+    if (!text || !canvas) return
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
-    const [canvas, numLines] = text2Canvas({ text: t, fontFace, color, align })
+    const [, numLines] = text2Canvas({ text, fontFace, color, align, canvas })
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
+    texture.generateMipmaps = false
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+    texture.anisotropy = 1
     const yScale = numLines
     const xScale = (canvas.width / canvas.height) * yScale
     const scale = [xScale, yScale, 0] as [number, number, number]
     const anchorOffset = side === "left" ? -xScale / 2 : xScale / 2
     const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
     setLabelState({ texture, scale, anchorPos })
-    return () => {
-      // texture.dispose()
-    }
-  }, [text, color, side])
+  }, [text, color, side, canvas])
 
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
-  if (!lightsOn || !labelState) return null
+  if (!text || !labelState || !lightsOn) return null
   const { texture, scale, anchorPos } = labelState
+  const zOffset = side === "right" ? 3 : -3
 
   // spriteNodeMaterial didn't work with sprite.center, so using meshBasicMaterial + camera lookAt
   return (
@@ -124,7 +128,7 @@ export const NeuronLabel = memo(function NeuronLabel({
       scale={size}
     >
       <sprite ref={labelRef} position={anchorPos} scale={scale}>
-        <meshBasicMaterial map={texture} transparent />
+        <meshBasicMaterial map={texture} />
       </sprite>
     </group>
   )

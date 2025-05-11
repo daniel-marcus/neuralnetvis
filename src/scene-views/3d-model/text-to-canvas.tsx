@@ -6,11 +6,12 @@ interface Text2CanvasProps {
   fontFace: string
   color: string
   align?: "left" | "center" | "right"
+  canvas?: HTMLCanvasElement // if provided, will be used instead of creating a new one
 }
 
 export function text2Canvas(props: Text2CanvasProps) {
   const { text, fontSize = 90, fontFace, color, align = "left" } = props
-  const canvas = document.createElement("canvas")
+  const canvas = props.canvas ?? document.createElement("canvas")
   const ctx = canvas.getContext("2d")!
 
   const lines = text.split("\n")
