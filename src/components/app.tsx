@@ -28,7 +28,7 @@ export const App = ({ children }: { children?: React.ReactNode }) => {
 function useGPUDevice() {
   useEffect(() => {
     async function initGPU() {
-      const adapter = await navigator.gpu.requestAdapter()
+      const adapter = await navigator.gpu?.requestAdapter()
       const device = await adapter?.requestDevice()
       useGlobalStore.setState({ gpuDevice: device })
     }
