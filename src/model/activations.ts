@@ -20,10 +20,12 @@ export function ActivationUpdater() {
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
+  const latestSampleIdx = useRef<Sample["index"]>(-1)
 
   const maybeUpdate = useCallback(
     async (sample?: Sample, focusIdx?: number) => {
       if (!model || !sample) return
+      latestSampleIdx.current = sample.index
 
       const updatedLayers = updateTracker.current.get(sample.index) ?? new Set()
       const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.index)
@@ -36,12 +38,19 @@ export function ActivationUpdater() {
       if (!layersToUpdate.length) return
 
       const t0 = performance.now()
-      const newActivations = await getActivations(model, layersToUpdate, sample)
+      // let lastYield = t0
+
+      const LAYERS_PER_BATCH = 500 // TODO: tune for large models
+      for (let i = 0; i < layersToUpdate.length; i += LAYERS_PER_BATCH) {
+        if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
+        const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
+        const newActivations = await getActivations(model, layersBatch, sample)
+        setActivations(newActivations)
+        invalidate()
+        // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
+      }
       const dt = performance.now() - t0
       if (isDebug()) console.log(`>> total: ${dt}ms (${layersToUpdate.length})`)
-
-      setActivations(newActivations)
-      invalidate()
 
       const newUpdated = new Set(updatedLayers)
       layersToUpdate.forEach((l) => newUpdated.add(l.index))
