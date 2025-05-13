@@ -9,7 +9,7 @@ setWasmPaths("/wasm/")
 
 export type Backend = "webgpu" | "wasm" | "webgl" | "cpu"
 
-export const DEFAULT_BACKEND: Backend = "wasm"
+export const DEFAULT_BACKEND: Backend = "webgpu"
 
 export function useTfBackend() {
   const backendReady = useGlobalStore((s) => s.backendReady)

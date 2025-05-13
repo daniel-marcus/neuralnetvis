@@ -1,5 +1,6 @@
 "use client"
 
+import * as tf from "@tensorflow/tfjs"
 import { useTfBackend } from "@/model/tf-backend"
 import { useDebugCommands, useScreenshotBodyClass } from "@/utils/debug"
 import { Header } from "./header"
@@ -28,8 +29,13 @@ export const App = ({ children }: { children?: React.ReactNode }) => {
 function useGPUDevice() {
   useEffect(() => {
     async function initGPU() {
-      const adapter = await navigator.gpu?.requestAdapter()
-      const gpuDevice = await adapter?.requestDevice()
+      await tf.setBackend("webgpu")
+      const gpuDevice = tf.engine().registry.webgpu?.device as
+        | GPUDevice
+        | undefined
+      // const adapter = await navigator.gpu?.requestAdapter()
+      // const gpuDevice = await adapter?.requestDevice()
+      console.log("GPU device", gpuDevice)
       useGlobalStore.setState({ gpuDevice })
     }
     initGPU()

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
+import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
-import { useSceneStore, isDebug } from "@/store"
+import { useSceneStore, isDebug, getThree } from "@/store"
 import { useActivationStats } from "./activation-stats"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
+import WebGPUBackend from "three/src/renderers/webgpu/WebGPUBackend.js"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 
@@ -103,10 +105,37 @@ async function getActivations(
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
+    const renderer = getThree()!.gl as unknown as THREE.WebGPURenderer
+    const backend = renderer.backend as WebGPUBackend
+    const device = backend.device as GPUDevice
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
-      const act = (await actTensor.data()) as Float32Array
+      try {
+        const newGpuBuffer = actTensor.dataToGPU().buffer
+        const existingGpuBuffer = backend.data.get(
+          layer.meshRefs[0].current?.userData.activations
+        )?.buffer
+        if (newGpuBuffer && existingGpuBuffer) {
+          // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
+
+          const commandEncoder = device.createCommandEncoder()
+          commandEncoder.copyBufferToBuffer(
+            newGpuBuffer, // from
+            0, // sourceOffset
+            existingGpuBuffer, // to
+            0, // destinationOffset
+            newGpuBuffer.size
+          )
+
+          const commands = commandEncoder.finish()
+          device.queue.submit([commands])
+          continue
+        }
+      } catch (e) {
+        console.error("Error copying GPU buffer", e)
+      }
+      const act = new Float32Array(0) // (await actTensor.data()) as Float32Array
 
       // reuse buffer from layer to avoid reallocating
       const { activations, channelActivations } = layer
@@ -129,7 +158,7 @@ async function getActivations(
     }
     const end = performance.now()
     if (isDebug()) console.log(`download/colors: ${end - start}ms`)
-    return newLayerActivations
+    return {} // newLayerActivations
   } catch (e) {
     console.log("Error getting activations", e)
     return {}

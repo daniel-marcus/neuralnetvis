@@ -34,13 +34,14 @@ export const InstancedLayer = memo(function InstancedLayer(
   const activations = useMemo(() => {
     const actArr = channelActivations[channelIdx]
     const attr = new THREE.StorageInstancedBufferAttribute(actArr, 1)
+    attr.name = `${props.lid}_channel_${channelIdx}`
     return attr
-  }, [channelActivations, channelIdx])
+  }, [channelActivations, channelIdx, props.lid])
 
   const isSoftmax = props.tfLayer.getConfig().activation === "softmax"
   const userData: UserData = useMemo(() => {
     const { PER_LAYER_MAX_ABS, NONE } = Normalization
-    const maxAbs = uniform(999.0)
+    const maxAbs = uniform(1.0)
     const normalization = uniform(isSoftmax ? NONE : PER_LAYER_MAX_ABS)
     return {
       activations,
@@ -158,7 +159,7 @@ function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
     const userData = meshRef.current.userData as UserData
     userData.maxAbs.value = maxAbs
     userData.activations.needsUpdate = true
-    // console.log(meshRef.current, maxAbs)
+    console.log(meshRef.current, maxAbs)
   }, [activationUpdTrigger, meshRef])
 
   return material
