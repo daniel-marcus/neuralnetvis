@@ -47,7 +47,7 @@ export function ActivationUpdater() {
         if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
         const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
         const newActivations = await getActivations(model, layersBatch, sample)
-        setActivations(newActivations)
+        if (newActivations) setActivations(newActivations)
         invalidate()
         // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
       }
@@ -107,16 +107,26 @@ async function getActivations(
     const start = performance.now()
     const renderer = getThree()!.gl as unknown as THREE.WebGPURenderer
     const backend = renderer.backend as WebGPUBackend
-    const device = backend.device as GPUDevice
+    const device =
+      "device" in backend ? (backend.device as GPUDevice) : undefined
+    const threeData =
+      "data" in backend
+        ? (backend.data as WeakMap<
+            THREE.StorageBufferAttribute,
+            { buffer: GPUBuffer }
+          >)
+        : undefined
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
       try {
+        if (!device || !threeData) return
         if (layer.hasColorChannels) continue // TODO: handle color channels
-        const newGpuBuffer = actTensor.dataToGPU().buffer
-        const existingGpuBuffer = backend.data.get(
-          layer.activationsBuffer
-        )?.buffer
+        // @ts-expect-error type not compatible with tensor container
+        const newGpuBuffer = tf.tidy(() => actTensor.dataToGPU().buffer) as
+          | GPUBuffer
+          | undefined
+        const existingGpuBuffer = threeData.get(layer.activationsBuffer)?.buffer
         if (newGpuBuffer && existingGpuBuffer) {
           // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
 
@@ -131,6 +141,8 @@ async function getActivations(
 
           const commands = commandEncoder.finish()
           device.queue.submit([commands])
+          // await device.queue.onSubmittedWorkDone()
+          // newGpuBuffer.destroy()
           continue
         }
       } catch (e) {

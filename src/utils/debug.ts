@@ -1,7 +1,6 @@
 import { useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import * as tf from "@tensorflow/tfjs"
-import { getThreadsCount } from "@tensorflow/tfjs-backend-wasm"
 import { useGlobalStore, isDebug, setStatus, getThree, getScene } from "@/store"
 import { getAvailableBackends, type Backend } from "@/model/tf-backend"
 import { useKeyCommand } from "./key-command"
@@ -51,8 +50,8 @@ function showStats() {
   const glInfo = gl?.info
   const tfEngine = tf.engine()
   const tfVars = tfEngine.state.registeredVariables
-  const wasmThreads = getThreadsCount()
-  console.log({ appState, scene, glInfo, tfEngine, tfVars, wasmThreads })
+  // const wasmThreads = getThreadsCount()
+  console.log({ appState, scene, glInfo, tfEngine, tfVars })
 }
 
 export function useScreenshotBodyClass() {
