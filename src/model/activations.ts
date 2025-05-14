@@ -15,7 +15,6 @@ export function ActivationUpdater() {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
   useActivationStats()
-  const setActivations = useSceneStore((s) => s.setActivations)
   const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
@@ -59,7 +58,7 @@ export function ActivationUpdater() {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [model, layers, setActivations, invalidate]
+    [model, layers, invalidate]
   )
 
   // reset update tracker when model changes
@@ -122,7 +121,6 @@ async function getActivations(
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
       try {
         if (!device || !threeData) return
-        // if (layer.hasColorChannels) continue // TODO: handle color channels
         // @ts-expect-error type not compatible with tensor container
         const newGpuBuffer = tf.tidy(() => {
           const tensor = layer.hasColorChannels

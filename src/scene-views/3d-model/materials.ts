@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu"
-import { abs, float, max, mix, pow, uv, vec3, vec4 } from "three/tsl"
-import { Fn, If, Discard, select } from "three/tsl"
+import { abs, mix, pow, vec3, vec4 } from "three/tsl"
+import { Fn, If, Discard } from "three/tsl"
 import { texture, storage, instanceIndex } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"

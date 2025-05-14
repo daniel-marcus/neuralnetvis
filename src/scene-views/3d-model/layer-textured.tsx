@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef } from "react"
-import { memo, type RefObject } from "react"
+import { useCallback, useEffect, useMemo, memo } from "react"
 import * as THREE from "three/webgpu"
-import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getTextureMaterial } from "./materials"
 import type { NeuronLayer } from "@/neuron-layers/types"
@@ -15,8 +13,7 @@ export interface UserDataTextured {
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const { activationsBuffer } = props
-  const meshRef = useRef<THREE.Mesh>(null)
-  const [texture, material, mapTexture] = useActivationTexture(props, meshRef)
+  const [texture, material, mapTexture] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   const userData: UserDataTextured = useMemo(() => {
@@ -26,22 +23,14 @@ export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
     }
   }, [activationsBuffer, mapTexture])
   return (
-    <mesh
-      ref={meshRef}
-      scale={[size, spacedSize, spacedSize]}
-      userData={userData}
-    >
+    <mesh scale={[size, spacedSize, spacedSize]} userData={userData}>
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />
     </mesh>
   )
 })
 
-function useActivationTexture(
-  layer: NeuronLayer,
-  meshRef: RefObject<THREE.Mesh | null>
-) {
-  const layerActivations = useLayerActivations(layer.index)
+function useActivationTexture(layer: NeuronLayer) {
   const [, height, width, channels] = layer.tfLayer.outputShape as number[]
 
   const texture = useMemo(() => {

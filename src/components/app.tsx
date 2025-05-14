@@ -30,11 +30,12 @@ function useGPUDevice() {
   useEffect(() => {
     async function initGPU() {
       await tf.setBackend("webgpu")
-      const gpuDevice = tf.engine().registry.webgpu?.device as
-        | GPUDevice
-        | undefined
-      // const adapter = await navigator.gpu?.requestAdapter()
-      // const gpuDevice = await adapter?.requestDevice()
+      // share webgpu device between tfjs and threejs to allow direct GPU-to-GPU transfer
+      const webGpuBackend = tf.engine().registry.webgpu
+      const gpuDevice =
+        !!webGpuBackend && "device" in webGpuBackend
+          ? (webGpuBackend.device as GPUDevice)
+          : undefined
       console.log("GPU device", gpuDevice)
       useGlobalStore.setState({ gpuDevice })
     }
