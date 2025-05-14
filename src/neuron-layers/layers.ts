@@ -47,10 +47,7 @@ export function useLayers() {
         const activations = new Float32Array(units)
         const channels = hasColorChannels ? 3 : 1
         const channelActivations = channelViews(activations, units, channels)
-        const activationsBuffer = new THREE.StorageBufferAttribute(
-          activations,
-          1
-        )
+        const actBuffer = new THREE.StorageBufferAttribute(activations, 1) // TODO: reuse?
 
         const layer: NeuronLayer = {
           lid: `${model.name}_${tfLayer.name}_${units}`,
@@ -70,7 +67,7 @@ export function useLayers() {
           hasColorChannels,
           activations,
           channelActivations,
-          activationsBuffer,
+          activationsBuffer: actBuffer,
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []

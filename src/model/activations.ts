@@ -3,13 +3,12 @@ import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
-import { useSceneStore, isDebug, getThree } from "@/store"
+import { useSceneStore, isDebug } from "@/store"
 import { useActivationStats } from "./activation-stats"
-import type { NeuronLayer } from "@/neuron-layers"
-import WebGPUBackend from "three/src/renderers/webgpu/WebGPUBackend.js"
 import { normalize } from "@/data/utils"
+import type { NeuronLayer } from "@/neuron-layers"
 
-type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
+type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
 export function ActivationUpdater() {
   const sample = useSample()
@@ -18,6 +17,7 @@ export function ActivationUpdater() {
   const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((s) => s.gl as unknown as THREE.WebGPURenderer)
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
@@ -29,7 +29,7 @@ export function ActivationUpdater() {
       latestSampleIdx.current = sample.index
 
       const updatedLayers = updateTracker.current.get(sample.index) ?? new Set()
-      const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.index)
+      const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.lid)
       const isFocussed = (l: NeuronLayer) => l.index === focusIdx
       const layersToUpdate =
         typeof focusIdx === "number"
@@ -45,7 +45,7 @@ export function ActivationUpdater() {
       for (let i = 0; i < layersToUpdate.length; i += LAYERS_PER_BATCH) {
         if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
         const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
-        await getActivations(model, layersBatch, sample)
+        await getActivations(renderer, model, layersBatch, sample)
         // if (newActivations) setActivations(newActivations)
         invalidate()
         // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
@@ -54,15 +54,20 @@ export function ActivationUpdater() {
       if (isDebug()) console.log(`>> total: ${dt}ms (${layersToUpdate.length})`)
 
       const newUpdated = new Set(updatedLayers)
-      layersToUpdate.forEach((l) => newUpdated.add(l.index))
+      layersToUpdate.forEach((l) => newUpdated.add(l.lid))
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [model, layers, invalidate]
+    [renderer, model, layers, invalidate]
   )
 
   // reset update tracker when model changes
-  useEffect(() => updateTracker.current.clear(), [maybeUpdate])
+  useEffect(() => {
+    return () => {
+      updateTracker.current.clear()
+      latestSampleIdx.current = -1
+    }
+  }, [maybeUpdate])
 
   useEffect(() => {
     maybeUpdate(sample, focusIdx)
@@ -87,6 +92,7 @@ export function useActivation(layerIdx: number, neuronIdx: number) {
 }
 
 async function getActivations(
+  renderer: THREE.WebGPURenderer,
   model: tf.LayersModel,
   layers: NeuronLayer[],
   sample: Sample
@@ -101,10 +107,11 @@ async function getActivations(
     return allActivations
   })
 
+  await new Promise((r) => setTimeout(r, 0)) // make sure layer component has mounted and buffer is attached
+
   try {
     const start = performance.now()
-    const renderer = getThree()!.gl as unknown as THREE.WebGPURenderer
-    const backend = renderer.backend as WebGPUBackend
+    const backend = renderer.backend
     const device =
       "device" in backend ? (backend.device as GPUDevice) : undefined
     const threeData =

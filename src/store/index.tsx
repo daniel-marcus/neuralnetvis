@@ -125,7 +125,7 @@ export const setStatus: StatusSlice["status"]["update"] = (...args) =>
 export const clearStatus: StatusSlice["status"]["clear"] = (id) =>
   useGlobalStore.getState().status.clear(id)
 
-export const getScene = () => useGlobalStore.getState().scene
+export const getScene = () => useGlobalStore.getState().scene // current scene only
 
 export const getDs = () => getScene().getState().ds
 export const getModel = () => getScene().getState().model

@@ -27,18 +27,18 @@ export const App = ({ children }: { children?: React.ReactNode }) => {
 }
 
 function useGPUDevice() {
+  const backendReady = useGlobalStore((s) => s.backendReady)
   useEffect(() => {
+    if (!backendReady) return
     async function initGPU() {
-      await tf.setBackend("webgpu")
       // share webgpu device between tfjs and threejs to allow direct GPU-to-GPU transfer
       const webGpuBackend = tf.engine().registry.webgpu
       const gpuDevice =
         !!webGpuBackend && "device" in webGpuBackend
           ? (webGpuBackend.device as GPUDevice)
           : undefined
-      console.log("GPU device", gpuDevice)
       useGlobalStore.setState({ gpuDevice })
     }
     initGPU()
-  }, [])
+  }, [backendReady])
 }

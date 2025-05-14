@@ -10,6 +10,7 @@ setWasmPaths("/wasm/")
 export type Backend = "webgpu" | "wasm" | "webgl" | "cpu"
 
 export const DEFAULT_BACKEND: Backend = "webgpu"
+const FALLBACK_BACKEND: Backend = "wasm"
 
 export function useTfBackend() {
   const backendReady = useGlobalStore((s) => s.backendReady)
@@ -25,7 +26,7 @@ export function useTfBackend() {
 
 export async function setBackend(
   backend: Backend = DEFAULT_BACKEND,
-  fallback: Backend = DEFAULT_BACKEND
+  fallback: Backend = FALLBACK_BACKEND
 ) {
   const success = getAvailableBackends().includes(backend)
     ? await tf.setBackend(backend)
