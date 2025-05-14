@@ -20,15 +20,15 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { channelIdx = 0, meshRefs } = props
+  const { activationsBuffer, channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
 
   const userData: UserData = useMemo(() => {
     return {
-      activations: props.activationsBuffer,
+      activations: activationsBuffer,
     }
-  }, [props.activationsBuffer])
+  }, [activationsBuffer])
 
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)

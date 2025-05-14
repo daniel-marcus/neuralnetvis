@@ -6,7 +6,6 @@ import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug, getThree } from "@/store"
 import { useActivationStats } from "./activation-stats"
 import type { NeuronLayer } from "@/neuron-layers"
-import type { LayerActivations } from "./types"
 import WebGPUBackend from "three/src/renderers/webgpu/WebGPUBackend.js"
 import { normalize } from "@/data/utils"
 
@@ -47,8 +46,8 @@ export function ActivationUpdater() {
       for (let i = 0; i < layersToUpdate.length; i += LAYERS_PER_BATCH) {
         if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
         const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
-        const newActivations = await getActivations(model, layersBatch, sample)
-        if (newActivations) setActivations(newActivations)
+        await getActivations(model, layersBatch, sample)
+        // if (newActivations) setActivations(newActivations)
         invalidate()
         // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
       }
@@ -103,7 +102,6 @@ async function getActivations(
     return allActivations
   })
 
-  const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
     const renderer = getThree()!.gl as unknown as THREE.WebGPURenderer
@@ -124,10 +122,13 @@ async function getActivations(
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
       try {
         if (!device || !threeData) return
-        if (layer.hasColorChannels) continue // TODO: handle color channels
+        // if (layer.hasColorChannels) continue // TODO: handle color channels
         // @ts-expect-error type not compatible with tensor container
         const newGpuBuffer = tf.tidy(() => {
-          const normalized = isSoftmax ? actTensor : normalize(actTensor)
+          const tensor = layer.hasColorChannels
+            ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
+            : actTensor
+          const normalized = isSoftmax ? tensor : normalize(tensor)
           return normalized.dataToGPU().buffer
         }) as GPUBuffer | undefined
         const existingGpuBuffer = threeData.get(layer.activationsBuffer)?.buffer
@@ -151,26 +152,6 @@ async function getActivations(
         }
       } catch (e) {
         console.error("Error copying GPU buffer", e)
-      }
-      const act = new Float32Array(0) // (await actTensor.data()) as Float32Array
-
-      // reuse buffer from layer to avoid reallocating
-      const { activations, channelActivations } = layer
-
-      if (layer.hasColorChannels) {
-        // different order in color layers: [...allRed, ...allGreen, ...allBlue]
-        // see channelViews() in neuron-layers/layers.ts
-        for (let nIdx = 0; nIdx < act.length; nIdx += 1) {
-          const channelIdx = nIdx % 3
-          const idxInChannel = Math.floor(nIdx / 3)
-          channelActivations[channelIdx][idxInChannel] = act[nIdx] // TODO: switch dims in tensor above?
-        }
-      } else {
-        activations.set(act)
-      }
-
-      newLayerActivations[layer.index] = {
-        activations: act,
       }
     }
     const end = performance.now()

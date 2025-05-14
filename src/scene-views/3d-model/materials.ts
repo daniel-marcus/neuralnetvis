@@ -44,7 +44,9 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
     const { activations } = object.userData as UserData
-    const normalizedNode = storage(activations).element(instanceIndex)
+    const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
+    const idx = instanceIndex.add(offset)
+    const normalizedNode = storage(activations).element(idx)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
