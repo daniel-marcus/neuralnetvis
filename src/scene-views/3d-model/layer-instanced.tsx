@@ -16,7 +16,7 @@ type InstancedLayerProps = NeuronLayer & {
 }
 
 export interface UserData {
-  activations: THREE.StorageInstancedBufferAttribute
+  activations: THREE.StorageBufferAttribute // StorageInstancedBufferAttribute
   maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
   normalization: THREE.TSL.ShaderNodeObject<
     THREE.UniformNode<NormalizationType>
@@ -27,28 +27,21 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { channelIdx = 0, channelActivations, meshRefs } = props
+  const { channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
-
-  const activations = useMemo(() => {
-    const actArr = channelActivations[channelIdx]
-    const attr = new THREE.StorageInstancedBufferAttribute(actArr, 1)
-    attr.name = `${props.lid}_channel_${channelIdx}`
-    return attr
-  }, [channelActivations, channelIdx, props.lid])
 
   const isSoftmax = props.tfLayer.getConfig().activation === "softmax"
   const userData: UserData = useMemo(() => {
     const { PER_LAYER_MAX_ABS, NONE } = Normalization
-    const maxAbs = uniform(1.0)
+    const maxAbs = uniform(1.0) // TODO
     const normalization = uniform(isSoftmax ? NONE : PER_LAYER_MAX_ABS)
     return {
-      activations,
+      activations: props.activationsBuffer,
       maxAbs,
       normalization,
     }
-  }, [isSoftmax, activations])
+  }, [isSoftmax, props.activationsBuffer])
 
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)

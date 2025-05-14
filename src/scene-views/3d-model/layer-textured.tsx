@@ -1,30 +1,35 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { memo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
+import { uniform } from "three/tsl"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getMaxAbs } from "@/data/utils"
 import { getTextureMaterial } from "./materials"
 import type { NeuronLayer } from "@/neuron-layers/types"
-import { uniform } from "three/tsl"
 
 const CELL_GAP = 1 // texture pixel between cells
 
 export interface UserDataTextured {
   // dataTexture: THREE.DataTexture
+  activations: THREE.StorageBufferAttribute
   maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
+  mapTexture: THREE.DataTexture
 }
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
+  const { activationsBuffer } = props
   const meshRef = useRef<THREE.Mesh>(null)
-  const [texture, material] = useActivationTexture(props, meshRef)
+  const [texture, material, mapTexture] = useActivationTexture(props, meshRef)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   const userData: UserDataTextured = useMemo(() => {
     return {
-      maxAbs: uniform(999.0),
+      activations: activationsBuffer,
+      maxAbs: uniform(1.0), // TODO
+      mapTexture,
     }
-  }, [])
+  }, [activationsBuffer, mapTexture])
   return (
     <mesh
       ref={meshRef}
@@ -65,7 +70,7 @@ function useActivationTexture(
     return texture
   }, [height, width, channels])
 
-  const material = useMemo(() => getTextureMaterial(texture), [texture])
+  const material = useMemo(() => getTextureMaterial(), [])
   useEffect(() => {
     return () => {
       material.dispose()
@@ -101,6 +106,16 @@ function useActivationTexture(
     return map
   }, [width, height, channels, texture.image.width])
 
+  const mapTexture = useMemo(() => {
+    // reverse of pixelMap: maps texture pixel to activation index
+    const mapTexture = texture.clone()
+    const data = mapTexture.image.data as Float32Array
+    pixelMap.forEach((texIdx, activationIdx) => {
+      data[texIdx] = activationIdx
+    })
+    return mapTexture
+  }, [texture, pixelMap])
+
   useLayoutEffect(() => {
     if (!meshRef.current || !layerActivations) return
     // update pixel colors in the texture
@@ -117,7 +132,7 @@ function useActivationTexture(
     texture.needsUpdate = true
   }, [texture, pixelMap, layerActivations, layer, meshRef])
 
-  return [texture, material] as const
+  return [texture, material, mapTexture] as const
 }
 
 function updateUvMapping(

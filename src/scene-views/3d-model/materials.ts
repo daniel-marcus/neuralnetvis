@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu"
-import { abs, max, mix, pow, vec3, vec4 } from "three/tsl"
+import { abs, float, max, mix, pow, uv, vec3, vec4 } from "three/tsl"
 import { Fn, If, Discard, select } from "three/tsl"
-import { instancedBufferAttribute, texture } from "three/tsl"
+import { texture, storage, instanceIndex } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 import { UserData } from "./layer-instanced"
@@ -44,7 +44,7 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
     const { activations, maxAbs, normalization } = object.userData as UserData
-    const activation = instancedBufferAttribute(activations, "float")
+    const activation = storage(activations).element(instanceIndex)
     const normalizedNode = select(
       normalization,
       activation.div(max(maxAbs, 1e-6)),
@@ -59,22 +59,24 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
   })()
 }
 
-export function getTextureMaterial(texture: THREE.DataTexture) {
+export function getTextureMaterial() {
   const material = new THREE.MeshStandardNodeMaterial()
   material.transparent = true
-  material.map = texture
-  material.colorNode = activationColorTexture(texture)
+  material.colorNode = activationColorTexture()
   return material
 }
 
-export function activationColorTexture(map: THREE.DataTexture) {
+export function activationColorTexture() {
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
-    const { maxAbs } = object.userData as UserDataTextured
-    const activationNode = texture(map).r
-    If(activationNode.lessThan(-900.0), () => {
+    const { maxAbs, activations, mapTexture } =
+      object.userData as UserDataTextured
+    const idx = texture(mapTexture).r
+    If(idx.lessThan(-900.0), () => {
+      // -999.0 used as marker for empty (transparent) pixels
       Discard()
     })
+    const activationNode = storage(activations).element(idx)
     const normalizedNode = activationNode.div(max(maxAbs, 1e-6))
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)

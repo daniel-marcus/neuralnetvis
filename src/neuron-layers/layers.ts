@@ -1,5 +1,6 @@
 import { createRef, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
+import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
 import { getLayerDef } from "@/model/layers"
@@ -46,6 +47,10 @@ export function useLayers() {
         const activations = new Float32Array(units)
         const channels = hasColorChannels ? 3 : 1
         const channelActivations = channelViews(activations, units, channels)
+        const activationsBuffer = new THREE.StorageBufferAttribute(
+          activations,
+          1
+        )
 
         const layer: NeuronLayer = {
           lid: `${model.name}_${tfLayer.name}_${units}`,
@@ -65,6 +70,7 @@ export function useLayers() {
           hasColorChannels,
           activations,
           channelActivations,
+          activationsBuffer,
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []

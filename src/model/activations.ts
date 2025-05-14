@@ -112,9 +112,10 @@ async function getActivations(
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
       try {
+        if (layer.hasColorChannels) continue // TODO: handle color channels
         const newGpuBuffer = actTensor.dataToGPU().buffer
         const existingGpuBuffer = backend.data.get(
-          layer.meshRefs[0].current?.userData.activations
+          layer.activationsBuffer
         )?.buffer
         if (newGpuBuffer && existingGpuBuffer) {
           // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
