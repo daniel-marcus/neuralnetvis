@@ -51,8 +51,8 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
-    const colorNode = pow(srgbColor, vec3(2.2))
-    return colorNode
+    const vColor = pow(srgbColor, vec3(2.2))
+    return vColor // TODO: vertexStage?
   })()
 }
 

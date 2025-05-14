@@ -130,7 +130,7 @@ async function getActivations(
       })
       try {
         if (isWebGPUBackend(backend)) {
-          // WebGPU is available: we can copy the GPU buffer directly!
+          // WebGPU is available: we can copy the buffer directly in GPU
           // @ts-expect-error type not compatible with tensor container
           const newGpuBuffer = tf.tidy(() => {
             return normalized.dataToGPU().buffer
@@ -139,8 +139,7 @@ async function getActivations(
             layer.activationsBuffer
           )?.buffer
           if (newGpuBuffer && existingGpuBuffer) {
-            // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
-
+            console.log("copy GPU buffer")
             const commandEncoder = backend.device.createCommandEncoder()
             commandEncoder.copyBufferToBuffer(
               newGpuBuffer, // from
@@ -157,11 +156,14 @@ async function getActivations(
             continue
           }
         } else {
-          // fallback if WebGPU is not available
-          console.log("lets implement WebGL fallback here")
+          // fallback if WebGPU is not available: fallback for WASM/WebGL via CPU
+          console.log("using fallback")
+          const data = await normalized.data()
+          layer.activations.set(data)
+          layer.activationsBuffer.needsUpdate = true
         }
       } catch (e) {
-        console.error("Error copying GPU buffer", e)
+        console.error("Error getting activations", e)
       } finally {
         normalized.dispose()
       }

@@ -43,6 +43,7 @@ export const ThreeCanvas = (props: CanvasProps) => {
         const renderer = new THREE.WebGPURenderer({
           ...(renderProps as WebGPURendererParameters),
           device: gpuDevice ? gpuDevice : undefined,
+          // forceWebGL: true,
         })
         await renderer.init()
         return renderer
