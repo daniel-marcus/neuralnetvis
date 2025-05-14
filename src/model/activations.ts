@@ -6,9 +6,15 @@ import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
 import { useActivationStats } from "./activation-stats"
 import { normalize } from "@/data/utils"
+import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
+
+interface TypedWebGPUBackend extends Backend {
+  device: GPUDevice
+  data: WeakMap<THREE.StorageBufferAttribute, { buffer: GPUBuffer }> // actually there are more types for K and V
+}
 
 export function ActivationUpdater() {
   const sample = useSample()
@@ -112,53 +118,56 @@ async function getActivations(
   try {
     const start = performance.now()
     const backend = renderer.backend
-    const device =
-      "device" in backend ? (backend.device as GPUDevice) : undefined
-    const threeData =
-      "data" in backend
-        ? (backend.data as WeakMap<
-            THREE.StorageBufferAttribute,
-            { buffer: GPUBuffer }
-          >)
-        : undefined
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
-
       const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
+      const normalized = tf.tidy(() => {
+        const tensor = layer.hasColorChannels
+          ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
+          : actTensor
+        return isSoftmax ? tensor : normalize(tensor)
+      })
       try {
-        if (!device || !threeData) return
-        // @ts-expect-error type not compatible with tensor container
-        const newGpuBuffer = tf.tidy(() => {
-          const tensor = layer.hasColorChannels
-            ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
-            : actTensor
-          const normalized = isSoftmax ? tensor : normalize(tensor)
-          return normalized.dataToGPU().buffer
-        }) as GPUBuffer | undefined
-        const existingGpuBuffer = threeData.get(layer.activationsBuffer)?.buffer
-        if (newGpuBuffer && existingGpuBuffer) {
-          // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
+        if (isWebGPUBackend(backend)) {
+          // WebGPU is available: we can copy the GPU buffer directly!
+          // @ts-expect-error type not compatible with tensor container
+          const newGpuBuffer = tf.tidy(() => {
+            return normalized.dataToGPU().buffer
+          }) as GPUBuffer | undefined
+          const existingGpuBuffer = backend.data.get(
+            layer.activationsBuffer
+          )?.buffer
+          if (newGpuBuffer && existingGpuBuffer) {
+            // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })
 
-          const commandEncoder = device.createCommandEncoder()
-          commandEncoder.copyBufferToBuffer(
-            newGpuBuffer, // from
-            0, // sourceOffset
-            existingGpuBuffer, // to
-            0, // destinationOffset
-            newGpuBuffer.size
-          )
+            const commandEncoder = backend.device.createCommandEncoder()
+            commandEncoder.copyBufferToBuffer(
+              newGpuBuffer, // from
+              0, // sourceOffset
+              existingGpuBuffer, // to
+              0, // destinationOffset
+              newGpuBuffer.size
+            )
 
-          const commands = commandEncoder.finish()
-          device.queue.submit([commands])
-          // await device.queue.onSubmittedWorkDone()
-          // newGpuBuffer.destroy()
-          continue
+            const commands = commandEncoder.finish()
+            backend.device.queue.submit([commands])
+            // await device.queue.onSubmittedWorkDone()
+            // newGpuBuffer.destroy()
+            continue
+          }
+        } else {
+          // fallback if WebGPU is not available
+          console.log("lets implement WebGL fallback here")
         }
       } catch (e) {
         console.error("Error copying GPU buffer", e)
+      } finally {
+        normalized.dispose()
       }
     }
+    // fallback to CPU if GPU copy fails
+
     const end = performance.now()
     if (isDebug()) console.log(`download/colors: ${end - start}ms`)
     return {} // newLayerActivations
@@ -196,4 +205,8 @@ type Shape = (number | null)[]
 
 export function checkShapeMatch(s1: Shape, s2: Shape) {
   return s1.every((value, idx) => value === s2[idx])
+}
+
+function isWebGPUBackend(backend: Backend): backend is TypedWebGPUBackend {
+  return "isWebGPUBackend" in backend && (backend.isWebGPUBackend as boolean)
 }
