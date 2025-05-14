@@ -8,6 +8,7 @@ import { useActivationStats } from "./activation-stats"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 import WebGPUBackend from "three/src/renderers/webgpu/WebGPUBackend.js"
+import { normalize } from "@/data/utils"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 
@@ -119,13 +120,16 @@ async function getActivations(
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor
+
+      const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
       try {
         if (!device || !threeData) return
         if (layer.hasColorChannels) continue // TODO: handle color channels
         // @ts-expect-error type not compatible with tensor container
-        const newGpuBuffer = tf.tidy(() => actTensor.dataToGPU().buffer) as
-          | GPUBuffer
-          | undefined
+        const newGpuBuffer = tf.tidy(() => {
+          const normalized = isSoftmax ? actTensor : normalize(actTensor)
+          return normalized.dataToGPU().buffer
+        }) as GPUBuffer | undefined
         const existingGpuBuffer = threeData.get(layer.activationsBuffer)?.buffer
         if (newGpuBuffer && existingGpuBuffer) {
           // console.log("copy GPU buffer", { newGpuBuffer, existingGpuBuffer })

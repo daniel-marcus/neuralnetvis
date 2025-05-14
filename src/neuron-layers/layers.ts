@@ -7,6 +7,7 @@ import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { LayerPos, NeuronLayer, LayerType } from "./types"
+import { uniform } from "three/tsl"
 
 // returns an array of all visible layers
 export function useLayers() {

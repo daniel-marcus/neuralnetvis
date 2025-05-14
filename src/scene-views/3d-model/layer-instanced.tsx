@@ -1,14 +1,11 @@
 import { memo, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
-import { useLayerActivations } from "@/model/activations"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
-import { getMaxAbs } from "@/data/utils"
-import { getMaterial, Normalization, NormalizationType } from "./materials"
-import { uniform } from "three/tsl"
+import { getMaterial } from "./materials"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 
 type InstancedLayerProps = NeuronLayer & {
@@ -17,10 +14,6 @@ type InstancedLayerProps = NeuronLayer & {
 
 export interface UserData {
   activations: THREE.StorageBufferAttribute // StorageInstancedBufferAttribute
-  maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
-  normalization: THREE.TSL.ShaderNodeObject<
-    THREE.UniformNode<NormalizationType>
-  >
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -31,21 +24,15 @@ export const InstancedLayer = memo(function InstancedLayer(
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
 
-  const isSoftmax = props.tfLayer.getConfig().activation === "softmax"
   const userData: UserData = useMemo(() => {
-    const { PER_LAYER_MAX_ABS, NONE } = Normalization
-    const maxAbs = uniform(1.0) // TODO
-    const normalization = uniform(isSoftmax ? NONE : PER_LAYER_MAX_ABS)
     return {
       activations: props.activationsBuffer,
-      maxAbs,
-      normalization,
     }
-  }, [isSoftmax, props.activationsBuffer])
+  }, [props.activationsBuffer])
 
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
-  const material = useColors(props, meshRef, channelIdx)
+  const material = useColors(props, channelIdx)
   const eventHandlers = useNeuronInteractions(props.index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
@@ -136,24 +123,13 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(layer: NeuronLayer, meshRef: MeshRef, channelIdx: number) {
+function useColors(layer: NeuronLayer, channelIdx: number) {
   const { hasColorChannels } = layer
 
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx),
     [hasColorChannels, channelIdx]
   )
-
-  const activationUpdTrigger = useLayerActivations(layer.index)
-
-  useLayoutEffect(() => {
-    if (!meshRef.current?.userData.activations || !activationUpdTrigger) return
-    const maxAbs = getMaxAbs(activationUpdTrigger.activations)
-    const userData = meshRef.current.userData as UserData
-    userData.maxAbs.value = maxAbs
-    userData.activations.needsUpdate = true
-    console.log(meshRef.current, maxAbs)
-  }, [activationUpdTrigger, meshRef])
 
   return material
 }

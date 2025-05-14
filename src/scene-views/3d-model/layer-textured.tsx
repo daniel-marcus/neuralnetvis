@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { memo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
-import { uniform } from "three/tsl"
 import { useLayerActivations } from "@/model/activations"
 import { useNeuronSpacing } from "./layer-instanced"
-import { getMaxAbs } from "@/data/utils"
 import { getTextureMaterial } from "./materials"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
 
 export interface UserDataTextured {
-  // dataTexture: THREE.DataTexture
   activations: THREE.StorageBufferAttribute
-  maxAbs: THREE.TSL.ShaderNodeObject<THREE.UniformNode<number>>
   mapTexture: THREE.DataTexture
 }
 
@@ -26,7 +22,6 @@ export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
   const userData: UserDataTextured = useMemo(() => {
     return {
       activations: activationsBuffer,
-      maxAbs: uniform(1.0), // TODO
       mapTexture,
     }
   }, [activationsBuffer, mapTexture])
@@ -115,22 +110,6 @@ function useActivationTexture(
     })
     return mapTexture
   }, [texture, pixelMap])
-
-  useLayoutEffect(() => {
-    if (!meshRef.current || !layerActivations) return
-    // update pixel colors in the texture
-    // layerActivations only used as update trigger here
-    const data = texture.image.data as Float32Array
-    const { activations } = layer
-
-    for (let i = 0; i < activations.length; i++) {
-      data[pixelMap[i]] = activations[i]
-    }
-
-    const userData = meshRef.current.userData as UserDataTextured
-    userData.maxAbs.value = getMaxAbs(activations)
-    texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations, layer, meshRef])
 
   return [texture, material, mapTexture] as const
 }

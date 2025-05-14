@@ -43,13 +43,8 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
-    const { activations, maxAbs, normalization } = object.userData as UserData
-    const activation = storage(activations).element(instanceIndex)
-    const normalizedNode = select(
-      normalization,
-      activation.div(max(maxAbs, 1e-6)),
-      activation
-    )
+    const { activations } = object.userData as UserData
+    const normalizedNode = storage(activations).element(instanceIndex)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
@@ -69,15 +64,13 @@ export function getTextureMaterial() {
 export function activationColorTexture() {
   // @ts-expect-error function not fully typed
   return Fn(({ object }) => {
-    const { maxAbs, activations, mapTexture } =
-      object.userData as UserDataTextured
+    const { activations, mapTexture } = object.userData as UserDataTextured
     const idx = texture(mapTexture).r
     If(idx.lessThan(-900.0), () => {
       // -999.0 used as marker for empty (transparent) pixels
       Discard()
     })
-    const activationNode = storage(activations).element(idx)
-    const normalizedNode = activationNode.div(max(maxAbs, 1e-6))
+    const normalizedNode = storage(activations).element(idx)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(basePos, baseNeg)
