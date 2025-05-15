@@ -1,11 +1,12 @@
 import * as THREE from "three/webgpu"
-import { abs, mix, pow, vec3, vec4 } from "three/tsl"
-import { Fn, If, Discard } from "three/tsl"
-import { texture, storage, instanceIndex } from "three/tsl"
+import { Fn, If, Discard, abs, mix, pow, vec3, vec4 } from "three/tsl"
+import { texture, storage, uniformArray, instanceIndex } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
+import { isWebGPUBackend } from "@/utils/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
-import { UserData } from "./layer-instanced"
-import { UserDataTextured } from "./layer-textured"
+import type { UserData } from "./layer-instanced"
+import type { UserDataTextured } from "./layer-textured"
+import type Backend from "three/src/renderers/common/Backend.js"
 
 export const Normalization = {
   NONE: 0,
@@ -39,14 +40,19 @@ function createActivationMaterial(hasColors: boolean, channelIdx: number) {
   return material
 }
 
+interface FnProps {
+  object: THREE.Object3D
+  renderer: THREE.WebGPURenderer
+}
+
 export function activationColor(hasColors: boolean, channelIdx: number) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
-  return Fn(({ object }) => {
+  return Fn(({ object, renderer: { backend } }: FnProps) => {
     const { activations } = object.userData as UserData
     const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
     const idx = instanceIndex.add(offset)
-    const normalizedNode = storage(activations).element(idx)
+    const normalizedNode = storageNode(activations, backend).element(idx)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
@@ -54,6 +60,16 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
     const vColor = pow(srgbColor, vec3(2.2))
     return vColor // TODO: vertexStage?
   })()
+}
+
+function storageNode(
+  storageAttr: THREE.StorageBufferAttribute,
+  backend: Backend
+) {
+  return isWebGPUBackend(backend)
+    ? storage(storageAttr)
+    : // @ts-expect-error function not fully typed
+      uniformArray(storageAttr.array, "float")
 }
 
 export function getTextureMaterial() {
@@ -65,14 +81,14 @@ export function getTextureMaterial() {
 
 export function activationColorTexture() {
   // @ts-expect-error function not fully typed
-  return Fn(({ object }) => {
+  return Fn(({ object, renderer: { backend } }: FnProps) => {
     const { activations, mapTexture } = object.userData as UserDataTextured
     const idx = texture(mapTexture).r
     If(idx.lessThan(-900.0), () => {
       // -999.0 used as marker for empty (transparent) pixels
       Discard()
     })
-    const normalizedNode = storage(activations).element(idx)
+    const normalizedNode = storageNode(activations, backend).element(idx)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(basePos, baseNeg)

@@ -5,16 +5,11 @@ import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
 import { useActivationStats } from "./activation-stats"
+import { isWebGPUBackend } from "@/utils/webgpu"
 import { normalize } from "@/data/utils"
-import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
-
-interface TypedWebGPUBackend extends Backend {
-  device: GPUDevice
-  data: WeakMap<THREE.StorageBufferAttribute, { buffer: GPUBuffer }> // actually there are more types for K and V
-}
 
 export function ActivationUpdater() {
   const sample = useSample()
@@ -207,8 +202,4 @@ type Shape = (number | null)[]
 
 export function checkShapeMatch(s1: Shape, s2: Shape) {
   return s1.every((value, idx) => value === s2[idx])
-}
-
-function isWebGPUBackend(backend: Backend): backend is TypedWebGPUBackend {
-  return "isWebGPUBackend" in backend && (backend.isWebGPUBackend as boolean)
 }
