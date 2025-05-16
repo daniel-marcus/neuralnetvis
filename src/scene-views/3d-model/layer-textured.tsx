@@ -12,16 +12,9 @@ export interface UserDataTextured {
 }
 
 export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
-  const { activationsBuffer } = props
-  const [texture, material, mapTexture] = useActivationTexture(props)
+  const [texture, material, userData] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
-  const userData: UserDataTextured = useMemo(() => {
-    return {
-      activations: activationsBuffer,
-      mapTexture,
-    }
-  }, [activationsBuffer, mapTexture])
   return (
     <mesh scale={[size, spacedSize, spacedSize]} userData={userData}>
       <primitive object={geometry} attach="geometry" />
@@ -100,7 +93,12 @@ function useActivationTexture(layer: NeuronLayer) {
     return mapTexture
   }, [texture, pixelMap])
 
-  return [texture, material, mapTexture] as const
+  const userData: UserDataTextured = {
+    activations: layer.activationsBuffer,
+    mapTexture,
+  }
+
+  return [texture, material, userData] as const
 }
 
 function updateUvMapping(

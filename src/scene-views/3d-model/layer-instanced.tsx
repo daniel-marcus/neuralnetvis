@@ -20,19 +20,12 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { activationsBuffer, channelIdx = 0, meshRefs } = props
+  const { channelIdx = 0, meshRefs } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
-
-  const userData: UserData = useMemo(() => {
-    return {
-      activations: activationsBuffer,
-    }
-  }, [activationsBuffer])
-
   const groupRef = useGroupPosition(props, channelIdx)
   const positions = useNeuronPositions(props, meshRef)
-  const material = useColors(props, channelIdx)
+  const [material, userData] = useColors(props, channelIdx)
   const eventHandlers = useNeuronInteractions(props.index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
@@ -123,13 +116,12 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(layer: NeuronLayer, channelIdx: number) {
-  const { hasColorChannels } = layer
-
+function useColors(props: NeuronLayer, channelIdx: number) {
+  const { activationsBuffer, hasColorChannels } = props
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx),
     [hasColorChannels, channelIdx]
   )
-
-  return material
+  const userData: UserData = { activations: activationsBuffer }
+  return [material, userData] as const
 }
