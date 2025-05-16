@@ -8,7 +8,7 @@ import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
-// import { YPointer } from "./pointer"
+import { YPointer } from "./pointer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = memo(function Layer(props: NeuronLayer) {
@@ -22,12 +22,10 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
           <LodComp key={i} {...props} channelIdx={i} measureRef={measureRef} />
         ))}
       </group>
+      {props.layerPos === "output" && <YPointer outputLayer={props} />}
     </LayerScaler>
   )
 })
-
-/* 
-      {props.layerPos === "output" && <YPointer outputLayer={props} />} */
 
 interface LayerScalerProps extends NeuronLayer {
   children: React.ReactNode

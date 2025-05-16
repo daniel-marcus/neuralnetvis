@@ -69,6 +69,7 @@ interface NeuronLabelProps {
   side?: "left" | "right"
   color?: string
   size?: number
+  lookAtCamera?: boolean
 }
 
 interface LabelState {
@@ -77,17 +78,29 @@ interface LabelState {
   anchorPos: [number, number, number]
 }
 
-export const NeuronLabel = memo(function NeuronLabel({
+function NeuronLabel(props: NeuronLabelProps) {
+  const { side, position = [0, 0, 0], size = 1 } = props
+  const zOffset = side === "right" ? 3 : -3
+  const [x, y, z] = position
+  const offsetPos = useMemo(
+    () => [x, y, z + size * zOffset] as [number, number, number],
+    [x, y, z, size, zOffset]
+  )
+  return <TextLabel {...props} position={offsetPos} lookAtCamera={true} />
+}
+
+export const TextLabel = memo(function NeuronLabel({
   text,
-  position: [x, y, z] = [0, 0, 0],
+  position,
   side = "right",
   color = LABEL_COLOR,
   size = 1,
+  lookAtCamera,
 }: NeuronLabelProps) {
   const labelRef = useRef<THREE.Object3D>(null)
 
   const camera = useThree((s) => s.camera)
-  useFrame(() => labelRef.current?.lookAt(camera.position))
+  useFrame(() => lookAtCamera && labelRef.current?.lookAt(camera.position))
 
   const [labelState, setLabelState] = useState<LabelState | undefined>()
   const [canvas, setCanvas] = useState<HTMLCanvasElement | undefined>()
@@ -117,18 +130,17 @@ export const NeuronLabel = memo(function NeuronLabel({
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!text || !labelState || !lightsOn) return null
   const { texture, scale, anchorPos } = labelState
-  const zOffset = side === "right" ? 3 : -3
 
   // spriteNodeMaterial didn't work with sprite.center, so using meshBasicMaterial + camera lookAt
   return (
     <group
-      position={[x, y, z + size * zOffset]}
+      position={position}
       rotation={[0, -Math.PI / 2, 0]}
       ref={labelRef}
       scale={size}
     >
       <sprite ref={labelRef} position={anchorPos} scale={scale}>
-        <meshBasicMaterial map={texture} />
+        <meshBasicMaterial map={texture} transparent />
       </sprite>
     </group>
   )
