@@ -51,6 +51,7 @@ interface DsMapProps {
 
 interface DsCamProps {
   aspectRatio?: number
+  processor?: "handPose"
 }
 
 export interface StoreMeta {
