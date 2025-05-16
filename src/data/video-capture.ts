@@ -16,7 +16,7 @@ export function useCaptureLoop(
 ) {
   const ds = useSceneStore((s) => s.ds)
   const setSample = useSceneStore((s) => s.setSample)
-  const nextSample = useSceneStore((s) => s.nextSample)
+  // const nextSample = useSceneStore((s) => s.nextSample)
   const videoRef = useSceneStore((s) => s.videoRef)
   const recY = useSceneStore((s) => s.recordingY)
   useEffect(() => {
@@ -34,9 +34,9 @@ export function useCaptureLoop(
     captureLoop()
     return () => {
       cancelAnimationFrame(animationFrame)
-      nextSample()
+      // nextSample()
     }
-  }, [stream, videoRef, predict, ds, setSample, nextSample, recY])
+  }, [stream, videoRef, predict, ds, setSample, recY])
 }
 
 export function DefaultRecorder({ stream }: RecorderProps) {
