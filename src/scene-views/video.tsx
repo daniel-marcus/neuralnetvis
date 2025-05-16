@@ -1,10 +1,10 @@
 "use client"
 
 import { useCallback, useEffect } from "react"
-import { useGlobalStore, useSceneStore } from "@/store"
-import { useHandPose } from "@/data"
+import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
-import { useCanvasUpdate } from "@/data/hand-pose"
+import { HandPoseRecorder, useCanvasUpdate } from "@/data/hand-pose"
+import { DefaultRecorder } from "@/data/video-capture"
 
 export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
@@ -68,9 +68,8 @@ const cameraOffSvg = (
 
 export function VideoControl() {
   const [stream, toggleStream] = useStream()
-  const [isRecording, toggleRecording] = useHandPose(stream)
-  const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
-  const setTab = useGlobalStore((s) => s.setTab)
+  const isRecording = useSceneStore((s) => s.isRecording)
+  const camProcessor = useSceneStore((s) => s.ds?.camProps?.processor)
   return (
     <>
       {!isRecording && (
@@ -78,18 +77,10 @@ export function VideoControl() {
           {!!stream ? <>{cameraOffSvg} stop</> : <>{cameraSvg} start</>} video
         </Button>
       )}
-      {!dsIsUserGenerated && (
-        <Button onClick={() => setTab("data")} variant="secondary">
-          new dataset
-        </Button>
-      )}
-      {dsIsUserGenerated && !!stream && (
-        <Button
-          onClick={async () => toggleRecording()}
-          variant={isRecording ? "primary" : "secondary"}
-        >
-          {isRecording ? "cancel recording" : "record samples"}
-        </Button>
+      {camProcessor === "handPose" ? (
+        <HandPoseRecorder stream={stream} />
+      ) : (
+        <DefaultRecorder stream={stream} />
       )}
     </>
   )

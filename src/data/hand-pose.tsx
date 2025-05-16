@@ -5,6 +5,9 @@ import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData } from "@/data/dataset"
+import { useCaptureLoop } from "./video-capture"
+import { Button } from "@/components/ui-elements"
+import type { PredictFunc, RecorderProps } from "./video-capture"
 import type { SampleRaw } from "./types"
 
 const HP_TRAIN_CONFIG = {
@@ -14,13 +17,31 @@ const HP_TRAIN_CONFIG = {
   lazyLoading: false,
 }
 
-export function useHandPose(stream?: MediaStream) {
+export function HandPoseRecorder({ stream }: RecorderProps) {
   useHpTrainConfig()
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands, stream)
-  usePredictLoop(stream, hpPredict)
-  const [isRecording, toggleRecording] = useSampleRecorder(hpPredict, numHands)
-  return [isRecording, toggleRecording] as const
+  useCaptureLoop(stream, hpPredict)
+  const [isRecording, toggleRec] = useSampleRecorder(hpPredict, numHands)
+  const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
+  const setTab = useGlobalStore((s) => s.setTab)
+  return (
+    <>
+      {!dsIsUserGenerated && (
+        <Button onClick={() => setTab("data")} variant="secondary">
+          new dataset
+        </Button>
+      )}
+      {dsIsUserGenerated && !!stream && (
+        <Button
+          onClick={async () => toggleRec()}
+          variant={isRecording ? "primary" : "secondary"}
+        >
+          {isRecording ? "cancel recording" : "record samples"}
+        </Button>
+      )}
+    </>
+  )
 }
 
 function useLandmarker(numHands: number, stream?: MediaStream) {
@@ -44,35 +65,37 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
     landmarker.setOptions({ numHands })
   }, [landmarker, numHands])
 
-  const hpPredict = useCallback(async () => {
-    const video = videoRef?.current
-    if (!landmarker || !video) return {}
-    if (!video.videoWidth || !video.videoHeight) return {}
-    const result = landmarker.detectForVideo(video, performance.now())
+  const hpPredict: PredictFunc = useCallback(
+    async (video?: HTMLVideoElement) => {
+      if (!landmarker || !video) return
+      if (!video.videoWidth || !video.videoHeight) return
+      const result = landmarker.detectForVideo(video, performance.now())
 
-    if (!result) return {}
-    let landmarks = result.landmarks
-    const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
-    if (numHands === 1) {
-      landmarks = [landmarks[0] ?? emptyHand]
-    } else if (numHands > 1) {
-      const leftIdx = result.handedness.findIndex(
-        (h) => h[0].categoryName === "Left"
-      )
-      const rightIdx = result.handedness.findIndex(
-        (h) => h[0].categoryName === "Right"
-      )
-      landmarks = [
-        landmarks[leftIdx] ?? emptyHand,
-        landmarks[rightIdx] ?? emptyHand,
-      ]
-    }
-    // const data = landmarks.map(toRelativeCoords)
-    const dataRaw = landmarks.map((lm) => lm.map((l) => [l.x, l.y, l.z]))
-    // const X = transposeLandmarks(data, numHands)
-    const rawX = transposeLandmarks(dataRaw, numHands)
-    return { X: rawX }
-  }, [landmarker, numHands, videoRef])
+      if (!result) return
+      let landmarks = result.landmarks
+      const emptyHand = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }))
+      if (numHands === 1) {
+        landmarks = [landmarks[0] ?? emptyHand]
+      } else if (numHands > 1) {
+        const leftIdx = result.handedness.findIndex(
+          (h) => h[0].categoryName === "Left"
+        )
+        const rightIdx = result.handedness.findIndex(
+          (h) => h[0].categoryName === "Right"
+        )
+        landmarks = [
+          landmarks[leftIdx] ?? emptyHand,
+          landmarks[rightIdx] ?? emptyHand,
+        ]
+      }
+      // const data = landmarks.map(toRelativeCoords)
+      const dataRaw = landmarks.map((lm) => lm.map((l) => [l.x, l.y, l.z]))
+      // const X = transposeLandmarks(data, numHands)
+      const rawX = transposeLandmarks(dataRaw, numHands)
+      return rawX
+    },
+    [landmarker, numHands, videoRef]
+  )
 
   return hpPredict
 }
@@ -109,36 +132,6 @@ async function createHandLandmarker(numHands?: number) {
     numHands,
   })
   return handLandmarker
-}
-
-let recordingY: number | undefined = undefined
-
-type PrecitFunc = ReturnType<typeof useLandmarker>
-
-function usePredictLoop(
-  stream: MediaStream | null | undefined,
-  hpPredict: PrecitFunc
-) {
-  const ds = useSceneStore((s) => s.ds)
-  const setSample = useSceneStore((s) => s.setSample)
-  const nextSample = useSceneStore((s) => s.nextSample)
-  useEffect(() => {
-    if (!stream) return
-    let animationFrame: number
-    async function captureLoop() {
-      const isTraning = useGlobalStore.getState().scene.getState().isTraining
-      if (!isTraning) {
-        const { X } = await hpPredict()
-        if (X) setSample({ X, y: recordingY, index: Date.now() })
-      }
-      animationFrame = requestAnimationFrame(captureLoop)
-    }
-    captureLoop()
-    return () => {
-      cancelAnimationFrame(animationFrame)
-      nextSample()
-    }
-  }, [stream, hpPredict, ds, setSample, nextSample])
 }
 
 function setCanvasDefaultSize(canvas: HTMLCanvasElement, aspectRatio: number) {
@@ -178,19 +171,22 @@ export function useCanvasUpdate() {
 
 let shouldCancelRecording = false
 
-function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
+function useSampleRecorder(hpPredict: PredictFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
-  const startRecording = useSceneStore((s) => s.startRecording)
-  const stopRecording = useSceneStore((s) => s.stopRecording)
+  const startRec = useSceneStore((s) => s.startRecording)
+  const stopRec = useSceneStore((s) => s.stopRecording)
   // const stream = useSceneStore((s) => s.stream)
 
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
   const hpTrain = useSceneStore((s) => s.toggleTraining)
   const stream = useSceneStore((s) => s.stream)
+  const videoRef = useSceneStore((s) => s.videoRef)
+  const recY = useSceneStore((s) => s.recordingY)
 
   const hpRecordSamples = useCallback(async () => {
-    if (!stream) return
+    const video = videoRef.current
+    if (!stream || !video) return
     shouldCancelRecording = false
     const outputSize = ds?.outputLabels.length
     if (!outputSize) return
@@ -201,7 +197,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
 
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
-      recordingY = y
+      recY.current = y
       const label = ds.outputLabels ? ds.outputLabels[y] : y
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
         setStatus(`Start recording "${label}" in ${s} seconds ...`, -1, {
@@ -224,7 +220,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
           fullscreen: true,
         })
         await new Promise((resolve) => setTimeout(resolve, 100))
-        const { X } = await hpPredict()
+        const X = await hpPredict(video)
         if (!X) continue
         xData = [...xData, ...X]
         yData.push(y)
@@ -234,7 +230,7 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
         shape: [yData.length, 21, 3, numHands],
       }
       const ys = { data: Uint8Array.from(yData), shape: [yData.length] }
-      recordingY = undefined
+      recY.current = null
       const aspectRatio = getAspectRatioFromStream(stream)
       const trainMeta = await addTrainData(ds, xs, ys, undefined, aspectRatio)
       updateMeta("train", trainMeta)
@@ -251,22 +247,22 @@ function useSampleRecorder(hpPredict: PrecitFunc, numHands: number) {
     }
     useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
-    stopRecording()
-  }, [stream, hpPredict, numHands, ds, stopRecording, updateMeta, hpTrain])
+    stopRec()
+  }, [stream, hpPredict, numHands, ds, stopRec, updateMeta, hpTrain, videoRef])
 
-  const toggleRecording = useCallback(async () => {
+  const toggleRec = useCallback(async () => {
     // if (!stream) return
     if (isRecording) {
       shouldCancelRecording = true
       clearStatus("hpRecordSamples")
-      stopRecording()
+      stopRec()
     } else {
-      startRecording()
+      startRec()
       hpRecordSamples()
     }
-  }, [isRecording, startRecording, stopRecording, hpRecordSamples])
+  }, [isRecording, startRec, stopRec, hpRecordSamples])
 
-  return [isRecording, toggleRecording] as const
+  return [isRecording, toggleRec] as const
 }
 
 function getAspectRatioFromStream(stream: MediaStream) {
