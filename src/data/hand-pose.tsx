@@ -45,7 +45,6 @@ export function HandPoseRecorder({ stream }: RecorderProps) {
 }
 
 function useLandmarker(numHands: number, stream?: MediaStream) {
-  const videoRef = useSceneStore((s) => s.videoRef)
   const landmarker = useGlobalStore((s) => s.handLandmarker)
 
   useEffect(() => {
@@ -94,7 +93,7 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
       const rawX = transposeLandmarks(dataRaw, numHands)
       return rawX
     },
-    [landmarker, numHands, videoRef]
+    [landmarker, numHands]
   )
 
   return hpPredict
@@ -175,17 +174,16 @@ function useSampleRecorder(hpPredict: PredictFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
   const startRec = useSceneStore((s) => s.startRecording)
   const stopRec = useSceneStore((s) => s.stopRecording)
-  // const stream = useSceneStore((s) => s.stream)
 
   const ds = useSceneStore((s) => s.ds)
-  const updateMeta = useSceneStore((s) => s.updateMeta)
+  const updMeta = useSceneStore((s) => s.updateMeta)
   const hpTrain = useSceneStore((s) => s.toggleTraining)
   const stream = useSceneStore((s) => s.stream)
-  const videoRef = useSceneStore((s) => s.videoRef)
+  const vidRef = useSceneStore((s) => s.videoRef)
   const recY = useSceneStore((s) => s.recordingY)
 
   const hpRecordSamples = useCallback(async () => {
-    const video = videoRef.current
+    const video = vidRef.current
     if (!stream || !video) return
     shouldCancelRecording = false
     const outputSize = ds?.outputLabels.length
@@ -233,7 +231,7 @@ function useSampleRecorder(hpPredict: PredictFunc, numHands: number) {
       recY.current = null
       const aspectRatio = getAspectRatioFromStream(stream)
       const trainMeta = await addTrainData(ds, xs, ys, undefined, aspectRatio)
-      updateMeta("train", trainMeta)
+      updMeta("train", trainMeta)
     }
 
     const newSamples = allY.length * SAMPLES
@@ -248,7 +246,7 @@ function useSampleRecorder(hpPredict: PredictFunc, numHands: number) {
     useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
     stopRec()
-  }, [stream, hpPredict, numHands, ds, stopRec, updateMeta, hpTrain, videoRef])
+  }, [stream, hpPredict, numHands, ds, stopRec, updMeta, hpTrain, vidRef, recY])
 
   const toggleRec = useCallback(async () => {
     // if (!stream) return
