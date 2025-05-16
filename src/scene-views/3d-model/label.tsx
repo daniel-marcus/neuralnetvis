@@ -79,7 +79,7 @@ interface LabelState {
 }
 
 function NeuronLabel(props: NeuronLabelProps) {
-  const { side, position = [0, 0, 0], size = 1 } = props
+  const { side = "right", position = [0, 0, 0], size = 1 } = props
   const zOffset = side === "right" ? 3 : -3
   const [x, y, z] = position
   const offsetPos = useMemo(
