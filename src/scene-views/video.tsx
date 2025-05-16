@@ -3,14 +3,13 @@
 import { useCallback, useEffect } from "react"
 import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
-import { HandPoseRecorder, useCanvasUpdate } from "@/data/hand-pose"
+import { HandPoseRecorder } from "@/data/hand-pose"
 import { DefaultRecorder } from "@/data/video-capture"
 
 export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
   const stream = useSceneStore((s) => s.stream)
-  useCanvasUpdate()
   return (
     <>
       <video

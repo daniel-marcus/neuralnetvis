@@ -53,13 +53,19 @@ async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   if (!inputDims) return
   if (!video.videoWidth || !video.videoHeight) return
   const numChannels = inputDims[2]
-  const data = tf.tidy(() => {
-    const tensor = tf.browser.fromPixels(video, numChannels)
+  const tensor = await tf.browser.fromPixelsAsync(video, numChannels)
+  const flattened = tf.tidy(() => {
     const resized = tf.image.resizeBilinear(tensor, [
       inputDims[0],
       inputDims[1],
     ])
-    return resized.flatten().arraySync()
+    return resized.flatten()
   })
-  return [...data] as number[]
+  let data: number[] | undefined
+  try {
+    data = await flattened.array()
+  } finally {
+    flattened.dispose()
+  }
+  return data
 }
