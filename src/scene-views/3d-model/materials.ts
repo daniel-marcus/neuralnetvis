@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu"
-import { Fn, If, Discard, abs, mix, pow, vec3, vec4 } from "three/tsl"
+import { Fn, If, Discard, abs, mix, pow, varying, vec3, vec4 } from "three/tsl"
 import { texture, storage, uniformArray, instanceIndex } from "three/tsl"
 import { normalizeColor } from "./materials-glsl"
 import { isWebGPUBackend } from "@/utils/webgpu"
@@ -58,7 +58,7 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
       .select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     const vColor = pow(srgbColor, vec3(2.2))
-    return vColor // TODO: vertexStage?
+    return varying(vColor) // compute in vertex stage
   })()
 }
 
