@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
 import * as THREE from "three"
-import { ThreeEvent, useFrame, useThree } from "@react-three/fiber"
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { MeshDiscardMaterial, Outlines } from "@react-three/drei"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
@@ -10,7 +10,6 @@ import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
 import { getNid } from "@/neuron-layers/neurons"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
-import type { Mesh } from "three"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
@@ -66,7 +65,10 @@ export function LayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }
-  const onDoubleClick = () => setFocussedIdx(props.index)
+  const onDoubleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation()
+    setFocussedIdx(props.index)
+  }
 
   const interactions = {
     onPointerOver,
@@ -142,7 +144,7 @@ interface HighlightedProps {
 const COLOR = "rgb(150, 156, 171)"
 
 export function Highlighted({ neuron, thick }: HighlightedProps) {
-  const ref = useRef<Mesh>(null)
+  const ref = useRef<THREE.Mesh>(null)
   const invalidate = useThree((s) => s.invalidate)
   useEffect(invalidate, [neuron, invalidate])
   useFrame(() => {
