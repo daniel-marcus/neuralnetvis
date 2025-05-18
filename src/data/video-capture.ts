@@ -50,22 +50,17 @@ export function DefaultRecorder({ stream }: RecorderProps) {
 }
 
 async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
-  if (!inputDims) return
-  if (!video.videoWidth || !video.videoHeight) return
-  const numChannels = inputDims[2]
-  const tensor = await tf.browser.fromPixelsAsync(video, numChannels)
-  const flattened = tf.tidy(() => {
-    const resized = tf.image.resizeBilinear(tensor, [
-      inputDims[0],
-      inputDims[1],
-    ])
-    return resized.flatten()
-  })
+  if (!inputDims || !video.videoWidth || !video.videoHeight) return
+  const [height, width, channels] = inputDims
+  const tensor = await tf.browser.fromPixelsAsync(video, channels)
+  const resized = tf.tidy(() =>
+    tf.image.resizeBilinear(tensor, [height, width]).flatten()
+  )
   let data: number[] | undefined
   try {
-    data = await flattened.array()
+    data = await resized.array()
   } finally {
-    flattened.dispose()
+    tf.dispose([tensor, resized])
   }
   return data
 }
