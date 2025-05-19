@@ -17,6 +17,7 @@ import { Nid } from "@/neuron-layers"
 import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional_depthwise"
 import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
 import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
+import { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {
@@ -33,6 +34,7 @@ export type LayerConfigMap = {
   ReLU: ReLULayerArgs
   ZeroPadding2D: ZeroPadding2DLayerArgs
   Activation: ActivationLayerArgs
+  Embedding: EmbeddingLayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {

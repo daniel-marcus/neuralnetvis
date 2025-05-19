@@ -83,12 +83,12 @@ export const LayerConfigControl = () => {
 
     const layerDef = getLayerDef(className)
 
-    const insertIdx =
-      className === "RandomRotation"
-        ? 1 // insert RandomRotation after InputLayer
-        : layerDef?.needsMultiDim && flattenIdx > -1
-        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
-        : beforeOutputIdx // default
+    // TODO: define insert position in layerDef?
+    const insertIdx = ["RandomRotation", "Embedding"].includes(className)
+      ? 1 // insert RandomRotation and Embedding after InputLayer
+      : layerDef?.needsMultiDim && flattenIdx > -1
+      ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
+      : beforeOutputIdx // default
     const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
     setLayerConfigs(newLayerConfigs)
   }
@@ -103,7 +103,7 @@ export const LayerConfigControl = () => {
       value: "empty",
       label: "add",
       disabled: true,
-    }, // TODO: disabled / filter condition in LayerDef?
+    },
     ...Object.keys(layerDefMap)
       .filter((key) => getLayerDef(key)?.isUserAddable)
       .map((key) => ({

@@ -11,6 +11,7 @@ import { DepthwiseConv2D } from "./depthwise-conv2d"
 import { ReLU } from "./relu"
 import { ZeroPadding2D } from "./zero-padding2d"
 import { Activation } from "./activation"
+import { Embedding } from "./embedding"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -27,6 +28,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   ReLU,
   ZeroPadding2D,
   Activation,
+  Embedding,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(
