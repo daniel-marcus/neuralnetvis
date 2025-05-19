@@ -61,7 +61,8 @@ export function useLayers() {
           meshParams,
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
-            (layerPos === "output" && !!ds?.outputLabels?.length),
+            (layerPos === "output" && !!ds?.outputLabels?.length) ||
+            (layerPos === "input" && ds?.decodeInput),
           hasColorChannels,
           activations,
           channelActivations,
