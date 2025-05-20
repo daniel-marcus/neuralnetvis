@@ -71,7 +71,7 @@
     "fake-indexeddb": "^6.0.1",
     "happy-dom": "^17.4.7",
     "postcss": "^8.5.3",
-    "puppeteer": "^24.8.2",
+    "puppeteer": "^24.9.0",
     "tailwindcss": "^4.1.7",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^5.8.3",
