@@ -156,31 +156,32 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   }, [model, ds, learningRate])
 }
 
-function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
-  const dsInputShape = [null, ...ds.inputDims] as [null, ...number[]]
-
-  // TODO: use tf.model instead of tf.sequential for custom branching w/ Add layer
-  // check add method: https://github.com/tensorflow/tfjs/blob/tfjs-v4.22.0/tfjs-layers/src/models.ts#L452
-  const model = tf.sequential()
-
-  const hasInputLayer = layerConfigs[0]?.className === "InputLayer"
-  if (!hasInputLayer) {
-    model.add(
-      tf.layers.inputLayer({
-        batchInputShape: dsInputShape,
-        name: `nnv_InputLayer`,
-      })
-    )
+class LayerStack {
+  nodes: tf.SymbolicTensor[]
+  constructor(input: tf.SymbolicTensor) {
+    this.nodes = [input]
   }
+  add(layer: Layer, inputs: tf.SymbolicTensor[] = [this.last]) {
+    const output = layer.apply(inputs) as tf.SymbolicTensor
+    this.nodes.push(output)
+  }
+  get last() {
+    return this.nodes[this.nodes.length - 1]
+  }
+  getNodeByLayerName(name: string) {
+    return this.nodes.find((n) => n.sourceLayer.name === name)
+  }
+}
 
+function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
+  const input = tf.input({ shape: ds.inputDims, name: "nnv_Input" })
+  const layerStack = new LayerStack(input)
   for (const [i, l] of layerConfigs.entries()) {
     const isOutput = i === layerConfigs.length - 1
     const config = { ...l.config, name: `nnv_${l.className}_${i}` }
 
     if (l.className === "InputLayer") {
-      config.batchInputShape = dsInputShape
-      config.name = `nnv_InputLayer`
-      model.add(tf.layers.inputLayer(config as LayerConfigMap["InputLayer"]))
+      continue
     } else if (l.className === "Dense") {
       const newConfig = isOutput
         ? {
@@ -190,31 +191,40 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
             name: `nnv_Output`,
           }
         : config
-      addDenseWithFlattenIfNeeded(model, newConfig as LayerConfigMap["Dense"])
-    } else if (l.className in layerDefMap) {
+      addDenseWithFlattenIfNeeded(
+        layerStack,
+        newConfig as LayerConfigMap["Dense"]
+      )
+    }
+    // TODO: custom handling for Add layer: layerStack.add(layer, [layerStack.last, layerStack.getNodeByLayerName(config.name)])
+    else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
       const makeLayer = getLayerDef(l.className)?.constructorFunc as (
         args: unknown
       ) => Layer
-      if (makeLayer) model.add(makeLayer(args))
+      if (makeLayer) layerStack.add(makeLayer(args))
     } else {
       console.log("Unknown layer", l)
     }
   }
 
+  const model = tf.model({
+    inputs: input,
+    outputs: layerStack.last,
+  })
+
   return model
 }
 
 function addDenseWithFlattenIfNeeded(
-  model: tf.Sequential,
+  layerStack: LayerStack,
   denseArgs: LayerConfigMap["Dense"]
 ) {
-  const prevLayer = model.layers[model.layers.length - 1]
-  const isMutliDim = prevLayer.outputShape.length > 2
+  const isMutliDim = layerStack.last.shape.length > 2
   if (isMutliDim) {
-    model.add(tf.layers.flatten())
+    layerStack.add(tf.layers.flatten())
   }
-  model.add(tf.layers.dense(denseArgs))
+  layerStack.add(tf.layers.dense(denseArgs))
 }
 
 function isModelCompiled(model: tf.LayersModel) {
