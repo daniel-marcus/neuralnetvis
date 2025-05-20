@@ -18,6 +18,8 @@ import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/co
 import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
 import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
 import { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
+import { PositionEmbeddingLayerArgs } from "./position-embedding"
+import { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {
@@ -35,6 +37,8 @@ export type LayerConfigMap = {
   ZeroPadding2D: ZeroPadding2DLayerArgs
   Activation: ActivationLayerArgs
   Embedding: EmbeddingLayerArgs
+  PositionEmbedding: PositionEmbeddingLayerArgs
+  Add: LayerArgs
 }
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {
@@ -64,7 +68,7 @@ export type GetInputNidsFunc = (
 
 export interface LayerDef<T extends keyof LayerConfigMap> {
   constructorFunc: (args: LayerConfigMap[T]) => Layer
-  defaultConfig: LayerConfigMap[T]
+  defaultConfig?: LayerConfigMap[T]
   options?: ControlableOption<T>[]
   getInputNids?: GetInputNidsFunc
   needsMultiDim?: boolean // TODO: better name?

@@ -159,6 +159,8 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
 function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
   const dsInputShape = [null, ...ds.inputDims] as [null, ...number[]]
 
+  // TODO: use tf.model instead of tf.sequential for custom branching w/ Add layer
+  // check add method: https://github.com/tensorflow/tfjs/blob/tfjs-v4.22.0/tfjs-layers/src/models.ts#L452
   const model = tf.sequential()
 
   const hasInputLayer = layerConfigs[0]?.className === "InputLayer"
