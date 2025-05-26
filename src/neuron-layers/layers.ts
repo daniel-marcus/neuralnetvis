@@ -28,7 +28,7 @@ export function useLayers() {
 
         const units = getUnits(tfLayer)
         const meshParams =
-          ["BatchNormalization", "RandomRotation"].includes(className) &&
+          ["BatchNormalization", "RandomRotation", "Add"].includes(className) &&
           !!prevLayer
             ? prevLayer.meshParams
             : getMeshParams(tfLayer, layerPos, units)

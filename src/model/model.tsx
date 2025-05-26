@@ -195,9 +195,18 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
         layerStack,
         newConfig as LayerConfigMap["Dense"]
       )
-    }
-    // TODO: custom handling for Add layer: layerStack.add(layer, [layerStack.last, layerStack.getNodeByLayerName(config.name)])
-    else if (l.className in layerDefMap) {
+    } else if (l.className === "Add") {
+      const lastNode = layerStack.last
+      const makeLayer = getLayerDef(l.className)!.constructorFunc
+      const { otherLayerNames, ...rest } = l.config as LayerConfigMap["Add"]
+      const layer = makeLayer(rest)
+      const otherNodes = otherLayerNames
+        ? (otherLayerNames
+            .map((name) => layerStack.getNodeByLayerName(name))
+            .filter(Boolean) as tf.SymbolicTensor[])
+        : [lastNode] // fallback for initialization
+      layerStack.add(layer, [lastNode, ...otherNodes])
+    } else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
       const makeLayer = getLayerDef(l.className)?.constructorFunc as (
         args: unknown

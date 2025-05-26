@@ -17,6 +17,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
   updateLayerConfig: <C extends keyof LayerConfigMap>(
     config: LayerConfig<C>["config"]
   ) => void,
+  layerConfigs: LayerConfigArray,
   isLast: boolean
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
@@ -51,6 +52,21 @@ function getInputComp<T extends keyof LayerConfigMap>(
         value={sliderVal}
         onChange={(val) => updateLayerConfig({ ...config, [option.name]: val })}
         transform={transformFromSliderVal}
+      />
+    )
+  } else if (option && option.inputType === "select") {
+    const options =
+      typeof option.options === "function"
+        ? option.options({ layerConfig, layerConfigs })
+        : option.options
+    const value = option.getValue({ layerConfig })
+    return (
+      <Select
+        options={options.map((o) => ({ value: o, label: o }))}
+        value={value}
+        onChange={(val) => {
+          updateLayerConfig({ ...config, [option.name]: [val] }) // TODO: Array vs string
+        }}
       />
     )
   } else return null
@@ -134,7 +150,12 @@ export const LayerConfigControl = () => {
               setLayerConfigs([...layerConfigs])
             }
             const isLast = i === layerConfigs.length - 1
-            const inputComp = getInputComp(layer, updateLayerConfig, isLast)
+            const inputComp = getInputComp(
+              layer,
+              updateLayerConfig,
+              layerConfigs,
+              isLast
+            )
 
             const isInvisible =
               invisibleLayers.includes(layer.config.name ?? "") ||
