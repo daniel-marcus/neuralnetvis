@@ -45,7 +45,7 @@ interface AddLayerArgs extends LayerArgs {
   otherLayerNames?: string[]
 }
 
-type InboundNode = [string, number, number, {}] // [name, ...]
+type InboundNode = [string, number, number, unknown] // [name, ...]
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {
   className: T
