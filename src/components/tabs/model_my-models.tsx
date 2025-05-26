@@ -9,6 +9,7 @@ import {
 import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
 import type { FormEvent } from "react"
 import { useModelTransition } from "@/model/model"
+import { importKerasModel } from "@/model/import-keras"
 
 export function MyModels() {
   const model = useCurrScene((s) => s.model)
@@ -134,12 +135,21 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
     async (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault()
       if (!modelFiles) return
-      setStatus("Importing model ...", -1, { id: IMPORT_STATUS })
-      const newModel = await tf.loadLayersModel(
-        tf.io.browserFiles([...modelFiles])
-      )
-      await newModel.save(`indexeddb://imported_${newModel.name}`)
-      setModel(newModel)
+
+      let newModel: tf.LayersModel | undefined
+
+      if (modelFiles[0].name.toLowerCase().endsWith(".keras")) {
+        newModel = await importKerasModel(modelFiles[0])
+      } else {
+        // assume model.json + weights.bin files
+        setStatus("Importing model ...", -1, { id: IMPORT_STATUS })
+        newModel = await tf.loadLayersModel(tf.io.browserFiles([...modelFiles]))
+      }
+
+      if (newModel) {
+        await newModel.save(`indexeddb://imported_${newModel.name}`)
+        setModel(newModel)
+      }
     },
     [modelFiles, setModel]
   )
@@ -153,7 +163,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
         <label className="block cursor-pointer input-appearance">
           {modelFiles
             ? modelFiles.length + " model file(s) selected"
-            : "Choose model.json & weights.bin"}
+            : "Choose model file(s)"}
           <input
             type="file"
             multiple
