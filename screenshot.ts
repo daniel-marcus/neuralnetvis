@@ -29,7 +29,9 @@ async function run() {
     const title = await page.title()
     console.log(title)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    const path = `${SCREENSHOT_FOLDER}/${pathToFileName(p) || "default"}.png`
+    const path = `${SCREENSHOT_FOLDER}/${
+      pathToFileName(p) || "default"
+    }.png` as `${string}.png`
     await page.screenshot({ path, type: "png" })
   }
   await browser.close()

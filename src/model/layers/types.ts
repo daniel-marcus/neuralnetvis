@@ -17,6 +17,9 @@ import { Nid } from "@/neuron-layers"
 import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional_depthwise"
 import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
 import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
+import { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
+import { PositionEmbeddingLayerArgs } from "./position-embedding"
+import { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {
@@ -33,24 +36,53 @@ export type LayerConfigMap = {
   ReLU: ReLULayerArgs
   ZeroPadding2D: ZeroPadding2DLayerArgs
   Activation: ActivationLayerArgs
+  Embedding: EmbeddingLayerArgs
+  PositionEmbedding: PositionEmbeddingLayerArgs
+  Add: AddLayerArgs
 }
+
+interface AddLayerArgs extends LayerArgs {
+  otherLayerNames?: string[]
+}
+
+type InboundNode = [string, number, number, unknown] // [name, ...]
 
 export type LayerConfig<T extends keyof LayerConfigMap> = {
   className: T
   config: LayerConfigMap[T]
+  name?: string
+  inboundNodes?: [InboundNode[]]
 }
 
 export type LayerConfigArray = LayerConfig<keyof LayerConfigMap>[]
 
-interface ControlableOption<T extends keyof LayerConfigMap> {
+interface BaseOption<T extends keyof LayerConfigMap> {
   name: keyof LayerConfigMap[T]
-  inputType: "slider" // | "select" | "checkbox"
-  min: number // TODO bind to inputType / optional
+}
+
+interface SliderOption<T extends keyof LayerConfigMap> extends BaseOption<T> {
+  inputType: "slider"
+  min: number
   max: number
   step?: number
   transformToSliderVal?: (v: number) => number
   transformFromSliderVal?: (v: number) => number
 }
+
+interface SelectOption<T extends keyof LayerConfigMap> extends BaseOption<T> {
+  inputType: "select"
+  getValue: (args: { layerConfig: LayerConfig<T> }) => string | undefined
+  options:
+    | string[]
+    | ((args: {
+        layerConfig: LayerConfig<T>
+        layerConfigs: LayerConfigArray
+      }) => string[])
+}
+
+type ControlableOption<T extends keyof LayerConfigMap> =
+  | SliderOption<T>
+  | SelectOption<T>
 
 export type GetInputNidsFunc = (
   layer: Layer,
@@ -62,7 +94,7 @@ export type GetInputNidsFunc = (
 
 export interface LayerDef<T extends keyof LayerConfigMap> {
   constructorFunc: (args: LayerConfigMap[T]) => Layer
-  defaultConfig: LayerConfigMap[T]
+  defaultConfig?: LayerConfigMap[T]
   options?: ControlableOption<T>[]
   getInputNids?: GetInputNidsFunc
   needsMultiDim?: boolean // TODO: better name?

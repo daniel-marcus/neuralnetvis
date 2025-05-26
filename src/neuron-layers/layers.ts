@@ -29,7 +29,7 @@ export function useLayers() {
 
         const units = getUnits(tfLayer)
         const meshParams =
-          ["BatchNormalization", "RandomRotation"].includes(className) &&
+          ["BatchNormalization", "RandomRotation", "Add"].includes(className) &&
           !!prevLayer
             ? prevLayer.meshParams
             : getMeshParams(tfLayer, layerPos, units)
@@ -63,7 +63,8 @@ export function useLayers() {
           meshParams,
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
-            (layerPos === "output" && !!ds?.outputLabels?.length),
+            (layerPos === "output" && !!ds?.outputLabels?.length) ||
+            (layerPos === "input" && ds?.decodeInput),
           hasColorChannels,
           activations,
           channelActivations,

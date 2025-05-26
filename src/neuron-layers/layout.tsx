@@ -71,13 +71,13 @@ export function getNeuronPos(
   channels: number = 1,
   spacedSize: number
 ) {
-  const mustBeColumn =
+  const forceColumns =
     (layerPos === "output" || layerPos === "input") && width === 1
   if (channels === 1)
-    return getGridXYZ(i, height, width, spacedSize, mustBeColumn)
+    return getGridXYZ(i, height, width, spacedSize, forceColumns)
   else {
     const idx = Math.floor(i / channels)
-    const [x, _y, _z] = getGridXYZ(idx, height, width, spacedSize, mustBeColumn)
+    const [x, _y, _z] = getGridXYZ(idx, height, width, spacedSize, forceColumns)
 
     const channelIdx = i % channels
 

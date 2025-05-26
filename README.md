@@ -23,10 +23,11 @@ Also, you can generate your own datasets using input from your webcam and these 
 
 ## Model Import (experimental)
 
-Pretrained models from Python Tensorflow can be exported via [tfjs-converter](https://github.com/tensorflow/tfjs/tree/master/tfjs-converter) and then imported in the _my models_ section. Notes:
+Pretrained models from Python Tensorflow can be imported in the _my models_ section. Notes:
 
-- The converter requires Keras 2.x as in Tensorflow 2.15.0 (see [issue](https://github.com/tensorflow/tfjs/issues/8328))
 - Only _LayersModel_ models are supported
+- For Keras 3.x, use `model.save('model.keras')` to export the model
+- For Keras 2.x, use [tfjs-converter](https://github.com/tensorflow/tfjs/tree/master/tfjs-converter): `tfjs.converters.save_keras_model(model, './export/')`
 
 ## Folder Structure
 

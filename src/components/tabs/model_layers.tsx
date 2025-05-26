@@ -17,6 +17,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
   updateLayerConfig: <C extends keyof LayerConfigMap>(
     config: LayerConfig<C>["config"]
   ) => void,
+  layerConfigs: LayerConfigArray,
   isLast: boolean
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
@@ -53,6 +54,21 @@ function getInputComp<T extends keyof LayerConfigMap>(
         transform={transformFromSliderVal}
       />
     )
+  } else if (option && option.inputType === "select") {
+    const options =
+      typeof option.options === "function"
+        ? option.options({ layerConfig, layerConfigs })
+        : option.options
+    const value = option.getValue({ layerConfig })
+    return (
+      <Select
+        options={options.map((o) => ({ value: o, label: o }))}
+        value={value}
+        onChange={(val) => {
+          updateLayerConfig({ ...config, [option.name]: [val] }) // TODO: Array vs string
+        }}
+      />
+    )
   } else return null
 }
 
@@ -83,12 +99,12 @@ export const LayerConfigControl = () => {
 
     const layerDef = getLayerDef(className)
 
-    const insertIdx =
-      className === "RandomRotation"
-        ? 1 // insert RandomRotation after InputLayer
-        : layerDef?.needsMultiDim && flattenIdx > -1
-        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
-        : beforeOutputIdx // default
+    // TODO: define insert position in layerDef?
+    const insertIdx = ["RandomRotation", "Embedding"].includes(className)
+      ? 1 // insert RandomRotation and Embedding after InputLayer
+      : layerDef?.needsMultiDim && flattenIdx > -1
+      ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
+      : beforeOutputIdx // default
     const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
     setLayerConfigs(newLayerConfigs)
   }
@@ -103,7 +119,7 @@ export const LayerConfigControl = () => {
       value: "empty",
       label: "add",
       disabled: true,
-    }, // TODO: disabled / filter condition in LayerDef?
+    },
     ...Object.keys(layerDefMap)
       .filter((key) => getLayerDef(key)?.isUserAddable)
       .map((key) => ({
@@ -134,7 +150,12 @@ export const LayerConfigControl = () => {
               setLayerConfigs([...layerConfigs])
             }
             const isLast = i === layerConfigs.length - 1
-            const inputComp = getInputComp(layer, updateLayerConfig, isLast)
+            const inputComp = getInputComp(
+              layer,
+              updateLayerConfig,
+              layerConfigs,
+              isLast
+            )
 
             const isInvisible =
               invisibleLayers.includes(layer.config.name ?? "") ||

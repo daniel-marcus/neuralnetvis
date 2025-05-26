@@ -21,6 +21,7 @@ export interface DatasetMeta {
   isUserGenerated?: boolean
   camProps?: DsCamProps
   mapProps?: DsMapProps
+  decodeInput?: boolean // TODO: specify tokenizer
   loaded: "preview" | "full" // will be set by ds loader
 }
 

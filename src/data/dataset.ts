@@ -83,10 +83,10 @@ export async function getDsFromDef(
     existingMeta?.version.getTime() === dsDef.version.getTime()
   const needsFullLoad =
     shouldLoadFullDs && existingMeta?.loaded !== "full" && !isPreview
-  const skipLoading = existingMeta && hasLatestData && !needsFullLoad
+  const shouldLoad = !hasLatestData || !!needsFullLoad
 
   let newMeta: DatasetMeta | undefined
-  if (!skipLoading) {
+  if (shouldLoad) {
     newMeta = await loadAndSaveDsData(dsDef, isPreview)
   }
 
