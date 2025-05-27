@@ -38,10 +38,12 @@ export function getMeshParams(
 ): MeshParams {
   const className = layer.getClassName()
   // const layerDef = getLayerDef(className)
-  if (["input", "output"].includes(layerPos)) {
+  if (layerPos === "input") {
     if (units <= 12) return meshMap.boxBig
     else if (units > 3072) return meshMap.boxTiny
     else return meshMap.boxSmall
+  } else if (layerPos === "output") {
+    return meshMap.boxBig
   } else if (className === "Dense") {
     if (units <= 128) return meshMap.sphere
     else return meshMap.sphereSmall

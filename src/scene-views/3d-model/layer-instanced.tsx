@@ -1,11 +1,13 @@
-import { memo, useLayoutEffect, useMemo } from "react"
+import { memo, useLayoutEffect, useMemo, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
-import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
+import { useAnimatedPosition, type Pos } from "@/scene-views/3d-model/utils"
 import { useNeuronInteractions } from "./interactions"
 import { getGridSize, getNeuronPos, MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import { getMaterial } from "./materials"
+import { useLayerActivations } from "@/model/activations"
+import { YPointer } from "./pointer"
 import type { MeshRef, NeuronLayer } from "@/neuron-layers/types"
 
 type InstancedLayerProps = NeuronLayer & {
@@ -39,15 +41,27 @@ export const InstancedLayer = memo(function InstancedLayer(
         {...eventHandlers}
       />
       {hasLabels &&
-        Array.from({ length: numNeurons }).map((_, i) => (
-          <NeuronLabels
-            key={i}
-            layer={props}
-            neuronIdx={i}
-            position={positions[i]}
-            size={meshParams.labelSize}
-          />
-        ))}
+        Array.from({ length: numNeurons }).map((_, i) => {
+          const position = positions[i]
+          const overrideText =
+            position.isHidden && position.hiddenIdx === 0
+              ? `(+${numNeurons - MAX_OUTPUT_NEURONS} more ...)`
+              : undefined
+          if (position.isHidden && position.hiddenIdx !== 0) return null
+          return (
+            <NeuronLabels
+              key={i}
+              layer={props}
+              neuronIdx={i}
+              position={position.pos}
+              size={meshParams.labelSize}
+              overrideText={overrideText}
+            />
+          )
+        })}
+      {props.layerPos === "output" && (
+        <YPointer outputLayer={props} positions={positions} />
+      )}
     </group>
   )
 })
@@ -89,6 +103,16 @@ export function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
   return groupRef
 }
 
+export interface PosObj {
+  pos: Pos
+  isHidden?: boolean
+  hiddenIdx?: number
+}
+
+// when output layer has more than 10 neurons, only the first 5 are shown
+const OUTPUT_TRUNC_THRESHOLD = 10
+export const MAX_OUTPUT_NEURONS = 5
+
 function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   const { layerPos, meshParams, tfLayer, hasColorChannels } = props
   const { spacedSize } = useNeuronSpacing(meshParams)
@@ -97,16 +121,44 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 
   const c = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
 
-  const positions = useMemo(() => {
+  // TODO: layer activations don't get updated with WebGPU ...
+  const layerActivations = useLayerActivations(props.index)
+  const [idxMap, setIdxMap] = useState(new Map<number, number>())
+  const shouldSort = layerPos === "output" && h > OUTPUT_TRUNC_THRESHOLD
+  useLayoutEffect(() => {
+    if (!shouldSort || !layerActivations?.activations) return
+    const indexed = [...layerActivations.activations].map((v, i) => ({ v, i }))
+    const sorted = indexed.toSorted((a, b) => b.v - a.v)
+    const newIdxMap = new Map<number, number>()
+    sorted.forEach((item, sortedIndex) => {
+      newIdxMap.set(item.i, sortedIndex)
+    })
+    setIdxMap(newIdxMap)
+  }, [layerActivations, shouldSort])
+
+  const positions: PosObj[] = useMemo(() => {
+    const _h = shouldSort ? MAX_OUTPUT_NEURONS + 1 : h
     const arr = Array.from({ length: h * w * c })
-    return arr.map((_, i) => getNeuronPos(i, layerPos, h, w, c, spacedSize))
-  }, [layerPos, spacedSize, h, w, c])
+    let hiddenIdx = -1
+    return arr.map((_, i) => {
+      let sortedIdx = idxMap.get(i) ?? i
+      const isHidden = shouldSort && sortedIdx >= MAX_OUTPUT_NEURONS
+      if (isHidden) {
+        sortedIdx = MAX_OUTPUT_NEURONS
+        hiddenIdx++
+      }
+      const pos = getNeuronPos(sortedIdx, layerPos, _h, w, c, spacedSize)
+      return { pos, isHidden, hiddenIdx }
+    })
+  }, [layerPos, spacedSize, h, w, c, idxMap, shouldSort])
 
   // has to be useLayoutEffect, otherwise raycasting probably won't work
   useLayoutEffect(() => {
     if (!meshRef.current) return
     for (const [i, position] of positions.entries()) {
-      tempObj.position.set(...position)
+      tempObj.position.set(...position.pos)
+      // if (position.isHidden) tempObj.scale.set(0, 0, 0)
+      // else tempObj.scale.set(1, 1, 1)
       tempObj.updateMatrix()
       meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }

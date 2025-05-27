@@ -8,6 +8,8 @@ import { useActivationStats } from "./activation-stats"
 import { isWebGPUBackend } from "@/utils/webgpu"
 import { normalize } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers"
+import { LayerActivations } from "./types"
+import { MAX_OUTPUT_NEURONS } from "@/scene-views/3d-model/layer-instanced"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
@@ -15,6 +17,7 @@ export function ActivationUpdater() {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
   useActivationStats()
+  const setActivations = useSceneStore((s) => s.setActivations)
   const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
@@ -46,8 +49,14 @@ export function ActivationUpdater() {
       for (let i = 0; i < layersToUpdate.length; i += LAYERS_PER_BATCH) {
         if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
         const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
-        await getActivations(renderer, model, layersBatch, sample)
-        // if (newActivations) setActivations(newActivations)
+        const newActivations = await getActivations(
+          renderer,
+          model,
+          layersBatch,
+          sample
+        )
+        console.log({ newActivations })
+        if (newActivations) setActivations(newActivations)
         invalidate()
         // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
       }
@@ -59,7 +68,7 @@ export function ActivationUpdater() {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [renderer, model, layers, invalidate]
+    [renderer, model, layers, invalidate, setActivations]
   )
 
   // reset update tracker when model changes
@@ -110,6 +119,7 @@ async function getActivations(
 
   await new Promise((r) => setTimeout(r, 0)) // make sure layer component has mounted and buffer is attached
 
+  const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
     const backend = renderer.backend
@@ -148,7 +158,7 @@ async function getActivations(
             backend.device.queue.submit([commands])
             // await device.queue.onSubmittedWorkDone()
             // newGpuBuffer.destroy()
-            continue
+            // continue
           }
         } else {
           // fallback if WebGPU is not available: fallback for WASM/WebGL via CPU
@@ -157,17 +167,25 @@ async function getActivations(
           layer.activations.set(data)
           layer.activationsBuffer.needsUpdate = true
         }
+
+        if (layer.layerPos === "output") {
+          // for output layers we still need to download the activations
+          // for output ranking & regression labels
+          const activations = (await actTensor.data()) as Float32Array
+          newLayerActivations[layer.index] = {
+            activations,
+          }
+        }
       } catch (e) {
         console.error("Error getting activations", e)
       } finally {
         normalized.dispose()
       }
     }
-    // fallback to CPU if GPU copy fails
 
     const end = performance.now()
     if (isDebug()) console.log(`download/colors: ${end - start}ms`)
-    return {} // newLayerActivations
+    return newLayerActivations
   } catch (e) {
     console.log("Error getting activations", e)
     return {}
