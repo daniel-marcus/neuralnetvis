@@ -54,7 +54,6 @@ export function ActivationUpdater() {
           layersBatch,
           sample
         )
-        console.log({ newActivations })
         if (newActivations) setActivations(newActivations)
         invalidate()
         // await new Promise((r) => setTimeout(r, 0)) // yield to avoid blocking
@@ -143,7 +142,7 @@ async function getActivations(
             layer.activationsBuffer
           )?.buffer
           if (newGpuBuffer && existingGpuBuffer) {
-            console.log("copy GPU buffer")
+            if (isDebug()) console.log("copy GPU buffer")
             const commandEncoder = backend.device.createCommandEncoder()
             commandEncoder.copyBufferToBuffer(
               newGpuBuffer, // from
@@ -161,7 +160,7 @@ async function getActivations(
           }
         } else {
           // fallback if WebGPU is not available: fallback for WASM/WebGL via CPU
-          console.log("using fallback")
+          if (isDebug()) console.log("using fallback")
           const data = await normalized.data()
           layer.activations.set(data)
           layer.activationsBuffer.needsUpdate = true
