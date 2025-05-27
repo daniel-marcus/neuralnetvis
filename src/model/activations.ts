@@ -8,8 +8,7 @@ import { useActivationStats } from "./activation-stats"
 import { isWebGPUBackend } from "@/utils/webgpu"
 import { normalize } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers"
-import { LayerActivations } from "./types"
-import { MAX_OUTPUT_NEURONS } from "@/scene-views/3d-model/layer-instanced"
+import type { LayerActivations } from "./types"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
