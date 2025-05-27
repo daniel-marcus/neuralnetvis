@@ -29,6 +29,7 @@ interface NeuronLabelsProps {
   position?: [number, number, number]
   size?: number
   label?: string
+  overrideText?: string
 }
 
 export function NeuronLabels(props: NeuronLabelsProps) {
@@ -44,7 +45,9 @@ export function NeuronLabels(props: NeuronLabelsProps) {
     return <DecodedInputLabel {...props} label={label} />
   }
   const side = layerPos === "input" ? "left" : "right"
-  return <NeuronLabel {...props} text={label} side={side} />
+  return (
+    <NeuronLabel {...props} text={props.overrideText ?? label} side={side} />
+  )
 }
 
 function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {

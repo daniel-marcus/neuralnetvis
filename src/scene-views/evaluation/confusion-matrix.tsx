@@ -372,7 +372,7 @@ function getCellColor(normalized: number, isCorrect: boolean) {
 
 function getMaxChars(arr: string[]) {
   return arr.reduce((acc, label) => {
-    const length = Array.from(label).length // bc emojis count as 2
+    const length = Array.from(label ?? "").length // bc emojis count as 2
     return length > acc ? length : acc
   }, 0)
 }

@@ -8,7 +8,6 @@ import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
-import { YPointer } from "./pointer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = memo(function Layer(props: NeuronLayer) {
@@ -22,7 +21,6 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
         ))}
       </group>
       <LayerInteractions {...props} measureRef={measureRef} />
-      {props.layerPos === "output" && <YPointer outputLayer={props} />}
     </LayerScaler>
   )
 })
