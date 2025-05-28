@@ -1,5 +1,6 @@
 "use client"
 
+import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
@@ -15,7 +16,7 @@ import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import { View } from "./view"
-import { useContext } from "react"
+import { useContext, useRef } from "react"
 
 interface CanvasViewProps {
   isActive: boolean
@@ -68,15 +69,18 @@ export const CanvasView = (props: CanvasViewProps) => {
 
 const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
-  const camera = useThree((s) => s.camera)
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const isScreenSm = useIsScreen("sm")
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : 0.4 }, // TODO: adjust from screen size
+    to: { zoom: isActive ? (isScreenSm ? 1 : 0.7) : 0.9 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
-      camera.zoom = value.zoom
-      camera.updateProjectionMatrix()
-      invalidate()
+      const camera = cameraRef.current
+      if (camera) {
+        camera.zoom = value.zoom
+        camera.updateProjectionMatrix()
+        invalidate()
+      }
     },
     config: { duration: getTileDuration() },
   })
@@ -91,6 +95,7 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
     <>
       <ThreeStoreSetter />
       <PerspectiveCamera
+        ref={cameraRef}
         makeDefault
         position={defaultState.cameraPos}
         zoom={0.1}
