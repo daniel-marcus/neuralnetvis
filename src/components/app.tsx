@@ -14,9 +14,9 @@ export const App = ({ children }: { children?: React.ReactNode }) => {
   useScreenshotBodyClass()
   return (
     <>
+      <MainCanvas />
       <Header />
       <LessonOverlayPortal />
-      <MainCanvas />
       <TileGrid />
       {children}
       <StatusBar />
