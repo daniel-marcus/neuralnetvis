@@ -73,7 +73,7 @@ function OutputValueLabel(props: NeuronLabelsProps) {
   const activation = useActivation(props.layer.index, props.neuronIdx)
   const trainingY = useSceneStore((s) => s.sample?.y)
   if (typeof activation !== "number") return null
-  let text = `${props.label}\n ${round(activation)} (predicted)`
+  let text = `${props.label}\n${round(activation)} (predicted)`
   if (typeof trainingY === "number") text += `\n${round(trainingY)} (actual)`
   return <NeuronLabel side="right" {...props} text={text} />
 }
@@ -127,14 +127,13 @@ export const TextLabel = memo(function NeuronLabel({
     if (!text || !canvas) return
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
-    const [, numLines] = text2Canvas({ text, fontFace, color, align, canvas })
+    const [, yScale] = text2Canvas({ text, fontFace, color, align, canvas })
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
     texture.generateMipmaps = false
     texture.minFilter = THREE.LinearFilter
     texture.magFilter = THREE.LinearFilter
     texture.anisotropy = 1
-    const yScale = numLines
     const xScale = (canvas.width / canvas.height) * yScale
     const scale = [xScale, yScale, 0] as [number, number, number]
     const anchorOffset = side === "left" ? -xScale / 2 : xScale / 2

@@ -21,7 +21,9 @@ export function text2Canvas(props: Text2CanvasProps) {
   const innerWidth = Math.max(
     ...lines.map((line) => ctx.measureText(line).width)
   )
-  const innerHeight = fontSize * lines.length
+  const paddingY = fontSize * 0.15
+  const lineHeight = 1.1
+  const innerHeight = fontSize * lineHeight * lines.length + 2 * paddingY
   canvas.width = innerWidth
   canvas.height = innerHeight
 
@@ -36,8 +38,8 @@ export function text2Canvas(props: Text2CanvasProps) {
   else if (align === "center") lineX = innerWidth / 2
   else lineX = innerWidth
   lines.forEach((line, index) => {
-    ctx.fillText(line, lineX, index * fontSize)
+    ctx.fillText(line, lineX, index * fontSize * lineHeight + paddingY)
   })
 
-  return [canvas, lines.length] as const
+  return [canvas, lineHeight * lines.length] as const
 }
