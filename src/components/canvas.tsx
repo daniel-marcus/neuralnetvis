@@ -43,12 +43,16 @@ export function MainCanvas() {
 
 function OnScrollUpdate() {
   const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((s) => s.gl)
   useEffect(() => {
     // with frameloop="demand" we need to manually invalidate the scene on scroll
-    const onScroll = () => invalidate()
+    const onScroll = () => {
+      renderer.clear() // used to clear overflow artefacts with WebGPUBackend
+      invalidate()
+    }
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
-  }, [invalidate])
+  }, [invalidate, renderer])
   useFrame((state) => {
     // translate the canvas wrapper to follow the scroll position (smoother than fixed position)
     // see: https://github.com/mrdoob/three.js/blob/master/examples/webgl_multiple_elements.html
