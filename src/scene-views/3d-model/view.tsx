@@ -4,6 +4,9 @@ import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import tunnel from "tunnel-rat"
 import type { ComputeFunction, RootState } from "@react-three/fiber"
 
+// drei/View component adapted for WebGPURenderer
+// original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
+
 const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 const col = /* @__PURE__ */ new THREE.Color()
@@ -95,9 +98,6 @@ function prepareViewport(
     right: number
   }
 ): { autoClear: boolean; originalViewport?: THREE.Vector4 } {
-  let autoClear: boolean
-  let originalViewport: THREE.Vector4 | undefined
-
   const aspect = width / height
 
   // Update camera projection
@@ -126,11 +126,11 @@ function prepareViewport(
   }
 
   // WebGPU renderer handling
-  autoClear = state.gl.autoClear
+  const autoClear = state.gl.autoClear
   state.gl.autoClear = false
 
   // Store original viewport for restoration
-  originalViewport = new THREE.Vector4()
+  const originalViewport = new THREE.Vector4()
   state.gl.getViewport(originalViewport)
 
   // Set new viewport - use bottom coordinate for WebGL/WebGPU coordinate system
@@ -243,122 +243,116 @@ function Container({
   )
 }
 
-const CanvasView = /* @__PURE__ */ React.forwardRef(
-  (
-    {
-      track,
-      visible = true,
-      index = 1,
-      id,
-      style,
-      className,
-      frames = Infinity,
-      children,
-      ...props
-    }: ViewProps,
-    fref: React.ForwardedRef<THREE.Group>
-  ) => {
-    const rect = React.useRef<DOMRect>(null!)
-    const { size, scene } = useThree()
-    const [virtualScene] = React.useState(() => new THREE.Scene())
-    const [ready, toggle] = React.useReducer(() => true, false)
+const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
+  {
+    track,
+    visible = true,
+    index = 1,
+    id, // eslint-disable-line @typescript-eslint/no-unused-vars
+    style, // eslint-disable-line @typescript-eslint/no-unused-vars
+    className, // eslint-disable-line @typescript-eslint/no-unused-vars
+    frames = Infinity,
+    children,
+    ...props
+  }: ViewProps,
+  fref: React.ForwardedRef<THREE.Group>
+) {
+  const rect = React.useRef<DOMRect>(null!)
+  const { size, scene } = useThree()
+  const [virtualScene] = React.useState(() => new THREE.Scene())
+  const [ready, toggle] = React.useReducer(() => true, false)
 
-    const compute: ComputeFunction = React.useCallback(
-      (event, state) => {
-        if (
-          rect.current &&
-          track &&
-          track.current &&
-          event.target === track.current
-        ) {
-          const { width, height, left, top } = rect.current
-          const x = event.clientX - left
-          const y = event.clientY - top
-          state.pointer.set((x / width) * 2 - 1, -(y / height) * 2 + 1)
-          state.raycaster.setFromCamera(state.pointer, state.camera)
-        }
-      },
-      [rect, track]
-    )
+  const compute: ComputeFunction = React.useCallback(
+    (event, state) => {
+      if (
+        rect.current &&
+        track &&
+        track.current &&
+        event.target === track.current
+      ) {
+        const { width, height, left, top } = rect.current
+        const x = event.clientX - left
+        const y = event.clientY - top
+        state.pointer.set((x / width) * 2 - 1, -(y / height) * 2 + 1)
+        state.raycaster.setFromCamera(state.pointer, state.camera)
+      }
+    },
+    [rect, track]
+  )
 
-    React.useEffect(() => {
-      // We need the tracking elements bounds beforehand in order to inject it into the portal
-      if (track) rect.current = track.current?.getBoundingClientRect()
-      // And now we can proceed
-      toggle()
-    }, [track])
+  React.useEffect(() => {
+    // We need the tracking elements bounds beforehand in order to inject it into the portal
+    if (track) rect.current = track.current?.getBoundingClientRect()
+    // And now we can proceed
+    toggle()
+  }, [track])
 
-    return (
-      <group ref={fref} {...props}>
-        {ready &&
-          createPortal(
-            <Container
-              visible={visible}
-              canvasSize={size}
-              frames={frames}
-              scene={scene}
-              track={track}
-              rect={rect}
-              index={index}
-            >
-              {children}
-            </Container>,
-            virtualScene,
-            {
-              events: { compute, priority: index },
-              size: {
-                width: rect.current?.width,
-                height: rect.current?.height,
-                // @ts-ignore
-                top: rect.current?.top,
-                // @ts-ignore
-                left: rect.current?.left,
-              },
-            }
-          )}
-      </group>
-    )
-  }
-)
-
-const HtmlView = /* @__PURE__ */ React.forwardRef(
-  (
-    {
-      as: El = "div",
-      id,
-      visible,
-      className,
-      style,
-      index = 1,
-      track,
-      frames = Infinity,
-      children,
-      ...props
-    }: ViewProps,
-    fref: React.ForwardedRef<HTMLElement>
-  ) => {
-    const uuid = React.useId()
-    const ref = React.useRef<HTMLElement>(null!)
-    React.useImperativeHandle(fref, () => ref.current)
-    return (
-      <>
-        {/** @ts-ignore */}
-        <El ref={ref} id={id} className={className} style={style} {...props} />
-        <tracked.In>
-          <CanvasView
+  return (
+    <group ref={fref} {...props}>
+      {ready &&
+        createPortal(
+          <Container
             visible={visible}
-            key={uuid}
-            track={ref}
+            canvasSize={size}
             frames={frames}
+            scene={scene}
+            track={track}
+            rect={rect}
             index={index}
           >
             {children}
-          </CanvasView>
-        </tracked.In>
-      </>
-    )
-  }
-)
+          </Container>,
+          virtualScene,
+          {
+            events: { compute, priority: index },
+            size: {
+              width: rect.current?.width,
+              height: rect.current?.height,
+              top: rect.current?.top,
+              left: rect.current?.left,
+            },
+          }
+        )}
+    </group>
+  )
+})
+
+const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
+  {
+    as: El = "div",
+    id,
+    visible,
+    className,
+    style,
+    index = 1,
+    // track,
+    frames = Infinity,
+    children,
+    ...props
+  }: ViewProps,
+  fref: React.ForwardedRef<HTMLElement>
+) {
+  const uuid = React.useId()
+  const ref = React.useRef<HTMLElement>(null!)
+  React.useImperativeHandle(fref, () => ref.current)
+  return (
+    <>
+      {/** @ts-expect-error with ref */}
+      <El ref={ref} id={id} className={className} style={style} {...props} />
+      <tracked.In>
+        <CanvasView
+          visible={visible}
+          key={uuid}
+          track={ref}
+          frames={frames}
+          index={index}
+        >
+          {children}
+        </CanvasView>
+      </tracked.In>
+    </>
+  )
+})
 
 export type ViewportProps = {
   Port: () => React.JSX.Element
@@ -367,30 +361,33 @@ export type ViewportProps = {
 >
 
 export const View = /* @__PURE__ */ (() => {
-  const _View = React.forwardRef(
-    (props: ViewProps, fref: React.ForwardedRef<HTMLElement | THREE.Group>) => {
-      // If we're inside a canvas we should be able to access the context store
-      const store = React.useContext(context)
-      // If that's not the case we render a tunnel
-      if (!store)
-        return (
-          <HtmlView
-            ref={fref as unknown as React.ForwardedRef<HTMLElement>}
-            {...props}
-          />
-        )
-      // Otherwise a plain canvas-view
-      else
-        return (
-          <CanvasView
-            ref={fref as unknown as React.ForwardedRef<THREE.Group>}
-            {...props}
-          />
-        )
-    }
-  ) as ViewportProps
+  const _View = React.forwardRef(function View_(
+    props: ViewProps,
+    fref: React.ForwardedRef<HTMLElement | THREE.Group>
+  ) {
+    // If we're inside a canvas we should be able to access the context store
+    const store = React.useContext(context)
+    // If that's not the case we render a tunnel
+    if (!store)
+      return (
+        <HtmlView
+          ref={fref as unknown as React.ForwardedRef<HTMLElement>}
+          {...props}
+        />
+      )
+    // Otherwise a plain canvas-view
+    else
+      return (
+        <CanvasView
+          ref={fref as unknown as React.ForwardedRef<THREE.Group>}
+          {...props}
+        />
+      )
+  }) as ViewportProps
 
-  _View.Port = () => <tracked.Out />
+  _View.Port = function _ViewPort() {
+    return <tracked.Out />
+  }
 
   return _View
 })()
