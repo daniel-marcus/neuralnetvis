@@ -32,13 +32,14 @@ export const CanvasView = (props: CanvasViewProps) => {
   if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
 
   return (
-    <div className="w-full h-full">
-      <View className="w-full h-full" visible={!invisible}>
-        <SceneContext.Provider value={store}>
-          <CanvasViewInner {...props} />
-        </SceneContext.Provider>
-      </View>
-    </div>
+    <View
+      className={`w-full h-full select-none ${isActive ? "" : "touch-pan-y!"}`}
+      visible={!invisible}
+    >
+      <SceneContext.Provider value={store}>
+        <CanvasViewInner {...props} />
+      </SceneContext.Provider>
+    </View>
   )
 }
 
