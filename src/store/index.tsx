@@ -37,7 +37,7 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
 const dummySceneStore = createSceneStore()
 
 type SceneStore = ReturnType<typeof createSceneStore>
-const SceneContext = createContext<SceneStore | null>(null)
+export const SceneContext = createContext<SceneStore | null>(null)
 
 type SceneProviderProps = React.PropsWithChildren<
   {

@@ -1,42 +1,49 @@
 "use client"
 
-import * as THREE from "three/webgpu"
-import { Canvas, extend, useThree } from "@react-three/fiber"
+import { useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
-import { useGlobalStore, useSceneStore } from "@/store"
+import { SceneContext, useGlobalStore, useSceneStore } from "@/store"
 import { useFlatView } from "./flat-view"
 import { useIsScreen, isTouch } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
-import { getTileDuration } from "@/components/tile-grid"
+import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
-import type { ThreeToJSXElements } from "@react-three/fiber"
-import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
+import { View } from "./view"
+import { useContext } from "react"
 
-declare module "@react-three/fiber" {
-  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
-}
-
-extend(THREE as any)
-
-interface CanvasProps {
+interface CanvasViewProps {
   isActive: boolean
   dsKey?: string
 }
 
-export const ThreeCanvas = (props: CanvasProps) => {
+export const CanvasView = (props: CanvasViewProps) => {
   const { isActive } = props
-  const isLocked = useSceneStore((s) => s.vis.isLocked)
   const isMapView = useSceneStore((s) => s.view === "map")
-  const isDebug = useGlobalStore((s) => s.isDebug)
+  const hasActive = useHasActiveTile()
+  const invisible = (hasActive && !isActive) || isMapView
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
+  const store = useContext(SceneContext) // needs to be passed inside the View component
   if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
+
   return (
+    <div className="w-full h-full">
+      <View className="w-full h-full" visible={!invisible}>
+        <SceneContext.Provider value={store}>
+          <CanvasViewInner {...props} />
+        </SceneContext.Provider>
+      </View>
+    </div>
+  )
+}
+
+/* 
+
     <Canvas
       frameloop="demand"
       gl={async (renderProps) => {
@@ -54,12 +61,11 @@ export const ThreeCanvas = (props: CanvasProps) => {
         isMapView ? "opacity-0" : ""
       } transition-opacity duration-300`}
     >
-      <CanvasInner {...props} />
+      <CanvasViewInner {...props} />
     </Canvas>
-  )
-}
+*/
 
-export const CanvasInner = ({ isActive }: CanvasProps) => {
+const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const camera = useThree((s) => s.camera)
   const isScreenSm = useIsScreen("sm")

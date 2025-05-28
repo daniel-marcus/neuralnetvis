@@ -47,6 +47,7 @@
     "react-headroom": "^3.2.1",
     "three": "^0.176.0",
     "three-stdlib": "^2.36.0",
+    "tunnel-rat": "^0.1.2",
     "zustand": "^5.0.5"
   },
   "devDependencies": {

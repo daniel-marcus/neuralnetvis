@@ -5,6 +5,7 @@ import { useGlobalStore } from "@/store"
 import type Backend from "three/src/renderers/common/Backend.js"
 
 export function useGPUDevice() {
+  const gpuDevice = useGlobalStore((s) => s.gpuDevice)
   const backendReady = useGlobalStore((s) => s.backendReady)
   useEffect(() => {
     if (!backendReady) return
@@ -19,6 +20,7 @@ export function useGPUDevice() {
     }
     initGPU()
   }, [backendReady])
+  return gpuDevice
 }
 
 interface TypedWebGPUBackend extends Backend {

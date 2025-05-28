@@ -5,7 +5,7 @@ import { useModel, useTraining } from "@/model"
 import { useInitialState } from "@/utils/initial-state"
 
 import { SampleName } from "./sample-name"
-import { ThreeCanvas } from "./3d-model/canvas"
+import { CanvasView } from "./3d-model/canvas-view"
 import { BlurMask } from "./blur-mask"
 import { VideoWindow } from "./video"
 import { EvaluationView } from "./evaluation/evaluation"
@@ -40,7 +40,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
-      <ThreeCanvas {...props} />
+      <CanvasView {...props} />
       {section === "play" && isActive && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
