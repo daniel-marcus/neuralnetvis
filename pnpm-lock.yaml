@@ -95,6 +95,9 @@ importers:
       troika-three-text:
         specifier: ^0.52.4
         version: 0.52.4(three@0.176.0)
+      tunnel-rat:
+        specifier: ^0.1.2
+        version: 0.1.2(@types/react@19.1.6)(react@19.1.0)
       zustand:
         specifier: ^5.0.5
         version: 5.0.5(@types/react@19.1.6)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
