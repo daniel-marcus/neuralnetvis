@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
 import { useGPUDevice, isWebGPUBackend } from "@/utils/webgpu"
@@ -13,14 +13,16 @@ declare module "@react-three/fiber" {
 
 extend(THREE as any)
 
-export function MainCanvas() {
-  const eventSource = useRef<HTMLDivElement>(null!)
+interface MainCanvasProps {
+  eventSource: RefObject<HTMLDivElement>
+}
+
+export function MainCanvas({ eventSource }: MainCanvasProps) {
   const gpuDevice = useGPUDevice()
   const hasActive = useHasActiveTile()
   if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
   return (
     <>
-      <div ref={eventSource} className="fixed w-screen h-screen top-0" />
       <div
         className={`${
           hasActive ? "fixed" : "absolute"
