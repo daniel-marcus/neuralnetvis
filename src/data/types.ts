@@ -78,7 +78,7 @@ export interface SampleRaw {
 }
 
 export interface Sample extends SampleRaw {
-  xTensor: Tensor<Rank>
+  xTensor: Tensor<Rank> // preprocessed
 }
 
 type DatasetLoader = () => Promise<{
