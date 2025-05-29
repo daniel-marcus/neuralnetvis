@@ -22,7 +22,6 @@ export function HandPoseRecorder({ stream }: RecorderProps) {
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands, stream)
   useCaptureLoop(stream, hpPredict)
-  useCanvasUpdate()
   const [isRecording, toggleRec] = useSampleRecorder(hpPredict, numHands)
   const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
   const setTab = useGlobalStore((s) => s.setTab)
@@ -139,7 +138,7 @@ function setCanvasDefaultSize(canvas: HTMLCanvasElement, aspectRatio: number) {
   canvas.height = 1280 / aspectRatio
 }
 
-export function useCanvasUpdate() {
+export function HandPoseCanvasUpdater() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
   const aspectRatio = useSceneStore((s) => s.getAspectRatio())
@@ -167,6 +166,7 @@ export function useCanvasUpdate() {
     }
     drawHandPoseSampleToCanvas(sample, inputDims, canvas)
   }, [sample, inputDims, canvasRef, videoRef])
+  return null
 }
 
 let shouldCancelRecording = false
