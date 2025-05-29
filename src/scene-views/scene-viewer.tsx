@@ -23,7 +23,7 @@ import { Portal } from "@/components/portal"
 
 import type { TileDef } from "@/components/tile-grid"
 
-type SceneViewerProps = TileDef & { isActive: boolean }
+type SceneViewerProps = TileDef & { isActive: boolean; tileIdx: number }
 
 function SceneViewerInner(props: SceneViewerProps) {
   const { dsKey, isActive, section, path } = props

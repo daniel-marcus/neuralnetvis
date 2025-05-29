@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
 import { useGPUDevice, isWebGPUBackend } from "@/utils/webgpu"
 import { View, type RootState } from "@/scene-views/3d-model/view"
+import { useHasActiveTile } from "./tile-grid"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
@@ -15,11 +16,16 @@ extend(THREE as any)
 export function MainCanvas() {
   const eventSource = useRef<HTMLDivElement>(null!)
   const gpuDevice = useGPUDevice()
+  const hasActive = useHasActiveTile()
   if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
   return (
     <>
       <div ref={eventSource} className="fixed w-screen h-screen top-0" />
-      <div className="absolute top-0 w-screen h-screen pointer-events-none">
+      <div
+        className={`${
+          hasActive ? "fixed" : "absolute"
+        } top-0 w-screen h-screen pointer-events-none!`}
+      >
         <Canvas
           frameloop="demand"
           eventSource={eventSource}
@@ -34,14 +40,14 @@ export function MainCanvas() {
           }}
         >
           <View.Port />
-          <OnScrollUpdate />
+          <OnScrollUpdate sync={!hasActive} />
         </Canvas>
       </div>
     </>
   )
 }
 
-function OnScrollUpdate() {
+function OnScrollUpdate({ sync }: { sync?: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
     // with frameloop="demand" we need to manually invalidate the scene on scroll
@@ -51,7 +57,7 @@ function OnScrollUpdate() {
   }, [invalidate])
   useFrame((_state) => {
     const state = _state as unknown as RootState
-    if (isWebGPUBackend(state.gl.backend)) {
+    if (isWebGPUBackend(state.gl.backend) && sync) {
       // with WebGPU we need to clear the canvas manually
       const canvas = state.gl.domElement
       state.gl.setViewport(0, 0, canvas.width, canvas.height)
@@ -61,7 +67,8 @@ function OnScrollUpdate() {
     // translate the canvas wrapper to follow the scroll position (smoother than fixed position)
     // see: https://github.com/mrdoob/three.js/blob/master/examples/webgl_multiple_elements.html
     const wrapper = state.gl.domElement.parentElement?.parentElement
-    if (wrapper) wrapper.style.transform = `translateY(${window.scrollY}px)`
+    const wrapperY = sync ? window.scrollY : 0
+    if (wrapper) wrapper.style.transform = `translateY(${wrapperY}px)`
   }, 0)
   return null
 }

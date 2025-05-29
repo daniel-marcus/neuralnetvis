@@ -1,5 +1,6 @@
 "use client"
 
+import { useContext, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
@@ -16,12 +17,14 @@ import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import { View } from "./view"
-import { useContext, useRef } from "react"
 
 interface CanvasViewProps {
   isActive: boolean
+  tileIdx: number
   dsKey?: string
 }
+
+// CanvasRenderTarget might be interesting: https://github.com/mrdoob/three.js/pull/27628
 
 export const CanvasView = (props: CanvasViewProps) => {
   const { isActive } = props
@@ -30,12 +33,12 @@ export const CanvasView = (props: CanvasViewProps) => {
   const invisible = (hasActive && !isActive) || isMapView
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
   const store = useContext(SceneContext) // needs to be passed inside the View component
-  if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
-
+  if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <View
       className={`w-full h-full select-none ${isActive ? "" : "touch-pan-y!"}`}
       visible={!invisible}
+      index={props.tileIdx + 1} // for debug only
     >
       <SceneContext.Provider value={store}>
         <CanvasViewInner {...props} />

@@ -11,9 +11,9 @@ import { Footer } from "./footer"
 import { SceneViewer } from "@/scene-views/scene-viewer"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "@/scene-views/video"
+import { useLast } from "@/utils/helpers"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
-import { useLast } from "@/utils/helpers"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -74,9 +74,9 @@ export const TileGrid = () => {
         <div
           className={`flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)] grid-flow-dense`}
         >
-          {tiles
+          {tiles // [...tiles, ...tiles, ...tiles]
             .filter(({ disabled }) => !disabled || isDebug)
-            .map((tileProps) => {
+            .map((tileProps, i) => {
               const isActive = tileProps.path === active
               return (
                 <Tile
@@ -87,7 +87,7 @@ export const TileGrid = () => {
                     !!section && tileProps.section !== section ? "hidden" : ""
                   } ${tileProps.path === lastActive ? "z-5" : ""}`}
                 >
-                  <SceneViewer isActive={isActive} {...tileProps} />
+                  <SceneViewer isActive={isActive} {...tileProps} tileIdx={i} />
                   {!isActive && <Tags {...tileProps} />}
                 </Tile>
               )

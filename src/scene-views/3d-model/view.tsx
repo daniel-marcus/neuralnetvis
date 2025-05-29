@@ -137,7 +137,7 @@ function prepareSkissor(
   const scissorTop = Math.max(0, top)
   const scissorHeight = Math.max(
     0,
-    Math.min(height, canvasSize.height - Math.abs(top))
+    Math.min(height, canvasSize.height - Math.abs(top) - 1)
   )
   state.gl.setViewport(left, top, width, height)
   if (scissorHeight) {
@@ -185,6 +185,7 @@ function Container({
       )
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
       if (visible && !isOffscreen && rect.current) {
+        // console.log("rendering", index)
         const autoClear = prepareSkissor(state, position, canvasSize)
         clear(state) // added for WebGPURenderer
         // When children are present render the portalled scene, otherwise the default scene
