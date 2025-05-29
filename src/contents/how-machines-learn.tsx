@@ -170,7 +170,7 @@ async function scrollTrain({ percent }: OnScrollProps) {
 
   const sample = scene.getState().sample
   if (!sample || typeof sample.y !== "number") return
-  const log = await trainOnBatch([sample.X], [sample.y])
+  const log = await trainOnBatch([sample.xTensor], [sample.y])
 
   if (!log) return
   scene.getState().addLog({ ...log, epoch: 0, batch })

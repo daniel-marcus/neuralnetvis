@@ -205,7 +205,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   return history
 }
 
-export async function trainOnBatch(xs: number[][], ys: number[]) {
+export async function trainOnBatch(xs: tf.Tensor[], ys: number[]) {
   const ds = getDs()
   const setBatchCount = useGlobalStore.getState().scene.getState().setBatchCount
   const model = getModel()
@@ -213,7 +213,7 @@ export async function trainOnBatch(xs: number[][], ys: number[]) {
   const isClassification = ds?.task === "classification"
   const trainShape = model.layers[0].batchInputShape as number[]
   const [X, y] = tf.tidy(() => {
-    const X = tf.tensor(xs, [xs.length, ...trainShape.slice(1)]) // input already preprocessed
+    const X = tf.concat(xs).reshape([xs.length, ...trainShape.slice(1)]) // input already preprocessed
     const y = isClassification
       ? tf.oneHot(ys, ds.outputLabels.length)
       : tf.tensor(ys)

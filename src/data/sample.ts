@@ -44,8 +44,8 @@ export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
     const tensor = tf.tensor(sampleRaw.X, [1, ...ds.inputDims])
     return ds.preprocess ? ds.preprocess(tensor) : tensor
   })
-  const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
-  const sample: Sample = { ...sampleRaw, X, rawX, xTensor }
+  // const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
+  const sample: Sample = { ...sampleRaw, rawX, xTensor }
   return sample
 }
 
