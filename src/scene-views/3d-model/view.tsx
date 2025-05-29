@@ -2,10 +2,17 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import tunnel from "tunnel-rat"
-import type { ComputeFunction, RootState } from "@react-three/fiber"
+import type {
+  ComputeFunction,
+  RootState as RootStateGL,
+} from "@react-three/fiber"
 
 // drei/View component adapted for WebGPURenderer
 // original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
+
+export type RootState = RootStateGL & {
+  gl: THREE.WebGPURenderer // instead of THREE.WebGLRenderer
+}
 
 const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
@@ -73,20 +80,20 @@ function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
 
   const canvasBottom = canvasSize.top + canvasSize.height
   const bottom = canvasBottom - trackBottom
-
   const left = trackLeft - canvasSize.left
+
   return {
-    // switched top and bottom
-    position: { width, height, left, top: bottom, bottom: top, right },
+    position: { width, height, left, top, bottom, right },
     isOffscreen,
   }
 }
 
-function prepareViewport(
+function prepareSkissor(
   state: RootState,
   {
     left,
-    bottom,
+    // bottom,
+    top,
     width,
     height,
   }: {
@@ -96,11 +103,10 @@ function prepareViewport(
     left: number
     bottom: number
     right: number
-  }
-): { autoClear: boolean; originalViewport?: THREE.Vector4 } {
+  },
+  canvasSize: CanvasSize
+) {
   const aspect = width / height
-
-  // Update camera projection
   if (isOrthographicCamera(state.camera)) {
     if (!state.camera.manual) {
       if (
@@ -124,41 +130,33 @@ function prepareViewport(
     state.camera.aspect = aspect
     state.camera.updateProjectionMatrix()
   }
-
-  // WebGPU renderer handling
   const autoClear = state.gl.autoClear
   state.gl.autoClear = false
-
-  // Store original viewport for restoration
-  const originalViewport = new THREE.Vector4()
-  state.gl.getViewport(originalViewport)
-
-  // Set new viewport - use bottom coordinate for WebGL/WebGPU coordinate system
-  state.gl.setViewport(left, bottom, width, height)
-
-  return { autoClear, originalViewport }
+  // changed bottom -> top
+  // top and height are clamped to the canvas size, otherwise WebGPU will throw an error
+  const scissorTop = Math.max(0, top)
+  const scissorHeight = Math.max(
+    0,
+    Math.min(height, canvasSize.height - Math.abs(top))
+  )
+  state.gl.setViewport(left, top, width, height)
+  if (scissorHeight) {
+    state.gl.setScissor(left, scissorTop, width, scissorHeight)
+    state.gl.setScissorTest(true)
+  }
+  return autoClear
 }
 
-function finishViewport(
-  state: RootState,
-  autoClear: boolean,
-  originalViewport?: THREE.Vector4
-) {
+function finishSkissor(state: RootState, autoClear: boolean) {
+  // Restore the default state
+  state.gl.setScissorTest(false)
   state.gl.autoClear = autoClear
-  if (originalViewport) {
-    state.gl.setViewport(
-      originalViewport.x,
-      originalViewport.y,
-      originalViewport.z,
-      originalViewport.w
-    )
-  }
 }
 
 function clear(state: RootState) {
   state.gl.getClearColor(col)
   state.gl.setClearColor(col, state.gl.getClearAlpha())
-  state.gl.clear()
+  state.gl.clear(true, true)
 }
 
 function Container({
@@ -171,11 +169,11 @@ function Container({
   rect,
   track,
 }: ContainerProps) {
-  const rootState = useThree()
+  const rootState = useThree() as unknown as RootState
   const [isOffscreen, setOffscreen] = React.useState(false)
-
   let frameCount = 0
-  useFrame((state) => {
+  useFrame((_state) => {
+    const state = _state as unknown as RootState
     if (frames === Infinity || frameCount <= frames) {
       if (track) rect.current = track.current?.getBoundingClientRect()
       frameCount++
@@ -187,14 +185,11 @@ function Container({
       )
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
       if (visible && !isOffscreen && rect.current) {
-        const { autoClear, originalViewport } = prepareViewport(state, position)
-
-        // For WebGPU, we need to clear the viewport area before rendering
-        clear(state)
-
+        const autoClear = prepareSkissor(state, position, canvasSize)
+        clear(state) // added for WebGPURenderer
         // When children are present render the portalled scene, otherwise the default scene
         state.gl.render(children ? state.scene : scene, state.camera)
-        finishViewport(state, autoClear, originalViewport)
+        finishSkissor(state, autoClear)
       }
     }
   }, index)
@@ -204,12 +199,9 @@ function Container({
     if (curRect && (!visible || !isOffscreen)) {
       // If the view is not visible clear it once, but stop rendering afterwards!
       const { position } = computeContainerPosition(canvasSize, curRect)
-      const { autoClear, originalViewport } = prepareViewport(
-        rootState,
-        position
-      )
+      const autoClear = prepareSkissor(rootState, position, canvasSize)
       clear(rootState)
-      finishViewport(rootState, autoClear, originalViewport)
+      finishSkissor(rootState, autoClear)
     }
   }, [visible, isOffscreen])
 
@@ -223,12 +215,9 @@ function Container({
     return () => {
       if (curRect) {
         const { position } = computeContainerPosition(canvasSize, curRect)
-        const { autoClear, originalViewport } = prepareViewport(
-          rootState,
-          position
-        )
+        const autoClear = prepareSkissor(rootState, position, canvasSize)
         clear(rootState)
-        finishViewport(rootState, autoClear, originalViewport)
+        finishSkissor(rootState, autoClear)
       }
       rootState.setEvents({ connected: old })
     }
@@ -385,7 +374,7 @@ export const View = /* @__PURE__ */ (() => {
       )
   }) as ViewportProps
 
-  _View.Port = function _ViewPort() {
+  _View.Port = function ViewPortal() {
     return <tracked.Out />
   }
 
