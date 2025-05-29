@@ -24,6 +24,7 @@ export function usePoints() {
       const data = await getDbDataAsTensors(ds, subset, { returnRawX: true })
       if (!data) return
       const { y, XRaw } = data
+      // assume that lon and lat are the first two features. TODO: prop names/idxs in dsDef
       const coordsTensor = XRaw?.slice([0, 0], [-1, 2])
       const yScaledTensor = scaleNormalize(y)
       const yNormTensor = tf.tidy(() => y.div(y.max()))
@@ -31,7 +32,6 @@ export function usePoints() {
 
       try {
         if (!coordsTensor) return
-        // assume that lon and lat are the first two features. TODO: prop names/idxs in dsDef
         const coords = (await coordsTensor.array()) as number[][]
         const yScaled = (await yScaledTensor.array()) as number[]
         const yNorm = (await yNormTensor.array()) as number[]
