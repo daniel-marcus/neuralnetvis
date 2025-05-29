@@ -24,36 +24,33 @@ export function usePoints() {
       const data = await getDbDataAsTensors(ds, subset, { returnRawX: true })
       if (!data) return
       const { y, XRaw } = data
+      // assume that lon and lat are the first two features. TODO: prop names/idxs in dsDef
+      const coordsTensor = XRaw?.slice([0, 0], [-1, 2])
+      const yScaledTensor = scaleNormalize(y)
+      const yNormTensor = tf.tidy(() => y.div(y.max()))
+      const minYTensor = yNormTensor.min()
 
       try {
-        const [points, minY] = tf.tidy(() => {
-          // assume that lon and lat first two features. TODO: prop names/idxs in dsDef
-          const coords = XRaw?.slice([0, 0], [-1, 2]).arraySync() as
-            | number[][]
-            | undefined
-          const yScaled = scaleNormalize(y).arraySync() as number[]
+        if (!coordsTensor) return
+        const coords = (await coordsTensor.array()) as number[][]
+        const yScaled = (await yScaledTensor.array()) as number[]
+        const yNorm = (await yNormTensor.array()) as number[]
+        const minY = (await minYTensor.data())[0]
 
-          const yMax = y.max()
-          const _yNorm = y.div(yMax)
-          const minY = _yNorm.min().dataSync()[0]
-          const yNorm = _yNorm.arraySync() as number[]
+        const projectCoords = (coords: [number, number]) =>
+          ds.mapProps
+            ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom)
+            : coords
 
-          const projectCoords = (coords: [number, number]) =>
-            ds.mapProps
-              ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom)
-              : coords
-
-          const points = Array.from({ length: yScaled.length }).map((_, i) => {
-            const c = (coords?.[i] as [number, number]) ?? [0, 0]
-            const [lon, lat] = projectCoords(c)
-            return {
-              lon,
-              lat,
-              y: yScaled[i],
-              yNorm: yNorm[i],
-            }
-          })
-          return [points, minY]
+        const points = Array.from({ length: yScaled.length }).map((_, i) => {
+          const c = (coords?.[i] as [number, number]) ?? [0, 0]
+          const [lon, lat] = projectCoords(c)
+          return {
+            lon,
+            lat,
+            y: yScaled[i],
+            yNorm: yNorm[i],
+          }
         })
         setMinY(minY)
         setPoints(points)
@@ -61,6 +58,10 @@ export function usePoints() {
         console.warn(e)
       } finally {
         Object.values(data).forEach((t) => t?.dispose())
+        coordsTensor?.dispose()
+        yScaledTensor.dispose()
+        yNormTensor.dispose()
+        minYTensor.dispose()
       }
     }
     getPoints()
