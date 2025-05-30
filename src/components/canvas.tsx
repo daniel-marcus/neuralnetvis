@@ -26,9 +26,9 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
       <div
         className={`${
           hasActive ? "fixed" : "absolute"
-        } top-0 w-screen h-screen pointer-events-none!`}
+        } top-0 w-screen h-screen pointer-events-none! opacity-0`}
       >
-        <Canvas
+        <Canvas // TODO: maybe use OffscreenCanvas instead of opacity-0? -> https://github.com/pmndrs/react-three-offscreen
           frameloop="demand"
           eventSource={eventSource}
           gl={async (renderProps) => {

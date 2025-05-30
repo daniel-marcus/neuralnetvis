@@ -36,7 +36,10 @@ export const CanvasView = (props: CanvasViewProps) => {
   if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <View
-      className={`w-full h-full select-none ${isActive ? "" : "touch-pan-y!"}`}
+      className={`absolute w-full h-full select-none ${
+        // TODO: resize during tile transition
+        isActive ? "" : "touch-pan-y!"
+      }`}
       visible={!invisible}
       index={props.tileIdx + 1} // for debug only
     >

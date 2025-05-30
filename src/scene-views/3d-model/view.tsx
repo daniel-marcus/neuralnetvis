@@ -188,8 +188,32 @@ function Container({
         // console.log("rendering", index)
         const autoClear = prepareSkissor(state, position, canvasSize)
         clear(state) // added for WebGPURenderer
+
         // When children are present render the portalled scene, otherwise the default scene
         state.gl.render(children ? state.scene : scene, state.camera)
+
+        // render on (invisible) main canvas, then copy back to tracked view canvas for correct stacking context
+        const targetCanvas = track?.current as HTMLCanvasElement
+        const ctx = targetCanvas?.getContext("2d")
+        if (ctx) {
+          const sourceCanvas = state.gl.domElement as HTMLCanvasElement
+          // TODO: setup target canvas in effect?
+          const dpr = window.devicePixelRatio || 1
+          targetCanvas.width = position.width * dpr
+          targetCanvas.height = position.height * dpr
+          // ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
+          ctx.drawImage(
+            sourceCanvas,
+            position.left * dpr,
+            position.top * dpr,
+            position.width * dpr,
+            position.height * dpr,
+            0,
+            0,
+            position.width * dpr,
+            position.height * dpr
+          )
+        }
         finishSkissor(state, autoClear)
       }
     }
@@ -309,7 +333,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
 
 const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
   {
-    as: El = "div",
+    as: El = "canvas", // div -> canvas
     id,
     visible,
     className,
