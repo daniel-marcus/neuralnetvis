@@ -45,7 +45,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-headroom": "^3.2.1",
-    "three": "^0.176.0",
+    "three": "^0.177.0",
     "three-stdlib": "^2.36.0",
     "tunnel-rat": "^0.1.2",
     "zustand": "^5.0.5"
@@ -61,7 +61,7 @@
     "@testing-library/react": "^16.3.0",
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^22.15.27",
+    "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@types/react-headroom": "^3.2.3",
