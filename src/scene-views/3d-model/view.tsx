@@ -198,7 +198,7 @@ function Container({
         if (ctx) {
           const sourceCanvas = state.gl.domElement as HTMLCanvasElement
           // TODO: setup target canvas in effect?
-          const dpr = window.devicePixelRatio || 1
+          const dpr = state.gl.getPixelRatio()
           targetCanvas.width = position.width * dpr
           targetCanvas.height = position.height * dpr
           // ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
@@ -214,6 +214,7 @@ function Container({
             position.height * dpr
           )
         }
+
         finishSkissor(state, autoClear)
       }
     }
