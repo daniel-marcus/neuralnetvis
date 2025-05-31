@@ -46,7 +46,7 @@ export const Pointer = ({ position: [x, y, z], size = 1 }: PointerProps) => {
   const ref = useAnimatedPosition(position, 0.6)
   return (
     <group ref={ref}>
-      <TextLabel text="☜" side="right" />
+      <TextLabel text="◀" side="right" />
     </group>
   )
 }
