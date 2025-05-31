@@ -133,15 +133,20 @@ function prepareSkissor(
   const autoClear = state.gl.autoClear
   state.gl.autoClear = false
   // changed bottom -> top
-  // top and height are clamped to the canvas size, otherwise WebGPU will throw an error
+  state.gl.setViewport(left, top, width, height)
+  // scissor: values are clamped to the canvas size, otherwise WebGPU will throw an error
   const scissorTop = Math.max(0, top)
   const scissorHeight = Math.max(
     0,
     Math.min(height, canvasSize.height - Math.abs(top) - 1)
   )
-  state.gl.setViewport(left, top, width, height)
-  if (scissorHeight) {
-    state.gl.setScissor(left, scissorTop, width, scissorHeight)
+  const scissorLeft = Math.max(0, left)
+  const scissorWidth = Math.max(
+    0,
+    Math.min(width, canvasSize.width - Math.abs(left) - 1)
+  )
+  if (scissorHeight && scissorWidth) {
+    state.gl.setScissor(scissorLeft, scissorTop, scissorWidth, scissorHeight)
     state.gl.setScissorTest(true)
   }
   return autoClear
