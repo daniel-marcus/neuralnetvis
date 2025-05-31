@@ -151,7 +151,7 @@ export const TextLabel = memo(function NeuronLabel({
       position={position}
       rotation={[0, -Math.PI / 2, 0]}
       ref={labelRef}
-      scale={size}
+      scale={size * 1.2}
     >
       <sprite ref={labelRef} position={anchorPos} scale={scale}>
         <meshBasicMaterial map={texture} transparent />
