@@ -26,7 +26,7 @@ const previewLayerConfigs: LayerConfigArray = [
 ]
 
 function useModelCreate(ds?: Dataset) {
-  const isPreview = useSceneStore((s) => !s.isActive)
+  const isPreview = false // useSceneStore((s) => !s.isActive)
   const model = useSceneStore((s) => s.model)
   const _setModel = useSceneStore((s) => s._setModel)
   const [setModel] = useModelTransition(_setModel)

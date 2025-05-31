@@ -198,7 +198,7 @@ function Container({
         state.gl.render(children ? state.scene : scene, state.camera)
 
         // render on (invisible) main canvas, then copy back to tracked view canvas for correct stacking context
-        const targetCanvas = track?.current as HTMLCanvasElement
+        /* const targetCanvas = track?.current as HTMLCanvasElement
         const ctx = targetCanvas?.getContext("2d")
         if (ctx) {
           const sourceCanvas = state.gl.domElement as HTMLCanvasElement
@@ -218,7 +218,7 @@ function Container({
             position.width * dpr,
             position.height * dpr
           )
-        }
+        } */
 
         finishSkissor(state, autoClear)
       }

@@ -7,6 +7,8 @@ import { useLayers } from "./layers"
 import { useSceneStore } from "@/store"
 import { useCurrSampleStatus } from "./sample-status"
 
+// TODO: z-index <-> MainCanvas
+
 export const MapPlot = () => {
   const view = useSceneStore((s) => s.view)
   const isActive = useSceneStore((s) => s.isActive)
