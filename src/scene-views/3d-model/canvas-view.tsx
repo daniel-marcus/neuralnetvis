@@ -36,7 +36,7 @@ export const CanvasView = (props: CanvasViewProps) => {
   if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <View
-      className={`absolute w-full h-full select-none ${
+      className={`absolute w-screen h-screen select-none ${
         // TODO: resize during tile transition
         isActive ? "" : "touch-pan-y!"
       }`}
@@ -79,7 +79,7 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   const isScreenSm = useIsScreen("sm")
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? (isScreenSm ? 1 : 0.7) : 0.9 }, // TODO: adjust from screen size
+    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : 0.4 }, // TODO: adjust from screen size
     onChange: ({ value }) => {
       const camera = cameraRef.current
       if (camera) {
