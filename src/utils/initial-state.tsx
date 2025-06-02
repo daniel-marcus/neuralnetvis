@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import { SceneState, useSceneStore } from "@/store"
 import { moveCameraTo, type Pos } from "@/scene-views/3d-model/utils"
-import { defaultLayerConfigs } from "@/store/model"
 import { defaultVisConfig } from "@/store/vis"
 
 type ExposedStoreKeys = "sampleIdx" | "layerConfigs"
@@ -16,7 +15,6 @@ export type InitialState = Partial<ExposedStoreType> & {
 }
 
 export const defaultState: InitialState = {
-  layerConfigs: defaultLayerConfigs,
   vis: defaultVisConfig,
   cameraPos: [-23, 0, 35],
   cameraLookAt: [0, 0, 0],

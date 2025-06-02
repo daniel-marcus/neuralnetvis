@@ -112,6 +112,7 @@ export const cifar100: DatasetDef = {
     "woman",
     "worm",
   ],
+  // modelKey: "cifar-100-test",
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([

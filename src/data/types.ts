@@ -23,6 +23,7 @@ export interface DatasetMeta {
   mapProps?: DsMapProps
   decodeInput?: boolean // TODO: specify tokenizer
   loaded: "preview" | "full" // will be set by ds loader
+  modelKey?: string // default model to load for this dataset
 }
 
 export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {

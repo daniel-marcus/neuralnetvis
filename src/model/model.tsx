@@ -10,6 +10,7 @@ import {
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
 import { getLayerDef, layerDefMap } from "./layers"
+import { models } from "./models"
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "@/model/layers/types"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
@@ -21,30 +22,42 @@ export function useModel(ds?: Dataset) {
   return model
 }
 
-const previewLayerConfigs: LayerConfigArray = [
+const defaultLayerConfigs: LayerConfigArray = [
+  { className: "Dense", config: { units: 64, activation: "relu" } },
   { className: "Dense", config: { units: 10, activation: "relu" } },
 ]
 
 function useModelCreate(ds?: Dataset) {
-  const isPreview = false // useSceneStore((s) => !s.isActive)
+  // const isPreview = false // useSceneStore((s) => !s.isActive)
   const model = useSceneStore((s) => s.model)
   const _setModel = useSceneStore((s) => s._setModel)
   const [setModel] = useModelTransition(_setModel)
   const backendReady = useGlobalStore((s) => s.backendReady)
-  const layerConfigs = useSceneStore((s) => s.layerConfigs)
-  const configs = isPreview ? previewLayerConfigs : layerConfigs
+  const configs = useSceneStore((s) => s.layerConfigs)
   useEffect(() => {
-    if (!ds || !backendReady) return
-    const scene = useGlobalStore.getState().scene
-    if (scene.getState().skipModelCreate) {
-      scene.setState({ skipModelCreate: false })
-      return
+    async function loadModel() {
+      if (!ds || !backendReady) return
+      const scene = useGlobalStore.getState().scene
+      if (scene.getState().skipModelCreate) {
+        scene.setState({ skipModelCreate: false })
+        return
+      }
+      // TODO: load weights later?, fallback if loadLayersModel fails
+      const modelDefFromKey = getModelDefFromKey(ds.modelKey)
+      const _model =
+        modelDefFromKey && !configs
+          ? await tf.loadLayersModel(modelDefFromKey.path) // first time: load default model if indicated
+          : createModel(ds, configs ?? defaultLayerConfigs)
+      if (isDebug()) console.log({ _model })
+      setModel(_model, true)
     }
-    const _model = createModel(ds, configs)
-    if (isDebug()) console.log({ _model })
-    setModel(_model, isPreview)
-  }, [backendReady, configs, ds, setModel, isPreview])
+    loadModel()
+  }, [backendReady, ds, configs, setModel])
   return model
+}
+
+function getModelDefFromKey(modelKey?: string) {
+  return modelKey ? models.find((m) => m.key === modelKey) : undefined
 }
 
 type ModelSetter = (model?: tf.LayersModel) => void
@@ -59,9 +72,9 @@ export function useModelTransition(
   const modelToSet = useRef<tf.LayersModel | undefined>(undefined)
 
   const setModel = useCallback(
-    async (model?: tf.LayersModel, isPreview?: boolean) => {
+    async (model?: tf.LayersModel, silent?: boolean) => {
       modelToSet.current = model
-      const id = setStatus(isPreview ? "" : "Creating model ...", -1)
+      const id = setStatus(silent ? "" : "Creating model ...", -1)
       setStatusId(id)
     },
     []
