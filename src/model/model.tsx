@@ -22,7 +22,7 @@ export function useModel(ds?: Dataset) {
   return model
 }
 
-const defaultLayerConfigs: LayerConfigArray = [
+const defaultConfigs: LayerConfigArray = [
   { className: "Dense", config: { units: 64, activation: "relu" } },
   { className: "Dense", config: { units: 10, activation: "relu" } },
 ]
@@ -42,12 +42,14 @@ function useModelCreate(ds?: Dataset) {
         scene.setState({ skipModelCreate: false })
         return
       }
-      // TODO: load weights later?, fallback if loadLayersModel fails
+      // TODO: load weights later?
       const modelDefFromKey = getModelDefFromKey(ds.modelKey)
+      const getNewModel = () => createModel(ds, configs ?? defaultConfigs)
       const _model =
         modelDefFromKey && !configs
-          ? await tf.loadLayersModel(modelDefFromKey.path) // first time: load default model if indicated
-          : createModel(ds, configs ?? defaultLayerConfigs)
+          ? (await getPretrainedModel(modelDefFromKey.path)) ?? // first time: load default model if indicated
+            getNewModel() // fallback: create new model from config
+          : getNewModel()
       if (isDebug()) console.log({ _model })
       setModel(_model, true)
     }
@@ -58,6 +60,16 @@ function useModelCreate(ds?: Dataset) {
 
 function getModelDefFromKey(modelKey?: string) {
   return modelKey ? models.find((m) => m.key === modelKey) : undefined
+}
+
+async function getPretrainedModel(path: string) {
+  try {
+    const model = await tf.loadLayersModel(path)
+    return model
+  } catch (e) {
+    console.warn("Failed to load pretrained model from", path, e)
+    return undefined
+  }
 }
 
 type ModelSetter = (model?: tf.LayersModel) => void
