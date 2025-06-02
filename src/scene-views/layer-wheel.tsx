@@ -1,8 +1,11 @@
+"use client"
+
 import { useCallback, useEffect, useMemo } from "react"
 import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import { createPortal } from "react-dom"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
@@ -16,7 +19,8 @@ export const LayerWheel = () => {
   )
   const view = useSceneStore((s) => s.view)
   const { onScrollStart, onScrollEnd } = useAutoFlatView(view !== "graph")
-  return (
+  if (typeof document === "undefined") return null
+  return createPortal(
     <WheelMenu
       items={items}
       currIdx={focussedIdx}
@@ -24,7 +28,8 @@ export const LayerWheel = () => {
       onScrollStart={onScrollStart}
       onScrollEnd={onScrollEnd}
       autoHide={true}
-    />
+    />,
+    document.body
   )
 }
 

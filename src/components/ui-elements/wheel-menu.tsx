@@ -29,7 +29,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
       className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none`}
     >
       <div
-        className={`fixed right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] ${
+        className={`fixed z-20 right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] ${
           !props.items.length
             ? "translate-x-full after:opacity-0"
             : isActive
