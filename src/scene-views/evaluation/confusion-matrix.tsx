@@ -293,10 +293,11 @@ function useSampleViewer(currCell: ConfusionCell | null) {
   const setSampleIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
   useEffect(() => {
     if (!currCell || !predictions) return
+    const { actual, predicted } = currCell
     const sampleIdxs = predictions.reduce((acc, pred, i) => {
       if (
-        (!currCell.actual || pred.actual === currCell.actual) &&
-        (!currCell.predicted || pred.predicted === currCell.predicted)
+        (typeof actual === "undefined" || pred.actual === actual) &&
+        (typeof predicted === "undefined" || pred.predicted === predicted)
       ) {
         acc.push(i)
       }
