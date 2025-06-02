@@ -23,7 +23,10 @@ import { Portal } from "@/components/portal"
 
 import type { TileDef } from "@/components/tile-grid"
 
-type SceneViewerProps = TileDef & { isActive: boolean; tileIdx: number }
+type SceneViewerProps = TileDef & {
+  isActive: boolean
+  tileIdx: number
+}
 
 function SceneViewerInner(props: SceneViewerProps) {
   const { dsKey, isActive, section, path } = props
@@ -36,11 +39,15 @@ function SceneViewerInner(props: SceneViewerProps) {
   const title = section === "play" && dsDef ? dsDef.name : props.title
   const showMap = dsDef?.task === "regression" && view !== "graph"
   return (
-    <>
+    <div
+      className={`flex justify-center items-center w-full h-full ${
+        showMap ? "bg-background" : ""
+      }`}
+    >
       {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
-      <CanvasView {...props} />
+      <CanvasView {...props} copyCanvas={showMap} />
       {section === "play" && isActive && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
@@ -65,7 +72,7 @@ function SceneViewerInner(props: SceneViewerProps) {
           <NeuronStatus />
         </Portal>
       )}
-    </>
+    </div>
   )
 }
 

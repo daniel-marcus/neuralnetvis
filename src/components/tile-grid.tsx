@@ -153,7 +153,7 @@ function Tile(props: TileProps) {
       }
     >
       <div
-        className={`rounded-box _bg-background overflow-hidden origin-center flex items-center justify-center ${
+        className={`rounded-box _bg-background overflow-hidden origin-center ${
           localActive
             ? "fixed inset-0 w-screen h-[100dvh] z-10"
             : "relative w-[var(--tile-width)] h-[var(--tile-height)]"

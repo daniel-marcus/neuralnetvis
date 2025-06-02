@@ -22,6 +22,7 @@ interface CanvasViewProps {
   isActive: boolean
   tileIdx: number
   dsKey?: string
+  copyCanvas?: boolean
 }
 
 // CanvasRenderTarget might be interesting: https://github.com/mrdoob/three.js/pull/27628
@@ -42,6 +43,7 @@ export const CanvasView = (props: CanvasViewProps) => {
       }`}
       visible={!invisible}
       index={props.tileIdx + 1} // for debug only
+      copyCanvas={props.copyCanvas}
     >
       <SceneContext.Provider value={store}>
         <CanvasViewInner {...props} />

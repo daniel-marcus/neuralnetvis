@@ -38,6 +38,7 @@ export type ContainerProps = {
    */
   track?: React.RefObject<HTMLElement>
   canvasSize: CanvasSize
+  copyCanvas?: boolean
 }
 
 export type ViewProps = {
@@ -61,6 +62,8 @@ export type ViewProps = {
    * @deprecated You can use inline Views now, see: https://github.com/pmndrs/drei/pull/1784
    */
   track?: React.RefObject<HTMLElement>
+  /** If set true, the content from the background rendering canvas will be copied to a canvas for the current view. Might be helpful when the content needs to appear in a specific stacking context (befor a map background etc.)   */
+  copyCanvas?: boolean
 }
 
 function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
@@ -173,6 +176,7 @@ function Container({
   frames,
   rect,
   track,
+  copyCanvas,
 }: ContainerProps) {
   const rootState = useThree() as unknown as RootState
   const [isOffscreen, setOffscreen] = React.useState(false)
@@ -198,9 +202,9 @@ function Container({
         state.gl.render(children ? state.scene : scene, state.camera)
 
         // render on (invisible) main canvas, then copy back to tracked view canvas for correct stacking context
-        /* const targetCanvas = track?.current as HTMLCanvasElement
+        const targetCanvas = track?.current as HTMLCanvasElement
         const ctx = targetCanvas?.getContext("2d")
-        if (ctx) {
+        if (copyCanvas && ctx) {
           const sourceCanvas = state.gl.domElement as HTMLCanvasElement
           // TODO: setup target canvas in effect?
           const dpr = state.gl.getPixelRatio()
@@ -218,7 +222,7 @@ function Container({
             position.width * dpr,
             position.height * dpr
           )
-        } */
+        }
 
         finishSkissor(state, autoClear)
       }
@@ -273,6 +277,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
     className, // eslint-disable-line @typescript-eslint/no-unused-vars
     frames = Infinity,
     children,
+    copyCanvas,
     ...props
   }: ViewProps,
   fref: React.ForwardedRef<THREE.Group>
@@ -319,6 +324,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
             track={track}
             rect={rect}
             index={index}
+            copyCanvas={copyCanvas}
           >
             {children}
           </Container>,
@@ -348,6 +354,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
     // track,
     frames = Infinity,
     children,
+    copyCanvas,
     ...props
   }: ViewProps,
   fref: React.ForwardedRef<HTMLElement>
@@ -366,6 +373,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
           track={ref}
           frames={frames}
           index={index}
+          copyCanvas={copyCanvas}
         >
           {children}
         </CanvasView>
