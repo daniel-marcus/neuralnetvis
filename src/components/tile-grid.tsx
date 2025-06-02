@@ -78,6 +78,7 @@ export const TileGrid = () => {
             .filter(({ disabled }) => !disabled || isDebug)
             .map((tileProps, i) => {
               const isActive = tileProps.path === active
+              const wasLastActive = tileProps.path === lastActive
               return (
                 <Tile
                   key={tileProps.path}
@@ -85,9 +86,13 @@ export const TileGrid = () => {
                   {...tileProps}
                   className={`${hasActive && !isActive ? "opacity-0" : ""} ${
                     !!section && tileProps.section !== section ? "hidden" : ""
-                  } ${tileProps.path === lastActive ? "z-5" : ""}`}
+                  } ${wasLastActive ? "z-5" : ""}`}
                 >
-                  <SceneViewer isActive={isActive} {...tileProps} tileIdx={i} />
+                  <SceneViewer
+                    isActive={isActive}
+                    {...tileProps}
+                    tileIdx={wasLastActive ? 99 : i}
+                  />
                   {!isActive && <Tags {...tileProps} />}
                 </Tile>
               )
