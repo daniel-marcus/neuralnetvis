@@ -1,4 +1,4 @@
-import { createRef, useEffect } from "react"
+import { createRef, useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
@@ -12,10 +12,8 @@ import type { LayerPos, NeuronLayer, LayerType } from "./types"
 export function useLayers() {
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
-  const layers = useSceneStore((s) => s.allLayers)
-  const setLayers = useSceneStore((s) => s.setAllLayers)
-  useEffect(() => {
-    if (!model) return
+  const layers = useMemo(() => {
+    if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
@@ -72,9 +70,8 @@ export function useLayers() {
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
-    setLayers(newLayers)
-    return () => setLayers([])
-  }, [model, ds, setLayers])
+    return newLayers
+  }, [model, ds])
   return layers
 }
 

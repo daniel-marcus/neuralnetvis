@@ -1,11 +1,8 @@
 import type { StateCreator } from "zustand"
 import type { Vector3 } from "three/webgpu"
-import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
+import type { Neuron, Nid } from "@/neuron-layers"
 
 export interface NeuronsSlice {
-  allLayers: NeuronLayer[]
-  setAllLayers: (layers: NeuronLayer[]) => void
-
   hoveredNid?: Nid
   selectedNid?: Nid
   setHoveredNid: (nid?: Nid) => void
@@ -20,9 +17,6 @@ export interface NeuronsSlice {
 }
 
 export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
-  allLayers: [],
-  setAllLayers: (layers) => set({ allLayers: layers }),
-
   hoveredNid: undefined,
   selectedNid: undefined,
   setHoveredNid: (nid) => set({ hoveredNid: nid }),

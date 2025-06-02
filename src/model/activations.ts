@@ -12,12 +12,11 @@ import type { LayerActivations } from "./types"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
-export function ActivationUpdater() {
+export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
   useActivationStats()
   const setActivations = useSceneStore((s) => s.setActivations)
-  const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
   const renderer = useThree((s) => s.gl as unknown as THREE.WebGPURenderer)

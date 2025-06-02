@@ -10,7 +10,11 @@ import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-export const Layer = memo(function Layer(props: NeuronLayer) {
+interface LayerProps extends NeuronLayer {
+  allLayers: NeuronLayer[]
+}
+
+export const Layer = memo(function Layer(props: LayerProps) {
   const isActive = useSceneStore((s) => s.isActive)
   const measureRef = useRef<THREE.Mesh | null>(null)
   const separateChannels = props.hasColorChannels ? 3 : 1
@@ -30,10 +34,11 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
 interface LayerScalerProps extends NeuronLayer {
   children: React.ReactNode
   visible: boolean
+  allLayers: NeuronLayer[]
 }
 
 function LayerScaler(props: LayerScalerProps) {
-  const posRef = useLayerPos(props)
+  const posRef = useLayerPos(props, props.allLayers)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible =
@@ -79,9 +84,8 @@ export function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: NeuronLayer) {
+function useLayerPos(layer: NeuronLayer, allLayers: NeuronLayer[]) {
   const isActive = useSceneStore((s) => s.isActive)
-  const allLayers = useSceneStore((s) => s.allLayers)
   const visibleLayers = useMemo(() => {
     if (isActive) return allLayers
     else return allLayers.filter((l) => l.layerPos !== "hidden")

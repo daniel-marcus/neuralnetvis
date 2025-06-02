@@ -10,10 +10,10 @@ export const Model = () => {
   const layers = useLayers()
   return (
     <>
-      <ActivationUpdater />
-      <ModelShifter>
+      <ActivationUpdater layers={layers} />
+      <ModelShifter layers={layers}>
         {layers.map((l) => (
-          <Layer key={l.lid} {...l} />
+          <Layer key={l.lid} {...l} allLayers={layers} />
         ))}
       </ModelShifter>
       <HoverComponents />
@@ -21,8 +21,12 @@ export const Model = () => {
   )
 }
 
-function ModelShifter({ children }: { children: React.ReactNode }) {
-  const layers = useSceneStore((s) => s.allLayers)
+interface ModelShifterProps {
+  children: React.ReactNode
+  layers: NeuronLayer[]
+}
+
+function ModelShifter({ children, layers }: ModelShifterProps) {
   const position = useModelOffset(layers)
   const ref = useAnimatedPosition(position, 0.1)
   useDynamicXShift(layers.length)
