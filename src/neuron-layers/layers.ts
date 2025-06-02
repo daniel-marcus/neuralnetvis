@@ -11,6 +11,7 @@ import type { LayerPos, NeuronLayer, LayerType } from "./types"
 export function useLayers() {
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
+  const setAllLayers = useSceneStore((s) => s.setAllLayers)
   const layers = useMemo(() => {
     if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model)
@@ -69,6 +70,9 @@ export function useLayers() {
       }, [] as NeuronLayer[]) ?? []
     return newLayers
   }, [model, ds])
+  useEffect(() => {
+    setAllLayers(layers)
+  }, [layers, setAllLayers])
   return layers
 }
 
