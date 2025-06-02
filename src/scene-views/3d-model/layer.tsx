@@ -64,7 +64,6 @@ function LodComp(props: LodCompProps) {
     alwaysInstanced ||
     (isFocussed && !isScrolling) ||
     (isClose && !hasFocussed && !isSuperLarge && !isScrolling)
-  const LayerComp = showInstanced ? InstancedLayer : TexturedLayer
   return (
     <>
       <InstancedLayer {...props} visible={showInstanced} />
