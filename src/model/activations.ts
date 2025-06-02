@@ -9,12 +9,11 @@ import type { LayerActivations } from "./types"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["index"]>>
 
-export function ActivationUpdater() {
+export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
   useActivationStats()
   const setActivations = useSceneStore((s) => s.setActivations)
-  const layers = useSceneStore((s) => s.allLayers)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
 
