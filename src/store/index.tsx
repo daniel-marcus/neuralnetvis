@@ -9,6 +9,8 @@ import { createTrainingSlice, TrainingSlice } from "./training"
 import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
 import { createVideoSlice, VideoSlice } from "./video"
+import { moveCameraTo } from "@/scene-views/3d-model/utils"
+import { defaultState } from "@/utils/initial-state"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
 export type SetterFunc<T> = (oldVal: T) => T
@@ -59,13 +61,21 @@ export function SceneStoreProvider({
     useGlobalStore.getState().setScene(storeRef.current!)
     storeRef.current?.setState({ isActive: true })
     return () => {
-      useGlobalStore.getState().setScene(dummySceneStore)
+      // cleanup when leaving the scene
       storeRef.current?.setState({
         isActive: false,
         view: "layers",
         subset: "train",
         focussedLayerIdx: undefined,
       })
+      // bring camera back to default position
+      moveCameraTo(
+        defaultState.cameraPos,
+        defaultState.cameraLookAt,
+        storeRef.current?.getState().three
+      )
+      // reset current scene
+      useGlobalStore.getState().setScene(dummySceneStore)
     }
   }, [isActive])
   return (
@@ -103,7 +113,6 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   ...createStatusSlice(...apiProps),
   backendReady: false,
   isDebug: false,
-  skipModelCreate: false,
   visLocked: false,
   scene: dummySceneStore,
   setScene: (scene) => {

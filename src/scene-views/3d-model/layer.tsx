@@ -11,8 +11,10 @@ import { TexturedLayer } from "./layer-textured"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const Layer = memo(function Layer(props: NeuronLayer) {
+  const isActive = useSceneStore((s) => s.isActive)
   const measureRef = useRef<THREE.Mesh | null>(null)
   const separateChannels = props.hasColorChannels ? 3 : 1
+  if (!isActive && props.layerPos === "hidden") return null
   return (
     <LayerScaler {...props}>
       <group ref={measureRef}>
@@ -70,8 +72,13 @@ export function useFocussed(layerIdx: number) {
 }
 
 function useLayerPos(layer: NeuronLayer) {
-  const visibleLayers = useSceneStore((s) => s.allLayers)
-  const visibleIdx = layer.visibleIdx
+  const isActive = useSceneStore((s) => s.isActive)
+  const allLayers = useSceneStore((s) => s.allLayers)
+  const visibleLayers = useMemo(() => {
+    if (isActive) return allLayers
+    else return allLayers.filter((l) => l.layerPos !== "hidden")
+  }, [allLayers, isActive])
+  const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 
   const position = useMemo(() => {
