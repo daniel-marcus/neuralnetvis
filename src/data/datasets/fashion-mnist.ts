@@ -22,6 +22,7 @@ export const fashionMnist: DatasetDef = {
     "Bag",
     "Ankle boot",
   ],
+  modelKey: "fashon-mnist",
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/fashion_mnist_20k/x_train.npz",

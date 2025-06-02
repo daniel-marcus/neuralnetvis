@@ -21,6 +21,7 @@ export const handPose: DatasetDef = {
     aspectRatio: 4 / 3,
     processor: "handPose",
   },
+  modelKey: "hand-pose",
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       ["/data/hand-pose/x_train.npz", "/data/hand-pose/y_train.npz"],

@@ -22,6 +22,7 @@ export const cifar10: DatasetDef = {
     "ship",
     "truck",
   ],
+  modelKey: "cifar-10",
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([
