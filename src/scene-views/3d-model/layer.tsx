@@ -36,15 +36,12 @@ function LayerScaler(props: LayerScalerProps) {
   const posRef = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
-  const invisible = useIsInvisible(props) || (isFlatView && !isFocussed)
+  const invisible =
+    useIsInvisible(props) || (isFlatView && !isFocussed) || !props.visible
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(posRef, scale, duration)
-  return (
-    <group ref={posRef} visible={props.visible}>
-      {props.children}
-    </group>
-  )
+  return <group ref={posRef}>{props.children}</group>
 }
 
 interface LodCompProps extends NeuronLayer {
