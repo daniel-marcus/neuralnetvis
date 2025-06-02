@@ -27,6 +27,7 @@ export const californiaHousing: DatasetDef = {
     zoom: 5.4,
     baseLayer: "/data/california_housing/california.geojson",
   },
+  modelKey: "california-housing",
   loadPreview: loadData,
 }
 

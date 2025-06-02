@@ -23,6 +23,7 @@ export const autoMpg: DatasetDef = {
     "japan",
   ],
   outputLabels: ["miles_per_gallon"],
+  modelKey: "auto-mpg",
   loadPreview: loadData,
 }
 
