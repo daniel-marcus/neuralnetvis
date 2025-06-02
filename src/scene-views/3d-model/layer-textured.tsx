@@ -11,12 +11,19 @@ export interface UserDataTextured {
   mapTexture: THREE.DataTexture
 }
 
-export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
+type TexturedLayerProps = NeuronLayer & {
+  visible: boolean
+}
+
+export const TexturedLayer = memo(function TexturedLayer(
+  props: TexturedLayerProps
+) {
+  const { visible } = props
   const [texture, material, userData] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   return (
-    <mesh scale={[size, spacedSize, spacedSize]} userData={userData}>
+    <mesh scale={[size, spacedSize, spacedSize]} {...{ userData, visible }}>
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />
     </mesh>

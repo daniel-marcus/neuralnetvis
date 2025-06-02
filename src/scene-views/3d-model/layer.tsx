@@ -14,9 +14,9 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
   const isActive = useSceneStore((s) => s.isActive)
   const measureRef = useRef<THREE.Mesh | null>(null)
   const separateChannels = props.hasColorChannels ? 3 : 1
-  if (!isActive && props.layerPos === "hidden") return null
+  const invisible = !isActive && props.layerPos === "hidden"
   return (
-    <LayerScaler {...props}>
+    <LayerScaler {...props} visible={!invisible}>
       <LayerInteractions {...props} measureRef={measureRef} />
       <group ref={measureRef}>
         {Array.from({ length: separateChannels }).map((_, i) => (
@@ -29,6 +29,7 @@ export const Layer = memo(function Layer(props: NeuronLayer) {
 
 interface LayerScalerProps extends NeuronLayer {
   children: React.ReactNode
+  visible: boolean
 }
 
 function LayerScaler(props: LayerScalerProps) {
@@ -39,7 +40,11 @@ function LayerScaler(props: LayerScalerProps) {
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration = isFlatView && !isFocussed && !wasFocussed ? 0 : 500
   useDynamicScale(posRef, scale, duration)
-  return <group ref={posRef}>{props.children}</group>
+  return (
+    <group ref={posRef} visible={props.visible}>
+      {props.children}
+    </group>
+  )
 }
 
 interface LodCompProps extends NeuronLayer {
@@ -59,8 +64,14 @@ function LodComp(props: LodCompProps) {
     alwaysInstanced ||
     (isFocussed && !isScrolling) ||
     (isClose && !hasFocussed && !isSuperLarge && !isScrolling)
-  const LayerComp = showInstanced ? InstancedLayer : TexturedLayer
-  return <LayerComp {...props} />
+  return (
+    <>
+      <InstancedLayer {...props} visible={showInstanced} />
+      {!alwaysInstanced && (
+        <TexturedLayer {...props} visible={!showInstanced} />
+      )}
+    </>
+  )
 }
 
 export function useFocussed(layerIdx: number) {
