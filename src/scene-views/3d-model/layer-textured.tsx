@@ -8,12 +8,18 @@ import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
 
-export const TexturedLayer = memo(function TexturedLayer(props: NeuronLayer) {
+type TexturedLayerProps = NeuronLayer & {
+  visible: boolean
+}
+
+export const TexturedLayer = memo(function TexturedLayer(
+  props: TexturedLayerProps
+) {
   const [texture, material] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
   return (
-    <mesh scale={[size, spacedSize, spacedSize]}>
+    <mesh scale={[size, spacedSize, spacedSize]} visible={props.visible}>
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />
     </mesh>

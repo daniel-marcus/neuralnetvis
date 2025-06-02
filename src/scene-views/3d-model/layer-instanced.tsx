@@ -14,6 +14,7 @@ import type { LayerActivations } from "@/model"
 
 type InstancedLayerProps = NeuronLayer & {
   channelIdx?: number
+  visible: boolean
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -32,7 +33,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   const eventHandlers = useNeuronInteractions(index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} visible={props.visible}>
       <instancedMesh
         ref={meshRef}
         name={`layer_${props.index}_group_${channelIdx}`}
