@@ -6,7 +6,10 @@ import type { NeuronsSlice } from "./neurons"
 export type View = "layers" | "graph" | "map" | "evaluation"
 
 export interface ViewSlice {
+  uid: string
   isActive: boolean
+  hasFullyRendered: boolean
+  setHasFullyRendered: (hasFullyRendered: boolean) => void
   view: View
   setView: (view: View) => void
   subset: Subset
@@ -31,7 +34,10 @@ export const createViewSlice: StateCreator<
   [],
   ViewSlice
 > = (set) => ({
+  uid: "unset",
   isActive: false,
+  hasFullyRendered: false,
+  setHasFullyRendered: (hasFullyRendered) => set({ hasFullyRendered }),
   view: "layers",
   setView: (view) =>
     set(({ sampleIdx, ds, subset }) => {
