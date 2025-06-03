@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useRef } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+} from "react"
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
 import { createViewSlice, View, ViewSlice } from "./view"
@@ -36,9 +43,12 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
   }))
 }
 
-const dummySceneStore = createSceneStore()
+const dummySceneStore = createSceneStore({
+  uid: "dummy",
+  hasFullyRendered: true,
+})
 
-type SceneStore = ReturnType<typeof createSceneStore>
+export type SceneStore = ReturnType<typeof createSceneStore>
 export const SceneContext = createContext<SceneStore | null>(null)
 
 type SceneProviderProps = React.PropsWithChildren<
@@ -52,10 +62,23 @@ export function SceneStoreProvider({
   isActive,
   ...props
 }: SceneProviderProps) {
+  const uid = useId()
   const storeRef = useRef<SceneStore>(null)
   if (!storeRef.current) {
-    storeRef.current = createSceneStore({ isActive, ...props })
+    storeRef.current = createSceneStore({ isActive, uid, ...props })
   }
+  useEffect(() => {
+    // register scene store in global store
+    const thisScene = storeRef.current!
+    useGlobalStore.setState((state) => ({
+      scenes: [...state.scenes.filter((s) => s !== thisScene), thisScene],
+    }))
+    return () => {
+      useGlobalStore.setState((state) => ({
+        scenes: state.scenes.filter((s) => s !== thisScene),
+      }))
+    }
+  }, [])
   useEffect(() => {
     if (!isActive) return
     useGlobalStore.getState().setScene(storeRef.current!)
@@ -96,12 +119,24 @@ export function useCurrScene<T>(selector: (state: SceneState) => T): T {
   return useStore(store, selector)
 }
 
+export function usePrevScene<T>(selector: (state: SceneState) => T): T {
+  const scenes = useGlobalStore((s) => s.scenes)
+  const currUid = useSceneStore((s) => s.uid)
+  const prevSceneStore = useMemo(() => {
+    const allScenes = scenes.map((s) => s.getState())
+    const currIdx = allScenes.findIndex((s) => s.uid === currUid)
+    return scenes[currIdx - 1] ?? dummySceneStore
+  }, [scenes, currUid])
+  return useStore(prevSceneStore, selector)
+}
+
 //
 
 export type GlobalStoreType = TabsSlice &
   StatusSlice & {
     backendReady: boolean
     isDebug: boolean
+    scenes: SceneStore[]
     scene: SceneStore
     setScene: (scene: SceneStore) => void
     handLandmarker?: HandLandmarker
@@ -115,6 +150,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   backendReady: false,
   isDebug: false,
   visLocked: false,
+  scenes: [],
   scene: dummySceneStore,
   setScene: (scene) => {
     const [set, get] = apiProps
