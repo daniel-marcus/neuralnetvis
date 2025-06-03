@@ -17,6 +17,7 @@ type InstancedLayerProps = NeuronLayer & {
 
 export interface UserData {
   activations: THREE.StorageBufferAttribute // StorageInstancedBufferAttribute
+  instancedActivations: THREE.InstancedBufferAttribute
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
@@ -170,11 +171,18 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 }
 
 function useColors(props: NeuronLayer, channelIdx: number) {
-  const { activationsBuffer, hasColorChannels } = props
+  const { activationsBuffer, hasColorChannels, channelActivations } = props
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx),
     [hasColorChannels, channelIdx]
   )
-  const userData: UserData = { activations: activationsBuffer }
+  const colorArray = channelActivations[channelIdx]
+  const userData: UserData = useMemo(
+    () => ({
+      activations: activationsBuffer,
+      instancedActivations: new THREE.InstancedBufferAttribute(colorArray, 1),
+    }),
+    [activationsBuffer, colorArray]
+  )
   return [material, userData] as const
 }

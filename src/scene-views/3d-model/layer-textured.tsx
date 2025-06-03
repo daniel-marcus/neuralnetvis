@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, memo } from "react"
 import * as THREE from "three/webgpu"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getTextureMaterial } from "./materials"
+import { useLayerActivations } from "@/model/activations"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
@@ -9,6 +10,7 @@ const CELL_GAP = 1 // texture pixel between cells
 export interface UserDataTextured {
   activations: THREE.StorageBufferAttribute
   mapTexture: THREE.DataTexture
+  actTexture: THREE.DataTexture // for WebGL fallback
 }
 
 type TexturedLayerProps = NeuronLayer & {
@@ -100,10 +102,27 @@ function useActivationTexture(layer: NeuronLayer) {
     return mapTexture
   }, [texture, pixelMap])
 
-  const userData: UserDataTextured = {
-    activations: layer.activationsBuffer,
-    mapTexture,
-  }
+  const userData: UserDataTextured = useMemo(
+    () => ({
+      activations: layer.activationsBuffer,
+      mapTexture,
+      actBuf: new THREE.BufferAttribute(layer.activations, 1),
+      actTexture: texture,
+    }),
+    [layer.activations, layer.activationsBuffer, mapTexture, texture]
+  )
+
+  const layerActivations = useLayerActivations(layer.index)
+  useEffect(() => {
+    const act = layerActivations?.normalizedActivations
+    if (!act) return
+    // WebGL fallback: update texture on CPU
+    const data = texture.image.data as Float32Array
+    for (let i = 0; i < act.length; i++) {
+      data[pixelMap[i]] = act[i]
+    }
+    texture.needsUpdate = true
+  }, [texture, pixelMap, layerActivations])
 
   return [texture, material, userData] as const
 }

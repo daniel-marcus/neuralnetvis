@@ -97,7 +97,7 @@ export function useLayerActivations(layerIdx: number) {
 }
 
 export function useActivation(layerIdx: number, neuronIdx: number) {
-  return useSceneStore((s) => s.activations[layerIdx]?.activations[neuronIdx])
+  return useSceneStore((s) => s.activations[layerIdx]?.activations?.[neuronIdx])
 }
 
 async function getActivations(
@@ -162,18 +162,24 @@ async function getActivations(
         } else {
           // fallback if WebGPU is not available: fallback for WASM/WebGL via CPU
           if (isDebug()) console.log("using fallback")
-          const data = await normalized.data()
+          const data = (await normalized.data()) as Float32Array
           layer.activations.set(data)
           layer.activationsBuffer.needsUpdate = true
+          for (const meshRef of layer.meshRefs) {
+            meshRef.current!.userData.actInst.needsUpdate = true
+          }
+          newLayerActivations[layer.index] = {
+            normalizedActivations: data,
+          }
         }
 
         if (layer.layerPos === "output") {
           // for output layers we still need to download the activations
           // for output ranking & regression labels
           const activations = (await actTensor.data()) as Float32Array
-          newLayerActivations[layer.index] = {
-            activations,
-          }
+          newLayerActivations[layer.index] =
+            newLayerActivations[layer.index] ?? {}
+          newLayerActivations[layer.index].activations = activations
         }
       } catch (e) {
         console.error("Error getting activations", e)

@@ -3,7 +3,8 @@ import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 // state
 
 export interface LayerActivations {
-  activations: Float32Array // [neuronIdx]
+  activations?: Float32Array // [neuronIdx]
+  normalizedActivations?: Float32Array // [neuronIdx] for WebGL fallback
 }
 
 export interface WeightsBiases {
