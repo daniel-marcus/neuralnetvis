@@ -26,7 +26,7 @@ export const Model = () => {
 }
 
 const cameraDir = new THREE.Vector3(-23, 0, 35).normalize()
-const cameraDirLarge = new THREE.Vector3(-25, 10, 15).normalize()
+const cameraDirLarge = new THREE.Vector3(-23, 10, 18).normalize()
 
 function useCameraShifter(layers: NeuronLayer[]) {
   // Adjust camera to model size
@@ -46,7 +46,7 @@ function useCameraShifter(layers: NeuronLayer[]) {
 
     const newPos = center.add(direction)
     const duration = 500
-    const lookAt = (isLarge ? [0, -15, 0] : [0, 0, 0]) as Pos
+    const lookAt = (isLarge ? [0, 0, 0] : [0, 0, 0]) as Pos
     moveCameraTo(newPos.toArray(), lookAt, undefined, { duration })
   }, [isActive, layers.length, camera])
 }

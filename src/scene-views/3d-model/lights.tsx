@@ -33,8 +33,8 @@ export const Lights = () => {
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
-        intensity={(Math.PI / 3) * 2}
-        color="#ff0000"
+        intensity={Math.PI * 0.9}
+        color="#ffcc99"
       />
     </>
   )

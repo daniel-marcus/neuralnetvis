@@ -61,7 +61,7 @@ function LodComp(props: LodCompProps) {
   const isClose = useIsClose(props.measureRef, 40)
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
-  const isSuperLarge = props.numNeurons > 30000
+  const isSuperLarge = props.numNeurons > 50000
   const alwaysInstanced = props.layerPos !== "hidden" || !hasChannels
   const showInstanced =
     alwaysInstanced ||
