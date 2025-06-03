@@ -13,7 +13,7 @@ export interface DataSlice {
   setLoadFullDs: (shouldLoadFullDs: boolean) => void
 
   ds?: Dataset
-  setDs: (ds?: Dataset, setOnlyIfNotLoadedFull?: boolean) => void
+  setDs: (ds?: Dataset, setOnlyIfNecessary?: boolean) => void
   updateMeta: (storeName: Subset, meta: StoreMeta) => void
   totalSamples: (subset?: Subset) => number
   isRegression: () => boolean
@@ -37,10 +37,10 @@ export const createDataSlice: StateCreator<
   setLoadFullDs: (shouldLoadFullDs) => set({ shouldLoadFullDs }),
 
   ds: undefined,
-  setDs: (ds, setOnlyIfNotLoadedFull) => {
+  setDs: (ds, setOnlyIfNecessary) => {
     const oldDs = get().ds
     const sameKey = oldDs?.key === ds?.key
-    if (setOnlyIfNotLoadedFull && oldDs?.loaded === "full" && sameKey) return
+    if (setOnlyIfNecessary && oldDs?.loaded === ds?.loaded && sameKey) return
     set(({ sampleIdx }) => ({
       ds,
       sample: undefined,
