@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useRef } from "react"
+import { useContext, useEffect, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
@@ -9,7 +9,12 @@ import { DebugUtils } from "./debug-utils"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
-import { SceneContext, useGlobalStore, useSceneStore } from "@/store"
+import {
+  SceneContext,
+  useGlobalStore,
+  usePrevScene,
+  useSceneStore,
+} from "@/store"
 import { useFlatView } from "./flat-view"
 import { isTouch } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
@@ -35,6 +40,7 @@ export const CanvasView = (props: CanvasViewProps) => {
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
+  const prevHasRendered = usePrevScene((s) => s.hasFullyRendered)
   if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <View
@@ -42,7 +48,7 @@ export const CanvasView = (props: CanvasViewProps) => {
         // TODO: resize during tile transition
         isActive ? "" : "touch-pan-y!"
       }`}
-      visible={!invisible}
+      visible={!invisible && prevHasRendered} // hide view when not active and not rendered yet
       index={props.tileIdx + 1} // for debug only
       copyCanvas={props.copyCanvas}
       onFirstRender={setHasRendered}
@@ -81,6 +87,14 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   // const isScreenSm = useIsScreen("sm")
+  const hasRendered = useSceneStore((s) => s.hasRendered)
+  const hasFullyRendered = useSceneStore((s) => s.hasFullyRendered)
+  const setHasFullyRendered = useSceneStore((s) => s.setHasFullyRendered)
+  useEffect(() => {
+    if (hasRendered && !hasFullyRendered) {
+      setTimeout(() => setHasFullyRendered(true), 100)
+    }
+  }, [hasRendered, hasFullyRendered, setHasFullyRendered])
   useSpring({
     from: { zoom: 0.1 },
     to: { zoom: isActive ? 1 : 0.9 }, // kept to trigger invalidation?

@@ -77,9 +77,13 @@ function SceneViewerInner(props: SceneViewerProps) {
 }
 
 export const SceneViewer = (props: SceneViewerProps) => {
-  const { isActive, shouldLoadFullDs } = props
+  const { isActive, shouldLoadFullDs, path } = props
   return (
-    <SceneStoreProvider isActive={isActive} shouldLoadFullDs={shouldLoadFullDs}>
+    <SceneStoreProvider
+      isActive={isActive}
+      shouldLoadFullDs={shouldLoadFullDs}
+      uid={path}
+    >
       <Suspense>
         <SceneViewerInner {...props} />
       </Suspense>
