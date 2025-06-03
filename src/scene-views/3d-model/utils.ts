@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Controller, config } from "@react-spring/web"
+import { Controller, SpringConfig, config } from "@react-spring/web"
 import { getThree, useSceneStore } from "@/store"
 import { defaultVisConfig, type Three } from "@/store/vis"
 import { clamp } from "@/utils/helpers"
@@ -54,7 +54,12 @@ export function getCameraPos() {
   return three.camera.position.toArray() as Pos
 }
 
-export function moveCameraTo(targetPos?: Pos, lookAt?: Pos, _three?: Three) {
+export function moveCameraTo(
+  targetPos?: Pos,
+  lookAt?: Pos,
+  _three?: Three,
+  customConfig?: SpringConfig
+) {
   const currSceneThree = getThree()
   const three = _three || currSceneThree
   if (!three) return
@@ -65,7 +70,7 @@ export function moveCameraTo(targetPos?: Pos, lookAt?: Pos, _three?: Three) {
     lookAt: initialLookAt,
   })
   api.start({
-    config: config.default,
+    config: customConfig ?? config.default,
     position: targetPos ?? initialPos,
     lookAt: lookAt ?? initialLookAt,
     from: { position: initialPos, lookAt: initialLookAt },
