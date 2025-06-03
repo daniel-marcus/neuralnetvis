@@ -21,7 +21,7 @@ export const Lights = () => {
       />
       <spotLight
         ref={ref1}
-        position={[-1500, 20, -20]}
+        position={[-1500, 800, -20]}
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
@@ -29,12 +29,12 @@ export const Lights = () => {
       />
       <spotLight
         ref={ref2}
-        position={[1500, -20, 20]}
+        position={[1500, -800, 20]}
         angle={Math.PI / 3}
         penumbra={1}
         decay={0}
-        intensity={Math.PI * 0.9}
-        color="#ffcc99"
+        intensity={Math.PI * 0.8}
+        color="#ff0000"
       />
     </>
   )
