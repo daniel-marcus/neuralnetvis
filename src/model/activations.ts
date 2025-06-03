@@ -164,9 +164,9 @@ async function getActivations(
           if (isDebug()) console.log("using fallback")
           const data = (await normalized.data()) as Float32Array
           layer.activations.set(data)
-          layer.activationsBuffer.needsUpdate = true
           for (const meshRef of layer.meshRefs) {
-            meshRef.current!.userData.actInst.needsUpdate = true
+            if (!meshRef.current?.userData.actInst) continue
+            meshRef.current.userData.actInst.needsUpdate = true
           }
           newLayerActivations[layer.index] = {
             normalizedActivations: data,
