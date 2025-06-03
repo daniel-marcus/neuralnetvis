@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useEffect, useRef } from "react"
+import { useContext, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
@@ -9,12 +9,7 @@ import { DebugUtils } from "./debug-utils"
 import { Lights } from "./lights"
 import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
-import {
-  SceneContext,
-  useGlobalStore,
-  usePrevScene,
-  useSceneStore,
-} from "@/store"
+import { SceneContext, useGlobalStore, useSceneStore } from "@/store"
 import { useFlatView } from "./flat-view"
 import { isTouch } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
