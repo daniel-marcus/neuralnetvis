@@ -8,6 +8,8 @@ export type View = "layers" | "graph" | "map" | "evaluation"
 export interface ViewSlice {
   uid: string
   isActive: boolean
+  isHovered: boolean
+  setIsHovered: (isHovered: boolean) => void
   view: View
   setView: (view: View) => void
   subset: Subset
@@ -34,6 +36,8 @@ export const createViewSlice: StateCreator<
 > = (set) => ({
   uid: "unset",
   isActive: false,
+  isHovered: false,
+  setIsHovered: (isHovered) => set({ isHovered }),
   view: "layers",
   setView: (view) =>
     set(({ sampleIdx, ds, subset }) => {

@@ -38,11 +38,14 @@ function SceneViewerInner(props: SceneViewerProps) {
   const view = useSceneStore((s) => s.view)
   const title = section === "play" && dsDef ? dsDef.name : props.title
   const showMap = dsDef?.task === "regression" && view !== "graph"
+  const setIsHovered = useSceneStore((s) => s.setIsHovered)
   return (
     <div
       className={`flex justify-center items-center w-full h-full ${
         showMap ? "bg-background" : ""
       }`}
+      onMouseEnter={!isActive ? () => setIsHovered(true) : undefined}
+      onMouseLeave={!isActive ? () => setIsHovered(false) : undefined}
     >
       {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}

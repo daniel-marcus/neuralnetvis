@@ -4,6 +4,7 @@ import { useCallback } from "react"
 import { useKeyCommand } from "@/utils/key-command"
 
 export const SampleSlider = () => {
+  const isHovered = useSceneStore((s) => s.isHovered)
   const isActive = useSceneStore((s) => s.isActive)
   const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
   const hasStatus = useGlobalStore((s) => !!s.status.getCurrent())
@@ -18,8 +19,8 @@ export const SampleSlider = () => {
 
   const next = useSceneStore((s) => s.nextSample)
   const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowLeft", prev, isActive)
-  useKeyCommand("ArrowRight", next, isActive)
+  useKeyCommand("ArrowLeft", prev, isActive || isHovered)
+  useKeyCommand("ArrowRight", next, isActive || isHovered)
 
   return (
     <div
