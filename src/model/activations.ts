@@ -9,6 +9,7 @@ import { isWebGPUBackend } from "@/utils/webgpu"
 import { normalize } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
+import { UserData } from "@/scene-views/3d-model/layer-instanced"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
@@ -165,8 +166,9 @@ async function getActivations(
           const data = (await normalized.data()) as Float32Array
           layer.activations.set(data)
           for (const meshRef of layer.meshRefs) {
-            if (!meshRef.current?.userData.actInst) continue
-            meshRef.current.userData.actInst.needsUpdate = true
+            const userData = meshRef.current?.userData as UserData | undefined
+            if (!userData?.instancedActivations) continue
+            userData.instancedActivations.needsUpdate = true
           }
           newLayerActivations[layer.index] = {
             normalizedActivations: data,
