@@ -76,7 +76,7 @@ function makeStateful(
   const bias = biases?.[filterIdx]
   const statefulNeuron: NeuronStateful = {
     ...neuron,
-    activation: layerActivations?.activations[nIdx],
+    activation: layerActivations?.activations?.[nIdx],
     weights,
     bias,
     rawInput: neuron.layer.layerPos === "input" ? rawX?.[nIdx] : undefined,
