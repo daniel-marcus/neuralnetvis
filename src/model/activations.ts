@@ -9,7 +9,7 @@ import { isWebGPUBackend } from "@/utils/webgpu"
 import { normalize } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
-import { UserData } from "@/scene-views/3d-model/layer-instanced"
+import type { UserData } from "@/scene-views/3d-model/layer-instanced"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 

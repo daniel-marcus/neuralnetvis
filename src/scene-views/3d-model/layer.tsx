@@ -69,10 +69,8 @@ function LodComp(props: LodCompProps) {
     (isClose && !hasFocussed && !isSuperLarge && !isScrolling)
   return (
     <>
-      <InstancedLayer {...props} visible={showInstanced} />
-      {!alwaysInstanced && (
-        <TexturedLayer {...props} visible={!showInstanced} />
-      )}
+      {showInstanced && <InstancedLayer {...props} visible={showInstanced} />}
+      {!showInstanced && <TexturedLayer {...props} visible={!showInstanced} />}
     </>
   )
 }
