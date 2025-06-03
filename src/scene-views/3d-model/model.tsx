@@ -36,7 +36,7 @@ function useCameraShifter(layers: NeuronLayer[]) {
   useEffect(() => {
     if (!isActive || !(camera instanceof THREE.PerspectiveCamera)) return
     const isLarge = layers.length > 10
-    const offset = isLarge ? 0.8 : 1
+    const offset = isLarge ? 0.8 : 1.2
     const modelLength = layers.length * xShift
     const fov = camera.fov! * (Math.PI / 180)
     const center = new THREE.Vector3(0, 0, 0)
