@@ -150,6 +150,7 @@ async function getActivations(
         } else return normalize(tensor)
       })
       try {
+        let gpuUpdateSuccess = false
         if (isWebGPUBackend(backend)) {
           // WebGPU is available: we can copy the buffer directly in GPU
           // @ts-expect-error type not compatible with tensor container
@@ -172,20 +173,29 @@ async function getActivations(
 
             const commands = commandEncoder.finish()
             backend.device.queue.submit([commands])
+            gpuUpdateSuccess = true
             // await device.queue.onSubmittedWorkDone()
             // newGpuBuffer.destroy()
             // continue
+          } else {
+            console.warn("WebGPU buffer update: Coulnd't match buffers", {
+              existingGpuBuffer,
+              newGpuBuffer,
+            })
           }
-        } else {
-          // fallback if WebGPU is not available: fallback for WASM/WebGL via CPU
+        }
+        if (!gpuUpdateSuccess) {
+          // fallback if WebGPU is not available or failed: WASM/WebGL via CPU
           if (isDebug()) console.log("using fallback")
           const data = (await normalized.data()) as Float32Array
           layer.activations.set(data)
+          layer.activationsBuffer.needsUpdate = true // storage buffer updated via CPU
           for (const meshRef of layer.meshRefs) {
             const userData = meshRef.current?.userData as UserData | undefined
             if (!userData?.instancedActivations) continue
-            userData.instancedActivations.needsUpdate = true
+            userData.instancedActivations.needsUpdate = true // instanced buffer updated via CPU
           }
+          // textures are updated in textured-layer.tsx
           newLayerActivations[layer.index] = {
             normalizedActivations: data,
           }
