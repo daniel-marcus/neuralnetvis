@@ -43,10 +43,7 @@ const createSceneStore = (initProps?: Partial<SceneState>) => {
   }))
 }
 
-const dummySceneStore = createSceneStore({
-  uid: "dummy",
-  hasFullyRendered: true,
-})
+const dummySceneStore = createSceneStore({ uid: "dummy" })
 
 export type SceneStore = ReturnType<typeof createSceneStore>
 export const SceneContext = createContext<SceneStore | null>(null)
