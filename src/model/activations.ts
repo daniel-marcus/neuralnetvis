@@ -4,9 +4,9 @@ import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
-import { useActivationStats } from "./activation-stats"
+import { ActivationStats, useActivationStats } from "./activation-stats"
 import { isWebGPUBackend } from "@/utils/webgpu"
-import { normalize } from "@/data/utils"
+import { normalize, scaleNormalize } from "@/data/utils"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 import type { UserData } from "@/scene-views/3d-model/layer-instanced"
@@ -16,12 +16,13 @@ type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const sample = useSample()
   const model = useSceneStore((s) => s.model)
-  useActivationStats()
+  const stats = useActivationStats()
   const setActivations = useSceneStore((s) => s.setActivations)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
   const renderer = useThree((s) => s.gl as unknown as THREE.WebGPURenderer)
   const hasRendered = useSceneStore((s) => s.hasRendered)
+  const isRegression = useSceneStore((s) => s.isRegression())
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
@@ -53,7 +54,9 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           renderer,
           model,
           layersBatch,
-          sample
+          sample,
+          isRegression,
+          stats
         )
         if (newActivations) setActivations(newActivations)
         invalidate()
@@ -67,7 +70,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [renderer, model, layers, invalidate, setActivations]
+    [renderer, model, layers, invalidate, setActivations, isRegression, stats]
   )
 
   // reset update tracker when model changes
@@ -105,7 +108,9 @@ async function getActivations(
   renderer: THREE.WebGPURenderer,
   model: tf.LayersModel,
   layers: NeuronLayer[],
-  sample: Sample
+  sample: Sample,
+  isRegression?: boolean,
+  stats?: { [layerIdx: number]: ActivationStats | undefined }
 ) {
   const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   await tf.ready()
@@ -131,7 +136,18 @@ async function getActivations(
         const tensor = layer.hasColorChannels
           ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
           : actTensor
-        return isSoftmax ? tensor : normalize(tensor)
+        if (
+          isRegression &&
+          layer.layerPos === "hidden" &&
+          stats?.[layer.index]
+        ) {
+          const { mean, std } = stats[layer.index]!
+          const meanTensor = tf.tensor(mean)
+          const stdTensor = tf.tensor(std)
+          return scaleNormalize(tensor, meanTensor, stdTensor)
+        } else if (isSoftmax) {
+          return tensor
+        } else return normalize(tensor)
       })
       try {
         if (isWebGPUBackend(backend)) {
