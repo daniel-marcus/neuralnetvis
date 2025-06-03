@@ -62,6 +62,8 @@ export type VisSlice = {
   vis: VisConfig & VisActions
   three?: Three
   setThree: (three: Three) => void
+  hasRendered: boolean
+  setHasRendered: () => void
 }
 
 export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
@@ -93,4 +95,6 @@ export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
   },
   three: undefined,
   setThree: (three) => set({ three }),
+  hasRendered: false,
+  setHasRendered: () => set({ hasRendered: true }),
 })

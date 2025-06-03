@@ -20,6 +20,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
   const renderer = useThree((s) => s.gl as unknown as THREE.WebGPURenderer)
+  const hasRendered = useSceneStore((s) => s.hasRendered)
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
@@ -77,8 +78,9 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   }, [maybeUpdate])
 
   useEffect(() => {
+    if (!hasRendered) return // make sure scene has rendered at least once for activation buffer binding
     maybeUpdate(sample, focusIdx)
-  }, [sample, focusIdx, maybeUpdate])
+  }, [sample, focusIdx, maybeUpdate, hasRendered])
 
   return null
 }

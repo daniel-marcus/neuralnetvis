@@ -34,6 +34,7 @@ export const CanvasView = (props: CanvasViewProps) => {
   const invisible = (hasActive && !isActive) || isMapView
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
   const store = useContext(SceneContext) // needs to be passed inside the View component
+  const setHasRendered = useSceneStore((s) => s.setHasRendered)
   if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <View
@@ -44,6 +45,7 @@ export const CanvasView = (props: CanvasViewProps) => {
       visible={!invisible}
       index={props.tileIdx + 1} // for debug only
       copyCanvas={props.copyCanvas}
+      onFirstRender={setHasRendered}
     >
       <SceneContext.Provider value={store}>
         <CanvasViewInner {...props} />

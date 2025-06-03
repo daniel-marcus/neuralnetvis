@@ -4,7 +4,7 @@ import { version } from "./package.json"
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  // reactStrictMode: false,
+  reactStrictMode: false,
   output: "export",
   env: {
     APP_VERSION: version,

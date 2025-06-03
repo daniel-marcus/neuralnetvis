@@ -39,6 +39,7 @@ export type ContainerProps = {
   track?: React.RefObject<HTMLElement>
   canvasSize: CanvasSize
   copyCanvas?: boolean
+  onFirstRender?: () => void
 }
 
 export type ViewProps = {
@@ -64,6 +65,7 @@ export type ViewProps = {
   track?: React.RefObject<HTMLElement>
   /** If set true, the content from the background rendering canvas will be copied to a canvas for the current view. Might be helpful when the content needs to appear in a specific stacking context (befor a map background etc.)   */
   copyCanvas?: boolean
+  onFirstRender?: () => void
 }
 
 function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
@@ -177,10 +179,12 @@ function Container({
   rect,
   track,
   copyCanvas,
+  onFirstRender,
 }: ContainerProps) {
   const rootState = useThree() as unknown as RootState
   const [isOffscreen, setOffscreen] = React.useState(false)
   let frameCount = 0
+  const hasRendered = React.useRef(false)
   useFrame((_state) => {
     const state = _state as unknown as RootState
     if (frames === Infinity || frameCount <= frames) {
@@ -193,7 +197,7 @@ function Container({
         rect.current
       )
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
-      if (visible && !isOffscreen && rect.current) {
+      if (visible && !_isOffscreen && rect.current) {
         // console.log("rendering", index)
         const autoClear = prepareSkissor(state, position, canvasSize)
         clear(state) // added for WebGPURenderer
@@ -225,6 +229,11 @@ function Container({
         }
 
         finishSkissor(state, autoClear)
+
+        if (!hasRendered.current && onFirstRender) {
+          hasRendered.current = true
+          onFirstRender()
+        }
       }
     }
   }, index)
@@ -278,6 +287,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
     frames = Infinity,
     children,
     copyCanvas,
+    onFirstRender,
     ...props
   }: ViewProps,
   fref: React.ForwardedRef<THREE.Group>
@@ -325,6 +335,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
             rect={rect}
             index={index}
             copyCanvas={copyCanvas}
+            onFirstRender={onFirstRender}
           >
             {children}
           </Container>,
@@ -355,6 +366,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
     frames = Infinity,
     children,
     copyCanvas,
+    onFirstRender,
     ...props
   }: ViewProps,
   fref: React.ForwardedRef<HTMLElement>
@@ -374,6 +386,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
           frames={frames}
           index={index}
           copyCanvas={copyCanvas}
+          onFirstRender={onFirstRender}
         >
           {children}
         </CanvasView>
