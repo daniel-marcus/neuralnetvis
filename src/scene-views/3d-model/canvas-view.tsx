@@ -97,6 +97,7 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   useFlatView()
 
   const view = useSceneStore((s) => s.view)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
   const autoRotate = useSceneStore((s) => s.vis.autoRotate)
   const toggleAutoRotate = useSceneStore((s) => s.vis.toggleAutoRotate)
   useKeyCommand("r", toggleAutoRotate, isActive)
@@ -114,7 +115,9 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
       <OrbitControls
         makeDefault
         target={defaultState.cameraLookAt}
-        enableZoom={isActive || isTouch()}
+        enableZoom={!visIsLocked && (isActive || isTouch())}
+        enableRotate={!visIsLocked}
+        enablePan={!visIsLocked}
         minPolarAngle={isActive || !isTouch() ? 0 : Math.PI / 2}
         maxPolarAngle={isActive || !isTouch() ? Math.PI : Math.PI / 2}
         rotateSpeed={isActive ? 1 : 1.5}

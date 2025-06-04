@@ -16,7 +16,9 @@ export function LayerInteractions(
   props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> }
 ) {
   const hasFocussed = useHasFocussed()
-  const isActive = useSceneStore((s) => s.isActive) && !hasFocussed
+  const sceneActive = useSceneStore((s) => s.isActive)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
+  const isActive = sceneActive && !hasFocussed && !visIsLocked
   const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
   const isHovered = hoveredIdx === props.index
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
@@ -31,7 +33,7 @@ export function LayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const [size] = useSize(props.measureRef, 0.2)
+  const [size] = useSize(props.measureRef, 0.2) // TODO: neuronSpacing as updateTrigger?
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
   const { layerType, tfLayer } = props
@@ -98,7 +100,9 @@ export function LayerInteractions(
 }
 
 export function useNeuronInteractions(layerIdx: number, channelIdx = 0) {
-  const isActive = useSceneStore((s) => s.isActive)
+  const sceneActive = useSceneStore((s) => s.isActive)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
+  const isActive = sceneActive && !visIsLocked
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const toggleHovered = useSceneStore((s) => s.toggleHovered)
   const eventHandlers = useMemo(() => {
