@@ -11,7 +11,7 @@ import { ThreeStoreSetter } from "./three-store-setter"
 import { useSpring } from "@react-spring/web"
 import { SceneContext, useGlobalStore, useSceneStore } from "@/store"
 import { useFlatView } from "./flat-view"
-import { isTouch } from "@/utils/screen"
+import { isTouch, useIsScreen } from "@/utils/screen"
 import { defaultState } from "@/utils/initial-state"
 import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
@@ -80,10 +80,10 @@ export const CanvasView = (props: CanvasViewProps) => {
 const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
-  // const isScreenSm = useIsScreen("sm")
+  const isScreenSm = useIsScreen("sm")
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? 1 : 0.9 }, // kept to trigger invalidation?
+    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : 0.9 },
     onChange: ({ value }) => {
       const camera = cameraRef.current
       if (camera) {
