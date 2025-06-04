@@ -8,8 +8,8 @@ import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
 import { InstancedLayer } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
-import type { NeuronLayer } from "@/neuron-layers/types"
 import { useIsScreen } from "@/utils/screen"
+import type { NeuronLayer } from "@/neuron-layers/types"
 
 interface LayerProps extends NeuronLayer {
   allLayers: NeuronLayer[]
@@ -63,8 +63,9 @@ function LodComp(props: LodCompProps) {
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
-  const alwaysTextured = props.numNeurons > (isScreenSm ? 50000 : 30000) // large layers: prefer less expensive TexturedLayer, especially on mobile
   const alwaysInstanced = props.layerPos !== "hidden" || !hasChannels
+  const alwaysTextured =
+    !alwaysInstanced && props.numNeurons > (isScreenSm ? 50000 : 30000) // large layers: prefer less expensive TexturedLayer, especially on mobile
   const showInstanced =
     alwaysInstanced ||
     (!alwaysTextured &&
@@ -72,8 +73,10 @@ function LodComp(props: LodCompProps) {
         (isClose && !hasFocussed && !isScrolling)))
   return (
     <>
-      {showInstanced && <InstancedLayer {...props} visible={showInstanced} />}
-      {!showInstanced && <TexturedLayer {...props} visible={!showInstanced} />}
+      {!alwaysTextured && <InstancedLayer {...props} visible={showInstanced} />}
+      {!alwaysInstanced && (
+        <TexturedLayer {...props} visible={!showInstanced} />
+      )}
     </>
   )
 }
