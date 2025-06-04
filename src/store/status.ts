@@ -34,6 +34,7 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
   status: {
     stack: [],
     update: (text, percent, opts = {}) => {
+      // console.log(get().status.stack)
       const id = opts.id ?? uid()
       if (opts.id) get().status.clearTimer(id)
       const duration = (opts.duration ?? DEFAULT_DURATION) * 1000

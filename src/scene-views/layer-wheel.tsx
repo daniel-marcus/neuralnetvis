@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
@@ -9,17 +9,22 @@ import { createPortal } from "react-dom"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
-  const layers = useMemo(() => model?.layers ?? [], [model])
+  const modelLayers = useMemo(() => model?.layers ?? [], [model])
+  const visibleLayers = useSceneStore((s) => s.visibleLayers)
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   const isGraphView = useSceneStore((s) => s.view === "graph")
-  const items = useMemo(
-    () => layers.map((l) => layer2WheelItem(l, !isGraphView)),
-    [layers, isGraphView]
-  )
+  const items = useMemo(() => {
+    const visibleIdxs = visibleLayers.map((l) => l.index)
+    return modelLayers.map((l, i) =>
+      layer2WheelItem(l, !isGraphView, !visibleIdxs.includes(i))
+    )
+  }, [modelLayers, isGraphView, visibleLayers])
   const view = useSceneStore((s) => s.view)
   const { onScrollStart, onScrollEnd } = useAutoFlatView(view !== "graph")
-  if (typeof document === "undefined") return null
+  const [hasMounted, setHasMounted] = useState(false) // to avoid SSR issues with portals
+  useEffect(() => setHasMounted(true), [])
+  if (!hasMounted) return null
   return createPortal(
     <WheelMenu
       items={items}
@@ -49,7 +54,11 @@ export function useAutoFlatView(isActive = true) {
   return isActive ? { onScrollStart, onScrollEnd } : {}
 }
 
-const layer2WheelItem = (layer: Layer, filterInvisible?: boolean) => ({
+const layer2WheelItem = (
+  layer: Layer,
+  filterInvisible?: boolean,
+  notInVisibleLayers?: boolean
+) => ({
   label: layer.getClassName(),
-  disabled: filterInvisible && !isVisible(layer),
+  disabled: filterInvisible && (!isVisible(layer) || notInVisibleLayers),
 })

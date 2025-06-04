@@ -4,6 +4,7 @@ import type { RootState } from "@react-three/fiber"
 import type { OrbitControls } from "three-stdlib"
 
 export const defaultVisConfig = {
+  showHiddenLayers: false,
   flatView: false,
   xShift: 11,
   yShift: 0,
@@ -22,6 +23,7 @@ export const defaultVisConfig = {
 }
 
 export interface VisConfig {
+  showHiddenLayers: boolean // switch on/off hidden layers (positions change)
   flatView: boolean
   xShift: number
   yShift: number
@@ -32,7 +34,7 @@ export interface VisConfig {
   highlightProp: HighlightProp // | string
   showLines: boolean
   lineActivationThreshold: number
-  invisibleLayers: string[]
+  invisibleLayers: string[] // currently used only in lesson: temorary switch off layers (positions remain)
   isLocked: boolean
   lightsOn: boolean
   lightIntensity: number

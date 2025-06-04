@@ -21,6 +21,12 @@ export const VisConfigControl = () => {
   return (
     <CollapsibleWithTitle title="visualization" collapsed>
       <InputRowsWrapper>
+        <InputRow label="showHidden" hint="show hidden layes">
+          <Checkbox
+            checked={config.showHiddenLayers}
+            onChange={(showHiddenLayers) => setConfig({ showHiddenLayers })}
+          />
+        </InputRow>
         {SHIFT_PROPS.map((prop) => {
           const value = config[prop]
           const isDefault = getDefault(prop) === value

@@ -94,10 +94,12 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         onScroll={scrollTrain}
         onEnter={() => {
+          abortFlag = false // reset abort flag
           setVisConfig({ highlightProp: "weights" })
           setSelectedNid(getNid(2, 2))
         }}
         onLeave={() => {
+          abortFlag = true // silence async training logs
           clearStatus(SCROLL_TRAIN_STATUS_ID)
           setVisConfig({ highlightProp: null })
           setSelectedNid(undefined)
@@ -151,6 +153,7 @@ export function rotate({ percent }: OnScrollProps) {
 
 let batch = 0
 const trainedIs = new Set<number>()
+let abortFlag = false
 
 function getRandomI(totalSamples: number) {
   let i = Math.round(Math.random() * totalSamples - 1)
@@ -172,7 +175,7 @@ async function scrollTrain({ percent }: OnScrollProps) {
   if (!sample || typeof sample.y !== "number") return
   const log = await trainOnBatch([sample.xTensor], [sample.y])
 
-  if (!log) return
+  if (!log || abortFlag) return
   scene.getState().addLog({ ...log, epoch: 0, batch })
   setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
     id: SCROLL_TRAIN_STATUS_ID,

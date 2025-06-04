@@ -5,6 +5,8 @@ import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 export interface NeuronsSlice {
   allLayers: NeuronLayer[]
   setAllLayers: (layers: NeuronLayer[]) => void
+  visibleLayers: NeuronLayer[]
+  setVisibleLayers: (layers: NeuronLayer[]) => void
 
   hoveredNid?: Nid
   selectedNid?: Nid
@@ -22,6 +24,8 @@ export interface NeuronsSlice {
 export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
   allLayers: [],
   setAllLayers: (layers) => set({ allLayers: layers }),
+  visibleLayers: [],
+  setVisibleLayers: (layers) => set({ visibleLayers: layers }),
 
   hoveredNid: undefined,
   selectedNid: undefined,

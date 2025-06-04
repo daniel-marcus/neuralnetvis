@@ -12,16 +12,14 @@ import { useIsScreen } from "@/utils/screen"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 interface LayerProps extends NeuronLayer {
-  allLayers: NeuronLayer[]
+  visibleLayers: NeuronLayer[]
 }
 
 export const Layer = memo(function Layer(props: LayerProps) {
-  const isActive = useSceneStore((s) => s.isActive)
   const measureRef = useRef<THREE.Mesh | null>(null)
   const separateChannels = props.hasColorChannels ? 3 : 1
-  const invisible = !isActive && props.layerPos === "hidden"
   return (
-    <LayerScaler {...props} visible={!invisible}>
+    <LayerScaler {...props}>
       <LayerInteractions {...props} measureRef={measureRef} />
       <group ref={measureRef}>
         {Array.from({ length: separateChannels }).map((_, i) => (
@@ -32,21 +30,19 @@ export const Layer = memo(function Layer(props: LayerProps) {
   )
 })
 
-interface LayerScalerProps extends NeuronLayer {
+interface LayerScalerProps extends LayerProps {
   children: React.ReactNode
-  visible: boolean
-  allLayers: NeuronLayer[]
 }
 
 function LayerScaler(props: LayerScalerProps) {
-  const posRef = useLayerPos(props, props.allLayers)
+  const [posRef, visibleIdx] = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const invisible =
-    useIsInvisible(props) || (isFlatView && !isFocussed) || !props.visible
+    useIsInvisible(props) || (isFlatView && !isFocussed) || visibleIdx < 0
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration =
-    !props.visible || (isFlatView && !isFocussed && !wasFocussed) ? 0 : 500
+    visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed) ? 0 : 500
   useDynamicScale(posRef, scale, duration)
   return <group ref={posRef}>{props.children}</group>
 }
@@ -89,12 +85,8 @@ export function useFocussed(layerIdx: number) {
   return { isFocussed, wasFocussed, hasFocussed }
 }
 
-function useLayerPos(layer: NeuronLayer, allLayers: NeuronLayer[]) {
-  const isActive = useSceneStore((s) => s.isActive)
-  const visibleLayers = useMemo(() => {
-    if (isActive) return allLayers
-    else return allLayers.filter((l) => l.layerPos !== "hidden")
-  }, [allLayers, isActive])
+function useLayerPos(layer: LayerProps) {
+  const { visibleLayers } = layer
   const visibleIdx = visibleLayers.findIndex((l) => l.index === layer.index)
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
 
@@ -106,9 +98,11 @@ function useLayerPos(layer: NeuronLayer, allLayers: NeuronLayer[]) {
   }, [visibleIdx, visibleLayers.length, xShift, yShift, zShift])
 
   const ref = useAnimatedPosition(position, 0.1)
-  return ref
+
+  return [ref, visibleIdx] as const
 }
 
+// TODO: combine with useVisibleLayers ...
 function useIsInvisible(layer?: NeuronLayer) {
   const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
   return invisibleLayers.includes(layer?.tfLayer.name ?? "")

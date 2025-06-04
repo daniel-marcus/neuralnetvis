@@ -79,15 +79,19 @@ export function SceneStoreProvider({
   useEffect(() => {
     if (!isActive) return
     useGlobalStore.getState().setScene(storeRef.current!)
-    storeRef.current?.setState({ isActive: true })
+    storeRef.current!.setState(({ vis }) => ({
+      isActive: true,
+      vis: { ...vis, showHiddenLayers: true },
+    }))
     return () => {
       // cleanup when leaving the scene
-      storeRef.current?.setState({
+      storeRef.current?.setState(({ vis }) => ({
         isActive: false,
         view: "layers",
         subset: "train",
         focussedLayerIdx: undefined,
-      })
+        vis: { ...vis, showHiddenLayers: false }, // TODO: restore default vis config?
+      }))
       // bring camera back to default position
       moveCameraTo(
         defaultState.cameraPos,

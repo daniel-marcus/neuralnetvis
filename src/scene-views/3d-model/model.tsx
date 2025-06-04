@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
@@ -8,16 +8,18 @@ import { moveCameraTo, useAnimatedPosition, useDynamicXShift } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./interactions"
 import type { Pos } from "./utils"
+import { useIsPlayMode } from "@/components/tab-menu"
 
 export const Model = () => {
   const layers = useLayers()
-  useCameraShifter(layers)
+  const visibleLayers = useVisibleLayers(layers)
+  useCameraShifter(visibleLayers)
   return (
     <>
       <ActivationUpdater layers={layers} />
-      <ModelShifter layers={layers}>
+      <ModelShifter visibleLayers={visibleLayers}>
         {layers.map((l) => (
-          <Layer key={l.lid} {...l} allLayers={layers} />
+          <Layer key={l.lid} {...l} visibleLayers={visibleLayers} />
         ))}
       </ModelShifter>
       <HoverComponents />
@@ -25,12 +27,28 @@ export const Model = () => {
   )
 }
 
+// TODO: combine with useIsInvisibe / match with LayerWheel ...
+function useVisibleLayers(allLayers: NeuronLayer[]) {
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const visibleLayers = useSceneStore((s) => s.visibleLayers)
+  const setVisibleLayers = useSceneStore((s) => s.setVisibleLayers)
+  useLayoutEffect(() => {
+    const visibleLayers = showHiddenLayers
+      ? allLayers
+      : allLayers.filter((l) => l.layerPos !== "hidden")
+    setVisibleLayers(visibleLayers)
+  }, [allLayers, showHiddenLayers, setVisibleLayers])
+  return visibleLayers
+}
+
 const cameraDir = new THREE.Vector3(-23, 0, 35).normalize()
 const cameraDirLarge = new THREE.Vector3(-23, 10, 18).normalize()
 
 function useCameraShifter(layers: NeuronLayer[]) {
   // Adjust camera to model size
-  const isActive = useSceneStore((s) => s.isActive)
+  const sceneActive = useSceneStore((s) => s.isActive)
+  const isPlayMode = useIsPlayMode()
+  const isActive = sceneActive && isPlayMode
   const { xShift } = useSceneStore((s) => s.vis)
   const camera = useThree((s) => s.camera)
   useEffect(() => {
@@ -53,13 +71,13 @@ function useCameraShifter(layers: NeuronLayer[]) {
 
 interface ModelShifterProps {
   children: React.ReactNode
-  layers: NeuronLayer[]
+  visibleLayers: NeuronLayer[]
 }
 
-function ModelShifter({ children, layers }: ModelShifterProps) {
-  const position = useModelOffset(layers)
+function ModelShifter({ children, visibleLayers }: ModelShifterProps) {
+  const position = useModelOffset(visibleLayers)
   const ref = useAnimatedPosition(position, 0.1)
-  useDynamicXShift(layers.length)
+  useDynamicXShift(visibleLayers.length)
   return <group ref={ref}>{children}</group>
 }
 
