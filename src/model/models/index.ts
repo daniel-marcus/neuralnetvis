@@ -2,6 +2,7 @@ export interface ModelDef {
   key: string
   path: string
   version: Date
+  sourceUrl?: string
   // dsKey?: string
 }
 
@@ -40,5 +41,12 @@ export const models: ModelDef[] = [
     key: "hand-pose",
     path: "/models/hand-pose/model.json",
     version: new Date("2025-06-02"),
+  },
+  {
+    key: "mobilenet-v2",
+    path: "/models/mobilenet-v2/model.json",
+    version: new Date("2025-06-04"),
+    sourceUrl:
+      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
   },
 ]

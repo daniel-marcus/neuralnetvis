@@ -72,7 +72,9 @@ function parseModelObject<T>(obj: T): T {
           const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
             ? value[0].args[0]
             : value[0].args
-          const parsedNodes = nodes.map(parseInboundNode)
+          const parsedNodes = nodes
+            .map(parseInboundNode)
+            .filter(Boolean) as LegacyInboundNode[]
           parsedValue = [[...parsedNodes]]
         }
         return [parsedKey, parsedValue]
@@ -96,7 +98,11 @@ type NewInboundNode = {
 }
 type LegacyInboundNode = [string, number, number, Record<string, unknown>]
 
-function parseInboundNode(node: NewInboundNode): LegacyInboundNode {
+function parseInboundNode(node: NewInboundNode): LegacyInboundNode | undefined {
+  if (typeof node !== "object" || node === null) {
+    console.warn("Unknown inbound node format:", node)
+    return
+  }
   const keras_history = node.config.keras_history
   return [keras_history[0], 0, 0, {}]
 }

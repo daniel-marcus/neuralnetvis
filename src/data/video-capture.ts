@@ -54,6 +54,7 @@ async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   const [height, width, channels] = inputDims
   const tensor = await tf.browser.fromPixelsAsync(video, channels)
   const resized = tf.tidy(() =>
+    // TODO: crop
     tf.image.resizeBilinear(tensor, [height, width]).flatten()
   )
   let data: number[] | undefined
