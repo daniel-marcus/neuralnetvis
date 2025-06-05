@@ -28,7 +28,7 @@ function LoadWeightsButton() {
   const setLoadWeights = useSceneStore((s) => s.setLoadWeights)
   const modelDef = getModelDef(ds?.modelKey)
   if (!ds || !modelDef) return null
-  const isPreview = modelDef.lazyLoadWeights && loadState !== "full"
+  const isPreview = modelDef.lazyLoadWeights && loadState === "no-weights"
   if (!isPreview || shouldLoadWeights) return null
   return (
     <>
