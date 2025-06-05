@@ -2,20 +2,10 @@ import * as THREE from "three/webgpu"
 import { Fn, If, Discard, abs, mix, pow, varying, vec3, vec4 } from "three/tsl"
 import { texture, storage, instanceIndex } from "three/tsl"
 import { instancedBufferAttribute } from "three/tsl"
-import { normalizeColor } from "./materials-glsl"
 import { isWebGPUBackend } from "@/utils/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
 import type { UserData } from "./layer-instanced"
 import type { UserDataTextured } from "./layer-textured"
-
-export const Normalization = {
-  NONE: 0,
-  PER_LAYER_MAX_ABS: 1,
-  PER_NEURON_SCALE_NORM: 1, // TODO 2
-} as const
-
-export type NormalizationType =
-  (typeof Normalization)[keyof typeof Normalization]
 
 const baseZero = vec3(...normalizeColor(ZERO_BASE))
 const basePos = vec3(...normalizeColor(POS_BASE))
@@ -98,3 +88,7 @@ export function activationColorTexture() {
 export const discardMaterial = new THREE.NodeMaterial()
 discardMaterial.transparent = true
 discardMaterial.colorNode = vec4(0, 0, 0, 0)
+
+function normalizeColor(arr: number[]) {
+  return new THREE.Color(...arr.map((v) => v / 255))
+}
