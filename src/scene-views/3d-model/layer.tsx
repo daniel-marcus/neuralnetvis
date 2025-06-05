@@ -43,7 +43,7 @@ function ColorChannelShifter({ children, ...props }: ColorChannelShifterProps) {
   return <group ref={groupRef}>{children}</group>
 }
 
-function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
+function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
   // only used for color channels
   const { meshParams, hasColorChannels } = layer
   const numChannels = hasColorChannels ? 3 : 1
@@ -53,14 +53,15 @@ function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
   const position = useMemo(() => {
     const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
 
-    const OFFSET = 0.05 // to avoid z-fighting
-    const splitY = -channelIdx * gHeight + (numChannels - 1) * gHeight * 0.5
+    const OFFSET_X = h > 200 ? 0.5 : 0.05 // to avoid z-fighting
+    const OFFSET_YZ = 0.05
+    const splitY = -chnlIdx * gHeight + (numChannels - 1) * gHeight * 0.5
     return hasColorChannels
       ? splitColors
-        ? [-channelIdx * OFFSET, splitY, channelIdx * OFFSET] // spread on y-axis
-        : [channelIdx * OFFSET, -channelIdx * OFFSET, -channelIdx * OFFSET]
+        ? [-chnlIdx * OFFSET_X, splitY, chnlIdx * OFFSET_YZ] // spread on y-axis
+        : [chnlIdx * OFFSET_X, -chnlIdx * OFFSET_YZ, -chnlIdx * OFFSET_YZ]
       : [0, 0, 0]
-  }, [channelIdx, numChannels, spacedSize, splitColors, h, w, hasColorChannels])
+  }, [chnlIdx, numChannels, spacedSize, splitColors, h, w, hasColorChannels])
   const groupRef = useAnimatedPosition(position, 0.1)
   return groupRef
 }
