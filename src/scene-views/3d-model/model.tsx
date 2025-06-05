@@ -16,7 +16,7 @@ export const Model = () => {
   useCameraShifter(visibleLayers)
   return (
     <>
-      <ActivationUpdater layers={layers} />
+      <ActivationUpdater layers={visibleLayers} />
       <ModelShifter visibleLayers={visibleLayers}>
         {layers.map((l) => (
           <Layer key={l.lid} {...l} visibleLayers={visibleLayers} />

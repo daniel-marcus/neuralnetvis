@@ -46,7 +46,11 @@ function LayerScaler(props: LayerScalerProps) {
       ? 0
       : 500
   useDynamicScale(posRef, scale, duration)
-  return <group ref={posRef}>{props.children}</group>
+  return (
+    <group ref={posRef} visible={visibleIdx >= 0}>
+      {props.children}
+    </group>
+  )
 }
 
 interface LodCompProps extends NeuronLayer {
