@@ -40,8 +40,13 @@ function useEvaluation() {
   }, [ds, subset, model, batchCount, setEvaluation, resetEvaluation])
 }
 
+export function useHasSample() {
+  // to hide the ConfusionViewer when a sample is selected
+  return useSceneStore((s) => typeof s.sampleIdx === "number")
+}
+
 function ConfusionViewer() {
-  const hasSample = useSceneStore((s) => typeof s.sampleIdx === "number")
+  const hasSample = useHasSample()
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   return (
     <>

@@ -1,11 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
+import { useHasSample } from "./evaluation/evaluation"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
-import { createPortal } from "react-dom"
 
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
@@ -21,6 +22,7 @@ export const LayerWheel = () => {
     )
   }, [modelLayers, isGraphView, visibleLayers])
   const view = useSceneStore((s) => s.view)
+  const hasSample = useHasSample()
   const { onScrollStart, onScrollEnd } = useAutoFlatView(view !== "graph")
   const [hasMounted, setHasMounted] = useState(false) // to avoid SSR issues with portals
   useEffect(() => setHasMounted(true), [])
@@ -33,6 +35,7 @@ export const LayerWheel = () => {
       onScrollStart={onScrollStart}
       onScrollEnd={onScrollEnd}
       autoHide={true}
+      fullyHidden={view === "map" || (view === "evaluation" && !hasSample)}
     />,
     document.body
   )

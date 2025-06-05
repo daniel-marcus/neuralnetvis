@@ -17,6 +17,7 @@ interface WheelMenuProps {
   onScrollStart?: () => void
   onScrollEnd?: () => void
   autoHide?: boolean
+  fullyHidden?: boolean
 }
 
 export const WheelMenu = (props: WheelMenuProps) => {
@@ -30,7 +31,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
     >
       <div
         className={`fixed z-20 right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] ${
-          !props.items.length
+          !props.items.length || props.fullyHidden
             ? "translate-x-full after:opacity-0"
             : isActive
             ? "after:opacity-100 translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"

@@ -41,7 +41,7 @@ export const CanvasView = (props: CanvasViewProps) => {
       className={`absolute w-full h-full select-none ${
         // TODO: resize during tile transition
         isActive ? "" : "touch-pan-y!"
-      }`}
+      } ${invisible ? "pointer-events-none opacity-0" : ""}`}
       visible={!invisible}
       index={props.tileIdx + 1} // for debug only
       copyCanvas={props.copyCanvas}
