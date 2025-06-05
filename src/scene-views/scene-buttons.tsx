@@ -1,21 +1,18 @@
 import { useHasFocussed, useSceneStore } from "@/store"
-import { VideoControl } from "./video"
 import { Button, Select } from "@/components/ui-elements"
 import type { Dataset } from "@/data"
 import type { View } from "@/store/view"
 
 export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
-  const ds = useSceneStore((s) => s.ds)
   return (
     <div
       className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
     >
       <LoadWeightsButton />
       <LoadFullDsButton />
-      {isLarge && <ToggleHiddenLayersButton />}
-      {!!ds?.camProps && <VideoControl />}
       <ViewSelect />
       <ViewSubsetSelect />
+      {isLarge && <ToggleHiddenLayersButton />}
       <ShowAllLayersBtn />
     </div>
   )
@@ -29,7 +26,7 @@ function ToggleHiddenLayersButton() {
       variant="secondary"
       onClick={() => setVisConfig({ showHiddenLayers: !showHidden })}
     >
-      {showHidden ? "hide" : "show"} hidden layers
+      {showHidden ? "hide" : "show"} hidden
     </Button>
   )
 }

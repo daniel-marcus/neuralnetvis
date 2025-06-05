@@ -11,6 +11,7 @@ export const handPose: DatasetDef = {
   version: new Date("2025-05-16"),
   task: "classification",
   isModelDs: true,
+  sampleViewer: true,
   description: `A handpose classification top for MediaPipe's Hand Landmarker`,
   aboutUrl:
     "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect } from "react"
 import { useSceneStore } from "@/store"
-import { Button } from "@/components/ui-elements"
-import { HandPoseCanvasUpdater, HandPoseRecorder } from "@/data/hand-pose"
-import { DefaultRecorder } from "@/data/video-capture"
+import { HandPoseCanvasUpdater, HandPoseCapture } from "@/data/hand-pose"
+import { DefaultVideoCapture } from "@/data/video-capture"
 
 export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
@@ -48,7 +47,7 @@ export const cameraSvg = (
   </svg>
 )
 
-const cameraOffSvg = (
+export const cameraOffSvg = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -67,24 +66,17 @@ const cameraOffSvg = (
   </svg>
 )
 
-export function VideoControl() {
+export function useVideoControl() {
   const [stream, toggleStream] = useStream()
-  const isRecording = useSceneStore((s) => s.isRecording)
+  // const isRecording = useSceneStore((s) => s.isRecording)
   const camProcessor = useSceneStore((s) => s.ds?.camProps?.processor)
-  return (
-    <>
-      {!isRecording && (
-        <Button onClick={toggleStream}>
-          {!!stream ? <>{cameraOffSvg} stop</> : <>{cameraSvg} start</>} video
-        </Button>
-      )}
-      {camProcessor === "handPose" ? (
-        <HandPoseRecorder stream={stream} />
-      ) : (
-        <DefaultRecorder stream={stream} />
-      )}
-    </>
-  )
+  const recorder =
+    camProcessor === "handPose" ? (
+      <HandPoseCapture stream={stream} />
+    ) : (
+      <DefaultVideoCapture stream={stream} />
+    )
+  return [stream, toggleStream, recorder] as const
 }
 
 function useStream() {

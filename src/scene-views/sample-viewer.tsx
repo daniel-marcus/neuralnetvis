@@ -2,17 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
-import { useCurrScene } from "@/store"
+import { useCurrScene, useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
+import { cameraOffSvg, cameraSvg, useVideoControl } from "./video"
+import { useExternalSample } from "@/data/external-sample"
 
 export function SampleViewer() {
-  const idxs = useCurrScene((s) => s.sampleViewerIdxs)
+  const idxs = useSceneStore((s) => s.sampleViewerIdxs)
   const [offset, setOffset] = useState(0)
   const [samples, setSamples] = useState<SampleRaw[]>([])
-  const ds = useCurrScene((s) => s.ds)
-  const subset = useCurrScene((s) => s.subset)
+  const ds = useSceneStore((s) => s.ds)
+  const subset = useSceneStore((s) => s.subset)
   const itemsPerPage = 16
   useEffect(() => {
     setOffset(0)
@@ -24,7 +26,6 @@ export function SampleViewer() {
       const newSamples: SampleRaw[] = []
       for (const idx of idxs.slice(offset, offset + itemsPerPage)) {
         const sample = await getSample(ds, subset, idx)
-        console.log("SampleViewer: got sample", idx, sample)
         if (sample) newSamples.push(sample)
       }
       setSamples(newSamples)
@@ -47,6 +48,8 @@ export function SampleViewer() {
         <div
           className={`flex items-start justify-start gap-2 overflow-auto no-scrollbar px-4 mx-auto  pointer-events-auto`}
         >
+          <VideoCaptureBtn />
+          <AddSampleBtn />
           {samples.map((sample, i) => {
             const idx = idxs[offset + i]
             const isCurrent = typeof idx !== "undefined" && idx === sampleIdx
@@ -68,6 +71,39 @@ export function SampleViewer() {
         setOffset={setOffset}
       />
     </div>
+  )
+}
+
+function VideoCaptureBtn() {
+  const ds = useCurrScene((s) => s.ds)
+  const [stream, toggleStream, recorder] = useVideoControl()
+  if (!ds?.camProps) return null
+  // TODO: styles as reusable component
+  return (
+    <button
+      className={`flex-none border-2 w-[var(--item-size)] aspect-square rounded-md hover:border-marker ${
+        !!stream ? "border-accent" : ""
+      }`}
+      onClick={toggleStream}
+    >
+      {stream ? cameraOffSvg : cameraSvg}
+      {recorder}
+    </button>
+  )
+}
+
+function AddSampleBtn() {
+  const onClick = useExternalSample()
+  // TODO: use for hand pose recorindg also
+  // - conditions when to show
+  // - add to dataset?
+  return (
+    <button
+      className={`flex-none border-2 w-[var(--item-size)] aspect-square rounded-md hover:border-marker `}
+      onClick={onClick}
+    >
+      +
+    </button>
   )
 }
 
@@ -179,7 +215,7 @@ function SampleCanvas({
     <canvas
       className={`border-2 bg-blend-multiply ${
         isCurrent ? "border-accent" : "border-menu-border"
-      } rounded-md w-[var(--item-size)] ${
+      } hover:border-marker rounded-md w-[var(--item-size)] ${
         hasCam ? "scale-x-[-1] bg-box" : ""
       } `}
       width={hasCam ? VIDEO_BASE_SIZE : inputDims?.[1]}

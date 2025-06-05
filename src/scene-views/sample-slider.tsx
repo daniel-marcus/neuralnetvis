@@ -1,8 +1,7 @@
+import { useCallback } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { Slider } from "@/components/ui-elements"
-import { useCallback } from "react"
 import { useKeyCommand } from "@/utils/key-command"
-import { ExternalSampleSelect } from "@/data/external-sample"
 
 export const SampleSlider = () => {
   const isHovered = useSceneStore((s) => s.isHovered)
@@ -23,36 +22,12 @@ export const SampleSlider = () => {
   useKeyCommand("ArrowLeft", prev, isActive || isHovered)
   useKeyCommand("ArrowRight", next, isActive || isHovered)
 
-  const hasExternalSamples = useSceneStore(
-    (s) => !!s.ds?.externalSamples?.length
-  )
-
-  const slider = (
-    <>
-      <Slider
-        value={sampleIdx ?? 0}
-        onChange={(sampleIdx) => setSampleIdx(sampleIdx)}
-        min={0}
-        max={totalSamples - 1}
-        yPad={0.25}
-      />
-      {isActive && (
-        <div className="label pointer-events-none select-none text-left opacity-0 group-hover/sample-slider:opacity-100 group-active/sample-slider:opacity-100 transition-opacity duration-200 flex justify-between">
-          <div>
-            {(sampleIdx ?? 0) + 1} / {totalSamples}
-          </div>
-        </div>
-      )}
-    </>
-  )
-
   return (
     <div
       className={`absolute left-0 ${
         isActive ? "bottom-8" : "bottom-[-2px] leading-[1]"
       } w-full flex-row items-center justify-center transition-[bottom] duration-300 screenshot:hidden`}
     >
-      {isActive && hasExternalSamples && <ExternalSampleSelect />}
       <div className="flex justify-center">
         <div
           className={`w-full ${
@@ -72,7 +47,20 @@ export const SampleSlider = () => {
             } as React.CSSProperties
           }
         >
-          {slider}
+          <Slider
+            value={sampleIdx ?? 0}
+            onChange={(sampleIdx) => setSampleIdx(sampleIdx)}
+            min={0}
+            max={totalSamples - 1}
+            yPad={0.25}
+          />
+          {isActive && (
+            <div className="label pointer-events-none select-none text-left opacity-0 group-hover/sample-slider:opacity-100 group-active/sample-slider:opacity-100 transition-opacity duration-200 flex justify-between">
+              <div>
+                {(sampleIdx ?? 0) + 1} / {totalSamples}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

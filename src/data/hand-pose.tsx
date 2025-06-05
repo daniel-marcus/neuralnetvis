@@ -17,7 +17,7 @@ const HP_TRAIN_CONFIG = {
   lazyLoading: false,
 }
 
-export function HandPoseRecorder({ stream }: RecorderProps) {
+export function HandPoseCapture({ stream }: RecorderProps) {
   useHpTrainConfig()
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands, stream)
@@ -25,6 +25,7 @@ export function HandPoseRecorder({ stream }: RecorderProps) {
   const [isRecording, toggleRec] = useSampleRecorder(hpPredict, numHands)
   const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
   const setTab = useGlobalStore((s) => s.setTab)
+  return null // TODO!
   return (
     <>
       {!dsIsUserGenerated && (

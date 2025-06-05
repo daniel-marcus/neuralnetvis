@@ -40,7 +40,7 @@ export function useCaptureLoop(
   }, [stream, videoRef, predict, ds, setSample, recY])
 }
 
-export function DefaultRecorder({ stream }: RecorderProps) {
+export function DefaultVideoCapture({ stream }: RecorderProps) {
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   const predict = useCallback(
     (v: HTMLVideoElement) => videoToSample(v, inputDims),

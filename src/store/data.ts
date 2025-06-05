@@ -23,7 +23,7 @@ export interface DataSlice {
   setSampleIdx: (arg: SampleIdx | SetterFunc<SampleIdx>) => void
 
   sample?: Sample
-  setSample: (sampleRaw?: SampleRaw) => void
+  setSample: (sampleRaw?: SampleRaw, unsetSampleIdx?: boolean) => void
   nextSample: (step?: number) => void
   resetSample: () => void
 
@@ -70,8 +70,11 @@ export const createDataSlice: StateCreator<
   setSampleIdx: (arg) =>
     set({ sampleIdx: typeof arg === "function" ? arg(get().sampleIdx) : arg }),
   sample: undefined,
-  setSample: (sampleRaw) =>
-    set(({ ds }) => ({ sample: preprocessSample(sampleRaw, ds) })),
+  setSample: (sampleRaw, unsetSampleIdx) =>
+    set(({ ds, sampleIdx }) => ({
+      sample: preprocessSample(sampleRaw, ds),
+      sampleIdx: unsetSampleIdx ? undefined : sampleIdx,
+    })),
   nextSample: (step = 1) =>
     set(({ sampleIdx, totalSamples }) => ({
       sampleIdx: ((sampleIdx ?? 0) + step + totalSamples()) % totalSamples(),
