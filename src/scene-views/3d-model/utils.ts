@@ -98,21 +98,6 @@ export function interpolate(from: number, to: number, percent: number): number {
   return from + (to - from) * percent
 }
 
-const MAX_X_WIDTH = 500 // in three.js units
-const MIN_X_SHIFT = 2
-
-// use smaller xShift for models with many layers
-export function useDynamicXShift(numVisibleLayers: number) {
-  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
-  useEffect(() => {
-    const dynamicXShift = Math.round(MAX_X_WIDTH / numVisibleLayers)
-    const defaultXShift = defaultVisConfig.xShift
-    const clampedXShift = clamp(dynamicXShift, MIN_X_SHIFT, defaultXShift)
-    setVisConfig({ xShift: clampedXShift })
-    return () => setVisConfig({ xShift: defaultXShift })
-  }, [numVisibleLayers, setVisConfig])
-}
-
 export function useSize(
   ref: React.RefObject<THREE.Object3D | null>,
   padding = 0

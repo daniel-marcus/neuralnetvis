@@ -4,7 +4,7 @@ import { useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
 import { useLayers, type NeuronLayer } from "@/neuron-layers"
 import { ActivationUpdater } from "@/model/activations"
-import { moveCameraTo, useAnimatedPosition, useDynamicXShift } from "./utils"
+import { moveCameraTo, useAnimatedPosition } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./interactions"
 import type { Pos } from "./utils"
@@ -27,7 +27,6 @@ export const Model = () => {
   )
 }
 
-// TODO: combine with useIsInvisibe / match with LayerWheel ...
 function useVisibleLayers(allLayers: NeuronLayer[]) {
   const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
   const visibleLayers = useSceneStore((s) => s.visibleLayers)
@@ -77,7 +76,6 @@ interface ModelShifterProps {
 function ModelShifter({ children, visibleLayers }: ModelShifterProps) {
   const position = useModelOffset(visibleLayers)
   const ref = useAnimatedPosition(position, 0.1)
-  useDynamicXShift(visibleLayers.length)
   return <group ref={ref}>{children}</group>
 }
 
