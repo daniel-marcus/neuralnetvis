@@ -52,9 +52,11 @@ function useCameraShifter(layers: NeuronLayer[]) {
   const camera = useThree((s) => s.camera)
   useEffect(() => {
     if (!isActive || !(camera instanceof THREE.PerspectiveCamera)) return
-    const isLarge = layers.length > 10
+    // TODO: find a linear solution?
+    const numLayers = Math.max(3, layers.length)
+    const isLarge = numLayers > 10
     const offset = isLarge ? 0.8 : 1.2
-    const modelLength = layers.length * xShift
+    const modelLength = numLayers * xShift
     const fov = camera.fov! * (Math.PI / 180)
     const center = new THREE.Vector3(0, 0, 0)
     const radius = Math.abs(modelLength / 2 / Math.tan(fov / 2)) * offset

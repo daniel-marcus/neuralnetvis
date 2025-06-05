@@ -82,7 +82,7 @@ function LayerScaler(props: LayerScalerProps) {
     : hasFocussed && !isFocussed
     ? 0.2
     : isLargeInput && !showHiddenLayers
-    ? 0.45
+    ? 0.5
     : 1
   const duration =
     isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
