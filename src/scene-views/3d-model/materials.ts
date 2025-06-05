@@ -54,14 +54,17 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
   })()
 }
 
-export function getTextureMaterial() {
-  const material = new THREE.MeshStandardNodeMaterial()
-  material.transparent = true
-  material.colorNode = activationColorTexture()
+export function getTextureMaterial(hasColors: boolean, channelIdx: number) {
+  const material = hasColors
+    ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
+    : new THREE.MeshStandardNodeMaterial()
+  material.transparent = !hasColors // transparency needed for gaps between kernels in Conv layers etc.
+  material.colorNode = activationColorTexture(hasColors, channelIdx)
   return material
 }
 
-export function activationColorTexture() {
+export function activationColorTexture(hasColors: boolean, channelIdx: number) {
+  const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object, renderer: { backend } }: FnProps) => {
     const { activations, mapTexture, actTexture } =
@@ -71,13 +74,15 @@ export function activationColorTexture() {
       // -999.0 used as marker for empty (transparent) pixels
       Discard()
     })
+    const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
+    const idxWithOffset = idx.add(offset)
     // WebGPU can pick the value directly from the storage buffer, WebGL needs precomputed texture
     const normalizedNode = isWebGPUBackend(backend)
-      ? storage(activations).element(idx)
+      ? storage(activations).element(idxWithOffset)
       : texture(actTexture).r
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
-      .select(basePos, baseNeg)
+      .select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     const colorNode = pow(srgbColor, vec3(2.2))
     return colorNode

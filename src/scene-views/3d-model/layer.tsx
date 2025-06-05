@@ -6,9 +6,10 @@ import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { LayerInteractions } from "./interactions"
 import { useLast } from "@/utils/helpers"
-import { InstancedLayer } from "./layer-instanced"
+import { InstancedLayer, useNeuronSpacing } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { useIsScreen } from "@/utils/screen"
+import { getGridSize } from "@/neuron-layers/layout"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 interface LayerProps extends NeuronLayer {
@@ -23,12 +24,46 @@ export const Layer = memo(function Layer(props: LayerProps) {
       <LayerInteractions {...props} measureRef={measureRef} />
       <group ref={measureRef}>
         {Array.from({ length: separateChannels }).map((_, i) => (
-          <LodComp key={i} {...props} channelIdx={i} measureRef={measureRef} />
+          <ColorChannelShifter {...props} channelIdx={i} key={i}>
+            <LodComp {...props} channelIdx={i} measureRef={measureRef} />
+          </ColorChannelShifter>
         ))}
       </group>
     </LayerScaler>
   )
 })
+
+interface ColorChannelShifterProps extends LayerProps {
+  channelIdx: number
+  children: React.ReactNode
+}
+
+function ColorChannelShifter({ children, ...props }: ColorChannelShifterProps) {
+  const groupRef = useGroupPosition(props, props.channelIdx)
+  return <group ref={groupRef}>{children}</group>
+}
+
+function useGroupPosition(layer: NeuronLayer, channelIdx = 0) {
+  // only used for color channels
+  const { meshParams, hasColorChannels } = layer
+  const numChannels = hasColorChannels ? 3 : 1
+  const { spacedSize } = useNeuronSpacing(meshParams)
+  const splitColors = useSceneStore((s) => s.vis.splitColors)
+  const [, h, w = 1] = layer.tfLayer.outputShape as number[]
+  const position = useMemo(() => {
+    const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
+
+    const OFFSET = 0.05 // to avoid z-fighting
+    const splitY = -channelIdx * gHeight + (numChannels - 1) * gHeight * 0.5
+    return hasColorChannels
+      ? splitColors
+        ? [-channelIdx * OFFSET, splitY, channelIdx * OFFSET] // spread on y-axis
+        : [channelIdx * OFFSET, -channelIdx * OFFSET, -channelIdx * OFFSET]
+      : [0, 0, 0]
+  }, [channelIdx, numChannels, spacedSize, splitColors, h, w, hasColorChannels])
+  const groupRef = useAnimatedPosition(position, 0.1)
+  return groupRef
+}
 
 interface LayerScalerProps extends LayerProps {
   children: React.ReactNode
@@ -54,7 +89,7 @@ function LayerScaler(props: LayerScalerProps) {
 }
 
 interface LodCompProps extends NeuronLayer {
-  channelIdx?: number
+  channelIdx: number
   measureRef: React.RefObject<THREE.Mesh | null>
 }
 
@@ -65,7 +100,7 @@ function LodComp(props: LodCompProps) {
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
-  const alwaysInstanced = props.layerPos !== "hidden" || !hasChannels
+  const alwaysInstanced = !hasChannels // || props.numNeurons <= 3072
   const alwaysTextured =
     !alwaysInstanced && props.numNeurons > (isScreenSm ? 50000 : 30000) // large layers: prefer less expensive TexturedLayer, especially on mobile
   const showInstanced =

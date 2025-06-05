@@ -15,25 +15,35 @@ export interface UserDataTextured {
 
 type TexturedLayerProps = NeuronLayer & {
   visible: boolean
+  channelIdx: number // for layers with color channels
 }
 
 export const TexturedLayer = memo(function TexturedLayer(
   props: TexturedLayerProps
 ) {
-  const { visible } = props
+  const { visible, hasColorChannels, channelIdx = 0 } = props
   const [texture, material, userData] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
+  const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
-    <mesh scale={[size, spacedSize, spacedSize]} {...{ userData, visible }}>
+    <mesh
+      scale={[size, spacedSize, spacedSize]}
+      userData={userData}
+      visible={visible}
+      renderOrder={renderOrder}
+    >
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />
     </mesh>
   )
 })
 
-function useActivationTexture(layer: NeuronLayer) {
-  const [, height, width, channels] = layer.tfLayer.outputShape as number[]
+function useActivationTexture(layer: TexturedLayerProps) {
+  const { hasColorChannels, channelIdx = 0 } = layer
+  const [, height, width, _channels] = layer.tfLayer.outputShape as number[]
+
+  const channels = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
 
   const texture = useMemo(() => {
     const gridCols = Math.ceil(Math.sqrt(channels))
@@ -56,7 +66,10 @@ function useActivationTexture(layer: NeuronLayer) {
     return texture
   }, [height, width, channels])
 
-  const material = useMemo(() => getTextureMaterial(), [])
+  const material = useMemo(
+    () => getTextureMaterial(hasColorChannels, channelIdx),
+    [hasColorChannels, channelIdx]
+  )
   useEffect(() => {
     return () => {
       material.dispose()
@@ -114,15 +127,24 @@ function useActivationTexture(layer: NeuronLayer) {
 
   const layerActivations = useLayerActivations(layer.index)
   useEffect(() => {
-    const act = layerActivations?.normalizedActivations
-    if (!act) return
     // WebGL fallback: update texture on CPU
+    const _act = layerActivations?.normalizedActivations
+    if (!_act) return
+
+    let act = _act
+    if (hasColorChannels) {
+      // for color channels, use a view with offset for the current channel
+      const channelUnits = _act.length / channels
+      const offset = channelIdx * channelUnits
+      act = new Float32Array(_act.buffer, offset * 4, channelUnits)
+    }
+
     const data = texture.image.data as Float32Array
     for (let i = 0; i < act.length; i++) {
       data[pixelMap[i]] = act[i]
     }
     texture.needsUpdate = true
-  }, [texture, pixelMap, layerActivations])
+  }, [texture, pixelMap, layerActivations, hasColorChannels, channelIdx])
 
   return [texture, material, userData] as const
 }
