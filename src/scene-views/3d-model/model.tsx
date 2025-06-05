@@ -7,8 +7,8 @@ import { ActivationUpdater } from "@/model/activations"
 import { moveCameraTo, useAnimatedPosition } from "./utils"
 import { Layer } from "./layer"
 import { HoverComponents } from "./interactions"
-import type { Pos } from "./utils"
 import { useIsPlayMode } from "@/components/tab-menu"
+import type { Pos } from "./utils"
 
 export const Model = () => {
   const layers = useLayers()

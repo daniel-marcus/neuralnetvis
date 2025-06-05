@@ -14,6 +14,7 @@ import { cameraSvg } from "@/scene-views/video"
 import { useLast } from "@/utils/helpers"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
+import type { DatasetDef } from "@/data"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -40,12 +41,19 @@ const tiles: TileDef[] = [
   ...datasets.map((dsDef) => ({
     path: getDsPath(dsDef),
     title: dsDef.name,
-    tags: !!dsDef.camProps ? [cameraSvg, "dataset"] : ["dataset"],
+    tags: getTags(dsDef),
     section: "play" as const,
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
   })),
 ]
+
+function getTags(dsDef: DatasetDef) {
+  const tags: ReactNode[] = []
+  if (dsDef.camProps) tags.push(cameraSvg)
+  tags.push(dsDef.isModelDs ? "model" : "dataset")
+  return tags
+}
 
 export const TileGrid = () => {
   const active = usePathname()

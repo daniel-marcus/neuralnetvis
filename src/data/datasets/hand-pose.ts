@@ -9,7 +9,8 @@ export const handPose: DatasetDef = {
   name: "Hand Pose",
   version: new Date("2025-05-16"),
   task: "classification",
-  description: `Handpose dataset with ${hands} hand and ${outputLabels.length} categories`,
+  isModelDs: true,
+  description: `A handpose classification top for MediaPipe's Hand Landmarker`,
   aboutUrl:
     "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
   inputDims: [21, 3, hands],

@@ -1,6 +1,7 @@
 import type { Parsed } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
-import { preprocessFuncs } from "./preprocess"
+import type { PreprocessFuncName } from "./preprocess"
+import type { ModelKey } from "@/model/models"
 
 export type DatasetKey = string
 
@@ -15,7 +16,7 @@ export interface DatasetMeta {
   aboutUrl: string
   inputDims: number[]
   inputLabels?: string[]
-  preprocessFunc?: keyof typeof preprocessFuncs
+  preprocessFunc?: PreprocessFuncName
   outputLabels: string[] // length defines the number of output neurons
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
@@ -23,8 +24,9 @@ export interface DatasetMeta {
   mapProps?: DsMapProps
   decodeInput?: boolean // TODO: specify tokenizer
   loaded: "preview" | "full" // will be set by ds loader
-  modelKey?: string // default model to load for this dataset
+  modelKey?: ModelKey // default model to load for this dataset // TODO: store modelDef
   externalSamples?: ExternalSample[] // test models with external images
+  isModelDs?: boolean // tile gets "model" tag instead of "dataset"
 }
 
 interface ExternalSample {

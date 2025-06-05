@@ -5,6 +5,7 @@ import { cifar10 } from "./cifar10"
 import { cifar100 } from "./cifar100"
 import { californiaHousing } from "./california-housing"
 import { autoMpg } from "./auto-mpg"
+import { mobileNetV2 } from "./mobilenet-v2"
 import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
@@ -15,4 +16,5 @@ export const datasets: DatasetDef[] = [
   cifar10,
   autoMpg,
   cifar100,
+  mobileNetV2,
 ] as const

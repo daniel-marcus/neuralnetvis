@@ -1,19 +1,14 @@
 import { useEffect, useCallback, useTransition, useState, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
-import {
-  useGlobalStore,
-  isDebug,
-  setStatus,
-  useSceneStore,
-  clearStatus,
-} from "@/store"
+import { useGlobalStore, setStatus, useSceneStore, clearStatus } from "@/store"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
 import { getLayerDef, layerDefMap } from "./layers"
-import { models } from "./models"
+import { getModelDef, type ModelDef } from "./models"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "@/model/layers/types"
-import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import type { ModelLoadState, ModelSlice } from "@/store/model"
 
 export function useModel(ds?: Dataset) {
   const model = useModelCreate(ds)
@@ -33,6 +28,7 @@ function useModelCreate(ds?: Dataset) {
   const _setModel = useSceneStore((s) => s._setModel)
   const [setModel] = useModelTransition(_setModel)
   const backendReady = useGlobalStore((s) => s.backendReady)
+  const shouldLoadWeights = useSceneStore((s) => s.shouldLoadWeights)
   const configs = useSceneStore((s) => s.layerConfigs)
   useEffect(() => {
     async function loadModel() {
@@ -42,50 +38,74 @@ function useModelCreate(ds?: Dataset) {
         scene.setState({ skipModelCreate: false })
         return
       }
-      // TODO: load weights later?
-      const modelDefFromKey = getModelDefFromKey(ds.modelKey)
+
+      const modelDef = getModelDef(ds.modelKey)
       const getNewModel = () => createModel(ds, configs ?? defaultConfigs)
-      const _model =
-        modelDefFromKey && !configs
-          ? (await getPretrainedModel(modelDefFromKey.path)) ?? // first time: load default model if indicated
-            getNewModel() // fallback: create new model from config
-          : getNewModel()
-      if (isDebug()) console.log({ _model })
-      setModel(_model, true)
+
+      if (modelDef && !configs) {
+        const noWeights = modelDef.lazyLoadWeights && !shouldLoadWeights
+        const { model, loadState } = await getPretrained(modelDef, noWeights)
+        setModel(model, loadState, true)
+      } else {
+        const _model = getNewModel()
+        setModel(_model, "full", true)
+      }
     }
     loadModel()
-  }, [backendReady, ds, configs, setModel])
+  }, [backendReady, ds, configs, setModel, shouldLoadWeights])
   return model
 }
 
-function getModelDefFromKey(modelKey?: string) {
-  return modelKey ? models.find((m) => m.key === modelKey) : undefined
+type GetPretrainedModelResult = {
+  model?: tf.LayersModel
+  loadState: ModelLoadState
 }
 
-async function getPretrainedModel(path: string) {
+async function getPretrained(
+  modelDef: ModelDef,
+  noWeights?: boolean
+): Promise<GetPretrainedModelResult> {
+  const { path, key } = modelDef
+  const allModels = await tf.io.listModels()
+  const dbPath = `indexeddb://nnv_${key}`
+  if (dbPath in allModels) {
+    // TODO: check version?
+    // console.log("Model exists in IndexedDB:", dbPath)
+    const model = await tf.loadLayersModel(dbPath)
+    return { model, loadState: "full" }
+  }
   try {
-    const model = await tf.loadLayersModel(path)
-    return model
+    const statusId = setStatus(`Loading model weights ...`, -1)
+    const model = await tf.loadLayersModel(path, { streamWeights: noWeights })
+    if (!noWeights) {
+      await model.save(dbPath)
+    }
+    clearStatus(statusId)
+    return { model, loadState: noWeights ? "no-weights" : "full" }
   } catch (e) {
     console.warn("Failed to load pretrained model from", path, e)
-    return undefined
+    return { model: undefined, loadState: null }
   }
 }
 
-type ModelSetter = (model?: tf.LayersModel) => void
-
 export function useModelTransition(
-  _setModel: ModelSetter,
+  _setModel: ModelSlice["_setModel"],
   onTransitionFinished?: () => void
 ) {
   const hasLesson = useHasLesson()
   const [isPending, startTransition] = useTransition()
   const [statusId, setStatusId] = useState<string | null>(null)
   const modelToSet = useRef<tf.LayersModel | undefined>(undefined)
+  const loadStateToSet = useRef<ModelLoadState | undefined>(undefined)
 
   const setModel = useCallback(
-    async (model?: tf.LayersModel, silent?: boolean) => {
+    async (
+      model?: tf.LayersModel,
+      loadState?: ModelLoadState,
+      silent?: boolean
+    ) => {
       modelToSet.current = model
+      loadStateToSet.current = loadState
       const id = setStatus(silent ? "" : "Creating model ...", -1)
       setStatusId(id)
     },
@@ -95,7 +115,7 @@ export function useModelTransition(
   useEffect(() => {
     if (!statusId || !modelToSet.current) return
     startTransition(() => {
-      _setModel(modelToSet.current)
+      _setModel(modelToSet.current, loadStateToSet.current)
     })
   }, [_setModel, statusId])
 
@@ -104,6 +124,7 @@ export function useModelTransition(
     return () => {
       clearStatus(statusId)
       modelToSet.current = undefined
+      loadStateToSet.current = undefined
       setStatusId(null)
       onTransitionFinished?.()
       if (!hasLesson) showModelStatus()

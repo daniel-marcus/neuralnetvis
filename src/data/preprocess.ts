@@ -31,3 +31,5 @@ export const preprocessFuncs = {
   normalizeImage,
   normalizeHandLandmarks,
 } as const
+
+export type PreprocessFuncName = keyof typeof preprocessFuncs

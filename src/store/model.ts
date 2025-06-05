@@ -7,10 +7,16 @@ import type { LayerConfigArray } from "@/model/layers/types"
 import type { ActivationStats } from "@/model/activation-stats"
 import { ViewSlice } from "./view"
 
+export type ModelLoadState = null | "no-weights" | "full"
+
 export interface ModelSlice {
   model?: LayersModel
+  modelLoadState: ModelLoadState
+  shouldLoadWeights?: boolean // to enable lazy loading of weights for pretrained models
+  setLoadWeights: (shouldLoad: boolean) => void
   skipModelCreate: boolean // flag to skip model creation for loaded models
-  _setModel: (model?: LayersModel) => void // for internal use; use modelTransition instead
+  _setModel: (model?: LayersModel, loadState?: ModelLoadState) => void // for internal use; use modelTransition instead
+
   layerConfigs: LayerConfigArray | null
   setLayerConfigs: (layerConfigs: LayerConfigArray) => void
   resetLayerConfigs: () => void
@@ -37,13 +43,16 @@ export const createModelSlice: StateCreator<
   [],
   ModelSlice
 > = (set) => ({
-  backendReady: false,
-
   model: undefined,
+  modelLoadState: null,
+  shouldLoadWeights: false,
+  setLoadWeights: (arg) => set({ shouldLoadWeights: arg }),
+
   skipModelCreate: false,
-  _setModel: (model) => {
+  _setModel: (model, modelLoadState) => {
     set({
       model,
+      modelLoadState: !model ? null : modelLoadState ?? "full",
       // sample: undefined,
       activationStats: {},
       activations: {},
