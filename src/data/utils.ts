@@ -102,3 +102,24 @@ export function round(val: number | undefined, dec = 1) {
 export function getMaxAbs(vals: Float32Array) {
   return vals.reduce((max, val) => Math.max(max, Math.abs(val)), 0)
 }
+
+export function centerCropResize(
+  imgTensor: tf.Tensor3D,
+  targetHeight: number,
+  targetWidth: number
+): tf.Tensor3D {
+  return tf.tidy(() => {
+    const [height, width, channels] = imgTensor.shape
+    const cropSize = Math.min(height, width)
+    const offsetHeight = Math.floor((height - cropSize) / 2)
+    const offsetWidth = Math.floor((width - cropSize) / 2)
+
+    const cropped = tf.slice(
+      imgTensor,
+      [offsetHeight, offsetWidth, 0],
+      [cropSize, cropSize, channels]
+    )
+
+    return tf.image.resizeBilinear(cropped, [targetHeight, targetWidth])
+  })
+}

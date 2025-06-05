@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
 import { Button, Select } from "@/components/ui-elements"
+import { centerCropResize } from "./utils"
 
 export function ExternalSampleSelect() {
   const externalSamples = useSceneStore((s) => s.ds?.externalSamples)
@@ -23,24 +24,11 @@ export function ExternalSampleSelect() {
 
       const [targetHeight, targetWidth] = inputDims
 
-      // TODO: crop // async
+      // TODO: async
       const X = tf.tidy(() => {
-        const imageTensor = tf.browser.fromPixels(image)
-        const [height, width, channels] = imageTensor.shape
-        const cropSize = Math.min(height, width)
-        const offsetHeight = Math.floor((height - cropSize) / 2)
-        const offsetWidth = Math.floor((width - cropSize) / 2)
-
-        const cropped = tf.slice(
-          imageTensor,
-          [offsetHeight, offsetWidth, 0],
-          [cropSize, cropSize, channels]
-        )
-
-        return tf.image
-          .resizeBilinear(cropped, [targetHeight, targetWidth])
-          .flatten()
-          .arraySync()
+        const imgTensor = tf.browser.fromPixels(image)
+        const resized = centerCropResize(imgTensor, targetHeight, targetWidth)
+        return resized.flatten().arraySync()
       })
 
       if (X) setSample({ X, index: Date.now() })
