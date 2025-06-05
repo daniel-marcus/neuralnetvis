@@ -21,10 +21,14 @@ export interface DataSlice {
 
   sampleIdx: number | undefined
   setSampleIdx: (arg: SampleIdx | SetterFunc<SampleIdx>) => void
+
   sample?: Sample
   setSample: (sampleRaw?: SampleRaw) => void
   nextSample: (step?: number) => void
   resetSample: () => void
+
+  sampleViewerIdxs: number[]
+  setSampleViewerIdxs: (idxs: number[]) => void
 }
 
 export const createDataSlice: StateCreator<
@@ -41,11 +45,14 @@ export const createDataSlice: StateCreator<
     const oldDs = get().ds
     const sameKey = oldDs?.key === ds?.key
     if (setOnlyIfNecessary && oldDs?.loaded === ds?.loaded && sameKey) return
+    const totalSamples = ds?.train.totalSamples ?? 0
     set(({ sampleIdx }) => ({
       ds,
       sample: undefined,
-      sampleIdx:
-        sampleIdx ?? Math.floor(Math.random() * (ds?.train.totalSamples ?? 0)),
+      sampleIdx: sampleIdx ?? Math.floor(Math.random() * totalSamples),
+      sampleViewerIdxs: ds?.sampleViewer
+        ? Array.from({ length: totalSamples }, (_, i) => i)
+        : [],
     }))
   },
   updateMeta: (storeName, meta) => {
@@ -70,4 +77,7 @@ export const createDataSlice: StateCreator<
       sampleIdx: ((sampleIdx ?? 0) + step + totalSamples()) % totalSamples(),
     })),
   resetSample: () => set(() => ({ sampleIdx: 0, sample: undefined })),
+
+  sampleViewerIdxs: [],
+  setSampleViewerIdxs: (idxs) => set({ sampleViewerIdxs: idxs }),
 })

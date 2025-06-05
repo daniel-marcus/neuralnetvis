@@ -9,19 +9,24 @@ export const mobileNetV2: DatasetDef = {
   task: "classification",
   isModelDs: true,
   description: "Google's MobileNetV2, trained on ImageNet data (224x224x3)",
-  version: new Date("2025-06-05"),
+  version: new Date("2025-06-01"),
   aboutUrl: "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
   inputDims: [224, 224, 3],
   preprocessFunc: "normalizeImage", // scale?
   camProps: {},
   outputLabels: getImagenetLabels(),
   model: getModelDef("mobilenet-v2"),
+  sampleViewer: true,
   loadPreview: async () => {
     // TODO: prepare
     const imgUrls = [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Tabby_cat_with_blue_eyes-3336579.jpg/500px-Tabby_cat_with_blue_eyes-3336579.jpg",
       "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Pineapple_on_white_table.jpg/960px-Pineapple_on_white_table.jpg",
       "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Zenit-B_Helios-44-2_2012_G1.jpg/330px-Zenit-B_Helios-44-2_2012_G1.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Sander-pinguins.jpg/960px-Sander-pinguins.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Red_Panda_%2824986761703%29.jpg/960px-Red_Panda_%2824986761703%29.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red_drum_set.jpg/960px-Red_drum_set.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Salford_Cathedral_Memorial_Chapel.jpg/330px-Salford_Cathedral_Memorial_Chapel.jpg",
     ]
     const imgs = await fetchImages(imgUrls)
     const xTrainData = tf.tidy(() => {
@@ -34,11 +39,11 @@ export const mobileNetV2: DatasetDef = {
     const data = new Uint8Array(xTrainData)
     const xTrain = {
       data,
-      shape: [3, 224, 224, 3],
+      shape: [imgs.length, 224, 224, 3],
     }
     const yTrain = {
-      data: new Uint32Array([281, 953, 759]),
-      shape: [3],
+      data: new Uint32Array([281, 953, 759, 145, 387, 541, 406]),
+      shape: [imgs.length],
     }
     return { xTrain, yTrain }
   },

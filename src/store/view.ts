@@ -14,8 +14,6 @@ export interface ViewSlice {
   setView: (view: View) => void
   subset: Subset
   setSubset: (subset: Subset) => void
-  sampleViewerIdxs: number[]
-  setSampleViewerIdxs: (idxs: number[]) => void
   focussedLayerIdx: number | undefined
   setFocussedLayerIdx: (
     arg: number | undefined | SetterFunc<number | undefined>
@@ -57,8 +55,6 @@ export const createViewSlice: StateCreator<
           : sampleIdx
       return { subset, sampleIdx: newSampleIdx }
     }),
-  sampleViewerIdxs: [],
-  setSampleViewerIdxs: (idxs) => set({ sampleViewerIdxs: idxs }),
   focussedLayerIdx: undefined,
   setFocussedLayerIdx: (arg) =>
     set(({ focussedLayerIdx }) => ({

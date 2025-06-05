@@ -24,6 +24,7 @@ export function SampleViewer() {
       const newSamples: SampleRaw[] = []
       for (const idx of idxs.slice(offset, offset + itemsPerPage)) {
         const sample = await getSample(ds, subset, idx)
+        console.log("SampleViewer: got sample", idx, sample)
         if (sample) newSamples.push(sample)
       }
       setSamples(newSamples)
@@ -38,8 +39,8 @@ export function SampleViewer() {
   if (!samples.length) return null
   return (
     <div
-      className={`-my-4 py-4! bg-gradient-to-b from-transparent via-[1rem] ${
-        hasBlur ? "via-black to-black" : "via-background to-background"
+      className={`-my-4 _py-4! bg-gradient-to-b from-transparent _via-[1rem] ${
+        hasBlur ? "_via-black to-black" : "_via-background to-background"
       } transition-colors duration-300 w-screen bottom-0 right-0 [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
     >
       <div className={`flex justify-center items-start`}>
@@ -159,13 +160,15 @@ function SampleCanvas({
   const camProps = useCurrScene((s) => s.ds?.camProps)
   const aspectRatio = useCurrScene((s) => s.getAspectRatio())
   const hasCam = !!camProps
+  const camProcessor = useCurrScene((s) => s.ds?.camProps?.processor)
   const inputDims = useCurrScene((s) => s.ds?.inputDims)
   useEffect(() => {
     const canvas = ref.current
     if (!inputDims || !sample || !canvas) return
-    if (hasCam) drawHandPoseSampleToCanvas(sample, inputDims, canvas)
+    if (camProcessor === "handPose")
+      drawHandPoseSampleToCanvas(sample, inputDims, canvas)
     else drawImageSampleToCanvas(sample, inputDims, canvas)
-  }, [inputDims, sample, hasCam])
+  }, [inputDims, sample, camProcessor])
   useEffect(() => {
     if (!isCurrent) return
     const el = ref.current
@@ -174,7 +177,7 @@ function SampleCanvas({
   }, [isCurrent])
   return (
     <canvas
-      className={`border-1 bg-blend-multiply ${
+      className={`border-2 bg-blend-multiply ${
         isCurrent ? "border-accent" : "border-menu-border"
       } rounded-md w-[var(--item-size)] ${
         hasCam ? "scale-x-[-1] bg-box" : ""

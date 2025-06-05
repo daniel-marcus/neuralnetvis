@@ -17,10 +17,11 @@ import { SampleSlider } from "./sample-slider"
 import { SceneButtons } from "./scene-buttons"
 import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
-import { neuronStatusPortal } from "@/components/status-bar"
+import { neuronStatusPortal, sampleViewerPortal } from "@/components/status-bar"
 import { Portal } from "@/components/portal"
 
 import type { TileDef } from "@/components/tile-grid"
+import { SampleViewer } from "./sample-viewer"
 
 type SceneViewerProps = TileDef & {
   isActive: boolean
@@ -37,6 +38,8 @@ function SceneViewerInner(props: SceneViewerProps) {
   const title = section === "play" && dsDef ? dsDef.name : props.title
   const showMap = dsDef?.task === "regression" && view !== "graph"
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
+  const sampleViewerIdxs = useSceneStore((s) => s.sampleViewerIdxs)
+  const showSampleViewer = isActive && !!sampleViewerIdxs.length
   return (
     <div
       className={`flex justify-center items-center w-full h-full ${
@@ -67,7 +70,14 @@ function SceneViewerInner(props: SceneViewerProps) {
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
-      {section === "play" && view === "layers" && <SampleSlider />}
+      {section === "play" && view === "layers" && !showSampleViewer && (
+        <SampleSlider />
+      )}
+      {showSampleViewer && (
+        <Portal target={sampleViewerPortal}>
+          <SampleViewer />
+        </Portal>
+      )}
       {section === "play" && isActive && (
         <Portal target={neuronStatusPortal}>
           <NeuronStatus />
