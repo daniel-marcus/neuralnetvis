@@ -134,7 +134,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
     let act = _act
     if (hasColorChannels) {
       // for color channels, use a view with offset for the current channel
-      const channelUnits = _act.length / channels
+      const channelUnits = _act.length / 3
       const offset = channelIdx * channelUnits
       act = new Float32Array(_act.buffer, offset * 4, channelUnits)
     }
