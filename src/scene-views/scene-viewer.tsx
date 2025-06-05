@@ -1,8 +1,7 @@
 import { Suspense } from "react"
-import { SceneStoreProvider, useSceneStore } from "@/store"
+import { SceneState, SceneStoreProvider, useSceneStore } from "@/store"
 import { useDsDef, useDataset } from "@/data"
 import { useModel, useTraining } from "@/model"
-import { useInitialState } from "@/utils/initial-state"
 
 import { SampleName } from "./sample-name"
 import { CanvasView } from "./3d-model/canvas-view"
@@ -34,7 +33,6 @@ function SceneViewerInner(props: SceneViewerProps) {
   const ds = useDataset(dsDef)
   const model = useModel(ds)
   useTraining(model, ds)
-  useInitialState(props.initialState)
   const view = useSceneStore((s) => s.view)
   const title = section === "play" && dsDef ? dsDef.name : props.title
   const showMap = dsDef?.task === "regression" && view !== "graph"
@@ -80,12 +78,13 @@ function SceneViewerInner(props: SceneViewerProps) {
 }
 
 export const SceneViewer = (props: SceneViewerProps) => {
-  const { isActive, shouldLoadFullDs, path } = props
+  const { isActive, shouldLoadFullDs, path, initialState } = props
   return (
     <SceneStoreProvider
       isActive={isActive}
       shouldLoadFullDs={shouldLoadFullDs}
       uid={path}
+      initialState={initialState}
     >
       <Suspense>
         <SceneViewerInner {...props} />

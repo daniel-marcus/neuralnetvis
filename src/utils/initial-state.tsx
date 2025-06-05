@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
-import { SceneState, useSceneStore } from "@/store"
-import { moveCameraTo, type Pos } from "@/scene-views/3d-model/utils"
+import { SceneState } from "@/store"
 import { defaultVisConfig } from "@/store/vis"
+import type { Pos } from "@/scene-views/3d-model/utils"
 
 type ExposedStoreKeys = "sampleIdx" | "layerConfigs"
 type ExposedStoreType = Pick<SceneState, ExposedStoreKeys>
@@ -18,21 +17,4 @@ export const defaultState: InitialState = {
   vis: defaultVisConfig,
   cameraPos: [-23, 0, 35],
   cameraLookAt: [0, 0, 0],
-}
-
-export function useInitialState(state?: InitialState) {
-  const three = useSceneStore((s) => s.three)
-  const setLayersConfig = useSceneStore((s) => s.setLayerConfigs)
-  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
-  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
-  useEffect(() => {
-    if (!three || !state) return
-    const { cameraPos, cameraLookAt } = state
-    if (cameraPos) {
-      moveCameraTo(cameraPos, cameraLookAt, three)
-    }
-    if (state.vis) setVisConfig({ ...state.vis })
-    if (state.layerConfigs) setLayersConfig(state.layerConfigs)
-    if (state.sampleIdx) setSampleIdx(state.sampleIdx)
-  }, [state, three, setLayersConfig, setVisConfig, setSampleIdx])
 }

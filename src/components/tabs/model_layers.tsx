@@ -127,7 +127,7 @@ export const LayerConfigControl = () => {
         disabled: getLayerDef(key)?.needsMultiDim && !hasMutliDimInput,
       })),
   ]
-  const invisibleLayers = useCurrScene((s) => s.vis.invisibleLayers)
+  const excludedLayers = useCurrScene((s) => s.vis.excludedLayers)
   if (!model) return null
   return (
     <CollapsibleWithTitle title={"layers"} className="bg-box-solid">
@@ -158,7 +158,7 @@ export const LayerConfigControl = () => {
             )
 
             const isInvisible =
-              invisibleLayers.includes(layer.config.name ?? "") ||
+              excludedLayers.includes(layer.config.name ?? "") ||
               !isVisible(model.layers[i])
             const mustBe =
               i === 0 ||

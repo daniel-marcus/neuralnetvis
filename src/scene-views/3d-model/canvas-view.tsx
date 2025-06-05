@@ -12,7 +12,7 @@ import { useSpring } from "@react-spring/web"
 import { SceneContext, useGlobalStore, useSceneStore } from "@/store"
 import { useFlatView } from "./flat-view"
 import { isTouch, useIsScreen } from "@/utils/screen"
-import { defaultState } from "@/utils/initial-state"
+import { defaultState, InitialState } from "@/utils/initial-state"
 import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
@@ -23,6 +23,7 @@ interface CanvasViewProps {
   tileIdx: number
   dsKey?: string
   copyCanvas?: boolean
+  initialState?: InitialState
 }
 
 // CanvasRenderTarget might be interesting: https://github.com/mrdoob/three.js/pull/27628
@@ -77,7 +78,7 @@ export const CanvasView = (props: CanvasViewProps) => {
     </Canvas>
 */
 
-const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
+const CanvasViewInner = ({ isActive, initialState }: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const isScreenSm = useIsScreen("sm")
@@ -108,13 +109,13 @@ const CanvasViewInner = ({ isActive }: CanvasViewProps) => {
       <PerspectiveCamera
         ref={cameraRef}
         makeDefault
-        position={defaultState.cameraPos}
+        position={initialState?.cameraPos ?? defaultState.cameraPos}
         zoom={0.1}
         far={5000}
       />
       <OrbitControls
         makeDefault
-        target={defaultState.cameraLookAt}
+        target={initialState?.cameraLookAt ?? defaultState.cameraLookAt}
         enableZoom={!visIsLocked && (isActive || isTouch())}
         enableRotate={!visIsLocked}
         enablePan={!visIsLocked}

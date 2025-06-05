@@ -25,10 +25,10 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
   const geometry = useMemo(() => new LineSegmentsGeometry(), [])
   const resolution = useMemo(() => new Vector2(512, 512), [])
 
-  const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
+  const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
   const prevLayerName = hovered?.layer.prevLayer?.tfLayer.name
   const prevLayerIsVisible =
-    !!prevLayerName && !invisibleLayers.includes(prevLayerName)
+    !!prevLayerName && !excludedLayers.includes(prevLayerName)
 
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const length = hovered?.inputNeurons?.length ?? 0

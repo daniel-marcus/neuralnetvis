@@ -19,7 +19,7 @@ export const hmlInitialState: InitialState = {
   vis: {
     neuronSpacing: 2.2,
     xShift: 13,
-    invisibleLayers: ["nnv_Output"],
+    excludedLayers: ["nnv_Output"],
     showPointer: false,
     highlightProp: null,
   },
@@ -50,7 +50,7 @@ export const IntroNetworks = (): LessonContent => {
         onEnter={() => {
           setSampleIdx(hmlInitialState.sampleIdx ?? 0)
           setVisConfig({
-            invisibleLayers: hmlInitialState.vis!.invisibleLayers,
+            excludedLayers: hmlInitialState.vis!.excludedLayers,
           })
         }}
       >
@@ -59,7 +59,7 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         cameraPos={[-25, 0, 40]}
         onEnter={() => {
-          setVisConfig({ invisibleLayers: [] })
+          setVisConfig({ excludedLayers: [] })
         }}
       >
         Let&apos;s add our output layer.

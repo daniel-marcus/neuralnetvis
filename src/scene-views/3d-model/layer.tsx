@@ -38,11 +38,13 @@ function LayerScaler(props: LayerScalerProps) {
   const [posRef, visibleIdx] = useLayerPos(props)
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
-  const invisible =
-    useIsInvisible(props) || (isFlatView && !isFocussed) || visibleIdx < 0
+  const isExcluded = useIsExcluded(props)
+  const invisible = isExcluded || (isFlatView && !isFocussed) || visibleIdx < 0
   const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
   const duration =
-    visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed) ? 0 : 500
+    isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
+      ? 0
+      : 500
   useDynamicScale(posRef, scale, duration)
   return <group ref={posRef}>{props.children}</group>
 }
@@ -102,10 +104,9 @@ function useLayerPos(layer: LayerProps) {
   return [ref, visibleIdx] as const
 }
 
-// TODO: combine with useVisibleLayers ...
-function useIsInvisible(layer?: NeuronLayer) {
-  const invisibleLayers = useSceneStore((s) => s.vis.invisibleLayers)
-  return invisibleLayers.includes(layer?.tfLayer.name ?? "")
+function useIsExcluded(layer?: NeuronLayer) {
+  const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
+  return excludedLayers.includes(layer?.tfLayer.name ?? "")
 }
 
 function useDynamicScale(

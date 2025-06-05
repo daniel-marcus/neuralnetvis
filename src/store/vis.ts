@@ -15,7 +15,7 @@ export const defaultVisConfig = {
   splitColors: false,
   highlightProp: "weightedInputs" as const,
   lineActivationThreshold: 0.5,
-  invisibleLayers: [],
+  excludedLayers: [],
   isLocked: false,
   lightsOn: true,
   lightIntensity: 1,
@@ -34,7 +34,7 @@ export interface VisConfig {
   highlightProp: HighlightProp // | string
   showLines: boolean
   lineActivationThreshold: number
-  invisibleLayers: string[] // currently used only in lesson: temorary switch off layers (positions remain)
+  excludedLayers: string[] // currently used only in lesson: temporary switch off layers (positions remain)
   isLocked: boolean
   lightsOn: boolean
   lightIntensity: number
@@ -78,9 +78,9 @@ export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
       set(({ vis }) => ({
         vis: {
           ...vis,
-          invisibleLayers: vis.invisibleLayers.includes(layerName)
-            ? vis.invisibleLayers.filter((l) => l !== layerName)
-            : vis.invisibleLayers.concat(layerName),
+          excludedLayers: vis.excludedLayers.includes(layerName)
+            ? vis.excludedLayers.filter((l) => l !== layerName)
+            : vis.excludedLayers.concat(layerName),
         },
       })),
     getDefault: (key) => defaultVisConfig[key],

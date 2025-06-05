@@ -17,7 +17,7 @@ import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
 import { createVideoSlice, VideoSlice } from "./video"
 import { moveCameraTo } from "@/scene-views/3d-model/utils"
-import { defaultState } from "@/utils/initial-state"
+import { defaultState, InitialState } from "@/utils/initial-state"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 
 export type SetterFunc<T> = (oldVal: T) => T
@@ -30,17 +30,26 @@ export type SceneState = ViewSlice &
   NeuronsSlice &
   VisSlice
 
-const createSceneStore = (initProps?: Partial<SceneState>) => {
-  return createStore<SceneState>()((...a) => ({
-    ...createViewSlice(...a),
-    ...createDataSlice(...a),
-    ...createVideoSlice(...a),
-    ...createModelSlice(...a),
-    ...createTrainingSlice(...a),
-    ...createNeuronsSlice(...a),
-    ...createVisSlice(...a),
-    ...initProps,
-  }))
+type InitProps = Partial<SceneState> & {
+  visConfig?: Partial<SceneState["vis"]>
+}
+
+const createSceneStore = (initProps?: InitProps) => {
+  const { visConfig = {}, ...otherInitProps } = initProps ?? {}
+  return createStore<SceneState>()((...a) => {
+    const visSlice = createVisSlice(...a)
+    return {
+      ...createViewSlice(...a),
+      ...createDataSlice(...a),
+      ...createVideoSlice(...a),
+      ...createModelSlice(...a),
+      ...createTrainingSlice(...a),
+      ...createNeuronsSlice(...a),
+      ...visSlice,
+      vis: { ...visSlice.vis, ...visConfig }, // merge with initial vis config
+      ...otherInitProps,
+    }
+  })
 }
 
 const dummySceneStore = createSceneStore({ uid: "dummy" })
@@ -49,20 +58,29 @@ export type SceneStore = ReturnType<typeof createSceneStore>
 export const SceneContext = createContext<SceneStore | null>(null)
 
 type SceneProviderProps = React.PropsWithChildren<
-  {
+  InitProps & {
     isActive: boolean
-  } & Partial<SceneState>
+    initialState?: InitialState
+  }
 >
 
 export function SceneStoreProvider({
   children,
   isActive,
+  initialState,
   ...props
 }: SceneProviderProps) {
   const uid = useId()
   const storeRef = useRef<SceneStore>(null)
   if (!storeRef.current) {
-    storeRef.current = createSceneStore({ isActive, uid, ...props })
+    const { vis: visConfig, ...otherInitialState } = initialState ?? {}
+    storeRef.current = createSceneStore({
+      isActive,
+      uid,
+      visConfig,
+      ...otherInitialState,
+      ...props,
+    })
   }
   useEffect(() => {
     // register scene store in global store
@@ -78,25 +96,27 @@ export function SceneStoreProvider({
   }, [])
   useEffect(() => {
     if (!isActive) return
-    useGlobalStore.getState().setScene(storeRef.current!)
-    storeRef.current!.setState(({ vis }) => ({
+    const thisScene = storeRef.current!
+    useGlobalStore.getState().setScene(thisScene)
+    const defaultVisConfig = thisScene.getState().vis
+    thisScene.setState(({ vis }) => ({
       isActive: true,
       vis: { ...vis, showHiddenLayers: true },
     }))
     return () => {
       // cleanup when leaving the scene
-      storeRef.current?.setState(({ vis }) => ({
+      thisScene.setState({
         isActive: false,
         view: "layers",
         subset: "train",
         focussedLayerIdx: undefined,
-        vis: { ...vis, showHiddenLayers: false }, // TODO: restore default vis config?
-      }))
-      // bring camera back to default position
+        vis: { ...defaultVisConfig },
+      })
+      // bring camera back to initial/default position
       moveCameraTo(
-        defaultState.cameraPos,
-        defaultState.cameraLookAt,
-        storeRef.current?.getState().three
+        initialState?.cameraPos ?? defaultState.cameraPos,
+        initialState?.cameraLookAt ?? defaultState.cameraLookAt,
+        thisScene.getState().three
       )
       // reset current scene
       useGlobalStore.getState().setScene(dummySceneStore)
@@ -131,7 +151,7 @@ export function usePrevScene<T>(selector: (state: SceneState) => T): T {
   return useStore(prevSceneStore, selector)
 }
 
-//
+// Global Store
 
 export type GlobalStoreType = TabsSlice &
   StatusSlice & {
@@ -183,8 +203,7 @@ export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
 export const getVisConfig: VisSlice["vis"]["getConfig"] = (key) =>
   getScene().getState().vis.getConfig(key)
 export const setView = (view: View) => getScene().setState({ view })
-export const getInvisibleLayers = () =>
-  getScene().getState().vis.invisibleLayers
+export const getExcludedLayers = () => getScene().getState().vis.excludedLayers
 
 export const getLayers = () => getScene().getState().allLayers
 export function useHasFocussed() {

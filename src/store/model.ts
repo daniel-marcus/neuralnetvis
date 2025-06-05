@@ -58,7 +58,7 @@ export const createModelSlice: StateCreator<
     })),
   resetLayerConfigs: () => {
     set({ layerConfigs: null })
-    setVisConfig({ invisibleLayers: [] })
+    setVisConfig({ excludedLayers: [] })
   },
   resetWeights: () =>
     set(({ layerConfigs }) => ({
