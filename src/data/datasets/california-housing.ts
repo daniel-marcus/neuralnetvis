@@ -2,6 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
 import type { DatasetDef } from "@/data/types"
+import { getModelDef } from "@/model/models"
 
 export const californiaHousing: DatasetDef = {
   key: "california-housing",
@@ -27,7 +28,7 @@ export const californiaHousing: DatasetDef = {
     zoom: 5.4,
     baseLayer: "/data/california_housing/california.geojson",
   },
-  modelKey: "california-housing",
+  model: getModelDef("california-housing"),
   loadPreview: loadData,
 }
 

@@ -1,4 +1,5 @@
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
 export const mnist: DatasetDef = {
@@ -11,7 +12,7 @@ export const mnist: DatasetDef = {
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",
   outputLabels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-  modelKey: "mnist",
+  model: getModelDef("mnist"),
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/mnist_20k/x_train.npz",

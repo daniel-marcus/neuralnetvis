@@ -39,12 +39,11 @@ function useModelCreate(ds?: Dataset) {
         return
       }
 
-      const modelDef = getModelDef(ds.modelKey)
       const getNewModel = () => createModel(ds, configs ?? defaultConfigs)
 
-      if (modelDef && !configs) {
-        const noWeights = modelDef.lazyLoadWeights && !shouldLoadWeights
-        const { model, loadState } = await getPretrained(modelDef, noWeights)
+      if (ds.model && !configs) {
+        const noWeights = ds.model.lazyLoadWeights && !shouldLoadWeights
+        const { model, loadState } = await getPretrained(ds.model, noWeights)
         setModel(model, loadState, true)
       } else {
         const _model = getNewModel()

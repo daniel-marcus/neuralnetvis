@@ -1,7 +1,6 @@
 import { useHasFocussed, useSceneStore } from "@/store"
 import { VideoControl } from "./video"
 import { Button, Select } from "@/components/ui-elements"
-import { getModelDef } from "@/model/models"
 import type { Dataset } from "@/data"
 import type { View } from "@/store/view"
 
@@ -26,9 +25,8 @@ function LoadWeightsButton() {
   const shouldLoadWeights = useSceneStore((s) => s.shouldLoadWeights)
   const loadState = useSceneStore((s) => s.modelLoadState)
   const setLoadWeights = useSceneStore((s) => s.setLoadWeights)
-  const modelDef = getModelDef(ds?.modelKey)
-  if (!ds || !modelDef) return null
-  const isPreview = modelDef.lazyLoadWeights && loadState === "no-weights"
+  if (!ds || !ds.model) return null
+  const isPreview = ds.model.lazyLoadWeights && loadState === "no-weights"
   if (!isPreview || shouldLoadWeights) return null
   return (
     <>

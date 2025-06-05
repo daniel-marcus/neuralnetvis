@@ -1,6 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
 export const autoMpg: DatasetDef = {
@@ -23,7 +24,7 @@ export const autoMpg: DatasetDef = {
     "japan",
   ],
   outputLabels: ["miles_per_gallon"],
-  modelKey: "auto-mpg",
+  model: getModelDef("auto-mpg"),
   loadPreview: loadData,
 }
 

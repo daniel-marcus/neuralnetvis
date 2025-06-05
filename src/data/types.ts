@@ -1,7 +1,7 @@
 import type { Parsed } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
 import type { PreprocessFuncName } from "./preprocess"
-import type { ModelKey } from "@/model/models"
+import type { ModelDef } from "@/model/models"
 
 export type DatasetKey = string
 
@@ -24,9 +24,10 @@ export interface DatasetMeta {
   mapProps?: DsMapProps
   decodeInput?: boolean // TODO: specify tokenizer
   loaded: "preview" | "full" // will be set by ds loader
-  modelKey?: ModelKey // default model to load for this dataset // TODO: store modelDef
+  model?: ModelDef // default model to load for this dataset
   externalSamples?: ExternalSample[] // test models with external images
   isModelDs?: boolean // tile gets "model" tag instead of "dataset"
+  sampleViewer?: boolean // show sample viewer instead of sample slider
 }
 
 interface ExternalSample {

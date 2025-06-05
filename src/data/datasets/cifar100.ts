@@ -1,4 +1,5 @@
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
 export const cifar100: DatasetDef = {
@@ -112,7 +113,7 @@ export const cifar100: DatasetDef = {
     "woman",
     "worm",
   ],
-  modelKey: "cifar-100",
+  model: getModelDef("cifar-100"),
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =
       await fetchMutlipleNpzWithProgress([

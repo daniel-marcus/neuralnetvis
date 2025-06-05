@@ -1,6 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
-import { DatasetDef } from "@/data/types"
 import { centerCropResize } from "@/data/utils"
+import { getModelDef } from "@/model/models"
+import type { DatasetDef } from "@/data/types"
 
 export const mobileNetV2: DatasetDef = {
   key: "mobilenet-v2",
@@ -14,7 +15,7 @@ export const mobileNetV2: DatasetDef = {
   preprocessFunc: "normalizeImage", // scale?
   camProps: {},
   outputLabels: getImagenetLabels(),
-  modelKey: "mobilenet-v2",
+  model: getModelDef("mobilenet-v2"),
   loadPreview: async () => {
     // TODO: prepare
     const imgUrls = [

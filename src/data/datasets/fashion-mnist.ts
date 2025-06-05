@@ -1,4 +1,5 @@
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
 export const fashionMnist: DatasetDef = {
@@ -22,7 +23,7 @@ export const fashionMnist: DatasetDef = {
     "Bag",
     "Ankle boot",
   ],
-  modelKey: "fashon-mnist",
+  model: getModelDef("fashon-mnist"),
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/fashion_mnist_20k/x_train.npz",
