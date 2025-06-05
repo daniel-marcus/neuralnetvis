@@ -1,17 +1,30 @@
+import * as THREE from "three/webgpu"
+
 // reference: https://github.com/vasturiano/three-spritetext/blob/master/src/index.js
 
-interface Text2CanvasProps {
+interface Text2TextureProps {
   text: string
   fontSize?: number
   fontFace: string
   color: string
   align?: "left" | "center" | "right"
-  canvas?: HTMLCanvasElement // if provided, will be used instead of creating a new one
 }
 
-export function text2Canvas(props: Text2CanvasProps) {
+type Text2TextureResult = {
+  texture: THREE.CanvasTexture
+  scale: [number, number, number]
+}
+const text2TextureCache = new Map<string, Text2TextureResult>()
+
+export function text2Texture(props: Text2TextureProps): Text2TextureResult {
   const { text, fontSize = 90, fontFace, color, align = "left" } = props
-  const canvas = props.canvas ?? document.createElement("canvas")
+
+  const key = `${text}-${fontSize}-${fontFace}-${color}-${align}`
+  if (text2TextureCache.has(key)) {
+    return text2TextureCache.get(key)!
+  }
+
+  const canvas = document.createElement("canvas")
   const ctx = canvas.getContext("2d")!
 
   const lines = text.split("\n")
@@ -41,5 +54,19 @@ export function text2Canvas(props: Text2CanvasProps) {
     ctx.fillText(line, lineX, index * fontSize * lineHeight + paddingY)
   })
 
-  return [canvas, lineHeight * lines.length] as const
+  const yScale = lineHeight * lines.length
+  const xScale = (canvas.width / canvas.height) * yScale
+  const scale = [xScale, yScale, 0] as [number, number, number]
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.generateMipmaps = false
+  texture.minFilter = THREE.LinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.anisotropy = 1
+
+  const result = { texture, scale }
+  text2TextureCache.set(key, result)
+
+  return result
 }

@@ -6,7 +6,7 @@ import { round } from "@/data/utils"
 import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
 import { getIndex3d } from "@/neuron-layers/neurons"
-import { text2Canvas } from "./text-to-canvas"
+import { text2Texture } from "./text-to-texture"
 import { decodeChar } from "@/data/tokenizer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
@@ -118,28 +118,15 @@ export const TextLabel = memo(function NeuronLabel({
   useFrame(() => lookAtCamera && labelRef.current?.lookAt(camera.position))
 
   const [labelState, setLabelState] = useState<LabelState | undefined>()
-  const [canvas, setCanvas] = useState<HTMLCanvasElement | undefined>()
   useEffect(() => {
-    const canvas = document.createElement("canvas")
-    setCanvas(canvas)
-  }, [])
-  useEffect(() => {
-    if (!text || !canvas) return
+    if (!text) return
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
-    const [, yScale] = text2Canvas({ text, fontFace, color, align, canvas })
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.generateMipmaps = false
-    texture.minFilter = THREE.LinearFilter
-    texture.magFilter = THREE.LinearFilter
-    texture.anisotropy = 1
-    const xScale = (canvas.width / canvas.height) * yScale
-    const scale = [xScale, yScale, 0] as [number, number, number]
-    const anchorOffset = side === "left" ? -xScale / 2 : xScale / 2
+    const { texture, scale } = text2Texture({ text, fontFace, color, align })
+    const anchorOffset = side === "left" ? -scale[0] / 2 : scale[0] / 2
     const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
     setLabelState({ texture, scale, anchorPos })
-  }, [text, color, side, canvas])
+  }, [text, color, side])
 
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!text || !labelState || !lightsOn) return null
