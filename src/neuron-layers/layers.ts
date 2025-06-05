@@ -43,13 +43,14 @@ export function useLayers() {
           createRef<InstancedMesh>()
         )
 
-        const activations = new Float32Array(units)
+        const lid = `${model.name}_${tfLayer.name}_${units}`
+        const { activations, actBuffer } = getBuffers(lid, units)
+
         const channels = hasColorChannels ? 3 : 1
         const channelActivations = channelViews(activations, units, channels)
-        const actBuffer = new THREE.StorageBufferAttribute(activations, 1) // TODO: reuse?
 
         const layer: NeuronLayer = {
-          lid: `${model.name}_${tfLayer.name}_${units}`,
+          lid,
           index: layerIndex,
           visibleIdx,
           layerType: className,
@@ -87,6 +88,21 @@ function channelViews(activations: Float32Array, units: number, channels = 3) {
     const offset = channelIdx * channelUnits * 4
     return new Float32Array(activations.buffer, offset, channelUnits)
   })
+}
+
+type Buffers = {
+  activations: Float32Array
+  actBuffer: THREE.StorageBufferAttribute
+}
+const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
+
+function getBuffers(lid: NeuronLayer["lid"], units: number): Buffers {
+  if (bufferCache.has(lid)) return bufferCache.get(lid)!
+  const activations = new Float32Array(units)
+  const actBuffer = new THREE.StorageBufferAttribute(activations, 1)
+  const buffers = { activations, actBuffer }
+  bufferCache.set(lid, buffers)
+  return buffers
 }
 
 const MAX_VISIBLE_LAYERS = 200
