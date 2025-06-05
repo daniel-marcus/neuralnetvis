@@ -19,9 +19,9 @@ import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
 import { neuronStatusPortal, sampleViewerPortal } from "@/components/status-bar"
 import { Portal } from "@/components/portal"
+import { SampleViewer } from "./sample-viewer"
 
 import type { TileDef } from "@/components/tile-grid"
-import { SampleViewer } from "./sample-viewer"
 
 type SceneViewerProps = TileDef & {
   isActive: boolean
@@ -29,7 +29,7 @@ type SceneViewerProps = TileDef & {
 }
 
 function SceneViewerInner(props: SceneViewerProps) {
-  const { dsKey, isActive, section, path } = props
+  const { dsKey, isActive, section, path, isLargeModel } = props
   const dsDef = useDsDef(dsKey)
   const ds = useDataset(dsDef)
   const model = useModel(ds)
@@ -66,7 +66,9 @@ function SceneViewerInner(props: SceneViewerProps) {
             section={section}
             ds={ds ?? dsDef}
           />
-          {section === "play" && isActive && <SceneButtons />}
+          {section === "play" && isActive && (
+            <SceneButtons isLarge={isLargeModel} />
+          )}
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
@@ -95,6 +97,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
       shouldLoadFullDs={shouldLoadFullDs}
       uid={path}
       initialState={initialState}
+      isLarge={props.isLargeModel}
     >
       <Suspense>
         <SceneViewerInner {...props} />

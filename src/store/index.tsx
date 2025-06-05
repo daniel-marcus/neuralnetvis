@@ -61,6 +61,7 @@ type SceneProviderProps = React.PropsWithChildren<
   InitProps & {
     isActive: boolean
     initialState?: InitialState
+    isLarge?: boolean
   }
 >
 
@@ -68,6 +69,7 @@ export function SceneStoreProvider({
   children,
   isActive,
   initialState,
+  isLarge = false,
   ...props
 }: SceneProviderProps) {
   const uid = useId()
@@ -101,7 +103,10 @@ export function SceneStoreProvider({
     const defaultVisConfig = thisScene.getState().vis
     thisScene.setState(({ vis }) => ({
       isActive: true,
-      vis: { ...vis, showHiddenLayers: true },
+      vis: {
+        ...vis,
+        showHiddenLayers: !isLarge,
+      },
     }))
     return () => {
       // cleanup when leaving the scene

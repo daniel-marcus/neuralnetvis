@@ -4,7 +4,7 @@ import { Button, Select } from "@/components/ui-elements"
 import type { Dataset } from "@/data"
 import type { View } from "@/store/view"
 
-export const SceneButtons = () => {
+export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
   const ds = useSceneStore((s) => s.ds)
   return (
     <div
@@ -12,11 +12,25 @@ export const SceneButtons = () => {
     >
       <LoadWeightsButton />
       <LoadFullDsButton />
+      {isLarge && <ToggleHiddenLayersButton />}
       {!!ds?.camProps && <VideoControl />}
       <ViewSelect />
       <ViewSubsetSelect />
       <ShowAllLayersBtn />
     </div>
+  )
+}
+
+function ToggleHiddenLayersButton() {
+  const showHidden = useSceneStore((s) => s.vis.showHiddenLayers)
+  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+  return (
+    <Button
+      variant="secondary"
+      onClick={() => setVisConfig({ showHiddenLayers: !showHidden })}
+    >
+      {showHidden ? "hide" : "show"} hidden layers
+    </Button>
   )
 }
 

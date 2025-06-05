@@ -29,6 +29,7 @@ export interface TileDef {
   disabled?: boolean
   initialState?: InitialState
   shouldLoadFullDs?: boolean
+  isLargeModel?: boolean // don't expand hidden layers by default
 }
 
 const tiles: TileDef[] = [
@@ -45,6 +46,7 @@ const tiles: TileDef[] = [
     section: "play" as const,
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
+    isLargeModel: dsDef.model?.lazyLoadWeights,
   })),
 ]
 
