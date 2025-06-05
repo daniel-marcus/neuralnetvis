@@ -179,7 +179,10 @@ const WeightsGridCanvas = ({
         weights.forEach((w, i) => {
           const x = (i % cols) * (ps + gap) + ps / 2
           const y = Math.floor(i / cols) * (ps + gap) + ps / 2
-          const color = getActColor(w).style
+
+          const safeW = Math.max(-1, Math.min(1, w)) // clamp to [-1, 1], sometimes we have floats like -1.0000001 etc.
+          const color = getActColor(safeW).style
+
           ctx.fillStyle = color
           if (isRounded) {
             ctx.beginPath()
