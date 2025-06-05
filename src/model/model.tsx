@@ -174,10 +174,10 @@ function showModelStatus() {
   const { model, ds } = scene
   if (!model || !ds) return
   const totalSamples = ds.train?.totalSamples ?? 0
+  const label = ds.isModelDs ? "Model" : "Dataset"
   const data = {
-    Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
+    [label]: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
     Samples: totalSamples.toLocaleString("en-US"),
-    Model: model.getClassName(),
     Params: model.countParams().toLocaleString("en-US"),
   }
   setStatus({ data }, null, { id: MODEL_STATUS_ID })

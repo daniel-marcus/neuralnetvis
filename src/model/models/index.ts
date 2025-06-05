@@ -7,7 +7,7 @@ export interface ModelDef {
   // dsKey?: string
 }
 
-const models: Record<string, ModelDef> = {
+const models = {
   "cifar-10": {
     key: "cifar-10",
     path: "/models/cifar-10/model.json",
@@ -51,10 +51,10 @@ const models: Record<string, ModelDef> = {
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
-}
+} as const
 
 export type ModelKey = keyof typeof models
 
-export function getModelDef(modelKey?: ModelKey): ModelDef | undefined {
-  return modelKey ? models[modelKey] : undefined
+export function getModelDef(modelKey: ModelKey): ModelDef | undefined {
+  return models[modelKey]
 }
