@@ -75,7 +75,15 @@ function LayerScaler(props: LayerScalerProps) {
   const { isFocussed, wasFocussed, hasFocussed } = useFocussed(props.index)
   const isExcluded = useIsExcluded(props)
   const invisible = isExcluded || (isFlatView && !isFocussed) || visibleIdx < 0
-  const scale = invisible ? 0.0001 : hasFocussed && !isFocussed ? 0.2 : 1
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const isLargeInput = props.layerPos === "input" && props.numNeurons > 100000
+  const scale = invisible
+    ? 0.0001
+    : hasFocussed && !isFocussed
+    ? 0.2
+    : isLargeInput && !showHiddenLayers
+    ? 0.45
+    : 1
   const duration =
     isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
       ? 0
