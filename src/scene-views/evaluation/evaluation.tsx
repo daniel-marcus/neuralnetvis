@@ -4,9 +4,6 @@ import { getModelEvaluation, getPredictions } from "@/model/evaluation"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { ConfusionMatrix } from "./confusion-matrix"
-import { SampleViewer } from "../sample-viewer"
-import { Portal } from "@/components/portal"
-import { sampleViewerPortal } from "@/components/status-bar"
 
 export function EvaluationView() {
   const task = useSceneStore((s) => s.ds?.task)
@@ -48,6 +45,7 @@ export function useHasSample() {
 function ConfusionViewer() {
   const hasSample = useHasSample()
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
+  const numClasses = useSceneStore((s) => s.ds?.outputLabels?.length ?? 0)
   return (
     <div className={`pointer-events-none pb-8`}>
       <div
@@ -58,7 +56,7 @@ function ConfusionViewer() {
         } transition-transform duration-500 mx-auto`}
         onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
       >
-        <ConfusionMatrix />
+        {numClasses <= 100 && <ConfusionMatrix />}
       </div>
       {!hasSample && (
         <div className="sticky left-0 w-screen p-main">

@@ -34,6 +34,8 @@ export const ConfusionMatrix = () => {
 
   const groupProp = sel?.groupProp
 
+  if (numClasses > 100) return null // too large to display
+
   return (
     <OuterGrid numClasses={numClasses} long={long} maxChars={maxChars}>
       <div
