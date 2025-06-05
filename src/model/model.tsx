@@ -4,11 +4,11 @@ import { useGlobalStore, setStatus, useSceneStore, clearStatus } from "@/store"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
 import { getLayerDef, layerDefMap } from "./layers"
-import { getModelDef, type ModelDef } from "./models"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { Dataset, DatasetDef } from "@/data"
 import type { LayerConfigArray, LayerConfigMap } from "@/model/layers/types"
 import type { ModelLoadState, ModelSlice } from "@/store/model"
+import type { ModelDef } from "./models"
 
 export function useModel(ds?: Dataset) {
   const model = useModelCreate(ds)

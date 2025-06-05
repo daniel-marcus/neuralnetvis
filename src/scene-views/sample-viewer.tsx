@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
-import type { SampleRaw } from "@/data"
 import { getSample } from "@/data/sample"
 import { useCurrScene, useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
@@ -8,6 +7,7 @@ import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
 import { cameraOffSvg, cameraSvg, useVideoControl } from "./video"
 import { useExternalSample } from "@/data/external-sample"
+import type { SampleRaw } from "@/data"
 
 export function SampleViewer() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
