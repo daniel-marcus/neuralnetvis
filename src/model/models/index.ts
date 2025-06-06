@@ -7,7 +7,8 @@ export interface ModelDef {
   // dsKey?: string
 }
 
-const models = {
+const defineModels = <T extends Record<string, ModelDef>>(models: T) => models
+const models = defineModels({
   "cifar-10": {
     key: "cifar-10",
     path: "/models/cifar-10/model.json",
@@ -24,7 +25,7 @@ const models = {
     version: new Date("2025-06-02"),
   },
   "fashion-mnist": {
-    key: "fashon-mnist",
+    key: "fashion-mnist",
     path: "/models/fashion-mnist/model.json",
     version: new Date("2025-06-02"),
   },
@@ -51,7 +52,7 @@ const models = {
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
-} as const
+})
 
 export type ModelKey = keyof typeof models
 
