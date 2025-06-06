@@ -243,7 +243,7 @@ function drawImageSampleToCanvas(
         inputDims as ImgShape,
         "int32"
       ) as tf.Tensor3D
-      tf.browser.toPixels(img, canvas)
+      tf.browser.draw(img, canvas)
     })
   } catch (e) {
     console.warn(e)
