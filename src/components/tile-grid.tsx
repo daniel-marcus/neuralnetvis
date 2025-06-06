@@ -15,6 +15,7 @@ import { useLast } from "@/utils/helpers"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
 import type { DatasetDef } from "@/data"
+import { useIsScreen } from "@/utils/screen"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -30,6 +31,7 @@ export interface TileDef {
   initialState?: InitialState
   shouldLoadFullDs?: boolean
   isLargeModel?: boolean // don't expand hidden layers by default
+  targetDevice?: DatasetDef["targetDevice"]
 }
 
 const tiles: TileDef[] = [
@@ -47,6 +49,7 @@ const tiles: TileDef[] = [
     dsKey: dsDef.key,
     disabled: dsDef.disabled,
     isLargeModel: dsDef.model?.lazyLoadWeights,
+    targetDevice: dsDef.targetDevice,
   })),
 ]
 
@@ -64,6 +67,7 @@ export const TileGrid = () => {
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   const is404 = useIs404()
+  const isDesktop = useIsScreen("md") // TODO: better check for device capabilities?
   if (is404) return null
   return (
     <div
@@ -86,6 +90,13 @@ export const TileGrid = () => {
         >
           {tiles // [...tiles, ...tiles, ...tiles]
             .filter(({ disabled }) => !disabled || isDebug)
+            .filter(({ targetDevice }) =>
+              targetDevice
+                ? isDesktop
+                  ? targetDevice === "desktop"
+                  : targetDevice === "mobile"
+                : true
+            )
             .map((tileProps, i) => {
               const isActive = tileProps.path === active
               const wasLastActive = tileProps.path === lastActive

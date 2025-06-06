@@ -28,6 +28,7 @@ export interface DatasetMeta {
   externalSamples?: ExternalSample[] // test models with external images
   isModelDs?: boolean // tile gets "model" tag instead of "dataset"
   sampleViewer?: boolean // show sample viewer instead of sample slider
+  targetDevice?: "desktop" | "mobile" // to load smaller model versions on mobile
 }
 
 interface ExternalSample {

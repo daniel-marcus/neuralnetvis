@@ -44,10 +44,18 @@ const models = defineModels({
     path: "/models/hand-pose/model.json",
     version: new Date("2025-06-02"),
   },
-  "mobilenet-v2": {
-    key: "mobilenet-v2",
-    path: "/models/mobilenet-v2/model.json",
-    version: new Date("2025-06-04"),
+  "mobilenet-v2-96": {
+    key: "mobilenet-v2-96",
+    path: "/models/mobilenet-v2/mobilenetv2_1.00_96.json",
+    version: new Date("2025-06-06"),
+    sourceUrl:
+      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
+    lazyLoadWeights: true,
+  },
+  "mobilenet-v2-224": {
+    key: "mobilenet-v2-224",
+    path: "/models/mobilenet-v2/mobilenetv2_1.00_224.json",
+    version: new Date("2025-06-06"),
     sourceUrl:
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,

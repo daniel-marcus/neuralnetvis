@@ -77,13 +77,14 @@ function LayerScaler(props: LayerScalerProps) {
   const isExcluded = useIsExcluded(props)
   const invisible = isExcluded || (isFlatView && !isFocussed) || visibleIdx < 0
   const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
-  const isLargeInput = props.layerPos === "input" && props.numNeurons > 100000
+  const isLargeInput =
+    props.layerPos === "input" && props.numNeurons >= 96 * 96 * 3
   const scale = invisible
     ? 0.0001
     : hasFocussed && !isFocussed
     ? 0.2
     : isLargeInput && !showHiddenLayers
-    ? 0.5
+    ? (1 / Math.sqrt(props.numNeurons / 3)) * 96 // scale down large input layers
     : 1
   const duration =
     isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
@@ -109,9 +110,10 @@ function LodComp(props: LodCompProps) {
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
-  const alwaysInstanced = !hasChannels // || props.numNeurons <= 3072
-  const alwaysTextured =
-    !alwaysInstanced && props.numNeurons > (isScreenSm ? 50000 : 30000) // large layers: prefer less expensive TexturedLayer, especially on mobile
+  const alwaysInstanced = !hasChannels || props.numNeurons <= 3072
+  const alwaysTextured = isScreenSm
+    ? !alwaysInstanced && props.numNeurons > 50000 // large layers: prefer less expensive TexturedLayer
+    : !alwaysInstanced // mobile: use mainly TexturedLayer and avoid duplicate layers
   const showInstanced =
     alwaysInstanced ||
     (!alwaysTextured &&
