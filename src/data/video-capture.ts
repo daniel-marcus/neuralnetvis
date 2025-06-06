@@ -28,7 +28,7 @@ export function useCaptureLoop(
       if (!isTraning && videoRef.current) {
         const X = await predict(videoRef.current)
         const y = typeof recY.current === "number" ? recY.current : undefined
-        if (X) setSample({ X, y, index: Date.now() })
+        if (X) setSample({ X, y, index: Date.now() }, true)
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }

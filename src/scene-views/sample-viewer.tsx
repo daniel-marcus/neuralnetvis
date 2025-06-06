@@ -37,16 +37,20 @@ export function SampleViewer() {
   const hasBlur = !!useMaskMode()
   useKeyboardNavigation(idxs, itemsPerPage, setOffset)
 
+  const camAspectRatio = useCurrScene((s) => s.getAspectRatio())
+  const aspectRatio = ds?.camProps ? camAspectRatio : 1
+
   if (!samples.length) return null
   return (
     <div
-      className={`-my-4 _py-4! bg-gradient-to-b from-transparent _via-[1rem] ${
+      className={`py-4! bg-gradient-to-b from-transparent _via-[1rem] ${
         hasBlur ? "_via-black to-black" : "_via-background to-background"
       } transition-colors duration-300 w-screen bottom-0 right-0 [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
+      style={{ "--item-aspect-ratio": aspectRatio } as React.CSSProperties}
     >
       <div className={`flex justify-center items-start`}>
         <div
-          className={`flex items-start justify-start gap-2 overflow-auto no-scrollbar px-4 mx-auto  pointer-events-auto`}
+          className={`flex items-center justify-start gap-2 overflow-auto no-scrollbar px-4 mx-auto  pointer-events-auto`}
         >
           <VideoCaptureBtn />
           <AddSampleBtn />
@@ -81,9 +85,9 @@ function VideoCaptureBtn() {
   // TODO: styles as reusable component
   return (
     <button
-      className={`flex-none border-2 w-[var(--item-size)] aspect-square rounded-md hover:border-marker ${
+      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker ${
         !!stream ? "border-accent" : ""
-      }`}
+      } aspect-[var(--item-aspect-ratio)]`}
       onClick={toggleStream}
     >
       {stream ? cameraOffSvg : cameraSvg}
@@ -99,7 +103,7 @@ function AddSampleBtn() {
   // - add to dataset?
   return (
     <button
-      className={`flex-none border-2 w-[var(--item-size)] aspect-square rounded-md hover:border-marker `}
+      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker  aspect-[var(--item-aspect-ratio)]`}
       onClick={onClick}
     >
       +
@@ -156,12 +160,14 @@ function Pagination({
   const totalPages = Math.ceil(total / itemsPerPage)
   const isFirstPage = page === 0
   const isLastPage = page === totalPages - 1 || totalPages === 0
+  if (totalPages <= 1) return null
+  // TODO: replace paginaton with infinite scroll w/ autoload
   return (
     <div
       className={`w-full max-w-[380px] mx-auto flex justify-between items-center mt-2 pointer-events-auto`}
     >
       <button
-        className={`px-4 py-2 ${isFirstPage ? "opacity-0" : ""}`}
+        className={`px-4 py-0 ${isFirstPage ? "opacity-0" : ""}`}
         disabled={page === 0}
         onClick={() => setPage(Math.max(page - 1, 0))}
       >
@@ -171,7 +177,7 @@ function Pagination({
         {page + 1}/{totalPages}
       </div>
       <button
-        className={`px-4 py-2  ${isLastPage ? "opacity-0" : ""}`}
+        className={`px-4 py-0  ${isLastPage ? "opacity-0" : ""}`}
         disabled={isLastPage}
         onClick={() => setPage(Math.min(page + 1, totalPages - 1))}
       >
