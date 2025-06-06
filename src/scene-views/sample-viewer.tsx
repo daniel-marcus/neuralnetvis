@@ -43,8 +43,8 @@ export function SampleViewer() {
   if (!samples.length) return null
   return (
     <div
-      className={`py-4! bg-gradient-to-b from-transparent _via-[1rem] ${
-        hasBlur ? "_via-black to-black" : "_via-background to-background"
+      className={`-mb-4! pt-4 pb-8 bg-gradient-to-b from-transparent ${
+        hasBlur ? "via-[1rem] via-black to-black" : "to-background"
       } transition-colors duration-300 w-screen bottom-0 right-0 [--item-size:70px] sm:[--item-size:80px] pointer-events-none`}
       style={{ "--item-aspect-ratio": aspectRatio } as React.CSSProperties}
     >
