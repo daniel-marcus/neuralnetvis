@@ -14,7 +14,7 @@ import { SceneOverlay } from "./overlay"
 import { SceneTitle } from "./title"
 import { SampleSlider } from "./sample-slider"
 
-import { SceneButtons } from "./scene-buttons"
+import { LoadWeightsButton, SceneButtons } from "./scene-buttons"
 import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
 import { neuronStatusPortal, sampleViewerPortal } from "@/components/status-bar"
@@ -66,6 +66,7 @@ function SceneViewerInner(props: SceneViewerProps) {
             section={section}
             ds={ds ?? dsDef}
           />
+          <LoadWeightsButton />
           {section === "play" && isActive && (
             <SceneButtons isLarge={isLargeModel} />
           )}

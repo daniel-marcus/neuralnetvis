@@ -14,9 +14,10 @@ export function useLayers() {
   const ds = useSceneStore((s) => s.ds)
   const setAllLayers = useSceneStore((s) => s.setAllLayers)
   const modelLoadState = useSceneStore((s) => s.modelLoadState)
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
   const layers = useMemo(() => {
     if (!model) return []
-    const visibleIdxMap = getVisibleIdxMap(model)
+    const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
@@ -74,7 +75,7 @@ export function useLayers() {
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
     return newLayers
-  }, [model, ds, modelLoadState])
+  }, [model, ds, modelLoadState, showHiddenLayers])
   useEffect(() => {
     setAllLayers(layers)
   }, [layers, setAllLayers])
@@ -96,15 +97,16 @@ type Buffers = {
   actBuffer: THREE.StorageBufferAttribute
 }
 
-// const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
+// TODO: implement buffer disposal
+const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
 
 function getBuffers(lid: NeuronLayer["lid"], units: number): Buffers {
-  // if (bufferCache.has(lid)) return bufferCache.get(lid)!
+  if (bufferCache.has(lid)) return bufferCache.get(lid)!
   const activations = new Float32Array(units)
   const actBuffer = new THREE.StorageBufferAttribute(activations, 1)
   actBuffer.name = lid
   const buffers = { activations, actBuffer }
-  // bufferCache.set(lid, buffers)
+  bufferCache.set(lid, buffers)
   return buffers
 }
 
@@ -128,11 +130,12 @@ export function isVisible(layer: Layer) {
   return !layerDef?.isInvisible
 }
 
-const getVisibleIdxMap = (model: tf.LayersModel) => {
-  return model.layers.reduce(
-    (map, layer, i) => (isVisible(layer) ? map.set(i, map.size) : map),
-    new Map<number, number>()
-  )
+const getVisibleIdxMap = (model: tf.LayersModel, showHiddenLayers: boolean) => {
+  return model.layers.reduce((map, layer, i) => {
+    const layerPos = getLayerPos(i, model)
+    if (!showHiddenLayers && layerPos === "hidden") return map
+    return isVisible(layer) ? map.set(i, map.size) : map
+  }, new Map<number, number>())
 }
 
 export function getUnits(layer: Layer) {

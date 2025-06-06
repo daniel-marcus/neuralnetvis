@@ -3,9 +3,10 @@ import { centerCropResize } from "@/data/utils"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
-type MobileNetRes = 96 | 224
+type MobileNetRes = 96 | 224 // 128 |
 
 export const mobileNetV2_96 = getMobileNet(96, "mobile")
+// export const mobileNetV2_128 = getMobileNet(128, "mobile")
 export const mobileNetV2_224 = getMobileNet(224, "desktop")
 
 function getMobileNet(

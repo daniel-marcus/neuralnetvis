@@ -44,6 +44,7 @@ const tiles: TileDef[] = [
   ...datasets.map((dsDef) => ({
     path: getDsPath(dsDef),
     title: dsDef.name,
+    isFeatured: dsDef.isFeatured,
     tags: getTags(dsDef),
     section: "play" as const,
     dsKey: dsDef.key,
@@ -145,9 +146,10 @@ function Tile(props: TileProps) {
   }, [])
 
   const router = useRouter()
-  const bind = useDrag(({ tap }) => {
+  const bind = useDrag(({ tap, event }) => {
     // allows touch scroll + drag rotate for scene + tap to expand
     if (tap && !isActive) {
+      if (event.target instanceof HTMLButtonElement) return
       setOffsetFromWrapper()
       useGlobalStore.setState({ scrollPos: window.scrollY })
       router.push(props.path, { scroll: true })

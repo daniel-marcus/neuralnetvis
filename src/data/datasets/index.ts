@@ -10,12 +10,12 @@ import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
   fashionMnist,
-  handPose,
-  mnist,
-  californiaHousing,
-  cifar10,
-  autoMpg,
-  cifar100,
   mobileNetV2_96,
   mobileNetV2_224,
+  handPose,
+  californiaHousing,
+  cifar10,
+  mnist,
+  cifar100,
+  autoMpg,
 ] as const

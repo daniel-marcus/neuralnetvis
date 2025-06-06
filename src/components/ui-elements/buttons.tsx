@@ -1,10 +1,10 @@
 import Link from "next/link"
-import type { ReactNode } from "react"
+import type { MouseEventHandler, ReactNode } from "react"
 
 interface ButtonProps {
   href?: string
   children: React.ReactNode
-  onClick?: () => void
+  onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
   disabled?: boolean
   type?: "submit"
   variant?: "primary" | "secondary" | "transparent"

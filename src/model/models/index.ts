@@ -52,6 +52,14 @@ const models = defineModels({
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
+  /* "mobilenet-v2-128": {
+    key: "mobilenet-v2-128",
+    path: "/models/mobilenet-v2/mobilenetv2_1.00_128.json",
+    version: new Date("2025-06-06"),
+    sourceUrl:
+      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
+    lazyLoadWeights: true,
+  }, */
   "mobilenet-v2-224": {
     key: "mobilenet-v2-224",
     path: "/models/mobilenet-v2/mobilenetv2_1.00_224.json",

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
@@ -11,8 +11,7 @@ import { useIsPlayMode } from "@/components/tab-menu"
 import type { Pos } from "./utils"
 
 export const Model = () => {
-  const layers = useLayers()
-  const visibleLayers = useVisibleLayers(layers)
+  const visibleLayers = useLayers()
   useCameraShifter(visibleLayers)
   return (
     <>
@@ -25,19 +24,6 @@ export const Model = () => {
       <HoverComponents />
     </>
   )
-}
-
-function useVisibleLayers(allLayers: NeuronLayer[]) {
-  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
-  const visibleLayers = useSceneStore((s) => s.visibleLayers)
-  const setVisibleLayers = useSceneStore((s) => s.setVisibleLayers)
-  useLayoutEffect(() => {
-    const visibleLayers = showHiddenLayers
-      ? allLayers
-      : allLayers.filter((l) => l.layerPos !== "hidden")
-    setVisibleLayers(visibleLayers)
-  }, [allLayers, showHiddenLayers, setVisibleLayers])
-  return visibleLayers
 }
 
 const cameraDir = new THREE.Vector3(-23, 0, 35).normalize()

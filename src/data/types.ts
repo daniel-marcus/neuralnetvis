@@ -13,6 +13,7 @@ export interface DatasetMeta {
   description: string
   version: Date
   disabled?: boolean
+  isFeatured?: boolean
   aboutUrl: string
   inputDims: number[]
   inputLabels?: string[]

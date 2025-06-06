@@ -11,7 +11,7 @@ import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 export const LayerWheel = () => {
   const model = useSceneStore((s) => s.model)
   const modelLayers = useMemo(() => model?.layers ?? [], [model])
-  const visibleLayers = useSceneStore((s) => s.visibleLayers)
+  const visibleLayers = useSceneStore((s) => s.allLayers)
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   const isGraphView = useSceneStore((s) => s.view === "graph")

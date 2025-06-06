@@ -9,7 +9,6 @@ export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
     <div
       className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
     >
-      <LoadWeightsButton />
       <LoadFullDsButton />
       <ViewSelect />
       <ViewSubsetSelect />
@@ -47,7 +46,7 @@ function ToggleHiddenLayersButton() {
   )
 }
 
-function LoadWeightsButton() {
+export function LoadWeightsButton() {
   const ds = useSceneStore((s) => s.ds)
   const shouldLoadWeights = useSceneStore((s) => s.shouldLoadWeights)
   const loadState = useSceneStore((s) => s.modelLoadState)
@@ -56,15 +55,18 @@ function LoadWeightsButton() {
   const isPreview = ds.model.lazyLoadWeights && loadState === "no-weights"
   if (!isPreview || shouldLoadWeights) return null
   return (
-    <>
+    <div className="flex gap-2">
       <span className="text-accent">PREVIEW</span>
       <Button
-        onClick={() => setLoadWeights(true)}
+        onClick={(e) => {
+          e.stopPropagation()
+          setLoadWeights(true)
+        }}
         className="pointer-events-auto"
       >
         load model weights
       </Button>
-    </>
+    </div>
   )
 }
 
