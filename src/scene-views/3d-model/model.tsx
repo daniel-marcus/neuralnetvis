@@ -18,7 +18,7 @@ export const Model = () => {
     <>
       <ActivationUpdater layers={visibleLayers} />
       <ModelShifter visibleLayers={visibleLayers}>
-        {layers.map((l) => (
+        {visibleLayers.map((l) => (
           <Layer key={l.lid} {...l} visibleLayers={visibleLayers} />
         ))}
       </ModelShifter>
