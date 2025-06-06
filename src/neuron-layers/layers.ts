@@ -13,6 +13,7 @@ export function useLayers() {
   const model = useSceneStore((s) => s.model)
   const ds = useSceneStore((s) => s.ds)
   const setAllLayers = useSceneStore((s) => s.setAllLayers)
+  const modelLoadState = useSceneStore((s) => s.modelLoadState)
   const layers = useMemo(() => {
     if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model)
@@ -43,7 +44,7 @@ export function useLayers() {
           createRef<InstancedMesh>()
         )
 
-        const lid = `${model.name}_${tfLayer.name}_${units}`
+        const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
         const { activations, actBuffer } = getBuffers(lid, units)
 
         const channels = hasColorChannels ? 3 : 1
@@ -73,7 +74,7 @@ export function useLayers() {
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
     return newLayers
-  }, [model, ds])
+  }, [model, ds, modelLoadState])
   useEffect(() => {
     setAllLayers(layers)
   }, [layers, setAllLayers])
@@ -94,14 +95,16 @@ type Buffers = {
   activations: Float32Array
   actBuffer: THREE.StorageBufferAttribute
 }
-const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
+
+// const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
 
 function getBuffers(lid: NeuronLayer["lid"], units: number): Buffers {
-  if (bufferCache.has(lid)) return bufferCache.get(lid)!
+  // if (bufferCache.has(lid)) return bufferCache.get(lid)!
   const activations = new Float32Array(units)
   const actBuffer = new THREE.StorageBufferAttribute(activations, 1)
+  actBuffer.name = lid
   const buffers = { activations, actBuffer }
-  bufferCache.set(lid, buffers)
+  // bufferCache.set(lid, buffers)
   return buffers
 }
 
