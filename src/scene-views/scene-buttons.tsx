@@ -1,4 +1,5 @@
-import { useHasFocussed, useSceneStore } from "@/store"
+import { useCallback, useEffect, useState, useTransition } from "react"
+import { clearStatus, setStatus, useHasFocussed, useSceneStore } from "@/store"
 import { Button, Select } from "@/components/ui-elements"
 import type { Dataset } from "@/data"
 import type { View } from "@/store/view"
@@ -20,12 +21,27 @@ export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
 
 function ToggleHiddenLayersButton() {
   const showHidden = useSceneStore((s) => s.vis.showHiddenLayers)
-  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+  const _toggleHidden = useSceneStore((s) => s.vis.toggleShowHiddenLayers)
+  const [statusId, setStatusId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const toggle = useCallback(() => {
+    const text = showHidden ? "" : "Loading hidden layers ..."
+    const newStatusId = setStatus(text, -1)
+    setStatusId(newStatusId)
+  }, [showHidden])
+  useEffect(() => {
+    if (!statusId) return
+    startTransition(() => _toggleHidden())
+  }, [statusId, _toggleHidden])
+  useEffect(() => {
+    if (!isPending || !statusId) return
+    return () => {
+      setStatusId(null)
+      clearStatus(statusId)
+    }
+  }, [isPending, statusId])
   return (
-    <Button
-      variant="secondary"
-      onClick={() => setVisConfig({ showHiddenLayers: !showHidden })}
-    >
+    <Button variant="secondary" onClick={toggle}>
       {showHidden ? "hide" : "show"} hidden
     </Button>
   )

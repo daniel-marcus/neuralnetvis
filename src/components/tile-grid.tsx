@@ -90,8 +90,8 @@ export const TileGrid = () => {
         >
           {tiles // [...tiles, ...tiles, ...tiles]
             .filter(({ disabled }) => !disabled || isDebug)
-            .filter(({ targetDevice }) =>
-              targetDevice
+            .filter(({ targetDevice, path }) =>
+              targetDevice && path !== active
                 ? isDesktop
                   ? targetDevice === "desktop"
                   : targetDevice === "mobile"

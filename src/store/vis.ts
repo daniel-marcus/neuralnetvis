@@ -44,6 +44,7 @@ export interface VisConfig {
 interface VisActions {
   setConfig: (newConfig: Partial<VisConfig>) => void
   getConfig: <T extends keyof VisConfig>(key: T) => VisConfig[T]
+  toggleShowHiddenLayers: () => void
   toggleLayerVisibility: (layerName: string) => void
   getDefault: <T extends keyof VisConfig>(key: T) => VisConfig[T]
   reset: <T extends keyof VisConfig>(key: T) => void
@@ -74,6 +75,10 @@ export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
     setConfig: (newConfig) =>
       set(({ vis }) => ({ vis: { ...vis, ...newConfig } })),
     getConfig: (key) => get().vis[key],
+    toggleShowHiddenLayers: () =>
+      set(({ vis }) => ({
+        vis: { ...vis, showHiddenLayers: !vis.showHiddenLayers },
+      })),
     toggleLayerVisibility: (layerName) =>
       set(({ vis }) => ({
         vis: {
