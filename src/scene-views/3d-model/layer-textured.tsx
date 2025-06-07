@@ -9,7 +9,6 @@ const CELL_GAP = 1 // texture pixel between cells
 
 export interface UserDataTextured {
   activations: THREE.StorageBufferAttribute
-  mapTexture: THREE.DataTexture
   actTexture: THREE.DataTexture // for WebGL fallback
 }
 
@@ -52,6 +51,8 @@ function useActivationTexture(layer: TexturedLayerProps) {
     const texWidth = gridCols * width + (gridCols - 1) * CELL_GAP
     const texHeight = gridRows * height + (gridRows - 1) * CELL_GAP
 
+    // TODO: create only if not isWebGPUBackend
+
     // use -999.0 as marker for empty (transparent) pixels
     const data = new Float32Array(texWidth * texHeight * 4).fill(-999.0)
 
@@ -67,8 +68,9 @@ function useActivationTexture(layer: TexturedLayerProps) {
   }, [height, width, channels])
 
   const material = useMemo(
-    () => getTextureMaterial(hasColorChannels, channelIdx),
-    [hasColorChannels, channelIdx]
+    () =>
+      getTextureMaterial(hasColorChannels, channelIdx, height, width, channels),
+    [hasColorChannels, channelIdx, height, width, channels]
   )
   useEffect(() => {
     return () => {
@@ -77,7 +79,8 @@ function useActivationTexture(layer: TexturedLayerProps) {
   }, [material])
 
   const pixelMap = useMemo(() => {
-    // map every activation index to the corresponding offset in the texture buffer
+    // TODO: create only if not isWebGPUBackend
+    // for WebGL fallback: map every activation index to the corresponding offset in the texture buffer
     const map = new Uint32Array(width * height * channels)
 
     const gridCols = Math.ceil(Math.sqrt(channels))
@@ -105,24 +108,12 @@ function useActivationTexture(layer: TexturedLayerProps) {
     return map
   }, [width, height, channels, texture.image.width])
 
-  const mapTexture = useMemo(() => {
-    // reverse of pixelMap: maps texture pixel to activation index
-    const mapTexture = texture.clone()
-    const data = mapTexture.image.data as Float32Array
-    pixelMap.forEach((texIdx, activationIdx) => {
-      data[texIdx] = activationIdx
-    })
-    return mapTexture
-  }, [texture, pixelMap])
-
   const userData: UserDataTextured = useMemo(
     () => ({
       activations: layer.activationsBuffer,
-      mapTexture,
-      actBuf: new THREE.BufferAttribute(layer.activations, 1),
       actTexture: texture,
     }),
-    [layer.activations, layer.activationsBuffer, mapTexture, texture]
+    [layer.activationsBuffer, texture]
   )
 
   const layerActivations = useLayerActivations(layer.index)
