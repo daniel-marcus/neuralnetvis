@@ -243,7 +243,8 @@ function drawImageSampleToCanvas(
         inputDims as ImgShape,
         "int32"
       ) as tf.Tensor3D
-      tf.browser.draw(img, canvas)
+      // tf.browser.draw(img, canvas) // better with webgpu backend, but not supported in wasm backend
+      tf.browser.toPixels(img, canvas)
     })
   } catch (e) {
     console.warn(e)
