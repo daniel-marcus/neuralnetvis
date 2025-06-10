@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu"
 import { useNeuronSpacing } from "./layer-instanced"
 import { getTextureMaterial } from "./materials"
 import { useLayerActivations } from "@/model/activations"
+import { useIsWebGPU } from "@/utils/webgpu"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
@@ -44,6 +45,8 @@ function useActivationTexture(layer: TexturedLayerProps) {
 
   const channels = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
 
+  const isWebGPU = useIsWebGPU()
+
   const texture = useMemo(() => {
     const gridCols = Math.ceil(Math.sqrt(channels))
     const gridRows = Math.ceil(channels / gridCols)
@@ -51,10 +54,9 @@ function useActivationTexture(layer: TexturedLayerProps) {
     const texWidth = gridCols * width + (gridCols - 1) * CELL_GAP
     const texHeight = gridRows * height + (gridRows - 1) * CELL_GAP
 
-    // TODO: create only if not isWebGPUBackend
-
-    // use -999.0 as marker for empty (transparent) pixels
-    const data = new Float32Array(texWidth * texHeight * 4).fill(-999.0)
+    const data = isWebGPU
+      ? null // in webgpu we do everything in the shader, so data will be null here
+      : new Float32Array(texWidth * texHeight * 4).fill(-999.0) // use -999.0 as marker for empty (transparent) pixels
 
     const texture = new THREE.DataTexture(
       data,
@@ -65,7 +67,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
     )
     // texture.colorSpace = THREE.SRGBColorSpace
     return texture
-  }, [height, width, channels])
+  }, [height, width, channels, isWebGPU])
 
   const material = useMemo(
     () =>
@@ -79,7 +81,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
   }, [material])
 
   const pixelMap = useMemo(() => {
-    // TODO: create only if not isWebGPUBackend
+    if (isWebGPU) return null
     // for WebGL fallback: map every activation index to the corresponding offset in the texture buffer
     const map = new Uint32Array(width * height * channels)
 
@@ -106,7 +108,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
       }
     }
     return map
-  }, [width, height, channels, texture.image.width])
+  }, [width, height, channels, texture.image.width, isWebGPU])
 
   const userData: UserDataTextured = useMemo(
     () => ({
@@ -119,8 +121,9 @@ function useActivationTexture(layer: TexturedLayerProps) {
   const layerActivations = useLayerActivations(layer.index)
   useEffect(() => {
     // WebGL fallback: update texture on CPU
+    const data = texture.image.data as Float32Array | null
     const _act = layerActivations?.normalizedActivations
-    if (!_act) return
+    if (!_act || !data || !pixelMap) return // no data or pixel map in WebGPU
 
     let act = _act
     if (hasColorChannels) {
@@ -130,7 +133,6 @@ function useActivationTexture(layer: TexturedLayerProps) {
       act = new Float32Array(_act.buffer, offset * 4, channelUnits)
     }
 
-    const data = texture.image.data as Float32Array
     for (let i = 0; i < act.length; i++) {
       data[pixelMap[i]] = act[i]
     }

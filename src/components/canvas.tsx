@@ -36,6 +36,7 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
             const renderer = new THREE.WebGPURenderer({
               ...(renderProps as WebGPURendererParameters),
               device: gpuDevice ? gpuDevice : undefined,
+              logarithmicDepthBuffer: true,
               // forceWebGL: true,
             })
             await renderer.init()

@@ -1,7 +1,7 @@
 import { createRef, useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
-import { useSceneStore } from "@/store"
+import { isDebug, useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
 import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three/webgpu"
@@ -74,6 +74,10 @@ export function useLayers() {
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
+    if (isDebug()) {
+      const totalNeurons = newLayers.reduce((acc, l) => acc + l.numNeurons, 0)
+      console.log({ model: model.name, totalNeurons })
+    }
     return newLayers
   }, [model, ds, modelLoadState, showHiddenLayers])
   useEffect(() => {
