@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
-import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
 import { ActivationStats, useActivationStats } from "./activation-stats"
-import { isWebGPUBackend } from "@/utils/webgpu"
+import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
 import { normalize, scaleNormalize } from "@/data/utils"
+import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 import type { UserData } from "@/scene-views/3d-model/layer-instanced"
@@ -20,7 +20,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const setActivations = useSceneStore((s) => s.setActivations)
   const focusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
-  const renderer = useThree((s) => s.gl as unknown as THREE.WebGPURenderer)
+  const backend = useBackend()
   const hasRendered = useSceneStore((s) => s.hasRendered)
   const isRegression = useSceneStore((s) => s.isRegression())
 
@@ -51,7 +51,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
         if (latestSampleIdx.current !== sample.index) return // abort if sample changed already
         const layersBatch = layersToUpdate.slice(i, i + LAYERS_PER_BATCH)
         const newActivations = await getActivations(
-          renderer,
+          backend,
           model,
           layersBatch,
           sample,
@@ -70,7 +70,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [renderer, model, layers, invalidate, setActivations, isRegression, stats]
+    [backend, model, layers, invalidate, setActivations, isRegression, stats]
   )
 
   // reset update tracker when model changes
@@ -105,7 +105,7 @@ export function useActivation(layerIdx: number, neuronIdx: number) {
 }
 
 async function getActivations(
-  renderer: THREE.WebGPURenderer,
+  backend: Backend,
   model: tf.LayersModel,
   layers: NeuronLayer[],
   sample: Sample,
@@ -127,7 +127,6 @@ async function getActivations(
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
-    const backend = renderer.backend
     for (const [i, layer] of layers.entries()) {
       if (!activationTensors?.[i]) continue
       const actTensor = activationTensors[i] as tf.Tensor

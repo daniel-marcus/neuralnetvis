@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
+import throttle from "lodash.throttle"
 import { useGPUDevice } from "@/utils/webgpu"
 import { View, type RootState } from "@/scene-views/3d-model/view"
 import { useHasActiveTile } from "./tile-grid"
@@ -55,7 +56,7 @@ function OnScrollUpdate({ sync }: { sync?: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
     // with frameloop="demand" we need to manually invalidate the scene on scroll
-    const onScroll = () => invalidate()
+    const onScroll = throttle(() => invalidate(), 30, { leading: true })
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
   }, [invalidate])

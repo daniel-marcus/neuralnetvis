@@ -1,9 +1,9 @@
 import { useEffect } from "react"
-import * as THREE from "three/webgpu"
 import * as tf from "@tensorflow/tfjs"
+import * as THREE from "three/webgpu"
+import { useThree } from "@react-three/fiber"
 import { useGlobalStore } from "@/store"
 import type Backend from "three/src/renderers/common/Backend.js"
-import { useThree } from "@react-three/fiber"
 
 export function useGPUDevice() {
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
