@@ -26,6 +26,15 @@ type CanvasSize = {
   width: number
 }
 
+type DOMPosition = {
+  width: number
+  height: number
+  top: number
+  left: number
+  bottom: number
+  right: number
+}
+
 export type ContainerProps = {
   visible: boolean
   scene: THREE.Scene
@@ -95,23 +104,12 @@ function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
 
 function prepareSkissor(
   state: RootState,
-  {
-    left,
-    // bottom,
-    top,
-    width,
-    height,
-  }: {
-    width: number
-    height: number
-    top: number
-    left: number
-    bottom: number
-    right: number
-  },
+  pos: DOMPosition,
   canvasSize: CanvasSize
 ) {
-  const aspect = width / height
+  const { left, top, width, height } = pos
+  // const aspect = width / height
+  const aspect = canvasSize.width / canvasSize.height
   if (isOrthographicCamera(state.camera)) {
     if (!state.camera.manual) {
       if (
@@ -135,26 +133,66 @@ function prepareSkissor(
     state.camera.aspect = aspect
     state.camera.updateProjectionMatrix()
   }
+
   const autoClear = state.gl.autoClear
   state.gl.autoClear = false
-  // changed bottom -> top
-  state.gl.setViewport(left, top, width, height)
-  // scissor: values are clamped to the canvas size, otherwise WebGPU will throw an error
-  const scissorTop = Math.max(0, top)
-  const scissorHeight = Math.max(
-    0,
-    Math.min(height, canvasSize.height - Math.abs(top) - 1)
+
+  state.gl.setViewport(0, 0, canvasSize.width, canvasSize.height)
+  state.camera.setViewOffset(
+    width,
+    height,
+    -left,
+    -top,
+    canvasSize.width,
+    canvasSize.height
   )
-  const scissorLeft = Math.max(0, left)
-  const scissorWidth = Math.max(
+
+  const cl = getClampedPos(pos, canvasSize)
+  if (cl.height) {
+    state.gl.setScissor(cl.left, cl.top, cl.width, cl.height)
+    state.gl.setScissorTest(true)
+  }
+
+  return autoClear
+}
+
+function getClampedPos(pos: DOMPosition, canvasSize: CanvasSize): DOMPosition {
+  // scissor: values should be clamped to the canvas size, otherwise WebGPU will throw an error
+  const { top, left, width, height, bottom, right } = pos
+
+  const clampedTop = Math.max(0, top)
+  const clampedHeight =
+    top < 0
+      ? Math.max(height + top, 0)
+      : Math.max(Math.min(height, canvasSize.height - Math.abs(top) - 1), 0)
+  const clampedLeft = Math.max(0, left)
+  const clampedWidth = Math.max(
     0,
     Math.min(width, canvasSize.width - Math.abs(left) - 1)
   )
-  if (scissorHeight && scissorWidth) {
-    state.gl.setScissor(scissorLeft, scissorTop, scissorWidth, scissorHeight)
-    state.gl.setScissorTest(true)
+
+  return {
+    top: clampedTop,
+    left: clampedLeft,
+    width: clampedWidth,
+    height: clampedHeight,
+    bottom,
+    right,
   }
-  return autoClear
+}
+
+function clearArea(
+  state: RootState,
+  prevPos: DOMPosition,
+  canvasSize: CanvasSize
+) {
+  // Clear the area of the previous viewport
+  const { left, top, width, height } = getClampedPos(prevPos, canvasSize)
+  if (height) {
+    state.gl.setScissor(left, top, width, height)
+    state.gl.setScissorTest(true)
+    clear(state)
+  }
 }
 
 function finishSkissor(state: RootState, autoClear: boolean) {
@@ -185,8 +223,10 @@ function Container({
   const [isOffscreen, setOffscreen] = React.useState(false)
   let frameCount = 0
   const hasRendered = React.useRef(false)
+  const prevPos = React.useRef<DOMPosition | null>(null)
   useFrame((_state) => {
     const state = _state as unknown as RootState
+    const autoClear = state.gl.autoClear
     if (frames === Infinity || frameCount <= frames) {
       if (track) rect.current = track.current?.getBoundingClientRect()
       frameCount++
@@ -199,8 +239,12 @@ function Container({
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
       if (visible && !_isOffscreen && rect.current) {
         // console.log("rendering", index)
-        const autoClear = prepareSkissor(state, position, canvasSize)
-        clear(state) // added for WebGPURenderer
+        if (prevPos.current) {
+          // with WebGPU we need to clear the previous position
+          clearArea(state, prevPos.current, canvasSize)
+        }
+        prepareSkissor(state, position, canvasSize)
+        prevPos.current = position
 
         // When children are present render the portalled scene, otherwise the default scene
         state.gl.render(children ? state.scene : scene, state.camera)
@@ -209,22 +253,28 @@ function Container({
         const targetCanvas = track?.current as HTMLCanvasElement
         const ctx = targetCanvas?.getContext("2d")
         if (copyCanvas && ctx) {
+          // TODO: find a more performant solution
           const sourceCanvas = state.gl.domElement as HTMLCanvasElement
-          // TODO: setup target canvas in effect?
           const dpr = state.gl.getPixelRatio()
-          targetCanvas.width = position.width * dpr
-          targetCanvas.height = position.height * dpr
-          // ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
+          const viewWidth = Math.round(position.width * dpr)
+          const viewHeight = Math.round(position.height * dpr)
+          if (
+            targetCanvas.width !== viewWidth ||
+            targetCanvas.height !== viewHeight
+          ) {
+            targetCanvas.width = viewWidth
+            targetCanvas.height = viewHeight
+          } else ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
           ctx.drawImage(
             sourceCanvas,
-            position.left * dpr,
-            position.top * dpr,
-            position.width * dpr,
-            position.height * dpr,
+            Math.round(position.left * dpr),
+            Math.round(position.top * dpr),
+            viewWidth,
+            viewHeight,
             0,
             0,
-            position.width * dpr,
-            position.height * dpr
+            viewWidth,
+            viewHeight
           )
         }
 

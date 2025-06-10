@@ -2,7 +2,7 @@
 
 import { useContext, useRef } from "react"
 import * as THREE from "three/webgpu"
-import { useThree } from "@react-three/fiber"
+import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
 import { Model } from "./model"
 import { DebugUtils } from "./debug-utils"
@@ -17,19 +17,20 @@ import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import { View } from "./view"
+import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
 interface CanvasViewProps {
   isActive: boolean
   tileIdx: number
   dsKey?: string
-  copyCanvas?: boolean
+  ownCanvas?: boolean
   initialState?: InitialState
 }
 
 // CanvasRenderTarget might be interesting: https://github.com/mrdoob/three.js/pull/27628
 
 export const CanvasView = (props: CanvasViewProps) => {
-  const { isActive } = props
+  const { isActive, ownCanvas } = props
   const isMapView = useSceneStore((s) => s.view === "map")
   const hasActive = useHasActiveTile()
   const invisible = (hasActive && !isActive) || isMapView
@@ -37,22 +38,44 @@ export const CanvasView = (props: CanvasViewProps) => {
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
   if (typeof gpuDevice === null) return null // not initialized yet
-  return (
-    <View
-      className={`absolute w-full h-full select-none ${
-        // TODO: resize during tile transition
-        isActive ? "" : "touch-pan-y!"
-      } ${invisible ? "pointer-events-none opacity-0" : ""}`}
-      visible={!invisible}
-      index={props.tileIdx + 1} // for debug only
-      copyCanvas={props.copyCanvas}
-      onFirstRender={setHasRendered}
-    >
-      <SceneContext.Provider value={store}>
+  if (!ownCanvas)
+    // only scenes with a map background get their own canvas (for correct stacking context), all others use a View to the MainCanvas
+    return (
+      <View
+        className={`absolute w-full h-full select-none ${
+          isActive ? "" : "touch-pan-y!"
+        } ${invisible ? "pointer-events-none opacity-0" : ""}`}
+        visible={!invisible}
+        index={props.tileIdx + 1} // for debug only
+        // copyCanvas={props.copyCanvas}
+        onFirstRender={setHasRendered}
+      >
+        <SceneContext.Provider value={store}>
+          <CanvasViewInner {...props} />
+        </SceneContext.Provider>
+      </View>
+    )
+  else
+    return (
+      <Canvas
+        frameloop="demand"
+        resize={{ debounce: 0 }}
+        gl={async (renderProps) => {
+          const renderer = new THREE.WebGPURenderer({
+            ...(renderProps as WebGPURendererParameters),
+            device: gpuDevice ? gpuDevice : undefined,
+          })
+          await renderer.init()
+          setHasRendered()
+          return renderer
+        }}
+        className={`w-full h-full ${isActive ? "" : "touch-pan-y!"} ${
+          isMapView ? "pointer-events-none!" : ""
+        } ${isMapView ? "opacity-0" : ""} transition-opacity duration-300`}
+      >
         <CanvasViewInner {...props} />
-      </SceneContext.Provider>
-    </View>
-  )
+      </Canvas>
+    )
 }
 
 /* 

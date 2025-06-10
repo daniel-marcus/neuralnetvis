@@ -40,10 +40,11 @@ function SceneViewerInner(props: SceneViewerProps) {
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
   const sampleViewerIdxs = useSceneStore((s) => s.sampleViewerIdxs)
   const showSampleViewer = isActive && !!sampleViewerIdxs.length
+  const ownCanvas = !!dsDef?.mapProps
   return (
     <div
       className={`flex justify-center items-center w-full h-full ${
-        showMap ? "bg-background" : ""
+        ownCanvas ? "bg-background" : ""
       }`}
       onMouseEnter={!isActive ? () => setIsHovered(true) : undefined}
       onMouseLeave={!isActive ? () => setIsHovered(false) : undefined}
@@ -51,7 +52,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
-      <CanvasView {...props} copyCanvas={showMap} />
+      <CanvasView {...props} ownCanvas={ownCanvas} />
       {section === "play" && isActive && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>

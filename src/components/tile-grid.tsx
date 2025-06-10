@@ -98,6 +98,7 @@ export const TileGrid = () => {
                   : targetDevice === "mobile"
                 : true
             )
+            // .slice(0, 3)
             .map((tileProps, i) => {
               const isActive = tileProps.path === active
               const wasLastActive = tileProps.path === lastActive
