@@ -6,7 +6,7 @@ import { getWorldPos, useSize } from "./utils"
 import { setStatus, clearStatus } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
-// import { HoverConnections } from "./connections"
+import { HoverConnections } from "./connections"
 import { getNid } from "@/neuron-layers/neurons"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
 
@@ -140,6 +140,7 @@ export function HoverComponents() {
   // <HoverConnections hovered={hovered} />
   return (
     <>
+      <HoverConnections hovered={hovered} />
       <Highlighted neuron={selected} thick />
       <Highlighted neuron={hovered} />
     </>

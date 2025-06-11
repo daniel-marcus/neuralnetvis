@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
+import * as THREE from "three/webgpu"
 import { Color, Line, Vector2, Vector3 } from "three/webgpu"
-import {
-  Line2,
-  LineGeometry,
-  LineMaterial,
-  LineSegments2,
-  LineSegmentsGeometry,
-} from "three-stdlib"
+
+import { LineGeometry } from "three/addons/lines/LineGeometry.js"
+import { Line2 } from "three/addons/lines/webgpu/Line2.js"
+import { LineSegments2 } from "three/addons/lines/webgpu/LineSegments2.js"
+import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js"
+
 import { useSceneStore } from "@/store"
 import { getWorldPos, type Pos } from "./utils"
 import type { NeuronLayer, Neuron, NeuronStateful } from "@/neuron-layers/types"
@@ -21,7 +21,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
   // const hoverOrigin = useGlobalStore((s) => s.hoverOrigin)
 
   const line = useMemo(() => new Line2(), [])
-  const material = useMemo(() => new LineMaterial(), [])
+  const material = useMemo(() => new THREE.Line2NodeMaterial(), [])
   const geometry = useMemo(() => new LineSegmentsGeometry(), [])
   const resolution = useMemo(() => new Vector2(512, 512), [])
 
@@ -32,12 +32,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
 
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const length = hovered?.inputNeurons?.length ?? 0
-  const show =
-    length > 0 &&
-    length < MAX_LINES_PER_LAYER &&
-    showLines &&
-    prevLayerIsVisible &&
-    !isFlatView
+  const show = length > 0 && showLines && prevLayerIsVisible && !isFlatView
 
   useEffect(() => {
     // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx
@@ -47,6 +42,8 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
     const toPosition = getWorldPos(hovered)?.toArray() as Pos
     const color = new Color(0xffffff).toArray()
     if (!toPosition) return
+
+    // console.log("UPD", hovered, toPosition)
     const positions = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
     const colors = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
     for (const [i, inputN] of inputNeurons.entries()) {
@@ -69,6 +66,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
     line.geometry.setColors(colors)
     line.geometry.setPositions(positions)
     line.geometry.attributes.position.needsUpdate = true
+    line.material.needsUpdate = true
     line.computeLineDistances()
   }, [hovered, geometry, line, show])
 
@@ -80,9 +78,10 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
         <primitive
           object={material}
           attach="material"
-          vertexColors={true}
-          linewidth={length >= 100 ? 0.1 : 0.5}
+          vertexColors={false}
+          linewidth={0.1} // {length >= 100 ? 0.1 : 0.5}
           resolution={resolution}
+          worldUnits={false}
         />
       </primitive>
     </group>
@@ -171,9 +170,9 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
 
   const material = useMemo(
     () =>
-      new LineMaterial({
+      new THREE.Line2NodeMaterial({
         linewidth: width,
-        resolution: new Vector2(size.width, size.height),
+        // resolution: new Vector2(size.width, size.height),
       }),
     [width, size]
   )
