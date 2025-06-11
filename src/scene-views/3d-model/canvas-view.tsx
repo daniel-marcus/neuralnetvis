@@ -59,56 +59,35 @@ export const CanvasView = (props: CanvasViewProps) => {
     return (
       <Canvas
         frameloop="demand"
-        resize={{ debounce: 0 }}
         gl={async (renderProps) => {
           const renderer = new THREE.WebGPURenderer({
             ...(renderProps as WebGPURendererParameters),
             device: gpuDevice ? gpuDevice : undefined,
-            forceWebGL: true, // TODO: debug buffer losses / canvas recreation
           })
           await renderer.init()
-          setHasRendered()
           return renderer
         }}
-        className={`w-full h-full ${isActive ? "" : "touch-pan-y!"} ${
-          isMapView ? "pointer-events-none!" : ""
-        } ${isMapView ? "opacity-0" : ""} transition-opacity duration-300`}
+        onCreated={setHasRendered}
+        className={`absolute! w-screen! h-screen! ${
+          isActive ? "" : "touch-pan-y!"
+        } ${isMapView ? "pointer-events-none!" : ""} ${
+          isMapView ? "opacity-0" : ""
+        } transition-opacity duration-300`}
       >
         <CanvasViewInner {...props} />
       </Canvas>
     )
 }
 
-/* 
-
-    <Canvas
-      frameloop="demand"
-      gl={async (renderProps) => {
-        const renderer = new THREE.WebGPURenderer({
-          ...(renderProps as WebGPURendererParameters),
-          device: gpuDevice ? gpuDevice : undefined,
-          // forceWebGL: true,
-        })
-        await renderer.init()
-        return renderer
-      }}
-      className={`absolute! w-screen! h-[100vh]! select-none ${
-        isActive ? "" : "touch-pan-y!"
-      } ${(isLocked || isMapView) && !isDebug ? "pointer-events-none!" : ""} ${
-        isMapView ? "opacity-0" : ""
-      } transition-opacity duration-300`}
-    >
-      <CanvasViewInner {...props} />
-    </Canvas>
-*/
-
-const CanvasViewInner = ({ isActive, initialState }: CanvasViewProps) => {
+const CanvasViewInner = (props: CanvasViewProps) => {
+  const { isActive, initialState, ownCanvas } = props
   const invalidate = useThree((s) => s.invalidate)
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const isScreenSm = useIsScreen("sm")
+  const inactiveZoom = ownCanvas ? 0.4 : 0.9
   useSpring({
     from: { zoom: 0.1 },
-    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : 0.9 },
+    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : inactiveZoom },
     onChange: ({ value }) => {
       const camera = cameraRef.current
       if (camera) {
