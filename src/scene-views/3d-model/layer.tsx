@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
-import { useSpring } from "@react-spring/web"
+import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { LayerInteractions } from "./interactions"
@@ -93,7 +93,7 @@ function LayerScaler(props: LayerScalerProps) {
   const duration =
     isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
       ? 0
-      : 500
+      : undefined // default spring
   useDynamicScale(posRef, scale, duration)
   return (
     <group ref={posRef} visible={visibleIdx >= 0}>
@@ -166,7 +166,7 @@ function useIsExcluded(layer?: NeuronLayer) {
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
   scale: number = 1,
-  duration = 200
+  duration?: number
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
   const [isMounted, setIsMounted] = useState(false)
@@ -178,7 +178,7 @@ function useDynamicScale(
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({
     scale: isMounted ? scale : 1,
-    config: { duration },
+    config: typeof duration === "number" ? { duration } : config.default,
     onChange: ({ value }) => {
       const val = value.scale
       ref.current?.scale.set(val, val, val)

@@ -11,6 +11,7 @@ export type ModelLoadState = null | "no-weights" | "full"
 
 export interface ModelSlice {
   model?: LayersModel
+  isLargeModel?: boolean
   modelLoadState: ModelLoadState
   shouldLoadWeights?: boolean // to enable lazy loading of weights for pretrained models
   setLoadWeights: (shouldLoad: boolean) => void

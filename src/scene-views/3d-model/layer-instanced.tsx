@@ -154,8 +154,8 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 function useColors(props: NeuronLayer, channelIdx: number) {
   const { activationsBuffer, hasColorChannels, channelActivations } = props
   const material = useMemo(
-    () => getMaterial(hasColorChannels, channelIdx),
-    [hasColorChannels, channelIdx]
+    () => getMaterial(hasColorChannels, channelIdx, props.storageNode),
+    [hasColorChannels, channelIdx, props.storageNode]
   )
   const colorArray = channelActivations[channelIdx]
   const userData: UserData = useMemo(

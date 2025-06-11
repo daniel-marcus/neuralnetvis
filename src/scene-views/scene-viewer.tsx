@@ -99,7 +99,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
       shouldLoadFullDs={shouldLoadFullDs}
       uid={path}
       initialState={initialState}
-      isLarge={props.isLargeModel}
+      isLargeModel={props.isLargeModel}
     >
       <Suspense>
         <SceneViewerInner {...props} />

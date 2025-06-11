@@ -28,6 +28,7 @@ export interface NeuronLayer {
   activations: Float32Array // used for activation colors, reused for performance = not reactive
   channelActivations: Float32Array[] // sliced view on activations for color channels
   activationsBuffer: THREE.StorageBufferAttribute
+  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
 }
 
 // Types for Neurons

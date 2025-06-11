@@ -16,18 +16,29 @@ const baseG = vec3(0, 1, 0)
 const baseB = vec3(0, 0, 1)
 const colorBases = [baseR, baseG, baseB]
 
-const standardMaterial = createActivationMaterial(false, 0)
-const colorMaterials = [0, 1, 2].map((i) => createActivationMaterial(true, i))
+// const standardMaterial = createActivationMaterial(false, 0)
+// const colorMaterials = [0, 1, 2].map((i) => createActivationMaterial(true, i))
 
-export function getMaterial(hasColors: boolean, channelIdx: number) {
-  return hasColors ? colorMaterials[channelIdx] : standardMaterial
+export type StorageNode = THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+
+export function getMaterial(
+  hasColors: boolean,
+  channelIdx: number,
+  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+) {
+  return createActivationMaterial(hasColors, channelIdx, storageNode)
+  // return hasColors ? colorMaterials[channelIdx] : standardMaterial
 }
 
-function createActivationMaterial(hasColors: boolean, channelIdx: number) {
+function createActivationMaterial(
+  hasColors: boolean,
+  channelIdx: number,
+  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+) {
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
     : new THREE.MeshStandardNodeMaterial()
-  material.colorNode = activationColor(hasColors, channelIdx)
+  material.colorNode = activationColor(hasColors, channelIdx, storageNode)
   return material
 }
 
@@ -36,7 +47,11 @@ interface FnProps {
   renderer: THREE.WebGPURenderer
 }
 
-export function activationColor(hasColors: boolean, channelIdx: number) {
+export function activationColor(
+  hasColors: boolean,
+  channelIdx: number,
+  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object, renderer: { backend } }: FnProps) => {
@@ -44,7 +59,7 @@ export function activationColor(hasColors: boolean, channelIdx: number) {
     const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
     const idx = instanceIndex.add(offset)
     const normalizedNode = isWebGPUBackend(backend)
-      ? storage(activations).element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
+      ? storageNode.element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
       : instancedBufferAttribute(instancedActivations)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
@@ -60,7 +75,8 @@ export function getTextureMaterial(
   channelIdx: number,
   height: number,
   width: number,
-  channels: number
+  channels: number,
+  storageNode: StorageNode
 ) {
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
@@ -71,7 +87,8 @@ export function getTextureMaterial(
     channelIdx,
     height,
     width,
-    channels
+    channels,
+    storageNode
   )
   return material
 }
@@ -83,6 +100,7 @@ export function activationColorTexture(
   height: number,
   width: number,
   channels: number,
+  storageNode: StorageNode,
   cellGap = 1
 ) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
@@ -129,7 +147,7 @@ export function activationColorTexture(
     const idxWithOffset = idx.add(offset)
     // WebGPU can pick the value directly from the storage buffer, WebGL needs precomputed texture
     const normalizedNode = isWebGPUBackend(backend)
-      ? storage(activations).element(idxWithOffset)
+      ? storageNode.element(idxWithOffset)
       : texture(actTexture).r // TODO: find a way to use activations w/ idx (bufferAttribute/uniformArray) in WebGL
 
     if (!isWebGPUBackend(backend)) {

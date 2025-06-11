@@ -1,6 +1,7 @@
 import { createRef, useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
+import { storage } from "three/tsl"
 import { isDebug, useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
 import { getLayerDef } from "@/model/layers"
@@ -14,7 +15,12 @@ export function useLayers() {
   const ds = useSceneStore((s) => s.ds)
   const setAllLayers = useSceneStore((s) => s.setAllLayers)
   const modelLoadState = useSceneStore((s) => s.modelLoadState)
-  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const isActive = useSceneStore((s) => s.isActive)
+  const isHovered = useSceneStore((s) => s.isHovered)
+  const isLargeModel = useSceneStore((s) => s.isLargeModel)
+  const _showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers) // set to true to preload all layers
+  const showHiddenLayers =
+    _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
   const layers = useMemo(() => {
     if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
@@ -71,6 +77,7 @@ export function useLayers() {
           activations,
           channelActivations,
           activationsBuffer: actBuffer,
+          storageNode: storage(actBuffer),
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []

@@ -41,7 +41,7 @@ export const TexturedLayer = memo(function TexturedLayer(
 })
 
 function useActivationTexture(layer: TexturedLayerProps) {
-  const { hasColorChannels, channelIdx = 0 } = layer
+  const { hasColorChannels, channelIdx = 0, storageNode } = layer
   const [, height, width, _channels] = layer.tfLayer.outputShape as number[]
 
   const channels = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level
@@ -72,8 +72,15 @@ function useActivationTexture(layer: TexturedLayerProps) {
 
   const material = useMemo(
     () =>
-      getTextureMaterial(hasColorChannels, channelIdx, height, width, channels),
-    [hasColorChannels, channelIdx, height, width, channels]
+      getTextureMaterial(
+        hasColorChannels,
+        channelIdx,
+        height,
+        width,
+        channels,
+        storageNode
+      ),
+    [hasColorChannels, channelIdx, height, width, channels, storageNode]
   )
   useEffect(() => {
     return () => {

@@ -11,19 +11,44 @@ import { useIsPlayMode } from "@/components/tab-menu"
 import type { Pos } from "./utils"
 
 export const Model = () => {
-  const visibleLayers = useLayers()
+  const layers = useLayers()
+  const visibleLayers = useVisibleLayers(layers)
   useCameraShifter(visibleLayers)
   return (
     <>
       <ActivationUpdater layers={visibleLayers} />
       <ModelShifter visibleLayers={visibleLayers}>
-        {visibleLayers.map((l) => (
+        {layers.map((l) => (
           <Layer key={l.lid} {...l} visibleLayers={visibleLayers} />
         ))}
       </ModelShifter>
       <HoverComponents />
     </>
   )
+}
+
+function useVisibleLayers(layers: NeuronLayer[]) {
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const setVisConfig = useSceneStore((s) => s.vis.setConfig)
+
+  const isActive = useSceneStore((s) => s.isActive)
+  const isLargeModel = useSceneStore((s) => s.isLargeModel)
+  useEffect(() => {
+    // auto expand when active and not a large model
+    if (!isActive || isLargeModel) return
+    const to = setTimeout(() => setVisConfig({ showHiddenLayers: true }), 0)
+    return () => {
+      clearTimeout(to)
+    }
+  }, [isActive, isLargeModel])
+
+  const visibleLayers = useMemo(
+    () =>
+      showHiddenLayers ? layers : layers.filter((l) => l.layerPos !== "hidden"),
+    [layers, showHiddenLayers]
+  )
+
+  return visibleLayers
 }
 
 const cameraDir = new THREE.Vector3(-23, 0, 35).normalize()
