@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu"
 import { abs, mix, pow, varying, uv, float, floor, mod } from "three/tsl"
 import { vec2, vec3, vec4 } from "three/tsl"
-import { texture, storage, instanceIndex } from "three/tsl"
+import { texture, instanceIndex } from "three/tsl"
 import { Fn, If, Discard, instancedBufferAttribute } from "three/tsl"
 import { isWebGPUBackend } from "@/utils/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
