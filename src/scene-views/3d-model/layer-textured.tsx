@@ -28,6 +28,7 @@ export const TexturedLayer = memo(function TexturedLayer(
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
     <mesh
+      name={`${props.lid}_channel_${channelIdx}_tex`}
       scale={[size, spacedSize, spacedSize]}
       userData={userData}
       visible={visible}

@@ -27,6 +27,7 @@ export function useGPUDevice() {
 interface TypedWebGPUBackend extends Backend {
   device: GPUDevice
   data: WeakMap<THREE.StorageBufferAttribute, { buffer: GPUBuffer }> // actually there are more types for K and V
+  get: (obj: THREE.StorageBufferAttribute) => { buffer: GPUBuffer } | undefined
 }
 
 export function isWebGPUBackend(

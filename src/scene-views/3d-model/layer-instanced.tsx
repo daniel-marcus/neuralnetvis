@@ -32,38 +32,42 @@ export const InstancedLayer = memo(function InstancedLayer(
   const eventHandlers = useNeuronInteractions(props.index, channelIdx)
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
-    <group visible={props.visible}>
+    <>
       <instancedMesh
         ref={meshRef}
         name={`${props.lid}_channel_${channelIdx}`}
         args={[meshParams.geometry, material, units]}
         renderOrder={renderOrder}
         userData={userData}
+        visible={props.visible}
         {...eventHandlers}
       />
-      {hasLabels &&
-        Array.from({ length: numNeurons }).map((_, i) => {
-          const position = positions[i]
-          const overrideText =
-            position.isHidden && position.hiddenIdx === 0
-              ? `(+${numNeurons - MAX_OUTPUT_NEURONS} more ...)`
-              : undefined
-          if (position.isHidden && position.hiddenIdx !== 0) return null
-          return (
-            <NeuronLabels
-              key={i}
-              layer={props}
-              neuronIdx={i}
-              position={position.pos}
-              size={meshParams.labelSize}
-              overrideText={overrideText}
-            />
-          )
-        })}
+      {hasLabels && (
+        <group visible={props.visible}>
+          {Array.from({ length: numNeurons }).map((_, i) => {
+            const position = positions[i]
+            const overrideText =
+              position.isHidden && position.hiddenIdx === 0
+                ? `(+${numNeurons - MAX_OUTPUT_NEURONS} more ...)`
+                : undefined
+            if (position.isHidden && position.hiddenIdx !== 0) return null
+            return (
+              <NeuronLabels
+                key={i}
+                layer={props}
+                neuronIdx={i}
+                position={position.pos}
+                size={meshParams.labelSize}
+                overrideText={overrideText}
+              />
+            )
+          })}
+        </group>
+      )}
       {props.layerPos === "output" && (
         <YPointer outputLayer={props} positions={positions} />
       )}
-    </group>
+    </>
   )
 })
 

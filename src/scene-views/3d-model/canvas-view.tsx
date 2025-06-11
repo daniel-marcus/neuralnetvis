@@ -64,7 +64,7 @@ export const CanvasView = (props: CanvasViewProps) => {
           const renderer = new THREE.WebGPURenderer({
             ...(renderProps as WebGPURendererParameters),
             device: gpuDevice ? gpuDevice : undefined,
-            forceWebGL: true, // in Chrome, buffer mismatches occur with custom canvas here
+            forceWebGL: true, // TODO: debug buffer losses / canvas recreation
           })
           await renderer.init()
           setHasRendered()

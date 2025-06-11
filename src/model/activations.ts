@@ -112,6 +112,7 @@ async function getActivations(
   isRegression?: boolean,
   stats?: { [layerIdx: number]: ActivationStats | undefined }
 ) {
+  const tfBackend = tf.getBackend()
   const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
   await tf.ready()
   const activationTensors = tf.tidy(() => {
@@ -150,15 +151,13 @@ async function getActivations(
       })
       try {
         let gpuUpdateSuccess = false
-        if (isWebGPUBackend(backend)) {
+        if (isWebGPUBackend(backend) && tfBackend === "webgpu") {
           // WebGPU is available: we can copy the buffer directly in GPU
           // @ts-expect-error type not compatible with tensor container
           const newGpuBuffer = tf.tidy(() => {
             return normalized.dataToGPU().buffer
           }) as GPUBuffer | undefined
-          const existingGpuBuffer = backend.data.get(
-            layer.activationsBuffer
-          )?.buffer
+          const existingGpuBuffer = backend.get(layer.activationsBuffer)?.buffer
           if (newGpuBuffer && existingGpuBuffer) {
             if (isDebug()) console.log("copy GPU buffer")
             const commandEncoder = backend.device.createCommandEncoder()
@@ -180,6 +179,8 @@ async function getActivations(
             console.warn("WebGPU buffer update: Coulnd't match buffers", {
               existingGpuBuffer,
               newGpuBuffer,
+              backend,
+              layer,
             })
           }
         }

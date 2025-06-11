@@ -40,7 +40,11 @@ interface ColorChannelShifterProps extends LayerProps {
 
 function ColorChannelShifter({ children, ...props }: ColorChannelShifterProps) {
   const groupRef = useGroupPosition(props, props.channelIdx)
-  return <group ref={groupRef}>{children}</group>
+  return (
+    <group ref={groupRef} name={`group_${props.lid}_${props.channelIdx}`}>
+      {children}
+    </group>
+  )
 }
 
 function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
