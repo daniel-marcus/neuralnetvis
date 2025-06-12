@@ -1,7 +1,7 @@
 import { useEffect, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
-import { useGPUDevice } from "@/utils/webgpu"
+import { isWebGPUBackend, useGPUDevice } from "@/utils/webgpu"
 import { View, type RootState } from "@/scene-views/3d-model/view"
 import { useHasActiveTile } from "./tile-grid"
 import type { ThreeToJSXElements } from "@react-three/fiber"
@@ -62,6 +62,10 @@ function OnScrollUpdate({ sync }: { sync?: boolean }) {
   }, [invalidate, sync])
   useFrame((_state) => {
     const state = _state as unknown as RootState
+    if (isWebGPUBackend(state.gl.backend)) {
+      // WebGPU: clear root before rendering views; WebGL: clear views separately
+      state.gl.clear()
+    }
     // translate the canvas wrapper to follow the scroll position (smoother than fixed position)
     // see: https://github.com/mrdoob/three.js/blob/master/examples/webgl_multiple_elements.html
     const wrapper = state.gl.domElement.parentElement?.parentElement

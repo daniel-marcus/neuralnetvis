@@ -2,6 +2,7 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import tunnel from "tunnel-rat"
+import { isWebGPUBackend } from "@/utils/webgpu"
 import type {
   ComputeFunction,
   RootState as RootStateGL,
@@ -181,20 +182,6 @@ function getClampedPos(pos: DOMPosition, canvasSize: CanvasSize): DOMPosition {
   }
 }
 
-function clearArea(
-  state: RootState,
-  prevPos: DOMPosition,
-  canvasSize: CanvasSize
-) {
-  // Clear the area of the previous viewport
-  const { left, top, width, height } = getClampedPos(prevPos, canvasSize)
-  if (height) {
-    state.gl.setScissor(left, top, width, height)
-    state.gl.setScissorTest(true)
-    clear(state)
-  }
-}
-
 function finishSkissor(state: RootState, autoClear: boolean) {
   // Restore the default state
   state.gl.setScissorTest(false)
@@ -223,7 +210,6 @@ function Container({
   const [isOffscreen, setOffscreen] = React.useState(false)
   let frameCount = 0
   const hasRendered = React.useRef(false)
-  const prevPos = React.useRef<DOMPosition | null>(null)
   useFrame((_state) => {
     const state = _state as unknown as RootState
     const autoClear = state.gl.autoClear
@@ -239,12 +225,10 @@ function Container({
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
       if (visible && !_isOffscreen && rect.current) {
         // console.log("rendering", index)
-        if (prevPos.current) {
-          // with WebGPU we need to clear the previous position
-          clearArea(state, prevPos.current, canvasSize)
-        }
         prepareSkissor(state, position, canvasSize)
-        prevPos.current = position
+
+        // WebGPU: clear root before rendering views; WebGL: clear views separately
+        if (!isWebGPUBackend(state.gl.backend)) state.gl.clear()
 
         // When children are present render the portalled scene, otherwise the default scene
         state.gl.render(children ? state.scene : scene, state.camera)
@@ -287,17 +271,6 @@ function Container({
       }
     }
   }, index)
-
-  React.useLayoutEffect(() => {
-    const curRect = rect.current
-    if (curRect && (!visible || !isOffscreen)) {
-      // If the view is not visible clear it once, but stop rendering afterwards!
-      const { position } = computeContainerPosition(canvasSize, curRect)
-      const autoClear = prepareSkissor(rootState, position, canvasSize)
-      clear(rootState)
-      finishSkissor(rootState, autoClear)
-    }
-  }, [visible, isOffscreen])
 
   React.useEffect(() => {
     if (!track) return

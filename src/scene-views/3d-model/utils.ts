@@ -108,7 +108,6 @@ export function useSize(
     if (!ref.current) return
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
-    console.log("UPDATE SIZE", bBox, ref.current)
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
   }, [ref, bBox, sizeVec, padding, setSize])
   useEffect(() => {
