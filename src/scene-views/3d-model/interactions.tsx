@@ -12,6 +12,8 @@ import type { Neuron, NeuronLayer } from "@/neuron-layers"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
+const layerHoverGeometry = new THREE.BoxGeometry(1, 1, 1)
+
 export function LayerInteractions(
   props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> }
 ) {
@@ -34,7 +36,7 @@ export function LayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const [size] = useSize(props.measureRef, 0.2) // TODO: neuronSpacing as updateTrigger?
+  const [size] = useSize(props.measureRef, 0.2)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
   const { layerType, tfLayer } = props
@@ -87,10 +89,9 @@ export function LayerInteractions(
       />
   
   */
-  if (!isActive) return null
   return (
-    <mesh {...(isActive ? interactions : {})} renderOrder={-1}>
-      <boxGeometry args={size} />
+    <mesh {...(isActive ? interactions : {})} scale={size} renderOrder={-1}>
+      <primitive object={layerHoverGeometry} attach={"geometry"} />
       <meshBasicMaterial
         color="white"
         transparent

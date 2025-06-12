@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, SpringConfig, config } from "@react-spring/web"
@@ -100,17 +100,21 @@ export function interpolate(from: number, to: number, percent: number): number {
 export function useSize(
   ref: React.RefObject<THREE.Object3D | null>,
   padding = 0
-): [[number, number, number], THREE.Box3] {
+) {
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
-  useEffect(() => {
-    if (!ref.current) return //  || !updTrigger
+  const updateSize = useCallback(() => {
+    if (!ref.current) return
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
+    console.log("UPDATE SIZE", bBox, ref.current)
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
-  }, [ref, bBox, sizeVec, padding])
-  return [size, bBox] as const
+  }, [ref, bBox, sizeVec, padding, setSize])
+  useEffect(() => {
+    updateSize()
+  }, [updateSize])
+  return [size, bBox, updateSize] as const
 }
 
 export function useIsClose(
