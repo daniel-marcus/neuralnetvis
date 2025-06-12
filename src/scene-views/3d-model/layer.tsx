@@ -57,7 +57,7 @@ function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
   const position = useMemo(() => {
     const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
 
-    const OFFSET_X = 0.05 // to avoid z-fighting // without logarithmicDepthBuffer higer values might be needed: h > 200 ? 0.5 : 0.05
+    const OFFSET_X = h > 200 ? 0.5 : 0.05 // to avoid z-fighting
     const OFFSET_YZ = 0.05
     const splitY = -chnlIdx * gHeight + (numChannels - 1) * gHeight * 0.5
     return hasColorChannels

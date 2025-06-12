@@ -3,7 +3,7 @@ import * as THREE from "three/webgpu"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { getWorldPos, useSize } from "./utils"
-import { setStatus, clearStatus } from "@/store"
+import { setStatus, clearStatus, useGlobalStore } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
@@ -18,7 +18,8 @@ export function LayerInteractions(
   const hasFocussed = useHasFocussed()
   const sceneActive = useSceneStore((s) => s.isActive)
   const visIsLocked = useSceneStore((s) => s.vis.isLocked)
-  const isActive = sceneActive && !hasFocussed && !visIsLocked
+  const isDebug = useGlobalStore((s) => s.isDebug)
+  const isActive = sceneActive && !hasFocussed && !visIsLocked && !isDebug
   const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
   const isHovered = hoveredIdx === props.index
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
@@ -86,6 +87,7 @@ export function LayerInteractions(
       />
   
   */
+  if (!isActive) return null
   return (
     <mesh {...(isActive ? interactions : {})} renderOrder={-1}>
       <boxGeometry args={size} />

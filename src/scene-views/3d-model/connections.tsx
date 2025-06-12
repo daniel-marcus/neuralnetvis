@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three/webgpu"
-import { Color, Line, Vector2, Vector3 } from "three/webgpu"
 
 import { LineGeometry } from "three/addons/lines/LineGeometry.js"
 import { Line2 } from "three/addons/lines/webgpu/Line2.js"
@@ -23,7 +22,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
   const line = useMemo(() => new Line2(), [])
   const material = useMemo(() => new THREE.Line2NodeMaterial(), [])
   const geometry = useMemo(() => new LineSegmentsGeometry(), [])
-  const resolution = useMemo(() => new Vector2(512, 512), [])
+  const resolution = useMemo(() => new THREE.Vector2(512, 512), [])
 
   const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
   const prevLayerName = hovered?.layer.prevLayer?.tfLayer.name
@@ -40,12 +39,10 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
     const inputNeurons = hovered?.inputNeurons
     if (!hovered || !inputNeurons?.length) return
     const toPosition = getWorldPos(hovered)?.toArray() as Pos
-    const color = new Color(0xffffff).toArray()
     if (!toPosition) return
 
     // console.log("UPD", hovered, toPosition)
     const positions = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
-    const colors = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
     for (const [i, inputN] of inputNeurons.entries()) {
       if (i >= MAX_LINES_PER_LAYER) break
       const fromPosition = getWorldPos(inputN)?.toArray() as Pos
@@ -56,14 +53,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
       positions[i * 6 + 3] = toPosition[0]
       positions[i * 6 + 4] = toPosition[1]
       positions[i * 6 + 5] = toPosition[2]
-      colors[i * 6] = color[0]
-      colors[i * 6 + 1] = color[1]
-      colors[i * 6 + 2] = color[2]
-      colors[i * 6 + 3] = color[0]
-      colors[i * 6 + 4] = color[1]
-      colors[i * 6 + 5] = color[2]
     }
-    line.geometry.setColors(colors)
     line.geometry.setPositions(positions)
     line.geometry.attributes.position.needsUpdate = true
     line.material.needsUpdate = true
@@ -77,9 +67,10 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
         <primitive object={geometry} attach="geometry" />
         <primitive
           object={material}
+          color={0xffffff}
           attach="material"
-          vertexColors={false}
-          linewidth={0.1} // {length >= 100 ? 0.1 : 0.5}
+          vertexColors={true}
+          linewidth={length >= 100 ? 0.1 : 0.5}
           resolution={resolution}
           worldUnits={false}
         />
@@ -158,12 +149,12 @@ function getConnections(
 interface DynamicLineProps {
   from: Neuron
   to: Neuron
-  toPoint?: Vector3 // alternatvie to meshRef
+  toPoint?: THREE.Vector3 // alternatvie to meshRef
   width?: number
 }
 
 const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
-  const lineRef = useRef<Line | null>(null)
+  const lineRef = useRef<THREE.Line | null>(null)
   const size = useThree((s) => s.size)
 
   const geometry = useMemo(() => new LineGeometry(), [])
@@ -186,7 +177,9 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
   useFrame(() => {
     if (lineRef.current && from && (to || toPoint)) {
       const fromPosition = getWorldPos(from)
-      const toPosition = toPoint ? new Vector3(...toPoint) : getWorldPos(to)
+      const toPosition = toPoint
+        ? new THREE.Vector3(...toPoint)
+        : getWorldPos(to)
       if (!fromPosition || !toPosition) return
       geometry.setPositions([...fromPosition, ...toPosition])
       lineRef.current.computeLineDistances()
