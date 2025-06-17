@@ -109,12 +109,13 @@ interface LodCompProps extends NeuronLayer {
 
 function LodComp(props: LodCompProps) {
   // Level-of-Detail rendering: use less expensive TexturedLayer for distant & large layers
-  const hasChannels = (props.tfLayer.outputShape[3] as number) ?? 1 > 1
+
+  const isMultiDim = ((props.tfLayer.outputShape[2] as number) ?? 1) > 1
   const isClose = useIsClose(props.measureRef, 40)
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
-  const alwaysInstanced = !hasChannels || props.numNeurons <= 3072
+  const alwaysInstanced = !isMultiDim || props.numNeurons <= 3072
   const alwaysTextured = isScreenSm
     ? !alwaysInstanced && props.numNeurons > 50000 // large layers: prefer less expensive TexturedLayer
     : !alwaysInstanced // mobile: use mainly TexturedLayer and avoid duplicate layers

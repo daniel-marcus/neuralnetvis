@@ -98,8 +98,8 @@ export function activationColorTexture(
   hasColors: boolean,
   channelIdx: number,
   height: number,
-  width: number,
-  channels: number,
+  width: number = 1,
+  channels: number = 1,
   storageNode: StorageNode,
   cellGap = 1
 ) {
