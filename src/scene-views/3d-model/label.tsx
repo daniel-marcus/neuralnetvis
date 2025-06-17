@@ -7,7 +7,6 @@ import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
 import { getIndex3d } from "@/neuron-layers/neurons"
 import { text2Texture } from "./text-to-texture"
-import { decodeChar } from "@/data/tokenizer"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const LABEL_COLOR = "rgb(150, 156, 171)"
@@ -25,12 +24,12 @@ export function NeuronLabels(props: NeuronLabelsProps) {
   const layerPos = props.layer.layerPos
   const isRegression = useSceneStore((s) => s.isRegression())
   const label = useLabelFromDs(props.layer, props.neuronIdx)
-  const decodeInput = useSceneStore((s) => s.ds?.decodeInput)
+  const decodeInput = useSceneStore((s) => !!s.ds?.tokenizer)
   if (isRegression) {
     const Comp = layerPos === "input" ? InputValueLabel : OutputValueLabel
     return <Comp {...props} label={label} />
   }
-  if (layerPos === "input" && decodeInput) {
+  if (layerPos === "input" && !!decodeInput) {
     return <DecodedInputLabel {...props} label={label} />
   }
   const side = layerPos === "input" ? "left" : "right"
@@ -53,8 +52,9 @@ function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
 
 function DecodedInputLabel(props: NeuronLabelsProps) {
   const rawInput = useRawInput(props.layer.index, props.neuronIdx)
-  if (typeof rawInput !== "number") return null
-  const decoded = decodeChar(rawInput)
+  const decodeFunc = useSceneStore((s) => s.ds?.tokenizer?.decode)
+  if (typeof rawInput !== "number" || !decodeFunc) return null
+  const decoded = decodeFunc(rawInput)
   return <NeuronLabel {...props} text={decoded} />
 }
 

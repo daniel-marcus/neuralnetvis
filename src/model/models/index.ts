@@ -68,6 +68,11 @@ const models = defineModels({
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
+  imdb: {
+    key: "imdb",
+    path: "/models/imdb/model.json",
+    version: new Date("2025-06-17"),
+  },
 })
 
 export type ModelKey = keyof typeof models

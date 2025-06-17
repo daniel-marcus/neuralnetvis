@@ -14,6 +14,7 @@ import type {
 import { preprocessFuncs } from "./preprocess"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { tokenizers, TokenizerType } from "./tokenizer"
 
 export const DEFAULT_STORE_BATCH_SIZE = 100
 
@@ -97,22 +98,33 @@ export async function getDsFromDef(
     (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
   const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
   const preprocess = getPreprocessFunc(dsDef)
+  const tokenizer = await getTokenizer(dsDef)
   const ds: Dataset = {
     ...dsDef,
     train,
     test,
     preprocess,
+    tokenizer,
     storeBatchSize,
     loaded: newMeta?.loaded ?? existingMeta?.loaded ?? "preview",
   }
   return ds
 }
 
-export function getPreprocessFunc(dsDef: DatasetDef | DatasetMeta) {
+function getPreprocessFunc(dsDef: DatasetDef | DatasetMeta) {
   const funcName = dsDef.preprocessFunc
   if (!funcName) return
   const func = preprocessFuncs[funcName]
   return ((inp) => func(inp, dsDef.inputDims)) as PreprocessFunc
+}
+
+async function getTokenizer(dsDef: DatasetDef | DatasetMeta) {
+  const tokenizerName = dsDef.tokenizerName
+  if (!tokenizerName) return
+  const Tokenizer = tokenizers[tokenizerName]
+  const tokenizer = new Tokenizer() as TokenizerType
+  if (tokenizer.init) await tokenizer.init()
+  return tokenizer
 }
 
 export async function loadAndSaveDsData(

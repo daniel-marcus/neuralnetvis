@@ -72,7 +72,7 @@ export function useLayers() {
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
             (layerPos === "output" && !!ds?.outputLabels?.length) ||
-            (layerPos === "input" && ds?.decodeInput),
+            (layerPos === "input" && !!ds?.tokenizer),
           hasColorChannels,
           activations,
           channelActivations,

@@ -108,7 +108,7 @@ function getGridXYZ(
     if (forceColumns) {
       height = Math.min(MAX_SINGLE_COL_HEIGHT, height)
       width = Math.ceil(total / height)
-      zSpacing = 5 // space between columns
+      zSpacing = 4 // space between columns
     } else {
       // convert 1D column to 2D grid
       width = Math.ceil(Math.sqrt(total))

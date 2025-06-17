@@ -2,9 +2,11 @@ import type { Parsed } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
 import type { PreprocessFuncName } from "./preprocess"
 import type { ModelDef } from "@/model/models"
+import { TokenizerName, TokenizerType } from "./tokenizer"
 
 export type DatasetKey = string
 
+// DatasetMeta needs to be serializable to JSON since it gets stored in IndexedDB, so no functions here
 export interface DatasetMeta {
   key: DatasetKey // aka slug
   parentKey?: DatasetKey // for user-generated datasets
@@ -23,13 +25,13 @@ export interface DatasetMeta {
   isUserGenerated?: boolean
   camProps?: DsCamProps
   mapProps?: DsMapProps
-  decodeInput?: boolean // TODO: specify tokenizer
   loaded: "preview" | "full" // will be set by ds loader
   model?: ModelDef // default model to load for this dataset
   externalSamples?: ExternalSample[] // test models with external images
   isModelDs?: boolean // tile gets "model" tag instead of "dataset"
   sampleViewer?: boolean // show sample viewer instead of sample slider
   targetDevice?: "desktop" | "mobile" // to load smaller model versions on mobile
+  tokenizerName?: TokenizerName
 }
 
 interface ExternalSample {
@@ -51,10 +53,11 @@ export type PreprocessFuncDef = <T extends Tensor<Rank>>(
 export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T
 
 export type Dataset = DatasetMeta & {
-  preprocess?: PreprocessFunc
   storeBatchSize: number
   train: StoreMeta
   test: StoreMeta
+  preprocess?: PreprocessFunc
+  tokenizer?: TokenizerType
 }
 
 interface DsMapProps {
@@ -110,21 +113,15 @@ export interface ParsedLike {
   shape: number[]
 }
 
-type SupportedTypedArray =
-  | Int8Array
-  | Uint8Array
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
+// supported typed arrays for tensorflow.js: https://js.tensorflow.org/api/latest/#tensor
+type SupportedTypedArray = Uint8Array | Int32Array | Float32Array
 
 type ParsedSafe = Parsed & { data: SupportedTypedArray }
 
 export function isSafe(parsed: Parsed): parsed is ParsedSafe {
-  return !(
-    parsed.data instanceof BigUint64Array ||
-    parsed.data instanceof BigInt64Array ||
-    parsed.data instanceof Float64Array
+  return (
+    parsed.data instanceof Uint8Array ||
+    parsed.data instanceof Int32Array ||
+    parsed.data instanceof Float32Array
   )
 }
