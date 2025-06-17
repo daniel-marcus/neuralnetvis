@@ -54,7 +54,7 @@ function getMobileNet(
         shape: [imgs.length, res, res, 3],
       }
       const yTrain = {
-        data: new Uint32Array([281, 953, 759, 145, 387, 541, 406]),
+        data: new Int32Array([281, 953, 759, 145, 387, 541, 406]),
         shape: [imgs.length],
       }
       return { xTrain, yTrain }
