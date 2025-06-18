@@ -17,7 +17,7 @@ export const MapPlot = () => {
   useCurrSampleStatus(isActive && view === "map")
   return (
     <div
-      className={`absolute pointer-events-none ${
+      className={`absolute will-change-transform pointer-events-none ${
         isActive
           ? view === "evaluation"
             ? "z-30"

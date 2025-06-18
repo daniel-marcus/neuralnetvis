@@ -12,10 +12,11 @@ import { SceneViewer } from "@/scene-views/scene-viewer"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "@/scene-views/video"
 import { useLast } from "@/utils/helpers"
+import { useIsScreen } from "@/utils/screen"
+import { useHasLesson } from "./lesson"
 import type { ReactNode, CSSProperties } from "react"
 import type { InitialState } from "@/utils/initial-state"
 import type { DatasetDef } from "@/data"
-import { useIsScreen } from "@/utils/screen"
 
 export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
@@ -68,11 +69,14 @@ export const TileGrid = () => {
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   const is404 = useIs404()
+  const hasLesson = useHasLesson()
   const isDesktop = useIsScreen("md") // TODO: better check for device capabilities?
   if (is404) return null
   return (
     <div
-      className={`tile-grid top-0 left-0 w-screen pt-[var(--logo-height)] absolute [--gap:1rem] xl:[--gap:2rem]`}
+      className={`tile-grid [--gap:1rem] xl:[--gap:2rem] ${
+        hasLesson ? "absolute" : ""
+      }`}
       style={
         {
           "--tile-width": "320px",

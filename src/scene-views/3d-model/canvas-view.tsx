@@ -68,7 +68,7 @@ export const CanvasView = (props: CanvasViewProps) => {
           return renderer
         }}
         onCreated={setHasRendered}
-        className={`absolute! w-screen! h-screen! ${
+        className={`absolute! will-change-transform w-screen! h-screen! ${
           isActive ? "" : "touch-pan-y!"
         } ${isMapView ? "pointer-events-none!" : ""} ${
           isMapView ? "opacity-0" : ""
