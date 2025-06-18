@@ -39,7 +39,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
         } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none`}
       >
         <ul
-          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background _shadow-accent-hover _shadow-2xl after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] rotate-[var(--wheel-rotation)] after:-rotate-[var(--wheel-rotation)] ${
+          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] rotate-[var(--wheel-rotation)] after:-rotate-[var(--wheel-rotation)] ${
             isActive ? "after:opacity-100" : "after:opacity-25"
           }`}
           style={

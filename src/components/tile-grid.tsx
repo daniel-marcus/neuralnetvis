@@ -72,7 +72,7 @@ export const TileGrid = () => {
   if (is404) return null
   return (
     <div
-      className={`top-0 left-0 w-screen pt-[var(--logo-height)] absolute [--gap:1rem] xl:[--gap:2rem]`}
+      className={`tile-grid top-0 left-0 w-screen pt-[var(--logo-height)] absolute [--gap:1rem] xl:[--gap:2rem]`}
       style={
         {
           "--tile-width": "320px",
