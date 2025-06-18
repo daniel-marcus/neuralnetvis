@@ -30,18 +30,24 @@ export const WheelMenu = (props: WheelMenuProps) => {
       className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none`}
     >
       <div
-        className={`fixed z-20 right-0 top-[50vh] translate-y-[-50%] w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] rounded-[50%] bg-background shadow-accent-hover shadow-2xl ${
+        className={`wheel-wrapper fixed z-20 right-0 top-0 h-full w-[200px] ${
           !props.items.length || props.fullyHidden
-            ? "translate-x-full after:opacity-0"
+            ? "translate-x-full"
             : isActive
             ? "translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
             : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
-        } transition-transform duration-200 flex items-center justify-center [--wheel-radius:450px] select-none`}
-        ref={wheelRef}
+        } transition-transform duration-200 [--wheel-radius:450px] select-none`}
       >
         <ul
-          className={`flex items-center justify-center`}
-          style={{ transform: `rotate(${rotation.toFixed(2)}deg)` }}
+          className={`absolute top-[50vh] translate-y-[-50%] left-0 rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] rotate-[var(--wheel-rotation)] after:-rotate-[var(--wheel-rotation)] ${
+            isActive ? "after:opacity-100" : "after:opacity-25"
+          }`}
+          style={
+            {
+              "--wheel-rotation": `${rotation.toFixed(2)}deg`,
+            } as React.CSSProperties
+          }
+          ref={wheelRef}
         >
           {props.items.map(({ label, disabled }, i) => {
             const isActive = i === props.currIdx
@@ -83,7 +89,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
   const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const wheelRef = useRef<HTMLDivElement>(null)
+  const wheelRef = useRef<HTMLUListElement>(null)
   const jumpTarget = useRef<Idx>(undefined)
   const userInteraction = useRef(false)
 
