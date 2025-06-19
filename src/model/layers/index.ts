@@ -14,6 +14,7 @@ import { Activation } from "./activation"
 import { Embedding } from "./embedding"
 import { PositionEmbedding } from "./position-embedding"
 import { Add } from "./add"
+import { MultiHeadAttention } from "./multi-head-attention"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -33,6 +34,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   Embedding,
   PositionEmbedding,
   Add,
+  MultiHeadAttention,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(

@@ -20,6 +20,7 @@ import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padd
 import { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
 import { PositionEmbeddingLayerArgs } from "./position-embedding"
 import { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
+import { MultiHeadAttentionArgs } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {
@@ -39,6 +40,7 @@ export type LayerConfigMap = {
   Embedding: EmbeddingLayerArgs
   PositionEmbedding: PositionEmbeddingLayerArgs
   Add: AddLayerArgs
+  MultiHeadAttention: MultiHeadAttentionArgs
 }
 
 interface AddLayerArgs extends LayerArgs {

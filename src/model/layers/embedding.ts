@@ -12,7 +12,7 @@ export const Embedding: LayerDef<"Embedding"> = {
       name: "outputDim",
       inputType: "slider",
       min: 1,
-      max: 32,
+      max: 64,
     },
   ],
   isUserAddable: true,
