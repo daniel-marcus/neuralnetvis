@@ -18,7 +18,14 @@ export async function importKerasModel(file: File) {
     const parsedModelJson = parseModelObject(modelJson)
     if (isDebug()) console.log("Parsed model JSON:", parsedModelJson)
 
-    const model = await tf.models.modelFromJSON(parsedModelJson)
+    const model = await tf.models
+      .modelFromJSON(parsedModelJson)
+      .catch((error) => {
+        console.warn("Error creating model from JSON:", error)
+        throw new Error(
+          "Failed to create model from JSON. Check the file format."
+        )
+      })
     if (isDebug()) console.log("Created model from JSON:", model)
 
     const weightsFile = zip.files["model.weights.h5"]
@@ -60,26 +67,47 @@ function parseModelObject<T>(obj: T): T {
   if (Array.isArray(obj)) {
     return obj.map((item) => parseModelObject(item)) as T
   } else if (obj !== null && typeof obj === "object") {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => {
-        const parsedKey = parseKey(key)
-        let parsedValue = parseModelObject(value)
-        if (
-          key === "inbound_nodes" &&
-          Array.isArray(value) &&
-          value.length > 0
-        ) {
-          const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
-            ? value[0].args[0]
-            : value[0].args
-          const parsedNodes = nodes
-            .map(parseInboundNode)
-            .filter(Boolean) as LegacyInboundNode[]
-          parsedValue = [[...parsedNodes]]
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      const parsedKey = parseKey(key)
+      let parsedValue = parseModelObject(value)
+
+      // parse inbound_nodes to legacy format
+      if (key === "inbound_nodes" && Array.isArray(value) && value.length > 0) {
+        const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
+          ? value[0].args[0]
+          : value[0].args
+        const parsedNodes = nodes
+          .map(parseInboundNode)
+          .filter(Boolean) as LegacyInboundNode[]
+        parsedValue = [[...parsedNodes]]
+      } else if (
+        /* 
+        MultiHeadAttention: build_config.shapes_dict -> config
+        Keras 3 exports a build_config object with shapes_dict, but tfjs expects the shapes to be directly in the config
+        Example:
+        "build_config": {
+          "shapes_dict": {
+            "query_shape": [null, 200, 32],
+            "value_shape": [null, 200, 32]
+          }
         }
-        return [parsedKey, parsedValue]
-      })
-    ) as T
+        */
+        key === "build_config" &&
+        typeof value === "object" &&
+        "shapes_dict" in value &&
+        typeof acc.config === "object" &&
+        acc.config !== null
+      ) {
+        const shapesDict = value.shapes_dict as Record<string, unknown> // {query_shape, value_shape, key_shape}
+        acc.config = {
+          ...acc.config,
+          ...shapesDict,
+        }
+      }
+      // return [parsedKey, parsedValue]
+      acc[parsedKey] = parsedValue
+      return acc
+    }, {} as Record<string, unknown>) as T
   } else return obj
 }
 
