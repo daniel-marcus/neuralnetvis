@@ -35,12 +35,12 @@ export const WheelMenu = (props: WheelMenuProps) => {
             ? "translate-x-full"
             : isActive
             ? "translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
-            : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-125px)]"
+            : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-105px)] sm:hover:translate-x-[calc(100%-125px)]"
         } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none`}
       >
         <ul
-          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background after:absolute after:inset-0 after:rounded-[50%] after:shadow-accent after:shadow-xl after:transition-opacity after:duration-200 after:z-[-1] rotate-[var(--wheel-rotation)] after:-rotate-[var(--wheel-rotation)] ${
-            isActive ? "after:opacity-100" : "after:opacity-25"
+          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background rotate-[var(--wheel-rotation)] after:absolute after:inset-0 after:rounded-[50%] after:shadow-xl after:z-[-1] after:-rotate-[var(--wheel-rotation)] ${
+            isActive ? "after:shadow-accent" : "after:shadow-accent-hover"
           }`}
           style={
             {
