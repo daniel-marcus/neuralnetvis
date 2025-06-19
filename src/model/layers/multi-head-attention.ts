@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs"
 import { MultiHeadAttention as MultiHeadAttentionLayer } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
+import { nameScope } from "@tensorflow/tfjs-layers/dist/common"
 import type { LayerDef } from "./types"
 
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
@@ -24,26 +25,25 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     // 1. Call the parent method to set up the layer
     super.buildFromSignature(queryShape, valueShape, keyShape)
 
-    // 2. Build the sublayers to create weights
-    this.queryDense.build(queryShape)
-    this.keyDense.build(keyShape ?? valueShape)
-    this.valueDense.build(valueShape)
-    this.outputDense.build([null, null, this.numHeads, this.valueDim]) // ??
+    // 2. Build the child layers to create weights
+    nameScope(`${this.name}/query_dense`, () => {
+      this.queryDense.build(queryShape)
+    })
+    nameScope(`${this.name}/key_dense`, () => {
+      this.keyDense.build(keyShape ?? valueShape)
+    })
+    nameScope(`${this.name}/value_dense`, () => {
+      this.valueDense.build(valueShape)
+    })
+    nameScope(`${this.name}/output_dense`, () => {
+      this.outputDense.build([null, null, this.numHeads, this.valueDim]) // ??
+    })
 
-    // TODO: somehow track the sublayer weights to make them reusable for saving/loading
-  }
-
-  getWeights(trainableOnly?: boolean): tf.Tensor[] {
-    return this.getSublayerWeights(trainableOnly)
-  }
-
-  getSublayerWeights(trainableOnly?: boolean): tf.Tensor[] {
-    return [
-      this.queryDense,
-      this.keyDense,
-      this.valueDense,
-      this.outputDense,
-    ].flatMap((l) => l.getWeights(trainableOnly))
+    // 3. Register the trainable weights
+    this._trainableWeights.push(...this.queryDense.trainableWeights)
+    this._trainableWeights.push(...this.keyDense.trainableWeights)
+    this._trainableWeights.push(...this.valueDense.trainableWeights)
+    this._trainableWeights.push(...this.outputDense.trainableWeights)
   }
 }
 

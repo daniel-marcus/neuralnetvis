@@ -39,6 +39,7 @@ export async function importKerasModel(file: File) {
       const count = classCounter.get(className) || 0
       classCounter.set(className, count + 1)
       const layerPath = count === 0 ? className : `${className}_${count}`
+      if (isDebug()) console.log(">> LAYER", layerPath)
       for (const [i, _weight] of layer.getWeights().entries()) {
         const weight = _weight as tf.Variable
 
