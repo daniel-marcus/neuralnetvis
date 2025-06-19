@@ -6,7 +6,6 @@ interface Text2TextureProps {
   text: string
   fontSize?: number
   fontFace: string
-  color: string
   align?: "left" | "center" | "right"
 }
 
@@ -17,9 +16,9 @@ type Text2TextureResult = {
 const text2TextureCache = new Map<string, Text2TextureResult>()
 
 export function text2Texture(props: Text2TextureProps): Text2TextureResult {
-  const { text, fontSize = 90, fontFace, color, align = "left" } = props
+  const { text, fontSize = 80, fontFace, align = "left" } = props
 
-  const key = `${text}-${fontSize}-${fontFace}-${color}-${align}`
+  const key = `${text}-${fontSize}-${fontFace}-${align}`
   if (text2TextureCache.has(key)) {
     return text2TextureCache.get(key)!
   }
@@ -41,7 +40,7 @@ export function text2Texture(props: Text2TextureProps): Text2TextureResult {
   canvas.height = innerHeight
 
   ctx.font = font
-  ctx.fillStyle = color
+  ctx.fillStyle = "#ffffff" // set actual text color on material
   ctx.textBaseline = "bottom"
   ctx.textAlign = align
 
@@ -59,7 +58,6 @@ export function text2Texture(props: Text2TextureProps): Text2TextureResult {
   const scale = [xScale, yScale, 0] as [number, number, number]
 
   const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
   texture.generateMipmaps = false
   texture.minFilter = THREE.LinearFilter
   texture.magFilter = THREE.LinearFilter

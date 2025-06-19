@@ -1,9 +1,10 @@
+import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, getWorldPos } from "@/scene-views/3d-model/utils"
 import { TextLabel } from "./label"
 import { LABEL_COLOR } from "./label"
 import type { NeuronLayer, Neuron } from "@/neuron-layers/types"
-import { PosObj } from "./layer-instanced"
+import type { PosObj } from "./layer-instanced"
 
 interface YPointerProps {
   outputLayer: NeuronLayer
@@ -37,16 +38,20 @@ export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
 
 interface PointerProps {
   position: [number, number, number]
-  color?: string
+  color?: string | THREE.Color
   size?: number
 }
 
-export const Pointer = ({ position: [x, y, z], size = 1 }: PointerProps) => {
+export const Pointer = ({
+  position: [x, y, z],
+  size = 1,
+  color,
+}: PointerProps) => {
   const position = [x, y, z + size * 1.7] as [number, number, number]
   const ref = useAnimatedPosition(position, 0.6)
   return (
     <group ref={ref}>
-      <TextLabel text="◀" side="right" />
+      <TextLabel text="◀" side="right" color={color} />
     </group>
   )
 }

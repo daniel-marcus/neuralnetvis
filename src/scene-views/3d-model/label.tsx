@@ -9,7 +9,7 @@ import { getIndex3d } from "@/neuron-layers/neurons"
 import { text2Texture } from "./text-to-texture"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
-export const LABEL_COLOR = "rgb(150, 156, 171)"
+export const LABEL_COLOR = new THREE.Color("rgb(150, 156, 171)")
 
 interface NeuronLabelsProps {
   neuronIdx: number
@@ -82,7 +82,7 @@ interface NeuronLabelProps {
   text?: string
   position?: [number, number, number]
   side?: "left" | "right"
-  color?: string
+  color?: string | THREE.Color
   size?: number
   lookAtCamera?: boolean
 }
@@ -122,11 +122,11 @@ export const TextLabel = memo(function NeuronLabel({
     if (!text) return
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
-    const { texture, scale } = text2Texture({ text, fontFace, color, align })
+    const { texture, scale } = text2Texture({ text, fontFace, align })
     const anchorOffset = side === "left" ? -scale[0] / 2 : scale[0] / 2
     const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
     setLabelState({ texture, scale, anchorPos })
-  }, [text, color, side])
+  }, [text, side])
 
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!text || !labelState || !lightsOn) return null
@@ -141,7 +141,7 @@ export const TextLabel = memo(function NeuronLabel({
       scale={size * 1.2}
     >
       <sprite ref={labelRef} position={anchorPos} scale={scale}>
-        <meshBasicMaterial map={texture} transparent />
+        <meshBasicMaterial map={texture} transparent color={color} />
       </sprite>
     </group>
   )
