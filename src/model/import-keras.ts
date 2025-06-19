@@ -5,6 +5,13 @@ import { isDebug } from "@/store"
 
 // experimantal import for .keras files from Keras 3
 
+const multiHeadAttentionPathNames = [
+  "query_dense",
+  "key_dense",
+  "value_dense",
+  "output_dense",
+]
+
 export async function importKerasModel(file: File) {
   if (isDebug()) console.log("Importing keras model file:", file)
   try {
@@ -18,14 +25,7 @@ export async function importKerasModel(file: File) {
     const parsedModelJson = parseModelObject(modelJson)
     if (isDebug()) console.log("Parsed model JSON:", parsedModelJson)
 
-    const model = await tf.models
-      .modelFromJSON(parsedModelJson)
-      .catch((error) => {
-        console.warn("Error creating model from JSON:", error)
-        throw new Error(
-          "Failed to create model from JSON. Check the file format."
-        )
-      })
+    const model = await tf.models.modelFromJSON(parsedModelJson)
     if (isDebug()) console.log("Created model from JSON:", model)
 
     const weightsFile = zip.files["model.weights.h5"]
@@ -41,10 +41,17 @@ export async function importKerasModel(file: File) {
       const layerPath = count === 0 ? className : `${className}_${count}`
       for (const [i, _weight] of layer.getWeights().entries()) {
         const weight = _weight as tf.Variable
-        // TODO: check if i is correct?
-        const path = `layers/${layerPath}/vars/${i}`
+
+        let weightPath = `/vars/${i}`
+        if (className === "multi_head_attention") {
+          const sublayerIdx = Math.floor(i / 2) // 2 weights per sublayer
+          const sublayerName = multiHeadAttentionPathNames[sublayerIdx] // query_dense, key_dense, value_dense, output_dense
+          weightPath = `/${sublayerName}/vars/${i % 2}` // 0 or 1 for kernel / bias
+        }
+        const path = `layers/${layerPath}` + weightPath
+
         const hdf5Data = f.get(path)?.value
-        if (isDebug()) console.log(weight, hdf5Data, path)
+        if (isDebug()) console.log(i, path, weight, hdf5Data)
         if (!hdf5Data) {
           console.warn(`No data found for path: ${path}`)
           continue
@@ -54,10 +61,7 @@ export async function importKerasModel(file: File) {
         )
       }
     }
-
     return model
-
-    // TODO: assign weights to model
   } catch (error) {
     console.error("Error importing keras model:", error)
   }

@@ -15,6 +15,36 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     const newKwargs = { ...kwargs, value, key }
     return super.call(query, newKwargs)
   }
+
+  buildFromSignature(
+    queryShape: tf.Shape,
+    valueShape: tf.Shape,
+    keyShape: tf.Shape
+  ) {
+    // 1. Call the parent method to set up the layer
+    super.buildFromSignature(queryShape, valueShape, keyShape)
+
+    // 2. Build the sublayers to create weights
+    this.queryDense.build(queryShape)
+    this.keyDense.build(keyShape ?? valueShape)
+    this.valueDense.build(valueShape)
+    this.outputDense.build([null, null, this.numHeads, this.valueDim]) // ??
+
+    // TODO: somehow track the sublayer weights to make them reusable for saving/loading
+  }
+
+  getWeights(trainableOnly?: boolean): tf.Tensor[] {
+    return this.getSublayerWeights(trainableOnly)
+  }
+
+  getSublayerWeights(trainableOnly?: boolean): tf.Tensor[] {
+    return [
+      this.queryDense,
+      this.keyDense,
+      this.valueDense,
+      this.outputDense,
+    ].flatMap((l) => l.getWeights(trainableOnly))
+  }
 }
 
 export const MultiHeadAttention: LayerDef<"MultiHeadAttention"> = {
