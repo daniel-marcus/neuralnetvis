@@ -90,7 +90,6 @@ function parseModelObject<T>(obj: T): T {
 
       // parse inbound_nodes to legacy format
       if (key === "inbound_nodes" && Array.isArray(value) && value.length > 0) {
-        console.log("Parsing inbound_nodes:", value, acc)
         const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
           ? value[0].args[0]
           : value[0].args
