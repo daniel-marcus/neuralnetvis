@@ -144,6 +144,9 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
         // assume model.json + weights.bin files
         setStatus("Importing model ...", -1, { id: IMPORT_STATUS })
         newModel = await tf.loadLayersModel(tf.io.browserFiles([...modelFiles]))
+        // const fileContent = await modelFiles[0].text()
+        // const json = JSON.parse(fileContent)
+        // newModel = await tf.models.modelFromJSON(json)
       }
 
       if (newModel) {

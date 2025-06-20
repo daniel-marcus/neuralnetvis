@@ -104,6 +104,12 @@ export function useActivation(layerIdx: number, neuronIdx: number) {
   return useSceneStore((s) => s.activations[layerIdx]?.activations?.[neuronIdx])
 }
 
+function getSingleOutput(tfLayer: tf.layers.Layer) {
+  const nodeIdx = tfLayer.inboundNodes.length - 1 // last inbound node; normally this is just 0, but in cases of nested models (e.g. Sequential as a layer) it is 1
+  const result = tfLayer.getOutputAt(nodeIdx)
+  return Array.isArray(result) ? result[0] : result
+}
+
 async function getActivations(
   backend: Backend,
   model: tf.LayersModel,
@@ -113,7 +119,7 @@ async function getActivations(
   stats?: { [layerIdx: number]: ActivationStats | undefined }
 ) {
   const tfBackend = tf.getBackend()
-  const outputs = layers.map((l) => l.tfLayer.output as tf.SymbolicTensor) // assume single output
+  const outputs = layers.map(({ tfLayer }) => getSingleOutput(tfLayer))
   await tf.ready()
   const activationTensors = tf.tidy(() => {
     const t0 = performance.now()
@@ -239,7 +245,7 @@ export function getLayerActivations(
     return tf.tidy(() => {
       const tmpModel = tf.model({
         inputs: model.input,
-        outputs: outputs ?? model.layers.flatMap((layer) => layer.output),
+        outputs: outputs ?? model.layers.map(getSingleOutput),
       })
       const result = tmpModel.predict(inputTensor)
       return Array.isArray(result) ? result : [result]
