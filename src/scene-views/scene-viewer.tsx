@@ -43,9 +43,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const ownCanvas = !!dsDef?.mapProps
   return (
     <div
-      className={`flex justify-center items-center w-full h-full ${
-        ownCanvas ? "bg-background" : ""
-      }`}
+      className={`flex justify-center items-center w-full h-full`}
       onMouseEnter={!isActive ? () => setIsHovered(true) : undefined}
       onMouseLeave={!isActive ? () => setIsHovered(false) : undefined}
     >

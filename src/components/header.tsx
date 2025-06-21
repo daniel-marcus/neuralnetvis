@@ -11,7 +11,7 @@ export const Header = () => {
   return (
     <div
       className={`${
-        isPlayMode ? "fixed" : "relative"
+        isPlayMode ? "fixed" : ""
       } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
     >
       <Headroom

@@ -24,7 +24,7 @@ export const SampleSlider = () => {
 
   return (
     <div
-      className={`absolute left-0 ${
+      className={`absolute will-change-transform left-0 ${
         isActive ? "bottom-8" : "bottom-[-2px] leading-[1]"
       } w-full flex-row items-center justify-center transition-[bottom] duration-300 screenshot:hidden`}
     >
