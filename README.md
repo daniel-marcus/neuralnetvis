@@ -4,6 +4,10 @@ Wrap your head around neural networks and watch machines learning: NeuralNetVis 
 
 Live here: [https://neuralnetvis.app](https://neuralnetvis.app)
 
+## Performance
+
+This is a prototype under development which is not yet optimized for mobile devices. It runs best on desktop browsers with WebGPU support (e.g. Chrome) which allows a direct data transfer on the GPU between the TensorFlow.js inference backend and the three.js rendering backend.
+
 ## Datasets
 
 These datasets are available at the moment; most of them are smaller subsets of the original datasets to keep network load and memory usage reasonable.
@@ -16,14 +20,18 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | [CIFAR100](https://www.cs.toronto.edu/~kriz/cifar.html)                 | Colored images          | Classification (100) |  32x32x3 |        18,000 |        1,800 |
 | [Auto MPG](https://archive.ics.uci.edu/dataset/9/auto+mpg)              | Predict fuel efficiency | Regression           |        9 |           314 |           50 |
 | [California Housing](https://keras.io/api/datasets/california_housing/) | Predict housing prices  | Regression           |        8 |        16,512 |        4,128 |
+| [IMDb](https://ai.stanford.edu/~amaas/data/sentiment/)                  |  Sentiment analysis     |  Classification (2)  |      200 |        25,000 |       25,000 |
 
-Also, you can generate your own datasets using input from your webcam and these pretrained models:
+## Models
 
-- [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker): Detects coordinates from 21 landmarks for each hand which can be used for hand pose classifications
+The app comes with a pretrained model for each of the above mentioned datasets. Other models:
 
-## Model Import (experimental)
+- [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker): Detects coordinates of 21 landmarks for each hand which can be used for hand pose classifications with webcam input
+- [MobileNetV2](https://keras.io/api/applications/mobilenet/#mobilenetv2-function): Google's MobileNetV2 for image classification, trained on ImageNet data (224x224x3)
 
-Pretrained models from Python Tensorflow can be imported in the _my models_ section. Notes:
+### Model Import (experimental)
+
+Custom pretrained models from Python Tensorflow can be imported in the _my models_ section. Notes:
 
 - Only _LayersModel_ models are supported
 - For Keras 3.x, use `model.save('model.keras')` to export the model
@@ -51,7 +59,6 @@ Pretrained models from Python Tensorflow can be imported in the _my models_ sect
 - [An Interactive Node-Link Visualization of Convolutional Neural Networks](https://adamharley.com/nn_vis/) by Adam W. Harley
 - TensorFlow's [Neural Network Playground](https://playground.tensorflow.org/)
 - Google's [Teachable Machine](https://teachablemachine.withgoogle.com)
-- The settings UI was inspired by [Leva](https://github.com/pmndrs/leva)
 - The logo and the lesson headings use a modified version of the _BlurVision ASCII_ font by Aiden Neuding using patorjk's [figlet.js](https://github.com/patorjk/figlet.js) for ASCII Art
 
 ```
