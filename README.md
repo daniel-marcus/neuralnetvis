@@ -20,7 +20,7 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | [CIFAR100](https://www.cs.toronto.edu/~kriz/cifar.html)                 | Colored images          | Classification (100) |  32x32x3 |        18,000 |        1,800 |
 | [Auto MPG](https://archive.ics.uci.edu/dataset/9/auto+mpg)              | Predict fuel efficiency | Regression           |        9 |           314 |           50 |
 | [California Housing](https://keras.io/api/datasets/california_housing/) | Predict housing prices  | Regression           |        8 |        16,512 |        4,128 |
-| [IMDb](https://ai.stanford.edu/~amaas/data/sentiment/)                  |  Sentiment analysis     |  Classification (2)  |      200 |        25,000 |       25,000 |
+| [IMDb](https://ai.stanford.edu/~amaas/data/sentiment/)                  | Sentiment analysis      | Classification (2)   |      200 |        25,000 |       25,000 |
 
 ## Models
 
