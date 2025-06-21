@@ -26,6 +26,7 @@ export const lessons: LessonDef[] = [
     content: IntroNetworks,
     dsKey: "mnist",
     initialState: hmlInitialState,
+    disabled: true,
   },
 ]
 
