@@ -4,6 +4,7 @@ import { getLayerDef } from "@/model/layers"
 import { getLayerWeights } from "@/model/weights"
 import type { Index3D, Neuron, NeuronStateful, Nid } from "./types"
 import type { LayerActivations } from "@/model"
+import type { Sample } from "@/data"
 
 export function useHovered() {
   const hoveredNid = useSceneStore((s) => s.hoveredNid)
@@ -67,7 +68,7 @@ export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
 function makeStateful(
   neuron: Neuron,
   layerActivations?: LayerActivations,
-  rawX?: number[]
+  rawX?: Sample["rawX"]
 ): NeuronStateful {
   const nIdx = neuron.index
   const filterIdx = nIdx % neuron.layer.numBiases // for dense layers this would be nIdx

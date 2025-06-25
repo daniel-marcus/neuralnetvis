@@ -25,7 +25,9 @@ function getMobileNet(
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
     inputDims: [res, res, 3],
     preprocessFunc: "normalizeImage", // scale?
-    camProps: {},
+    camProps: {
+      videoConstraints: { width: res, height: res },
+    },
     outputLabels: getImagenetLabels(),
     model: getModelDef(`mobilenet-v2-${res}`),
     sampleViewer: true,

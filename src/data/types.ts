@@ -68,6 +68,7 @@ interface DsMapProps {
 
 interface DsCamProps {
   aspectRatio?: number
+  videoConstraints?: MediaTrackConstraints // { width: number, height: number } to avoid manual resizing
   processor?: "handPose"
 }
 
@@ -87,9 +88,9 @@ export interface DbBatch {
 
 export interface SampleRaw {
   index: number
-  X: number[]
+  X: number[] | SupportedTypedArray
   y?: number
-  rawX?: number[]
+  rawX?: number[] | SupportedTypedArray
   name?: string
 }
 

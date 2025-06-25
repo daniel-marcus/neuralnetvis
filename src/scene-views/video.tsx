@@ -87,13 +87,18 @@ function useStream() {
     stream?.getTracks().forEach((track) => track.stop())
     setStream(undefined)
   }, [stream, setStream])
+  const videoConstraints = useSceneStore(
+    (s) => s.ds?.camProps?.videoConstraints
+  )
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()
     else {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: videoConstraints ?? true,
+      })
       setStream(stream)
     }
-  }, [stream, setStream, stopStream])
+  }, [stream, setStream, stopStream, videoConstraints])
   useEffect(() => {
     const video = videoRef?.current
     if (!video || !stream) return

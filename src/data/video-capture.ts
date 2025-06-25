@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore, useGlobalStore } from "@/store"
-import { centerCropResize } from "./utils"
+import type { SampleRaw } from "./types"
 
 export interface RecorderProps {
   stream?: MediaStream
@@ -9,7 +9,7 @@ export interface RecorderProps {
 
 export type CaptureFunc = (
   video: HTMLVideoElement
-) => Promise<number[] | undefined>
+) => Promise<SampleRaw["X"] | undefined>
 
 export function useCaptureLoop(
   stream: MediaStream | null | undefined,
@@ -48,16 +48,25 @@ export function DefaultVideoCapture({ stream }: RecorderProps) {
 
 async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   if (!inputDims || !video.videoWidth || !video.videoHeight) return
-  const [height, width, channels] = inputDims
-  const tensor = await tf.browser.fromPixelsAsync(video, channels)
-  const resized = tf.tidy(() =>
-    centerCropResize(tensor, height, width).flatten()
+  const [, , channels] = inputDims
+  const wrapToImageBitmap = isSafari() && tf.getBackend() === "webgpu"
+  const input = wrapToImageBitmap
+    ? await createImageBitmap(video, { premultiplyAlpha: "none" })
+    : video
+  const imgTensor = await tf.browser.fromPixelsAsync(input, channels)
+  const flattened = tf.tidy(
+    () => imgTensor.flatten() // assume correctly sized input with ds.camProps.videoConstraints
+    // centerCropResize(tensor, height, width).flatten()
   )
-  let data: number[] | undefined
+  let data: Float32Array | undefined
   try {
-    data = await resized.array()
+    data = (await flattened.data()) as Float32Array
   } finally {
-    tf.dispose([tensor, resized])
+    tf.dispose([imgTensor, flattened])
   }
   return data
+}
+
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 }
