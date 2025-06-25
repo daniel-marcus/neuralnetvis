@@ -20,7 +20,7 @@ function getMobileNet(
     isModelDs: true,
     targetDevice,
     description: `Google's MobileNetV2, trained on ImageNet data (${res}x${res}x3)`,
-    version: new Date("2025-06-06"),
+    version: new Date("2025-06-25"),
     aboutUrl:
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
     inputDims: [res, res, 3],
@@ -41,13 +41,19 @@ function getMobileNet(
         "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Salford_Cathedral_Memorial_Chapel.jpg/330px-Salford_Cathedral_Memorial_Chapel.jpg",
       ]
       const imgs = await fetchImages(imgUrls)
-      const xTrainData = tf.tidy(() => {
+      const xTrainTensor = tf.tidy(() => {
         const imgTensors = imgs.map((img) =>
           centerCropResize(tf.browser.fromPixels(img), res, res)
         )
         const all = tf.stack(imgTensors)
-        return all.flatten().arraySync()
+        return all.flatten()
       })
+      let xTrainData: number[]
+      try {
+        xTrainData = await xTrainTensor.array()
+      } finally {
+        xTrainTensor.dispose()
+      }
       const data = new Uint8Array(xTrainData)
       const xTrain = {
         data,

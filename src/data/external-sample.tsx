@@ -23,14 +23,17 @@ export function useExternalSample() {
 
       const [targetHeight, targetWidth] = inputDims
 
-      // TODO: async
-      const X = tf.tidy(() => {
-        const imgTensor = tf.browser.fromPixels(image)
-        const resized = centerCropResize(imgTensor, targetHeight, targetWidth)
-        return resized.flatten().arraySync()
-      })
-
-      if (X) setSample({ X, index: Date.now() }, true)
+      const imgTensor = await tf.browser.fromPixelsAsync(image)
+      const resized = tf.tidy(() =>
+        centerCropResize(imgTensor, targetHeight, targetWidth).flatten()
+      )
+      try {
+        const X = await resized.array()
+        if (X) setSample({ X, index: Date.now() }, true)
+      } finally {
+        resized.dispose()
+        imgTensor.dispose()
+      }
     }
     loadExternalSample().catch((error) => {
       window.alert(`Failed to load image from URL: ${url}\nTry another`)
