@@ -7,17 +7,16 @@ export interface RecorderProps {
   stream?: MediaStream
 }
 
-export type PredictFunc = (
+export type CaptureFunc = (
   video: HTMLVideoElement
 ) => Promise<number[] | undefined>
 
 export function useCaptureLoop(
   stream: MediaStream | null | undefined,
-  predict: PredictFunc // a function that converts video input to raw data for a sample
+  capture: CaptureFunc // a function that converts video input to raw data for a sample
 ) {
   const ds = useSceneStore((s) => s.ds)
   const setSample = useSceneStore((s) => s.setSample)
-  // const nextSample = useSceneStore((s) => s.nextSample)
   const videoRef = useSceneStore((s) => s.videoRef)
   const recY = useSceneStore((s) => s.recordingY)
   useEffect(() => {
@@ -26,27 +25,24 @@ export function useCaptureLoop(
     async function captureLoop() {
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
       if (!isTraning && videoRef.current) {
-        const X = await predict(videoRef.current)
+        const X = await capture(videoRef.current)
         const y = typeof recY.current === "number" ? recY.current : undefined
         if (X) setSample({ X, y, index: Date.now() }, true)
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
     captureLoop()
-    return () => {
-      cancelAnimationFrame(animationFrame)
-      // nextSample()
-    }
-  }, [stream, videoRef, predict, ds, setSample, recY])
+    return () => cancelAnimationFrame(animationFrame)
+  }, [stream, videoRef, capture, ds, setSample, recY])
 }
 
 export function DefaultVideoCapture({ stream }: RecorderProps) {
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
-  const predict = useCallback(
+  const capture = useCallback(
     (v: HTMLVideoElement) => videoToSample(v, inputDims),
     [inputDims]
   )
-  useCaptureLoop(stream, predict)
+  useCaptureLoop(stream, capture)
   return null
 }
 

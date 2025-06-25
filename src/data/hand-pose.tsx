@@ -7,7 +7,7 @@ import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData } from "@/data/dataset"
 import { useCaptureLoop } from "./video-capture"
 import { Button } from "@/components/ui-elements"
-import type { PredictFunc, RecorderProps } from "./video-capture"
+import type { CaptureFunc, RecorderProps } from "./video-capture"
 import type { SampleRaw } from "./types"
 
 const HP_TRAIN_CONFIG = {
@@ -65,7 +65,7 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
     landmarker.setOptions({ numHands })
   }, [landmarker, numHands])
 
-  const hpPredict: PredictFunc = useCallback(
+  const hpPredict: CaptureFunc = useCallback(
     async (video?: HTMLVideoElement) => {
       if (!landmarker || !video) return
       if (!video.videoWidth || !video.videoHeight) return
@@ -172,7 +172,7 @@ export function HandPoseCanvasUpdater() {
 
 let shouldCancelRecording = false
 
-function useSampleRecorder(hpPredict: PredictFunc, numHands: number) {
+function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
   const startRec = useSceneStore((s) => s.startRecording)
   const stopRec = useSceneStore((s) => s.stopRecording)
