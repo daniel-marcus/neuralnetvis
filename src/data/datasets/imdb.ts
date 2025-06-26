@@ -12,6 +12,7 @@ export const imdb: DatasetDef = {
   inputDims: [200],
   outputLabels: ["negative", "positive"],
   tokenizerName: "IMDbTokenizer",
+  sampleViewer: true,
   model: getModelDef("imdb"),
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([

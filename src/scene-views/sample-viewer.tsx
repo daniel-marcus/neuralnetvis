@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { getSample } from "@/data/sample"
-import { useCurrScene, useSceneStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
@@ -32,13 +32,13 @@ export function SampleViewer() {
     }
     getSamples()
   }, [idxs, ds, subset, offset, itemsPerPage])
-  const sampleIdx = useCurrScene((s) => s.sampleIdx)
-  const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
+  const sampleIdx = useSceneStore((s) => s.sampleIdx)
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   const hasBlur = !!useMaskMode()
   useKeyboardNavigation(idxs, itemsPerPage, setOffset)
 
   const isLayersView = useSceneStore((s) => s.view === "layers")
-  const camAspectRatio = useCurrScene((s) => s.getAspectRatio())
+  const camAspectRatio = useSceneStore((s) => s.getAspectRatio())
   const aspectRatio = ds?.camProps ? camAspectRatio : 1
 
   if (!samples.length) return null
@@ -63,7 +63,7 @@ export function SampleViewer() {
                 key={i}
                 onClick={() => setSampleIdx(isCurrent ? undefined : idx)}
               >
-                <SampleCanvas sample={sample} isCurrent={isCurrent} />
+                <SamplePreview sample={sample} isCurrent={isCurrent} />
               </button>
             )
           })}
@@ -80,7 +80,7 @@ export function SampleViewer() {
 }
 
 function VideoCaptureBtn() {
-  const ds = useCurrScene((s) => s.ds)
+  const ds = useSceneStore((s) => s.ds)
   const [stream, toggleStream, recorder] = useVideoControl()
   if (!ds?.camProps) return null
   // TODO: styles as reusable component
@@ -104,7 +104,7 @@ function AddSampleBtn() {
   // - add to dataset?
   return (
     <button
-      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker  aspect-[var(--item-aspect-ratio)]`}
+      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}
       onClick={onClick}
     >
       +
@@ -117,8 +117,8 @@ function useKeyboardNavigation(
   itemsPerPage: number,
   setOffset: React.Dispatch<React.SetStateAction<number>>
 ) {
-  const sampleIdx = useCurrScene((s) => s.sampleIdx)
-  const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
+  const sampleIdx = useSceneStore((s) => s.sampleIdx)
+  const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
   const nextLocal = useCallback(
     (step = 1) =>
       setSampleIdx((prevIdx) => {
@@ -192,42 +192,67 @@ type ImgShape = [number, number, number]
 
 const VIDEO_BASE_SIZE = 640 // x 480 -> 4:3 aspect ratio
 
-function SampleCanvas({
-  sample,
-  isCurrent,
-}: {
+interface SamplePreviewProps {
   sample: SampleRaw
   isCurrent?: boolean
-}) {
-  const ref = useRef<HTMLCanvasElement>(null)
-  const camProps = useCurrScene((s) => s.ds?.camProps)
-  const aspectRatio = useCurrScene((s) => s.getAspectRatio())
-  const hasCam = !!camProps
-  const camProcessor = useCurrScene((s) => s.ds?.camProps?.processor)
-  const inputDims = useCurrScene((s) => s.ds?.inputDims)
-  useEffect(() => {
-    const canvas = ref.current
-    if (!inputDims || !sample || !canvas) return
-    if (camProcessor === "handPose")
-      drawHandPoseSampleToCanvas(sample, inputDims, canvas)
-    else drawImageSampleToCanvas(sample, inputDims, canvas)
-  }, [inputDims, sample, camProcessor])
+}
+
+function SamplePreview({ sample, isCurrent }: SamplePreviewProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!isCurrent) return
     const el = ref.current
     el?.scrollIntoView({ behavior: "smooth" })
     return () => el?.parentElement?.blur()
   }, [isCurrent])
+  const isTextSample = useSceneStore((s) => !!s.ds?.tokenizer)
+  const Preview = isTextSample ? TokenPreview : CanvasPreview
+  return (
+    <div
+      className={`border-2 ${
+        isCurrent ? "border-accent" : "border-menu-border"
+      } hover:border-marker rounded-md overflow-hidden w-[var(--item-size)]`}
+      ref={ref}
+    >
+      <Preview sample={sample} />
+    </div>
+  )
+}
+
+function TokenPreview({ sample }: SamplePreviewProps) {
+  const tokenizer = useSceneStore((s) => s.ds?.tokenizer)
+  const text = useMemo(() => {
+    if (!tokenizer || !sample.X) return ""
+    const tokens = [...sample.X].slice(1, 31).map(tokenizer.decode)
+    return tokens.join(" ") // using non-breaking space to allow arbitrary line breaks
+  }, [sample.X, tokenizer])
+  return (
+    <div className="text-[9px] w-full h-[var(--item-size)] text-left break-words leading-none">
+      {text}
+    </div>
+  )
+}
+
+function CanvasPreview({ sample }: SamplePreviewProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const camProps = useSceneStore((s) => s.ds?.camProps)
+  const aspectRatio = useSceneStore((s) => s.getAspectRatio())
+  const hasCam = !!camProps
+  const camProcessor = useSceneStore((s) => s.ds?.camProps?.processor)
+  const inputDims = useSceneStore((s) => s.ds?.inputDims)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!inputDims || !sample || !canvas) return
+    if (camProcessor === "handPose")
+      drawHandPoseSampleToCanvas(sample, inputDims, canvas)
+    else drawImageSampleToCanvas(sample, inputDims, canvas)
+  }, [inputDims, sample, camProcessor])
   return (
     <canvas
-      className={`border-2 bg-blend-multiply ${
-        isCurrent ? "border-accent" : "border-menu-border"
-      } hover:border-marker rounded-md w-[var(--item-size)] ${
-        hasCam ? "scale-x-[-1] bg-box" : ""
-      } `}
+      className={`w-full ${hasCam ? "scale-x-[-1] bg-box" : ""} `}
       width={hasCam ? VIDEO_BASE_SIZE : inputDims?.[1]}
       height={hasCam ? VIDEO_BASE_SIZE / aspectRatio : inputDims?.[2]}
-      ref={ref}
+      ref={canvasRef}
     />
   )
 }
