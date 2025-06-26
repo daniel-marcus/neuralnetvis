@@ -6,7 +6,7 @@ import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
 import { cameraOffSvg, cameraSvg, useVideoControl } from "./video"
-import { useExternalSample } from "@/data/external-sample"
+import { useMySample } from "@/data/my-sample"
 import type { SampleRaw } from "@/data"
 
 export function SampleViewer() {
@@ -98,10 +98,7 @@ function VideoCaptureBtn() {
 }
 
 function AddSampleBtn() {
-  const onClick = useExternalSample()
-  // TODO: use for hand pose recorindg also
-  // - conditions when to show
-  // - add to dataset?
+  const onClick = useMySample()
   return (
     <button
       className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}

@@ -2,26 +2,47 @@ type EncodeDict = { [str: string]: number }
 type DecodeDict = { [token: number]: string }
 
 export interface TokenizerType {
-  encode(text: string): number[] | Uint8Array
+  encode(text: string, length?: number): number[] | Int32Array
   decode(token: number): string
   encodeDict: EncodeDict
   decodeDict: DecodeDict
   init?: () => Promise<void>
+  normalize: (rawText: string) => string
 }
 
 class Tokenizer implements TokenizerType {
-  encodeDict: EncodeDict = {}
+  encodeDict: EncodeDict = {
+    "<PAD>": 0,
+    "<START>": 1,
+    "<OOV>": 2, // out-of-vocabulary / unknown
+  }
   decodeDict: DecodeDict = {}
 
   constructor() {
     this.encode = this.encode.bind(this)
     this.decode = this.decode.bind(this)
+    this.normalize = this.normalize.bind(this)
   }
 
-  public encode(x: string): Uint8Array {
-    const encoded = new Uint8Array(x.length)
-    for (let i = 0; i < x.length; i++) {
-      const tkn = this.encodeDict[x] ?? 0
+  public normalize(rawText: string): string {
+    return rawText
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9 ']/g, "")
+      .replaceAll(/\s+/g, " ") // replace multiple spaces with single space
+      .trim()
+  }
+
+  public encode(rawText: string, _length?: number): Int32Array {
+    const text = this.normalize(rawText)
+    const words = text.split(" ")
+    const length = _length ?? words.length + 1 // +1 for <START> token
+    const encoded = new Int32Array(length)
+    encoded[0] = this.encodeDict["<START>"]
+    for (let i = 1; i < length; i++) {
+      let tkn: number
+      const wordIdx = i - 1
+      if (wordIdx >= words.length) tkn = this.encodeDict["<PAD>"]
+      else tkn = this.encodeDict[words[wordIdx]] ?? this.encodeDict["<OOV>"]
       encoded[i] = tkn
     }
     return encoded
@@ -45,11 +66,7 @@ class IMDbTokenizer extends Tokenizer {
       Object.entries(_dict).map(([k, v]) => [k, v + 3]) // offset by 3 for special tokens
     )
 
-    dict["<PAD>"] = 0
-    dict["<START>"] = 1
-    dict["<UNK>"] = 2
-
-    this.encodeDict = dict
+    this.encodeDict = { ...this.encodeDict, ...dict }
     this.decodeDict = this._reverse(this.encodeDict)
   }
 }
