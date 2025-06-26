@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore, useGlobalStore } from "@/store"
+import { centerCropResize } from "./utils"
 import type { SampleRaw } from "./types"
 
 export interface RecorderProps {
@@ -22,12 +23,18 @@ export function useCaptureLoop(
   useEffect(() => {
     if (!stream) return
     let animationFrame: number
+    let isCapturing = false
     async function captureLoop() {
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
-      if (!isTraning && videoRef.current) {
-        const X = await capture(videoRef.current)
-        const y = typeof recY.current === "number" ? recY.current : undefined
-        if (X) setSample({ X, y, index: Date.now() }, true)
+      if (!isTraning && !isCapturing && videoRef.current?.readyState! >= 2) {
+        isCapturing = true
+        try {
+          const X = await capture(videoRef.current!)
+          const y = typeof recY.current === "number" ? recY.current : undefined
+          if (X) setSample({ X, y, index: Date.now() }, true)
+        } finally {
+          isCapturing = false
+        }
       }
       animationFrame = requestAnimationFrame(captureLoop)
     }
@@ -46,36 +53,19 @@ export function DefaultVideoCapture({ stream }: RecorderProps) {
   return null
 }
 
-let videoCanvas: HTMLCanvasElement | undefined
-function getVideoCanvas(height: number, width: number) {
-  if (!videoCanvas) {
-    videoCanvas = document.createElement("canvas")
-    videoCanvas.width = width
-    videoCanvas.height = height
-  }
-  if (videoCanvas.width !== width || videoCanvas.height !== height) {
-    videoCanvas.width = width
-    videoCanvas.height = height
-  }
-  return videoCanvas
-}
-
 async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   if (!inputDims || !video.videoWidth || !video.videoHeight) return
   const [height, width, channels] = inputDims
   let input: HTMLVideoElement | HTMLCanvasElement | ImageBitmap = video
   const needsResize = video.videoWidth !== width || video.videoHeight !== height
-  if (needsResize) {
-    const canvas = getVideoCanvas(height, width)
-    canvas.getContext("2d")?.drawImage(video, 0, 0, width, height)
-    input = canvas
-  } else if (isSafari() && tf.getBackend() === "webgpu") {
+  if (isSafari() && tf.getBackend() === "webgpu") {
     input = await createImageBitmap(video, { premultiplyAlpha: "none" })
   }
   const imgTensor = await tf.browser.fromPixelsAsync(input, channels)
-  const flattened = tf.tidy(
-    () => imgTensor.flatten() // assume correctly sized input with ds.camProps.videoConstraints
-    // centerCropResize(tensor, height, width).flatten()
+  const flattened = tf.tidy(() =>
+    needsResize
+      ? centerCropResize(imgTensor, height, width).flatten()
+      : imgTensor.flatten()
   )
   let data: Float32Array | undefined
   try {
