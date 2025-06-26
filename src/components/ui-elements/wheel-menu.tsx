@@ -36,10 +36,10 @@ export const WheelMenu = (props: WheelMenuProps) => {
             : isActive
             ? "translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
             : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-105px)] sm:hover:translate-x-[calc(100%-125px)]"
-        } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none`}
+        } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none pointer-events-none`}
       >
         <ul
-          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background rotate-[var(--wheel-rotation)] after:absolute after:inset-0 after:rounded-[50%] after:shadow-xl after:z-[-1] after:-rotate-[var(--wheel-rotation)] ${
+          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] pointer-events-auto rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background rotate-[var(--wheel-rotation)] after:absolute after:inset-0 after:rounded-[50%] after:shadow-xl after:z-[-1] after:-rotate-[var(--wheel-rotation)] ${
             isActive ? "after:shadow-accent" : "after:shadow-accent-hover"
           }`}
           style={
