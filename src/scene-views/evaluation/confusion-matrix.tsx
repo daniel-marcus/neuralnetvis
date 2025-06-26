@@ -163,7 +163,7 @@ const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
           "--ideal-grid-size":
             "min(var(--grid-base), calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-size) - var(--gap)))",
           "--ideal-cell-size": `calc(var(--ideal-grid-size) / var(--num-classes) - var(--gap))`,
-          "--cell-size": "max(1.5rem,var(--ideal-cell-size)",
+          "--cell-size": "max(1.5rem,var(--ideal-cell-size))",
           "--grid-size":
             "calc((var(--cell-size) + var(--gap)) * var(--num-classes))",
           "--label-width": long
@@ -172,7 +172,7 @@ const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
           "--label-max-w": "min(var(--label-width), 4em)",
           "--axis-label-size": "1.5em",
           "--label-plus-axis":
-            "calc(var(--label-width) + var(--axis-label-size) + 2 * var(--gap))",
+            "calc(var(--label-max-w) + var(--axis-label-size) + 2 * var(--gap))",
         } as React.CSSProperties
       }
     >
@@ -212,6 +212,8 @@ function Labels(props: LabelProps) {
   const { long, highlighted, highlightedIsSelected, className = "" } = props
   const { onClick, onMouseEnter, onMouseLeave } = props
   const orient = position === "top" || position === "bottom" ? "row" : "column"
+  const numClasses = labels.length
+  const rotate = long && orient === "row" && numClasses > 2
   return (
     <div
       className={`flex gap-[var(--gap)] ${
@@ -235,11 +237,11 @@ function Labels(props: LabelProps) {
         className={`grid gap-[var(--gap)] ${
           orient === "column"
             ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)]"
-            : `grid-cols-[repeat(var(--num-classes),var(--cell-size))] ${
-                long
-                  ? "min-h-[var(--label-width)]"
-                  : "min-h-[var(--axis-label-size)]"
-              }`
+            : `grid-cols-[repeat(var(--num-classes),var(--cell-size))]`
+        } ${
+          rotate
+            ? "min-h-[var(--label-width)]"
+            : "min-h-[var(--axis-label-size)]"
         }`}
       >
         {labels.map((label, i) => (
@@ -254,16 +256,16 @@ function Labels(props: LabelProps) {
             } ${
               long ? "px-[var(--label-padding)]" : ""
             } leading-none flex items-center ${
-              long
-                ? orient === "row"
-                  ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
-                  : "max-w-[var(--label-max-w)] sm:max-w-none"
+              rotate
+                ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
+                : long && orient === "column"
+                ? "max-w-[var(--label-max-w)] sm:max-w-none"
                 : ""
             } ${
-              long
-                ? position === "left" || position === "bottom"
-                  ? "sm:justify-end"
-                  : "justify-start"
+              long && (position === "left" || position === "bottom")
+                ? "sm:justify-end"
+                : rotate
+                ? "justify-start"
                 : "justify-center"
             } ${typeof onClick === "function" ? "cursor-pointer" : ""}`}
             onClick={() => onClick?.(i)}

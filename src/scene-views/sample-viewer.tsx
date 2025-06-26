@@ -37,6 +37,7 @@ export function SampleViewer() {
   const hasBlur = !!useMaskMode()
   useKeyboardNavigation(idxs, itemsPerPage, setOffset)
 
+  const isLayersView = useSceneStore((s) => s.view === "layers")
   const camAspectRatio = useCurrScene((s) => s.getAspectRatio())
   const aspectRatio = ds?.camProps ? camAspectRatio : 1
 
@@ -52,8 +53,8 @@ export function SampleViewer() {
         <div
           className={`flex items-center justify-start gap-2 overflow-auto no-scrollbar px-4 mx-auto  pointer-events-auto`}
         >
-          <VideoCaptureBtn />
-          <AddSampleBtn />
+          {isLayersView && <VideoCaptureBtn />}
+          {isLayersView && <AddSampleBtn />}
           {samples.map((sample, i) => {
             const idx = idxs[offset + i]
             const isCurrent = typeof idx !== "undefined" && idx === sampleIdx
