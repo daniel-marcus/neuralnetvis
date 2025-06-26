@@ -26,7 +26,8 @@ export function useCaptureLoop(
     let isCapturing = false
     async function captureLoop() {
       const isTraning = useGlobalStore.getState().scene.getState().isTraining
-      if (!isTraning && !isCapturing && videoRef.current?.readyState! >= 2) {
+      const videoReady = (videoRef.current?.readyState ?? 0) >= 2
+      if (!isTraning && !isCapturing && videoReady) {
         isCapturing = true
         try {
           const X = await capture(videoRef.current!)
