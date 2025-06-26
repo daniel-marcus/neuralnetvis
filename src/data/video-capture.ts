@@ -46,13 +46,32 @@ export function DefaultVideoCapture({ stream }: RecorderProps) {
   return null
 }
 
+let videoCanvas: HTMLCanvasElement | undefined
+function getVideoCanvas(height: number, width: number) {
+  if (!videoCanvas) {
+    videoCanvas = document.createElement("canvas")
+    videoCanvas.width = width
+    videoCanvas.height = height
+  }
+  if (videoCanvas.width !== width || videoCanvas.height !== height) {
+    videoCanvas.width = width
+    videoCanvas.height = height
+  }
+  return videoCanvas
+}
+
 async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   if (!inputDims || !video.videoWidth || !video.videoHeight) return
-  const [, , channels] = inputDims
-  const wrapToImageBitmap = isSafari() && tf.getBackend() === "webgpu"
-  const input = wrapToImageBitmap
-    ? await createImageBitmap(video, { premultiplyAlpha: "none" })
-    : video
+  const [height, width, channels] = inputDims
+  let input: HTMLVideoElement | HTMLCanvasElement | ImageBitmap = video
+  const needsResize = video.videoWidth !== width || video.videoHeight !== height
+  if (needsResize) {
+    const canvas = getVideoCanvas(height, width)
+    canvas.getContext("2d")?.drawImage(video, 0, 0, width, height)
+    input = canvas
+  } else if (isSafari() && tf.getBackend() === "webgpu") {
+    input = await createImageBitmap(video, { premultiplyAlpha: "none" })
+  }
   const imgTensor = await tf.browser.fromPixelsAsync(input, channels)
   const flattened = tf.tidy(
     () => imgTensor.flatten() // assume correctly sized input with ds.camProps.videoConstraints

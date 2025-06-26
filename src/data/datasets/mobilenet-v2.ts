@@ -26,7 +26,7 @@ function getMobileNet(
     inputDims: [res, res, 3],
     preprocessFunc: "normalizeImage", // scale?
     camProps: {
-      videoConstraints: { width: res, height: res },
+      videoConstraints: { width: res, height: res, facingMode: "environment" }, // ideally get video input with required dimensions + prefer rear camera on mobile devices
     },
     outputLabels: getImagenetLabels(),
     model: getModelDef(`mobilenet-v2-${res}`),
