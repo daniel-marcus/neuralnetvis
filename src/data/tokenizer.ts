@@ -1,8 +1,10 @@
+import type { SupportedTypedArray } from "./types"
+
 type EncodeDict = { [str: string]: number }
 type DecodeDict = { [token: number]: string }
 
 export interface TokenizerType {
-  encode(text: string, length?: number): number[] | Int32Array
+  encode(text: string, length?: number): SupportedTypedArray
   decode(token: number): string
   encodeDict: EncodeDict
   decodeDict: DecodeDict
@@ -11,17 +13,52 @@ export interface TokenizerType {
 }
 
 class Tokenizer implements TokenizerType {
-  encodeDict: EncodeDict = {
-    "<PAD>": 0,
-    "<START>": 1,
-    "<OOV>": 2, // out-of-vocabulary / unknown
-  }
+  encodeDict: EncodeDict = {}
   decodeDict: DecodeDict = {}
 
   constructor() {
     this.encode = this.encode.bind(this)
     this.decode = this.decode.bind(this)
     this.normalize = this.normalize.bind(this)
+  }
+
+  public normalize(rawText: string): string {
+    return rawText
+  }
+
+  public encode(text: string): SupportedTypedArray {
+    const encoded = new Uint8Array(text.length)
+    for (let i = 0; i < text.length; i++) {
+      encoded[i] = this.encodeDict[text[i]] ?? 0
+    }
+    return encoded
+  }
+
+  public decode(token: number): string {
+    return this.decodeDict[token] ?? ""
+  }
+
+  _reverse(dict: EncodeDict): DecodeDict {
+    return Object.fromEntries(Object.entries(dict).map(([k, v]) => [v, k]))
+  }
+}
+
+class IMDbTokenizer extends Tokenizer {
+  async init() {
+    const specialTokens = {
+      "<PAD>": 0,
+      "<START>": 1,
+      "<OOV>": 2, // out-of-vocabulary / unknown
+    }
+
+    const res = await fetch("/data/imdb/imdb_word_index.json")
+    const _dict = (await res.json()) as EncodeDict
+
+    const dict = Object.fromEntries(
+      Object.entries(_dict).map(([k, v]) => [k, v + 3]) // offset by 3 for special tokens
+    )
+    this.encodeDict = { ...specialTokens, ...dict }
+    this.decodeDict = this._reverse(this.encodeDict)
   }
 
   public normalize(rawText: string): string {
@@ -46,28 +83,6 @@ class Tokenizer implements TokenizerType {
       encoded[i] = tkn
     }
     return encoded
-  }
-
-  public decode(token: number): string {
-    return this.decodeDict[token] ?? ""
-  }
-
-  _reverse(dict: EncodeDict): DecodeDict {
-    return Object.fromEntries(Object.entries(dict).map(([k, v]) => [v, k]))
-  }
-}
-
-class IMDbTokenizer extends Tokenizer {
-  async init() {
-    const res = await fetch("/data/imdb/imdb_word_index.json")
-    const _dict = (await res.json()) as EncodeDict
-
-    const dict = Object.fromEntries(
-      Object.entries(_dict).map(([k, v]) => [k, v + 3]) // offset by 3 for special tokens
-    )
-
-    this.encodeDict = { ...this.encodeDict, ...dict }
-    this.decodeDict = this._reverse(this.encodeDict)
   }
 }
 

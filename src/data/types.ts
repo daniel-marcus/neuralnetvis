@@ -115,7 +115,7 @@ export interface ParsedLike {
 }
 
 // supported typed arrays for tensorflow.js: https://js.tensorflow.org/api/latest/#tensor
-type SupportedTypedArray = Uint8Array | Int32Array | Float32Array
+export type SupportedTypedArray = Uint8Array | Int32Array | Float32Array
 
 type ParsedSafe = Parsed & { data: SupportedTypedArray }
 
