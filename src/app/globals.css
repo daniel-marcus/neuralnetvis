@@ -35,6 +35,17 @@
       transform: translateX(calc(100vw - 100%));
     }
   }
+
+  --animate-recording-pulse: recording-pulse 2s infinite ease-in-out;
+  @keyframes recording-pulse {
+    0%,
+    100% {
+      color: transparent;
+    }
+    50% {
+      color: var(--color-accent);
+    }
+  }
 }
 
 @custom-variant scroll-zero {

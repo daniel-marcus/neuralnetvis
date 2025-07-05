@@ -1,8 +1,9 @@
-import { StateCreator } from "zustand"
+import { preprocessSample } from "@/data/sample"
+import type { StateCreator } from "zustand"
 import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"
-import { preprocessSample } from "@/data/sample"
-import { SetterFunc } from "."
+import type { VideoSlice } from "./video"
+import type { SetterFunc } from "."
 
 export type Subset = "train" | "test"
 
@@ -32,7 +33,7 @@ export interface DataSlice {
 }
 
 export const createDataSlice: StateCreator<
-  DataSlice & ModelSlice,
+  DataSlice & ModelSlice & VideoSlice,
   [],
   [],
   DataSlice
@@ -50,16 +51,16 @@ export const createDataSlice: StateCreator<
       ds,
       sample: undefined,
       sampleIdx: sampleIdx ?? Math.floor(Math.random() * totalSamples),
-      sampleViewerIdxs: ds?.sampleViewer
-        ? Array.from({ length: totalSamples }, (_, i) => i)
-        : [],
     }))
   },
   updateMeta: (storeName, meta) => {
     const ds = get().ds
     if (!ds) return
     const newDs = { ...ds, [storeName]: meta }
-    set({ ds: newDs, skipModelCreate: true })
+    set({
+      ds: newDs,
+      skipModelCreate: true,
+    })
   },
   totalSamples: (subset = "train") => get().ds?.[subset].totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
@@ -68,7 +69,10 @@ export const createDataSlice: StateCreator<
 
   sampleIdx: undefined,
   setSampleIdx: (arg) =>
-    set({ sampleIdx: typeof arg === "function" ? arg(get().sampleIdx) : arg }),
+    set({
+      sampleIdx: typeof arg === "function" ? arg(get().sampleIdx) : arg,
+      stream: undefined, // stop stream when sample is clicked
+    }),
   sample: undefined,
   setSample: (sampleRaw, unsetSampleIdx) =>
     set(({ ds, sampleIdx }) => ({

@@ -8,6 +8,7 @@ import { useKeyCommand } from "@/utils/key-command"
 import { cameraOffSvg, cameraSvg, useVideoControl } from "./video"
 import { useMySample } from "@/data/my-sample"
 import type { SampleRaw } from "@/data"
+import { resetData } from "@/data/dataset"
 
 export function SampleViewer() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
@@ -41,7 +42,7 @@ export function SampleViewer() {
   const camAspectRatio = useSceneStore((s) => s.getAspectRatio())
   const aspectRatio = ds?.camProps ? camAspectRatio : 1
 
-  if (!samples.length) return null
+  if (!samples.length && !isLayersView) return null
   return (
     <div
       className={`-mb-4! pt-4 pb-8 bg-gradient-to-b from-transparent ${
@@ -99,13 +100,40 @@ function VideoCaptureBtn() {
 
 function AddSampleBtn() {
   const onClick = useMySample()
+  const ds = useSceneStore((s) => s.ds)
+  const hasRecIcon =
+    ds?.camProps?.processor === "handPose" && ds?.isUserGenerated
+  const isRecording = useSceneStore((s) => s.isRecording)
+  const stream = useSceneStore((s) => s.stream)
+  const icon = hasRecIcon ? "●" : "+"
   return (
-    <button
-      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}
-      onClick={onClick}
-    >
-      +
-    </button>
+    <>
+      {!!onClick && (
+        <button
+          className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker ${
+            isRecording ? "border-accent animate-recording-pulse" : ""
+          } ${
+            hasRecIcon ? "text-accent" : ""
+          } aspect-[var(--item-aspect-ratio)]`}
+          onClick={onClick}
+        >
+          {icon}
+        </button>
+      )}
+      {ds?.isUserGenerated && !!ds.train.totalSamples && !stream && (
+        <button
+          className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}
+          onClick={async () => {
+            const confirm = window.confirm(
+              "Are you sure you want to clear all recorded samples?"
+            )
+            if (confirm) await resetData(ds.key, "train")
+          }}
+        >
+          x
+        </button>
+      )}
+    </>
   )
 }
 

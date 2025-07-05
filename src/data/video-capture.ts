@@ -8,13 +8,14 @@ export interface RecorderProps {
   stream?: MediaStream
 }
 
+// CaptureFunc: converts video input to raw data for a sample
 export type CaptureFunc = (
   video: HTMLVideoElement
 ) => Promise<SampleRaw["X"] | undefined>
 
 export function useCaptureLoop(
   stream: MediaStream | null | undefined,
-  capture: CaptureFunc // a function that converts video input to raw data for a sample
+  capture: CaptureFunc
 ) {
   const ds = useSceneStore((s) => s.ds)
   const setSample = useSceneStore((s) => s.setSample)

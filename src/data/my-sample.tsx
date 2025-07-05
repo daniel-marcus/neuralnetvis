@@ -1,78 +1,92 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useSceneStore } from "@/store"
+import { useGlobalStore, useSceneStore } from "@/store"
 import { centerCropResize } from "./utils"
-import { SampleRaw } from "./types"
+import type { Dataset, SampleRaw } from "./types"
 
 export function useMySample() {
-  // TODO: use for hand pose recorindg also
-  // - conditions when to show
-  // - add to dataset?
-  const isTextInput = useSceneStore((s) => !!s.ds?.tokenizer)
-  const getImageFromUrl = useImageFromUrl()
-  const getTextInput = useTextInput()
-  const cb = isTextInput ? getTextInput : getImageFromUrl
-  return cb
+  // TODO: img: add to dataset?
+  const ds = useSceneStore((s) => s.ds)
+  const setTab = useGlobalStore((s) => s.setTab)
+  const openNewDsTab = useCallback(() => setTab("data"), [setTab])
+  const isTextInput = !!ds?.tokenizer
+  const toggleRecording = useSceneStore((s) => s.toggleRecording)
+  const stream = useSceneStore((s) => s.stream)
+  const addFunc: SampleAdderFunc | undefined =
+    ds?.camProps?.processor === "handPose"
+      ? ds.isUserGenerated
+        ? !!stream
+          ? toggleRecording
+          : undefined
+        : openNewDsTab
+      : isTextInput
+      ? textToSample
+      : getSampleFromImgUrl
+  const setSample = useSceneStore((s) => s.setSample)
+  const onBtnClick = useCallback(async () => {
+    if (!ds || !addFunc) return
+    try {
+      const sampleRaw = await addFunc({ ds })
+      if (sampleRaw) setSample(sampleRaw, true)
+    } catch (e) {
+      console.error("Error adding sample:", e)
+    }
+  }, [ds, setSample, addFunc])
+  return addFunc ? onBtnClick : undefined
 }
 
-function useImageFromUrl() {
-  // const externalSamples = useSceneStore((s) => s.ds?.externalSamples)
-  const inputDims = useSceneStore((s) => s.ds?.inputDims)
-  const setSample = useSceneStore((s) => s.setSample)
-  const [url, setUrl] = useState<string | undefined>(undefined)
-  useEffect(() => {
-    async function loadExternalSample() {
-      if (!url || !inputDims) return
+interface SampleAdderArgs {
+  ds: Dataset
+}
+type SampleAdderFunc = (
+  arg: SampleAdderArgs
+) => Promise<SampleRaw | undefined> | void
 
-      const image = new Image()
-      image.crossOrigin = "anonymous"
-      image.src = url
-
-      await new Promise<HTMLImageElement>((resolve, reject) => {
-        image.onload = () => resolve(image)
-        image.onerror = reject
-      })
-
-      const [targetHeight, targetWidth] = inputDims
-
-      const imgTensor = await tf.browser.fromPixelsAsync(image)
-      const resized = tf.tidy(() =>
-        centerCropResize(imgTensor, targetHeight, targetWidth).flatten()
-      )
-      try {
-        const X = await resized.array()
-        if (X) setSample({ X, index: Date.now() }, true)
-      } finally {
-        resized.dispose()
-        imgTensor.dispose()
-      }
-    }
-    loadExternalSample().catch((error) => {
-      window.alert(`Failed to load image from URL: ${url}\nTry another`)
-      console.error("Error loading external sample:", error)
-    })
-  }, [url, inputDims, setSample])
-  const onBtnClick = useCallback(() => {
-    const newUrl = window.prompt("Enter image URL:")
-    if (newUrl) setUrl(newUrl)
-  }, [])
-  return onBtnClick
+const getSampleFromImgUrl: SampleAdderFunc = async ({ ds }) => {
+  const url = window.prompt("Enter image URL:")
+  if (!url) return
+  const image = await loadExternalImage(url)
+  return imageToSample(image, ds.inputDims)
 }
 
-function useTextInput() {
-  const inputDims = useSceneStore((s) => s.ds?.inputDims)
-  const setSample = useSceneStore((s) => s.setSample)
-  const tokenizer = useSceneStore((s) => s.ds?.tokenizer)
-  const onBtnClick = useCallback(() => {
-    const text = window.prompt("Enter some text:")
-    const length = inputDims?.[0]
-    const tokens = tokenizer?.encode(text ?? "", length)
-    if (!tokens) return
-    const newSample: SampleRaw = {
-      X: tokens,
-      index: Date.now(),
-    }
-    setSample(newSample, true)
-  }, [inputDims, tokenizer, setSample])
-  return onBtnClick
+async function loadExternalImage(url: string) {
+  const image = new Image()
+  image.crossOrigin = "anonymous"
+  image.src = url
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    image.onload = () => resolve(image)
+    image.onerror = reject
+  })
+}
+
+async function imageToSample(
+  image: HTMLImageElement,
+  inputDims?: number[]
+): Promise<SampleRaw | undefined> {
+  if (!inputDims || !image.width || !image.height) return
+  const [targetHeight, targetWidth] = inputDims
+  const imgTensor = tf.browser.fromPixels(image)
+  const resized = tf.tidy(() =>
+    centerCropResize(imgTensor, targetHeight, targetWidth).flatten()
+  )
+  try {
+    const X = (await resized.data()) as SampleRaw["X"]
+    return { X, index: Date.now() }
+  } finally {
+    resized.dispose()
+    imgTensor.dispose()
+  }
+}
+
+const textToSample: SampleAdderFunc = async ({ ds }) => {
+  const tokenizer = ds.tokenizer!
+  const text = window.prompt("Enter some text:")
+  const length = ds.inputDims[0]
+  const tokens = tokenizer.encode(text ?? "", length)
+  if (!tokens) return
+  const newSample: SampleRaw = {
+    X: tokens,
+    index: Date.now(),
+  }
+  return newSample
 }

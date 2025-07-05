@@ -39,7 +39,8 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showMap = dsDef?.task === "regression" && view !== "graph"
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
   const sampleViewerIdxs = useSceneStore((s) => s.sampleViewerIdxs)
-  const showSampleViewer = isActive && !!sampleViewerIdxs.length
+  const showSampleViewer =
+    isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   return (
     <div

@@ -127,6 +127,7 @@ function dsDefFromState(
 ): DatasetDef {
   return {
     ...handPose,
+    model: undefined, // start with new untrained model
     key: name,
     parentKey: handPose.key,
     name,

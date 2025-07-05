@@ -6,7 +6,6 @@ import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData } from "@/data/dataset"
 import { useCaptureLoop } from "./video-capture"
-import { Button } from "@/components/ui-elements"
 import type { CaptureFunc, RecorderProps } from "./video-capture"
 import type { SampleRaw } from "./types"
 
@@ -22,27 +21,8 @@ export function HandPoseCapture({ stream }: RecorderProps) {
   const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
   const hpPredict = useLandmarker(numHands, stream)
   useCaptureLoop(stream, hpPredict)
-  const [isRecording, toggleRec] = useSampleRecorder(hpPredict, numHands)
-  const dsIsUserGenerated = useSceneStore((s) => s.ds?.isUserGenerated)
-  const setTab = useGlobalStore((s) => s.setTab)
-  return null // TODO!
-  return (
-    <>
-      {!dsIsUserGenerated && (
-        <Button onClick={() => setTab("data")} variant="secondary">
-          new dataset
-        </Button>
-      )}
-      {dsIsUserGenerated && !!stream && (
-        <Button
-          onClick={async () => toggleRec()}
-          variant={isRecording ? "primary" : "secondary"}
-        >
-          {isRecording ? "cancel recording" : "record samples"}
-        </Button>
-      )}
-    </>
-  )
+  useSampleRecorder(hpPredict, numHands)
+  return null
 }
 
 function useLandmarker(numHands: number, stream?: MediaStream) {
@@ -174,7 +154,6 @@ let shouldCancelRecording = false
 
 function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
-  const startRec = useSceneStore((s) => s.startRecording)
   const stopRec = useSceneStore((s) => s.stopRecording)
 
   const ds = useSceneStore((s) => s.ds)
@@ -250,19 +229,14 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
     stopRec()
   }, [stream, hpPredict, numHands, ds, stopRec, updMeta, hpTrain, vidRef, recY])
 
-  const toggleRec = useCallback(async () => {
-    // if (!stream) return
-    if (isRecording) {
+  useEffect(() => {
+    if (!isRecording || !stream) return
+    hpRecordSamples()
+    return () => {
       shouldCancelRecording = true
       clearStatus("hpRecordSamples")
-      stopRec()
-    } else {
-      startRec()
-      hpRecordSamples()
     }
-  }, [isRecording, startRec, stopRec, hpRecordSamples])
-
-  return [isRecording, toggleRec] as const
+  }, [isRecording, stream])
 }
 
 function getAspectRatioFromStream(stream: MediaStream) {

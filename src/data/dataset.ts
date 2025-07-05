@@ -35,7 +35,21 @@ export function useDataset(dsDef?: DatasetDef) {
     }
     loadDs()
   }, [dsDef, isPreview, setDs, shouldLoadFullDs, setLoadFullDs])
+  useSampleViewerIdxs()
   return ds
+}
+
+function useSampleViewerIdxs() {
+  const ds = useSceneStore((s) => s.ds)
+  const setSampleViewerIdxs = useSceneStore((s) => s.setSampleViewerIdxs)
+  const subset = useSceneStore((s) => s.subset)
+  useEffect(() => {
+    if (!ds || !ds.sampleViewer) return
+    const totalSamples = ds[subset].totalSamples
+    const idxs = Array.from({ length: totalSamples }, (_, i) => i)
+    setSampleViewerIdxs(idxs)
+    return () => setSampleViewerIdxs([])
+  }, [ds, subset])
 }
 
 export function useDsDef(dsKey?: string) {
