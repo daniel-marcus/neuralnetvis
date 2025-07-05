@@ -111,7 +111,9 @@ function AddSampleBtn() {
       {!!onClick && (
         <button
           className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker ${
-            isRecording ? "border-accent animate-recording-pulse" : ""
+            isRecording
+              ? "border-accent animate-recording-pulse"
+              : "border-gray-text"
           } ${
             hasRecIcon ? "text-accent" : ""
           } aspect-[var(--item-aspect-ratio)]`}
