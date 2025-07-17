@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { describe, it, expect, beforeAll } from "vitest"
-import { handPose } from "./datasets/hand-pose"
 import { normalizeHandLandmarks } from "./preprocess"
+import { handPose } from "./datasets/hand-pose"
 
 describe("normalizeHandLandmarks", () => {
   let singleInput: tf.Tensor | undefined
