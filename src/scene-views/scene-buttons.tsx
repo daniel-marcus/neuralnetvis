@@ -55,7 +55,7 @@ export function LoadWeightsButton() {
   const isPreview = ds.model.lazyLoadWeights && loadState === "no-weights"
   if (!isPreview || shouldLoadWeights) return null
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 screenshot:hidden">
       <span className="text-accent">PREVIEW</span>
       <Button
         onClick={(e) => {

@@ -28,7 +28,7 @@ async function run() {
     await page.goto(`http://localhost:${PORT}/${p}?screenshot`)
     const title = await page.title()
     console.log(title)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
     const path = `${SCREENSHOT_FOLDER}/${
       pathToFileName(p) || "default"
     }.png` as `${string}.png`

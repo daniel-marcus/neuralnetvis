@@ -22,6 +22,7 @@ import { Portal } from "@/components/portal"
 import { SampleViewer } from "./sample-viewer"
 
 import type { TileDef } from "@/components/tile-grid"
+import { useScreenshotSettings } from "@/utils/screenshot"
 
 type SceneViewerProps = TileDef & {
   isActive: boolean
@@ -42,6 +43,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showSampleViewer =
     isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
+  useScreenshotSettings(isActive)
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}

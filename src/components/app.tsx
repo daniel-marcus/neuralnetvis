@@ -2,7 +2,8 @@
 
 import { useRef } from "react"
 import { useTfBackend } from "@/model/tf-backend"
-import { useDebugCommands, useScreenshotBodyClass } from "@/utils/debug"
+import { useDebugCommands } from "@/utils/debug"
+import { useScreenshotBodyClass } from "@/utils/screenshot"
 import { Header } from "./header"
 import { LessonOverlayPortal } from "./lesson"
 import { MainCanvas } from "./canvas"
