@@ -19,7 +19,7 @@ export function useScreenshotSettings(isActive: boolean) {
   const setLoadFullDs = useSceneStore((s) => s.setLoadFullDs)
   const setVisConfig = useSceneStore((s) => s.vis.setConfig)
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive || !isScreenshot) return
     setLoadFullDs(true)
     setLoadWeights(true)
     setVisConfig({ showHiddenLayers: true })
