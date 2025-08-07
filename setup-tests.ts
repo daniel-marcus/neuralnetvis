@@ -13,7 +13,7 @@ vi.stubGlobal("fetch", async (url: string) => {
   const contentType = url.endsWith(".json")
     ? "application/json"
     : "application/octet-stream"
-  return new Response(data, {
+  return new Response(Uint8Array.from(data), {
     headers: {
       "Content-Length": data.length.toString(),
       "Content-Type": contentType,
