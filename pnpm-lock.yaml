@@ -18,8 +18,8 @@ importers:
         specifier: ^9.1.13
         version: 9.1.13(@deck.gl/core@9.1.13)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.1.9)(@luma.gl/engine@9.1.9(@luma.gl/core@9.1.9)(@luma.gl/shadertools@9.1.9(@luma.gl/core@9.1.9)))
       '@deck.gl/react':
-        specifier: ^9.1.13
-        version: 9.1.13(@deck.gl/core@9.1.13)(@deck.gl/widgets@9.1.11(@deck.gl/core@9.1.13))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: ^9.1.14
+        version: 9.1.14(@deck.gl/core@9.1.13)(@deck.gl/widgets@9.1.11(@deck.gl/core@9.1.13))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@mediapipe/drawing_utils':
         specifier: ^0.3.1675466124
         version: 0.3.1675466124
@@ -296,8 +296,8 @@ packages:
       '@luma.gl/core': ^9.1.5
       '@luma.gl/engine': ^9.1.5
 
-  '@deck.gl/react@9.1.13':
-    resolution: {integrity: sha512-9tu5roGzvy4plLvUVUxDpEy3KHDxpAEBRdM/qC06Ijognfl/A9bECdQt4cqqGflkvg6VzQaw2Cy7eIRvzhXJbA==}
+  '@deck.gl/react@9.1.14':
+    resolution: {integrity: sha512-G9uiL/+ZzTUaSH+NPrL+OfyWPN6LfRIIfQicjkqF5v5Mtnv8EO9raOHgYk8ZYdt4Z7MPD8TiXbyeENZwrlNSzg==}
     peerDependencies:
       '@deck.gl/core': ^9.1.0
       '@deck.gl/widgets': ^9.1.0
@@ -4433,7 +4433,7 @@ snapshots:
       '@math.gl/web-mercator': 4.1.0
       earcut: 2.2.4
 
-  '@deck.gl/react@9.1.13(@deck.gl/core@9.1.13)(@deck.gl/widgets@9.1.11(@deck.gl/core@9.1.13))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+  '@deck.gl/react@9.1.14(@deck.gl/core@9.1.13)(@deck.gl/widgets@9.1.11(@deck.gl/core@9.1.13))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@deck.gl/core': 9.1.13
       '@deck.gl/widgets': 9.1.11(@deck.gl/core@9.1.13)
