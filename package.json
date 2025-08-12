@@ -62,7 +62,7 @@
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",
     "@types/node": "^24.2.1",
-    "@types/react": "^19.1.9",
+    "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.179.0",
