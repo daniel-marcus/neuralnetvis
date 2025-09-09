@@ -1,6 +1,5 @@
 import { useMemo } from "react"
-import figlet from "figlet/lib/figlet"
-import type { Fonts } from "figlet"
+import figlet from "figlet"
 
 const MAX_CHARS_PER_LINE = 10
 
@@ -22,7 +21,7 @@ const useAsciiText = (input: string) => {
     const textWithLineBreaks = splitWithThreshold(sanitizedInput).join("\n")
     return figlet
       .textSync(textWithLineBreaks, {
-        font: "Blur Vision ASCII" as Fonts,
+        font: "Blur Vision ASCII",
       })
       .replace(/[░▒]/g, " ")
       .replace(/^.{2}/gm, "")
