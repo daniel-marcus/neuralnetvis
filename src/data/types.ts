@@ -1,4 +1,4 @@
-import type { Parsed } from "npyjs"
+import type { NpyArray } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
 import type { PreprocessFuncName } from "./preprocess"
 import type { ModelDef } from "@/model/models"
@@ -117,9 +117,9 @@ export interface ParsedLike {
 // supported typed arrays for tensorflow.js: https://js.tensorflow.org/api/latest/#tensor
 export type SupportedTypedArray = Uint8Array | Int32Array | Float32Array
 
-type ParsedSafe = Parsed & { data: SupportedTypedArray }
+type ParsedSafe = NpyArray & { data: SupportedTypedArray }
 
-export function isSafe(parsed: Parsed): parsed is ParsedSafe {
+export function isSafe(parsed: NpyArray): parsed is ParsedSafe {
   return (
     parsed.data instanceof Uint8Array ||
     parsed.data instanceof Int32Array ||

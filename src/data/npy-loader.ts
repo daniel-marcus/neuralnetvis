@@ -1,11 +1,9 @@
 "use client"
 
-import npyjs from "npyjs"
+import { load } from "npyjs"
 import JSZip from "jszip"
 import { setStatus } from "@/store"
 import { isSafe } from "./types"
-
-const n = new npyjs()
 
 async function parseNpz(arrayBuffer: ArrayBuffer) {
   // TODO: skip JZip if file is npy
@@ -14,7 +12,7 @@ async function parseNpz(arrayBuffer: ArrayBuffer) {
   if (!file) throw new Error("No files in zip")
   if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
   const data = await file.async("arraybuffer")
-  const parsed = n.parse(data)
+  const parsed = await load(data)
   if (!isSafe(parsed))
     throw new Error("BigUint64Array/BigInt64Array/Float64Array not supported")
   return parsed
