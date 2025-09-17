@@ -2,7 +2,7 @@ import type { NpyArray } from "npyjs"
 import type { Tensor, Rank } from "@tensorflow/tfjs"
 import type { PreprocessFuncName } from "./preprocess"
 import type { ModelDef } from "@/model/models"
-import { TokenizerName, TokenizerType } from "./tokenizer"
+import type { TokenizerName, TokenizerType } from "./tokenizer"
 
 export type DatasetKey = string
 
