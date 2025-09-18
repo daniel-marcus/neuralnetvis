@@ -1,0 +1,28 @@
+diff --git a/package.json b/package.json
+index 4114a10d7e448d8541a12291cd95b63afbfe3c41..891b05ffd9eb1ee52b3324489319f9d00931040e 100644
+--- a/package.json
++++ b/package.json
+@@ -9,7 +9,7 @@
+     "bugs": "https://github.com/aplbrain/npyjs/issues",
+     "type": "module",
+     "main": "./dist/index.cjs",
+-    "module": "./dist/index.mjs",
++    "module": "./dist/index.js",
+     "types": "./dist/index.d.ts",
+     "files": [
+         "dist"
+@@ -17,12 +17,12 @@
+     "exports": {
+         ".": {
+             "types": "./dist/index.d.ts",
+-            "import": "./dist/index.mjs",
++            "import": "./dist/index.js",
+             "require": "./dist/index.cjs"
+         },
+         "./reshape": {
+             "types": "./dist/reshape.d.ts",
+-            "import": "./dist/reshape.mjs",
++            "import": "./dist/reshape.js",
+             "require": "./dist/reshape.cjs"
+         }
+     },

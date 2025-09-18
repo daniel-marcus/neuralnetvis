@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  npyjs@1.0.2:
+    hash: e0cfb64364e11b3c8250039cfe61ee4cd9d1578e9258ff098736ebb15f59b0e3
+    path: patches/npyjs@1.0.2.patch
+
 importers:
 
   .:
@@ -73,7 +78,7 @@ importers:
         version: 15.5.3(@babel/core@7.28.4)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       npyjs:
         specifier: ^1.0.2
-        version: 1.0.2
+        version: 1.0.2(patch_hash=e0cfb64364e11b3c8250039cfe61ee4cd9d1578e9258ff098736ebb15f59b0e3)
       r3f-forcegraph:
         specifier: ^1.1.1
         version: 1.1.1(react@19.1.1)(three@0.180.0)
@@ -7500,7 +7505,7 @@ snapshots:
       gauge: 3.0.2
       set-blocking: 2.0.0
 
-  npyjs@1.0.2:
+  npyjs@1.0.2(patch_hash=e0cfb64364e11b3c8250039cfe61ee4cd9d1578e9258ff098736ebb15f59b0e3):
     dependencies:
       cross-fetch: 4.1.0
     transitivePeerDependencies:

@@ -104,6 +104,9 @@
       "puppeteer",
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "npyjs@1.0.2": "patches/npyjs@1.0.2.patch"
+    }
   }
 }
