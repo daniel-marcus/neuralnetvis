@@ -6,6 +6,7 @@ import { View, type RootState } from "@/scene-views/3d-model/view"
 import { useHasActiveTile } from "./tile-grid"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
+import { Tunnel } from "@/scene-views/3d-model/a-view"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -43,8 +44,9 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
             return renderer
           }}
         >
-          <View.Port />
-          <OnScrollUpdate sync={!hasActive} />
+          {/* <View.Port /> */}
+          <Tunnel.Out />
+          {/* <OnScrollUpdate sync={!hasActive} /> */}
         </Canvas>
       </div>
     </>

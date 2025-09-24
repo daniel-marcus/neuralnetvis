@@ -18,6 +18,7 @@ import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
 import { View } from "./view"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
+import { AView } from "./a-view"
 
 interface CanvasViewProps {
   isActive: boolean
@@ -38,6 +39,17 @@ export const CanvasView = (props: CanvasViewProps) => {
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
   if (typeof gpuDevice === null) return null // not initialized yet
+  return (
+    <AView
+      className={`absolute w-full h-full select-none ${
+        isActive ? "" : "touch-pan-y!"
+      } ${invisible ? "pointer-events-none opacity-0" : ""}`}
+    >
+      <SceneContext.Provider value={store}>
+        <CanvasViewInner {...props} />
+      </SceneContext.Provider>
+    </AView>
+  )
   if (!ownCanvas)
     // only scenes with a map background get their own canvas (for correct stacking context), all others use a View to the MainCanvas
     return (
