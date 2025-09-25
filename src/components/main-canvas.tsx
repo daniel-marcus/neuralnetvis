@@ -79,7 +79,7 @@ function OnScrollUpdate({ sync }: { sync: boolean }) {
     return () => window.removeEventListener("scroll", onScroll)
   }, [invalidate, active])
   useFrame((_state) => {
-    if (!active) return
+    if (isWebGPU) return
     const state = _state as unknown as RootState
     if (isWebGPUBackend(state.gl.backend)) {
       // WebGPU: clear root before rendering views; WebGL: clear views separately
