@@ -45,7 +45,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-headroom": "^3.2.1",
-    "three": "git+https://github.com/mrdoob/three.js.git#dev",
+    "three": "github:mrdoob/three.js#dev",
     "three-stdlib": "^2.36.0",
     "tunnel-rat": "^0.1.2",
     "zustand": "^5.0.8"
@@ -72,7 +72,7 @@
     "fake-indexeddb": "^6.2.2",
     "happy-dom": "^18.0.1",
     "postcss": "^8.5.6",
-    "puppeteer": "^24.22.2",
+    "puppeteer": "^24.22.3",
     "tailwindcss": "^4.1.13",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^5.9.2",
