@@ -4,6 +4,10 @@ import tunnel from "tunnel-rat"
 import { useFrame, createPortal } from "@react-three/fiber"
 import type { RootState as RootStateGL } from "@react-three/fiber"
 
+// inspirations:
+// - https://github.com/mrdoob/three.js/blob/dev/examples/webgpu_multiple_canvas.html
+// - https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
+
 export const Tunnel = tunnel()
 
 export type RootState = RootStateGL & {
@@ -15,28 +19,28 @@ export type RootState = RootStateGL & {
 interface AViewProps {
   className?: string
   children?: React.ReactNode
+  onFirstRender?: () => void
 }
 
-export const AView = ({ className = "", children }: AViewProps) => {
+export const AView = ({ className = "", ...otherProps }: AViewProps) => {
   const ref = useRef<HTMLCanvasElement>(null)
   const uuid = useId()
   return (
-    <canvas ref={ref} className={`${className} border-1 border-marker`}>
+    <canvas ref={ref} className={`${className}`}>
       <Tunnel.In>
-        <ViewInner canvasRef={ref} key={uuid}>
-          {children}
-        </ViewInner>
+        <ViewInner canvasRef={ref} key={uuid} {...otherProps} />
       </Tunnel.In>
     </canvas>
   )
 }
 
 interface ViewInnerProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   canvasRef: React.RefObject<HTMLCanvasElement | null>
+  onFirstRender?: () => void
 }
 
-const ViewInner = ({ children, canvasRef }: ViewInnerProps) => {
+const ViewInner = ({ children, canvasRef, onFirstRender }: ViewInnerProps) => {
   const [target, setTarget] = useState<THREE.CanvasTarget | null>(null)
   const [virtualScene] = useState(() => new THREE.Scene())
   useEffect(() => {
@@ -48,6 +52,7 @@ const ViewInner = ({ children, canvasRef }: ViewInnerProps) => {
     newTarget.setSize(window.innerWidth, window.innerHeight)
     virtualScene.userData["canvasTarget"] = newTarget
     setTarget(newTarget)
+    onFirstRender?.()
   }, [canvasRef])
   return (
     !!target &&

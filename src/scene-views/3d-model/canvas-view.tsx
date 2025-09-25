@@ -28,8 +28,6 @@ interface CanvasViewProps {
   initialState?: InitialState
 }
 
-// CanvasRenderTarget might be interesting: https://github.com/mrdoob/three.js/pull/27628
-
 export const CanvasView = (props: CanvasViewProps) => {
   const { isActive, ownCanvas } = props
   const isMapView = useSceneStore((s) => s.view === "map")
@@ -44,9 +42,10 @@ export const CanvasView = (props: CanvasViewProps) => {
       className={`absolute w-full h-full select-none ${
         isActive ? "" : "touch-pan-y!"
       } ${invisible ? "pointer-events-none opacity-0" : ""}`}
+      onFirstRender={setHasRendered}
     >
       <SceneContext.Provider value={store}>
-        <CanvasViewInner {...props} />
+        <CanvasViewInner {...props} ownCanvas={true} />
       </SceneContext.Provider>
     </AView>
   )
