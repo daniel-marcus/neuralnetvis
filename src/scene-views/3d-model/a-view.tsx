@@ -41,42 +41,40 @@ interface ViewInnerProps {
 }
 
 const ViewInner = ({ children, canvasRef, onFirstRender }: ViewInnerProps) => {
-  const [target, setTarget] = useState<THREE.CanvasTarget | null>(null)
+  const [canvasTarget, setCanvasTarget] = useState<THREE.CanvasTarget | null>(
+    null
+  )
   const [virtualScene] = useState(() => new THREE.Scene())
   useEffect(() => {
     if (!canvasRef.current) return
     const newTarget = new THREE.CanvasTarget(canvasRef.current, {
       antialias: true,
     })
+    const { width, height } = canvasRef.current.getBoundingClientRect()
     newTarget.setPixelRatio(window.devicePixelRatio)
-    newTarget.setSize(window.innerWidth, window.innerHeight)
+    newTarget.setSize(width, height, false)
     virtualScene.userData["canvasTarget"] = newTarget
-    setTarget(newTarget)
+    setCanvasTarget(newTarget)
     onFirstRender?.()
   }, [canvasRef])
   return (
-    !!target &&
+    !!canvasTarget &&
     createPortal(
-      <Container target={target}>{children}</Container>,
-      virtualScene,
-      {
-        size: {
-          ...target.domElement.getBoundingClientRect(),
-        },
-      }
+      <Container canvasTarget={canvasTarget}>{children}</Container>,
+      virtualScene
     )
   )
 }
 
 interface ContainerProps {
   children: React.ReactNode
-  target: THREE.CanvasTarget
+  canvasTarget: THREE.CanvasTarget
 }
 
-const Container = ({ children, target }: ContainerProps) => {
+const Container = ({ children, canvasTarget }: ContainerProps) => {
   useFrame((_state) => {
     const state = _state as unknown as RootState
-    state.gl.setCanvasTarget(target)
+    state.gl.setCanvasTarget(canvasTarget)
     state.gl.render(state.scene, state.camera)
   })
   return (

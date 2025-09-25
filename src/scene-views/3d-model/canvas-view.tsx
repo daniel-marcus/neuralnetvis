@@ -39,7 +39,7 @@ export const CanvasView = (props: CanvasViewProps) => {
   if (typeof gpuDevice === null) return null // not initialized yet
   return (
     <AView
-      className={`absolute w-full h-full select-none ${
+      className={`absolute w-screen h-screen select-none ${
         isActive ? "" : "touch-pan-y!"
       } ${invisible ? "pointer-events-none opacity-0" : ""}`}
       onFirstRender={setHasRendered}

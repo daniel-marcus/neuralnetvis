@@ -5,6 +5,6 @@ declare module "three/webgpu" {
     constructor(canvas: HTMLCanvasElement, opts?: { antialias: boolean })
     domElement: HTMLCanvasElement
     setPixelRatio(ratio: number)
-    setSize(w: number, h: number)
+    setSize(w: number, h: number, updateStyles?: boolean)
   }
 }

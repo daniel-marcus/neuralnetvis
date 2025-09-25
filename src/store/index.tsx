@@ -152,6 +152,8 @@ export function usePrevScene<T>(selector: (state: SceneState) => T): T {
 
 // Global Store
 
+type WindowSize = { width: number; height: number }
+
 export type GlobalStoreType = TabsSlice &
   StatusSlice & {
     backendReady: boolean
@@ -162,6 +164,8 @@ export type GlobalStoreType = TabsSlice &
     handLandmarker?: HandLandmarker
     scrollPos: number // used to restore scroll position when switching from scene back to main
     gpuDevice: GPUDevice | null | undefined
+    windowSize: WindowSize
+    setWindowSize: (size: WindowSize) => void
   }
 
 export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
@@ -179,6 +183,11 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   },
   scrollPos: 0,
   gpuDevice: null,
+  windowSize: { width: 0, height: 0 },
+  setWindowSize: (windowSize) => {
+    const [set] = apiProps
+    set({ windowSize })
+  },
 }))
 
 // shortcut getters and setters to use from everywhere
