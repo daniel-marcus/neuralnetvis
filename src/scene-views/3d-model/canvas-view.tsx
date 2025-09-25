@@ -118,6 +118,8 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   const toggleAutoRotate = useSceneStore((s) => s.vis.toggleAutoRotate)
   useKeyCommand("r", toggleAutoRotate, isActive)
 
+  const scene = useThree((s) => s.scene)
+
   return (
     <>
       <ThreeStoreSetter />
@@ -130,6 +132,7 @@ const CanvasViewInner = (props: CanvasViewProps) => {
       />
       <OrbitControls
         makeDefault
+        domElement={scene.userData.canvasTarget.domElement}
         target={initialState?.cameraLookAt ?? defaultState.cameraLookAt}
         enableZoom={!visIsLocked && (isActive || isTouch())}
         enableRotate={!visIsLocked}

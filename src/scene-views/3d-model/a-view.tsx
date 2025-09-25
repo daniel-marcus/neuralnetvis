@@ -46,6 +46,7 @@ const ViewInner = ({ children, canvasRef }: ViewInnerProps) => {
     })
     newTarget.setPixelRatio(window.devicePixelRatio)
     newTarget.setSize(window.innerWidth, window.innerHeight)
+    virtualScene.userData["canvasTarget"] = newTarget
     setTarget(newTarget)
   }, [canvasRef])
   return (
