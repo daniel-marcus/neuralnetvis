@@ -4,10 +4,10 @@ import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
 import tunnel from "tunnel-rat"
 import { isWebGPUBackend, useGPUDevice, useIsWebGPU } from "@/utils/webgpu"
 import { useHasActiveTile } from "./tile-grid"
+import { useGlobalStore } from "@/store"
 import type { RootState as RootStateGL } from "@react-three/fiber"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
-import { useGlobalStore } from "@/store"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
