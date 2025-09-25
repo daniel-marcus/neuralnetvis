@@ -1,18 +1,27 @@
 import { useEffect, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
-import { isWebGPUBackend, useGPUDevice } from "@/utils/webgpu"
-import { View, type RootState } from "@/scene-views/3d-model/view"
+import tunnel from "tunnel-rat"
+import { isWebGPUBackend, useGPUDevice, useIsWebGPU } from "@/utils/webgpu"
 import { useHasActiveTile } from "./tile-grid"
+import type { RootState as RootStateGL } from "@react-three/fiber"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
-import { Tunnel } from "@/scene-views/3d-model/a-view"
+import { useGlobalStore } from "@/store"
 
 declare module "@react-three/fiber" {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
 extend(THREE as any)
+
+export const Tunnel = tunnel()
+
+export type RootState = Omit<RootStateGL, "gl"> & {
+  gl: THREE.WebGPURenderer & {
+    setCanvasTarget: (target: THREE.CanvasTarget) => void
+  }
+}
 
 interface MainCanvasProps {
   eventSource: RefObject<HTMLDivElement>
@@ -38,31 +47,39 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
               ...(renderProps as WebGPURendererParameters),
               device: gpuDevice ? gpuDevice : undefined,
               // logarithmicDepthBuffer: true, // helps with color channel z-fighing, but bad for lines
-              // forceWebGL: true,
+              forceWebGL: true,
             })
             await renderer.init()
+            useGlobalStore.setState({ renderer })
             return renderer
           }}
         >
-          {/* <View.Port /> */}
           <Tunnel.Out />
-          {/* <OnScrollUpdate sync={!hasActive} /> */}
+          <OnScrollUpdate sync={!hasActive} />
         </Canvas>
       </div>
     </>
   )
 }
 
-function OnScrollUpdate({ sync }: { sync?: boolean }) {
+/**
+ * Only used for WebGLBackend legacy support!
+ * Moves and updates the fixed main rendering canvas during scroll
+ */
+
+function OnScrollUpdate({ sync }: { sync: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
+  const isWebGPU = useIsWebGPU()
+  const active = sync && !isWebGPU
   useEffect(() => {
     // with frameloop="demand" we need to manually invalidate the scene on scroll
-    if (!sync) return
+    if (!active) return
     const onScroll = () => invalidate() // throttle(() => invalidate(), 30, { leading: true })
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
-  }, [invalidate, sync])
+  }, [invalidate, active])
   useFrame((_state) => {
+    if (!active) return
     const state = _state as unknown as RootState
     if (isWebGPUBackend(state.gl.backend)) {
       // WebGPU: clear root before rendering views; WebGL: clear views separately

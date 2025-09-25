@@ -16,9 +16,10 @@ import { defaultState, InitialState } from "@/utils/initial-state"
 import { getTileDuration, useHasActiveTile } from "@/components/tile-grid"
 import { Graph } from "../graph"
 import { useKeyCommand } from "@/utils/key-command"
-import { View } from "./view"
+import { isWebGPUBackend, useIsWebGPU } from "@/utils/webgpu"
+import { ScissorView } from "./scissor-view"
+import { CanvasTargetView } from "./canvas-target-view"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
-import { AView } from "./a-view"
 
 interface CanvasViewProps {
   isActive: boolean
@@ -36,25 +37,30 @@ export const CanvasView = (props: CanvasViewProps) => {
   const gpuDevice = useGlobalStore((s) => s.gpuDevice)
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
-  if (typeof gpuDevice === null) return null // not initialized yet
-  return (
-    <AView
-      className={`absolute w-screen h-screen select-none ${
-        isActive ? "" : "touch-pan-y!"
-      } ${invisible ? "pointer-events-none opacity-0" : ""}`}
-      onFirstRender={setHasRendered}
-      visible={!invisible}
-      index={props.tileIdx + 1}
-    >
-      <SceneContext.Provider value={store}>
-        <CanvasViewInner {...props} ownCanvas={true} />
-      </SceneContext.Provider>
-    </AView>
-  )
-  if (!ownCanvas)
-    // only scenes with a map background get their own canvas (for correct stacking context), all others use a View to the MainCanvas
+  const mainRenderer = useGlobalStore((s) => s.renderer)
+  if (typeof gpuDevice === null || !mainRenderer) return null // not initialized yet
+  const isWebGPU = isWebGPUBackend(mainRenderer.backend)
+  if (isWebGPU)
     return (
-      <View
+      <CanvasTargetView
+        className={`absolute w-screen h-screen select-none ${
+          isActive ? "" : "touch-pan-y!"
+        } ${invisible ? "pointer-events-none opacity-0" : ""}`}
+        onFirstRender={setHasRendered}
+        visible={!invisible}
+        index={props.tileIdx + 1}
+      >
+        <SceneContext.Provider value={store}>
+          <CanvasViewInner {...props} ownCanvas={true} />
+        </SceneContext.Provider>
+      </CanvasTargetView>
+    )
+  // fallback for WebGLBackend:
+  // a) ScissorView (sharing MainCanvas)
+  // b) separate Canvas (only for scenes with map background for correct stacking context)
+  if (!ownCanvas)
+    return (
+      <ScissorView
         className={`absolute w-full h-full select-none ${
           isActive ? "" : "touch-pan-y!"
         } ${invisible ? "pointer-events-none opacity-0" : ""}`}
@@ -66,7 +72,7 @@ export const CanvasView = (props: CanvasViewProps) => {
         <SceneContext.Provider value={store}>
           <CanvasViewInner {...props} />
         </SceneContext.Provider>
-      </View>
+      </ScissorView>
     )
   else
     return (
@@ -118,8 +124,11 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   const autoRotate = useSceneStore((s) => s.vis.autoRotate)
   const toggleAutoRotate = useSceneStore((s) => s.vis.toggleAutoRotate)
   useKeyCommand("r", toggleAutoRotate, isActive)
-
+  const isWebGPU = useIsWebGPU()
   const scene = useThree((s) => s.scene)
+  const domElement = isWebGPU
+    ? scene.userData.canvasTarget?.domElement
+    : undefined
 
   return (
     <>
@@ -133,7 +142,7 @@ const CanvasViewInner = (props: CanvasViewProps) => {
       />
       <OrbitControls
         makeDefault
-        domElement={scene.userData.canvasTarget.domElement}
+        domElement={domElement}
         target={initialState?.cameraLookAt ?? defaultState.cameraLookAt}
         enableZoom={!visIsLocked && (isActive || isTouch())}
         enableRotate={!visIsLocked}

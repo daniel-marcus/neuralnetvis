@@ -1,24 +1,17 @@
 import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
-import tunnel from "tunnel-rat"
 import { isWebGPUBackend } from "@/utils/webgpu"
-import type {
-  ComputeFunction,
-  RootState as RootStateGL,
-} from "@react-three/fiber"
+import { RootState, Tunnel } from "@/components/canvas"
+import type { ComputeFunction } from "@react-three/fiber"
 
 // drei/View component adapted for WebGPURenderer
 // original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
-
-export type RootState = RootStateGL & {
-  gl: THREE.WebGPURenderer // instead of THREE.WebGLRenderer
-}
+// here only used for WebGLBackend
 
 const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 const col = /* @__PURE__ */ new THREE.Color()
-const tracked = /* @__PURE__ */ tunnel()
 
 type CanvasSize = {
   top: number
@@ -189,7 +182,6 @@ function finishSkissor(state: RootState, autoClear: boolean) {
 }
 
 function clear(state: RootState) {
-  state.gl.getClearColor(col)
   state.gl.setClearColor(col, state.gl.getClearAlpha())
   state.gl.clear(true, true)
 }
@@ -230,6 +222,7 @@ function Container({
         // WebGPU: clear root before rendering views; WebGL: clear views separately
         if (!isWebGPUBackend(state.gl.backend)) state.gl.clear()
 
+        // console.log("RENDER", index)
         // When children are present render the portalled scene, otherwise the default scene
         state.gl.render(children ? state.scene : scene, state.camera)
 
@@ -401,7 +394,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
     <>
       {/** @ts-expect-error with ref */}
       <El ref={ref} id={id} className={className} style={style} {...props} />
-      <tracked.In>
+      <Tunnel.In>
         <CanvasView
           visible={visible}
           key={uuid}
@@ -413,7 +406,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
         >
           {children}
         </CanvasView>
-      </tracked.In>
+      </Tunnel.In>
     </>
   )
 })
@@ -424,7 +417,7 @@ export type ViewportProps = {
   ViewProps & React.RefAttributes<HTMLElement | THREE.Group>
 >
 
-export const View = /* @__PURE__ */ (() => {
+export const ScissorView = /* @__PURE__ */ (() => {
   const _View = React.forwardRef(function View_(
     props: ViewProps,
     fref: React.ForwardedRef<HTMLElement | THREE.Group>
@@ -448,10 +441,6 @@ export const View = /* @__PURE__ */ (() => {
         />
       )
   }) as ViewportProps
-
-  _View.Port = function ViewPortal() {
-    return <tracked.Out />
-  }
 
   return _View
 })()

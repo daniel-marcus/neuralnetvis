@@ -19,6 +19,7 @@ import { createVideoSlice, VideoSlice } from "./video"
 import { moveCameraTo } from "@/scene-views/3d-model/utils"
 import { defaultState, InitialState } from "@/utils/initial-state"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
+import type { WebGPURenderer } from "three/webgpu"
 
 export type SetterFunc<T> = (oldVal: T) => T
 
@@ -164,6 +165,7 @@ export type GlobalStoreType = TabsSlice &
     handLandmarker?: HandLandmarker
     scrollPos: number // used to restore scroll position when switching from scene back to main
     gpuDevice: GPUDevice | null | undefined
+    renderer: WebGPURenderer | null
     windowSize: WindowSize
     setWindowSize: (size: WindowSize) => void
   }
@@ -183,6 +185,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   },
   scrollPos: 0,
   gpuDevice: null,
+  renderer: null,
   windowSize: { width: 0, height: 0 },
   setWindowSize: (windowSize) => {
     const [set] = apiProps

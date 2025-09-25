@@ -1,22 +1,14 @@
 import React, { useEffect, useId, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
-import tunnel from "tunnel-rat"
 import { useFrame, createPortal } from "@react-three/fiber"
-import type { RootState as RootStateGL } from "@react-three/fiber"
+import { RootState, Tunnel } from "@/components/canvas"
 
 // inspirations:
 // - https://github.com/mrdoob/three.js/blob/dev/examples/webgpu_multiple_canvas.html
 // - https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
+// works only with WebGPUBackend
 
-export const Tunnel = tunnel()
-
-export type RootState = RootStateGL & {
-  gl: THREE.WebGPURenderer & {
-    setCanvasTarget: (target: THREE.CanvasTarget) => void
-  }
-}
-
-interface AViewProps {
+interface CanvasTargetViewProps {
   className?: string
   children?: React.ReactNode
   onFirstRender?: () => void
@@ -24,7 +16,8 @@ interface AViewProps {
   index?: number
 }
 
-export const AView = ({ className = "", ...otherProps }: AViewProps) => {
+export const CanvasTargetView = (props: CanvasTargetViewProps) => {
+  const { className = "", ...otherProps } = props
   const ref = useRef<HTMLCanvasElement>(null)
   const uuid = useId()
   return (
@@ -89,14 +82,10 @@ const Container = (props: ContainerProps) => {
   useFrame((_state) => {
     const state = _state as unknown as RootState
     if (visible) {
+      // console.log("RENDER", index)
       state.gl.setCanvasTarget(canvasTarget)
       state.gl.render(state.scene, state.camera)
     }
   }, index)
-  return (
-    <>
-      {children}
-      <group onPointerOver={() => null} />
-    </>
-  )
+  return <>{children}</>
 }
