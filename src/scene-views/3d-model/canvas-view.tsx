@@ -43,6 +43,8 @@ export const CanvasView = (props: CanvasViewProps) => {
         isActive ? "" : "touch-pan-y!"
       } ${invisible ? "pointer-events-none opacity-0" : ""}`}
       onFirstRender={setHasRendered}
+      visible={!invisible}
+      index={props.tileIdx + 1}
     >
       <SceneContext.Provider value={store}>
         <CanvasViewInner {...props} ownCanvas={true} />

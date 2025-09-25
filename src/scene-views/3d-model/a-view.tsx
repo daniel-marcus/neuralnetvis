@@ -20,6 +20,8 @@ interface AViewProps {
   className?: string
   children?: React.ReactNode
   onFirstRender?: () => void
+  visible?: boolean
+  index?: number
 }
 
 export const AView = ({ className = "", ...otherProps }: AViewProps) => {
@@ -38,9 +40,16 @@ interface ViewInnerProps {
   children?: React.ReactNode
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   onFirstRender?: () => void
+  visible?: boolean
+  index?: number
 }
 
-const ViewInner = ({ children, canvasRef, onFirstRender }: ViewInnerProps) => {
+const ViewInner = ({
+  children,
+  canvasRef,
+  onFirstRender,
+  ...otherProps
+}: ViewInnerProps) => {
   const [canvasTarget, setCanvasTarget] = useState<THREE.CanvasTarget | null>(
     null
   )
@@ -60,7 +69,9 @@ const ViewInner = ({ children, canvasRef, onFirstRender }: ViewInnerProps) => {
   return (
     !!canvasTarget &&
     createPortal(
-      <Container canvasTarget={canvasTarget}>{children}</Container>,
+      <Container canvasTarget={canvasTarget} {...otherProps}>
+        {children}
+      </Container>,
       virtualScene
     )
   )
@@ -69,14 +80,19 @@ const ViewInner = ({ children, canvasRef, onFirstRender }: ViewInnerProps) => {
 interface ContainerProps {
   children: React.ReactNode
   canvasTarget: THREE.CanvasTarget
+  visible?: boolean
+  index?: number
 }
 
-const Container = ({ children, canvasTarget }: ContainerProps) => {
+const Container = (props: ContainerProps) => {
+  const { children, canvasTarget, visible = true, index } = props
   useFrame((_state) => {
     const state = _state as unknown as RootState
-    state.gl.setCanvasTarget(canvasTarget)
-    state.gl.render(state.scene, state.camera)
-  })
+    if (visible) {
+      state.gl.setCanvasTarget(canvasTarget)
+      state.gl.render(state.scene, state.camera)
+    }
+  }, index)
   return (
     <>
       {children}
