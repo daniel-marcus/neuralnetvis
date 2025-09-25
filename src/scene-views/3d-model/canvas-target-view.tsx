@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react"
-import * as THREE from "three/webgpu"
+import { CanvasTarget, Scene } from "three/webgpu"
 import { useFrame, createPortal } from "@react-three/fiber"
-import { RootState, Tunnel } from "@/components/canvas"
+import { Tunnel, type RootState } from "@/components/main-canvas"
 
 // inspirations:
 // - https://github.com/mrdoob/three.js/blob/dev/examples/webgpu_multiple_canvas.html
@@ -18,38 +18,29 @@ interface CanvasTargetViewProps {
 
 export const CanvasTargetView = (props: CanvasTargetViewProps) => {
   const { className = "", ...otherProps } = props
-  const ref = useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const uuid = useId()
   return (
-    <canvas ref={ref} className={`${className}`}>
+    <canvas ref={canvasRef} className={`${className}`}>
       <Tunnel.In>
-        <ViewInner canvasRef={ref} key={uuid} {...otherProps} />
+        <CanvasTargetInner key={uuid} canvasRef={canvasRef} {...otherProps} />
       </Tunnel.In>
     </canvas>
   )
 }
 
-interface ViewInnerProps {
-  children?: React.ReactNode
+interface CanvasTargetInnerProps extends CanvasTargetViewProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>
-  onFirstRender?: () => void
-  visible?: boolean
-  index?: number
 }
 
-const ViewInner = ({
-  children,
-  canvasRef,
-  onFirstRender,
-  ...otherProps
-}: ViewInnerProps) => {
-  const [canvasTarget, setCanvasTarget] = useState<THREE.CanvasTarget | null>(
-    null
-  )
-  const [virtualScene] = useState(() => new THREE.Scene())
+function CanvasTargetInner(props: CanvasTargetInnerProps) {
+  const { canvasRef, children, onFirstRender, ...otherProps } = props
+  const [canvasTarget, setCanvasTarget] = useState<CanvasTarget | null>(null)
+  const [virtualScene] = useState(() => new Scene())
+
   useEffect(() => {
     if (!canvasRef.current) return
-    const newTarget = new THREE.CanvasTarget(canvasRef.current, {
+    const newTarget = new CanvasTarget(canvasRef.current, {
       antialias: true,
     })
     const { width, height } = canvasRef.current.getBoundingClientRect()
@@ -59,6 +50,7 @@ const ViewInner = ({
     setCanvasTarget(newTarget)
     onFirstRender?.()
   }, [canvasRef])
+
   return (
     !!canvasTarget &&
     createPortal(
@@ -72,7 +64,7 @@ const ViewInner = ({
 
 interface ContainerProps {
   children: React.ReactNode
-  canvasTarget: THREE.CanvasTarget
+  canvasTarget: CanvasTarget
   visible?: boolean
   index?: number
 }

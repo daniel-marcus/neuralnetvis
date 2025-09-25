@@ -47,7 +47,7 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
               ...(renderProps as WebGPURendererParameters),
               device: gpuDevice ? gpuDevice : undefined,
               // logarithmicDepthBuffer: true, // helps with color channel z-fighing, but bad for lines
-              forceWebGL: true,
+              // forceWebGL: true,
             })
             await renderer.init()
             useGlobalStore.setState({ renderer })

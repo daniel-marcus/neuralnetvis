@@ -2,7 +2,7 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import { isWebGPUBackend } from "@/utils/webgpu"
-import { RootState, Tunnel } from "@/components/canvas"
+import { RootState, Tunnel } from "@/components/main-canvas"
 import type { ComputeFunction } from "@react-three/fiber"
 
 // drei/View component adapted for WebGPURenderer
