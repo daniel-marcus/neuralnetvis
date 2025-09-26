@@ -7,7 +7,7 @@ export const fashionMnist: DatasetDef = {
   name: "Fashion MNIST",
   task: "classification",
   description: "Clothing items (28x28)",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-09-26"),
   aboutUrl: "https://github.com/zalandoresearch/fashion-mnist",
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",
@@ -23,6 +23,7 @@ export const fashionMnist: DatasetDef = {
     "Bag",
     "Ankle boot",
   ],
+  sampleViewer: true,
   model: getModelDef("fashion-mnist"),
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([

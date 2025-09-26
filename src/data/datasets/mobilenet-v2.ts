@@ -20,7 +20,7 @@ function getMobileNet(
     isModelDs: true,
     targetDevice,
     description: `Google's MobileNetV2, trained on ImageNet data (${res}x${res}x3)`,
-    version: new Date("2025-06-25"),
+    version: new Date("2025-09-26"),
     aboutUrl:
       "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
     inputDims: [res, res, 3],
@@ -31,6 +31,7 @@ function getMobileNet(
     outputLabels: getImagenetLabels(),
     model: getModelDef(`mobilenet-v2-${res}`),
     sampleViewer: true,
+    showAddImgBtn: true,
     loadPreview: async () => {
       // TODO: prepare
       const imgUrls = [

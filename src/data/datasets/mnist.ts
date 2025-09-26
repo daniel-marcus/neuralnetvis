@@ -7,12 +7,13 @@ export const mnist: DatasetDef = {
   name: "MNIST",
   task: "classification",
   description: "Handwritten digits (28x28)",
-  version: new Date("2025-03-06"),
+  version: new Date("2025-09-26"),
   aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",
   outputLabels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
   model: getModelDef("mnist"),
+  sampleViewer: true,
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/mnist_20k/x_train.npz",

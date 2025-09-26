@@ -23,6 +23,7 @@ export interface DatasetMeta {
   outputLabels: string[] // length defines the number of output neurons
   storeBatchSize?: number // default: 100
   isUserGenerated?: boolean
+  showAddImgBtn?: boolean // use any image from URL as custom samle // TODO: rename?
   camProps?: DsCamProps
   mapProps?: DsMapProps
   loaded: "preview" | "full" // will be set by ds loader

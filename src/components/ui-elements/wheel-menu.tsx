@@ -27,7 +27,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
   return (
     <div
       ref={scrollerRef} // hidden scroll container
-      className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none`}
+      className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none screenshot:hidden`}
     >
       <div
         className={`wheel-wrapper fixed z-20 right-[var(--wheel-padding)] top-0 h-full w-[160px] overflow-hidden ${

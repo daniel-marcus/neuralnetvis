@@ -21,7 +21,9 @@ export function useMySample() {
         : openNewDsTab
       : isTextInput
       ? textToSample
-      : getSampleFromImgUrl
+      : ds?.showAddImgBtn
+      ? getSampleFromImgUrl
+      : undefined
   const setSample = useSceneStore((s) => s.setSample)
   const onBtnClick = useCallback(async () => {
     if (!ds || !addFunc) return

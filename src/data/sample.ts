@@ -55,27 +55,30 @@ let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
 export async function getSample(
   ds: Dataset,
   type: "train" | "test",
-  i: number
+  sampleIdx: number
 ) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
   const storeBatchSize = ds.storeBatchSize
-  const batchIdx = Math.floor(i / storeBatchSize)
+  const batchIdx = Math.floor(sampleIdx / storeBatchSize)
   const batchCacheKey: BatchCacheKey = `${ds.key}_${type}`
   const hasCached = currBatchCache[batchCacheKey]?.index === batchIdx
   const batch = hasCached
     ? currBatchCache[batchCacheKey]
     : await getData<DbBatch>(ds.key, type, batchIdx)
   if (!batch) {
-    if (isDebug()) console.log("NO BATCH", hasCached, batchIdx, i, ds)
+    if (isDebug()) console.log("NO BATCH", hasCached, batchIdx, sampleIdx, ds)
     return
   }
   if (!hasCached) currBatchCache = { [batchCacheKey]: batch }
-  const sampleIdx = i % storeBatchSize
-  const sliceIdxs = [sampleIdx * valsPerSample, (sampleIdx + 1) * valsPerSample]
+  const idxInBatch = sampleIdx % storeBatchSize
+  const sliceIdxs = [
+    idxInBatch * valsPerSample,
+    (idxInBatch + 1) * valsPerSample,
+  ]
   const X = batch.xs.slice(...sliceIdxs)
   const rawX = batch.xsRaw?.slice(...sliceIdxs)
-  const y = batch.ys[sampleIdx]
-  const name = batch.sampleNames?.[sampleIdx]
+  const y = batch.ys[idxInBatch]
+  const name = batch.sampleNames?.[idxInBatch]
   const result: SampleRaw = {
     index: sampleIdx,
     X: Array.from(X),

@@ -7,7 +7,7 @@ export const cifar100: DatasetDef = {
   name: "CIFAR-100",
   task: "classification",
   description: "Color images (32x32x3)",
-  version: new Date("2025-03-19"),
+  version: new Date("2025-09-26"),
   aboutUrl: "https://www.cs.toronto.edu/~kriz/cifar.html",
   inputDims: [32, 32, 3],
   preprocessFunc: "normalizeImage",
@@ -113,6 +113,7 @@ export const cifar100: DatasetDef = {
     "woman",
     "worm",
   ],
+  sampleViewer: true,
   model: getModelDef("cifar-100"),
   loadFull: async () => {
     const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] =

@@ -6,8 +6,7 @@ import { useKeyCommand } from "@/utils/key-command"
 export const SampleSlider = () => {
   const isHovered = useSceneStore((s) => s.isHovered)
   const isActive = useSceneStore((s) => s.isActive)
-  const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
-  const hasStatus = useGlobalStore((s) => !!s.status.getCurrent())
+  const hasStatusOrSelected = useHasStatusOrSelected()
   const hasProgressBar =
     typeof useGlobalStore((s) => s.status.getPercent()) === "number"
   const visIsLocked = useSceneStore((s) => s.vis.isLocked)
@@ -16,12 +15,7 @@ export const SampleSlider = () => {
   const subset = useSceneStore((s) => s.subset)
   const totalSamples = useSceneStore((s) => s.totalSamples(subset))
   const hasStream = useSceneStore((s) => !!s.stream)
-
-  const next = useSceneStore((s) => s.nextSample)
-  const prev = useCallback(() => next(-1), [next])
-  useKeyCommand("ArrowLeft", prev, isActive || isHovered)
-  useKeyCommand("ArrowRight", next, isActive || isHovered)
-
+  useKeyboardNavigation(isActive || isHovered)
   return (
     <div
       className={`absolute will-change-transform left-0 ${
@@ -35,7 +29,7 @@ export const SampleSlider = () => {
           } pointer-events-auto ${
             hasProgressBar || !totalSamples || visIsLocked || hasStream
               ? "opacity-0 pointer-events-none"
-              : isActive && (hasStatus || hasSelected)
+              : isActive && hasStatusOrSelected
               ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
               : "opacity-[var(--opacity-inactive)] lg:opacity-[var(--opacity-inactive-lg)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
           } transition-opacity duration-200 group/sample-slider`}
@@ -65,4 +59,20 @@ export const SampleSlider = () => {
       </div>
     </div>
   )
+}
+
+function useKeyboardNavigation(isActive = true) {
+  const next = useSceneStore((s) => s.nextSample)
+  const prev = useCallback(() => next(-1), [next])
+  useKeyCommand("ArrowLeft", prev, isActive)
+  useKeyCommand("ArrowRight", next, isActive)
+}
+
+/**
+ * used for mobile styles to hide sample slider or sample viewer
+ */
+export function useHasStatusOrSelected() {
+  const hasStatus = useGlobalStore((s) => !!s.status.getCurrent())
+  const hasSelected = useSceneStore((s) => !!s.hoveredNid || !!s.selectedNid)
+  return hasStatus || hasSelected
 }
