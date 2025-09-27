@@ -278,51 +278,6 @@ function useKeyboardNavigation(idxs: number[]) {
   useKeyCommand("ArrowRight", next, !!idxs.length, true)
 }
 
-interface PaginationProps {
-  total: number
-  itemsPerPage: number
-  offset: number
-  setOffset: React.Dispatch<React.SetStateAction<number>>
-}
-
-function Pagination({
-  total,
-  itemsPerPage,
-  offset,
-  setOffset,
-}: PaginationProps) {
-  const page = Math.floor(offset / itemsPerPage)
-  const setPage = (newPage: number) => setOffset(newPage * itemsPerPage)
-  const totalPages = Math.ceil(total / itemsPerPage)
-  const isFirstPage = page === 0
-  const isLastPage = page === totalPages - 1 || totalPages === 0
-  if (totalPages <= 1) return null
-  // TODO: replace paginaton with infinite scroll w/ autoload
-  return (
-    <div
-      className={`w-full max-w-[380px] mx-auto flex justify-between items-center mt-2 pointer-events-auto`}
-    >
-      <button
-        className={`px-4 py-0 ${isFirstPage ? "opacity-0" : ""}`}
-        disabled={page === 0}
-        onClick={() => setPage(Math.max(page - 1, 0))}
-      >
-        &lt; prev
-      </button>
-      <div className={totalPages <= 1 ? "hidden" : ""}>
-        {page + 1}/{totalPages}
-      </div>
-      <button
-        className={`px-4 py-0  ${isLastPage ? "opacity-0" : ""}`}
-        disabled={isLastPage}
-        onClick={() => setPage(Math.min(page + 1, totalPages - 1))}
-      >
-        next &gt;
-      </button>
-    </div>
-  )
-}
-
 type ImgShape = [number, number, number]
 
 const VIDEO_BASE_SIZE = 640 // x 480 -> 4:3 aspect ratio
