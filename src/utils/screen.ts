@@ -69,12 +69,12 @@ interface InViewStateProps {
   direction: "up" | "down" | "none"
 }
 
-export function useInView(
+export function useInView<T extends HTMLElement = HTMLDivElement>(
   options: IntersectionObserverInit = {},
-  existingRef?: React.RefObject<HTMLDivElement>
+  existingRef?: React.RefObject<T | null>
 ) {
   const { root, rootMargin, threshold } = options
-  const newRef: React.RefObject<HTMLDivElement | null> = useRef(null)
+  const newRef: React.RefObject<T | null> = useRef(null)
   const ref = existingRef ?? newRef
   const [state, setState] = useState<InViewStateProps>({
     inView: false,
