@@ -39,10 +39,10 @@ importers:
         version: 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@react-three/drei':
         specifier: ^10.7.6
-        version: 10.7.6(@react-three/fiber@9.3.0(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc))(@types/react@19.2.0)(@types/three@0.180.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
+        version: 10.7.6(@react-three/fiber@9.3.0(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc))(@types/react@19.2.1)(@types/three@0.180.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       '@react-three/fiber':
         specifier: ^9.3.0
-        version: 9.3.0(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
+        version: 9.3.0(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       '@tensorflow/tfjs':
         specifier: ^4.22.0
         version: 4.22.0(seedrandom@3.0.5)
@@ -99,10 +99,10 @@ importers:
         version: 2.36.0(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       tunnel-rat:
         specifier: ^0.1.2
-        version: 0.1.2(@types/react@19.2.0)(react@19.2.0)
+        version: 0.1.2(@types/react@19.2.1)(react@19.2.0)
       zustand:
         specifier: ^5.0.8
-        version: 5.0.8(@types/react@19.2.0)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
+        version: 5.0.8(@types/react@19.2.1)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -127,7 +127,7 @@ importers:
         version: 10.4.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.0(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@types/figlet':
         specifier: ^1.7.0
         version: 1.7.0
@@ -138,11 +138,11 @@ importers:
         specifier: ^24.7.0
         version: 24.7.0
       '@types/react':
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       '@types/react-dom':
         specifier: ^19.2.0
-        version: 19.2.0(@types/react@19.2.0)
+        version: 19.2.0(@types/react@19.2.1)
       '@types/react-headroom':
         specifier: ^3.2.3
         version: 3.2.3
@@ -1495,8 +1495,8 @@ packages:
     peerDependencies:
       '@types/react': '*'
 
-  '@types/react@19.2.0':
-    resolution: {integrity: sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA==}
+  '@types/react@19.2.1':
+    resolution: {integrity: sha512-1U5NQWh/GylZQ50ZMnnPjkYHEaGhg6t5i/KI0LDDh3t4E3h3T3vzm+GLY2BRzMfIjSBwzm6tginoZl5z0O/qsA==}
 
   '@types/seedrandom@2.4.34':
     resolution: {integrity: sha512-ytDiArvrn/3Xk6/vtylys5tlY6eo7Ane0hvcx++TKo6RxQXuVfW0AF/oeWqAj9dN29SyhtawuXstgmPlwNcv/A==}
@@ -5070,12 +5070,12 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  '@react-three/drei@10.7.6(@react-three/fiber@9.3.0(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc))(@types/react@19.2.0)(@types/three@0.180.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)':
+  '@react-three/drei@10.7.6(@react-three/fiber@9.3.0(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc))(@types/react@19.2.1)(@types/three@0.180.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@mediapipe/tasks-vision': 0.10.17
       '@monogrid/gainmap-js': 3.1.0(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
-      '@react-three/fiber': 9.3.0(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
+      '@react-three/fiber': 9.3.0(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       '@use-gesture/react': 10.3.1(react@19.2.0)
       camera-controls: 3.1.0(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       cross-env: 7.0.3
@@ -5092,10 +5092,10 @@ snapshots:
       three-mesh-bvh: 0.8.3(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       three-stdlib: 2.36.0(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
       troika-three-text: 0.52.4(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)
-      tunnel-rat: 0.1.2(@types/react@19.2.0)(react@19.2.0)
+      tunnel-rat: 0.1.2(@types/react@19.2.1)(react@19.2.0)
       use-sync-external-store: 1.6.0(react@19.2.0)
       utility-types: 3.11.0
-      zustand: 5.0.8(@types/react@19.2.0)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
+      zustand: 5.0.8(@types/react@19.2.1)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     optionalDependencies:
       react-dom: 19.2.0(react@19.2.0)
     transitivePeerDependencies:
@@ -5103,14 +5103,14 @@ snapshots:
       - '@types/three'
       - immer
 
-  '@react-three/fiber@9.3.0(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)':
+  '@react-three/fiber@9.3.0(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(three@https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc)':
     dependencies:
       '@babel/runtime': 7.28.4
-      '@types/react-reconciler': 0.32.1(@types/react@19.2.0)
+      '@types/react-reconciler': 0.32.1(@types/react@19.2.1)
       '@types/webxr': 0.5.24
       base64-js: 1.5.1
       buffer: 6.0.3
-      its-fine: 2.0.0(@types/react@19.2.0)(react@19.2.0)
+      its-fine: 2.0.0(@types/react@19.2.1)(react@19.2.0)
       react: 19.2.0
       react-reconciler: 0.31.0(react@19.2.0)
       react-use-measure: 2.1.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -5118,7 +5118,7 @@ snapshots:
       suspend-react: 0.1.3(react@19.2.0)
       three: https://codeload.github.com/mrdoob/three.js/tar.gz/cfd6be3add2249883afd84d30f4a125d5dedf1dc
       use-sync-external-store: 1.6.0(react@19.2.0)
-      zustand: 5.0.8(@types/react@19.2.0)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
+      zustand: 5.0.8(@types/react@19.2.1)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     optionalDependencies:
       react-dom: 19.2.0(react@19.2.0)
     transitivePeerDependencies:
@@ -5448,15 +5448,15 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.0(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@testing-library/dom': 10.4.1
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
     optionalDependencies:
-      '@types/react': 19.2.0
-      '@types/react-dom': 19.2.0(@types/react@19.2.0)
+      '@types/react': 19.2.1
+      '@types/react-dom': 19.2.0(@types/react@19.2.1)
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
@@ -5545,23 +5545,23 @@ snapshots:
 
   '@types/offscreencanvas@2019.7.3': {}
 
-  '@types/react-dom@19.2.0(@types/react@19.2.0)':
+  '@types/react-dom@19.2.0(@types/react@19.2.1)':
     dependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
 
   '@types/react-headroom@3.2.3':
     dependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
 
-  '@types/react-reconciler@0.28.9(@types/react@19.2.0)':
+  '@types/react-reconciler@0.28.9(@types/react@19.2.1)':
     dependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
 
-  '@types/react-reconciler@0.32.1(@types/react@19.2.0)':
+  '@types/react-reconciler@0.32.1(@types/react@19.2.1)':
     dependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
 
-  '@types/react@19.2.0':
+  '@types/react@19.2.1':
     dependencies:
       csstype: 3.1.3
 
@@ -7233,9 +7233,9 @@ snapshots:
       has-symbols: 1.1.0
       set-function-name: 2.0.2
 
-  its-fine@2.0.0(@types/react@19.2.0)(react@19.2.0):
+  its-fine@2.0.0(@types/react@19.2.1)(react@19.2.0):
     dependencies:
-      '@types/react-reconciler': 0.28.9(@types/react@19.2.0)
+      '@types/react-reconciler': 0.28.9(@types/react@19.2.1)
       react: 19.2.0
     transitivePeerDependencies:
       - '@types/react'
@@ -8379,9 +8379,9 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tunnel-rat@0.1.2(@types/react@19.2.0)(react@19.2.0):
+  tunnel-rat@0.1.2(@types/react@19.2.1)(react@19.2.0):
     dependencies:
-      zustand: 4.5.7(@types/react@19.2.0)(react@19.2.0)
+      zustand: 4.5.7(@types/react@19.2.1)(react@19.2.0)
     transitivePeerDependencies:
       - '@types/react'
       - immer
@@ -8754,15 +8754,15 @@ snapshots:
 
   zod@3.25.76: {}
 
-  zustand@4.5.7(@types/react@19.2.0)(react@19.2.0):
+  zustand@4.5.7(@types/react@19.2.1)(react@19.2.0):
     dependencies:
       use-sync-external-store: 1.6.0(react@19.2.0)
     optionalDependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
       react: 19.2.0
 
-  zustand@5.0.8(@types/react@19.2.0)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)):
+  zustand@5.0.8(@types/react@19.2.1)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)):
     optionalDependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
       react: 19.2.0
       use-sync-external-store: 1.6.0(react@19.2.0)
