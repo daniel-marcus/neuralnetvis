@@ -39,7 +39,7 @@
     "jsfive": "^0.4.0",
     "jszip": "^3.10.1",
     "lodash.throttle": "^4.1.1",
-    "next": "^15.5.4",
+    "next": "^15.5.5",
     "npyjs": "^1.0.2",
     "r3f-forcegraph": "^1.1.1",
     "react": "^19.2.0",
