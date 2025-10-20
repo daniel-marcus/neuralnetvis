@@ -21,7 +21,7 @@
   "dependencies": {
     "@deck.gl/core": "^9.1.15",
     "@deck.gl/extensions": "^9.1.15",
-    "@deck.gl/layers": "^9.1.15",
+    "@deck.gl/layers": "^9.2.2",
     "@deck.gl/react": "^9.1.15",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
