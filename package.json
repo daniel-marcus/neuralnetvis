@@ -8,7 +8,7 @@
   "homepage": "https://neuralnetvis.app",
   "repository": "https://github.com/daniel-marcus/neuralnetvis",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "serve": "npx serve out",
@@ -19,16 +19,16 @@
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
-    "@deck.gl/core": "^9.1.15",
-    "@deck.gl/extensions": "^9.1.15",
-    "@deck.gl/layers": "^9.1.15",
-    "@deck.gl/react": "^9.1.15",
+    "@deck.gl/core": "^9.2.2",
+    "@deck.gl/extensions": "^9.2.2",
+    "@deck.gl/layers": "^9.2.2",
+    "@deck.gl/react": "^9.2.2",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
     "@react-spring/web": "^10.0.3",
     "@react-three/drei": "^10.7.6",
-    "@react-three/fiber": "^9.3.0",
+    "@react-three/fiber": "^9.4.0",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
@@ -39,8 +39,8 @@
     "jsfive": "^0.4.0",
     "jszip": "^3.10.1",
     "lodash.throttle": "^4.1.1",
-    "next": "^15.5.4",
-    "npyjs": "^1.0.2",
+    "next": "^16.0.1",
+    "npyjs": "^1.0.4",
     "r3f-forcegraph": "^1.1.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -52,32 +52,32 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@next/bundle-analyzer": "^15.5.4",
+    "@next/bundle-analyzer": "^16.0.1",
     "@react-spring/types": "^10.0.3",
     "@swc-node/register": "^1.11.1",
-    "@tailwindcss/postcss": "^4.1.14",
+    "@tailwindcss/postcss": "^4.1.16",
     "@tensorflow/tfjs-node": "^4.22.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
     "@types/figlet": "^1.7.0",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^24.7.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/node": "^24.9.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.180.0",
-    "@vitejs/plugin-react": "^5.0.4",
-    "eslint": "^9.37.0",
-    "eslint-config-next": "^15.5.4",
-    "fake-indexeddb": "^6.2.2",
-    "happy-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^16.0.1",
+    "fake-indexeddb": "^6.2.4",
+    "happy-dom": "^20.0.10",
     "postcss": "^8.5.6",
-    "puppeteer": "^24.23.0",
-    "tailwindcss": "^4.1.14",
+    "puppeteer": "^24.27.0",
+    "tailwindcss": "^4.1.16",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.4"
   },
   "keywords": [
     "data-visualization",
@@ -104,9 +104,6 @@
       "puppeteer",
       "sharp",
       "unrs-resolver"
-    ],
-    "patchedDependencies": {
-      "npyjs@1.0.2": "patches/npyjs@1.0.2.patch"
-    }
+    ]
   }
 }
