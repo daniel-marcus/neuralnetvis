@@ -65,7 +65,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/react-headroom": "^3.2.3",
-    "@types/three": "^0.180.0",
+    "@types/three": "^0.181.0",
     "@vitejs/plugin-react": "^5.1.0",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.1",
