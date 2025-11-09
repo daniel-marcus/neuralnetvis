@@ -19,12 +19,12 @@ const colorBases = [baseR, baseG, baseB]
 // const standardMaterial = createActivationMaterial(false, 0)
 // const colorMaterials = [0, 1, 2].map((i) => createActivationMaterial(true, i))
 
-export type StorageNode = THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+export type StorageNode = THREE.StorageBufferNode
 
 export function getMaterial(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+  storageNode: StorageNode
 ) {
   return createActivationMaterial(hasColors, channelIdx, storageNode)
   // return hasColors ? colorMaterials[channelIdx] : standardMaterial
@@ -33,7 +33,7 @@ export function getMaterial(
 function createActivationMaterial(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+  storageNode: StorageNode
 ) {
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
@@ -50,7 +50,7 @@ interface FnProps {
 export function activationColor(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: THREE.TSL.ShaderNodeObject<THREE.StorageBufferNode>
+  storageNode: StorageNode
 ) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
