@@ -90,8 +90,8 @@ importers:
         specifier: ^0.181.0
         version: 0.181.0
       three-stdlib:
-        specifier: ^2.36.0
-        version: 2.36.0(three@0.181.0)
+        specifier: ^2.36.1
+        version: 2.36.1(three@0.181.0)
       tunnel-rat:
         specifier: ^0.1.2
         version: 0.1.2(@types/react@19.2.2)(react@19.2.0)
@@ -2004,6 +2004,11 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
+  browserslist@4.28.0:
+    resolution: {integrity: sha512-tbydkR/CxfMwelN0vwdP/pLkDwyAASZ+VfWm4EOwlB6SWhx1sYnWLqo8N5j0rAzPfzfRaxt0mM/4wPU/Su84RQ==}
+    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
+    hasBin: true
+
   buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
 
@@ -3897,8 +3902,8 @@ packages:
     peerDependencies:
       three: '>= 0.159.0'
 
-  three-stdlib@2.36.0:
-    resolution: {integrity: sha512-kv0Byb++AXztEGsULgMAs8U2jgUdz6HPpAB/wDJnLiLlaWQX2APHhiTJIN7rqW+Of0eRgcp7jn05U1BsCP3xBA==}
+  three-stdlib@2.36.1:
+    resolution: {integrity: sha512-XyGQrFmNQ5O/IoKm556ftwKsBg11TIb301MB5dWNicziQBEs2g3gtOYIf7pFiLa0zI2gUwhtCjv9fmjnxKZ1Cg==}
     peerDependencies:
       three: '>=0.128.0'
 
@@ -5068,7 +5073,7 @@ snapshots:
       suspend-react: 0.1.3(react@19.2.0)
       three: 0.181.0
       three-mesh-bvh: 0.8.3(three@0.181.0)
-      three-stdlib: 2.36.0(three@0.181.0)
+      three-stdlib: 2.36.1(three@0.181.0)
       troika-three-text: 0.52.4(three@0.181.0)
       tunnel-rat: 0.1.2(@types/react@19.2.2)(react@19.2.0)
       use-sync-external-store: 1.6.0(react@19.2.0)
@@ -6098,6 +6103,14 @@ snapshots:
       electron-to-chromium: 1.5.249
       node-releases: 2.0.27
       update-browserslist-db: 1.1.4(browserslist@4.27.0)
+
+  browserslist@4.28.0:
+    dependencies:
+      baseline-browser-mapping: 2.8.25
+      caniuse-lite: 1.0.30001754
+      electron-to-chromium: 1.5.249
+      node-releases: 2.0.27
+      update-browserslist-db: 1.1.4(browserslist@4.28.0)
 
   buffer-crc32@0.2.13: {}
 
@@ -8275,7 +8288,7 @@ snapshots:
     dependencies:
       three: 0.181.0
 
-  three-stdlib@2.36.0(three@0.181.0):
+  three-stdlib@2.36.1(three@0.181.0):
     dependencies:
       '@types/draco3d': 1.4.10
       '@types/offscreencanvas': 2019.7.3
@@ -8440,6 +8453,12 @@ snapshots:
       escalade: 3.2.0
       picocolors: 1.1.1
 
+  update-browserslist-db@1.1.4(browserslist@4.28.0):
+    dependencies:
+      browserslist: 4.28.0
+      escalade: 3.2.0
+      picocolors: 1.1.1
+
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
@@ -8561,7 +8580,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.15.0
       acorn-import-phases: 1.0.4(acorn@8.15.0)
-      browserslist: 4.27.0
+      browserslist: 4.28.0
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.3
       es-module-lexer: 1.7.0
