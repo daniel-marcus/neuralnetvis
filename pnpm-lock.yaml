@@ -9,17 +9,17 @@ importers:
   .:
     dependencies:
       '@deck.gl/core':
-        specifier: ^9.2.3
-        version: 9.2.3
+        specifier: ^9.2.4
+        version: 9.2.4
       '@deck.gl/extensions':
         specifier: ^9.2.3
-        version: 9.2.3(@deck.gl/core@9.2.3)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
+        version: 9.2.3(@deck.gl/core@9.2.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
       '@deck.gl/layers':
         specifier: ^9.2.3
-        version: 9.2.3(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
+        version: 9.2.3(@deck.gl/core@9.2.4)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
       '@deck.gl/react':
         specifier: ^9.2.3
-        version: 9.2.3(@deck.gl/core@9.2.3)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.3))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        version: 9.2.3(@deck.gl/core@9.2.4)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.4))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@mediapipe/drawing_utils':
         specifier: ^0.3.1675466124
         version: 0.3.1675466124
@@ -274,8 +274,8 @@ packages:
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
 
-  '@deck.gl/core@9.2.3':
-    resolution: {integrity: sha512-OTLTRyII38mHJku6Cg4UNkhZBiMmJOHw0V+SPcksph1yIgweoPQIMAD5+U+HwPZ58BNyJLhUHMJ4UZ+reutU+w==}
+  '@deck.gl/core@9.2.4':
+    resolution: {integrity: sha512-bTOMevNXplrlsi/VkA43nBfeoSWKW/tHpH4jdQQOeTzUqnl/Ti8J0V8CMqES5/xkDrwXbzOCHSUuPqiHFYqelQ==}
 
   '@deck.gl/extensions@9.2.3':
     resolution: {integrity: sha512-ZcxMxaoIB7anRs8j/cY0zsWxIsbxpqxU26lpYlXN8Kv5Q4Tj8elX0ZxOeHhhDXdU8lLKDzHy7UxGkfdPLg7H5w==}
@@ -4432,7 +4432,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@deck.gl/core@9.2.3':
+  '@deck.gl/core@9.2.4':
     dependencies:
       '@loaders.gl/core': 4.3.4
       '@loaders.gl/images': 4.3.4(@loaders.gl/core@4.3.4)
@@ -4452,18 +4452,18 @@ snapshots:
       gl-matrix: 3.4.4
       mjolnir.js: 3.0.0
 
-  '@deck.gl/extensions@9.2.3(@deck.gl/core@9.2.3)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
+  '@deck.gl/extensions@9.2.3(@deck.gl/core@9.2.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
     dependencies:
-      '@deck.gl/core': 9.2.3
+      '@deck.gl/core': 9.2.4
       '@luma.gl/constants': 9.2.4
       '@luma.gl/core': 9.2.4
       '@luma.gl/engine': 9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4))
       '@luma.gl/shadertools': 9.2.4(@luma.gl/core@9.2.4)
       '@math.gl/core': 4.1.0
 
-  '@deck.gl/layers@9.2.3(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
+  '@deck.gl/layers@9.2.3(@deck.gl/core@9.2.4)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
     dependencies:
-      '@deck.gl/core': 9.2.3
+      '@deck.gl/core': 9.2.4
       '@loaders.gl/core': 4.3.4
       '@loaders.gl/images': 4.3.4(@loaders.gl/core@4.3.4)
       '@loaders.gl/schema': 4.3.4(@loaders.gl/core@4.3.4)
@@ -4476,16 +4476,16 @@ snapshots:
       '@math.gl/web-mercator': 4.1.0
       earcut: 2.2.4
 
-  '@deck.gl/react@9.2.3(@deck.gl/core@9.2.3)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.3))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+  '@deck.gl/react@9.2.3(@deck.gl/core@9.2.4)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.4))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@deck.gl/core': 9.2.3
-      '@deck.gl/widgets': 9.1.14(@deck.gl/core@9.2.3)
+      '@deck.gl/core': 9.2.4
+      '@deck.gl/widgets': 9.1.14(@deck.gl/core@9.2.4)
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
 
-  '@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.3)':
+  '@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.4)':
     dependencies:
-      '@deck.gl/core': 9.2.3
+      '@deck.gl/core': 9.2.4
       preact: 10.28.0
 
   '@dimforge/rapier3d-compat@0.12.0': {}
