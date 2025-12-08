@@ -15,8 +15,8 @@ importers:
         specifier: ^9.2.3
         version: 9.2.3(@deck.gl/core@9.2.3)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
       '@deck.gl/layers':
-        specifier: ^9.2.3
-        version: 9.2.3(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
+        specifier: ^9.2.4
+        version: 9.2.4(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))
       '@deck.gl/react':
         specifier: ^9.2.3
         version: 9.2.3(@deck.gl/core@9.2.3)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.2.3))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -284,8 +284,8 @@ packages:
       '@luma.gl/core': ~9.2.2
       '@luma.gl/engine': ~9.2.2
 
-  '@deck.gl/layers@9.2.3':
-    resolution: {integrity: sha512-BCPh3HpfxucivmL/EcXe/MiKwgInA1tKGGTQCoWEYoz7R3N41CanVQXSTjSpn5TpEjtQ5hiinRa0sBW7gN3hwg==}
+  '@deck.gl/layers@9.2.4':
+    resolution: {integrity: sha512-oGgoIIPJQ+Ivbsfv/rHQUEOggTKiU2EoHJxuJ8FHLN/xITs1+TdufFJUh8Oq6Ih41uCe7Quv4g+bk1i5qjOSJQ==}
     peerDependencies:
       '@deck.gl/core': ~9.2.0
       '@loaders.gl/core': ^4.2.0
@@ -4461,7 +4461,7 @@ snapshots:
       '@luma.gl/shadertools': 9.2.4(@luma.gl/core@9.2.4)
       '@math.gl/core': 4.1.0
 
-  '@deck.gl/layers@9.2.3(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
+  '@deck.gl/layers@9.2.4(@deck.gl/core@9.2.3)(@loaders.gl/core@4.3.4)(@luma.gl/core@9.2.4)(@luma.gl/engine@9.2.4(@luma.gl/core@9.2.4)(@luma.gl/shadertools@9.2.4(@luma.gl/core@9.2.4)))':
     dependencies:
       '@deck.gl/core': 9.2.3
       '@loaders.gl/core': 4.3.4
