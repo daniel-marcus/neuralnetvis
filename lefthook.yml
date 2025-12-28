@@ -1,4 +1,8 @@
 pre-commit:
   commands:
+    format:
+      tags: format
+      glob: "*.{ts,tsx,js,jsx,json,css,scss}"
+      run: pnpm format --log-level warn --cache {staged_files} && git add {staged_files}
     test:
       run: pnpm test
