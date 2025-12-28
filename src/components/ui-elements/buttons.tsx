@@ -28,8 +28,8 @@ export const Button = ({
         variant === "primary"
           ? "bg-accent text-white disabled:brightness-50 active:bg-accent-hover"
           : variant === "secondary"
-          ? "bg-secondary active:text-white"
-          : "hover:text-white active:text-white"
+            ? "bg-secondary active:text-white"
+            : "hover:text-white active:text-white"
       } rounded-btn ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -68,10 +68,10 @@ export const Arrow = ({ className, direction: d = "right" }: ArrowProps) => (
       d === "right"
         ? "-rotate-90"
         : d === "up"
-        ? "rotate-180"
-        : d === "left"
-        ? "rotate-90"
-        : ""
+          ? "rotate-180"
+          : d === "left"
+            ? "rotate-90"
+            : ""
     } duration-150 mr-2 ${className}`}
   >
     <path

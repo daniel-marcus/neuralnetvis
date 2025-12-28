@@ -57,7 +57,7 @@ export class ProgressCb extends CustomCallback {
   private statusId = "training_progress"
   private setStatus = throttle(
     useGlobalStore.getState().status.update,
-    PROGRESS_UPD_THROTTLE
+    PROGRESS_UPD_THROTTLE,
   )
   private startTime = 0
   private firstRun = true

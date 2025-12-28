@@ -165,7 +165,7 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
         linewidth: width,
         // resolution: new Vector2(size.width, size.height),
       }),
-    [width, size]
+    [width, size],
   )
   useEffect(() => {
     return () => {
@@ -188,7 +188,7 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
 
   const obj = useMemo(
     () => new LineSegments2(geometry, material),
-    [geometry, material]
+    [geometry, material],
   )
 
   return <primitive object={obj} ref={lineRef} />

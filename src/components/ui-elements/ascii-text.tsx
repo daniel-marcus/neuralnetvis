@@ -41,7 +41,7 @@ function replaceUmlauts(str: string) {
 
 export function splitWithThreshold(
   str: string,
-  threshold = MAX_CHARS_PER_LINE
+  threshold = MAX_CHARS_PER_LINE,
 ) {
   return str.split(" ").reduce((acc, word) => {
     const lastChunk = acc.at(-1) || ""

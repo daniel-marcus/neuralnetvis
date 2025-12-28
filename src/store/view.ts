@@ -16,11 +16,11 @@ export interface ViewSlice {
   setSubset: (subset: Subset) => void
   focussedLayerIdx: number | undefined
   setFocussedLayerIdx: (
-    arg: number | undefined | SetterFunc<number | undefined>
+    arg: number | undefined | SetterFunc<number | undefined>,
   ) => void
   hoveredLayerIdx: number | undefined
   setHoveredLayerIdx: (
-    arg: number | undefined | SetterFunc<number | undefined>
+    arg: number | undefined | SetterFunc<number | undefined>,
   ) => void
   isScrolling: boolean
   setIsScrolling: (isScrolling: boolean) => void

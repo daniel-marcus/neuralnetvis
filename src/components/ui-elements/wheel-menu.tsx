@@ -34,8 +34,8 @@ export const WheelMenu = (props: WheelMenuProps) => {
           !props.items.length || props.fullyHidden
             ? "translate-x-full"
             : isActive
-            ? "translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
-            : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-105px)] sm:hover:translate-x-[calc(100%-125px)]"
+              ? "translate-x-[calc(100%-105px)] sm:translate-x-[calc(100%-125px)]"
+              : "translate-x-[calc(100%-40px)] sm:translate-x-[calc(100%-80px)] hover:translate-x-[calc(100%-105px)] sm:hover:translate-x-[calc(100%-125px)]"
         } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none pointer-events-none`}
       >
         <ul
@@ -95,7 +95,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
 
   const onClick = useCallback(
     (idx: number) => setCurrIdx((oldIdx) => (idx === oldIdx ? undefined : idx)),
-    [setCurrIdx]
+    [setCurrIdx],
   )
 
   // on external currIdx change: auto scroll to the target item
@@ -210,7 +210,7 @@ function getMaxScroll(scroller: HTMLDivElement) {
 function useKeyboardNavigation(
   currIdx: Idx,
   items: WheelMenuItem[],
-  gotoIdx: (i: number) => void
+  gotoIdx: (i: number) => void,
 ) {
   const next = useCallback(
     (step = 1) => {
@@ -222,7 +222,7 @@ function useKeyboardNavigation(
       }
       gotoIdx(newIdx)
     },
-    [currIdx, items, gotoIdx]
+    [currIdx, items, gotoIdx],
   )
   const prev = useCallback(() => next(-1), [next])
   useKeyCommand("ArrowUp", prev, true, true)

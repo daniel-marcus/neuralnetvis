@@ -6,7 +6,7 @@ export function useKeyCommand(
   key: string,
   cb: Callback,
   isActive = true,
-  preventDefault = false
+  preventDefault = false,
 ) {
   useEffect(() => {
     if (!isActive) return

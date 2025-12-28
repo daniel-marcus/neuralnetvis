@@ -67,7 +67,7 @@ export const Graph = () => {
       onNodeHover={(node) => {
         if (!node) return null
         setStatus(
-          `${node.className} (${node.layer.outputShape.slice(1).join("x")})`
+          `${node.className} (${node.layer.outputShape.slice(1).join("x")})`,
         )
         // document.body.style.cursor = node ? "pointer" : "auto"
       }}
@@ -110,7 +110,7 @@ function useModelGraph() {
     }))
 
     const layerIdxMap = new Map(
-      model.layers.map((layer, index) => [layer.name, index])
+      model.layers.map((layer, index) => [layer.name, index]),
     )
 
     model.layers.forEach((layer, layerIdx) => {

@@ -55,7 +55,7 @@ export function useScrollCallbacks(scrollProps: ScrollBlockProps) {
 }
 
 function calculateScrolledPercent(
-  ref: React.RefObject<HTMLElement | null>
+  ref: React.RefObject<HTMLElement | null>,
 ): number {
   if (!ref.current) return 0
   const rect = ref.current.getBoundingClientRect()
@@ -69,7 +69,7 @@ function calculateScrolledPercent(
     : 0
   const percent =
     Math.round(
-      ((middleY + offset - rect.top) / (rect.height + offset)) * 1000
+      ((middleY + offset - rect.top) / (rect.height + offset)) * 1000,
     ) / 1000
   return percent
 }

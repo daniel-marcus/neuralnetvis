@@ -38,7 +38,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(
-  className: T | string
+  className: T | string,
 ): LayerDef<T> | undefined {
   const layerDef =
     className in layerDefMap ? layerDefMap[className as T] : undefined

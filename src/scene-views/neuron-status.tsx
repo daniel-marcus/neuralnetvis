@@ -54,7 +54,7 @@ const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
 const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const [currGroup, setCurrGroup] = useState(0)
   const highlightProp = useGlobalStore(
-    (s) => s.scene?.getState().vis?.highlightProp
+    (s) => s.scene?.getState().vis?.highlightProp,
   )
   const isScreenSm = isScreen("sm")
 
@@ -63,7 +63,7 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   // normalize in group?
   const weights = useMemo(
     () => normalizeWithSign(neuron.weights) ?? [],
-    [neuron]
+    [neuron],
   )
 
   if (!neuron.weights?.length || !prevLayer) return null
@@ -76,8 +76,8 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const [rows, cols] = Array.isArray(kernelSize)
     ? (kernelSize as number[])
     : prevWidth
-    ? [prevHeight, prevWidth]
-    : [sqr, sqr] // 1D Dense to square
+      ? [prevHeight, prevWidth]
+      : [sqr, sqr] // 1D Dense to square
   const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
 
   const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)

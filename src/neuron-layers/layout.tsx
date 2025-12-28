@@ -34,7 +34,7 @@ const meshMap: Record<string, MeshParams> = {
 export function getMeshParams(
   layer: tf.layers.Layer,
   layerPos: LayerPos,
-  units: number
+  units: number,
 ): MeshParams {
   const className = layer.getClassName()
   // const layerDef = getLayerDef(className)
@@ -59,7 +59,7 @@ export function getGridSize(
   height: number,
   width: number,
   cellSize: number,
-  additionalSpacing = 0
+  additionalSpacing = 0,
 ) {
   const totalHeight = height * cellSize + additionalSpacing
   const totalWidth = width * cellSize + additionalSpacing
@@ -72,7 +72,7 @@ export function getNeuronPos(
   height: number,
   width: number = 1,
   channels: number = 1,
-  spacedSize: number
+  spacedSize: number,
 ) {
   const forceColumns =
     (layerPos === "output" || layerPos === "input") && width === 1
@@ -101,7 +101,7 @@ function getGridXYZ(
   height: number,
   width: number,
   spacing: number,
-  forceColumns = false
+  forceColumns = false,
 ): [number, number, number] {
   const total = height * width
   let zSpacing = spacing

@@ -14,8 +14,8 @@ export const Logo = () => {
         isPlayMode
           ? "screenshot:hidden"
           : !hasLesson
-          ? "screenshot:scale-150 origin-top-left"
-          : ""
+            ? "screenshot:scale-150 origin-top-left"
+            : ""
       }`}
       scroll={hasLesson ? true : false}
     >

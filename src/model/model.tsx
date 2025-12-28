@@ -62,7 +62,7 @@ type GetPretrainedModelResult = {
 
 async function getPretrained(
   modelDef: ModelDef,
-  noWeights?: boolean
+  noWeights?: boolean,
 ): Promise<GetPretrainedModelResult> {
   const { path, key } = modelDef
   const allModels = await tf.io.listModels()
@@ -89,7 +89,7 @@ async function getPretrained(
 
 export function useModelTransition(
   _setModel: ModelSlice["_setModel"],
-  onTransitionFinished?: () => void
+  onTransitionFinished?: () => void,
 ) {
   const hasLesson = useHasLesson()
   const [isPending, startTransition] = useTransition()
@@ -101,14 +101,14 @@ export function useModelTransition(
     async (
       model?: tf.LayersModel,
       loadState?: ModelLoadState,
-      silent?: boolean
+      silent?: boolean,
     ) => {
       modelToSet.current = model
       loadStateToSet.current = loadState
       const id = setStatus(silent ? "" : "Creating model ...", -1)
       setStatusId(id)
     },
-    []
+    [],
   )
 
   useEffect(() => {
@@ -161,8 +161,8 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
         v.size === size &&
         v.trainable === false &&
         !v.name.match(
-          /(BatchNormalization|batch_normalization|moving_mean|moving_variance)/
-        )
+          /(BatchNormalization|batch_normalization|moving_mean|moving_variance)/,
+        ),
     )
     // console.log({ olds })
     olds.forEach((v) => tf.dispose(v))
@@ -238,7 +238,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
         : config
       addDenseWithFlattenIfNeeded(
         layerStack,
-        newConfig as LayerConfigMap["Dense"]
+        newConfig as LayerConfigMap["Dense"],
       )
     } else if (l.className === "Add") {
       const lastNode = layerStack.last
@@ -254,7 +254,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
     } else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
       const makeLayer = getLayerDef(l.className)?.constructorFunc as (
-        args: unknown
+        args: unknown,
       ) => Layer
       if (makeLayer) layerStack.add(makeLayer(args))
     } else {
@@ -272,7 +272,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
 
 function addDenseWithFlattenIfNeeded(
   layerStack: LayerStack,
-  denseArgs: LayerConfigMap["Dense"]
+  denseArgs: LayerConfigMap["Dense"],
 ) {
   const isMutliDim = layerStack.last.shape.length > 2
   if (isMutliDim) {

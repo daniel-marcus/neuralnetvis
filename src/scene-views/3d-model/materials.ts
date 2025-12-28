@@ -24,7 +24,7 @@ export type StorageNode = THREE.StorageBufferNode
 export function getMaterial(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: StorageNode
+  storageNode: StorageNode,
 ) {
   return createActivationMaterial(hasColors, channelIdx, storageNode)
   // return hasColors ? colorMaterials[channelIdx] : standardMaterial
@@ -33,7 +33,7 @@ export function getMaterial(
 function createActivationMaterial(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: StorageNode
+  storageNode: StorageNode,
 ) {
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
@@ -50,7 +50,7 @@ interface FnProps {
 export function activationColor(
   hasColors: boolean,
   channelIdx: number,
-  storageNode: StorageNode
+  storageNode: StorageNode,
 ) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
@@ -76,7 +76,7 @@ export function getTextureMaterial(
   height: number,
   width: number,
   channels: number,
-  storageNode: StorageNode
+  storageNode: StorageNode,
 ) {
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
@@ -88,7 +88,7 @@ export function getTextureMaterial(
     height,
     width,
     channels,
-    storageNode
+    storageNode,
   )
   return material
 }
@@ -101,7 +101,7 @@ export function activationColorTexture(
   width: number = 1,
   channels: number = 1,
   storageNode: StorageNode,
-  cellGap = 1
+  cellGap = 1,
 ) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed

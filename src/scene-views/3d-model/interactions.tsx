@@ -15,7 +15,7 @@ const LAYER_HOVER_STATUS = "layer-hover-status"
 const layerHoverGeometry = new THREE.BoxGeometry(1, 1, 1)
 
 export function LayerInteractions(
-  props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> }
+  props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> },
 ) {
   const hasFocussed = useHasFocussed()
   const sceneActive = useSceneStore((s) => s.isActive)
@@ -27,7 +27,7 @@ export function LayerInteractions(
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
   const setIsHovered = useCallback(
     (hovered: boolean) => setHoveredLayerIdx(hovered ? props.index : undefined),
-    [setHoveredLayerIdx, props.index]
+    [setHoveredLayerIdx, props.index],
   )
   useEffect(() => {
     if (!isActive) return

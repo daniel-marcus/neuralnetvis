@@ -29,14 +29,14 @@ export function isScreen(bp: Breakpoint) {
 
 export function useOrientation() {
   const [orientation, setOrientation] = useState<"landscape" | "portrait">(
-    "landscape"
+    "landscape",
   )
   useEffect(() => {
     const handleOrientationChange = () => {
       setOrientation(
         window.matchMedia("(orientation: landscape)").matches
           ? "landscape"
-          : "portrait"
+          : "portrait",
       )
     }
     handleOrientationChange()
@@ -71,7 +71,7 @@ interface InViewStateProps {
 
 export function useInView<T extends HTMLElement = HTMLDivElement>(
   options: IntersectionObserverInit = {},
-  existingRef?: React.RefObject<T | null>
+  existingRef?: React.RefObject<T | null>,
 ) {
   const { root, rootMargin, threshold } = options
   const newRef: React.RefObject<T | null> = useRef(null)
@@ -93,8 +93,8 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
           typeof oldState.y === "undefined"
             ? "none"
             : y > oldState.y
-            ? "up"
-            : "down",
+              ? "up"
+              : "down",
       }))
     }, options)
     o.observe(ref.current)

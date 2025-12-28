@@ -63,7 +63,7 @@ function LessonGradient() {
 function useContent(content: LessonDef["content"]) {
   const main = content()
   const children = main.props.children.map((c, i, arr) =>
-    cloneElement(c, { key: i, nextProps: arr[i + 1]?.props })
+    cloneElement(c, { key: i, nextProps: arr[i + 1]?.props }),
   )
   return (<main>{children}</main>) as LessonContent
 }

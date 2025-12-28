@@ -40,7 +40,7 @@ async function loadData() {
       "/data/california_housing/x_test.npz",
       "/data/california_housing/y_test.npz",
     ],
-    true
+    true,
   )
   const [xTrainScaled, xTestScaled] = tf.tidy(() => {
     const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)

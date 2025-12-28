@@ -31,7 +31,7 @@ interface TypedWebGPUBackend extends Backend {
 }
 
 export function isWebGPUBackend(
-  backend: Backend
+  backend: Backend,
 ): backend is TypedWebGPUBackend {
   return "isWebGPUBackend" in backend && (backend.isWebGPUBackend as boolean)
 }

@@ -65,7 +65,7 @@ export function getActColor(val: number) {
 export function getPredQualColor(
   yPred?: number, // activation
   yTrue?: number,
-  yMean?: number
+  yMean?: number,
 ) {
   if (
     typeof yPred === "undefined" ||

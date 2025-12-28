@@ -31,7 +31,7 @@ export function text2Texture(props: Text2TextureProps): Text2TextureResult {
 
   ctx.font = font
   const innerWidth = Math.max(
-    ...lines.map((line) => ctx.measureText(line).width)
+    ...lines.map((line) => ctx.measureText(line).width),
   )
   const paddingY = fontSize * 0.15
   const lineHeight = 1.1

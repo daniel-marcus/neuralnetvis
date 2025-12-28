@@ -63,7 +63,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   const updateModelList = async () => {
     const allModels = await tf.io.listModels()
     const modelNames = Object.keys(allModels).map((k) =>
-      k.replace(/^indexeddb:\/\//, "")
+      k.replace(/^indexeddb:\/\//, ""),
     )
     setSavedModels(modelNames)
   }
@@ -154,7 +154,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
         setModel(newModel)
       }
     },
-    [modelFiles, setModel]
+    [modelFiles, setModel],
   )
   useEffect(() => {
     if (!modelFiles) return

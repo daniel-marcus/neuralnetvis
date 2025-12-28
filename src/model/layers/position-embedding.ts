@@ -43,7 +43,7 @@ export class PositionEmbeddingLayer extends tf.layers.Layer {
       undefined, // dtype
       this.initializer,
       undefined, // regularizer
-      true // trainable
+      true, // trainable
     )
 
     this.built = true
@@ -51,7 +51,7 @@ export class PositionEmbeddingLayer extends tf.layers.Layer {
 
   override call(
     inputs: tf.Tensor | tf.Tensor[],
-    kwargs: { startIndex?: number } = {}
+    kwargs: { startIndex?: number } = {},
   ): tf.Tensor | tf.Tensor[] {
     const startIndex = kwargs.startIndex || 0
     const inputTensor = Array.isArray(inputs) ? inputs[0] : inputs
@@ -63,7 +63,7 @@ export class PositionEmbeddingLayer extends tf.layers.Layer {
     const sliced = tf.slice(
       positionEmbeds,
       [startIndex, 0],
-      [sequenceLength, featureLength]
+      [sequenceLength, featureLength],
     )
 
     const broadcastShape = [...inputShape]

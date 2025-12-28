@@ -34,7 +34,7 @@ export const CreateNewDataset = () => {
   const [name, setName] = useState<string>("my_handpose_ds")
   const [hands, setHands] = useState<HandsNum>(1)
   const [labels, setLabels] = useState<string[]>(
-    DEFAULT_LABELS[hands].slice(0, 3)
+    DEFAULT_LABELS[hands].slice(0, 3),
   )
   useEffect(() => {
     setLabels(DEFAULT_LABELS[hands].slice(0, 3))
@@ -123,7 +123,7 @@ export const CreateNewDataset = () => {
 function dsDefFromState(
   name: string,
   hands: number,
-  outputLabels: string[]
+  outputLabels: string[],
 ): DatasetDef {
   return {
     ...handPose,

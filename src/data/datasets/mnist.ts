@@ -37,7 +37,7 @@ export const mnist: DatasetDef = {
         "/data/mnist_20k/x_train_preview.npz",
         "/data/mnist_20k/y_train_preview.npz",
       ],
-      true
+      true,
     )
     xTrain.shape = [...xTrain.shape, 1]
     return { xTrain, yTrain }

@@ -116,7 +116,7 @@ export function SceneStoreProvider({
       moveCameraTo(
         initialState?.cameraPos ?? defaultState.cameraPos,
         initialState?.cameraLookAt ?? defaultState.cameraLookAt,
-        thisScene.getState().three
+        thisScene.getState().three,
       )
       // reset current scene
       useGlobalStore.getState().setScene(dummySceneStore)

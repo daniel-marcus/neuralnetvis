@@ -55,7 +55,7 @@ let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
 export async function getSample(
   ds: Dataset,
   type: "train" | "test",
-  sampleIdx: number
+  sampleIdx: number,
 ) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
   const storeBatchSize = ds.storeBatchSize

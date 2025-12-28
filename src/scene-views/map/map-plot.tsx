@@ -22,8 +22,8 @@ export const MapPlot = () => {
           ? view === "evaluation"
             ? "z-30"
             : view === "map"
-            ? `pointer-events-auto!`
-            : "md:translate-x-[25vw]"
+              ? `pointer-events-auto!`
+              : "md:translate-x-[25vw]"
           : "grayscale-25 opacity-75"
       } transition duration-[var(--tile-duration)] w-[100vw] h-[100vh]`}
     >

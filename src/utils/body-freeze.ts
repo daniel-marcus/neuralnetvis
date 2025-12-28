@@ -4,7 +4,7 @@ import { useEffect } from "react"
 
 export function useBodyFreeze(
   isActive: boolean,
-  scrollableRef: React.RefObject<HTMLElement | null>
+  scrollableRef: React.RefObject<HTMLElement | null>,
 ) {
   useEffect(() => {
     const el = scrollableRef.current

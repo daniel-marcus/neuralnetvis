@@ -100,7 +100,7 @@ export const TileGrid = () => {
                 ? isDesktop
                   ? targetDevice === "desktop"
                   : targetDevice === "mobile"
-                : true
+                : true,
             )
             // .slice(0, 3)
             .map((tileProps, i) => {
@@ -194,8 +194,8 @@ function Tile(props: TileProps) {
           isActive === localActive
             ? "[transition-property:all,border-color] [transition-duration:var(--tile-duration),0s] ease-in-out"
             : isActive && !localActive
-            ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
-            : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
+              ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
+              : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
         } border-2 ${
           isActive || inTransition
             ? "border-transparent! border-0!"
@@ -248,8 +248,8 @@ function useIs404() {
 export function getTileDuration() {
   const s = parseFloat(
     getComputedStyle(document.documentElement).getPropertyValue(
-      "--tile-duration"
-    )
+      "--tile-duration",
+    ),
   )
   const ms = s * 1000
   if (!ms) console.warn("--tile-duration not set!", ms)

@@ -63,7 +63,7 @@ function CanvasTargetInner(props: CanvasTargetInnerProps) {
       <Container canvasTarget={canvasTarget} {...otherProps}>
         {children}
       </Container>,
-      virtualScene
+      virtualScene,
     )
   )
 }

@@ -20,10 +20,10 @@ export function useMySample() {
           : undefined
         : openNewDsTab
       : isTextInput
-      ? textToSample
-      : ds?.showAddImgBtn
-      ? getSampleFromImgUrl
-      : undefined
+        ? textToSample
+        : ds?.showAddImgBtn
+          ? getSampleFromImgUrl
+          : undefined
   const setSample = useSceneStore((s) => s.setSample)
   const onBtnClick = useCallback(async () => {
     if (!ds || !addFunc) return
@@ -41,7 +41,7 @@ interface SampleAdderArgs {
   ds: Dataset
 }
 type SampleAdderFunc = (
-  arg: SampleAdderArgs
+  arg: SampleAdderArgs,
 ) => Promise<SampleRaw | undefined> | void
 
 const getSampleFromImgUrl: SampleAdderFunc = async ({ ds }) => {
@@ -63,13 +63,13 @@ async function loadExternalImage(url: string) {
 
 async function imageToSample(
   image: HTMLImageElement,
-  inputDims?: number[]
+  inputDims?: number[],
 ): Promise<SampleRaw | undefined> {
   if (!inputDims || !image.width || !image.height) return
   const [targetHeight, targetWidth] = inputDims
   const imgTensor = tf.browser.fromPixels(image)
   const resized = tf.tidy(() =>
-    centerCropResize(imgTensor, targetHeight, targetWidth).flatten()
+    centerCropResize(imgTensor, targetHeight, targetWidth).flatten(),
   )
   try {
     const X = (await resized.data()) as SampleRaw["X"]

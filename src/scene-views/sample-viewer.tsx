@@ -40,15 +40,15 @@ export function SampleViewer() {
 
   const visibleStart = useMemo(
     () => Math.max(0, Math.floor(scrollLeft / ITEM_WIDTH) - BUFFER_SIZE),
-    [scrollLeft]
+    [scrollLeft],
   )
   const visibleEnd = useMemo(
     () =>
       Math.min(
         idxs.length,
-        Math.ceil((scrollLeft + containerWidth) / ITEM_WIDTH) + BUFFER_SIZE
+        Math.ceil((scrollLeft + containerWidth) / ITEM_WIDTH) + BUFFER_SIZE,
       ),
-    [scrollLeft, containerWidth, idxs]
+    [scrollLeft, containerWidth, idxs],
   )
   const visibleSamples: VisibleSample[] = useMemo(() => {
     return idxs
@@ -74,7 +74,7 @@ export function SampleViewer() {
     throttle((e: React.UIEvent<HTMLDivElement>) => {
       if (e.target instanceof HTMLDivElement) setScrollLeft(e.target.scrollLeft)
     }, 50),
-    []
+    [],
   )
 
   const handleSliderChange = useCallback(
@@ -83,7 +83,7 @@ export function SampleViewer() {
         left: newVal,
       })
     }, 50),
-    []
+    [],
   )
 
   const atStart = scrollLeft <= 0
@@ -249,7 +249,7 @@ function AddSampleBtn() {
           className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}
           onClick={async () => {
             const confirm = window.confirm(
-              "Are you sure you want to clear all recorded samples?"
+              "Are you sure you want to clear all recorded samples?",
             )
             if (confirm) await resetData(ds.key, "train")
           }}
@@ -270,7 +270,7 @@ function useKeyboardNavigation(idxs: number[]) {
           typeof prevIdx === "number" ? idxs.indexOf(prevIdx) : -1
         return idxs[currLocalIdx + step]
       }),
-    [idxs, setSampleIdx]
+    [idxs, setSampleIdx],
   )
   const prev = useCallback(() => nextLocal(-1), [nextLocal])
   const next = useCallback(() => nextLocal(1), [nextLocal])
@@ -373,14 +373,14 @@ function CanvasPreview({ sample }: PreviewProps) {
 function drawImageSampleToCanvas(
   sample: SampleRaw,
   inputDims: number[],
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ) {
   try {
     tf.tidy(() => {
       const img = tf.tensor(
         sample.X,
         inputDims as ImgShape,
-        "int32"
+        "int32",
       ) as tf.Tensor3D
       const backend = tf.getBackend()
       const draw = backend === "wasm" ? tf.browser.toPixels : tf.browser.draw

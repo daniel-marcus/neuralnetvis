@@ -8,7 +8,7 @@ export function SampleName() {
   const sampleName = useSceneStore((s) => s.sample?.name)
   const rows = useMemo(
     () => splitWithThreshold(sampleName ?? "", 9),
-    [sampleName]
+    [sampleName],
   )
   if (!sampleName) return null
   return (

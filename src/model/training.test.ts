@@ -38,7 +38,7 @@ describe("getSamplesAsBatch", () => {
         () =>
           tf
             .oneHot(sample256.y!, dsMnistMock.outputLabels.length)
-            .arraySync() as number[]
+            .arraySync() as number[],
       )
       expect(firstFromBatchData).toEqual(sample256Data)
       expect(firstFromBatchLabel[0]).toEqual(sample256Label)

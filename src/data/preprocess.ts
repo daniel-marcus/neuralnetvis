@@ -7,7 +7,7 @@ const normalizeImage: PreprocessFuncDef = (inputTensor) => inputTensor.div(255)
 
 export const normalizeHandLandmarks: PreprocessFuncDef = (
   inputTensor,
-  inputDims
+  inputDims,
 ) => {
   // all coordinates relative to wrist (0, 0, 0) + invert axises
   const numHands = inputDims[2]

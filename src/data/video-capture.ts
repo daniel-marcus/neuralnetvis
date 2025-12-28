@@ -10,12 +10,12 @@ export interface RecorderProps {
 
 // CaptureFunc: converts video input to raw data for a sample
 export type CaptureFunc = (
-  video: HTMLVideoElement
+  video: HTMLVideoElement,
 ) => Promise<SampleRaw["X"] | undefined>
 
 export function useCaptureLoop(
   stream: MediaStream | null | undefined,
-  capture: CaptureFunc
+  capture: CaptureFunc,
 ) {
   const ds = useSceneStore((s) => s.ds)
   const setSample = useSceneStore((s) => s.setSample)
@@ -49,7 +49,7 @@ export function DefaultVideoCapture({ stream }: RecorderProps) {
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   const capture = useCallback(
     (v: HTMLVideoElement) => videoToSample(v, inputDims),
-    [inputDims]
+    [inputDims],
   )
   useCaptureLoop(stream, capture)
   return null
@@ -67,7 +67,7 @@ async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   const flattened = tf.tidy(() =>
     needsResize
       ? centerCropResize(imgTensor, height, width).flatten()
-      : imgTensor.flatten()
+      : imgTensor.flatten(),
   )
   let data: Float32Array | undefined
   try {

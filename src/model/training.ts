@@ -74,7 +74,7 @@ function getStoreBatchIdx(sampleIdx: number, storeBatchSize: number) {
 export async function getSamplesAsBatch(
   ds: Dataset,
   newBatchSize: number,
-  newBatchIdx: number
+  newBatchIdx: number,
 ): Promise<TensorBatch> {
   const type = "train"
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
@@ -93,7 +93,7 @@ export async function getSamplesAsBatch(
     const allYs = dbBatches.flatMap((b) => Array.from(b.ys))
     const slicedYs = allYs.slice(
       firstIdxInStoreBatch,
-      firstIdxInStoreBatch + newBatchSize
+      firstIdxInStoreBatch + newBatchSize,
     )
     const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
     const shapeX = [currBatchSize, ...ds.inputDims]
@@ -103,7 +103,7 @@ export async function getSamplesAsBatch(
       .flatten()
       .slice(
         firstIdxInStoreBatch * valsPerSample,
-        currBatchSize * valsPerSample
+        currBatchSize * valsPerSample,
       )
       .reshape(shapeX)
     const xs = ds.preprocess?.(_xs) ?? _xs
@@ -118,7 +118,7 @@ export async function getSamplesAsBatch(
 function makeGenerator(
   ds: Dataset,
   trainBatchSize: number,
-  totalSamples: number
+  totalSamples: number,
 ) {
   const totalBatches = Math.ceil(totalSamples / trainBatchSize)
 
@@ -181,7 +181,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const firstValidationIdx = trainSamples
     const validStoreBatchIdx = getStoreBatchIdx(
       firstValidationIdx,
-      ds.storeBatchSize
+      ds.storeBatchSize,
     )
     const range = IDBKeyRange.lowerBound(validStoreBatchIdx)
     const validationData = validationSamples

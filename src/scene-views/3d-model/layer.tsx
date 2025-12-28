@@ -86,10 +86,10 @@ function LayerScaler(props: LayerScalerProps) {
   const scale = invisible
     ? 0.0001
     : hasFocussed && !isFocussed
-    ? 0.2
-    : isLargeInput && !showHiddenLayers
-    ? (1 / Math.sqrt(props.numNeurons / 3)) * 96 // scale down large input layers
-    : 1
+      ? 0.2
+      : isLargeInput && !showHiddenLayers
+        ? (1 / Math.sqrt(props.numNeurons / 3)) * 96 // scale down large input layers
+        : 1
   const duration =
     isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
       ? 0
@@ -167,7 +167,7 @@ function useIsExcluded(layer?: NeuronLayer) {
 function useDynamicScale(
   ref: React.RefObject<THREE.Mesh | null>,
   scale: number = 1,
-  duration?: number
+  duration?: number,
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
   const [isMounted, setIsMounted] = useState(false)

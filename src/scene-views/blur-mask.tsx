@@ -8,15 +8,15 @@ export function useMaskMode(): MaskMode {
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
   const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
   const hasFullscreenConfusionMatrix = useCurrScene(
-    (s) => (s.ds?.outputLabels?.length ?? 0) > 10
+    (s) => (s.ds?.outputLabels?.length ?? 0) > 10,
   )
   return !!status?.fullscreen
     ? "blur"
     : isEvaluationView && !hasSample
-    ? hasFullscreenConfusionMatrix
-      ? "dark"
-      : "blur"
-    : undefined
+      ? hasFullscreenConfusionMatrix
+        ? "dark"
+        : "blur"
+      : undefined
 }
 
 export function BlurMask() {
@@ -35,8 +35,8 @@ export function BlurMask() {
         maskMode === "blur"
           ? "backdrop-blur-sm backdrop-brightness-75 backdrop-grayscale-100"
           : maskMode === "dark"
-          ? "bg-background grayscale-100"
-          : ""
+            ? "bg-background grayscale-100"
+            : ""
       } transition duration-300 pointer-events-none select-none`}
     />
   )

@@ -28,7 +28,7 @@ export function getDb(dbName: DatasetKey) {
 export async function putDataBatches<T>(
   dbName: DatasetKey,
   storeName: StoreName,
-  batches: T[]
+  batches: T[],
 ) {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
@@ -42,7 +42,7 @@ export async function putDataBatches<T>(
 export async function putData<T>(
   dbName: DatasetKey,
   storeName: StoreName,
-  value: T
+  value: T,
 ) {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
@@ -54,7 +54,7 @@ export async function putData<T>(
 export async function getData<T>(
   dbName: DatasetKey,
   storeName: StoreName,
-  key: string | number
+  key: string | number,
 ): Promise<T | undefined> {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readonly")
@@ -67,7 +67,7 @@ export async function getData<T>(
 export async function getAll<T>(
   dbName: DatasetKey,
   storeName: StoreName,
-  range?: IDBKeyRange
+  range?: IDBKeyRange,
 ): Promise<T[]> {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readonly")
@@ -87,7 +87,7 @@ export async function deleteAll(dbName: DatasetKey, storeName: StoreName) {
 
 export async function storeHasEntries(
   dbName: DatasetKey,
-  storeName: StoreName
+  storeName: StoreName,
 ) {
   const db = await getDb(dbName)
   const count = await db.count(storeName)

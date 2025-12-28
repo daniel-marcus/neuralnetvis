@@ -40,7 +40,7 @@ export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
   tempWorldMatrix.decompose(
     worldPos,
     new THREE.Quaternion(),
-    new THREE.Vector3()
+    new THREE.Vector3(),
   )
   return worldPos
 }
@@ -57,7 +57,7 @@ export function moveCameraTo(
   targetPos?: Pos,
   lookAt?: Pos,
   _three?: Three,
-  customConfig?: SpringConfig
+  customConfig?: SpringConfig,
 ) {
   const currSceneThree = getThree()
   const three = _three || currSceneThree
@@ -99,7 +99,7 @@ export function interpolate(from: number, to: number, percent: number): number {
 
 export function useSize(
   ref: React.RefObject<THREE.Object3D | null>,
-  padding = 0
+  padding = 0,
 ) {
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
@@ -118,7 +118,7 @@ export function useSize(
 
 export function useIsClose(
   ref: React.RefObject<THREE.Object3D | null>,
-  threshold: number
+  threshold: number,
 ): boolean {
   const camera = useThree((s) => s.camera)
   const [isClose, setIsClose] = useState(false)

@@ -75,7 +75,7 @@ export const createTrainingSlice: StateCreator<TrainingSlice> = (set) => ({
     set(({ batchLogs, epochLogs }) =>
       isBatchLog(newLog)
         ? { batchLogs: [...batchLogs, newLog] }
-        : { epochLogs: [...epochLogs, newLog] }
+        : { epochLogs: [...epochLogs, newLog] },
     ),
   logsMetric: "loss",
   setLogsMetric: (logsMetric) => set({ logsMetric }),

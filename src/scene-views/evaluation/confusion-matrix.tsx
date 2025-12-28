@@ -29,7 +29,7 @@ export const ConfusionMatrix = () => {
       long,
       ...labelHandlers(prop, setSelected, setHovered, cells, isLarge),
     }),
-    [labels, long, cells, isLarge]
+    [labels, long, cells, isLarge],
   )
 
   const groupProp = sel?.groupProp
@@ -92,7 +92,7 @@ const Cell = (
     isSelected?: boolean
     isCorrect?: boolean
     color?: string
-  } & DivProps
+  } & DivProps,
 ) => {
   const { isHighlighted, isSelected, isCorrect, color, ...otherProps } = props
   return (
@@ -113,7 +113,7 @@ function labelHandlers(
   setSelected: React.Dispatch<React.SetStateAction<ConfusionCell | null>>,
   setHovered: React.Dispatch<React.SetStateAction<ConfusionCell | null>>,
   cells: ConfusionCell[],
-  isLarge?: boolean
+  isLarge?: boolean,
 ) {
   const groupedCell = (val: number) => {
     return cells
@@ -123,13 +123,13 @@ function labelHandlers(
           ...acc,
           count: (acc.count ?? 0) + (cell.count ?? 0),
         }),
-        { [prop]: val, groupProp: prop } as ConfusionCell
+        { [prop]: val, groupProp: prop } as ConfusionCell,
       )
   }
 
   const onClick = (val: number) =>
     setSelected((s) =>
-      s?.groupProp === prop && s[prop] === val ? null : groupedCell(val)
+      s?.groupProp === prop && s[prop] === val ? null : groupedCell(val),
     )
   const onMouseEnter = isLarge
     ? undefined
@@ -259,14 +259,14 @@ function Labels(props: LabelProps) {
               rotate
                 ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
                 : long && orient === "column"
-                ? "max-w-[var(--label-max-w)] sm:max-w-none"
-                : ""
+                  ? "max-w-[var(--label-max-w)] sm:max-w-none"
+                  : ""
             } ${
               long && (position === "left" || position === "bottom")
                 ? "sm:justify-end"
                 : rotate
-                ? "justify-start"
-                : "justify-center"
+                  ? "justify-start"
+                  : "justify-center"
             } ${typeof onClick === "function" ? "cursor-pointer" : ""}`}
             onClick={() => onClick?.(i)}
             onMouseEnter={!isTouch() ? () => onMouseEnter?.(i) : undefined}

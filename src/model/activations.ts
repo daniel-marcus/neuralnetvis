@@ -56,7 +56,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           layersBatch,
           sample,
           isRegression,
-          stats
+          stats,
         )
         if (newActivations) setActivations(newActivations)
         invalidate()
@@ -70,7 +70,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [backend, model, layers, invalidate, setActivations, isRegression, stats]
+    [backend, model, layers, invalidate, setActivations, isRegression, stats],
   )
 
   // reset update tracker when model changes
@@ -116,7 +116,7 @@ async function getActivations(
   layers: NeuronLayer[],
   sample: Sample,
   isRegression?: boolean,
-  stats?: { [layerIdx: number]: ActivationStats | undefined }
+  stats?: { [layerIdx: number]: ActivationStats | undefined },
 ) {
   const tfBackend = tf.getBackend()
   const outputs = layers.map(({ tfLayer }) => getSingleOutput(tfLayer))
@@ -172,7 +172,7 @@ async function getActivations(
               0, // sourceOffset
               existingGpuBuffer, // to
               0, // destinationOffset
-              newGpuBuffer.size
+              newGpuBuffer.size,
             )
 
             const commands = commandEncoder.finish()
@@ -236,7 +236,7 @@ async function getActivations(
 export function getLayerActivations(
   model: tf.LayersModel,
   inputTensor: tf.Tensor,
-  outputs?: tf.SymbolicTensor[]
+  outputs?: tf.SymbolicTensor[],
 ) {
   const inputDimsModel = model.layers[0].batchInputShape.slice(1)
   const inputDimsSample = inputTensor.shape.slice(1)

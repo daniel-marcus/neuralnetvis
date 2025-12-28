@@ -88,7 +88,7 @@ function useStream() {
     setStream(undefined)
   }, [stream, setStream])
   const videoConstraints = useSceneStore(
-    (s) => s.ds?.camProps?.videoConstraints
+    (s) => s.ds?.camProps?.videoConstraints,
   )
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()

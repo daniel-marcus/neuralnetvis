@@ -66,7 +66,7 @@ export async function importKerasModel(file: File) {
         try {
           const hdf5Data = f.get(path)?.value
           weight.assign(
-            tf.tensor(hdf5Data, weight.shape as number[], weight.dtype)
+            tf.tensor(hdf5Data, weight.shape as number[], weight.dtype),
           )
         } catch (error) {
           console.error(`Error loading weight from path: ${path}`, error)
@@ -84,21 +84,26 @@ function parseModelObject<T>(obj: T): T {
   if (Array.isArray(obj)) {
     return obj.map((item) => parseModelObject(item)) as T
   } else if (obj !== null && typeof obj === "object") {
-    return Object.entries(obj).reduce((acc, [key, value]) => {
-      const parsedKey = parseKey(key)
-      let parsedValue = parseModelObject(value)
+    return Object.entries(obj).reduce(
+      (acc, [key, value]) => {
+        const parsedKey = parseKey(key)
+        let parsedValue = parseModelObject(value)
 
-      // parse inbound_nodes to legacy format
-      if (key === "inbound_nodes" && Array.isArray(value) && value.length > 0) {
-        const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
-          ? value[0].args[0]
-          : value[0].args
-        const parsedNodes = nodes
-          .map(parseInboundNode)
-          .filter(Boolean) as LegacyInboundNode[]
-        parsedValue = [[...parsedNodes]]
-      } else if (
-        /* 
+        // parse inbound_nodes to legacy format
+        if (
+          key === "inbound_nodes" &&
+          Array.isArray(value) &&
+          value.length > 0
+        ) {
+          const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
+            ? value[0].args[0]
+            : value[0].args
+          const parsedNodes = nodes
+            .map(parseInboundNode)
+            .filter(Boolean) as LegacyInboundNode[]
+          parsedValue = [[...parsedNodes]]
+        } else if (
+          /* 
         MultiHeadAttention: build_config.shapes_dict -> config
         Keras 3 exports a build_config object with shapes_dict, but tfjs expects the shapes to be directly in the config
         Example:
@@ -109,22 +114,24 @@ function parseModelObject<T>(obj: T): T {
           }
         }
         */
-        key === "build_config" &&
-        typeof value === "object" &&
-        "shapes_dict" in value &&
-        typeof acc.config === "object" &&
-        acc.config !== null
-      ) {
-        const shapesDict = value.shapes_dict as Record<string, unknown> // {query_shape, value_shape, key_shape}
-        acc.config = {
-          ...acc.config,
-          ...shapesDict,
+          key === "build_config" &&
+          typeof value === "object" &&
+          "shapes_dict" in value &&
+          typeof acc.config === "object" &&
+          acc.config !== null
+        ) {
+          const shapesDict = value.shapes_dict as Record<string, unknown> // {query_shape, value_shape, key_shape}
+          acc.config = {
+            ...acc.config,
+            ...shapesDict,
+          }
         }
-      }
-      // return [parsedKey, parsedValue]
-      acc[parsedKey] = parsedValue
-      return acc
-    }, {} as Record<string, unknown>) as T
+        // return [parsedKey, parsedValue]
+        acc[parsedKey] = parsedValue
+        return acc
+      },
+      {} as Record<string, unknown>,
+    ) as T
   } else return obj
 }
 

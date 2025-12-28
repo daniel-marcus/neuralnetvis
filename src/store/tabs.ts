@@ -21,10 +21,10 @@ export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
     set(({ tab, tabIsShown }) => {
       if (tab?.key === key) return { tab, tabIsShown: !tabIsShown }
       return {
-        tab: key ? tabMap.get(key) ?? null : null,
+        tab: key ? (tabMap.get(key) ?? null) : null,
         tabIsShown: true,
       }
     }),
   setTab: (key) =>
-    set({ tab: key ? tabMap.get(key) ?? null : null, tabIsShown: true }),
+    set({ tab: key ? (tabMap.get(key) ?? null) : null, tabIsShown: true }),
 })

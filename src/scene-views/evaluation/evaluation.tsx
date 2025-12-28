@@ -84,8 +84,8 @@ export function Evaluation({ className = "" }) {
     _lossName && isScreen("sm")
       ? `(${_lossName})`
       : _lossName in LOSS_DICT
-      ? `(${LOSS_DICT[_lossName]})`
-      : ""
+        ? `(${LOSS_DICT[_lossName]})`
+        : ""
 
   const rmse =
     _lossName === "meanSquaredError" && typeof loss === "number"

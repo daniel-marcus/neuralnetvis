@@ -44,7 +44,7 @@ export const DraggableList = ({
       const currRow = clamp(
         Math.round(dragY / rowHeight),
         0,
-        children.length - 1
+        children.length - 1,
       )
       const newOrder = swap(order, currIdx, currRow)
       const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
@@ -53,14 +53,14 @@ export const DraggableList = ({
         const max = maxHeight - currIdx * rowHeight - rowHeight
         const constrainedY = rubberbandIfOutOfBounds(y, min, max)
         api.start(
-          fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight)
+          fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight),
         )
       }
       if (!active) {
         if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
         else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
       }
-    }
+    },
   )
 
   return (
@@ -100,7 +100,7 @@ function fn(
   originalIdx = 0,
   currIdx = 0,
   y = 0,
-  rowHeight = 0
+  rowHeight = 0,
 ) {
   return (index: number) =>
     active && index === originalIdx

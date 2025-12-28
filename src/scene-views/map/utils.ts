@@ -4,7 +4,7 @@ import { PLOT_HEIGHT, PLOT_WIDTH } from "./constants"
 
 export function xyToPlot(
   [x, y]: [number, number],
-  center = [0, 0]
+  center = [0, 0],
 ): [number, number] {
   // x, y are normalized values (0-1)
   return [
@@ -16,7 +16,7 @@ export function xyToPlot(
 export function lngLatToScreen(
   lngLat: [number, number],
   centerLngLat: [number, number],
-  zoom: number
+  zoom: number,
 ): [number, number] {
   // returns x, y as carthesian coordinates relative to center
   const WIDTH = 300
@@ -35,7 +35,7 @@ export function lngLatToScreen(
 export function projectGeoJSON(
   input: InputGeoJSON,
   center: [number, number],
-  zoom: number
+  zoom: number,
 ): InputGeoJSON {
   const projectCoordinate = (coord: GeoJSON.Position): GeoJSON.Position => {
     const [x, y] = lngLatToScreen([coord[0], coord[1]], center, zoom)
@@ -60,7 +60,7 @@ export function projectGeoJSON(
         return {
           ...geometry,
           coordinates: geometry.coordinates.map((ring) =>
-            ring.map(projectCoordinate)
+            ring.map(projectCoordinate),
           ),
         }
 
@@ -74,7 +74,7 @@ export function projectGeoJSON(
         return {
           ...geometry,
           coordinates: geometry.coordinates.map((line) =>
-            line.map(projectCoordinate)
+            line.map(projectCoordinate),
           ),
         }
 
@@ -82,7 +82,7 @@ export function projectGeoJSON(
         return {
           ...geometry,
           coordinates: geometry.coordinates.map((polygon) =>
-            polygon.map((ring) => ring.map(projectCoordinate))
+            polygon.map((ring) => ring.map(projectCoordinate)),
           ),
         }
 

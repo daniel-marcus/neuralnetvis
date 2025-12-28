@@ -21,7 +21,7 @@ export interface UserData {
 }
 
 export const InstancedLayer = memo(function InstancedLayer(
-  props: InstancedLayerProps
+  props: InstancedLayerProps,
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
   const { channelIdx, meshRefs } = props
@@ -78,8 +78,8 @@ export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
       geometry instanceof THREE.BoxGeometry
         ? geometry.parameters.width
         : geometry instanceof THREE.SphereGeometry
-        ? geometry.parameters.radius * 2
-        : 1
+          ? geometry.parameters.radius * 2
+          : 1
     const factor = spacingFactor ?? 1
     const spacedSize = size * neuronSpacing * factor
     return { size, spacedSize }
@@ -155,7 +155,7 @@ function useColors(props: NeuronLayer, channelIdx: number) {
   const { activationsBuffer, hasColorChannels, channelActivations } = props
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx, props.storageNode),
-    [hasColorChannels, channelIdx, props.storageNode]
+    [hasColorChannels, channelIdx, props.storageNode],
   )
   const colorArray = channelActivations[channelIdx]
   const userData: UserData = useMemo(
@@ -163,7 +163,7 @@ function useColors(props: NeuronLayer, channelIdx: number) {
       activations: activationsBuffer,
       instancedActivations: new THREE.InstancedBufferAttribute(colorArray, 1),
     }),
-    [activationsBuffer, colorArray]
+    [activationsBuffer, colorArray],
   )
   return [material, userData] as const
 }

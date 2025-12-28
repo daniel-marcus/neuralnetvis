@@ -11,7 +11,7 @@ export const getFullyConnectedInputNids: GetInputNidsFunc = (
   _,
   __,
   prevLayer,
-  prevLayerIdx
+  prevLayerIdx,
 ) => {
   // each neuron is connected to all neurons in the previous layer
   const prevUnits = getUnits(prevLayer)
@@ -26,7 +26,7 @@ export const getOneToOneInputNids: GetInputNidsFunc = (
   _,
   nIdx,
   __,
-  prevLayerIdx
+  prevLayerIdx,
 ) => {
   return [getNid(prevLayerIdx, nIdx)]
 }
@@ -38,7 +38,7 @@ export const getReceptiveFieldInputNids: GetInputNidsFunc = (
   nIdx,
   prevLayer,
   prevLayerIdx,
-  depthwise?: boolean // for DepthwiseConv2D and MaxPooling2D
+  depthwise?: boolean, // for DepthwiseConv2D and MaxPooling2D
 ) => {
   // get the receptive field
   const [filterHeight, filterWidth] =

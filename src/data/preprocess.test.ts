@@ -41,7 +41,7 @@ describe("normalizeHandLandmarks", () => {
     const testInput = batchInput.slice([0, 0, 0, 0], [SAMPLES]) // two samples
     const testResult = normalizeHandLandmarks(
       testInput,
-      handPose.inputDims
+      handPose.inputDims,
     ).arraySync() as number[][][]
     for (let i = 0; i < SAMPLES; i++) {
       const sampleLandmarks = (testInput.arraySync() as number[][][])[i]

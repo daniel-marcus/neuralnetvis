@@ -26,7 +26,7 @@ export function useTfBackend() {
 
 export async function setBackend(
   backend: Backend = DEFAULT_BACKEND,
-  fallback: Backend = FALLBACK_BACKEND
+  fallback: Backend = FALLBACK_BACKEND,
 ) {
   const success = getAvailableBackends().includes(backend)
     ? await tf.setBackend(backend)

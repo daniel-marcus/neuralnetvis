@@ -55,7 +55,7 @@ function useLogs() {
 
   const currMetrics = useMemo(
     () => new Set([...batchLogs, ...epochLogs].flatMap(Object.keys)),
-    [batchLogs, epochLogs]
+    [batchLogs, epochLogs],
   )
   return [logs, currMetrics] as const
 }
@@ -89,7 +89,7 @@ const TOOLTIP_HEIGHT = 80
 function useTooltip(
   logs: TrainingLog[],
   positions: RefObject<[number, number][]>,
-  canvasRef: RefObject<HTMLCanvasElement | null>
+  canvasRef: RefObject<HTMLCanvasElement | null>,
 ) {
   const [mouseXY, handlers] = useMousePos()
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -241,7 +241,8 @@ function useCanvasUpdate(logs: TrainingLog[], metric: Metric) {
       const x = getX(i)
       const y = getY(value)
       positions.current.push([x, y])
-      if (i === 0) ctx.moveTo(x, y) // Move to the first point
+      if (i === 0)
+        ctx.moveTo(x, y) // Move to the first point
       else ctx.lineTo(x, y) // Draw line to the next point
     })
     ctx.stroke()

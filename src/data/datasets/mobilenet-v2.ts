@@ -11,7 +11,7 @@ export const mobileNetV2_224 = getMobileNet(224, "desktop")
 
 function getMobileNet(
   res: MobileNetRes,
-  targetDevice: DatasetDef["targetDevice"]
+  targetDevice: DatasetDef["targetDevice"],
 ): DatasetDef {
   return {
     key: `mobilenet-v2-${res}`,
@@ -46,7 +46,7 @@ function getMobileNet(
       const imgs = await fetchImages(imgUrls)
       const xTrainTensor = tf.tidy(() => {
         const imgTensors = imgs.map((img) =>
-          centerCropResize(tf.browser.fromPixels(img), res, res)
+          centerCropResize(tf.browser.fromPixels(img), res, res),
         )
         const all = tf.stack(imgTensors)
         return all.flatten()
@@ -81,7 +81,7 @@ async function fetchImages(urls: string[]): Promise<HTMLImageElement[]> {
         img.onerror = (err) => reject(err)
         img.src = url
       })
-    })
+    }),
   )
 }
 

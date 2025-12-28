@@ -31,7 +31,7 @@ export const imdb: DatasetDef = {
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       ["/data/imdb/x_train_preview.npz", "/data/imdb/y_train_preview.npz"],
-      true
+      true,
     )
     return { xTrain, yTrain }
   },

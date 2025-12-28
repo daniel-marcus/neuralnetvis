@@ -26,7 +26,7 @@ export function useFlatView() {
     const timeoutId = setTimeout(
       // when wheel browsing is finished, spread layers on y axis for flat transitions
       () => setVisConfig({ xShift: 0, yShift: -30, zShift: 0 }),
-      1500
+      1500,
     )
     moveCameraTo([lastFlatCameraX.current, 0, 0], [0, 0, 0])
     return () => {
@@ -35,7 +35,7 @@ export function useFlatView() {
         camera.position.toArray()[0] ?? FLAT_VIEW_CAMERA_X
       moveCameraTo(
         oldCameraPos ?? defaultState.cameraPos,
-        oldCameraLookAt ?? defaultState.cameraLookAt
+        oldCameraLookAt ?? defaultState.cameraLookAt,
       )
       setVisConfig({ xShift, yShift, zShift })
     }

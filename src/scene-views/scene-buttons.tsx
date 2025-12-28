@@ -122,7 +122,7 @@ function ViewSubsetSelect() {
   const setSubset = useSceneStore((s) => s.setSubset)
   if (!ds || view === "graph") return null
   const subsets = (["train", "test"] as const).filter(
-    (s) => ds[s].totalSamples > 0
+    (s) => ds[s].totalSamples > 0,
   )
   if (subsets.length < 2) return null
   return (

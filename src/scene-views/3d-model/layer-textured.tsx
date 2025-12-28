@@ -19,7 +19,7 @@ type TexturedLayerProps = NeuronLayer & {
 }
 
 export const TexturedLayer = memo(function TexturedLayer(
-  props: TexturedLayerProps
+  props: TexturedLayerProps,
 ) {
   const { visible, hasColorChannels, channelIdx = 0 } = props
   const [texture, material, userData] = useActivationTexture(props)
@@ -65,7 +65,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
       texWidth,
       texHeight,
       THREE.RedFormat,
-      THREE.FloatType
+      THREE.FloatType,
     )
     // texture.colorSpace = THREE.SRGBColorSpace
     return texture
@@ -79,9 +79,9 @@ function useActivationTexture(layer: TexturedLayerProps) {
         height,
         width,
         channels,
-        storageNode
+        storageNode,
       ),
-    [hasColorChannels, channelIdx, height, width, channels, storageNode]
+    [hasColorChannels, channelIdx, height, width, channels, storageNode],
   )
   useEffect(() => {
     return () => {
@@ -124,7 +124,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
       activations: layer.activationsBuffer,
       actTexture: texture,
     }),
-    [layer.activationsBuffer, texture]
+    [layer.activationsBuffer, texture],
   )
 
   const layerActivations = useLayerActivations(layer.index)
@@ -154,7 +154,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
 function updateUvMapping(
   geometry: THREE.BufferGeometry,
   width: number,
-  height: number
+  height: number,
 ) {
   // https://discoverthreejs.com/book/first-steps/textures-intro/
   const first = (base: number) => 1 / base
@@ -197,7 +197,7 @@ function useCachedGeometry(texture: THREE.DataTexture) {
       geometryCache.set(id, geom)
       return geom
     },
-    [width, height]
+    [width, height],
   )
 
   const geometry = useMemo(() => getGeometry(id), [id, getGeometry])

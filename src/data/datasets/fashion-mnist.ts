@@ -48,7 +48,7 @@ export const fashionMnist: DatasetDef = {
         "/data/fashion_mnist_20k/x_train_preview.npz",
         "/data/fashion_mnist_20k/y_train_preview.npz",
       ],
-      true
+      true,
     )
     // add depth dim for Conv2D layers
     xTrain.shape = [...xTrain.shape, 1]

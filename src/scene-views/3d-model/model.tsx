@@ -45,7 +45,7 @@ function useVisibleLayers(layers: NeuronLayer[]) {
   const visibleLayers = useMemo(
     () =>
       showHiddenLayers ? layers : layers.filter((l) => l.layerPos !== "hidden"),
-    [layers, showHiddenLayers]
+    [layers, showHiddenLayers],
   )
 
   return visibleLayers
@@ -104,7 +104,7 @@ function useModelOffset(visibleLayers: NeuronLayer[]) {
   const { xShift, yShift, zShift } = useSceneStore((s) => s.vis)
   const position = useMemo(
     () => [offset * xShift, offset * yShift, offset * zShift],
-    [offset, xShift, yShift, zShift]
+    [offset, xShift, yShift, zShift],
   )
   return position
 }

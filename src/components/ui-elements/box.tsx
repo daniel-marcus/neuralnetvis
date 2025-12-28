@@ -62,7 +62,7 @@ function useSwipeClose(onClose: () => void, isShown: boolean) {
       bounds: { bottom: 0 },
       rubberband: [0, 0.1],
       filterTaps: true,
-    }
+    },
   )
   const style = {
     transform: y.to((v) => `translateY(${v}px)`),

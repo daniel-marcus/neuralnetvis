@@ -45,8 +45,8 @@ function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
     return layer.layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
       ? ds?.inputLabels?.[index3d[0]]
       : layer.layerPos === "output"
-      ? ds?.outputLabels?.[neuronIdx]
-      : undefined
+        ? ds?.outputLabels?.[neuronIdx]
+        : undefined
   }, [layer, neuronIdx, ds])
 }
 
@@ -99,7 +99,7 @@ function NeuronLabel(props: NeuronLabelProps) {
   const [x, y, z] = position
   const offsetPos = useMemo(
     () => [x, y, z + size * zOffset] as [number, number, number],
-    [x, y, z, size, zOffset]
+    [x, y, z, size, zOffset],
   )
   return <TextLabel {...props} position={offsetPos} lookAtCamera={true} />
 }

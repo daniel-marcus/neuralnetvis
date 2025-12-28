@@ -48,7 +48,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
 
 function useIsScrolledBodyClass(
   ref: React.RefObject<HTMLElement | null>,
-  className: string
+  className: string,
 ) {
   useEffect(() => {
     const el = ref.current

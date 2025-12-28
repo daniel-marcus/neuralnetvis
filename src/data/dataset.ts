@@ -62,7 +62,7 @@ export function useDsDef(dsKey?: string) {
     getDsMetaFromDb(dsKeyFromParams).then(setDsMeta)
     return () => setDsMeta(undefined)
   }, [isActive, dsKeyFromParams])
-  return isActive ? dsMetaFromDb ?? dsDef : dsDef
+  return isActive ? (dsMetaFromDb ?? dsDef) : dsDef
 }
 
 export function getDsPath(dsDef: DatasetDef | DatasetMeta) {
@@ -83,7 +83,7 @@ export async function getDsMetaFromDb(key: string) {
 function newStoreMeta(
   storeName: "train" | "test",
   totalSamples = 0,
-  aspectRatio?: number
+  aspectRatio?: number,
 ): StoreMeta {
   return { index: storeName, totalSamples, aspectRatio }
 }
@@ -91,7 +91,7 @@ function newStoreMeta(
 export async function getDsFromDef(
   dsDef: DatasetDef | DatasetMeta,
   isPreview?: boolean,
-  shouldLoadFullDs?: boolean
+  shouldLoadFullDs?: boolean,
 ) {
   const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
   const hasLatestData =
@@ -143,7 +143,7 @@ async function getTokenizer(dsDef: DatasetDef | DatasetMeta) {
 
 export async function loadAndSaveDsData(
   dsDef: DatasetDef,
-  isPreview?: boolean
+  isPreview?: boolean,
 ) {
   const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
@@ -168,7 +168,6 @@ export async function loadAndSaveDsData(
 }
 
 function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { loadPreview, loadFull, ...dsMeta } = dsDef
   const loaded =
     isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
@@ -183,7 +182,7 @@ async function saveData(
   xsRaw?: ParsedLike,
   sampleNames?: string[],
   overwrite = true,
-  aspectRatio?: number
+  aspectRatio?: number,
 ) {
   const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
 
@@ -226,7 +225,7 @@ export async function addTrainData(
   xs: ParsedLike,
   ys: ParsedLike,
   xsRaw?: ParsedLike,
-  aspectRatio?: number
+  aspectRatio?: number,
 ) {
   const newTrainMeta = await saveData(
     ds,
@@ -236,7 +235,7 @@ export async function addTrainData(
     xsRaw,
     undefined,
     false,
-    aspectRatio
+    aspectRatio,
   )
   return newTrainMeta
 }
@@ -263,7 +262,7 @@ interface GetDbDataOpts {
 export async function getDbDataAsTensors(
   ds: Dataset,
   type: "train" | "test",
-  opts: GetDbDataOpts = {}
+  opts: GetDbDataOpts = {},
 ) {
   const { range, returnRawX, noOneHot } = opts
   const batches = await getAll<DbBatch>(ds.key, type, range)

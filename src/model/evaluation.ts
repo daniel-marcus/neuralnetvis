@@ -9,7 +9,7 @@ import { Dataset } from "@/data"
 async function getEvalData(
   ds: Dataset,
   subset: Subset = "test",
-  noOneHot = false
+  noOneHot = false,
 ) {
   return getDbDataAsTensors(ds, subset, { noOneHot })
 }
@@ -48,7 +48,7 @@ type PredictionResult = {
 export async function getPredictions(
   ds: Dataset,
   model: tf.LayersModel,
-  subset: Subset = "test"
+  subset: Subset = "test",
 ): Promise<PredictionResult | undefined> {
   if (!ds) return
   const data = await getEvalData(ds, subset, true) // TODO: share with getModelEvaluation

@@ -13,7 +13,7 @@ export const clamp = (val: number, min: number, max: number) =>
 
 // returns a funtion that is throttled by requestAnimationFrame
 export function rafThrottle<T extends (...args: never[]) => void>(
-  fn: T
+  fn: T,
 ): (...args: Parameters<T>) => void {
   let ticking = false
   let lastArgs: Parameters<T>

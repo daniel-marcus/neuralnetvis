@@ -18,7 +18,7 @@ export const LayerWheel = () => {
   const items = useMemo(() => {
     const visibleIdxs = visibleLayers.map((l) => l.index)
     return modelLayers.map((l, i) =>
-      layer2WheelItem(l, !isGraphView, !visibleIdxs.includes(i))
+      layer2WheelItem(l, !isGraphView, !visibleIdxs.includes(i)),
     )
   }, [modelLayers, isGraphView, visibleLayers])
   const view = useSceneStore((s) => s.view)
@@ -37,7 +37,7 @@ export const LayerWheel = () => {
       autoHide={true}
       fullyHidden={view === "map" || (view === "evaluation" && !hasSample)}
     />,
-    document.body
+    document.body,
   )
 }
 
@@ -60,7 +60,7 @@ export function useAutoFlatView(isActive = true) {
 const layer2WheelItem = (
   layer: Layer,
   filterInvisible?: boolean,
-  notInVisibleLayers?: boolean
+  notInVisibleLayers?: boolean,
 ) => ({
   label: layer.getClassName(),
   disabled: filterInvisible && (!isVisible(layer) || notInVisibleLayers),

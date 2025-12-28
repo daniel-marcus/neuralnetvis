@@ -25,7 +25,7 @@ export interface ModelSlice {
 
   activationStats: { [layerIdx: number]: ActivationStats | undefined }
   setActivationStats: (
-    activationStats?: Record<number, ActivationStats>
+    activationStats?: Record<number, ActivationStats>,
   ) => void
 
   activations: {
@@ -53,7 +53,7 @@ export const createModelSlice: StateCreator<
   _setModel: (model, modelLoadState) => {
     set({
       model,
-      modelLoadState: !model ? null : modelLoadState ?? "full",
+      modelLoadState: !model ? null : (modelLoadState ?? "full"),
       // sample: undefined,
       activationStats: {},
       activations: {},

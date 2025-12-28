@@ -39,7 +39,7 @@ export const ProgressBar = memo(function ProgressBar() {
 
 function useResponsiveSize(
   wrapperRef: RefObject<HTMLDivElement | null>,
-  testRef: RefObject<HTMLSpanElement | null>
+  testRef: RefObject<HTMLSpanElement | null>,
 ) {
   const [wrapperWidth, setWrapperWidth] = useState(0)
   const [pxPerChar, setPxPerChar] = useState(10)

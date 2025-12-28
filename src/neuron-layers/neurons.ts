@@ -41,12 +41,12 @@ export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
   const prevLayer = layer.prevLayer
   const inputNids =
     prevLayer && withInputs
-      ? layerDef?.getInputNids?.(
+      ? (layerDef?.getInputNids?.(
           layer.tfLayer,
           neuronIdx,
           prevLayer.tfLayer,
-          prevLayer.index
-        ) ?? []
+          prevLayer.index,
+        ) ?? [])
       : []
   const neuron: Neuron = {
     index: neuronIdx,
@@ -68,7 +68,7 @@ export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
 function makeStateful(
   neuron: Neuron,
   layerActivations?: LayerActivations,
-  rawX?: Sample["rawX"]
+  rawX?: Sample["rawX"],
 ): NeuronStateful {
   const nIdx = neuron.index
   const filterIdx = nIdx % neuron.layer.numBiases // for dense layers this would be nIdx
@@ -112,7 +112,7 @@ export function getFlatIndex(
   heightIndex: number,
   widthIndex: number,
   depthIndex: number,
-  outputShape: number[]
+  outputShape: number[],
 ): number {
   const [, , width = 1, depth = 1] = outputShape
   return (heightIndex * width + widthIndex) * depth + depthIndex

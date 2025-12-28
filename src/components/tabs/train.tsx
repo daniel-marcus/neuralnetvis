@@ -13,7 +13,7 @@ export const Train = () => {
 
   const [showLogs, setShowLogs] = useState(false)
   const hasLogs = useCurrScene(
-    (s) => s.epochLogs.length + s.batchLogs.length > 0
+    (s) => s.epochLogs.length + s.batchLogs.length > 0,
   )
   useEffect(() => {
     if (hasLogs) setShowLogs(true)

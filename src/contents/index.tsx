@@ -35,7 +35,6 @@ export type LessonPreview = Omit<LessonDef, "content"> & {
 }
 
 export const lessonPreviews: LessonPreview[] = lessons.map((l) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { content, ...lessonDef } = l
   return {
     ...lessonDef,

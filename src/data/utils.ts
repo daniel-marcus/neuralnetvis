@@ -12,7 +12,7 @@ export function normalize(tensor: tf.Tensor): tf.Tensor {
 export function minMaxNormalize(
   tensor: tf.Tensor,
   min: tf.Tensor,
-  max: tf.Tensor
+  max: tf.Tensor,
 ): tf.Tensor {
   // normalization between 0 and 1
   return tf.tidy(() => {
@@ -25,7 +25,7 @@ export function minMaxNormalize(
 export function scaleNormalize(
   tensor: tf.Tensor,
   _mean?: tf.Tensor,
-  _std?: tf.Tensor
+  _std?: tf.Tensor,
 ) {
   // z-scale and normalize between -1 and 1
   return tf.tidy(() => {
@@ -106,7 +106,7 @@ export function getMaxAbs(vals: Float32Array) {
 export function centerCropResize(
   imgTensor: tf.Tensor3D,
   targetHeight: number,
-  targetWidth: number
+  targetWidth: number,
 ): tf.Tensor3D {
   return tf.tidy(() => {
     const [height, width, channels] = imgTensor.shape
@@ -117,7 +117,7 @@ export function centerCropResize(
     const cropped = tf.slice(
       imgTensor,
       [offsetHeight, offsetWidth, 0],
-      [cropSize, cropSize, channels]
+      [cropSize, cropSize, channels],
     )
 
     return tf.image.resizeBilinear(cropped, [targetHeight, targetWidth])

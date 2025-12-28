@@ -69,14 +69,14 @@ export function useLayers() {
       }),
       new ScatterplotLayer<Point>({
         id: `scatterplot-layer-${subset}`,
-        data: mapProps || view === "evaluation" ? points ?? [] : [],
+        data: mapProps || view === "evaluation" ? (points ?? []) : [],
         stroked: false,
         filled: true,
         lineWidthMinPixels: 1,
         getPosition: (d: Point, { index: idx }) =>
           view === "evaluation"
             ? Float32Array.from(
-                xyToPlot([d.yNorm, predictions?.[idx]?.normPredicted ?? 0])
+                xyToPlot([d.yNorm, predictions?.[idx]?.normPredicted ?? 0]),
               )
             : [d.lon, d.lat],
         getRadius: () =>
@@ -87,8 +87,8 @@ export function useLayers() {
           view === "evaluation"
             ? [200, 255, 90]
             : d.y >= 0
-            ? getColorVals(d.y, POS_BASE)
-            : getColorVals(-d.y, NEG_BASE),
+              ? getColorVals(d.y, POS_BASE)
+              : getColorVals(-d.y, NEG_BASE),
         pickable: view === "map",
         onClick: ({ index }) => {
           setSampleIdx((currIdx) => (index === currIdx ? undefined : index))
@@ -172,7 +172,7 @@ export function useLayers() {
       view,
       setSampleIdx,
       predictions,
-    ]
+    ],
   )
 
   return layers

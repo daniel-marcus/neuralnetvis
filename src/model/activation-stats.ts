@@ -32,7 +32,7 @@ export function useActivationStats() {
             const { mean, variance } = tf.moments(la, 0)
             const std = variance.sqrt().add(1e-7)
             return { mean, std }
-          }) ?? []
+          }) ?? [],
       )
       try {
         const newActivationStats: { [layerIdx: number]: ActivationStats } = {}
@@ -47,7 +47,7 @@ export function useActivationStats() {
       } finally {
         Object.values(data).forEach((t) => t?.dispose())
         statsTensors.forEach((t) =>
-          Object.values(t).forEach((v) => v.dispose())
+          Object.values(t).forEach((v) => v.dispose()),
         )
       }
     }

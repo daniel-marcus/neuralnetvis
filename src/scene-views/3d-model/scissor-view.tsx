@@ -99,7 +99,7 @@ function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
 function prepareSkissor(
   state: RootState,
   pos: DOMPosition,
-  canvasSize: CanvasSize
+  canvasSize: CanvasSize,
 ) {
   const { left, top, width, height } = pos
   // const aspect = width / height
@@ -138,7 +138,7 @@ function prepareSkissor(
     -left,
     -top,
     canvasSize.width,
-    canvasSize.height
+    canvasSize.height,
   )
 
   const cl = getClampedPos(pos, canvasSize)
@@ -162,7 +162,7 @@ function getClampedPos(pos: DOMPosition, canvasSize: CanvasSize): DOMPosition {
   const clampedLeft = Math.max(0, left)
   const clampedWidth = Math.max(
     0,
-    Math.min(width, canvasSize.width - Math.abs(left) - 1)
+    Math.min(width, canvasSize.width - Math.abs(left) - 1),
   )
 
   return {
@@ -212,7 +212,7 @@ function Container({
     if (rect.current) {
       const { position, isOffscreen: _isOffscreen } = computeContainerPosition(
         canvasSize,
-        rect.current
+        rect.current,
       )
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
       if (visible && !_isOffscreen && rect.current) {
@@ -251,7 +251,7 @@ function Container({
             0,
             0,
             viewWidth,
-            viewHeight
+            viewHeight,
           )
         }
 
@@ -297,16 +297,16 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
     track,
     visible = true,
     index = 1,
-    id, // eslint-disable-line @typescript-eslint/no-unused-vars
-    style, // eslint-disable-line @typescript-eslint/no-unused-vars
-    className, // eslint-disable-line @typescript-eslint/no-unused-vars
+    id,
+    style,
+    className,
     frames = Infinity,
     children,
     copyCanvas,
     onFirstRender,
     ...props
   }: ViewProps,
-  fref: React.ForwardedRef<THREE.Group>
+  fref: React.ForwardedRef<THREE.Group>,
 ) {
   const rect = React.useRef<DOMRect>(null!)
   const { size, scene } = useThree()
@@ -328,7 +328,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
         state.raycaster.setFromCamera(state.pointer, state.camera)
       }
     },
-    [rect, track]
+    [rect, track],
   )
 
   React.useEffect(() => {
@@ -364,7 +364,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
               top: rect.current?.top,
               left: rect.current?.left,
             },
-          }
+          },
         )}
     </group>
   )
@@ -385,7 +385,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
     onFirstRender,
     ...props
   }: ViewProps,
-  fref: React.ForwardedRef<HTMLElement>
+  fref: React.ForwardedRef<HTMLElement>,
 ) {
   const uuid = React.useId()
   const ref = React.useRef<HTMLElement>(null!)
@@ -420,7 +420,7 @@ export type ViewportProps = {
 export const ScissorView = /* @__PURE__ */ (() => {
   const _View = React.forwardRef(function View_(
     props: ViewProps,
-    fref: React.ForwardedRef<HTMLElement | THREE.Group>
+    fref: React.ForwardedRef<HTMLElement | THREE.Group>,
   ) {
     // If we're inside a canvas we should be able to access the context store
     const store = React.useContext(context)

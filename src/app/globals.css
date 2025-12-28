@@ -8,8 +8,9 @@
 
 @theme {
   --breakpoint-xs: 22.5rem; /* 360px */
-  --font-mono: Menlo-Regular, Menlo, ui-monospace, SFMono-Regular, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono:
+    Menlo-Regular, Menlo, ui-monospace, SFMono-Regular, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
   --logo-width: calc(126px + 2 * var(--padding-main));
 
   --color-background: var(--background);

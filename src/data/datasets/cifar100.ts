@@ -151,7 +151,7 @@ export const cifar100: DatasetDef = {
         "/data/cifar100_18k/x_train_preview.npz",
         "/data/cifar100_18k/y_train_preview.npz",
       ],
-      true
+      true,
     )
     return { xTrain, yTrain }
   },

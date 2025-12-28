@@ -20,7 +20,7 @@ export interface StatusSlice {
     update: (
       text: TableProps | ReactNode,
       percent?: number | null,
-      opts?: Partial<Omit<Status, "text" | "percent" | "timer">>
+      opts?: Partial<Omit<Status, "text" | "percent" | "timer">>,
     ) => Status["id"]
     clearTimer: (id: string) => void
     clear: (id: string) => void

@@ -91,7 +91,7 @@ export type GetInputNidsFunc = (
   neuronIdx: number,
   prevLayer: Layer,
   prevLayerIdx: number,
-  depthwise?: boolean // for DepthwiseConv2D and MaxPooling2D
+  depthwise?: boolean, // for DepthwiseConv2D and MaxPooling2D
 ) => Nid[]
 
 export interface LayerDef<T extends keyof LayerConfigMap> {

@@ -15,10 +15,10 @@ const { CollapsibleWithTitle, DraggableList } = Components
 function getInputComp<T extends keyof LayerConfigMap>(
   layerConfig: LayerConfig<T>,
   updateLayerConfig: <C extends keyof LayerConfigMap>(
-    config: LayerConfig<C>["config"]
+    config: LayerConfig<C>["config"],
   ) => void,
   layerConfigs: LayerConfigArray,
-  isLast: boolean
+  isLast: boolean,
 ): ReactNode {
   const sharedSliderProps = { showValue: true, lazyUpdate: true }
   const { className } = layerConfig
@@ -73,7 +73,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
 }
 
 function newDefaultLayer<T extends keyof LayerConfigMap>(
-  className: T
+  className: T,
 ): LayerConfig<T> {
   const config = getLayerDef(className)?.defaultConfig ?? {}
   const layer = { className, config }
@@ -103,8 +103,8 @@ export const LayerConfigControl = () => {
     const insertIdx = ["RandomRotation", "Embedding"].includes(className)
       ? 1 // insert RandomRotation and Embedding after InputLayer
       : layerDef?.needsMultiDim && flattenIdx > -1
-      ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
-      : beforeOutputIdx // default
+        ? flattenIdx // always insert Conv2D and MaxPooling2D before Flatten
+        : beforeOutputIdx // default
     const newLayerConfigs = layerConfigs.toSpliced(insertIdx, 0, newLayer)
     setLayerConfigs(newLayerConfigs)
   }
@@ -144,7 +144,7 @@ export const LayerConfigControl = () => {
         >
           {layerConfigs.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
-              newConfig: LayerConfig<T>["config"]
+              newConfig: LayerConfig<T>["config"],
             ) {
               layerConfigs[i].config = newConfig
               setLayerConfigs([...layerConfigs])
@@ -154,7 +154,7 @@ export const LayerConfigControl = () => {
               layer,
               updateLayerConfig,
               layerConfigs,
-              isLast
+              isLast,
             )
 
             const isInvisible =
@@ -222,10 +222,10 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")
   const firstDenseIdx = newLayerConfigs.findIndex(
-    (l) => l.className === "Dense"
+    (l) => l.className === "Dense",
   )
   const lastMultiDimIdx = newLayerConfigs.findLastIndex((l) =>
-    ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(l.className)
+    ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(l.className),
   )
 
   if (newOrder[0] !== 0) {
@@ -236,7 +236,7 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
     return false
   } else if (lastMultiDimIdx > 0 && flattenIdx < lastMultiDimIdx) {
     setStatus(
-      "Conv2D, MaxPooling2D, and RandomRotation must come before Flatten"
+      "Conv2D, MaxPooling2D, and RandomRotation must come before Flatten",
     )
     return false
   } else if (firstDenseIdx > 0 && flattenIdx > firstDenseIdx) {

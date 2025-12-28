@@ -30,7 +30,7 @@ const Status = () => {
       ) : (
         <Table {...status.text} />
       ),
-    [status]
+    [status],
   )
   const keptText = useRef<ReactNode>("")
   useEffect(() => {

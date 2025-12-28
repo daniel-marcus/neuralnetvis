@@ -48,7 +48,7 @@ export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {
 
 export type PreprocessFuncDef = <T extends Tensor<Rank>>(
   X: T,
-  inputDims: DatasetMeta["inputDims"]
+  inputDims: DatasetMeta["inputDims"],
 ) => T
 
 export type PreprocessFunc = <T extends Tensor<Rank>>(X: T) => T

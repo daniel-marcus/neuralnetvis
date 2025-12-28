@@ -21,7 +21,7 @@ describe("IMDBTokenizer", () => {
     expect(encoded.length).toBe(length)
     expect(encoded[0]).toBe(tokenizer.encodeDict["<START>"])
     expect(
-      encoded.slice(3).every((tkn) => tkn === tokenizer.encodeDict["<PAD>"])
+      encoded.slice(3).every((tkn) => tkn === tokenizer.encodeDict["<PAD>"]),
     ).toBe(true)
   })
 

@@ -58,10 +58,10 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
         landmarks = [landmarks[0] ?? emptyHand]
       } else if (numHands > 1) {
         const leftIdx = result.handedness.findIndex(
-          (h) => h[0].categoryName === "Left"
+          (h) => h[0].categoryName === "Left",
         )
         const rightIdx = result.handedness.findIndex(
-          (h) => h[0].categoryName === "Right"
+          (h) => h[0].categoryName === "Right",
         )
         landmarks = [
           landmarks[leftIdx] ?? emptyHand,
@@ -74,7 +74,7 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
       const rawX = transposeLandmarks(dataRaw, numHands)
       return rawX
     },
-    [landmarker, numHands]
+    [landmarker, numHands],
   )
 
   return hpPredict
@@ -101,7 +101,7 @@ function transposeLandmarks(data: number[][][], numHands: number) {
 async function createHandLandmarker(numHands?: number) {
   // TODO: add to public folder
   const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
   )
   const handLandmarker = await HandLandmarker.createFromOptions(vision, {
     baseOptions: {
@@ -220,7 +220,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
       setStatus(
         `Recorded ${newSamples} new samples. Starting training in ${s} seconds ...`,
         -1,
-        { id: STATUS_ID, fullscreen: true }
+        { id: STATUS_ID, fullscreen: true },
       )
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
@@ -257,10 +257,10 @@ function sampleToLandmarks(sample?: SampleRaw, inputDims?: number[]) {
   if (!rawX || !inputDims) return
   if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
   const shapedX = tf.tidy(() =>
-    tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync()
+    tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync(),
   ) as number[][][]
   const landmarks = shapedX.map((lm) =>
-    lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 }))
+    lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 })),
   )
   return landmarks
 }
@@ -268,7 +268,7 @@ function sampleToLandmarks(sample?: SampleRaw, inputDims?: number[]) {
 export function drawHandPoseSampleToCanvas(
   sample?: SampleRaw,
   inputDims?: number[],
-  canvas?: HTMLCanvasElement
+  canvas?: HTMLCanvasElement,
 ) {
   const ctx = canvas?.getContext("2d")
   if (!canvas || !ctx) return

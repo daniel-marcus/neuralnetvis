@@ -28,7 +28,7 @@ export const handPose: DatasetDef = {
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
       ["/data/hand-pose/x_train.npz", "/data/hand-pose/y_train.npz"],
-      true
+      true,
     )
     return { xTrain, yTrain }
   },

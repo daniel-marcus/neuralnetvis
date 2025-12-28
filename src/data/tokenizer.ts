@@ -55,7 +55,7 @@ class IMDbTokenizer extends Tokenizer {
     const _dict = (await res.json()) as EncodeDict
 
     const dict = Object.fromEntries(
-      Object.entries(_dict).map(([k, v]) => [k, v + 3]) // offset by 3 for special tokens
+      Object.entries(_dict).map(([k, v]) => [k, v + 3]), // offset by 3 for special tokens
     )
     this.encodeDict = { ...specialTokens, ...dict }
     this.decodeDict = this._reverse(this.encodeDict)

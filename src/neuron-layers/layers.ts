@@ -48,7 +48,7 @@ export function useLayers() {
         const layerMeshRef = createRef<InstancedMesh>()
         const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
         const groupMeshRefs = Array.from({ length: groupCount }).map(() =>
-          createRef<InstancedMesh>()
+          createRef<InstancedMesh>(),
         )
 
         const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
