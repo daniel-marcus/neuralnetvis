@@ -40,7 +40,7 @@ function useVisibleLayers(layers: NeuronLayer[]) {
     return () => {
       clearTimeout(to)
     }
-  }, [isActive, isLargeModel])
+  }, [isActive, isLargeModel, setVisConfig])
 
   const visibleLayers = useMemo(
     () =>
@@ -78,7 +78,7 @@ function useCameraShifter(layers: NeuronLayer[]) {
     const duration = 500
     const lookAt = (isLarge ? [0, 0, 0] : [0, 0, 0]) as Pos
     moveCameraTo(newPos.toArray(), lookAt, undefined, { duration })
-  }, [isActive, layers.length, camera])
+  }, [isActive, layers.length, camera, xShift])
 }
 
 interface ModelShifterProps {

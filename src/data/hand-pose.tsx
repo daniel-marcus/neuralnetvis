@@ -236,7 +236,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
       shouldCancelRecording = true
       clearStatus("hpRecordSamples")
     }
-  }, [isRecording, stream])
+  }, [isRecording, stream, hpRecordSamples])
 }
 
 function getAspectRatioFromStream(stream: MediaStream) {

@@ -121,7 +121,7 @@ export function SceneStoreProvider({
       // reset current scene
       useGlobalStore.getState().setScene(dummySceneStore)
     }
-  }, [isActive])
+  }, [isActive, initialState])
   return (
     <SceneContext.Provider value={storeRef.current}>
       {children}

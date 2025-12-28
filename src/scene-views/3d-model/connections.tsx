@@ -155,7 +155,7 @@ interface DynamicLineProps {
 
 const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
   const lineRef = useRef<THREE.Line | null>(null)
-  const size = useThree((s) => s.size)
+  // const size = useThree((s) => s.size)
 
   const geometry = useMemo(() => new LineGeometry(), [])
 
@@ -165,7 +165,7 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
         linewidth: width,
         // resolution: new Vector2(size.width, size.height),
       }),
-    [width, size],
+    [width],
   )
   useEffect(() => {
     return () => {

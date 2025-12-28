@@ -49,7 +49,7 @@ function useSampleViewerIdxs() {
     const idxs = Array.from({ length: totalSamples }, (_, i) => i)
     setSampleViewerIdxs(idxs)
     return () => setSampleViewerIdxs([])
-  }, [ds, subset])
+  }, [ds, subset, setSampleViewerIdxs])
 }
 
 export function useDsDef(dsKey?: string) {
@@ -168,7 +168,7 @@ export async function loadAndSaveDsData(
 }
 
 function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
-  const { loadPreview, loadFull, ...dsMeta } = dsDef
+  const { loadPreview, loadFull, ...dsMeta } = dsDef // eslint-disable-line
   const loaded =
     isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
   return { ...dsMeta, loaded }

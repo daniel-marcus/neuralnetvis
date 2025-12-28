@@ -52,10 +52,10 @@ function CanvasTargetInner(props: CanvasTargetInnerProps) {
     const { width, height } = canvasRef.current.getBoundingClientRect()
     newTarget.setPixelRatio(window.devicePixelRatio)
     newTarget.setSize(width, height, false)
-    virtualScene.userData["canvasTarget"] = newTarget
+    virtualScene.userData["canvasTarget"] = newTarget // eslint-disable-line
     setCanvasTarget(newTarget)
     onFirstRender?.()
-  }, [canvasRef])
+  }, [canvasRef, onFirstRender, virtualScene])
 
   return (
     !!canvasTarget &&

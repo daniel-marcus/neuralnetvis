@@ -10,10 +10,10 @@ import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
 declare module "@react-three/fiber" {
-  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {} // eslint-disable-line @typescript-eslint/no-empty-object-type
 }
 
-extend(THREE as any)
+extend(THREE as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const Tunnel = tunnel()
 
