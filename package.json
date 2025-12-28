@@ -18,7 +18,10 @@
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
     "screenshot": "node --import @swc-node/register/esm-register screenshot.ts",
     "analyze": "next experimental-analyze",
-    "postinstall": "lefthook install"
+    "postinstall": "lefthook install",
+    "commit": "cz commit",
+    "bump": "cz bump",
+    "changelog": "cz changelog --dry-run | less"
   },
   "dependencies": {
     "@deck.gl/core": "^9.2.5",
