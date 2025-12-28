@@ -36,7 +36,7 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
       <div
         className={`${
           hasActive ? "fixed" : "absolute"
-        } top-0 w-screen h-screen pointer-events-none! _opacity-0`}
+        } top-0 w-screen h-screen pointer-events-none!`}
       >
         <Canvas
           frameloop="demand"

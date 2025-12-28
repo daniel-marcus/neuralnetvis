@@ -1,5 +1,5 @@
 import { useGlobalStore } from "@/store"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 
 const breakpoints = {
   xs: 360,
@@ -13,18 +13,18 @@ const breakpoints = {
 type Breakpoint = keyof typeof breakpoints
 
 export function useIsScreen(bp: Breakpoint) {
-  const [isMatch, setIsMatch] = useState(false)
   const windowSize = useGlobalStore((s) => s.windowSize)
-  useEffect(() => {
-    setIsMatch(isScreen(bp))
-  }, [bp, windowSize])
+  const isMatch = useMemo(
+    () => isScreen(bp, windowSize.width),
+    [bp, windowSize],
+  )
   return isMatch
 }
 
-export function isScreen(bp: Breakpoint) {
+export function isScreen(bp: Breakpoint, windowWidth?: number) {
   if (typeof window === "undefined") return false
   const bpPx = breakpoints[bp]
-  return window.innerWidth >= bpPx
+  return (windowWidth ?? window.innerWidth) >= bpPx
 }
 
 export function useOrientation() {
@@ -60,7 +60,7 @@ export function useResizeListener() {
     return () => {
       window.removeEventListener("resize", onResize)
     }
-  }, [])
+  }, [setWindowSize])
 }
 
 interface InViewStateProps {

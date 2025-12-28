@@ -13,8 +13,6 @@ interface LessonProps extends LessonDef {
 
 export const Lesson = (props: LessonProps) => {
   const { content, nextLesson } = props
-  const [isMounted, setIsMounted] = useState(false)
-  useEffect(() => setIsMounted(true), [])
   const children = useContent(content)
   const visLocked = useLock()
   const isDebug = useGlobalStore((s) => s.isDebug)
@@ -24,8 +22,6 @@ export const Lesson = (props: LessonProps) => {
       <div
         className={`relative z-20 pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
           visLocked && !isDebug ? "" : "pointer-events-none"
-        } ${
-          isMounted ? "" : "opacity-0"
         } transition-opacity duration-[calc(2*var(--tile-duration))]`}
       >
         <div className="p-main lesson-width">
@@ -53,7 +49,7 @@ function LessonGradient() {
   const hasLesson = useHasLesson()
   return (
     <div
-      className={`absolute z-10 scroll-zero:fixed top-0 w-full h-[120vh] bg-gradient-to-b from-background to-transparent pointer-events-none ${
+      className={`absolute z-10 scroll-zero:fixed top-0 w-full h-[120vh] bg-linear-to-b from-background to-transparent pointer-events-none ${
         hasLesson ? "opacity-50" : "opacity-0"
       } transition-opacity duration-700`}
     />

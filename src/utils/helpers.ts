@@ -5,7 +5,7 @@ export function useLast<T>(value: T) {
   useEffect(() => {
     ref.current = value
   }, [value])
-  return ref.current
+  return ref.current // eslint-disable-line
 }
 
 export const clamp = (val: number, min: number, max: number) =>

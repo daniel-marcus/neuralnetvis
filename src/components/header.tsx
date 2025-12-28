@@ -12,7 +12,7 @@ export const Header = () => {
     <div
       className={`${
         isPlayMode ? "fixed" : ""
-      } z-30 top-0 left-0 w-[100vw] pointer-events-none select-none`}
+      } z-30 top-0 left-0 w-screen pointer-events-none select-none`}
     >
       <Headroom
         disable={isPlayMode}
@@ -24,7 +24,7 @@ export const Header = () => {
           <div
             className={`${
               !showGradient ? "hidden overlay-scrolled:block!" : ""
-            } xl:hidden absolute h-[120px] overlay-scrolled:h-[var(--header-height)] inset-0 bg-gradient-to-b from-background
+            } xl:hidden absolute h-30 overlay-scrolled:h-(--header-height) inset-0 bg-linear-to-b from-background
            to-transparent z-[-1]`}
           />
           <Logo />

@@ -74,6 +74,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
+    "eslint-formatter-summary": "^2.0.2",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.0.11",
     "lefthook": "^2.0.13",

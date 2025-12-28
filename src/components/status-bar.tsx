@@ -8,7 +8,7 @@ export const sampleViewerPortal = createRef<HTMLDivElement>()
 
 export const StatusBar = () => {
   return (
-    <div className="fixed z-20 bottom-0 left-0 w-[100vw] select-none pointer-events-none screenshot:hidden">
+    <div className="fixed z-20 bottom-0 left-0 w-screen select-none pointer-events-none screenshot:hidden">
       <div className={`-mb-1 relative`}>
         <div className="flex justify-between items-end relative">
           <div ref={neuronStatusPortal} />
@@ -53,7 +53,7 @@ const Status = () => {
         className={status?.text ? "pointer-events-auto " : ""}
         onClick={onClick}
       >
-        {parsedText || keptText.current}
+        {parsedText || keptText.current /* eslint-disable-line */}
       </div>
     </div>
   )
