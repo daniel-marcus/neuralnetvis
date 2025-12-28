@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: "happy-dom",
-    setupFiles: ["./setup-tests.ts"],
+    setupFiles: ["./vitest.setup.ts"],
   },
 })
