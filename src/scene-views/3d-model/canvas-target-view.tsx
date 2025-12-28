@@ -48,9 +48,7 @@ function CanvasTargetInner(props: CanvasTargetInnerProps) {
 
   useEffect(() => {
     if (!canvasRef.current) return
-    const newTarget = new CanvasTarget(canvasRef.current, {
-      antialias: true,
-    })
+    const newTarget = new CanvasTarget(canvasRef.current)
     const { width, height } = canvasRef.current.getBoundingClientRect()
     newTarget.setPixelRatio(window.devicePixelRatio)
     newTarget.setSize(width, height, false)
