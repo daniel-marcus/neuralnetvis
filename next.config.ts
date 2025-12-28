@@ -1,4 +1,3 @@
-import withBundleAnalyzer from "@next/bundle-analyzer"
 // import TerserPlugin from "terser-webpack-plugin"
 import { version } from "./package.json"
 import type { NextConfig } from "next"
@@ -45,7 +44,4 @@ const nextConfig: NextConfig = {
   }, */
 }
 
-const config =
-  process.env.ANALYZE === "true" ? withBundleAnalyzer()(nextConfig) : nextConfig
-
-export default config
+export default nextConfig
