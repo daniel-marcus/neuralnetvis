@@ -13,6 +13,7 @@
     "start": "next start",
     "serve": "npx serve out",
     "lint": "eslint .",
+    "lint:summary": "eslint . --format summary",
     "format": "prettier --write src",
     "test": "vitest --run",
     "test:watch": "vitest",

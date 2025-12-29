@@ -1,4 +1,5 @@
-import { useMemo, useCallback, useEffect, useRef, useState } from "react"
+import { useMemo, useCallback, useRef, useState } from "react"
+import { useEffect, useLayoutEffect } from "react"
 import { Button, Table } from "@/components/ui-elements"
 import { useCurrScene } from "@/store"
 import { clamp } from "@/utils/helpers"
@@ -32,7 +33,7 @@ export function LogsPlot({ className = "" }) {
   const [handlers, dot, tooltip] = useTooltip(logs, positions, canvasRef)
   return (
     <div className={className}>
-      <div className="relative h-[100px] sm:h-[132px]">
+      <div className="relative h-25 sm:h-33">
         <canvas ref={canvasRef} className={`w-full h-full`} {...handlers} />
         {dot}
         {tooltip}
@@ -81,8 +82,6 @@ function useMousePos() {
   return [mouseXY, handlers] as const
 }
 
-type TooltipText = React.ReactNode | null
-
 const TOOLTIP_WIDTH = 132
 const TOOLTIP_HEIGHT = 80
 
@@ -94,13 +93,16 @@ function useTooltip(
   const [mouseXY, handlers] = useMousePos()
   const tooltipRef = useRef<HTMLDivElement>(null)
   const dotRef = useRef<HTMLDivElement>(null)
-  const [tooltipText, setTooltipText] = useState<TooltipText | null>(null)
+  const [canvasRect, setCanvasRect] = useState<DOMRect | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    setCanvasRect(() => canvasRef.current?.getBoundingClientRect() ?? null)
+  }, [canvasRef, mouseXY])
+
+  useLayoutEffect(() => {
     const canvas = canvasRef.current
     const rect = canvas?.getBoundingClientRect()
     if (!canvas || !rect || !mouseXY || !tooltipRef.current) {
-      setTooltipText(null)
       return
     }
     const { x, y } = mouseXY
@@ -116,15 +118,20 @@ function useTooltip(
       const dotY = (point[1] / canvas.height) * rect.height
       updElPos(dotRef.current, dotX, dotY)
     }
+  }, [mouseXY, logs, positions, canvasRef])
 
+  const tooltipText = useMemo(() => {
+    if (!canvasRect || !mouseXY) return null
+    const { x } = mouseXY
+    const i = Math.floor((x / canvasRect.width) * logs.length)
     const log = logs[i]
-    if (!log) return
+    if (!log) return null
     const ep = log.epoch + 1
     const t = isBatchLog(log) ? `Batch ${ep}.${log.batch + 1}` : `Epoch ${ep}`
     const getVal = (val?: number) => val?.toPrecision(3)
     const data = Object.fromEntries(METRICS.map((m) => [m, getVal(log[m])]))
-    setTooltipText(<Table title={<strong>{t}</strong>} data={data} />)
-  }, [mouseXY, logs, positions, canvasRef, tooltipRef])
+    return <Table title={<strong>{t}</strong>} data={data} />
+  }, [canvasRect, mouseXY, logs])
 
   const dot = !!tooltipText && <Dot ref={dotRef} />
   const tooltip = <Tooltip ref={tooltipRef}>{tooltipText}</Tooltip>

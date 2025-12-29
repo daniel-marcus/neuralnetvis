@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react"
+import { ReactNode, useLayoutEffect, useRef, useState } from "react"
 import { Arrow } from "./buttons"
 
 interface CollapsibleWithTitleProps {
@@ -58,14 +58,16 @@ export function Collapsible({
 }: CollapsibleProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(500)
-  useEffect(() => {
-    if (ref.current?.scrollHeight) setHeight(ref.current?.scrollHeight ?? 0)
+  useLayoutEffect(() => {
+    setHeight(() => {
+      return ref.current?.scrollHeight || 500
+    })
   }, [children])
   return (
     <div
       ref={ref}
       className={`transition-height ${
-        isOpen ? "max-h-[var(--collapsible-max-h)]" : "max-h-0 overflow-hidden"
+        isOpen ? "max-h-(--collapsible-max-h)" : "max-h-0 overflow-hidden"
       } ${!animate ? "duration-0" : "duration-200"} ${className} ease-linear`}
       style={
         {

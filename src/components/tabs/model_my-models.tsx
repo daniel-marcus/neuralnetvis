@@ -25,8 +25,9 @@ export function MyModels() {
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return
-    model.name = modelName
-    await model.save(`indexeddb://${modelName}`)
+    const modelToSave = Object.assign({}, model)
+    modelToSave.name = modelName
+    await modelToSave.save(`indexeddb://${modelName}`)
     setStatus("Model saved to IndexedDB")
     updateList()
   }
@@ -60,13 +61,7 @@ export function MyModels() {
 
 function SavedModels({ updTrigger }: { updTrigger: number }) {
   const [savedModels, setSavedModels] = useState<string[]>([])
-  const updateModelList = async () => {
-    const allModels = await tf.io.listModels()
-    const modelNames = Object.keys(allModels).map((k) =>
-      k.replace(/^indexeddb:\/\//, ""),
-    )
-    setSavedModels(modelNames)
-  }
+  const updateModelList = () => getModelNamesFromDb().then(setSavedModels)
   useEffect(() => {
     updateModelList()
   }, [updTrigger])
@@ -115,6 +110,14 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
       ))}
     </ul>
   )
+}
+
+async function getModelNamesFromDb(): Promise<string[]> {
+  const allModels = await tf.io.listModels()
+  const modelNames = Object.keys(allModels).map((k) =>
+    k.replace(/^indexeddb:\/\//, ""),
+  )
+  return modelNames
 }
 
 interface ImportFormProps {

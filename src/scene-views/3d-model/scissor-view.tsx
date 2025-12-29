@@ -5,12 +5,16 @@ import { isWebGPUBackend } from "@/utils/webgpu"
 import { RootState, Tunnel } from "@/components/main-canvas"
 import type { ComputeFunction } from "@react-three/fiber"
 
+/* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps */
+
 // drei/View component adapted for WebGPURenderer
 // original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
 // here only used for WebGLBackend
 
-const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
-  def && (def as THREE.OrthographicCamera).isOrthographicCamera
+const isOrthographicCamera = (
+  def: THREE.Camera,
+): def is THREE.OrthographicCamera =>
+  def && "isOrthographicCamera" in def && !!def.isOrthographicCamera
 const col = /* @__PURE__ */ new THREE.Color()
 
 type CanvasSize = {

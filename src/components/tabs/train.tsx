@@ -11,13 +11,11 @@ export const Train = () => {
   const isTraining = useCurrScene((s) => s.isTraining)
   const toggleTraining = useCurrScene((s) => s.toggleTraining)
 
-  const [showLogs, setShowLogs] = useState(false)
+  const [logsExpanded, setLogsExpanded] = useState(true)
   const hasLogs = useCurrScene(
     (s) => s.epochLogs.length + s.batchLogs.length > 0,
   )
-  useEffect(() => {
-    if (hasLogs) setShowLogs(true)
-  }, [hasLogs])
+  const showLogs = logsExpanded && hasLogs
   const resetWeights = useCurrScene((s) => s.resetWeights)
   const batchCount = useCurrScene((s) => s.batchCount)
   const hasTestData = useCurrScene((s) => !!s.ds?.test?.totalSamples)
@@ -33,7 +31,7 @@ export const Train = () => {
       <div className="p-4 flex justify-between">
         <button
           className={`${hasLogs ? "" : "opacity-0 pointer-events-none"}`}
-          onClick={() => setShowLogs((s) => !s)}
+          onClick={() => setLogsExpanded((s) => !s)}
         >
           <Arrow direction={showLogs ? "up" : "right"} />
           logs

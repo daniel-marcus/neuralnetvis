@@ -70,6 +70,7 @@ export function SampleViewer() {
     scrollElRef.current?.scrollTo({ left: 0, behavior: "smooth" })
   }, [idxs])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleScroll = useCallback(
     throttle((e: React.UIEvent<HTMLDivElement>) => {
       if (e.target instanceof HTMLDivElement) setScrollLeft(e.target.scrollLeft)
@@ -77,6 +78,7 @@ export function SampleViewer() {
     [],
   )
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSliderChange = useCallback(
     throttle((newVal: number) => {
       scrollElRef.current?.scrollTo({
@@ -97,7 +99,7 @@ export function SampleViewer() {
   if (!idxs.length && !isLayersView) return null
   return (
     <div
-      className={`lg:fixed lg:bottom-0 lg:z-[-1] -mb-4! pt-4 pb-8 bg-gradient-to-b from-transparent ${
+      className={`lg:fixed lg:bottom-0 lg:z-[-1] -mb-4! pt-4 pb-8 bg-linear-to-b from-transparent ${
         hasBlur ? "via-[1rem] via-black to-black" : "to-background"
       } transition-discrete duration-300 w-screen bottom-0 right-0 [--item-size:70px]  pointer-events-none ${
         isShown
@@ -110,7 +112,7 @@ export function SampleViewer() {
       }`}
       style={{ "--item-aspect-ratio": aspectRatio } as React.CSSProperties}
     >
-      <div className="max-w-screen sm:max-w-[600px] mx-auto pointer-events-auto">
+      <div className="max-w-screen sm:max-w-150 mx-auto pointer-events-auto">
         <div className="flex items-center justify-center pb-2">
           <button onClick={() => setIsShown((s) => !s)}>
             {isShown ? "hide" : "show"} samples
@@ -209,9 +211,9 @@ function VideoCaptureBtn() {
   // TODO: styles as reusable component
   return (
     <button
-      className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker ${
+      className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker ${
         !!stream ? "border-accent" : ""
-      } aspect-[var(--item-aspect-ratio)]`}
+      } aspect-(--item-aspect-ratio)`}
       onClick={toggleStream}
     >
       {stream ? cameraOffSvg : cameraSvg}
@@ -232,13 +234,11 @@ function AddSampleBtn() {
     <>
       {!!onClick && (
         <button
-          className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker ${
+          className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker ${
             isRecording
               ? "border-accent animate-recording-pulse"
               : "border-gray-text"
-          } ${
-            hasRecIcon ? "text-accent" : ""
-          } aspect-[var(--item-aspect-ratio)]`}
+          } ${hasRecIcon ? "text-accent" : ""} aspect-(--item-aspect-ratio)`}
           onClick={onClick}
         >
           {icon}
@@ -246,7 +246,7 @@ function AddSampleBtn() {
       )}
       {ds?.isUserGenerated && !!ds.train.totalSamples && !stream && (
         <button
-          className={`flex-none border-2 w-[var(--item-size)] rounded-md hover:border-marker aspect-[var(--item-aspect-ratio)]`}
+          className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker aspect-(--item-aspect-ratio)`}
           onClick={async () => {
             const confirm = window.confirm(
               "Are you sure you want to clear all recorded samples?",
@@ -318,7 +318,7 @@ function SamplePreview({ sampleIdx, isCurrent }: SamplePreviewProps) {
     <div
       className={`border-2 ${
         isCurrent ? "border-accent" : "border-menu-border"
-      } hover:border-marker rounded-md overflow-hidden w-[var(--item-size)] aspect-[var(--item-aspect-ratio)] ${
+      } hover:border-marker rounded-md overflow-hidden w-(--item-size) aspect-(--item-aspect-ratio) ${
         !sample ? "bg-menu-border" : ""
       }`}
       ref={ref}
@@ -340,7 +340,7 @@ function TokenPreview({ sample }: PreviewProps) {
     return tokens.join(" ") // using non-breaking space to allow arbitrary line breaks
   }, [sample.X, tokenizer])
   return (
-    <div className="text-[9px] w-full h-[var(--item-size)] text-left break-words leading-none">
+    <div className="text-[9px] w-full h-(--item-size) text-left wrap-break-word leading-none">
       {text}
     </div>
   )

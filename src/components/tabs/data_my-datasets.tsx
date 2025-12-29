@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { deleteDB } from "idb"
 import { DB_PREFIX, getAll } from "@/data/db"
 import { clearStatus, setStatus, useCurrScene } from "@/store"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
 import { getDsPath, resetData, getDsMetaFromDb } from "@/data/dataset"
@@ -13,26 +13,10 @@ export const MyDatasets = () => {
   const ds = useCurrScene((s) => s.ds)
   const totalSamples = useCurrScene((s) => s.totalSamples())
   const [savedDatasets, setSavedDatasets] = useState<DatasetMeta[]>([])
-  const updateDatasets = async () => {
-    try {
-      const databases = await indexedDB.databases()
-      const dsNames = databases
-        .filter((d) => d.name?.startsWith(DB_PREFIX))
-        .map((d) => d.name?.replace(DB_PREFIX, ""))
-        .filter(Boolean) as string[]
-      const dsMetas: DatasetMeta[] = []
-      for (const dsName of dsNames) {
-        const dsMeta = await getDsMetaFromDb(dsName)
-        if (dsMeta) dsMetas.push(dsMeta)
-      }
-      setSavedDatasets(dsMetas)
-    } catch (error) {
-      console.warn("Error listing databases:", error)
-    }
-  }
+  const updateDatasets = () => getDsMetasFromDb().then(setSavedDatasets)
   useEffect(() => {
     updateDatasets()
-  }, [ds])
+  }, [])
   const router = useRouter()
   const removeDataset = async (dsKey: string) => {
     const fullName = `${DB_PREFIX}${dsKey}`
@@ -102,6 +86,25 @@ export const MyDatasets = () => {
       </ul>
     </CollapsibleWithTitle>
   )
+}
+
+async function getDsMetasFromDb(): Promise<DatasetMeta[]> {
+  try {
+    const databases = await indexedDB.databases()
+    const dsNames = databases
+      .filter((d) => d.name?.startsWith(DB_PREFIX))
+      .map((d) => d.name?.replace(DB_PREFIX, ""))
+      .filter(Boolean) as string[]
+    const dsMetas: DatasetMeta[] = []
+    for (const dsName of dsNames) {
+      const dsMeta = await getDsMetaFromDb(dsName)
+      if (dsMeta) dsMetas.push(dsMeta)
+    }
+    return dsMetas
+  } catch (error) {
+    console.warn("Error listing databases:", error)
+    return []
+  }
 }
 
 function saveArrayAsJson(array: unknown[], filename: string) {

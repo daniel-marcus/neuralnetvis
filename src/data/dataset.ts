@@ -168,7 +168,7 @@ export async function loadAndSaveDsData(
 }
 
 function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
-  const { loadPreview, loadFull, ...dsMeta } = dsDef // eslint-disable-line
+  const { loadPreview, loadFull, ...dsMeta } = dsDef
   const loaded =
     isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
   return { ...dsMeta, loaded }

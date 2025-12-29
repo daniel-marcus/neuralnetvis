@@ -85,13 +85,13 @@ export const TileGrid = () => {
       }
     >
       <div
-        className={`w-[var(--tile-width)] sm:w-[calc(2*var(--tile-width)+var(--gap))] lg:w-[calc(3*var(--tile-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-[var(--padding-main)] xs:px-0`}
+        className={`w-(--tile-width) sm:w-[calc(2*var(--tile-width)+var(--gap))] lg:w-[calc(3*var(--tile-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-(--padding-main) xs:px-0`}
       >
         <SectionIntro
           className={hasActive ? "hidden pointer-events-none" : ""}
         />
         <div
-          className={`flex-grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-[var(--gap)] grid-flow-dense`}
+          className={`grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-(--gap) grid-flow-dense`}
         >
           {tiles // [...tiles, ...tiles, ...tiles]
             .filter(({ disabled }) => !disabled || isDebug)
@@ -173,7 +173,7 @@ function Tile(props: TileProps) {
   return (
     <div
       ref={ref}
-      className={`relative h-[var(--tile-height)] group/tile ${
+      className={`relative h-(--tile-height) group/tile ${
         !isActive ? "cursor-pointer" : ""
       } ${props.isFeatured ? "sm:col-span-2" : ""} ${className}`}
       {...(!isActive ? bind() : {})}
@@ -188,14 +188,14 @@ function Tile(props: TileProps) {
       <div
         className={`tile-inner rounded-box overflow-hidden origin-center ${
           localActive
-            ? "fixed inset-0 w-screen h-[100dvh] z-10"
-            : "relative w-[var(--tile-width)] h-[var(--tile-height)]"
+            ? "fixed inset-0 w-screen h-dvh z-10"
+            : "relative w-(--tile-width) h-(--tile-height)"
         } ${
           isActive === localActive
-            ? "[transition-property:all,border-color] [transition-duration:var(--tile-duration),0s] ease-in-out"
+            ? "[transition-property:all,border-color] duration-[var(--tile-duration),0s] ease-in-out"
             : isActive && !localActive
-              ? "translate-x-[var(--offset-x)] translate-y-[var(--offset-y)]"
-              : "-translate-x-[var(--offset-x)] -translate-y-[var(--offset-y)] z-5"
+              ? "translate-x-(--offset-x) translate-y-(--offset-y)"
+              : "-translate-x-(--offset-x) -translate-y-(--offset-y) z-5"
         } border-2 ${
           isActive || inTransition
             ? "border-transparent! border-0!"
