@@ -21,8 +21,8 @@
     "analyze": "next experimental-analyze",
     "postinstall": "lefthook install",
     "commit": "cz commit",
-    "bump": "cz bump",
-    "changelog": "cz changelog --dry-run | less"
+    "bump": "commit-and-tag-version --no-verify",
+    "changelog": "commit-and-tag-version --dry-run"
   },
   "dependencies": {
     "@deck.gl/core": "^9.2.5",
@@ -72,6 +72,7 @@
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.182.0",
     "@vitejs/plugin-react": "^5.1.2",
+    "commit-and-tag-version": "^12.6.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
     "eslint-formatter-summary": "^2.0.2",
