@@ -17,7 +17,7 @@
     "test": "vitest --run",
     "test:watch": "vitest",
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
-    "screenshot": "node --import @swc-node/register/esm-register screenshot.ts",
+    "screenshot": "node --import @swc-node/register/esm-register scripts/screenshot.ts",
     "analyze": "next experimental-analyze",
     "postinstall": "lefthook install",
     "commit": "cz commit",
@@ -115,5 +115,10 @@
       "sharp",
       "unrs-resolver"
     ]
+  },
+  "postcss": {
+    "plugins": {
+      "@tailwindcss/postcss": {}
+    }
   }
 }
