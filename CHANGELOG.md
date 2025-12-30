@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.2](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.1...v0.1.2) (2025-12-30)
+
+
+### Bug Fixes
+
+* fix more eslint errors / warnings ([437d60e](https://github.com/daniel-marcus/neuralnetvis/commit/437d60e11693a7411e3e1687725e0ca75c5bc31d))
+* **flat-view.ts:** fix interference w/ model cameraShifter ([5b9d590](https://github.com/daniel-marcus/neuralnetvis/commit/5b9d590fa5555153d8ec1e974c9b98fb5f39f425))
+* **LayerInteractions:** exclude labels from layer size measure ([848ce97](https://github.com/daniel-marcus/neuralnetvis/commit/848ce97f1b7367147d83a797691bbbcd5bd814ed))
+
 ## [0.1.1](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.0...v0.1.1) (2025-12-29)
 
 

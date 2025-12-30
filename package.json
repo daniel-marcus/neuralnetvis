@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
   "author": "Daniel Marcus (https://danielmarcus.de)",
