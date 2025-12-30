@@ -46,8 +46,6 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
         timer = setTimeout(() => get().status.clear(id), duration)
       }
       const newStatus = { ...opts, id, text, percent, timer }
-      const stack = get().status.stack
-      // console.log("Status update:", JSON.stringify(stack, null, 2))
       set(({ status }) => ({
         status: {
           ...status,

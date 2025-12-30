@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"

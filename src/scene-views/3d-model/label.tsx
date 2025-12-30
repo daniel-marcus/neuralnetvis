@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { useSceneStore } from "@/store"
@@ -85,12 +85,6 @@ interface NeuronLabelProps {
   color?: string | THREE.Color
   size?: number
   lookAtCamera?: boolean
-}
-
-interface LabelState {
-  texture: THREE.CanvasTexture
-  scale: [number, number, number]
-  anchorPos: [number, number, number]
 }
 
 function NeuronLabel(props: NeuronLabelProps) {

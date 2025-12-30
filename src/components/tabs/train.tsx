@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { canUseLazyLoading } from "@/model/training"

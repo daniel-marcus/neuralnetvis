@@ -1,12 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import React, { useContext, useEffect, useId, useMemo, useState } from "react"
+
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
 import { createViewSlice, View, ViewSlice } from "./view"
@@ -57,7 +50,7 @@ const createSceneStore = (initProps?: InitProps) => {
 const dummySceneStore = createSceneStore({ uid: "dummy" })
 
 export type SceneStore = ReturnType<typeof createSceneStore>
-export const SceneContext = createContext<SceneStore | null>(null)
+export const SceneContext = React.createContext<SceneStore | null>(null)
 
 type SceneProviderProps = React.PropsWithChildren<
   InitProps & {
