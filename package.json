@@ -14,6 +14,7 @@
     "serve": "npx serve out",
     "lint": "eslint .",
     "lint:summary": "eslint . --format summary",
+    "check-types": "tsc --noEmit",
     "format": "prettier --write src",
     "test": "vitest --run",
     "test:watch": "vitest",
