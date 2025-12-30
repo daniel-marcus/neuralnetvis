@@ -25,7 +25,7 @@ export function useFlatView() {
 
     const timeoutId = setTimeout(
       // when wheel browsing is finished, spread layers on y axis for flat transitions
-      () => setVisConfig({ xShift: 0, yShift: -30, zShift: 0 }),
+      () => setVisConfig({ yShift: -30, zShift: 0 }), // keep xShift to avoid useCameraShifter interference
       1500,
     )
     moveCameraTo([lastFlatCameraX.current, 0, 0], [0, 0, 0])
