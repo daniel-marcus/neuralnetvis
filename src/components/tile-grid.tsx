@@ -11,7 +11,7 @@ import { Footer } from "./footer"
 import { SceneViewer } from "@/scene-views/scene-viewer"
 import { getDsPath } from "@/data/dataset"
 import { cameraSvg } from "@/scene-views/video"
-import { useLast } from "@/utils/helpers"
+import { usePrevious } from "@/utils/helpers"
 import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 import type { ReactNode, CSSProperties } from "react"
@@ -65,7 +65,7 @@ function getTags(dsDef: DatasetDef) {
 export const TileGrid = () => {
   const active = usePathname()
   const hasActive = useHasActiveTile()
-  const lastActive = useLast(hasActive ? active : undefined)
+  const lastActive = usePrevious(hasActive ? active : undefined)
   const isDebug = useGlobalStore((s) => s.isDebug)
   const section = useSection()
   const is404 = useIs404()

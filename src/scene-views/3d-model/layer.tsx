@@ -5,7 +5,7 @@ import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { LayerInteractions } from "./interactions"
-import { useLast } from "@/utils/helpers"
+import { usePrevious } from "@/utils/helpers"
 import { InstancedLayer, useNeuronSpacing } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { useIsScreen } from "@/utils/screen"
@@ -137,7 +137,7 @@ function LodComp(props: LodCompProps) {
 export function useFocussed(layerIdx: number) {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const isFocussed = focussedIdx === layerIdx
-  const wasFocussed = useLast(isFocussed)
+  const wasFocussed = usePrevious(isFocussed)
   const hasFocussed = typeof focussedIdx === "number"
   return { isFocussed, wasFocussed, hasFocussed }
 }

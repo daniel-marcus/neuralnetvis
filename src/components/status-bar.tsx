@@ -53,7 +53,10 @@ const Status = () => {
         className={status?.text ? "pointer-events-auto " : ""}
         onClick={onClick}
       >
-        {parsedText || keptText.current /* eslint-disable-line */}
+        {
+          parsedText ||
+            keptText.current /* eslint-disable-line react-hooks/refs */
+        }
       </div>
     </div>
   )
