@@ -35,7 +35,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
         isActive
           ? `overflow-auto ${canScroll ? "pointer-events-auto!" : ""}`
           : ""
-      } transition-[padding] duration-[var(--tile-duration)] flex flex-col gap-2 sm:gap-4 items-start`}
+      } transition-[padding] duration-(--tile-duration) flex flex-col gap-2 sm:gap-4 items-start`}
     >
       {children}
     </div>

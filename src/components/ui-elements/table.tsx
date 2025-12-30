@@ -29,7 +29,7 @@ export const Table = ({
             >
               {key}
             </td>
-            <td className={`align-top text-${valueAlign} break-words`}>
+            <td className={`align-top text-${valueAlign} wrap-break-word`}>
               {value}
             </td>
           </tr>

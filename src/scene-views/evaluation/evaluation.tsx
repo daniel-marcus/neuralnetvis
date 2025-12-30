@@ -12,7 +12,7 @@ export function EvaluationView() {
   if (task === "classification") return <ConfusionViewer />
   else
     return (
-      <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-[var(--plot-size)] pt-8" />
+      <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-(--plot-size) pt-8" />
     ) /* sm:plotsize = PLOT_SIZE * (2 ** zoom) */
 }
 
@@ -60,7 +60,7 @@ function ConfusionViewer() {
       </div>
       {!hasSample && (
         <div className="sticky left-0 w-screen p-main">
-          <Evaluation className="my-4 max-w-[500px] mx-auto" />
+          <Evaluation className="my-4 max-w-125 mx-auto" />
         </div>
       )}
     </div>

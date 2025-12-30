@@ -86,7 +86,7 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const needsShifter = groupCount > maxGroupsPerView
   return (
     <div
-      className="flex-shrink-0 w-[var(--grid-width)] sm:w-[var(--grid-width-sm)] overflow-hidden mb-[0.3em]"
+      className="shrink-0 w-(--grid-width) sm:w-(--grid-width-sm) overflow-hidden mb-[0.3em]"
       style={
         {
           "--grid-width": "calc(4 * 1em * 1.5 - 0.6em)",
@@ -118,8 +118,8 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
       <div
         className={`grid ${
           needsShifter
-            ? "grid-cols-[var(--cols-shifted)] sm:grid-cols-[var(--cols-shifted-sm)] translate-x-[(var(--current-shift)]"
-            : "grid-cols-[var(--cols-all)]"
+            ? "grid-cols-(--cols-shifted) sm:grid-cols-(--cols-shifted-sm) translate-x-(--current-shift)"
+            : "grid-cols-(--cols-all)"
         } gap-2 transition-transform duration-100 ease-in-out`}
         style={
           {
@@ -198,7 +198,7 @@ const WeightsGridCanvas = ({
   return (
     <canvas
       ref={canvasRef}
-      className="max-w-full max-h-[var(--grid-width)] sm:max-h-[var(--grid-width-sm)]"
+      className="max-w-full max-h-(--grid-width) sm:max-h-(--grid-width-sm)"
     />
   )
 }

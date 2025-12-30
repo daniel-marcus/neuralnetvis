@@ -64,14 +64,14 @@ export const Slider = ({
       <div
         ref={sliderRef}
         {...bind()}
-        className="flex-1 py-[var(--y-pad)] overflow-hidden select-none relative cursor-pointer touch-none group/slider"
+        className="flex-1 py-(--y-pad) overflow-hidden select-none relative cursor-pointer touch-none group/slider"
         aria-label={`${value}/${max}`}
       >
         {bgContent}
         {markers.map((mVal, i) => (
           <span
             key={i}
-            className="absolute top-[var(--y-pad)] left-0"
+            className="absolute top-(--y-pad) left-0"
             style={{
               left: `${getPercent(mVal)}%`,
               transform: `translateX(-${getPercent(mVal)}%)`,
@@ -81,7 +81,7 @@ export const Slider = ({
           </span>
         ))}
         <span
-          className={`absolute top-[var(--y-pad)] left-0 text-accent group-active/slider:scale-120`}
+          className={`absolute top-(--y-pad) left-0 text-accent group-active/slider:scale-120`}
           style={{
             left: `${currPercent}%`,
             transform: `translateX(-${currPercent}%)`,
@@ -91,7 +91,7 @@ export const Slider = ({
         </span>
       </div>
       {!!showValue && ( // maybe use input?
-        <div className="flex-none w-[var(--slider-value-width)] text-right">
+        <div className="flex-none w-(--slider-value-width) text-right">
           {transform?.(currVal) ?? currVal}
         </div>
       )}

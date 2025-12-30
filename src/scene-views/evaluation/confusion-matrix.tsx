@@ -39,7 +39,7 @@ export const ConfusionMatrix = () => {
   return (
     <OuterGrid numClasses={numClasses} long={long} maxChars={maxChars}>
       <div
-        className={`sticky top-[var(--stick-top-offset)] left-0 ${
+        className={`sticky top-(--stick-top-offset) left-0 ${
           isLarge ? "bg-background" : ""
         } z-3`}
       />
@@ -149,12 +149,12 @@ interface GridProps {
 const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
   <div className="[--stick-top-offset:var(--header-height)] relative">
     <div
-      className={`sticky top-0 w-full h-[var(--stick-top-offset)] ${
+      className={`sticky top-0 w-full h-(--stick-top-offset) ${
         numClasses > LARGE_THRESHOLD ? "bg-black" : "hidden"
       } z-3`}
     />
     <div
-      className={`grid justify-center grid-cols-[max-content_max-content] gap-[var(--gap)] text-xs md:text-sm xl:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] pointer-events-auto [--grid-base:400px] xl:[--grid-base:450px] ${
+      className={`grid justify-center grid-cols-[max-content_max-content] gap-(--gap) text-xs md:text-sm xl:text-base [--gap:0.5px] sm:[--gap:0.1em] [--label-padding:0.5em] sm:[--label-padding:1em] pointer-events-auto [--grid-base:400px] xl:[--grid-base:450px] ${
         numClasses > LARGE_THRESHOLD ? "bg-background" : ""
       }`}
       style={
@@ -182,7 +182,7 @@ const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
 )
 
 const InnerGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-[var(--grid-size)] aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-[var(--gap)]">
+  <div className="w-(--grid-size) aspect-square grid grid-cols-[repeat(var(--num-classes),var(--cell-size))] grid-rows-[repeat(var(--num-classes),var(--cell-size))] gap-(--gap)">
     {children}
   </div>
 )
@@ -216,17 +216,17 @@ function Labels(props: LabelProps) {
   const rotate = long && orient === "row" && numClasses > 2
   return (
     <div
-      className={`flex gap-[var(--gap)] ${
+      className={`flex gap-(--gap) ${
         LABEL_FLEX_MAP[position]
       } text-secondary sticky ${
-        orient === "column" ? "left-0" : "top-[var(--stick-top-offset)]"
+        orient === "column" ? "left-0" : "top-(--stick-top-offset)"
       } z-2 bg-background ${className}`}
     >
       <div
         className={`flex items-center justify-center bg-box-dark ${
           orient === "column"
-            ? "w-[var(--axis-label-size)] max-h-[calc(100vh-var(--label-plus-axis))] sticky top-[var(--label-plus-axis)]"
-            : "max-w-[calc(100vw-var(--label-plus-axis))] sticky left-[var(--label-plus-axis)]"
+            ? "w-(--axis-label-size) max-h-[calc(100vh-var(--label-plus-axis))] sticky top-(--label-plus-axis)"
+            : "max-w-[calc(100vw-var(--label-plus-axis))] sticky left-(--label-plus-axis)"
         }`}
       >
         <div className={`px-2 ${orient === "column" ? "-rotate-90" : ""}`}>
@@ -234,15 +234,11 @@ function Labels(props: LabelProps) {
         </div>
       </div>
       <div
-        className={`grid gap-[var(--gap)] ${
+        className={`grid gap-(--gap) ${
           orient === "column"
-            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-[var(--label-max-w)]"
+            ? "grid-rows-[repeat(var(--num-classes),var(--cell-size))] min-w-(--label-max-w)"
             : `grid-cols-[repeat(var(--num-classes),var(--cell-size))]`
-        } ${
-          rotate
-            ? "min-h-[var(--label-width)]"
-            : "min-h-[var(--axis-label-size)]"
-        }`}
+        } ${rotate ? "min-h-(--label-width)" : "min-h-(--axis-label-size)"}`}
       >
         {labels.map((label, i) => (
           <div
@@ -254,12 +250,12 @@ function Labels(props: LabelProps) {
                   }`
                 : "bg-box-dark"
             } ${
-              long ? "px-[var(--label-padding)]" : ""
+              long ? "px-(--label-padding)" : ""
             } leading-none flex items-center ${
               rotate
-                ? "h-[var(--cell-size)] w-[var(--label-width)] -rotate-90 origin-top-left translate-y-[var(--label-width)]"
+                ? "h-(--cell-size) w-(--label-width) -rotate-90 origin-top-left translate-y-(--label-width)"
                 : long && orient === "column"
-                  ? "max-w-[var(--label-max-w)] sm:max-w-none"
+                  ? "max-w-(--label-max-w) sm:max-w-none"
                   : ""
             } ${
               long && (position === "left" || position === "bottom")

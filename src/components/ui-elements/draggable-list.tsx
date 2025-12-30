@@ -65,7 +65,7 @@ export const DraggableList = ({
 
   return (
     <div
-      className="relative h-[var(--height)]"
+      className="relative h-(--height)"
       style={
         {
           "--height": `${maxHeight}px`,

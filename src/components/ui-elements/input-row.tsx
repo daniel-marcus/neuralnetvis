@@ -32,7 +32,7 @@ export const InputRow = (props: InputRowProps) => {
     setCurrHint(uid)
   }
   return (
-    <div className={`relative flex gap-2 w-full leading-[1.5] ${className}`}>
+    <div className={`relative flex gap-2 w-full leading-normal ${className}`}>
       <div className={`flex-none w-[7.5em] flex justify-between`}>
         <div
           className={`w-full ${!!hint ? "cursor-pointer" : ""}`}

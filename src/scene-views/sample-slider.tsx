@@ -19,19 +19,19 @@ export const SampleSlider = () => {
   return (
     <div
       className={`absolute will-change-transform left-0 ${
-        isActive ? "bottom-8" : "bottom-[-2px] leading-[1]"
+        isActive ? "bottom-8" : "-bottom-0.5 leading-none"
       } w-full flex-row items-center justify-center transition-[bottom] duration-300 screenshot:hidden`}
     >
       <div className="flex justify-center">
         <div
           className={`w-full ${
-            isActive ? "px-4 max-w-[320px] sm:max-w-[380px]" : ""
+            isActive ? "px-4 max-w-[320px] sm:max-w-95" : ""
           } pointer-events-auto ${
             hasProgressBar || !totalSamples || visIsLocked || hasStream
               ? "opacity-0 pointer-events-none"
               : isActive && hasStatusOrSelected
-                ? "opacity-0 pointer-events-none lg:opacity-[var(--opacity-inactive-lg)] lg:pointer-events-auto lg:hover:opacity-[var(--opacity-active)] lg:active:opacity-[var(--opacity-active)]"
-                : "opacity-[var(--opacity-inactive)] lg:opacity-[var(--opacity-inactive-lg)] hover:opacity-[var(--opacity-active)] active:opacity-[var(--opacity-active)]"
+                ? "opacity-0 pointer-events-none lg:opacity-(--opacity-inactive-lg) lg:pointer-events-auto lg:hover:opacity-(--opacity-active) lg:active:opacity-(--opacity-active)"
+                : "opacity-(--opacity-inactive) lg:opacity-(--opacity-inactive-lg) hover:opacity-(--opacity-active) active:opacity-(--opacity-active)"
           } transition-opacity duration-200 group/sample-slider`}
           style={
             {

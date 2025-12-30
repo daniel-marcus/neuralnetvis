@@ -59,7 +59,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       <SceneOverlay section={section}>
         <div
           className={`w-full ${
-            isActive ? "sticky left-0 p-main pt-[var(--header-height)]!" : "p-4"
+            isActive ? "sticky left-0 p-main pt-(--header-height)!" : "p-4"
           } flex flex-col gap-2 sm:gap-4 items-start`}
         >
           <SceneTitle

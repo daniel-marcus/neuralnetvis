@@ -7,7 +7,7 @@ import type { View } from "@/store/view"
 export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
   return (
     <div
-      className={`max-w-[300px] flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
+      className={`max-w-75 flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
     >
       <LoadFullDsButton />
       <ViewSelect />

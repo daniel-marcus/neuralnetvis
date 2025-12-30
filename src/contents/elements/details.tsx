@@ -11,7 +11,7 @@ export function Details({ title, children }: DetailsProps) {
     <CollapsibleWithTitle
       title={title}
       collapsed
-      className="inline-block mt-8 max-w-[32rem]"
+      className="inline-block mt-8 max-w-lg"
     >
       {children}
     </CollapsibleWithTitle>

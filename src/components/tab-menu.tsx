@@ -68,7 +68,7 @@ export const TabMenu = () => {
         {renderTabs(tabs)}
       </div>
       <div
-        className={`overflow-hidden pb-8 pointer-events-none absolute right-0 w-[25rem] max-w-[100vw]`}
+        className={`overflow-hidden pb-8 pointer-events-none absolute right-0 w-100 max-w-[100vw]`}
       >
         <div
           className={`${

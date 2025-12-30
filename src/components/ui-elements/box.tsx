@@ -25,7 +25,7 @@ export function Box({ children, className, padding, hasBg = true }: BoxProps) {
       {...bind()}
       className={`${padding ? "p-4" : ""} ${
         hasBg ? "bg-box-dark" : ""
-      } rounded-box text-left shadow-sm translate-y-[var(--translate-y)] transition-translate duration-50 ease-in-out pointer-events-auto touch-none ${className}`}
+      } rounded-box text-left shadow-sm translate-y-(--translate-y) transition-translate duration-50 ease-in-out pointer-events-auto touch-none ${className}`}
       style={style}
     >
       {children}

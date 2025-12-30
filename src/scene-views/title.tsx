@@ -25,7 +25,7 @@ function LessonTitle({ title, href, isActive }: SceneTitleProps) {
         isActive
           ? "translate-y-[calc(20vh+var(--logo-height)-var(--padding-main))] w-full lesson-width lg:px-4" // to match original lesson title position
           : "translate-y-[calc(var(--tile-height)-100%-2rem)]"
-      } transition-translate duration-[var(--tile-duration)]`}
+      } transition-translate duration-(--tile-duration)`}
     >
       <Link href={href}>
         <AsciiText
@@ -33,7 +33,7 @@ function LessonTitle({ title, href, isActive }: SceneTitleProps) {
             isActive
               ? "text-ascii-title"
               : "text-logo pointer-events-auto group-hover/tile:text-white active:text-white"
-          } [transition-property:all,color] [transition-duration:var(--tile-duration),0s]`}
+          } [transition-property:all,color] duration-[var(--tile-duration),0s]`}
         >
           {title}
         </AsciiText>
@@ -71,7 +71,7 @@ const DsDescription = ({ ds }: { ds?: Dataset | DatasetDef }) => {
   if (!ds) return null
   return (
     <div
-      className={`max-w-[300px] mb-2 pointer-events-auto ${
+      className={`max-w-75 mb-2 pointer-events-auto ${
         view === "evaluation" ? "hidden" : ""
       } screenshot:hidden`}
     >
