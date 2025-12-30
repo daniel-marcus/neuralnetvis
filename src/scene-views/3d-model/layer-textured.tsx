@@ -16,12 +16,13 @@ export interface UserDataTextured {
 type TexturedLayerProps = NeuronLayer & {
   visible: boolean
   channelIdx: number // for layers with color channels
+  measureRef: React.RefObject<THREE.Mesh | null>
 }
 
 export const TexturedLayer = memo(function TexturedLayer(
   props: TexturedLayerProps,
 ) {
-  const { visible, hasColorChannels, channelIdx = 0 } = props
+  const { visible, hasColorChannels, channelIdx = 0, measureRef } = props
   const [texture, material, userData] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
   const geometry = useCachedGeometry(texture)
@@ -33,6 +34,7 @@ export const TexturedLayer = memo(function TexturedLayer(
       userData={userData}
       visible={visible}
       renderOrder={renderOrder}
+      ref={measureRef}
     >
       <primitive object={geometry} attach="geometry" />
       <primitive object={material} attach="material" />

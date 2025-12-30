@@ -13,6 +13,7 @@ import type { Pos } from "@/scene-views/3d-model/utils"
 type InstancedLayerProps = NeuronLayer & {
   channelIdx: number
   visible: boolean
+  measureRef: React.RefObject<THREE.Mesh | null>
 }
 
 export interface UserData {
@@ -24,7 +25,7 @@ export const InstancedLayer = memo(function InstancedLayer(
   props: InstancedLayerProps,
 ) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
-  const { channelIdx, meshRefs } = props
+  const { channelIdx, meshRefs, measureRef } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
   const meshRef = meshRefs[channelIdx]
   const positions = useNeuronPositions(props, meshRef)
@@ -33,15 +34,17 @@ export const InstancedLayer = memo(function InstancedLayer(
   const renderOrder = hasColorChannels ? 0 - channelIdx : undefined // reversed render order for color blending
   return (
     <>
-      <instancedMesh
-        ref={meshRef}
-        name={`${props.lid}_channel_${channelIdx}`}
-        args={[meshParams.geometry, material, units]}
-        renderOrder={renderOrder}
-        userData={userData}
-        visible={props.visible}
-        {...eventHandlers}
-      />
+      <group ref={measureRef}>
+        <instancedMesh
+          ref={meshRef}
+          name={`${props.lid}_channel_${channelIdx}`}
+          args={[meshParams.geometry, material, units]}
+          renderOrder={renderOrder}
+          userData={userData}
+          visible={props.visible}
+          {...eventHandlers}
+        />
+      </group>
       {hasLabels && (
         <group visible={props.visible}>
           {Array.from({ length: numNeurons }).map((_, i) => {

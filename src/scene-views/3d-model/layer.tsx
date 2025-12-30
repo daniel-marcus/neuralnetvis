@@ -1,11 +1,11 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { LayerInteractions } from "./interactions"
-import { usePrevious } from "@/utils/helpers"
+import { useDidMount, usePrevious } from "@/utils/helpers"
 import { InstancedLayer, useNeuronSpacing } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
 import { useIsScreen } from "@/utils/screen"
@@ -18,17 +18,16 @@ interface LayerProps extends NeuronLayer {
 
 export const Layer = memo(function Layer(props: LayerProps) {
   const measureRef = useRef<THREE.Mesh | null>(null)
-  const separateChannels = props.hasColorChannels ? 3 : 1
+  const { hasColorChannels } = props
+  const separateChannels = hasColorChannels ? 3 : 1
   return (
     <LayerScaler {...props}>
       <LayerInteractions {...props} measureRef={measureRef} />
-      <group ref={measureRef}>
-        {Array.from({ length: separateChannels }).map((_, i) => (
-          <ColorChannelShifter {...props} channelIdx={i} key={i}>
-            <LodComp {...props} channelIdx={i} measureRef={measureRef} />
-          </ColorChannelShifter>
-        ))}
-      </group>
+      {Array.from({ length: separateChannels }).map((_, i) => (
+        <ColorChannelShifter {...props} channelIdx={i} key={i}>
+          <LodComp {...props} channelIdx={i} measureRef={measureRef} />
+        </ColorChannelShifter>
+      ))}
     </LayerScaler>
   )
 })
@@ -170,10 +169,7 @@ function useDynamicScale(
   duration?: number,
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
-  const [didMount, setDidMount] = useState(false)
-  useEffect(() => {
-    setDidMount(!!ref.current)
-  }, [ref])
+  const didMount = useDidMount(ref)
   // would use @react-spring/three, but that breaks @react-spring/web:
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({

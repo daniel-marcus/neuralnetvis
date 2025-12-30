@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export function usePrevious<T>(value: T) {
   const [previous, setPrevious] = useState<T>(value)
@@ -10,6 +10,14 @@ export function usePrevious<T>(value: T) {
   }
 
   return previous
+}
+
+export function useDidMount(ref: React.RefObject<unknown>) {
+  const [didMount, setDidMount] = useState(false)
+  useEffect(() => {
+    setDidMount(!!ref.current)
+  }, [ref])
+  return didMount
 }
 
 export const clamp = (val: number, min: number, max: number) =>

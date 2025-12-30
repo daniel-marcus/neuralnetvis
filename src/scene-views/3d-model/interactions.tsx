@@ -36,7 +36,7 @@ export function LayerInteractions(
       clearStatus(LAYER_HOVER_STATUS)
     }
   }, [isActive, setIsHovered])
-  const [size] = useSize(props.measureRef, 0.2)
+  const size = useSize(props.measureRef, 0.2)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
 
   const { layerType, tfLayer } = props

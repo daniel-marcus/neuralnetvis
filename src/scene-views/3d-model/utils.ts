@@ -5,6 +5,7 @@ import { Controller, SpringConfig, config } from "@react-spring/web"
 import { getThree } from "@/store"
 import type { Neuron } from "@/neuron-layers/types"
 import type { Three } from "@/store/vis"
+import { useDidMount } from "@/utils/helpers"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   const ref = useRef<THREE.Mesh>(null)
@@ -104,7 +105,7 @@ export function useSize(
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!ref.current) return
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
@@ -112,7 +113,7 @@ export function useSize(
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
   }, [ref, bBox, sizeVec, padding])
-  return [size, bBox] as const
+  return size
 }
 
 export function useIsClose(
