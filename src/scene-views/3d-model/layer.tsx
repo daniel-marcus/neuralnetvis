@@ -170,15 +170,14 @@ function useDynamicScale(
   duration?: number,
 ) {
   const invalidate = useThree(({ invalidate }) => invalidate)
-  const [isMounted, setIsMounted] = useState(false)
+  const [didMount, setDidMount] = useState(false)
   useEffect(() => {
-    setIsMounted(true)
-    return () => setIsMounted(false)
-  }, [])
+    setDidMount(!!ref.current)
+  }, [ref])
   // would use @react-spring/three, but that breaks @react-spring/web:
   // https://github.com/pmndrs/react-spring/issues/1586
   useSpring({
-    scale: isMounted ? scale : 1,
+    scale: didMount ? scale : 1,
     config: typeof duration === "number" ? { duration } : config.default,
     onChange: ({ value }) => {
       const val = value.scale

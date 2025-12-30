@@ -117,15 +117,14 @@ export const TextLabel = memo(function NeuronLabel({
   const camera = useThree((s) => s.camera)
   useFrame(() => lookAtCamera && labelRef.current?.lookAt(camera.position))
 
-  const [labelState, setLabelState] = useState<LabelState | undefined>()
-  useEffect(() => {
+  const labelState = useMemo(() => {
     if (!text) return
     const align = side === "left" ? "right" : "left"
     const fontFace = "Menlo-Regular"
     const { texture, scale } = text2Texture({ text, fontFace, align })
     const anchorOffset = side === "left" ? -scale[0] / 2 : scale[0] / 2
     const anchorPos = [anchorOffset, 0, 0] as [number, number, number]
-    setLabelState({ texture, scale, anchorPos })
+    return { texture, scale, anchorPos }
   }, [text, side])
 
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)

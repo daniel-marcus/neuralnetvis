@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { setStatus, useSceneStore } from "@/store"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { GraphMethods } from "r3f-forcegraph"
 import { isVisible } from "@/neuron-layers/layers"
@@ -88,14 +88,13 @@ interface LayersGraph {
   links: Link[]
 }
 
+const EMPTY_GRAPH: LayersGraph = { nodes: [], links: [] }
+
 function useModelGraph() {
   const model = useSceneStore((s) => s.model)
-  const [graph, setGraph] = useState<LayersGraph>({
-    nodes: [],
-    links: [],
-  })
-  useEffect(() => {
-    if (!model) return
+
+  const graph = useMemo(() => {
+    if (!model) return EMPTY_GRAPH
     const result: LayersGraph = {
       nodes: [],
       links: [],
@@ -128,8 +127,9 @@ function useModelGraph() {
         })
       })
     })
-    setGraph(result)
+    return result
   }, [model])
+
   return graph
 }
 

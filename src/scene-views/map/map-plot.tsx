@@ -25,7 +25,7 @@ export const MapPlot = () => {
               ? `pointer-events-auto!`
               : "md:translate-x-[25vw]"
           : "grayscale-25 opacity-75"
-      } transition duration-[var(--tile-duration)] w-[100vw] h-[100vh]`}
+      } transition duration-(--tile-duration) w-screen h-screen`}
     >
       <DeckGL
         layers={layers}

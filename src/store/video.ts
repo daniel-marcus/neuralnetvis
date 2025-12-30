@@ -10,7 +10,8 @@ export interface VideoSlice {
   startRecording: () => void
   stopRecording: () => void
   toggleRecording: () => void
-  recordingY: RefObject<number | null>
+  recordingY: number | undefined
+  setRecordingY: (y: number | undefined) => void
 }
 
 export const createVideoSlice: StateCreator<VideoSlice> = (set) => ({
@@ -22,5 +23,6 @@ export const createVideoSlice: StateCreator<VideoSlice> = (set) => ({
   startRecording: () => set({ isRecording: true }),
   stopRecording: () => set({ isRecording: false }),
   toggleRecording: () => set((state) => ({ isRecording: !state.isRecording })),
-  recordingY: createRef<number | null>(),
+  recordingY: undefined,
+  setRecordingY: (recordingY) => set({ recordingY }),
 })

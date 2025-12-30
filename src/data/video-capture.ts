@@ -18,9 +18,8 @@ export function useCaptureLoop(
   capture: CaptureFunc,
 ) {
   const ds = useSceneStore((s) => s.ds)
-  const setSample = useSceneStore((s) => s.setSample)
+  const setCustomSample = useSceneStore((s) => s.setCustomSample)
   const videoRef = useSceneStore((s) => s.videoRef)
-  const recY = useSceneStore((s) => s.recordingY)
   useEffect(() => {
     if (!stream) return
     let animationFrame: number
@@ -32,8 +31,7 @@ export function useCaptureLoop(
         isCapturing = true
         try {
           const X = await capture(videoRef.current!)
-          const y = typeof recY.current === "number" ? recY.current : undefined
-          if (X) setSample({ X, y, index: Date.now() }, true)
+          if (X) setCustomSample({ X, index: Date.now() })
         } finally {
           isCapturing = false
         }
@@ -42,7 +40,7 @@ export function useCaptureLoop(
     }
     captureLoop()
     return () => cancelAnimationFrame(animationFrame)
-  }, [stream, videoRef, capture, ds, setSample, recY])
+  }, [stream, videoRef, capture, ds, setCustomSample])
 }
 
 export function DefaultVideoCapture({ stream }: RecorderProps) {

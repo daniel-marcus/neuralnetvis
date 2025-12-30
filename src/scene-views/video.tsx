@@ -102,7 +102,7 @@ function useStream() {
   useEffect(() => {
     const video = videoRef?.current
     if (!video || !stream) return
-    video.srcObject = stream
+    setVideoSrc(video, stream)
     video.play().catch(console.warn)
     return () => {
       video.srcObject = null
@@ -110,4 +110,8 @@ function useStream() {
     }
   }, [stream, videoRef, stopStream])
   return [stream, toggleStream, stopStream] as const
+}
+
+function setVideoSrc(video: HTMLVideoElement, stream: MediaStream) {
+  video.srcObject = stream
 }

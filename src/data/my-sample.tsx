@@ -24,16 +24,16 @@ export function useMySample() {
         : ds?.showAddImgBtn
           ? getSampleFromImgUrl
           : undefined
-  const setSample = useSceneStore((s) => s.setSample)
+  const setCustomSample = useSceneStore((s) => s.setCustomSample)
   const onBtnClick = useCallback(async () => {
     if (!ds || !addFunc) return
     try {
       const sampleRaw = await addFunc({ ds })
-      if (sampleRaw) setSample(sampleRaw, true)
+      if (sampleRaw) setCustomSample(sampleRaw)
     } catch (e) {
       console.error("Error adding sample:", e)
     }
-  }, [ds, setSample, addFunc])
+  }, [ds, setCustomSample, addFunc])
   return addFunc ? onBtnClick : undefined
 }
 

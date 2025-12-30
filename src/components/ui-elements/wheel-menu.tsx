@@ -27,10 +27,10 @@ export const WheelMenu = (props: WheelMenuProps) => {
   return (
     <div
       ref={scrollerRef} // hidden scroll container
-      className={`absolute top-0 right-[-10px] h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-[10px] overscroll-none screenshot:hidden`}
+      className={`absolute top-0 -right-2.5 h-screen overflow-y-scroll pointer-events-auto select-none no-scrollbar w-2.5 overscroll-none screenshot:hidden`}
     >
       <div
-        className={`wheel-wrapper fixed z-20 right-[var(--wheel-padding)] top-0 h-full w-[160px] overflow-hidden ${
+        className={`wheel-wrapper fixed z-20 right-(--wheel-padding) top-0 h-full w-40 overflow-hidden ${
           !props.items.length || props.fullyHidden
             ? "translate-x-full"
             : isActive
@@ -39,7 +39,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
         } transition-transform duration-200 [--wheel-radius:450px] [--wheel-padding:30px] select-none pointer-events-none`}
       >
         <ul
-          className={`absolute top-[50vh] translate-y-[-50%] left-[var(--wheel-padding)] pointer-events-auto rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background rotate-[var(--wheel-rotation)] after:absolute after:inset-0 after:rounded-[50%] after:shadow-xl after:z-[-1] after:-rotate-[var(--wheel-rotation)] ${
+          className={`absolute top-[50vh] translate-y-[-50%] left-(--wheel-padding) pointer-events-auto rounded-full w-[calc(2*var(--wheel-radius))] h-[calc(2*var(--wheel-radius))] flex items-center justify-center bg-background rotate-(--wheel-rotation) after:absolute after:inset-0 after:rounded-[50%] after:shadow-xl after:z-[-1] after:-rotate-(--wheel-rotation) ${
             isActive ? "after:shadow-accent" : "after:shadow-accent-hover"
           }`}
           style={
@@ -54,7 +54,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
             return (
               <li
                 key={i}
-                className={`absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-[var(--wheel-radius)]`}
+                className={`absolute flex justify-start items-center origin-right translate-x-[calc(-0.5*var(--wheel-radius))] w-(--wheel-radius)`}
                 style={{ transform: `rotate(-${degPerItem * (i + 1)}deg)` }}
               >
                 <button onClick={() => onClick(i)} disabled={disabled}>

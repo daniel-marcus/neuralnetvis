@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three/webgpu"
 
@@ -55,7 +55,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
       positions[i * 6 + 5] = toPosition[2]
     }
     line.geometry.setPositions(positions)
-    line.geometry.attributes.position.needsUpdate = true
+    line.geometry.attributes.position.needsUpdate = true // eslint-disable-line react-hooks/immutability
     line.material.needsUpdate = true
     line.computeLineDistances()
   }, [hovered, geometry, line, show])

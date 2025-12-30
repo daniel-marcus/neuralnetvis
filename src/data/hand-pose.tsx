@@ -119,6 +119,11 @@ function setCanvasDefaultSize(canvas: HTMLCanvasElement, aspectRatio: number) {
   canvas.height = 1280 / aspectRatio
 }
 
+function setCanvasSize(canvas: HTMLCanvasElement, w: number, h: number) {
+  canvas.width = w
+  canvas.height = h
+}
+
 export function HandPoseCanvasUpdater() {
   const videoRef = useSceneStore((s) => s.videoRef)
   const canvasRef = useSceneStore((s) => s.canvasRef)
@@ -142,8 +147,9 @@ export function HandPoseCanvasUpdater() {
     if (!canvas) return
     if (videoRef?.current?.videoWidth) {
       const dpr = window.devicePixelRatio || 1
-      canvas.width = videoRef.current.videoWidth * dpr
-      canvas.height = videoRef.current.videoHeight * dpr
+      const width = videoRef.current.videoWidth * dpr
+      const height = videoRef.current.videoHeight * dpr
+      setCanvasSize(canvas, width, height)
     }
     drawHandPoseSampleToCanvas(sample, inputDims, canvas)
   }, [sample, inputDims, canvasRef, videoRef])
@@ -161,7 +167,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const hpTrain = useSceneStore((s) => s.toggleTraining)
   const stream = useSceneStore((s) => s.stream)
   const vidRef = useSceneStore((s) => s.videoRef)
-  const recY = useSceneStore((s) => s.recordingY)
+  const setRecY = useSceneStore((s) => s.setRecordingY)
 
   const hpRecordSamples = useCallback(async () => {
     const video = vidRef.current
@@ -176,7 +182,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
 
     const allY = Array.from({ length: outputSize }, (_, i) => i)
     for (const y of allY) {
-      recY.current = y
+      setRecY(y)
       const label = ds.outputLabels ? ds.outputLabels[y] : y
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
         setStatus(`Start recording "${label}" in ${s} seconds ...`, -1, {
@@ -209,7 +215,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
         shape: [yData.length, 21, 3, numHands],
       }
       const ys = { data: Uint8Array.from(yData), shape: [yData.length] }
-      recY.current = null
+      setRecY(undefined)
       const aspectRatio = getAspectRatioFromStream(stream)
       const trainMeta = await addTrainData(ds, xs, ys, undefined, aspectRatio)
       updMeta("train", trainMeta)
@@ -227,7 +233,17 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
     useGlobalStore.getState().status.clear(STATUS_ID)
     hpTrain()
     stopRec()
-  }, [stream, hpPredict, numHands, ds, stopRec, updMeta, hpTrain, vidRef, recY])
+  }, [
+    stream,
+    hpPredict,
+    numHands,
+    ds,
+    stopRec,
+    updMeta,
+    hpTrain,
+    vidRef,
+    setRecY,
+  ])
 
   useEffect(() => {
     if (!isRecording || !stream) return

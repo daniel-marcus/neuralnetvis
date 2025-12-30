@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
@@ -24,9 +24,6 @@ export const LayerWheel = () => {
   const view = useSceneStore((s) => s.view)
   const hasSample = useHasSample()
   const { onScrollStart, onScrollEnd } = useAutoFlatView(view !== "graph")
-  const [hasMounted, setHasMounted] = useState(false) // to avoid SSR issues with portals
-  useEffect(() => setHasMounted(true), [])
-  if (!hasMounted) return null
   return createPortal(
     <WheelMenu
       items={items}

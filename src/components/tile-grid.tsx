@@ -164,6 +164,8 @@ function Tile(props: TileProps) {
   const [localActive, setLocalActive] = useState(isActive)
   const [inTransition, setInTransition] = useState(false)
   useEffect(() => {
+    // value comes from ref, so state setting in effect is ok (https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect#valid)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isActive) setOffsetFromWrapper()
     setLocalActive(!!isActive)
     setInTransition(true)

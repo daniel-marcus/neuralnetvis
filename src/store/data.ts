@@ -4,6 +4,7 @@ import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"
 import type { VideoSlice } from "./video"
 import type { SetterFunc } from "."
+import { use } from "react"
 
 export type Subset = "train" | "test"
 
@@ -24,7 +25,8 @@ export interface DataSlice {
   setSampleIdx: (arg: SampleIdx | SetterFunc<SampleIdx>) => void
 
   sample?: Sample
-  setSample: (sampleRaw?: SampleRaw, unsetSampleIdx?: boolean) => void
+  setSample: (sampleRaw?: SampleRaw) => void
+  setCustomSample: (sampleRaw: SampleRaw) => void // no sampleIdx, y from recordingY (optional)
   nextSample: (step?: number) => void
   resetSample: () => void
 
@@ -74,10 +76,14 @@ export const createDataSlice: StateCreator<
       stream: undefined, // stop stream when sample is clicked
     }),
   sample: undefined,
-  setSample: (sampleRaw, unsetSampleIdx) =>
-    set(({ ds, sampleIdx }) => ({
+  setSample: (sampleRaw) =>
+    set(({ ds }) => ({
       sample: preprocessSample(sampleRaw, ds),
-      sampleIdx: unsetSampleIdx ? undefined : sampleIdx,
+    })),
+  setCustomSample: (sampleRaw) =>
+    set(({ ds, recordingY }) => ({
+      sample: preprocessSample({ ...sampleRaw, y: recordingY }, ds),
+      sampleIdx: undefined,
     })),
   nextSample: (step = 1) =>
     set(({ sampleIdx, totalSamples }) => ({

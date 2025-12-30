@@ -143,9 +143,9 @@ function useActivationTexture(layer: TexturedLayerProps) {
     }
 
     for (let i = 0; i < act.length; i++) {
-      data[pixelMap[i]] = act[i]
+      data[pixelMap[i]] = act[i] // eslint-disable-line react-hooks/immutability
     }
-    texture.needsUpdate = true
+    texture.needsUpdate = true // eslint-disable-line react-hooks/immutability
   }, [texture, pixelMap, layerActivations, hasColorChannels, channelIdx])
 
   return [texture, material, userData] as const

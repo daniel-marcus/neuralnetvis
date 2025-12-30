@@ -5,6 +5,7 @@ import {
   useId,
   useMemo,
   useRef,
+  useState,
 } from "react"
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
@@ -73,10 +74,9 @@ export function SceneStoreProvider({
   ...props
 }: SceneProviderProps) {
   const uid = useId()
-  const storeRef = useRef<SceneStore>(null)
-  if (!storeRef.current) {
+  const [thisScene] = useState<SceneStore>(() => {
     const { vis: visConfig, ...otherInitialState } = initialState ?? {}
-    storeRef.current = createSceneStore({
+    return createSceneStore({
       isActive,
       uid,
       visConfig,
@@ -84,10 +84,8 @@ export function SceneStoreProvider({
       ...otherInitialState,
       ...props,
     })
-  }
+  })
   useEffect(() => {
-    // register scene store in global store
-    const thisScene = storeRef.current!
     useGlobalStore.setState((state) => ({
       scenes: [...state.scenes.filter((s) => s !== thisScene), thisScene],
     }))
@@ -96,10 +94,9 @@ export function SceneStoreProvider({
         scenes: state.scenes.filter((s) => s !== thisScene),
       }))
     }
-  }, [])
+  }, [thisScene])
   useEffect(() => {
     if (!isActive) return
-    const thisScene = storeRef.current!
     useGlobalStore.getState().setScene(thisScene)
     const defaultVisConfig = thisScene.getState().vis
     thisScene.setState({ isActive: true })
@@ -121,11 +118,9 @@ export function SceneStoreProvider({
       // reset current scene
       useGlobalStore.getState().setScene(dummySceneStore)
     }
-  }, [isActive, initialState])
+  }, [thisScene, isActive, initialState])
   return (
-    <SceneContext.Provider value={storeRef.current}>
-      {children}
-    </SceneContext.Provider>
+    <SceneContext.Provider value={thisScene}>{children}</SceneContext.Provider>
   )
 }
 

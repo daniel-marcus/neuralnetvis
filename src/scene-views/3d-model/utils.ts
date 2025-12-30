@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, SpringConfig, config } from "@react-spring/web"
@@ -104,16 +104,15 @@ export function useSize(
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
-  const updateSize = useCallback(() => {
+  useLayoutEffect(() => {
     if (!ref.current) return
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
+    // value comes from ref, so state setting in effect is ok (https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect#valid)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
-  }, [ref, bBox, sizeVec, padding, setSize])
-  useEffect(() => {
-    updateSize()
-  }, [updateSize])
-  return [size, bBox, updateSize] as const
+  }, [ref, bBox, sizeVec, padding])
+  return [size, bBox] as const
 }
 
 export function useIsClose(
