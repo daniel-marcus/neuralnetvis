@@ -1,41 +1,8 @@
-import { useCallback } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useGlobalStore, useSceneStore } from "@/store"
+import { useSceneStore } from "@/store"
 import { centerCropResize } from "./utils"
+import { CustomBtn } from "@/scene-views/sample-viewer-btns"
 import type { Dataset, SampleRaw } from "./types"
-
-export function useMySample() {
-  // TODO: img: add to dataset?
-  const ds = useSceneStore((s) => s.ds)
-  const setTab = useGlobalStore((s) => s.setTab)
-  const openNewDsTab = useCallback(() => setTab("data"), [setTab])
-  const isTextInput = !!ds?.tokenizer
-  const toggleRecording = useSceneStore((s) => s.toggleRecording)
-  const stream = useSceneStore((s) => s.stream)
-  const addFunc: SampleAdderFunc | undefined =
-    ds?.camProps?.processor === "handPose"
-      ? ds.isUserGenerated
-        ? !!stream
-          ? toggleRecording
-          : undefined
-        : openNewDsTab
-      : isTextInput
-        ? textToSample
-        : ds?.showAddImgBtn
-          ? getSampleFromImgUrl
-          : undefined
-  const setCustomSample = useSceneStore((s) => s.setCustomSample)
-  const onBtnClick = useCallback(async () => {
-    if (!ds || !addFunc) return
-    try {
-      const sampleRaw = await addFunc({ ds })
-      if (sampleRaw) setCustomSample(sampleRaw)
-    } catch (e) {
-      console.error("Error adding sample:", e)
-    }
-  }, [ds, setCustomSample, addFunc])
-  return addFunc ? onBtnClick : undefined
-}
 
 interface SampleAdderArgs {
   ds: Dataset
@@ -43,6 +10,30 @@ interface SampleAdderArgs {
 type SampleAdderFunc = (
   arg: SampleAdderArgs,
 ) => Promise<SampleRaw | undefined> | void
+
+export const AddSampleBtn = () => {
+  const setCustomSample = useSceneStore((s) => s.setCustomSample)
+  const ds = useSceneStore((s) => s.ds)
+  const isTextInput = !!ds?.tokenizer
+  const addFunc: SampleAdderFunc | undefined = isTextInput
+    ? textToSample
+    : ds?.showAddImgBtn
+      ? getSampleFromImgUrl
+      : undefined
+
+  if (!addFunc) return null
+
+  const onClick = async () => {
+    if (!ds) return
+    try {
+      const sampleRaw = await addFunc({ ds })
+      if (sampleRaw) setCustomSample(sampleRaw)
+    } catch (e) {
+      console.error("Error adding sample:", e)
+    }
+  }
+  return <CustomBtn onClick={onClick}>+</CustomBtn>
+}
 
 const getSampleFromImgUrl: SampleAdderFunc = async ({ ds }) => {
   const url = window.prompt("Enter image URL:")

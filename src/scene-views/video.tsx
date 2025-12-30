@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react"
 import { useSceneStore } from "@/store"
 import { HandPoseCanvasUpdater, HandPoseCapture } from "@/data/hand-pose"
 import { DefaultVideoCapture } from "@/data/video-capture"
+import { CustomBtn } from "./sample-viewer-btns"
 
 export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)
@@ -47,7 +48,7 @@ export const cameraSvg = (
   </svg>
 )
 
-export const cameraOffSvg = (
+const cameraOffSvg = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -66,9 +67,8 @@ export const cameraOffSvg = (
   </svg>
 )
 
-export function useVideoControl() {
+export function VideoCaptureBtns() {
   const [stream, toggleStream] = useStream()
-  // const isRecording = useSceneStore((s) => s.isRecording)
   const camProcessor = useSceneStore((s) => s.ds?.camProps?.processor)
   const recorder =
     camProcessor === "handPose" ? (
@@ -76,7 +76,14 @@ export function useVideoControl() {
     ) : (
       <DefaultVideoCapture stream={stream} />
     )
-  return [stream, toggleStream, recorder] as const
+  return (
+    <>
+      <CustomBtn onClick={toggleStream} isActive={!!stream}>
+        {stream ? cameraOffSvg : cameraSvg}
+      </CustomBtn>
+      {recorder}
+    </>
+  )
 }
 
 function useStream() {

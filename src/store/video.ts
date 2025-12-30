@@ -7,9 +7,7 @@ export interface VideoSlice {
   stream?: MediaStream
   setStream: (stream?: MediaStream) => void
   isRecording: boolean
-  startRecording: () => void
-  stopRecording: () => void
-  toggleRecording: () => void
+  setIsRecording: (isRecording: boolean) => void
   recordingY: number | undefined
   setRecordingY: (y: number | undefined) => void
 }
@@ -20,9 +18,7 @@ export const createVideoSlice: StateCreator<VideoSlice> = (set) => ({
   stream: undefined,
   setStream: (stream) => set({ stream }),
   isRecording: false,
-  startRecording: () => set({ isRecording: true }),
-  stopRecording: () => set({ isRecording: false }),
-  toggleRecording: () => set((state) => ({ isRecording: !state.isRecording })),
+  setIsRecording: (isRecording) => set({ isRecording }),
   recordingY: undefined,
   setRecordingY: (recordingY) => set({ recordingY }),
 })

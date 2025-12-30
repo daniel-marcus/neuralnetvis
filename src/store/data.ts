@@ -4,7 +4,6 @@ import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"
 import type { VideoSlice } from "./video"
 import type { SetterFunc } from "."
-import { use } from "react"
 
 export type Subset = "train" | "test"
 

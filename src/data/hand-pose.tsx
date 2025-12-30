@@ -1,11 +1,12 @@
-import { useCallback, useEffect } from "react"
+import { use, useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
-import { addTrainData } from "@/data/dataset"
+import { addTrainData, resetData } from "@/data/dataset"
 import { useCaptureLoop } from "./video-capture"
+import { CustomBtn } from "@/scene-views/sample-viewer-btns"
 import type { CaptureFunc, RecorderProps } from "./video-capture"
 import type { SampleRaw } from "./types"
 
@@ -18,10 +19,40 @@ const HP_TRAIN_CONFIG = {
 
 export function HandPoseCapture({ stream }: RecorderProps) {
   useHpTrainConfig()
-  const numHands = useSceneStore((s) => s.ds?.inputDims[2] ?? 1)
+  const ds = useSceneStore((s) => s.ds)
+  const numHands = ds?.inputDims[2] ?? 1
   const hpPredict = useLandmarker(numHands, stream)
   useCaptureLoop(stream, hpPredict)
-  useSampleRecorder(hpPredict, numHands)
+  const toggleRecording = useSampleRecorder(hpPredict, numHands)
+
+  const isRecording = useSceneStore((s) => s.isRecording)
+  const setTab = useGlobalStore((s) => s.setTab)
+  const openNewDsTab = useCallback(() => setTab("data"), [setTab])
+
+  if (!ds?.isUserGenerated)
+    return <CustomBtn onClick={openNewDsTab}>+</CustomBtn>
+  else if (stream)
+    return (
+      <CustomBtn
+        onClick={toggleRecording}
+        className={`${isRecording ? "border-accent animate-recording-pulse" : "border-gray-400"} text-accent`}
+      >
+        ●
+      </CustomBtn>
+    )
+  else if (!!ds.train.totalSamples)
+    return (
+      <CustomBtn
+        onClick={async () => {
+          const confirm = window.confirm(
+            "Are you sure you want to clear all recorded samples?",
+          )
+          if (confirm) await resetData(ds.key, "train")
+        }}
+      >
+        x
+      </CustomBtn>
+    )
   return null
 }
 
@@ -158,9 +189,11 @@ export function HandPoseCanvasUpdater() {
 
 let shouldCancelRecording = false
 
+const RECORDING_STATUS_ID = "hpRecordSamples"
+
 function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const isRecording = useSceneStore((s) => s.isRecording)
-  const stopRec = useSceneStore((s) => s.stopRecording)
+  const setIsRecording = useSceneStore((s) => s.setIsRecording)
 
   const ds = useSceneStore((s) => s.ds)
   const updMeta = useSceneStore((s) => s.updateMeta)
@@ -169,7 +202,7 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const vidRef = useSceneStore((s) => s.videoRef)
   const setRecY = useSceneStore((s) => s.setRecordingY)
 
-  const hpRecordSamples = useCallback(async () => {
+  const hpRecordSamples = async () => {
     const video = vidRef.current
     if (!stream || !video) return
     shouldCancelRecording = false
@@ -177,7 +210,6 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
     if (!outputSize) return
 
     const SAMPLES = ds.storeBatchSize
-    const STATUS_ID = "hpRecordSamples"
     const SECONDS_BEFORE_RECORDING = 3
 
     const allY = Array.from({ length: outputSize }, (_, i) => i)
@@ -186,22 +218,22 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
       const label = ds.outputLabels ? ds.outputLabels[y] : y
       for (let s = SECONDS_BEFORE_RECORDING; s > 0; s--) {
         setStatus(`Start recording "${label}" in ${s} seconds ...`, -1, {
-          id: STATUS_ID,
+          id: RECORDING_STATUS_ID,
           fullscreen: true,
         })
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-      setStatus(`Recording "${label}" ...`, 0, { id: STATUS_ID })
+      setStatus(`Recording "${label}" ...`, 0, { id: RECORDING_STATUS_ID })
       let xData: number[] = []
       const yData: number[] = []
       for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
         if (shouldCancelRecording) {
-          setStatus(`Recording canceled.`, null, { id: STATUS_ID })
+          setStatus(`Recording canceled.`, null, { id: RECORDING_STATUS_ID })
           return
         }
         const percent = (i + 1) / SAMPLES
         setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`, percent, {
-          id: STATUS_ID,
+          id: RECORDING_STATUS_ID,
           fullscreen: true,
         })
         await new Promise((resolve) => setTimeout(resolve, 100))
@@ -226,33 +258,26 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
       setStatus(
         `Recorded ${newSamples} new samples. Starting training in ${s} seconds ...`,
         -1,
-        { id: STATUS_ID, fullscreen: true },
+        { id: RECORDING_STATUS_ID, fullscreen: true },
       )
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
-    useGlobalStore.getState().status.clear(STATUS_ID)
+    useGlobalStore.getState().status.clear(RECORDING_STATUS_ID)
     hpTrain()
-    stopRec()
-  }, [
-    stream,
-    hpPredict,
-    numHands,
-    ds,
-    stopRec,
-    updMeta,
-    hpTrain,
-    vidRef,
-    setRecY,
-  ])
+  }
 
-  useEffect(() => {
-    if (!isRecording || !stream) return
-    hpRecordSamples()
-    return () => {
+  const toggleRecording = async () => {
+    if (isRecording) {
       shouldCancelRecording = true
-      clearStatus("hpRecordSamples")
+      setIsRecording(false)
+    } else {
+      setIsRecording(true)
+      await hpRecordSamples()
+      setIsRecording(false)
     }
-  }, [isRecording, stream, hpRecordSamples])
+  }
+
+  return toggleRecording
 }
 
 function getAspectRatioFromStream(stream: MediaStream) {

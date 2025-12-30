@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
+import throttle from "lodash.throttle"
 import { getSample } from "@/data/sample"
 import { useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
-import { cameraOffSvg, cameraSvg, useVideoControl } from "./video"
-import { useMySample } from "@/data/my-sample"
-import { resetData } from "@/data/dataset"
-import type { SampleRaw } from "@/data"
-import { Slider } from "@/components/ui-elements"
-import throttle from "lodash.throttle"
 import { useHasStatusOrSelected } from "./sample-slider"
+import { Slider } from "@/components/ui-elements"
+import { CustomBtns } from "./sample-viewer-btns"
+import type { SampleRaw } from "@/data"
 
 const ITEM_WIDTH = 78 // --item-size + 0.5rem
 const BUFFER_SIZE = 3 // items before/after visible items to preload
@@ -124,8 +122,7 @@ export function SampleViewer() {
           } transition-opacity duration-300`}
         >
           <div className="relative flex gap-2">
-            {isLayersView && <VideoCaptureBtn />}
-            {isLayersView && <AddSampleBtn />}
+            {isLayersView && <CustomBtns />}
             <div
               className={`overflow-auto no-scrollbar`}
               ref={scrollElRef}
@@ -202,63 +199,6 @@ const getMaskStyle = (atStart: boolean, atEnd: boolean) => {
     WebkitMask: maskImage,
     mask: maskImage,
   }
-}
-
-function VideoCaptureBtn() {
-  const ds = useSceneStore((s) => s.ds)
-  const [stream, toggleStream, recorder] = useVideoControl()
-  if (!ds?.camProps) return null
-  // TODO: styles as reusable component
-  return (
-    <button
-      className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker ${
-        !!stream ? "border-accent" : ""
-      } aspect-(--item-aspect-ratio)`}
-      onClick={toggleStream}
-    >
-      {stream ? cameraOffSvg : cameraSvg}
-      {recorder}
-    </button>
-  )
-}
-
-function AddSampleBtn() {
-  const onClick = useMySample()
-  const ds = useSceneStore((s) => s.ds)
-  const hasRecIcon =
-    ds?.camProps?.processor === "handPose" && ds?.isUserGenerated
-  const isRecording = useSceneStore((s) => s.isRecording)
-  const stream = useSceneStore((s) => s.stream)
-  const icon = hasRecIcon ? "●" : "+"
-  return (
-    <>
-      {!!onClick && (
-        <button
-          className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker ${
-            isRecording
-              ? "border-accent animate-recording-pulse"
-              : "border-gray-text"
-          } ${hasRecIcon ? "text-accent" : ""} aspect-(--item-aspect-ratio)`}
-          onClick={onClick}
-        >
-          {icon}
-        </button>
-      )}
-      {ds?.isUserGenerated && !!ds.train.totalSamples && !stream && (
-        <button
-          className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker aspect-(--item-aspect-ratio)`}
-          onClick={async () => {
-            const confirm = window.confirm(
-              "Are you sure you want to clear all recorded samples?",
-            )
-            if (confirm) await resetData(ds.key, "train")
-          }}
-        >
-          x
-        </button>
-      )}
-    </>
-  )
 }
 
 function useKeyboardNavigation(idxs: number[]) {

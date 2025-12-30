@@ -175,7 +175,7 @@ function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
 }
 
 async function saveData(
-  ds: DatasetDef | Dataset,
+  dsDef: DatasetDef,
   storeName: "train" | "test",
   xs: ParsedLike,
   ys: ParsedLike,
@@ -184,7 +184,7 @@ async function saveData(
   overwrite = true,
   aspectRatio?: number,
 ) {
-  const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = ds
+  const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = dsDef
 
   let oldSamplesX = 0
   if (overwrite) {
@@ -195,7 +195,7 @@ async function saveData(
   }
 
   const [newSamplesX] = xs.shape
-  const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
+  const valsPerSample = dsDef.inputDims.reduce((a, b) => a * b)
 
   const batches: DbBatch[] = []
   for (let i = 0; i < newSamplesX; i += storeBatchSize) {
@@ -214,21 +214,21 @@ async function saveData(
   await putDataBatches(dbName, storeName, batches)
 
   const totalSamples = oldSamplesX + newSamplesX
-  aspectRatio = aspectRatio ?? ds.camProps?.aspectRatio
+  aspectRatio = aspectRatio ?? dsDef.camProps?.aspectRatio
   const storeMeta = newStoreMeta(storeName, totalSamples, aspectRatio)
   await putData<StoreMeta>(dbName, "meta", storeMeta)
   return storeMeta
 }
 
 export async function addTrainData(
-  ds: Dataset | DatasetDef,
+  dsDef: DatasetDef,
   xs: ParsedLike,
   ys: ParsedLike,
   xsRaw?: ParsedLike,
   aspectRatio?: number,
 ) {
   const newTrainMeta = await saveData(
-    ds,
+    dsDef,
     "train",
     xs,
     ys,

@@ -1,11 +1,15 @@
-import { useRef, useEffect } from "react"
+import { useState } from "react"
 
 export function usePrevious<T>(value: T) {
-  const ref = useRef(value)
-  useEffect(() => {
-    ref.current = value
-  }, [value])
-  return ref.current // eslint-disable-line react-hooks/refs
+  const [previous, setPrevious] = useState<T>(value)
+  const [current, setCurrent] = useState<T>(value)
+
+  if (value !== current) {
+    setPrevious(current)
+    setCurrent(value)
+  }
+
+  return previous
 }
 
 export const clamp = (val: number, min: number, max: number) =>
