@@ -20,9 +20,10 @@ import { NeuronStatus } from "./neuron-status"
 import { neuronStatusPortal, sampleViewerPortal } from "@/components/status-bar"
 import { Portal } from "@/components/portal"
 import { SampleViewer } from "./sample-viewer"
+import { useScreenshotSettings } from "@/utils/screenshot"
+import { useDidMount } from "@/utils/helpers"
 
 import type { TileDef } from "@/components/tile-grid"
-import { useScreenshotSettings } from "@/utils/screenshot"
 
 type SceneViewerProps = TileDef & {
   isActive: boolean
@@ -44,17 +45,19 @@ function SceneViewerInner(props: SceneViewerProps) {
     isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
+  const [ref, didMount] = useDidMount<HTMLDivElement>()
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}
       onMouseEnter={!isActive ? () => setIsHovered(true) : undefined}
       onMouseLeave={!isActive ? () => setIsHovered(false) : undefined}
+      ref={ref}
     >
       {showMap && <MapPlot />}
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <CanvasView {...props} ownCanvas={ownCanvas} />
-      {section === "play" && isActive && <LayerWheel />}
+      {section === "play" && isActive && didMount && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
         <div

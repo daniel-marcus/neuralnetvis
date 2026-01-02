@@ -6,9 +6,10 @@ import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
 import { useHasSample } from "./evaluation/evaluation"
+import { ClientOnly } from "@/utils/helpers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
-export const LayerWheel = () => {
+const LayerWheel_ = () => {
   const model = useSceneStore((s) => s.model)
   const modelLayers = useMemo(() => model?.layers ?? [], [model])
   const visibleLayers = useSceneStore((s) => s.allLayers)
@@ -37,6 +38,12 @@ export const LayerWheel = () => {
     document.body,
   )
 }
+
+export const LayerWheel = () => (
+  <ClientOnly>
+    <LayerWheel_ />
+  </ClientOnly>
+)
 
 export function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)

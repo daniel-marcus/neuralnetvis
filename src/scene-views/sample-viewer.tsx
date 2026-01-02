@@ -2,39 +2,43 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
 import { getSample } from "@/data/sample"
-import { useSceneStore } from "@/store"
+import { useCurrScene, useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
-import { useMaskMode } from "@/scene-views/blur-mask"
 import { useKeyCommand } from "@/utils/key-command"
 import { useHasStatusOrSelected } from "./sample-slider"
 import { Slider } from "@/components/ui-elements"
 import { CustomBtns } from "./sample-viewer-btns"
+import { ClientOnly } from "@/utils/helpers"
 import type { SampleRaw } from "@/data"
 
 const ITEM_WIDTH = 78 // --item-size + 0.5rem
 const BUFFER_SIZE = 3 // items before/after visible items to preload
+const DEFAULT_WIDTH = 600
 
 interface VisibleSample {
   sampleIdx: number
   offsetLeft: number
 }
 
-export function SampleViewer() {
+export function SampleViewer_() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
   const ds = useSceneStore((s) => s.ds)
 
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
-  const hasBlur = !!useMaskMode()
+
+  const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
+  const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
+  const hasDarkBg = isEvaluationView && !hasSample
 
   const isLayersView = useSceneStore((s) => s.view === "layers")
   const camAspectRatio = useSceneStore((s) => s.getAspectRatio())
   const aspectRatio = ds?.camProps ? camAspectRatio : 1
 
-  const totalWidth = idxs.length * ITEM_WIDTH - 8 // -0.5rem margin for last item
+  const totalWidth = idxs.length ? idxs.length * ITEM_WIDTH - 8 : 0 // -0.5rem margin for last item
   const scrollElRef = useRef<HTMLDivElement>(null)
   const [scrollLeft, setScrollLeft] = useState(0)
-  const [containerWidth, setContainerWidth] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(DEFAULT_WIDTH)
 
   const visibleStart = useMemo(
     () => Math.max(0, Math.floor(scrollLeft / ITEM_WIDTH) - BUFFER_SIZE),
@@ -58,7 +62,7 @@ export function SampleViewer() {
   }, [visibleStart, visibleEnd, idxs])
   useEffect(() => {
     const handleResize = () => {
-      setContainerWidth(scrollElRef.current?.clientWidth ?? 0)
+      setContainerWidth(scrollElRef.current?.clientWidth ?? DEFAULT_WIDTH)
     }
     handleResize()
     window.addEventListener("resize", handleResize)
@@ -98,8 +102,8 @@ export function SampleViewer() {
   return (
     <div
       className={`lg:fixed lg:bottom-0 lg:z-[-1] -mb-4! pt-4 pb-8 bg-linear-to-b from-transparent ${
-        hasBlur ? "via-[1rem] via-black to-black" : "to-background"
-      } transition-discrete duration-300 w-screen bottom-0 right-0 [--item-size:70px]  pointer-events-none ${
+        hasDarkBg ? "via-[1rem] via-black to-black" : "to-background"
+      } transition-discrete duration-300 w-screen bottom-0 right-0 [--item-size:70px] pointer-events-none ${
         isShown
           ? ""
           : `fixed translate-y-[calc(100%-5rem)] ${
@@ -124,7 +128,7 @@ export function SampleViewer() {
           <div className="relative flex gap-2">
             {isLayersView && <CustomBtns />}
             <div
-              className={`overflow-auto no-scrollbar`}
+              className={`overflow-auto no-scrollbar grow`}
               ref={scrollElRef}
               onScroll={handleScroll}
               style={getMaskStyle(atStart, atEnd)}
@@ -175,6 +179,12 @@ export function SampleViewer() {
     </div>
   )
 }
+
+export const SampleViewer = () => (
+  <ClientOnly>
+    <SampleViewer_ />
+  </ClientOnly>
+)
 
 const getMaskStyle = (atStart: boolean, atEnd: boolean) => {
   const fadeWidth = "10%"

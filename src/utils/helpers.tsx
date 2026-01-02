@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
+import type { FragmentInstance } from "react"
 
 export function usePrevious<T>(value: T) {
   const [previous, setPrevious] = useState<T>(value)
@@ -12,12 +13,19 @@ export function usePrevious<T>(value: T) {
   return previous
 }
 
-export function useDidMount(ref: React.RefObject<unknown>) {
+export function useDidMount<T = unknown>(providedRef?: React.RefObject<T>) {
+  const newRef = useRef<T>(null)
+  const ref = providedRef || newRef
   const [didMount, setDidMount] = useState(false)
   useEffect(() => {
     setDidMount(!!ref.current)
   }, [ref])
-  return didMount
+  return [ref, didMount] as const
+}
+
+export function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [ref, didMount] = useDidMount<FragmentInstance>()
+  return <Fragment ref={ref}>{didMount ? children : null}</Fragment>
 }
 
 export const clamp = (val: number, min: number, max: number) =>
