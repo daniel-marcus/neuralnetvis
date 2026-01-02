@@ -1,11 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, SpringConfig, config } from "@react-spring/web"
 import { getThree } from "@/store"
 import type { Neuron } from "@/neuron-layers/types"
 import type { Three } from "@/store/vis"
-import { useDidMount } from "@/utils/helpers"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   const ref = useRef<THREE.Mesh>(null)
