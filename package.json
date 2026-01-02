@@ -36,7 +36,7 @@
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
     "@react-spring/web": "^10.0.3",
     "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.4.2",
+    "@react-three/fiber": "^9.5.0",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
@@ -53,7 +53,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-headroom": "^3.2.1",
-    "three": "github:mrdoob/three.js#15cbc8c",
+    "three": "github:mrdoob/three.js#3ada1b3",
     "three-stdlib": "^2.36.1",
     "tunnel-rat": "^0.1.2",
     "zustand": "^5.0.9"
