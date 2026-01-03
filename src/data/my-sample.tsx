@@ -87,14 +87,28 @@ export async function imageToMnistSample(
   const numChannels = inputDims[2] || 1
   const imgTensor = tf.browser.fromPixels(image, numChannels)
 
-  const processed = tf.tidy(() => {
-    const [height, width] = imgTensor.shape
+  const [height, width] = imgTensor.shape
+  const { rowSumsTensor, colSumsTensor } = tf.tidy(() => {
     const grayscale =
       numChannels === 1 ? imgTensor.squeeze() : imgTensor.mean(-1)
     const mask = grayscale.greater(10)
-    const rowSums = mask.sum(1).arraySync() as number[]
-    const colSums = mask.sum(0).arraySync() as number[]
+    return {
+      rowSumsTensor: mask.sum(1),
+      colSumsTensor: mask.sum(0),
+    }
+  })
 
+  let rowSums: number[]
+  let colSums: number[]
+  try {
+    rowSums = (await rowSumsTensor.array()) as number[]
+    colSums = (await colSumsTensor.array()) as number[]
+  } finally {
+    rowSumsTensor.dispose()
+    colSumsTensor.dispose()
+  }
+
+  const processed = tf.tidy(() => {
     let top = rowSums.findIndex((sum) => sum > 0)
     let bottom =
       rowSums.length - 1 - [...rowSums].reverse().findIndex((sum) => sum > 0)

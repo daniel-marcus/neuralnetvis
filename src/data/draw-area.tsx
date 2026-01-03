@@ -3,7 +3,7 @@ import { useSceneStore } from "@/store"
 import { imageToMnistSample } from "./my-sample"
 import { Button } from "@/components/ui-elements"
 
-export const DrawArea = () => {
+export const DrawArea = ({ title = "Draw a digit" }) => {
   const ref = useRef<HTMLCanvasElement>(null)
   const toggleDrawAreaShown = useSceneStore((s) => s.toggleDrawAreaShown)
   const ds = useSceneStore((s) => s.ds)
@@ -104,9 +104,10 @@ export const DrawArea = () => {
   }, [handleMouseDown, handleMouseMove, handleMouseUp])
 
   return (
-    <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto">
+    <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto pt-8">
+      <div>{title}</div>
       <canvas
-        className="w-50 lg:w-75 aspect-square border rounded-2xl bg-box-dark"
+        className="w-40 lg:w-75 aspect-square border rounded-2xl bg-box-dark"
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
