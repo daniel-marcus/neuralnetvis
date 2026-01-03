@@ -24,6 +24,8 @@ export interface ViewSlice {
   ) => void
   isScrolling: boolean
   setIsScrolling: (isScrolling: boolean) => void
+  drawAreaShown: boolean
+  toggleDrawAreaShown: () => void
 }
 
 export const createViewSlice: StateCreator<
@@ -69,4 +71,8 @@ export const createViewSlice: StateCreator<
     })),
   isScrolling: false,
   setIsScrolling: (isScrolling) => set({ isScrolling }),
+
+  drawAreaShown: false,
+  toggleDrawAreaShown: () =>
+    set(({ drawAreaShown }) => ({ drawAreaShown: !drawAreaShown })),
 })

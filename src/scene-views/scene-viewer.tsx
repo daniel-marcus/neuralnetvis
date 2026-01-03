@@ -15,6 +15,7 @@ import { SceneTitle } from "./title"
 import { SampleSlider } from "./sample-slider"
 
 import { LoadWeightsButton, SceneButtons } from "./scene-buttons"
+import { DrawArea } from "@/data/draw-area"
 import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
 import { Portal } from "@/utils/portal"
@@ -47,6 +48,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   useScreenshotSettings(isActive)
   const [ref, didMount] = useDidMount<HTMLDivElement>()
   const { neuronStatusRef, sampleViewerRef } = useDomRefs()
+  const drawAreaShown = useSceneStore((s) => s.drawAreaShown)
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}
@@ -76,6 +78,7 @@ function SceneViewerInner(props: SceneViewerProps) {
           {section === "play" && isActive && (
             <SceneButtons isLarge={isLargeModel} />
           )}
+          {isActive && view === "layers" && drawAreaShown && <DrawArea />}
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
