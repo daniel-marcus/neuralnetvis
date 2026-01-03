@@ -64,11 +64,10 @@ async function getPretrained(
   modelDef: ModelDef,
   noWeights?: boolean,
 ): Promise<GetPretrainedModelResult> {
-  const { path, key } = modelDef
+  const { path, key, version } = modelDef
   const allModels = await tf.io.listModels()
-  const dbPath = `indexeddb://nnv_${key}`
+  const dbPath = `indexeddb://nnv_${key}_v${version}`
   if (dbPath in allModels) {
-    // TODO: check version?
     // console.log("Model exists in IndexedDB:", dbPath)
     const model = await tf.loadLayersModel(dbPath)
     return { model, loadState: "full" }
