@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { App } from "@/components/app"
+import { DomRefsProvider } from "@/utils/dom-refs"
 import { metadata } from "./metadata"
 import manifest from "./manifest.json"
 import "./globals.css"
@@ -25,7 +26,9 @@ export default function Layout({ children }: LayoutProps) {
       </head>
       <body className={`antialiased`}>
         <Suspense>
-          <App>{children}</App>
+          <DomRefsProvider>
+            <App>{children}</App>
+          </DomRefsProvider>
         </Suspense>
       </body>
     </html>

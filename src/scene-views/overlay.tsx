@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, type ReactNode } from "react"
-import { createPortal } from "react-dom"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { getTileDuration, type Section } from "@/components/tile-grid"
 import { useBodyFreeze } from "@/utils/body-freeze"
-import { lessonOverlayPortal } from "@/components/lesson"
+import { useDomRefs } from "@/utils/dom-refs"
+import { Portal } from "@/utils/portal"
 
 type SceneOverlayProps = {
   children: ReactNode
@@ -41,9 +41,9 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     </div>
   )
   const shouldUsePortal = isActive && localActive && section === "learn"
-  return shouldUsePortal && lessonOverlayPortal.current
-    ? createPortal(comp, lessonOverlayPortal.current!)
-    : comp
+  const { lessonOverlayRef } = useDomRefs()
+  const compThroughPortal = <Portal target={lessonOverlayRef}>{comp}</Portal>
+  return shouldUsePortal ? compThroughPortal : comp
 }
 
 function useIsScrolledBodyClass(

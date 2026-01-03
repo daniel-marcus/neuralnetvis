@@ -17,8 +17,8 @@ import { SampleSlider } from "./sample-slider"
 import { LoadWeightsButton, SceneButtons } from "./scene-buttons"
 import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
-import { neuronStatusPortal, sampleViewerPortal } from "@/components/status-bar"
-import { Portal } from "@/components/portal"
+import { Portal } from "@/utils/portal"
+import { useDomRefs } from "@/utils/dom-refs"
 import { SampleViewer } from "./sample-viewer"
 import { useScreenshotSettings } from "@/utils/screenshot"
 import { useDidMount } from "@/utils/helpers"
@@ -46,6 +46,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
   const [ref, didMount] = useDidMount<HTMLDivElement>()
+  const { neuronStatusRef, sampleViewerRef } = useDomRefs()
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}
@@ -82,12 +83,12 @@ function SceneViewerInner(props: SceneViewerProps) {
         <SampleSlider />
       )}
       {showSampleViewer && (
-        <Portal target={sampleViewerPortal}>
+        <Portal target={sampleViewerRef}>
           <SampleViewer />
         </Portal>
       )}
       {section === "play" && isActive && (
-        <Portal target={neuronStatusPortal}>
+        <Portal target={neuronStatusRef}>
           <NeuronStatus />
         </Portal>
       )}

@@ -5,6 +5,7 @@ import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData, resetData } from "@/data/dataset"
+import { useDomRefs } from "@/utils/dom-refs"
 import { useCaptureLoop } from "./video-capture"
 import { CustomBtn } from "@/scene-views/sample-viewer-btns"
 import type { CaptureFunc, RecorderProps } from "./video-capture"
@@ -156,8 +157,7 @@ function setCanvasSize(canvas: HTMLCanvasElement, w: number, h: number) {
 }
 
 export function HandPoseCanvasUpdater() {
-  const videoRef = useSceneStore((s) => s.videoRef)
-  const canvasRef = useSceneStore((s) => s.canvasRef)
+  const { videoRef, canvasRef } = useDomRefs()
   const aspectRatio = useSceneStore((s) => s.getAspectRatio())
   const stream = useSceneStore((s) => s.stream)
   useEffect(() => {
@@ -192,6 +192,7 @@ let shouldCancelRecording = false
 const RECORDING_STATUS_ID = "hpRecordSamples"
 
 function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
+  const { videoRef } = useDomRefs()
   const isRecording = useSceneStore((s) => s.isRecording)
   const setIsRecording = useSceneStore((s) => s.setIsRecording)
 
@@ -199,11 +200,10 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
   const updMeta = useSceneStore((s) => s.updateMeta)
   const hpTrain = useSceneStore((s) => s.toggleTraining)
   const stream = useSceneStore((s) => s.stream)
-  const vidRef = useSceneStore((s) => s.videoRef)
   const setRecY = useSceneStore((s) => s.setRecordingY)
 
   const hpRecordSamples = async () => {
-    const video = vidRef.current
+    const video = videoRef.current
     if (!stream || !video) return
     shouldCancelRecording = false
     const outputSize = ds?.outputLabels.length

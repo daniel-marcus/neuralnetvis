@@ -4,11 +4,11 @@ import dynamic from "next/dynamic"
 import { setStatus, useSceneStore } from "@/store"
 import { useEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import { GraphMethods } from "r3f-forcegraph"
 import { isVisible } from "@/neuron-layers/layers"
 import { moveCameraTo } from "./3d-model/utils"
 import { defaultState } from "@/utils/initial-state"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import type { GraphMethods } from "r3f-forcegraph"
 
 const R3fForceGraph = dynamic(() => import("r3f-forcegraph"), { ssr: false })
 

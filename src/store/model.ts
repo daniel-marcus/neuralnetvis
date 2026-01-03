@@ -5,7 +5,7 @@ import type { DataSlice } from "./data"
 import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
 import type { ActivationStats } from "@/model/activation-stats"
-import { ViewSlice } from "./view"
+import type { ViewSlice } from "./view"
 
 export type ModelLoadState = null | "no-weights" | "full"
 

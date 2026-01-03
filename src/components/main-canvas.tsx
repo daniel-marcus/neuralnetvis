@@ -24,7 +24,7 @@ export type RootState = Omit<RootStateGL, "gl"> & {
 }
 
 interface MainCanvasProps {
-  eventSource: RefObject<HTMLDivElement>
+  eventSource: RefObject<HTMLDivElement | null>
 }
 
 export function MainCanvas({ eventSource }: MainCanvasProps) {
@@ -40,7 +40,7 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
       >
         <Canvas
           frameloop="demand"
-          eventSource={eventSource}
+          eventSource={eventSource.current || undefined}
           // className="border-1 border-marker"
           gl={async (renderProps) => {
             const renderer = new THREE.WebGPURenderer({

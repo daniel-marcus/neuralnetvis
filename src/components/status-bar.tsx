@@ -1,21 +1,20 @@
-import React, { useRef, useEffect, ReactNode, useMemo, createRef } from "react"
+import React, { useRef, useEffect, ReactNode, useMemo } from "react"
 import { clearStatus, useGlobalStore } from "@/store"
+import { useDomRefs } from "@/utils/dom-refs"
 import { ProgressBar } from "./progress-bar"
 import { Table } from "./ui-elements"
 
-export const neuronStatusPortal = createRef<HTMLDivElement>()
-export const sampleViewerPortal = createRef<HTMLDivElement>()
-
 export const StatusBar = () => {
+  const { neuronStatusRef, sampleViewerRef } = useDomRefs()
   return (
     <div className="fixed z-20 bottom-0 left-0 w-screen select-none pointer-events-none screenshot:hidden">
       <div className={`-mb-1 relative`}>
         <div className="flex justify-between items-end relative">
-          <div ref={neuronStatusPortal} />
+          <div ref={neuronStatusRef} />
           <Status />
         </div>
       </div>
-      <div ref={sampleViewerPortal} />
+      <div ref={sampleViewerRef} />
       <ProgressBar />
     </div>
   )
