@@ -107,7 +107,7 @@ export const DrawArea = ({ title = "Draw a digit" }) => {
     <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto pt-8">
       <div>{title}</div>
       <canvas
-        className={`w-40 lg:w-75 aspect-square border-2 rounded-2xl bg-box-dark ${isDrawing ? "border-accent" : "border-menu-border"}`}
+        className={`w-40 lg:w-75 aspect-square border-2 rounded-2xl bg-box-dark ${isDrawing ? "border-accent" : "border-menu-border"} cursor-pencil`}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
