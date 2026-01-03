@@ -1,6 +1,8 @@
 import { StateCreator } from "zustand"
 
 export interface VideoSlice {
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
   stream?: MediaStream
   setStream: (stream?: MediaStream) => void
   isRecording: boolean
@@ -10,6 +12,8 @@ export interface VideoSlice {
 }
 
 export const createVideoSlice: StateCreator<VideoSlice> = (set) => ({
+  videoRef: createRef<HTMLVideoElement>(),
+  canvasRef: createRef<HTMLCanvasElement>(),
   stream: undefined,
   setStream: (stream) => set({ stream }),
   isRecording: false,
@@ -17,3 +21,7 @@ export const createVideoSlice: StateCreator<VideoSlice> = (set) => ({
   recordingY: undefined,
   setRecordingY: (recordingY) => set({ recordingY }),
 })
+
+function createRef<T>(): React.RefObject<T | null> {
+  return { current: null }
+}

@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore, useGlobalStore } from "@/store"
-import { useDomRefs } from "@/utils/dom-refs"
 import { centerCropResize } from "./utils"
 import type { SampleRaw } from "./types"
 
@@ -20,7 +19,7 @@ export function useCaptureLoop(
 ) {
   const ds = useSceneStore((s) => s.ds)
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
-  const { videoRef } = useDomRefs()
+  const videoRef = useSceneStore((s) => s.videoRef)
   useEffect(() => {
     if (!stream) return
     let animationFrame: number

@@ -1,14 +1,14 @@
 "use client"
 
 import { useCallback, useEffect } from "react"
-import { useDomRefs } from "@/utils/dom-refs"
 import { useSceneStore } from "@/store"
 import { HandPoseCanvasUpdater, HandPoseCapture } from "@/data/hand-pose"
 import { DefaultVideoCapture } from "@/data/video-capture"
 import { CustomBtn } from "./sample-viewer-btns"
 
 export function VideoWindow() {
-  const { videoRef, canvasRef } = useDomRefs()
+  const videoRef = useSceneStore((s) => s.videoRef)
+  const canvasRef = useSceneStore((s) => s.canvasRef)
   const stream = useSceneStore((s) => s.stream)
   const camProcessor = useSceneStore((s) => s.ds?.camProps?.processor)
   return (
@@ -87,7 +87,7 @@ export function VideoCaptureBtns() {
 }
 
 function useStream() {
-  const { videoRef } = useDomRefs()
+  const videoRef = useSceneStore((s) => s.videoRef)
   const stream = useSceneStore((s) => s.stream)
   const setStream = useSceneStore((s) => s.setStream)
   const stopStream = useCallback(() => {
