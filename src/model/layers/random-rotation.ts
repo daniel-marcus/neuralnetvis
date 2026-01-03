@@ -36,7 +36,7 @@ export class RandomRotationLayer extends tf.layers.Layer {
   constructor(config: RandomRotationLayerArgs) {
     super(config)
     this.factor = config.factor ?? 1 // 1 = 360 degrees
-    this.applyAtInference = config.applyAtInference ?? true
+    this.applyAtInference = config.applyAtInference ?? false
   }
 
   computeOutputShape(inputShape: tf.Shape) {
