@@ -1,4 +1,4 @@
-import { createRef, useEffect, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { storage } from "three/tsl"
@@ -21,6 +21,7 @@ export function useLayers() {
   const _showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers) // set to true to preload all layers
   const showHiddenLayers =
     _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
+
   const layers = useMemo(() => {
     if (!model) return []
     const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
@@ -44,17 +45,11 @@ export function useLayers() {
         const outputShape = tfLayer.outputShape as number[]
 
         const hasColorChannels = layerPos === "input" && outputShape[3] === 3
-
-        const layerMeshRef = createRef<InstancedMesh>()
-        const groupCount = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
-        const groupMeshRefs = Array.from({ length: groupCount }).map(() =>
-          createRef<InstancedMesh>(),
-        )
+        const channels = hasColorChannels ? 3 : 1
+        const meshRefs = Array.from({ length: channels }).map(createMeshRef)
 
         const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
         const { activations, actBuffer } = getBuffers(lid, units)
-
-        const channels = hasColorChannels ? 3 : 1
         const channelActivations = channelViews(activations, units, channels)
 
         const layer: NeuronLayer = {
@@ -67,7 +62,7 @@ export function useLayers() {
           prevLayer,
           numNeurons: units,
           numBiases,
-          meshRefs: hasColorChannels ? groupMeshRefs : [layerMeshRef],
+          meshRefs,
           meshParams,
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
@@ -101,6 +96,10 @@ function channelViews(activations: Float32Array, units: number, channels = 3) {
     const offset = channelIdx * channelUnits * 4
     return new Float32Array(activations.buffer, offset, channelUnits)
   })
+}
+
+function createMeshRef() {
+  return { current: null } as React.RefObject<InstancedMesh | null>
 }
 
 type Buffers = {
