@@ -78,6 +78,7 @@ export const createDataSlice: StateCreator<
   setSample: (sampleRaw) =>
     set(({ ds }) => ({
       sample: preprocessSample(sampleRaw, ds),
+      drawAreaShown: false,
     })),
   setCustomSample: (sampleRaw) =>
     set(({ ds, recordingY }) => ({
