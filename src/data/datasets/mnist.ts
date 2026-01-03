@@ -7,7 +7,7 @@ export const mnist: DatasetDef = {
   name: "MNIST",
   task: "classification",
   description: "Handwritten digits (28x28)",
-  version: new Date("2025-09-26"),
+  version: new Date("2026-01-03"),
   aboutUrl: "https://en.wikipedia.org/wiki/MNIST_database",
   inputDims: [28, 28, 1],
   preprocessFunc: "normalizeImage",
