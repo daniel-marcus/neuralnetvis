@@ -25,9 +25,8 @@ export function MyModels() {
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return
-    const modelToSave = Object.assign({}, model)
-    modelToSave.name = modelName
-    await modelToSave.save(`indexeddb://${modelName}`)
+    model.name = modelName // eslint-disable-line react-hooks/immutability
+    await model.save(`indexeddb://${modelName}`)
     setStatus("Model saved to IndexedDB")
     updateList()
   }
