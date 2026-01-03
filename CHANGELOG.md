@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.3](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.2...v0.1.3) (2026-01-03)
+
+
+### Features
+
+* **DrawArea:** add draw area to draw digits for mnist ([b81174e](https://github.com/daniel-marcus/neuralnetvis/commit/b81174ee0821692f444ec9843a2ee1055bf91bfc))
+* **mnist-conv:** add new pretrained conv model for mnist dataset ([29e26d8](https://github.com/daniel-marcus/neuralnetvis/commit/29e26d872abdb85aeab3647615f997453afac043))
+* **model.tsx:** add version check for pretrained models ([7c44020](https://github.com/daniel-marcus/neuralnetvis/commit/7c44020d48e347d5a944f49ce07c86c59f200201))
+
+
+### Bug Fixes
+
+* **RandomRotation:** applyAtInference default false ([25e76bb](https://github.com/daniel-marcus/neuralnetvis/commit/25e76bbfbf830177b97a7d17551beb7a2df72b12))
+* **SampleViewer:** fix containerWidth 0 glitch ([c38f1eb](https://github.com/daniel-marcus/neuralnetvis/commit/c38f1ebc227c910dfd74f0db4f541a407bba0c85))
+
 ## [0.1.2](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.1...v0.1.2) (2025-12-30)
 
 
