@@ -76,7 +76,9 @@ function SceneViewerInner(props: SceneViewerProps) {
           />
           <LoadWeightsButton />
           {section === "play" && isActive && <SceneButtons />}
-          {isActive && view === "layers" && drawAreaShown && <DrawArea />}
+          {isActive && view === "layers" && drawAreaShown && (
+            <DrawArea title={dsDef?.drawOptions?.title} />
+          )}
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>

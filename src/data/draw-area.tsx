@@ -4,7 +4,7 @@ import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
 import type { SampleRaw } from "./types"
 
-export const DrawArea = ({ title = "Draw a digit" }) => {
+export const DrawArea = ({ title = "" }) => {
   const ref = useRef<HTMLCanvasElement>(null)
   const toggleDrawAreaShown = useSceneStore((s) => s.toggleDrawAreaShown)
   const ds = useSceneStore((s) => s.ds)

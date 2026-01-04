@@ -28,17 +28,15 @@ export interface DatasetMeta {
   mapProps?: DsMapProps
   loaded: "preview" | "full" // will be set by ds loader
   model?: ModelDef // default model to load for this dataset
-  externalSamples?: ExternalSample[] // test models with external images
   isModelDs?: boolean // tile gets "model" tag instead of "dataset"
   sampleViewer?: boolean // show sample viewer instead of sample slider
   targetDevice?: "desktop" | "mobile" // to load smaller model versions on mobile
   tokenizerName?: TokenizerName
+  drawOptions?: DrawOptions // for datasets that support drawing input samples
 }
 
-interface ExternalSample {
-  url: string
-  label: string
-  // y?: number
+interface DrawOptions {
+  title: string
 }
 
 export interface DatasetDef extends Omit<DatasetMeta, "loaded"> {

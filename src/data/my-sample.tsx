@@ -20,7 +20,7 @@ export const AddSampleBtn = () => {
     ? textToSample
     : ds?.showAddImgBtn
       ? getSampleFromImgUrl
-      : ["mnist", "quickdraw"].includes(ds?.key ?? "")
+      : ds?.drawOptions
         ? toggleDrawAreaShown
         : undefined
 

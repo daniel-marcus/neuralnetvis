@@ -65,6 +65,9 @@ export const quickDraw: DatasetDef = {
   ],
   model: getModelDef("quickdraw"),
   sampleViewer: true,
+  drawOptions: {
+    title: "Draw something",
+  },
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
       "/data/quickdraw/x_train.npz",
