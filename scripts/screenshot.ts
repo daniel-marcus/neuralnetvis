@@ -14,8 +14,8 @@ const paths = ["", ...getPaths()].filter(
 )
 
 async function run() {
-  fs.rmSync(SCREENSHOT_FOLDER, { recursive: true, force: true })
-  fs.mkdirSync(SCREENSHOT_FOLDER)
+  // fs.rmSync(SCREENSHOT_FOLDER, { recursive: true, force: true })
+  // fs.mkdirSync(SCREENSHOT_FOLDER)
 
   const browser = await puppeteer.launch({
     headless: false,
@@ -26,6 +26,7 @@ async function run() {
 
   try {
     await page.goto(PAGEROOT)
+    await new Promise((resolve) => setTimeout(resolve, 2000))
   } catch {
     const bold = (str: string) => `\x1b[1m${str}\x1b[0m`
     console.error(
@@ -35,14 +36,21 @@ async function run() {
   }
 
   for (const p of paths) {
+    const screenshotPath = `${SCREENSHOT_FOLDER}/${
+      pathToFileName(p) || "default"
+    }.png` as `${string}.png`
+
+    // TODO: add overwrite flag
+    if (fs.existsSync(screenshotPath)) {
+      console.log(`File ${screenshotPath} already exists. Skipping...`)
+      continue
+    }
+
     await page.goto(`${PAGEROOT}/${p}?screenshot`)
     const title = await page.title()
     console.log(title)
     await new Promise((resolve) => setTimeout(resolve, 2000))
-    const path = `${SCREENSHOT_FOLDER}/${
-      pathToFileName(p) || "default"
-    }.png` as `${string}.png`
-    await page.screenshot({ path, type: "png" })
+    await page.screenshot({ path: screenshotPath, type: "png" })
   }
   await browser.close()
 }

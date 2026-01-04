@@ -73,6 +73,11 @@ const models = defineModels({
     path: "/models/imdb/model.json",
     version: "1.0",
   },
+  quickdraw: {
+    key: "quickdraw",
+    path: "/models/quickdraw/model.json",
+    version: "1.0",
+  },
 })
 
 export type ModelKey = keyof typeof models

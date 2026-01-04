@@ -18,6 +18,7 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | :---------------------------------------------------------------------- | :---------------------- | :------------------- | -------: | ------------: | -----------: |
 | [MNIST](https://en.wikipedia.org/wiki/MNIST_database)                   | Handwritten digits      | Classification (10)  |  28x28x1 |        20,000 |        2,000 |
 | [Fashion MNIST](https://github.com/zalandoresearch/fashion-mnist)       | Clothing items          | Classification (10)  |  28x28x1 |        20,000 |        2,000 |
+| [Quick, Draw!](https://github.com/googlecreativelab/quickdraw-dataset)  | Drawings                |  Classification (50) |  28x28x1 |        20,000 |        2,000 |
 | [CIFAR10](https://www.cs.toronto.edu/~kriz/cifar.html)                  | Colored images          | Classification (10)  |  32x32x3 |        18,000 |        1,800 |
 | [CIFAR100](https://www.cs.toronto.edu/~kriz/cifar.html)                 | Colored images          | Classification (100) |  32x32x3 |        18,000 |        1,800 |
 | [Auto MPG](https://archive.ics.uci.edu/dataset/9/auto+mpg)              | Predict fuel efficiency | Regression           |        9 |           314 |           50 |
