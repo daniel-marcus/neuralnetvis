@@ -29,7 +29,7 @@ export const DrawArea = ({ title = "Draw a digit" }) => {
     if (!ref.current || !ctx) return
     const rect = ref.current.getBoundingClientRect()
     scaleCanvas(ref.current, rect)
-    ctx.lineWidth = Math.round(rect.width / 15)
+    ctx.lineWidth = Math.round(rect.width / 20)
     ctx.lineCap = "round"
     ctx.strokeStyle = "white"
     const { x, y } = getCoords(e, rect)
@@ -47,7 +47,7 @@ export const DrawArea = ({ title = "Draw a digit" }) => {
     ctx.stroke()
     ctx.beginPath()
     ctx.moveTo(x, y)
-    imageToMnistSample(ref.current, ds!.inputDims).then(setCustomSample)
+    imageToMnistSample(ref.current, ds?.inputDims).then(setCustomSample)
   }
 
   const handlePointerUp = () => (isDrawing.current = false)
@@ -76,90 +76,60 @@ export const DrawArea = ({ title = "Draw a digit" }) => {
   )
 }
 
+type ImgOrCanvas = HTMLImageElement | HTMLCanvasElement
+
 /**
  * Convert image or canvas with auto-padding and centering to MNIST-style sample.
  */
-async function imageToMnistSample(
-  image: HTMLImageElement | HTMLCanvasElement,
-  inputDims?: number[],
-): Promise<SampleRaw | undefined> {
+async function imageToMnistSample(image: ImgOrCanvas, inputDims?: number[]) {
   if (!inputDims || !image.width || !image.height) return
-  const [targetHeight, targetWidth] = inputDims
-  const numChannels = inputDims[2] || 1
+  const [targetH, targetW, numChannels = 1] = inputDims
   const imgTensor = tf.browser.fromPixels(image, numChannels)
-
-  const [height, width] = imgTensor.shape
-  const { rowSumsTensor, colSumsTensor } = tf.tidy(() => {
-    const grayscale =
-      numChannels === 1 ? imgTensor.squeeze() : imgTensor.mean(-1)
-    const mask = grayscale.greater(10)
-    return {
-      rowSumsTensor: mask.sum(1),
-      colSumsTensor: mask.sum(0),
-    }
-  })
-
-  let rowSums: number[]
-  let colSums: number[]
-  try {
-    rowSums = (await rowSumsTensor.array()) as number[]
-    colSums = (await colSumsTensor.array()) as number[]
-  } finally {
-    rowSumsTensor.dispose()
-    colSumsTensor.dispose()
-  }
+  const cropped = await getCroppedImage(imgTensor)
 
   const processed = tf.tidy(() => {
-    let top = rowSums.findIndex((sum) => sum > 0)
-    let bottom =
-      rowSums.length - 1 - [...rowSums].reverse().findIndex((sum) => sum > 0)
-    let left = colSums.findIndex((sum) => sum > 0)
-    let right =
-      colSums.length - 1 - [...colSums].reverse().findIndex((sum) => sum > 0)
-
-    if (top === -1 || left === -1)
-      [top, bottom, left, right] = [0, height - 1, 0, width - 1]
-
-    const cropped = tf.slice(
-      imgTensor,
-      [top, left, 0],
-      [bottom - top + 1, right - left + 1, numChannels],
-    )
-    const padded = tf.pad(
-      cropped,
-      [
-        [50, 50],
-        [50, 50],
-        [0, 0],
-      ],
-      0,
-    )
-    const [h, w] = padded.shape
-    const scale = Math.min(targetHeight / h, targetWidth / w)
+    const [h, w] = cropped.shape
+    const pad = Math.round(Math.max(h, w) * 0.1) // 10 %
+    const scale = Math.min(targetH / (h + 2 * pad), targetW / (w + 2 * pad))
     const [newH, newW] = [Math.round(h * scale), Math.round(w * scale)]
-    const scaled = tf.image.resizeBilinear(padded, [newH, newW])
-    const [pT, pL] = [
-      Math.floor((targetHeight - newH) / 2),
-      Math.floor((targetWidth - newW) / 2),
-    ]
-    return tf
-      .pad(
-        scaled,
-        [
-          [pT, targetHeight - newH - pT],
-          [pL, targetWidth - newW - pL],
-          [0, 0],
-        ],
-        0,
-      )
-      .flatten()
+    const scaled = tf.image.resizeBilinear(cropped, [newH, newW])
+    const pT = Math.floor((targetH - newH) / 2)
+    const pL = Math.floor((targetW - newW) / 2)
+    const yPadding = [pT, targetH - newH - pT] as [number, number]
+    const xPadding = [pL, targetW - newW - pL] as [number, number]
+    return scaled.pad([yPadding, xPadding, [0, 0]]).flatten()
   })
 
   try {
     const X = (await processed.data()) as SampleRaw["X"]
     return { X, index: Date.now() }
   } finally {
-    processed.dispose()
-    imgTensor.dispose()
+    tf.dispose([imgTensor, cropped, processed])
   }
+}
+
+/**
+ * Crop image tensor to bounding box of non-empty content.
+ */
+async function getCroppedImage(imgTensor: tf.Tensor3D): Promise<tf.Tensor3D> {
+  const numChannels = imgTensor.shape[2]
+  const sums = tf.tidy(() => {
+    const grayscale = imgTensor.mean(-1)
+    const mask = grayscale.greater(0)
+    return [mask.sum(1), mask.sum(0)]
+  })
+  const sumPromises = sums.map((t) => t.data())
+  const [rowSums, colSums] = await Promise.all(sumPromises).finally(() => {
+    tf.dispose(sums)
+  })
+
+  const top = rowSums.findIndex(Boolean)
+  const bottom = rowSums.length - 1 - rowSums.toReversed().findIndex(Boolean)
+  const left = colSums.findIndex(Boolean)
+  const right = colSums.length - 1 - colSums.toReversed().findIndex(Boolean)
+
+  if (top === -1 || left === -1) return imgTensor // empty image
+
+  const size = [bottom - top + 1, right - left + 1, numChannels]
+  return imgTensor.slice([top, left, 0], size)
 }
