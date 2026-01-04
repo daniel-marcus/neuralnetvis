@@ -25,7 +25,7 @@ export interface DataSlice {
 
   sample?: Sample
   setSample: (sampleRaw?: SampleRaw) => void
-  setCustomSample: (sampleRaw: SampleRaw) => void // no sampleIdx, y from recordingY (optional)
+  setCustomSample: (sampleRaw?: SampleRaw) => void // no sampleIdx, y from recordingY (optional)
   nextSample: (step?: number) => void
   resetSample: () => void
 
@@ -80,9 +80,9 @@ export const createDataSlice: StateCreator<
       sample: preprocessSample(sampleRaw, ds),
       drawAreaShown: false,
     })),
-  setCustomSample: (sampleRaw) =>
+  setCustomSample: (cs) =>
     set(({ ds, recordingY }) => ({
-      sample: preprocessSample({ ...sampleRaw, y: recordingY }, ds),
+      sample: preprocessSample(cs ? { ...cs, y: recordingY } : undefined, ds),
       sampleIdx: undefined,
     })),
   nextSample: (step = 1) =>
