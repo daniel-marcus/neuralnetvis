@@ -32,7 +32,7 @@ type SceneViewerProps = TileDef & {
 }
 
 function SceneViewerInner(props: SceneViewerProps) {
-  const { dsKey, isActive, section, path, isLargeModel } = props
+  const { dsKey, isActive, section, path } = props
   const dsDef = useDsDef(dsKey)
   const ds = useDataset(dsDef)
   const model = useModel(ds)
@@ -75,9 +75,7 @@ function SceneViewerInner(props: SceneViewerProps) {
             ds={ds ?? dsDef}
           />
           <LoadWeightsButton />
-          {section === "play" && isActive && (
-            <SceneButtons isLarge={isLargeModel} />
-          )}
+          {section === "play" && isActive && <SceneButtons />}
           {isActive && view === "layers" && drawAreaShown && <DrawArea />}
         </div>
         {view === "evaluation" && <EvaluationView />}

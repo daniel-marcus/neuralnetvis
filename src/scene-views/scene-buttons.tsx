@@ -4,15 +4,16 @@ import { Button, Select } from "@/components/ui-elements"
 import type { Dataset } from "@/data"
 import type { View } from "@/store/view"
 
-export const SceneButtons = ({ isLarge }: { isLarge?: boolean }) => {
+export const SceneButtons = () => {
+  const view = useSceneStore((s) => s.view)
   return (
     <div
       className={`max-w-75 flex gap-2 flex-wrap justify-start w-auto pointer-events-auto screenshot:hidden`}
     >
       <LoadFullDsButton />
       <ViewSelect />
-      <ViewSubsetSelect />
-      {isLarge && <ToggleHiddenLayersButton />}
+      {view === "evaluation" && <ViewSubsetSelect />}
+      {view === "layers" && <ToggleHiddenLayersButton />}
       <ShowAllLayersBtn />
     </div>
   )

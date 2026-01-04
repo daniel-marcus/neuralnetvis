@@ -40,11 +40,11 @@ export const createViewSlice: StateCreator<
   setIsHovered: (isHovered) => set({ isHovered }),
   view: "layers",
   setView: (view) =>
-    set(({ sampleIdx, ds, subset }) => {
+    set(({ sampleIdx, ds }) => {
       const hasTestData = !!ds?.test.totalSamples
       return {
         view,
-        subset: view === "evaluation" && hasTestData ? "test" : subset,
+        subset: view === "evaluation" && hasTestData ? "test" : "train",
         sampleIdx: view === "evaluation" ? undefined : sampleIdx,
       }
     }),
