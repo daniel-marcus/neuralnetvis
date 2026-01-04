@@ -33,6 +33,7 @@ export interface TileDef {
   shouldLoadFullDs?: boolean
   isLargeModel?: boolean // don't expand hidden layers by default
   targetDevice?: DatasetDef["targetDevice"]
+  hasDraw?: boolean
 }
 
 const tiles: TileDef[] = [
@@ -52,6 +53,7 @@ const tiles: TileDef[] = [
     disabled: dsDef.disabled,
     isLargeModel: dsDef.model?.lazyLoadWeights,
     targetDevice: dsDef.targetDevice,
+    hasDraw: !!dsDef.drawOptions,
   })),
 ]
 

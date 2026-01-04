@@ -108,6 +108,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
       uid={path}
       initialState={initialState}
       isLargeModel={props.isLargeModel}
+      drawAreaShown={props.hasDraw}
     >
       <Suspense>
         <SceneViewerInner {...props} />
