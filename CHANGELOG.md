@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.4](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.3...v0.1.4) (2026-01-04)
+
+
+### Features
+
+* add quickdraw dataset & model ([783a148](https://github.com/daniel-marcus/neuralnetvis/commit/783a148b0d8912faec0e13087ebb9f42fd728401))
+* **datasets:** add draw options ([fa24d23](https://github.com/daniel-marcus/neuralnetvis/commit/fa24d2397a9f81e2f57b90b1d8ffc8719e1d822a))
+* **DrawArea:** add pencil cursor ([6752e49](https://github.com/daniel-marcus/neuralnetvis/commit/6752e49e55c3f6bb2266e1880068a548ed17d515))
+
+
+### Bug Fixes
+
+* **MyModels:** fix model save ([1d96d7c](https://github.com/daniel-marcus/neuralnetvis/commit/1d96d7c4af44ce085f9c9772f9d8be5944dc2358))
+
 ## [0.1.3](https://github.com/daniel-marcus/neuralnetvis/compare/v0.1.2...v0.1.3) (2026-01-03)
 
 
