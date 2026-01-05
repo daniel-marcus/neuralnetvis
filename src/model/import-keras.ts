@@ -125,6 +125,15 @@ function parseModelObject<T>(obj: T): T {
             ...acc.config,
             ...shapesDict,
           }
+        } else if (["input_layers", "output_layers"].includes(key)) {
+          // ["input_layer", 0, 0] -> [["input_layer", 0, 0]]
+          if (
+            Array.isArray(value) &&
+            value.length > 0 &&
+            !Array.isArray(value[0])
+          ) {
+            parsedValue = [[...value]]
+          }
         }
         // return [parsedKey, parsedValue]
         acc[parsedKey] = parsedValue
