@@ -13,6 +13,7 @@ import type { Pos } from "./utils"
 export const Model = () => {
   const layers = useLayers()
   const visibleLayers = useVisibleLayers(layers)
+  useAutoExpand()
   useCameraShifter(visibleLayers)
   return (
     <>
@@ -27,28 +28,27 @@ export const Model = () => {
   )
 }
 
-function useVisibleLayers(layers: NeuronLayer[]) {
-  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+function useAutoExpand() {
+  // auto expand when active and not a large model
   const setVisConfig = useSceneStore((s) => s.vis.setConfig)
-
   const isActive = useSceneStore((s) => s.isActive)
   const isLargeModel = useSceneStore((s) => s.isLargeModel)
   useEffect(() => {
-    // auto expand when active and not a large model
     if (!isActive || isLargeModel) return
     const to = setTimeout(() => setVisConfig({ showHiddenLayers: true }), 0)
     return () => {
       clearTimeout(to)
     }
   }, [isActive, isLargeModel, setVisConfig])
+}
 
-  const visibleLayers = useMemo(
-    () =>
-      showHiddenLayers ? layers : layers.filter((l) => l.layerPos !== "hidden"),
-    [layers, showHiddenLayers],
+export function useVisibleLayers(layers: NeuronLayer[]) {
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const onlyInputAndOutputLayers = useMemo(
+    () => layers.filter((l) => l.layerPos !== "hidden"),
+    [layers],
   )
-
-  return visibleLayers
+  return showHiddenLayers ? layers : onlyInputAndOutputLayers
 }
 
 const cameraDir = new THREE.Vector3(-23, 0, 35).normalize()

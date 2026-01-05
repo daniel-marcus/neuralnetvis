@@ -6,13 +6,15 @@ import { useHasFocussed, useSceneStore } from "@/store"
 import { WheelMenu } from "@/components/ui-elements/wheel-menu"
 import { isVisible } from "@/neuron-layers/layers"
 import { useHasSample } from "./evaluation/evaluation"
+import { useVisibleLayers } from "./3d-model/model"
 import { ClientOnly } from "@/utils/helpers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 const LayerWheel_ = () => {
   const model = useSceneStore((s) => s.model)
   const modelLayers = useMemo(() => model?.layers ?? [], [model])
-  const visibleLayers = useSceneStore((s) => s.allLayers)
+  const allLayers = useSceneStore((s) => s.allLayers)
+  const visibleLayers = useVisibleLayers(allLayers)
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const setFocussedIdx = useSceneStore((s) => s.setFocussedLayerIdx)
   const isGraphView = useSceneStore((s) => s.view === "graph")
