@@ -72,7 +72,7 @@ export function useLayers() {
           activations,
           channelActivations,
           activationsBuffer: actBuffer,
-          storageNode: storage(actBuffer),
+          storageNode: storage(actBuffer, "float", units),
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []

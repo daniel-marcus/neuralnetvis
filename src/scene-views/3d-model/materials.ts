@@ -19,7 +19,7 @@ const colorBases = [baseR, baseG, baseB]
 // const standardMaterial = createActivationMaterial(false, 0)
 // const colorMaterials = [0, 1, 2].map((i) => createActivationMaterial(true, i))
 
-export type StorageNode = THREE.StorageBufferNode
+export type StorageNode = THREE.StorageBufferNode<"float">
 
 export function getMaterial(
   hasColors: boolean,
@@ -60,11 +60,12 @@ export function activationColor(
     const idx = instanceIndex.add(offset)
     const normalizedNode = isWebGPUBackend(backend)
       ? storageNode.element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
-      : instancedBufferAttribute(instancedActivations)
+      : instancedBufferAttribute<"float">(instancedActivations)
     const baseNode = normalizedNode
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
+    // @ts-expect-error TSL pow types don't reflect vec3 support
     const vColor = pow(srgbColor, vec3(2.2))
     return varying(vColor) // compute in vertex stage
   })()
@@ -161,6 +162,7 @@ export function activationColorTexture(
       .greaterThanEqual(0.0)
       .select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
+    // @ts-expect-error TSL pow types don't reflect vec3 support
     const colorNode = pow(srgbColor, vec3(2.2))
     return colorNode
   })()
