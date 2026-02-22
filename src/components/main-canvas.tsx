@@ -1,4 +1,5 @@
 import { useEffect, type RefObject } from "react"
+import throttle from "lodash.throttle"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
 import tunnel from "tunnel-rat"
@@ -74,7 +75,7 @@ function OnScrollUpdate({ sync }: { sync: boolean }) {
   useEffect(() => {
     // with frameloop="demand" we need to manually invalidate the scene on scroll
     if (!active) return
-    const onScroll = () => invalidate() // throttle(() => invalidate(), 30, { leading: true })
+    const onScroll = throttle(() => invalidate(), 30, { leading: true })
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
   }, [invalidate, active])

@@ -147,6 +147,7 @@ export async function loadAndSaveDsData(
 ) {
   const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
+    await tf.ready()
     const {
       xTrain,
       yTrain,

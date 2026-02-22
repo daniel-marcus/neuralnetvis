@@ -98,6 +98,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
       }))
     }, options)
     o.observe(ref.current)
+    return () => o.disconnect()
   }, [ref, root, rootMargin, threshold])
   return [ref, state.inView, state.direction] as const
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { storage } from "three/tsl"
@@ -22,8 +22,14 @@ export function useLayers() {
   const showHiddenLayers =
     _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
 
-  const layers = useMemo(() => {
-    if (!model) return []
+  const [layers, setLayers] = useState<NeuronLayer[]>([])
+
+  useEffect(() => {
+    if (!model) {
+      setLayers([]) // eslint-disable-line react-hooks/set-state-in-effect
+      setAllLayers([])
+      return
+    }
     const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
@@ -80,11 +86,10 @@ export function useLayers() {
       const totalNeurons = newLayers.reduce((acc, l) => acc + l.numNeurons, 0)
       console.log({ model: model.name, totalNeurons })
     }
-    return newLayers
-  }, [model, ds, modelLoadState, showHiddenLayers])
-  useEffect(() => {
-    setAllLayers(layers)
-  }, [layers, setAllLayers])
+    setLayers(newLayers)
+    setAllLayers(newLayers)
+  }, [model, ds, modelLoadState, showHiddenLayers, setAllLayers])
+
   return layers
 }
 

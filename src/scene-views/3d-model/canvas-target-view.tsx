@@ -55,6 +55,10 @@ function CanvasTargetInner(props: CanvasTargetInnerProps) {
     virtualScene.userData["canvasTarget"] = newTarget // eslint-disable-line react-hooks/immutability
     setCanvasTarget(newTarget)
     onFirstRender?.()
+    return () => {
+      newTarget.dispose()
+      virtualScene.userData["canvasTarget"] = null
+    }
   }, [canvasRef, onFirstRender, virtualScene])
 
   return (
