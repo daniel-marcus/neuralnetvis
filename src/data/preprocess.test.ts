@@ -20,7 +20,7 @@ describe("normalizeHandLandmarks", () => {
   it("should return correctly shaped input", async () => {
     if (!batchInput || !singleInput) throw new Error("No inputTensor")
     if (!resultSingle || !resultBatch) throw new Error("No result")
-    console.log(resultSingle.shape, resultBatch.shape)
+    // console.log(resultSingle.shape, resultBatch.shape)
     expect(resultSingle.shape).toEqual(singleInput.shape)
     expect(resultBatch.shape).toEqual(batchInput.shape)
   })

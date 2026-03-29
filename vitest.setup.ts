@@ -22,6 +22,6 @@ vi.stubGlobal("fetch", async (url: string) => {
 })
 
 beforeAll(async () => {
-  console.log("Putting mnist data into fake indexedDB ...")
+  // Putting mnist data into fake indexedDB ...
   await loadAndSaveDsData(mnist)
 })
