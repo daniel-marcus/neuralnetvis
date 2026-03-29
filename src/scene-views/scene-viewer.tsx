@@ -1,5 +1,6 @@
 import { Suspense } from "react"
-import { SceneStoreProvider, useSceneStore } from "@/store"
+import { SceneStoreProvider } from "@/store/scene-provider"
+import { useSceneStore } from "@/store"
 import { useDsDef, useDataset } from "@/data"
 import { useModel, useTraining } from "@/model"
 

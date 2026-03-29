@@ -3,7 +3,7 @@ pre-commit:
     format:
       glob: "*.{ts,tsx,js,jsx,json,css,scss}"
       run: pnpm format --log-level warn --cache {staged_files} && git add {staged_files}
-    check-types:
+    typecheck:
       run: pnpm typecheck
     lint:
       run: pnpm lint:summary

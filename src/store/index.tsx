@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useId, useMemo, useState } from "react"
+import React, { useContext, useMemo } from "react"
 
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
@@ -10,8 +10,6 @@ import { createTrainingSlice, TrainingSlice } from "./training"
 import { createNeuronsSlice, NeuronsSlice } from "./neurons"
 import { createVisSlice, VisSlice } from "./vis"
 import { createVideoSlice, VideoSlice } from "./video"
-import { moveCameraTo } from "@/scene-views/3d-model/utils"
-import { defaultState, InitialState } from "@/utils/initial-state"
 import type { HandLandmarker } from "@mediapipe/tasks-vision"
 import type { WebGPURenderer } from "three/webgpu"
 
@@ -29,7 +27,7 @@ type InitProps = Partial<SceneState> & {
   visConfig?: Partial<SceneState["vis"]>
 }
 
-const createSceneStore = (initProps?: InitProps) => {
+export const createSceneStore = (initProps?: InitProps) => {
   const { visConfig = {}, ...otherInitProps } = initProps ?? {}
   return createStore<SceneState>()((...a) => {
     const visSlice = createVisSlice(...a)
@@ -47,75 +45,10 @@ const createSceneStore = (initProps?: InitProps) => {
   })
 }
 
-const dummySceneStore = createSceneStore({ uid: "dummy" })
+export const dummySceneStore = createSceneStore({ uid: "dummy" })
 
 export type SceneStore = ReturnType<typeof createSceneStore>
 export const SceneContext = React.createContext<SceneStore | null>(null)
-
-type SceneProviderProps = React.PropsWithChildren<
-  InitProps & {
-    isActive: boolean
-    initialState?: InitialState
-  }
->
-
-export function SceneStoreProvider({
-  children,
-  isActive,
-  initialState,
-  isLargeModel = false,
-  ...props
-}: SceneProviderProps) {
-  const uid = useId()
-  const [thisScene] = useState<SceneStore>(() => {
-    const { vis: visConfig, ...otherInitialState } = initialState ?? {}
-    return createSceneStore({
-      isActive,
-      uid,
-      visConfig,
-      isLargeModel,
-      ...otherInitialState,
-      ...props,
-    })
-  })
-  useEffect(() => {
-    useGlobalStore.setState((state) => ({
-      scenes: [...state.scenes.filter((s) => s !== thisScene), thisScene],
-    }))
-    return () => {
-      useGlobalStore.setState((state) => ({
-        scenes: state.scenes.filter((s) => s !== thisScene),
-      }))
-    }
-  }, [thisScene])
-  useEffect(() => {
-    if (!isActive) return
-    useGlobalStore.getState().setScene(thisScene)
-    const defaultVisConfig = thisScene.getState().vis
-    thisScene.setState({ isActive: true })
-    return () => {
-      // cleanup when leaving the scene
-      thisScene.setState({
-        isActive: false,
-        view: "layers",
-        subset: "train",
-        focussedLayerIdx: undefined,
-        vis: { ...defaultVisConfig },
-      })
-      // bring camera back to initial/default position
-      moveCameraTo(
-        initialState?.cameraPos ?? defaultState.cameraPos,
-        initialState?.cameraLookAt ?? defaultState.cameraLookAt,
-        thisScene.getState().three,
-      )
-      // reset current scene
-      useGlobalStore.getState().setScene(dummySceneStore)
-    }
-  }, [thisScene, isActive, initialState])
-  return (
-    <SceneContext.Provider value={thisScene}>{children}</SceneContext.Provider>
-  )
-}
 
 export function useSceneStore<T>(selector: (state: SceneState) => T): T {
   const store = useContext(SceneContext)
