@@ -12,7 +12,14 @@ export function useIsPlayMode() {
 
 export const TabMenu = () => {
   const currTab = useGlobalStore((s) => s.tab)
-  const content = currTab?.component ? createElement(currTab.component) : null
+  const allTabs = useMemo(
+    () => [...rootTabs, ...playTabs].flatMap((t) => [t, ...(t.children ?? [])]),
+    [],
+  )
+  const content = useMemo(() => {
+    const component = allTabs.find((t) => t.key === currTab?.key)?.component
+    return component ? createElement(component) : null
+  }, [allTabs, currTab?.key])
   const setTab = useGlobalStore((s) => s.setTab)
   const toggleTab = useGlobalStore((s) => s.toggleTab)
   const tabIsShown = useGlobalStore((s) => s.tabIsShown)

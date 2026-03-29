@@ -3,32 +3,19 @@
 import { Data } from "./data"
 import { Model } from "./model"
 import { Train } from "./train"
+import { rootTabs as _rootTabs, playTabs as _playTabs } from "./tab-keys"
 
-export type Tab = {
-  key: string
-  slug?: string
-  label?: string
-  component?: () => React.ReactElement
-  isDefault?: boolean
-  children?: Tab[]
-  parent?: Tab // will be added in addParent
+export type { Tab } from "./tab-keys"
+
+export const rootTabs = _rootTabs
+
+const componentMap: Record<string, () => React.ReactElement> = {
+  data: Data,
+  model: Model,
+  train: Train,
 }
 
-const _rootTabs: Tab[] = [
-  { key: "learn", slug: "learn" },
-  { key: "play", slug: "play" },
-]
-
-const _playTabs: Tab[] = [
-  { key: "data", component: Data },
-  { key: "model", component: Model },
-  { key: "train", component: Train },
-]
-
-function addParent(tab: Tab, parent?: Tab): Tab {
-  const children = tab.children?.map((c) => addParent(c, tab))
-  return { ...tab, parent, children }
-}
-
-export const rootTabs = _rootTabs.map((t) => addParent(t))
-export const playTabs = _playTabs.map((t) => addParent(t))
+export const playTabs = _playTabs.map((t) => ({
+  ...t,
+  component: componentMap[t.key],
+}))

@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand"
-import { rootTabs, playTabs, type Tab } from "@/components/tabs"
+import { rootTabs, playTabs, type Tab } from "@/components/tabs/tab-keys"
 
 const allTabs = [...rootTabs, ...playTabs].flatMap((t) => [
   t,
