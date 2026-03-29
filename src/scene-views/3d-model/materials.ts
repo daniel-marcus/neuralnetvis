@@ -125,6 +125,8 @@ export function activationColorTexture(
     const tileY = floor(fragCoord.y.div(tileHeight))
     const channel = floor(tileY.mul(gridCols).add(tileX))
 
+    If(channel.greaterThanEqual(float(channels)), () => Discard())
+
     const localX = floor(mod(fragCoord.x, tileWidth))
     const localY = floor(mod(fragCoord.y, tileHeight))
 
