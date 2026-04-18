@@ -1,5 +1,5 @@
 import { useDrag } from "@use-gesture/react"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 
 interface SliderProps {
   value: number
@@ -28,10 +28,9 @@ export const Slider = ({
 }: SliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const [currVal, setCurrVal] = useState(value)
-  useEffect(() => {
-    setCurrVal(value)
-  }, [value])
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragVal, setDragVal] = useState(value)
+  const currVal = isDragging ? dragVal : value
 
   // TODO: add spring (e.g. when space between options is big as with validationSplit)
   const bind = useDrag(({ event, active, xy: [clientX] }) => {
@@ -42,9 +41,14 @@ export const Slider = ({
       const newValue =
         Math.round((percentage * (max - min) + min) * (1 / step)) / (1 / step)
       const clampedValue = Math.min(Math.max(newValue, min), max)
-      setCurrVal(clampedValue)
-      if (lazyUpdate && active) return
-      else onChange?.(transform?.(clampedValue) ?? clampedValue)
+      if (active) {
+        setIsDragging(true)
+        setDragVal(clampedValue)
+        if (lazyUpdate) return
+      } else {
+        setIsDragging(false)
+      }
+      onChange?.(transform?.(clampedValue) ?? clampedValue)
     }
   })
 

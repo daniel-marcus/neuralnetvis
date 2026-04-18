@@ -5,7 +5,7 @@ import { isWebGPUBackend } from "@/utils/webgpu"
 import { RootState, Tunnel } from "@/components/main-canvas"
 import type { ComputeFunction } from "@react-three/fiber"
 
-/* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps, @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/refs, react-hooks/immutability, react-hooks/exhaustive-deps, @typescript-eslint/no-unused-vars */
 
 // drei/View component adapted for WebGPURenderer
 // original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx

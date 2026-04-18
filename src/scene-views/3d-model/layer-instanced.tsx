@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useMemo, useState } from "react"
+import { memo, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useNeuronInteractions } from "./interactions"
@@ -109,9 +109,9 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 
   // TODO: layer activations don't get updated with WebGPU ...
   const layerActivations = useLayerActivations(props.index)
-  const [idxMap, setIdxMap] = useState(new Map<number, number>())
+  // sort neurons by activation for output layers w/ many neurons
   const shouldSort = layerPos === "output" && h > OUTPUT_TRUNC_THRESHOLD
-  useLayoutEffect(() => {
+  const idxMap = useMemo(() => {
     if (!shouldSort || !layerActivations?.activations) return
     const indexed = [...layerActivations.activations].map((v, i) => ({ v, i }))
     const sorted = indexed.toSorted((a, b) => b.v - a.v)
@@ -119,7 +119,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
     sorted.forEach((item, sortedIndex) => {
       newIdxMap.set(item.i, sortedIndex)
     })
-    setIdxMap(newIdxMap)
+    return newIdxMap
   }, [layerActivations, shouldSort])
 
   const positions: PosObj[] = useMemo(() => {
@@ -127,7 +127,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
     const arr = Array.from({ length: h * w * c })
     let hiddenIdx = -1
     return arr.map((_, i) => {
-      let sortedIdx = idxMap.get(i) ?? i
+      let sortedIdx = idxMap?.get(i) ?? i
       const isHidden = shouldSort && sortedIdx >= MAX_OUTPUT_NEURONS
       if (isHidden) {
         sortedIdx = MAX_OUTPUT_NEURONS

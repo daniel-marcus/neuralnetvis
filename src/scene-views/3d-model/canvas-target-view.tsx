@@ -46,6 +46,7 @@ function CanvasTargetInner(props: CanvasTargetInnerProps) {
   const [canvasTarget, setCanvasTarget] = useState<CanvasTarget | null>(null)
   const [virtualScene] = useState(() => new Scene())
 
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => {
     if (!canvasRef.current) return
     const newTarget = new CanvasTarget(canvasRef.current)

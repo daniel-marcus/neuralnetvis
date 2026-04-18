@@ -14,8 +14,11 @@ export function usePoints() {
   const subset = useSceneStore((s) => s.subset)
   const batchCount = useSceneStore((s) => s.batchCount)
   useEffect(() => {
-    setPoints(null)
-    setMinY(0)
+    async function reset() {
+      setPoints(null)
+      setMinY(0)
+    }
+    reset()
   }, [subset])
   useEffect(() => {
     if (!backendReady) return

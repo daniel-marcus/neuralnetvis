@@ -11,6 +11,11 @@ import { CustomBtns } from "./sample-viewer-btns"
 import { ClientOnly } from "@/utils/helpers"
 import type { SampleRaw } from "@/data"
 
+const throttledScrollTo = throttle(
+  (el: Element | null, left: number) => el?.scrollTo({ left }),
+  50,
+)
+
 const ITEM_WIDTH = 78 // --item-size + 0.5rem
 const BUFFER_SIZE = 3 // items before/after visible items to preload
 const DEFAULT_WIDTH = 600
@@ -81,15 +86,9 @@ export function SampleViewer_() {
     [],
   )
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleSliderChange = useCallback(
-    throttle((newVal: number) => {
-      scrollElRef.current?.scrollTo({
-        left: newVal,
-      })
-    }, 50),
-    [],
-  )
+  const handleSliderChange = useCallback((newVal: number) => {
+    throttledScrollTo(scrollElRef.current, newVal)
+  }, [])
 
   const atStart = scrollLeft <= 0
   const atEnd = scrollLeft >= totalWidth - containerWidth
