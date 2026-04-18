@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   CollapsibleWithTitle,
   DraggableList,
@@ -36,9 +36,6 @@ export const CreateNewDataset = () => {
   const [labels, setLabels] = useState<string[]>(
     DEFAULT_LABELS[hands].slice(0, 3),
   )
-  useEffect(() => {
-    setLabels(DEFAULT_LABELS[hands].slice(0, 3))
-  }, [hands])
   const router = useRouter()
   const ds = useCurrScene((s) => s.ds)
   const setDs = useCurrScene((s) => s.setDs)
@@ -69,7 +66,11 @@ export const CreateNewDataset = () => {
             key={`select_hands_${hands}`}
             options={HANDS_OPTIONS}
             value={String(hands)}
-            onChange={(val) => setHands(parseInt(val) as HandsNum)}
+            onChange={(val) => {
+              const newHands = parseInt(val) as HandsNum
+              setHands(newHands)
+              setLabels(DEFAULT_LABELS[newHands].slice(0, 3))
+            }}
           />
         </InputRow>
         <InputRow label="labels">

@@ -7,7 +7,7 @@ import {
   TextInput,
 } from "@/components/ui-elements"
 import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
-import type { FormEvent } from "react"
+import type { SubmitEvent } from "react"
 import { useModelTransition } from "@/model/model"
 import { importKerasModel } from "@/model/import-keras"
 
@@ -19,9 +19,6 @@ export function MyModels() {
   const setStatus = useGlobalStore((s) => s.status.update)
   const defaultName = useCurrScene((s) => `my_${s.ds?.key ?? ""}_model`)
   const [modelName, setModelName] = useState<string>(defaultName)
-  useEffect(() => {
-    setModelName(defaultName)
-  }, [defaultName])
   const saveModel = async () => {
     // TODO: also save dataset key?
     if (!model) return
@@ -134,7 +131,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
   const [setModel] = useModelTransition(_setModel, onImportFinished)
   const [modelFiles, setModelFiles] = useState<FileList | null>(null)
   const importModel = useCallback(
-    async (e?: FormEvent<HTMLFormElement>) => {
+    async (e?: SubmitEvent<HTMLFormElement>) => {
       e?.preventDefault()
       if (!modelFiles) return
 

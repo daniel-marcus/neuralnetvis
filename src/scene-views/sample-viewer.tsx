@@ -74,6 +74,7 @@ export function SampleViewer_() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleScroll = useCallback(
+    // eslint-disable-next-line react-hooks/use-memo
     throttle((e: React.UIEvent<HTMLDivElement>) => {
       if (e.target instanceof HTMLDivElement) setScrollLeft(e.target.scrollLeft)
     }, 50),

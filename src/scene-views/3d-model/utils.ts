@@ -109,7 +109,6 @@ export function useSize(
     bBox.setFromObject(ref.current)
     bBox.getSize(sizeVec)
     // value comes from ref, so state setting in effect is ok (https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect#valid)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
   }, [ref, bBox, sizeVec, padding])
   return size
