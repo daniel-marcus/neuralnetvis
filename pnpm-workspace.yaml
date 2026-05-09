@@ -1,0 +1,9 @@
+allowBuilds:
+  '@swc/core': true
+  '@tensorflow/tfjs-node': true
+  core-js: false
+  esbuild: false
+  lefthook: false
+  puppeteer: true
+  sharp: false
+  unrs-resolver: false
