@@ -181,8 +181,8 @@ importers:
         specifier: ^4.2.4
         version: 4.2.4
       terser-webpack-plugin:
-        specifier: ^5.5.0
-        version: 5.5.0(@swc/core@1.13.5(@swc/helpers@0.5.21))(webpack@5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14))
+        specifier: ^5.6.0
+        version: 5.6.0(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14)(webpack@5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14))
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1337,8 +1337,8 @@ packages:
   '@types/node-fetch@2.6.13':
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
 
-  '@types/node@24.12.3':
-    resolution: {integrity: sha512-8oljBDGun9cIsZRJR6fkihn0TSXJI0UDOOhncYaERq6M0JMDoPLxyscwruJcb4GKS6dvK/d8xebYBg27h/duaQ==}
+  '@types/node@24.12.4':
+    resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
 
   '@types/node@25.6.2':
     resolution: {integrity: sha512-sokuT28dxf9JT5Kady1fsXOvI4HVpjZa95NKT5y9PNTIrs2AsobR4GFAA90ZG8M+nxVRLysCXsVj6eGC7Vbrlw==}
@@ -4307,22 +4307,6 @@ packages:
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
 
-  terser-webpack-plugin@5.5.0:
-    resolution: {integrity: sha512-UYhptBwhWvfIjKd/UuFo6D8uq9xpGLDK+z8EDsj/zWhrTaH34cKEbrkMKfV5YWqGBvAYA3tlzZbs2R+qYrbQJA==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@swc/core': '*'
-      esbuild: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      esbuild:
-        optional: true
-      uglify-js:
-        optional: true
-
   terser-webpack-plugin@5.6.0:
     resolution: {integrity: sha512-Eum+5ajkaOhf5KbM26osvv21kLD7BaGqQ1UA4Ami4arYwylmGUQTgHFpHDdmJod1q4QXa66p0to/FBKID+J1vA==}
     engines: {node: '>= 10.13.0'}
@@ -5951,7 +5935,7 @@ snapshots:
       '@types/node': 25.6.2
       form-data: 4.0.5
 
-  '@types/node@24.12.3':
+  '@types/node@24.12.4':
     dependencies:
       undici-types: 7.16.0
 
@@ -6369,7 +6353,7 @@ snapshots:
       '@swc/helpers': 0.5.21
       '@types/command-line-args': 5.2.3
       '@types/command-line-usage': 5.0.4
-      '@types/node': 24.12.3
+      '@types/node': 24.12.4
       command-line-args: 6.0.2
       command-line-usage: 7.0.4
       flatbuffers: 25.9.23
@@ -9232,16 +9216,6 @@ snapshots:
     transitivePeerDependencies:
       - bare-abort-controller
       - react-native-b4a
-
-  terser-webpack-plugin@5.5.0(@swc/core@1.13.5(@swc/helpers@0.5.21))(webpack@5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.47.1
-      webpack: 5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14)
-    optionalDependencies:
-      '@swc/core': 1.13.5(@swc/helpers@0.5.21)
 
   terser-webpack-plugin@5.6.0(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14)(webpack@5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.21))(postcss@8.5.14)):
     dependencies:
