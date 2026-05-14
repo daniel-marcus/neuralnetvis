@@ -82,7 +82,7 @@
     "patch-package": "^8.0.1",
     "postcss": "^8.5.14",
     "prettier": "^3.8.3",
-    "puppeteer": "^24.43.0",
+    "puppeteer": "^24.43.1",
     "tailwindcss": "^4.2.4",
     "terser-webpack-plugin": "^5.5.0",
     "typescript": "^6.0.3",
