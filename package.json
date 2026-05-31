@@ -3,9 +3,19 @@
   "version": "0.1.4",
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
-  "author": "Daniel Marcus (https://danielmarcus.de)",
-  "license": "MIT",
+  "keywords": [
+    "data-visualization",
+    "machine-learning",
+    "neural-network",
+    "react",
+    "tensorflow",
+    "threejs",
+    "webgl",
+    "webgpu"
+  ],
   "homepage": "https://neuralnetvis.app",
+  "license": "MIT",
+  "author": "Daniel Marcus (https://danielmarcus.de)",
   "repository": "https://github.com/daniel-marcus/neuralnetvis",
   "scripts": {
     "dev": "next dev",
@@ -15,7 +25,7 @@
     "lint": "eslint .",
     "lint:summary": "eslint . --format summary",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write src",
+    "format": "oxfmt",
     "test": "vitest --run",
     "test:watch": "vitest",
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
@@ -79,9 +89,9 @@
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.9.0",
     "lefthook": "^2.1.9",
+    "oxfmt": "^0.52.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.15",
-    "prettier": "^3.8.3",
     "puppeteer": "^25.1.0",
     "tailwindcss": "^4.3.0",
     "terser-webpack-plugin": "^5.6.1",
@@ -89,16 +99,6 @@
     "vite": "^8.0.14",
     "vitest": "^4.1.7"
   },
-  "keywords": [
-    "data-visualization",
-    "machine-learning",
-    "neural-network",
-    "tensorflow",
-    "threejs",
-    "react",
-    "webgl",
-    "webgpu"
-  ],
   "prettier": {
     "semi": false
   },
