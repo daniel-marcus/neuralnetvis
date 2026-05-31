@@ -22,10 +22,10 @@
     "build": "next build",
     "start": "next start",
     "serve": "npx serve out",
-    "lint": "eslint .",
-    "lint:summary": "eslint . --format summary",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "typecheck": "tsc --noEmit",
-    "format": "oxfmt",
+    "fmt": "oxfmt",
     "test": "vitest --run",
     "test:watch": "vitest",
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
@@ -67,7 +67,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.5",
     "@react-spring/types": "^10.1.0",
     "@swc-node/register": "^1.11.1",
     "@tailwindcss/postcss": "^4.3.0",
@@ -85,11 +84,11 @@
     "commit-and-tag-version": "^12.7.3",
     "eslint": "^10.4.1",
     "eslint-config-next": "^16.2.6",
-    "eslint-formatter-summary": "^2.0.2",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.9.0",
     "lefthook": "^2.1.9",
     "oxfmt": "^0.52.0",
+    "oxlint": "^1.67.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.15",
     "puppeteer": "^25.1.0",
@@ -98,9 +97,6 @@
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
     "vitest": "^4.1.7"
-  },
-  "prettier": {
-    "semi": false
   },
   "packageManager": "pnpm@11.5.0",
   "postcss": {
