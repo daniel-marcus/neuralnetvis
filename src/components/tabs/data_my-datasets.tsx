@@ -29,8 +29,7 @@ export const MyDatasets = () => {
     updateDatasets()
   }
   const handleSelect = async (dsKey: string) => {
-    const dsDef =
-      datasets.find((d) => d.key === dsKey) || (await getDsMetaFromDb(dsKey))
+    const dsDef = datasets.find((d) => d.key === dsKey) || (await getDsMetaFromDb(dsKey))
     if (dsDef) {
       const path = getDsPath(dsDef)
       router.push(path)
@@ -58,10 +57,7 @@ export const MyDatasets = () => {
               </button>
               <div>
                 {d.isUserGenerated && (
-                  <button
-                    className="px-2 active:text-white"
-                    onClick={() => exportDs(d)}
-                  >
+                  <button className="px-2 active:text-white" onClick={() => exportDs(d)}>
                     export
                   </button>
                 )}

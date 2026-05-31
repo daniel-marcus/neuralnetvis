@@ -37,11 +37,7 @@ export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
   const tempWorldMatrix = new THREE.Matrix4()
   meshRef.current.getMatrixAt(idx, tempMatrix)
   tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
-  tempWorldMatrix.decompose(
-    worldPos,
-    new THREE.Quaternion(),
-    new THREE.Vector3(),
-  )
+  tempWorldMatrix.decompose(worldPos, new THREE.Quaternion(), new THREE.Vector3())
   return worldPos
 }
 
@@ -97,10 +93,7 @@ export function interpolate(from: number, to: number, percent: number): number {
   return from + (to - from) * percent
 }
 
-export function useSize(
-  ref: React.RefObject<THREE.Object3D | null>,
-  padding = 0,
-) {
+export function useSize(ref: React.RefObject<THREE.Object3D | null>, padding = 0) {
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])

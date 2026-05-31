@@ -17,11 +17,7 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     return super.call(query, newKwargs)
   }
 
-  buildFromSignature(
-    queryShape: tf.Shape,
-    valueShape: tf.Shape,
-    keyShape: tf.Shape,
-  ) {
+  buildFromSignature(queryShape: tf.Shape, valueShape: tf.Shape, keyShape: tf.Shape) {
     // 1. Call the parent method to set up the layer
     super.buildFromSignature(queryShape, valueShape, keyShape)
 

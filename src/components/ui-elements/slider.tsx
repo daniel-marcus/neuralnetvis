@@ -38,8 +38,7 @@ export const Slider = ({
       event.stopPropagation()
       const rect = sliderRef.current.getBoundingClientRect()
       const percentage = (clientX - rect.left) / rect.width
-      const newValue =
-        Math.round((percentage * (max - min) + min) * (1 / step)) / (1 / step)
+      const newValue = Math.round((percentage * (max - min) + min) * (1 / step)) / (1 / step)
       const clampedValue = Math.min(Math.max(newValue, min), max)
       if (active) {
         setIsDragging(true)

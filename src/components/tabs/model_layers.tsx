@@ -3,20 +3,14 @@ import { setLayerConfigs, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { getLayerDef, layerDefMap } from "@/model/layers"
 import { isVisible } from "@/neuron-layers/layers"
-import type {
-  LayerConfig,
-  LayerConfigArray,
-  LayerConfigMap,
-} from "@/model/layers/types"
+import type { LayerConfig, LayerConfigArray, LayerConfigMap } from "@/model/layers/types"
 
 const { InputRow, Slider, Select, Button } = Components
 const { CollapsibleWithTitle, DraggableList } = Components
 
 function getInputComp<T extends keyof LayerConfigMap>(
   layerConfig: LayerConfig<T>,
-  updateLayerConfig: <C extends keyof LayerConfigMap>(
-    config: LayerConfig<C>["config"],
-  ) => void,
+  updateLayerConfig: <C extends keyof LayerConfigMap>(config: LayerConfig<C>["config"]) => void,
   layerConfigs: LayerConfigArray,
   isLast: boolean,
 ): ReactNode {
@@ -33,16 +27,11 @@ function getInputComp<T extends keyof LayerConfigMap>(
     const [, ...dims] = config.batchInputShape as number[]
     return <div className="text-right">{dims.join(" x ")}</div>
   } else if (className === "Dense" && isLast)
-    return (
-      <div className="text-right">
-        {(config as LayerConfigMap["Dense"]).units!}
-      </div>
-    )
+    return <div className="text-right">{(config as LayerConfigMap["Dense"]).units!}</div>
   else if (option && option.inputType === "slider") {
     const { name, min, max, step } = option
     const { transformFromSliderVal, transformToSliderVal } = option
-    const sliderVal =
-      transformToSliderVal?.(config[name] as number) ?? (config[name] as number)
+    const sliderVal = transformToSliderVal?.(config[name] as number) ?? (config[name] as number)
     return (
       <Slider
         {...sharedSliderProps}
@@ -72,9 +61,7 @@ function getInputComp<T extends keyof LayerConfigMap>(
   } else return null
 }
 
-function newDefaultLayer<T extends keyof LayerConfigMap>(
-  className: T,
-): LayerConfig<T> {
+function newDefaultLayer<T extends keyof LayerConfigMap>(className: T): LayerConfig<T> {
   const config = getLayerDef(className)?.defaultConfig ?? {}
   const layer = { className, config }
   return layer as LayerConfig<T>
@@ -82,8 +69,7 @@ function newDefaultLayer<T extends keyof LayerConfigMap>(
 
 export const LayerConfigControl = () => {
   const model = useCurrScene((s) => s.model)
-  const layerConfigs = (model?.getConfig().layers ??
-    []) as unknown as LayerConfigArray
+  const layerConfigs = (model?.getConfig().layers ?? []) as unknown as LayerConfigArray
   const resetLayerConfigs = useCurrScene((s) => s.resetLayerConfigs)
 
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -112,8 +98,7 @@ export const LayerConfigControl = () => {
     setLayerConfigs(layerConfigs.filter((_, j) => j !== i))
   }
   const hasMutliDimInput =
-    model?.layers[0].batchInputShape &&
-    model?.layers[0].batchInputShape.length > 2
+    model?.layers[0].batchInputShape && model?.layers[0].batchInputShape.length > 2
   const selectOptions = [
     {
       value: "empty",
@@ -138,9 +123,7 @@ export const LayerConfigControl = () => {
             const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
             setLayerConfigs([...newLayerConfigs])
           }}
-          checkValidChange={(newOrder) =>
-            checkVaildOrder(newOrder, layerConfigs)
-          }
+          checkValidChange={(newOrder) => checkVaildOrder(newOrder, layerConfigs)}
         >
           {layerConfigs.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
@@ -150,20 +133,11 @@ export const LayerConfigControl = () => {
               setLayerConfigs([...layerConfigs])
             }
             const isLast = i === layerConfigs.length - 1
-            const inputComp = getInputComp(
-              layer,
-              updateLayerConfig,
-              layerConfigs,
-              isLast,
-            )
+            const inputComp = getInputComp(layer, updateLayerConfig, layerConfigs, isLast)
 
             const isInvisible =
-              excludedLayers.includes(layer.config.name ?? "") ||
-              !isVisible(model.layers[i])
-            const mustBe =
-              i === 0 ||
-              i === layerConfigs.length - 1 ||
-              layer.className === "Flatten"
+              excludedLayers.includes(layer.config.name ?? "") || !isVisible(model.layers[i])
+            const mustBe = i === 0 || i === layerConfigs.length - 1 || layer.className === "Flatten"
             const label = (
               <div className="flex justify-between">
                 <div className="flex truncate">
@@ -174,10 +148,7 @@ export const LayerConfigControl = () => {
                   </div>
                 </div>
                 {!mustBe && (
-                  <button
-                    onClick={() => handleRemove(i)}
-                    className="px-2 active:text-white"
-                  >
+                  <button onClick={() => handleRemove(i)} className="px-2 active:text-white">
                     x
                   </button>
                 )}
@@ -221,9 +192,7 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 
   const flattenIdx = newLayerConfigs.findIndex((l) => l.className === "Flatten")
-  const firstDenseIdx = newLayerConfigs.findIndex(
-    (l) => l.className === "Dense",
-  )
+  const firstDenseIdx = newLayerConfigs.findIndex((l) => l.className === "Dense")
   const lastMultiDimIdx = newLayerConfigs.findLastIndex((l) =>
     ["Conv2D", "MaxPooling2D", "RandomRotation"].includes(l.className),
   )
@@ -235,9 +204,7 @@ function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
     setStatus("Output layer must be the last layer")
     return false
   } else if (lastMultiDimIdx > 0 && flattenIdx < lastMultiDimIdx) {
-    setStatus(
-      "Conv2D, MaxPooling2D, and RandomRotation must come before Flatten",
-    )
+    setStatus("Conv2D, MaxPooling2D, and RandomRotation must come before Flatten")
     return false
   } else if (firstDenseIdx > 0 && flattenIdx > firstDenseIdx) {
     setStatus("Dense must come after Flatten")

@@ -18,9 +18,7 @@ export function DomRefsProvider({ children }: { children: React.ReactNode }) {
     neuronStatusRef: useRef<HTMLDivElement>(null),
     sampleViewerRef: useRef<HTMLDivElement>(null),
   }
-  return (
-    <DomRefsContext.Provider value={refs}>{children}</DomRefsContext.Provider>
-  )
+  return <DomRefsContext.Provider value={refs}>{children}</DomRefsContext.Provider>
 }
 
 export function useDomRefs() {

@@ -142,11 +142,7 @@ async function getActivations(
         const tensor = layer.hasColorChannels
           ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
           : actTensor
-        if (
-          isRegression &&
-          layer.layerPos === "hidden" &&
-          stats?.[layer.index]
-        ) {
+        if (isRegression && layer.layerPos === "hidden" && stats?.[layer.index]) {
           const { mean, std } = stats[layer.index]!
           const meanTensor = tf.tensor(mean)
           const stdTensor = tf.tensor(std)
@@ -211,8 +207,7 @@ async function getActivations(
           // for output layers we still need to download the activations
           // for output ranking & regression labels
           const activations = (await actTensor.data()) as Float32Array
-          newLayerActivations[layer.index] =
-            newLayerActivations[layer.index] ?? {}
+          newLayerActivations[layer.index] = newLayerActivations[layer.index] ?? {}
           newLayerActivations[layer.index].activations = activations
         }
       } catch (e) {

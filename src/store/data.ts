@@ -65,8 +65,7 @@ export const createDataSlice: StateCreator<
   },
   totalSamples: (subset = "train") => get().ds?.[subset].totalSamples ?? 0,
   isRegression: () => get().ds?.task === "regression",
-  getAspectRatio: () =>
-    get().ds?.train.aspectRatio ?? get().ds?.camProps?.aspectRatio ?? 1,
+  getAspectRatio: () => get().ds?.train.aspectRatio ?? get().ds?.camProps?.aspectRatio ?? 1,
 
   sampleIdx: undefined,
   setSampleIdx: (arg) =>

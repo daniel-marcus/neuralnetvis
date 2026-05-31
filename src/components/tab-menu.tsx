@@ -35,14 +35,11 @@ export const TabMenu = () => {
     return tabs.map((t) => {
       const isActive = currTab?.key === t.key || pathname === `/${t.slug}`
       const allChildren = t.children?.flatMap((c) => [c, ...(c.children ?? [])])
-      const isParent =
-        !!currTab && allChildren?.some((c) => c.key === currTab.key)
+      const isParent = !!currTab && allChildren?.some((c) => c.key === currTab.key)
       const isSibling = currTab?.parent?.key === parent?.key && !isActive
       const isChild = !!parent && parent.key === currTab?.key
       const isShown =
-        (isActive && !currTab?.children) ||
-        isChild ||
-        (isSibling && !currTab?.children)
+        (isActive && !currTab?.children) || isChild || (isSibling && !currTab?.children)
       return (
         <Fragment key={t.key}>
           <TabButton
@@ -53,16 +50,12 @@ export const TabMenu = () => {
           >
             {t.label ?? t.key}
           </TabButton>
-          {!!t.children && (isActive || isParent) && (
-            <>{renderTabs(t.children, t)}</>
-          )}
+          {!!t.children && (isActive || isParent) && <>{renderTabs(t.children, t)}</>}
         </Fragment>
       )
     })
   }
-  const backKey = tabIsShown
-    ? currTab?.parent?.key
-    : currTab?.parent?.parent?.key
+  const backKey = tabIsShown ? currTab?.parent?.key : currTab?.parent?.parent?.key
   return (
     <div className="pointer-events-auto screenshot:hidden">
       <div className="flex justify-end items-center w-full relative z-10 overflow-hidden">
@@ -79,9 +72,7 @@ export const TabMenu = () => {
       >
         <div
           className={`${
-            tabIsShown
-              ? ""
-              : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
+            tabIsShown ? "" : "-translate-y-full sm:translate-y-0 sm:translate-x-full"
           } transition-transform duration-300 ease-in-out max-h-[calc(100dvh-var(--header-height))] overflow-y-auto`}
         >
           {content}
@@ -99,13 +90,7 @@ interface TabButtonProps {
   isShown?: boolean
 }
 
-const TabButton = ({
-  href,
-  isActive,
-  isShown = true,
-  children,
-  onClick,
-}: TabButtonProps) => {
+const TabButton = ({ href, isActive, isShown = true, children, onClick }: TabButtonProps) => {
   const Component = href ? Link : "button"
   return (
     <Component

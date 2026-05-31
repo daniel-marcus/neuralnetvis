@@ -33,9 +33,7 @@ export function NeuronLabels(props: NeuronLabelsProps) {
     return <DecodedInputLabel {...props} label={label} />
   }
   const side = layerPos === "input" ? "left" : "right"
-  return (
-    <NeuronLabel {...props} text={props.overrideText ?? label} side={side} />
-  )
+  return <NeuronLabel {...props} text={props.overrideText ?? label} side={side} />
 }
 
 function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
@@ -127,12 +125,7 @@ export const TextLabel = memo(function NeuronLabel({
 
   // spriteNodeMaterial didn't work with sprite.center, so using meshBasicMaterial + camera lookAt
   return (
-    <group
-      position={position}
-      rotation={[0, -Math.PI / 2, 0]}
-      ref={labelRef}
-      scale={size * 1.2}
-    >
+    <group position={position} rotation={[0, -Math.PI / 2, 0]} ref={labelRef} scale={size * 1.2}>
       <sprite ref={labelRef} position={anchorPos} scale={scale}>
         <meshBasicMaterial map={texture} transparent color={color} />
       </sprite>

@@ -27,9 +27,7 @@ describe("normalizeHandLandmarks", () => {
 
   it("single input: should return correct values", async () => {
     if (!resultSingle || !singleInput) throw new Error("No data")
-    const landmarks = singleInput
-      .reshape(handPose.inputDims.slice(0, 2))
-      .arraySync() as number[][]
+    const landmarks = singleInput.reshape(handPose.inputDims.slice(0, 2)).arraySync() as number[][]
     const normalized = manuallyNormalize(landmarks).flat().map(round)
     const result = resultSingle.arraySync() as number[]
     expect(result.map(round)).toEqual(normalized.map(round))

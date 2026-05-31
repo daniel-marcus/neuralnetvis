@@ -1,6 +1,6 @@
 allowBuilds:
-  '@swc/core': false
-  '@tensorflow/tfjs-node': true
+  "@swc/core": false
+  "@tensorflow/tfjs-node": true
   core-js: false
   esbuild: false
   lefthook: false

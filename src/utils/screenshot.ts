@@ -2,8 +2,7 @@ import { useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { useSceneStore } from "@/store"
 
-const useIsScreenshot = () =>
-  typeof useSearchParams().get("screenshot") === "string"
+const useIsScreenshot = () => typeof useSearchParams().get("screenshot") === "string"
 
 export function useScreenshotBodyClass() {
   const isScreenshot = useIsScreenshot()

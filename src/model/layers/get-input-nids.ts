@@ -7,12 +7,7 @@ import type { Nid } from "@/neuron-layers"
 
 // for Dense etc
 // each neuron is connected to all neurons in the previous layer
-export const getFullyConnectedInputNids: GetInputNidsFunc = (
-  _,
-  __,
-  prevLayer,
-  prevLayerIdx,
-) => {
+export const getFullyConnectedInputNids: GetInputNidsFunc = (_, __, prevLayer, prevLayerIdx) => {
   // each neuron is connected to all neurons in the previous layer
   const prevUnits = getUnits(prevLayer)
   return Array.from({ length: prevUnits }).map((_, i) => {
@@ -22,12 +17,7 @@ export const getFullyConnectedInputNids: GetInputNidsFunc = (
 
 // for BatchNormalization etc:
 // each neuron is connected to 1 neuron in the previous layer
-export const getOneToOneInputNids: GetInputNidsFunc = (
-  _,
-  nIdx,
-  __,
-  prevLayerIdx,
-) => {
+export const getOneToOneInputNids: GetInputNidsFunc = (_, nIdx, __, prevLayerIdx) => {
   return [getNid(prevLayerIdx, nIdx)]
 }
 
@@ -45,9 +35,7 @@ export const getReceptiveFieldInputNids: GetInputNidsFunc = (
     (l.getConfig().kernelSize as number[]) ??
     (l.getConfig().poolSize as number[]) ??
     ([] as number[])
-  const [strideHeight, strideWidth] = (l.getConfig().strides as number[]) ?? [
-    1, 1,
-  ]
+  const [strideHeight, strideWidth] = (l.getConfig().strides as number[]) ?? [1, 1]
   const filterSize = filterHeight * filterWidth
 
   const outputShape = l.outputShape as number[]
@@ -60,8 +48,7 @@ export const getReceptiveFieldInputNids: GetInputNidsFunc = (
     const depthIdx = k % depth
     if (depthwise && depthIdx !== thisDepth) continue
     const widthIdx = thisX * strideWidth + (Math.floor(k / depth) % filterWidth)
-    const heightIdx =
-      thisY * strideHeight + Math.floor(k / (depth * filterWidth))
+    const heightIdx = thisY * strideHeight + Math.floor(k / (depth * filterWidth))
     const flatIndex = getFlatIndex(heightIdx, widthIdx, depthIdx, prevShape)
     const inputNid = getNid(prevLayerIdx, flatIndex)
     inputNids.push(inputNid)

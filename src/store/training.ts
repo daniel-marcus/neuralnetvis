@@ -1,11 +1,7 @@
 import type { StateCreator } from "zustand"
 import type { TrainingConfig } from "@/model"
 import type { History } from "@tensorflow/tfjs"
-import {
-  isBatchLog,
-  type Metric,
-  type TrainingLog,
-} from "@/components/ui-elements/logs-plot"
+import { isBatchLog, type Metric, type TrainingLog } from "@/components/ui-elements/logs-plot"
 
 export interface TrainingSlice {
   trainConfig: TrainingConfig

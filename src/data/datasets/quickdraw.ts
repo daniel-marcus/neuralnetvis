@@ -87,10 +87,7 @@ export const quickDraw: DatasetDef = {
   },
   loadPreview: async () => {
     const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
-      [
-        "/data/quickdraw/x_train_preview.npz",
-        "/data/quickdraw/y_train_preview.npz",
-      ],
+      ["/data/quickdraw/x_train_preview.npz", "/data/quickdraw/y_train_preview.npz"],
       true,
     )
     xTrain.shape = [...xTrain.shape, 1]

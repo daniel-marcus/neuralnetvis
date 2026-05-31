@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import {
-  ScatterplotLayer,
-  GeoJsonLayer,
-  IconLayer,
-  PathLayer,
-  TextLayer,
-} from "@deck.gl/layers"
+import { ScatterplotLayer, GeoJsonLayer, IconLayer, PathLayer, TextLayer } from "@deck.gl/layers"
 import { PathStyleExtension } from "@deck.gl/extensions"
 import { useSceneStore } from "@/store"
 import { getColorVals, NEG_BASE, POS_BASE } from "@/utils/colors"
@@ -75,9 +69,7 @@ export function useLayers() {
         lineWidthMinPixels: 1,
         getPosition: (d: Point, { index: idx }) =>
           view === "evaluation"
-            ? Float32Array.from(
-                xyToPlot([d.yNorm, predictions?.[idx]?.normPredicted ?? 0]),
-              )
+            ? Float32Array.from(xyToPlot([d.yNorm, predictions?.[idx]?.normPredicted ?? 0]))
             : [d.lon, d.lat],
         getRadius: () =>
           view === "evaluation" && points
@@ -162,17 +154,7 @@ export function useLayers() {
         iconMapping,
       }),
     ],
-    [
-      activePoint,
-      mapProps,
-      points,
-      minY,
-      baseLayer,
-      subset,
-      view,
-      setSampleIdx,
-      predictions,
-    ],
+    [activePoint, mapProps, points, minY, baseLayer, subset, view, setSampleIdx, predictions],
   )
 
   return layers

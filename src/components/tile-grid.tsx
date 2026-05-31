@@ -76,9 +76,7 @@ export const TileGrid = () => {
   if (is404) return null
   return (
     <div
-      className={`tile-grid [--gap:1rem] xl:[--gap:2rem] ${
-        hasLesson ? "absolute" : ""
-      }`}
+      className={`tile-grid [--gap:1rem] xl:[--gap:2rem] ${hasLesson ? "absolute" : ""}`}
       style={
         {
           "--tile-width": "320px",
@@ -89,9 +87,7 @@ export const TileGrid = () => {
       <div
         className={`w-(--tile-width) sm:w-[calc(2*var(--tile-width)+var(--gap))] lg:w-[calc(3*var(--tile-width)+2*var(--gap))] mx-auto flex flex-col min-h-[calc(100dvh-120px)] px-(--padding-main) xs:px-0`}
       >
-        <SectionIntro
-          className={hasActive ? "hidden pointer-events-none" : ""}
-        />
+        <SectionIntro className={hasActive ? "hidden pointer-events-none" : ""} />
         <div
           className={`grow grid grid-cols-[repeat(1,var(--tile-width))] sm:grid-cols-[repeat(2,var(--tile-width))] lg:grid-cols-[repeat(3,var(--tile-width))] justify-center gap-(--gap) grid-flow-dense`}
         >
@@ -242,18 +238,12 @@ function useIs404() {
   const hasActive = useHasActiveTile()
   const section = useSection()
   const pathname = usePathname()
-  return (
-    pathname !== "/" &&
-    !hasActive &&
-    (!section || !sections.includes(section as Section))
-  )
+  return pathname !== "/" && !hasActive && (!section || !sections.includes(section as Section))
 }
 
 export function getTileDuration() {
   const s = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue(
-      "--tile-duration",
-    ),
+    getComputedStyle(document.documentElement).getPropertyValue("--tile-duration"),
   )
   const ms = s * 1000
   if (!ms) console.warn("--tile-duration not set!", ms)

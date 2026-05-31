@@ -72,8 +72,7 @@ export type VisSlice = {
 export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
   vis: {
     ...defaultVisConfig,
-    setConfig: (newConfig) =>
-      set(({ vis }) => ({ vis: { ...vis, ...newConfig } })),
+    setConfig: (newConfig) => set(({ vis }) => ({ vis: { ...vis, ...newConfig } })),
     getConfig: (key) => get().vis[key],
     toggleShowHiddenLayers: () =>
       set(({ vis }) => ({
@@ -89,16 +88,11 @@ export const createVisSlice: StateCreator<VisSlice> = (set, get) => ({
         },
       })),
     getDefault: (key) => defaultVisConfig[key],
-    reset: (key) =>
-      set(({ vis }) => ({ vis: { ...vis, [key]: defaultVisConfig[key] } })),
-    toggleLocked: () =>
-      set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
-    toggleLights: () =>
-      set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
-    toggleAutoRotate: () =>
-      set(({ vis }) => ({ vis: { ...vis, autoRotate: !vis.autoRotate } })),
-    setFlatView: (flatView) =>
-      set(({ vis }) => ({ vis: { ...vis, flatView } })),
+    reset: (key) => set(({ vis }) => ({ vis: { ...vis, [key]: defaultVisConfig[key] } })),
+    toggleLocked: () => set(({ vis }) => ({ vis: { ...vis, isLocked: !vis.isLocked } })),
+    toggleLights: () => set(({ vis }) => ({ vis: { ...vis, lightsOn: !vis.lightsOn } })),
+    toggleAutoRotate: () => set(({ vis }) => ({ vis: { ...vis, autoRotate: !vis.autoRotate } })),
+    setFlatView: (flatView) => set(({ vis }) => ({ vis: { ...vis, flatView } })),
   },
   three: undefined,
   setThree: (three) => set({ three }),

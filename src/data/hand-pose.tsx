@@ -29,8 +29,7 @@ export function HandPoseCapture({ stream }: RecorderProps) {
   const setTab = useGlobalStore((s) => s.setTab)
   const openNewDsTab = useCallback(() => setTab("data"), [setTab])
 
-  if (!ds?.isUserGenerated)
-    return <CustomBtn onClick={openNewDsTab}>+</CustomBtn>
+  if (!ds?.isUserGenerated) return <CustomBtn onClick={openNewDsTab}>+</CustomBtn>
   else if (stream)
     return (
       <CustomBtn
@@ -44,9 +43,7 @@ export function HandPoseCapture({ stream }: RecorderProps) {
     return (
       <CustomBtn
         onClick={async () => {
-          const confirm = window.confirm(
-            "Are you sure you want to clear all recorded samples?",
-          )
+          const confirm = window.confirm("Are you sure you want to clear all recorded samples?")
           if (confirm) await resetData(ds.key, "train")
         }}
       >
@@ -88,16 +85,9 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
       if (numHands === 1) {
         landmarks = [landmarks[0] ?? emptyHand]
       } else if (numHands > 1) {
-        const leftIdx = result.handedness.findIndex(
-          (h) => h[0].categoryName === "Left",
-        )
-        const rightIdx = result.handedness.findIndex(
-          (h) => h[0].categoryName === "Right",
-        )
-        landmarks = [
-          landmarks[leftIdx] ?? emptyHand,
-          landmarks[rightIdx] ?? emptyHand,
-        ]
+        const leftIdx = result.handedness.findIndex((h) => h[0].categoryName === "Left")
+        const rightIdx = result.handedness.findIndex((h) => h[0].categoryName === "Right")
+        landmarks = [landmarks[leftIdx] ?? emptyHand, landmarks[rightIdx] ?? emptyHand]
       }
       // const data = landmarks.map(toRelativeCoords)
       const dataRaw = landmarks.map((lm) => lm.map((l) => [l.x, l.y, l.z]))
@@ -255,11 +245,10 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
 
     const newSamples = allY.length * SAMPLES
     for (let s = 2; s > 0; s--) {
-      setStatus(
-        `Recorded ${newSamples} new samples. Starting training in ${s} seconds ...`,
-        -1,
-        { id: RECORDING_STATUS_ID, fullscreen: true },
-      )
+      setStatus(`Recorded ${newSamples} new samples. Starting training in ${s} seconds ...`, -1, {
+        id: RECORDING_STATUS_ID,
+        fullscreen: true,
+      })
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
     useGlobalStore.getState().status.clear(RECORDING_STATUS_ID)
@@ -300,9 +289,7 @@ function sampleToLandmarks(sample?: SampleRaw, inputDims?: number[]) {
   const shapedX = tf.tidy(() =>
     tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync(),
   ) as number[][][]
-  const landmarks = shapedX.map((lm) =>
-    lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 })),
-  )
+  const landmarks = shapedX.map((lm) => lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 })))
   return landmarks
 }
 

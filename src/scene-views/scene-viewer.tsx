@@ -43,8 +43,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showMap = dsDef?.task === "regression" && view !== "graph"
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
   const sampleViewerIdxs = useSceneStore((s) => s.sampleViewerIdxs)
-  const showSampleViewer =
-    isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
+  const showSampleViewer = isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
   const [ref, didMount] = useDidMount<HTMLDivElement>()
@@ -69,12 +68,7 @@ function SceneViewerInner(props: SceneViewerProps) {
             isActive ? "sticky left-0 p-main pt-(--header-height)!" : "p-4"
           } flex flex-col gap-2 sm:gap-4 items-start`}
         >
-          <SceneTitle
-            title={title}
-            href={path}
-            section={section}
-            ds={ds ?? dsDef}
-          />
+          <SceneTitle title={title} href={path} section={section} ds={ds ?? dsDef} />
           <LoadWeightsButton />
           {section === "play" && isActive && <SceneButtons />}
           {isActive && view === "layers" && drawAreaShown && (
@@ -83,9 +77,7 @@ function SceneViewerInner(props: SceneViewerProps) {
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
-      {section === "play" && view === "layers" && !showSampleViewer && (
-        <SampleSlider />
-      )}
+      {section === "play" && view === "layers" && !showSampleViewer && <SampleSlider />}
       {showSampleViewer && (
         <Portal target={sampleViewerRef}>
           <SampleViewer />

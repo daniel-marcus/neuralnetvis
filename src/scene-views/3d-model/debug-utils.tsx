@@ -38,10 +38,8 @@ export const Raycaster = () => {
 
   const handlePointerMove = (event: THREE.Event) => {
     if ("clientX" in event && "clientY" in event) {
-      pointer.current.x =
-        ((event.clientX as number) / window.innerWidth) * 2 - 1
-      pointer.current.y =
-        -((event.clientY as number) / window.innerHeight) * 2 + 1
+      pointer.current.x = ((event.clientX as number) / window.innerWidth) * 2 - 1
+      pointer.current.y = -((event.clientY as number) / window.innerHeight) * 2 + 1
     }
   }
 

@@ -21,11 +21,7 @@ const colorBases = [baseR, baseG, baseB]
 
 export type StorageNode = THREE.StorageBufferNode<"float">
 
-export function getMaterial(
-  hasColors: boolean,
-  channelIdx: number,
-  storageNode: StorageNode,
-) {
+export function getMaterial(hasColors: boolean, channelIdx: number, storageNode: StorageNode) {
   return createActivationMaterial(hasColors, channelIdx, storageNode)
   // return hasColors ? colorMaterials[channelIdx] : standardMaterial
 }
@@ -47,11 +43,7 @@ interface FnProps {
   renderer: THREE.WebGPURenderer
 }
 
-export function activationColor(
-  hasColors: boolean,
-  channelIdx: number,
-  storageNode: StorageNode,
-) {
+export function activationColor(hasColors: boolean, channelIdx: number, storageNode: StorageNode) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object, renderer: { backend } }: FnProps) => {
@@ -61,9 +53,7 @@ export function activationColor(
     const normalizedNode = isWebGPUBackend(backend)
       ? storageNode.element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
       : instancedBufferAttribute<"float">(instancedActivations)
-    const baseNode = normalizedNode
-      .greaterThanEqual(0.0)
-      .select(posBase, baseNeg)
+    const baseNode = normalizedNode.greaterThanEqual(0.0).select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     // @ts-expect-error TSL pow types don't reflect vec3 support
     const vColor = pow(srgbColor, vec3(2.2))
@@ -133,7 +123,7 @@ export function activationColorTexture(
     If(localX.greaterThanEqual(float(width)), () => Discard())
     If(localY.greaterThanEqual(float(height)), () => Discard())
 
-    /* 
+    /*
     return vec3(  // DEBUG: use this to visualize the grid
       channel.div(float(channels)),
       localX.div(float(width)),
@@ -160,9 +150,7 @@ export function activationColorTexture(
       })
     }
 
-    const baseNode = normalizedNode
-      .greaterThanEqual(0.0)
-      .select(posBase, baseNeg)
+    const baseNode = normalizedNode.greaterThanEqual(0.0).select(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     // @ts-expect-error TSL pow types don't reflect vec3 support
     const colorNode = pow(srgbColor, vec3(2.2))

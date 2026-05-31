@@ -32,9 +32,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
     <div
       ref={ref}
       className={`absolute top-0 left-0 h-full w-full max-h-screen pointer-events-none select-none ${
-        isActive
-          ? `overflow-auto ${canScroll ? "pointer-events-auto!" : ""}`
-          : ""
+        isActive ? `overflow-auto ${canScroll ? "pointer-events-auto!" : ""}` : ""
       } transition-[padding] duration-(--tile-duration) flex flex-col gap-2 sm:gap-4 items-start`}
     >
       {children}
@@ -46,10 +44,7 @@ export const SceneOverlay = ({ children, section }: SceneOverlayProps) => {
   return shouldUsePortal ? compThroughPortal : comp
 }
 
-function useIsScrolledBodyClass(
-  ref: React.RefObject<HTMLElement | null>,
-  className: string,
-) {
+function useIsScrolledBodyClass(ref: React.RefObject<HTMLElement | null>, className: string) {
   useEffect(() => {
     const el = ref.current
     if (!el) return

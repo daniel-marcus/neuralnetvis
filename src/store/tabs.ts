@@ -1,10 +1,7 @@
 import type { StateCreator } from "zustand"
 import { rootTabs, playTabs, type Tab } from "@/components/tabs/tab-keys"
 
-const allTabs = [...rootTabs, ...playTabs].flatMap((t) => [
-  t,
-  ...(t.children ?? []),
-])
+const allTabs = [...rootTabs, ...playTabs].flatMap((t) => [t, ...(t.children ?? [])])
 const tabMap = new Map(allTabs.map((t) => [t.key, t]))
 
 export interface TabsSlice {
@@ -25,6 +22,5 @@ export const createTabsSlice: StateCreator<TabsSlice> = (set) => ({
         tabIsShown: true,
       }
     }),
-  setTab: (key) =>
-    set({ tab: key ? (tabMap.get(key) ?? null) : null, tabIsShown: true }),
+  setTab: (key) => set({ tab: key ? (tabMap.get(key) ?? null) : null, tabIsShown: true }),
 })

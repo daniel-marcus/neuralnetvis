@@ -66,9 +66,7 @@ export const Graph = () => {
       linkCurvature={(link) => (link.isResidual ? 1 : 0)}
       onNodeHover={(node) => {
         if (!node) return null
-        setStatus(
-          `${node.className} (${node.layer.outputShape.slice(1).join("x")})`,
-        )
+        setStatus(`${node.className} (${node.layer.outputShape.slice(1).join("x")})`)
         // document.body.style.cursor = node ? "pointer" : "auto"
       }}
       onNodeClick={(node) => {
@@ -108,9 +106,7 @@ function useModelGraph() {
       layer: l,
     }))
 
-    const layerIdxMap = new Map(
-      model.layers.map((layer, index) => [layer.name, index]),
-    )
+    const layerIdxMap = new Map(model.layers.map((layer, index) => [layer.name, index]))
 
     model.layers.forEach((layer, layerIdx) => {
       layer.inboundNodes.forEach((node) => {
@@ -120,8 +116,7 @@ function useModelGraph() {
             result.links.push({
               source: inboundLayer.name,
               target: layer.name,
-              isResidual:
-                layer.getClassName() === "Add" && inboundIdx !== layerIdx - 1,
+              isResidual: layer.getClassName() === "Add" && inboundIdx !== layerIdx - 1,
             })
           }
         })
@@ -134,12 +129,10 @@ function useModelGraph() {
 }
 
 function getNodeColor(node: Node, focussedLayerIdx?: number) {
-  return node.index === focussedLayerIdx
-    ? "rgb(220, 20, 100)"
-    : "rgb(100, 20, 180)"
+  return node.index === focussedLayerIdx ? "rgb(220, 20, 100)" : "rgb(100, 20, 180)"
 }
 
-/* 
+/*
 const boxGeometry = new THREE.BoxGeometry(0.25, 1, 1)
 const sphereGeometry = new THREE.SphereGeometry(1, 16, 16)
 

@@ -41,9 +41,7 @@ export function usePoints() {
         const minY = (await minYTensor.data())[0]
 
         const projectCoords = (coords: [number, number]) =>
-          ds.mapProps
-            ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom)
-            : coords
+          ds.mapProps ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom) : coords
 
         const points = Array.from({ length: yScaled.length }).map((_, i) => {
           const c = (coords?.[i] as [number, number]) ?? [0, 0]

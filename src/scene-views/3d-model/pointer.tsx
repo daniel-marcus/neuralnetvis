@@ -18,13 +18,7 @@ export function YPointer({ outputLayer, positions }: YPointerProps) {
   if (!showPointer || typeof trainingY !== "number") return null
   const position = positions[trainingY]
   if (!position) return null
-  return (
-    <Pointer
-      position={position.pos}
-      color={LABEL_COLOR}
-      size={meshParams.labelSize}
-    />
-  )
+  return <Pointer position={position.pos} color={LABEL_COLOR} size={meshParams.labelSize} />
 }
 
 export function NeuronPointer({ pointedNeuron }: { pointedNeuron: Neuron }) {
@@ -42,11 +36,7 @@ interface PointerProps {
   size?: number
 }
 
-export const Pointer = ({
-  position: [x, y, z],
-  size = 1,
-  color,
-}: PointerProps) => {
+export const Pointer = ({ position: [x, y, z], size = 1, color }: PointerProps) => {
   const position = [x, y, z + size * 1.7] as [number, number, number]
   const ref = useAnimatedPosition(position, 0.6)
   return (

@@ -11,10 +11,7 @@ import { CustomBtns } from "./sample-viewer-btns"
 import { ClientOnly } from "@/utils/helpers"
 import type { SampleRaw } from "@/data"
 
-const throttledScrollTo = throttle(
-  (el: Element | null, left: number) => el?.scrollTo({ left }),
-  50,
-)
+const throttledScrollTo = throttle((el: Element | null, left: number) => el?.scrollTo({ left }), 50)
 
 const ITEM_WIDTH = 78 // --item-size + 0.5rem
 const BUFFER_SIZE = 3 // items before/after visible items to preload
@@ -51,19 +48,14 @@ export function SampleViewer_() {
   )
   const visibleEnd = useMemo(
     () =>
-      Math.min(
-        idxs.length,
-        Math.ceil((scrollLeft + containerWidth) / ITEM_WIDTH) + BUFFER_SIZE,
-      ),
+      Math.min(idxs.length, Math.ceil((scrollLeft + containerWidth) / ITEM_WIDTH) + BUFFER_SIZE),
     [scrollLeft, containerWidth, idxs],
   )
   const visibleSamples: VisibleSample[] = useMemo(() => {
-    return idxs
-      .slice(visibleStart, visibleEnd)
-      .map((sampleIdx, idxInSlice) => ({
-        sampleIdx,
-        offsetLeft: (visibleStart + idxInSlice) * ITEM_WIDTH,
-      }))
+    return idxs.slice(visibleStart, visibleEnd).map((sampleIdx, idxInSlice) => ({
+      sampleIdx,
+      offsetLeft: (visibleStart + idxInSlice) * ITEM_WIDTH,
+    }))
   }, [visibleStart, visibleEnd, idxs])
   useEffect(() => {
     const handleResize = () => {
@@ -116,9 +108,7 @@ export function SampleViewer_() {
     >
       <div className="max-w-screen sm:max-w-150 mx-auto pointer-events-auto">
         <div className="flex items-center justify-center pb-2">
-          <button onClick={() => setIsShown((s) => !s)}>
-            {isShown ? "hide" : "show"} samples
-          </button>
+          <button onClick={() => setIsShown((s) => !s)}>{isShown ? "hide" : "show"} samples</button>
         </div>
         <div
           className={`${
@@ -146,14 +136,9 @@ export function SampleViewer_() {
                       key={vs.sampleIdx}
                       className="absolute"
                       style={{ left: `${vs.offsetLeft}px` }}
-                      onClick={() =>
-                        setSampleIdx(isCurrent ? undefined : vs.sampleIdx)
-                      }
+                      onClick={() => setSampleIdx(isCurrent ? undefined : vs.sampleIdx)}
                     >
-                      <SamplePreview
-                        sampleIdx={vs.sampleIdx}
-                        isCurrent={isCurrent}
-                      />
+                      <SamplePreview sampleIdx={vs.sampleIdx} isCurrent={isCurrent} />
                     </button>
                   )
                 })}
@@ -216,8 +201,7 @@ function useKeyboardNavigation(idxs: number[]) {
   const nextLocal = useCallback(
     (step = 1) =>
       setSampleIdx((prevIdx) => {
-        const currLocalIdx =
-          typeof prevIdx === "number" ? idxs.indexOf(prevIdx) : -1
+        const currLocalIdx = typeof prevIdx === "number" ? idxs.indexOf(prevIdx) : -1
         return idxs[currLocalIdx + step]
       }),
     [idxs, setSampleIdx],
@@ -306,8 +290,7 @@ function CanvasPreview({ sample }: PreviewProps) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!inputDims || !sample || !canvas) return
-    if (camProcessor === "handPose")
-      drawHandPoseSampleToCanvas(sample, inputDims, canvas)
+    if (camProcessor === "handPose") drawHandPoseSampleToCanvas(sample, inputDims, canvas)
     else drawImageSampleToCanvas(sample, inputDims, canvas)
   }, [inputDims, sample, camProcessor])
   return (
@@ -327,11 +310,7 @@ function drawImageSampleToCanvas(
 ) {
   try {
     tf.tidy(() => {
-      const img = tf.tensor(
-        sample.X,
-        inputDims as ImgShape,
-        "int32",
-      ) as tf.Tensor3D
+      const img = tf.tensor(sample.X, inputDims as ImgShape, "int32") as tf.Tensor3D
       const backend = tf.getBackend()
       const draw = backend === "wasm" ? tf.browser.toPixels : tf.browser.draw
       draw(img, canvas)

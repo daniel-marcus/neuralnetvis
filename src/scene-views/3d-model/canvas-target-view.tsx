@@ -25,12 +25,7 @@ export const CanvasTargetView = (props: CanvasTargetViewProps) => {
   return (
     <canvas ref={canvasRef} className={`${className}`}>
       <Tunnel.In>
-        <CanvasTargetInner
-          key={uuid}
-          canvasRef={canvasRef}
-          inView={inView}
-          {...otherProps}
-        />
+        <CanvasTargetInner key={uuid} canvasRef={canvasRef} inView={inView} {...otherProps} />
       </Tunnel.In>
     </canvas>
   )

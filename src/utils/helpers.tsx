@@ -28,8 +28,7 @@ export function ClientOnly({ children }: { children: React.ReactNode }) {
   return <Fragment ref={ref}>{didMount ? children : null}</Fragment>
 }
 
-export const clamp = (val: number, min: number, max: number) =>
-  Math.max(min, Math.min(val, max))
+export const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(val, max))
 
 // returns a funtion that is throttled by requestAnimationFrame
 export function rafThrottle<T extends (...args: never[]) => void>(

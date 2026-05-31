@@ -21,8 +21,7 @@ export const metadata: Metadata = {
 
 export const learnMetadata: Metadata = {
   title: `Learn | ${metadata.title}`,
-  description:
-    "Coming soon: Learn some basic concepts about neural networks and machine learning",
+  description: "Coming soon: Learn some basic concepts about neural networks and machine learning",
   openGraph: {
     images: [{ url: getOgImgUrl("learn") }],
   },

@@ -36,12 +36,7 @@ export const Lesson = (props: LessonProps) => {
 
 export function LessonOverlayPortal() {
   const { lessonOverlayRef } = useDomRefs()
-  return (
-    <div
-      ref={lessonOverlayRef}
-      className="absolute z-20 pointer-events-none inset-0"
-    />
-  )
+  return <div ref={lessonOverlayRef} className="absolute z-20 pointer-events-none inset-0" />
 }
 
 function LessonGradient() {

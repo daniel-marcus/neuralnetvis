@@ -73,7 +73,5 @@ export function SceneStoreProvider({
       useGlobalStore.getState().setScene(dummySceneStore)
     }
   }, [thisScene, isActive, initialState])
-  return (
-    <SceneContext.Provider value={thisScene}>{children}</SceneContext.Provider>
-  )
+  return <SceneContext.Provider value={thisScene}>{children}</SceneContext.Provider>
 }

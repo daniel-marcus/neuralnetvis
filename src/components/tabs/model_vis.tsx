@@ -15,8 +15,7 @@ export const VisConfigControl = () => {
   const vis = useCurrScene((s) => s.vis)
   const { setConfig, getDefault, reset, ...config } = vis
   const model = useCurrScene((s) => s.model)
-  const hasColorChannels =
-    ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
+  const hasColorChannels = ((model?.layers[0].outputShape[3] as number) ?? 0) > 1
   const isDebug = useGlobalStore((s) => s.isDebug)
   return (
     <CollapsibleWithTitle title="visualization" collapsed>
@@ -37,9 +36,7 @@ export const VisConfigControl = () => {
               label={prop}
               hint={`layer spacing along the ${axis} axis`}
               reset={isDefault ? undefined : () => reset(prop)}
-              className={
-                config.flatView ? "opacity-50 pointer-events-none" : ""
-              }
+              className={config.flatView ? "opacity-50 pointer-events-none" : ""}
             >
               <Slider
                 value={value}
@@ -72,14 +69,8 @@ export const VisConfigControl = () => {
             />
           </InputRow>
         )}
-        <InputRow
-          label="showLines"
-          hint="show (strongest) connections between neurons"
-        >
-          <Checkbox
-            checked={config.showLines}
-            onChange={(showLines) => setConfig({ showLines })}
-          />
+        <InputRow label="showLines" hint="show (strongest) connections between neurons">
+          <Checkbox checked={config.showLines} onChange={(showLines) => setConfig({ showLines })} />
         </InputRow>
         {hasColorChannels && (
           <InputRow label="splitColors" hint="show color channels separately">
@@ -89,10 +80,7 @@ export const VisConfigControl = () => {
             />
           </InputRow>
         )}
-        <InputRow
-          label="onSelect"
-          hint="What should be shown when you hover or click on a neuron?"
-        >
+        <InputRow label="onSelect" hint="What should be shown when you hover or click on a neuron?">
           <Select
             key={`highlight_prop_${config.highlightProp}`}
             value={config.highlightProp ?? ""}
@@ -103,9 +91,7 @@ export const VisConfigControl = () => {
                 label: "show weighted inputs",
               },
             ]}
-            onChange={(val) =>
-              setConfig({ highlightProp: val as HighlightProp })
-            }
+            onChange={(val) => setConfig({ highlightProp: val as HighlightProp })}
           />
         </InputRow>
       </InputRowsWrapper>

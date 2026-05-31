@@ -169,7 +169,7 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
   })
   if (!neuron) return null
   const { geometry } = neuron.layer.meshParams
-  /* 
+  /*
   
       <MeshDiscardMaterial />
       <Outlines color={COLOR} />
@@ -178,12 +178,7 @@ export function Highlighted({ neuron, thick }: HighlightedProps) {
   return (
     <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
       <primitive object={geometry} attach={"geometry"} />
-      <meshBasicMaterial
-        color="white"
-        transparent
-        opacity={0.02}
-        depthWrite={false}
-      />
+      <meshBasicMaterial color="white" transparent opacity={0.02} depthWrite={false} />
     </mesh>
   )
 }

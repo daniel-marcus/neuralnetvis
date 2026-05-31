@@ -60,11 +60,7 @@ export class PositionEmbeddingLayer extends tf.layers.Layer {
     const sequenceLength = inputShape[inputShape.length - 2] as number
 
     const positionEmbeds = this.positionEmbeddings.read() as tf.Tensor
-    const sliced = tf.slice(
-      positionEmbeds,
-      [startIndex, 0],
-      [sequenceLength, featureLength],
-    )
+    const sliced = tf.slice(positionEmbeds, [startIndex, 0], [sequenceLength, featureLength])
 
     const broadcastShape = [...inputShape]
     return tf.broadcastTo(sliced, broadcastShape)

@@ -14,10 +14,7 @@ type Breakpoint = keyof typeof breakpoints
 
 export function useIsScreen(bp: Breakpoint) {
   const windowSize = useGlobalStore((s) => s.windowSize)
-  const isMatch = useMemo(
-    () => isScreen(bp, windowSize.width),
-    [bp, windowSize],
-  )
+  const isMatch = useMemo(() => isScreen(bp, windowSize.width), [bp, windowSize])
   return isMatch
 }
 
@@ -28,15 +25,11 @@ export function isScreen(bp: Breakpoint, windowWidth?: number) {
 }
 
 export function useOrientation() {
-  const [orientation, setOrientation] = useState<"landscape" | "portrait">(
-    "landscape",
-  )
+  const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape")
   useEffect(() => {
     const handleOrientationChange = () => {
       setOrientation(
-        window.matchMedia("(orientation: landscape)").matches
-          ? "landscape"
-          : "portrait",
+        window.matchMedia("(orientation: landscape)").matches ? "landscape" : "portrait",
       )
     }
     handleOrientationChange()
@@ -53,8 +46,7 @@ export function useOrientation() {
 export function useResizeListener() {
   const setWindowSize = useGlobalStore((s) => s.setWindowSize)
   useEffect(() => {
-    const onResize = () =>
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight })
+    const onResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight })
     window.addEventListener("resize", onResize)
     onResize()
     return () => {
@@ -89,12 +81,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
       setState((oldState) => ({
         inView: entry.isIntersecting,
         y,
-        direction:
-          typeof oldState.y === "undefined"
-            ? "none"
-            : y > oldState.y
-              ? "up"
-              : "down",
+        direction: typeof oldState.y === "undefined" ? "none" : y > oldState.y ? "up" : "down",
       }))
     }, options)
     o.observe(ref.current)

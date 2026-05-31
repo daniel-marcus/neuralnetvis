@@ -39,17 +39,12 @@ function replaceUmlauts(str: string) {
     .replace(/ß/g, "ss")
 }
 
-export function splitWithThreshold(
-  str: string,
-  threshold = MAX_CHARS_PER_LINE,
-) {
+export function splitWithThreshold(str: string, threshold = MAX_CHARS_PER_LINE) {
   return str.split(" ").reduce((acc, word) => {
     const lastChunk = acc.at(-1) || ""
     const newChunk = lastChunk ? `${lastChunk} ${word}` : word
     const length = newChunk.replace(/(.*)\n/, "").length
-    return length <= threshold
-      ? [...acc.slice(0, -1), newChunk]
-      : [...acc, word]
+    return length <= threshold ? [...acc.slice(0, -1), newChunk] : [...acc, word]
   }, [] as string[])
 }
 

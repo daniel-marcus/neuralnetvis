@@ -9,11 +9,7 @@ export function normalize(tensor: tf.Tensor): tf.Tensor {
   })
 }
 
-export function minMaxNormalize(
-  tensor: tf.Tensor,
-  min: tf.Tensor,
-  max: tf.Tensor,
-): tf.Tensor {
+export function minMaxNormalize(tensor: tf.Tensor, min: tf.Tensor, max: tf.Tensor): tf.Tensor {
   // normalization between 0 and 1
   return tf.tidy(() => {
     const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
@@ -22,11 +18,7 @@ export function minMaxNormalize(
   })
 }
 
-export function scaleNormalize(
-  tensor: tf.Tensor,
-  _mean?: tf.Tensor,
-  _std?: tf.Tensor,
-) {
+export function scaleNormalize(tensor: tf.Tensor, _mean?: tf.Tensor, _std?: tf.Tensor) {
   // z-scale and normalize between -1 and 1
   return tf.tidy(() => {
     const mean = _mean ?? tensor.mean()

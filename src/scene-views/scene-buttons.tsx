@@ -107,12 +107,7 @@ function ViewSelect() {
   const views = VIEWS.filter((v) => !v.cond || v.cond(ds))
   if (views.length < 2) return null
   return (
-    <Select
-      options={views}
-      value={view}
-      onChange={(val) => setView(val as View)}
-      label="view"
-    />
+    <Select options={views} value={view} onChange={(val) => setView(val as View)} label="view" />
   )
 }
 
@@ -122,9 +117,7 @@ function ViewSubsetSelect() {
   const subset = useSceneStore((s) => s.subset)
   const setSubset = useSceneStore((s) => s.setSubset)
   if (!ds || view === "graph") return null
-  const subsets = (["train", "test"] as const).filter(
-    (s) => ds[s].totalSamples > 0,
-  )
+  const subsets = (["train", "test"] as const).filter((s) => ds[s].totalSamples > 0)
   if (subsets.length < 2) return null
   return (
     <Select

@@ -126,9 +126,7 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   useKeyCommand("r", toggleAutoRotate, isActive)
   const isWebGPU = useIsWebGPU()
   const scene = useThree((s) => s.scene)
-  const domElement = isWebGPU
-    ? scene.userData.canvasTarget?.domElement
-    : undefined
+  const domElement = isWebGPU ? scene.userData.canvasTarget?.domElement : undefined
 
   return (
     <>

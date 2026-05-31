@@ -19,8 +19,7 @@ export function useLayers() {
   const isHovered = useSceneStore((s) => s.isHovered)
   const isLargeModel = useSceneStore((s) => s.isLargeModel)
   const _showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers) // set to true to preload all layers
-  const showHiddenLayers =
-    _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
+  const showHiddenLayers = _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
 
   const [layers, setLayers] = useState<NeuronLayer[]>([])
 
@@ -43,8 +42,7 @@ export function useLayers() {
 
         const units = getUnits(tfLayer)
         const meshParams =
-          ["BatchNormalization", "RandomRotation", "Add"].includes(className) &&
-          !!prevLayer
+          ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
             ? prevLayer.meshParams
             : getMeshParams(tfLayer, layerPos, units)
         const numBiases = (tfLayer.getConfig().filters as number) ?? units

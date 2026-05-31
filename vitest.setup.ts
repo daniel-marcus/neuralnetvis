@@ -10,9 +10,7 @@ import { mnist } from "@/data/datasets/mnist"
 vi.stubGlobal("fetch", async (url: string) => {
   const patchedPath = join(process.cwd(), "public", url.replace(/^\//, ""))
   const data = await readFile(patchedPath)
-  const contentType = url.endsWith(".json")
-    ? "application/json"
-    : "application/octet-stream"
+  const contentType = url.endsWith(".json") ? "application/json" : "application/octet-stream"
   return new Response(Uint8Array.from(data), {
     headers: {
       "Content-Length": data.length.toString(),

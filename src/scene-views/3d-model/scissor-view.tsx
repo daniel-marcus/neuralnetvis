@@ -11,9 +11,7 @@ import type { ComputeFunction } from "@react-three/fiber"
 // original: https://github.com/pmndrs/drei/blob/master/src/web/View.tsx
 // here only used for WebGLBackend
 
-const isOrthographicCamera = (
-  def: THREE.Camera,
-): def is THREE.OrthographicCamera =>
+const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && "isOrthographicCamera" in def && !!def.isOrthographicCamera
 const col = /* @__PURE__ */ new THREE.Color()
 
@@ -76,14 +74,7 @@ export type ViewProps = {
 }
 
 function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
-  const {
-    right,
-    top,
-    left: trackLeft,
-    bottom: trackBottom,
-    width,
-    height,
-  } = trackRect
+  const { right, top, left: trackLeft, bottom: trackBottom, width, height } = trackRect
   const isOffscreen =
     trackRect.bottom < 0 ||
     top > canvasSize.height ||
@@ -100,11 +91,7 @@ function computeContainerPosition(canvasSize: CanvasSize, trackRect: DOMRect) {
   }
 }
 
-function prepareSkissor(
-  state: RootState,
-  pos: DOMPosition,
-  canvasSize: CanvasSize,
-) {
+function prepareSkissor(state: RootState, pos: DOMPosition, canvasSize: CanvasSize) {
   const { left, top, width, height } = pos
   // const aspect = width / height
   const aspect = canvasSize.width / canvasSize.height
@@ -136,14 +123,7 @@ function prepareSkissor(
   state.gl.autoClear = false
 
   state.gl.setViewport(0, 0, canvasSize.width, canvasSize.height)
-  state.camera.setViewOffset(
-    width,
-    height,
-    -left,
-    -top,
-    canvasSize.width,
-    canvasSize.height,
-  )
+  state.camera.setViewOffset(width, height, -left, -top, canvasSize.width, canvasSize.height)
 
   const cl = getClampedPos(pos, canvasSize)
   if (cl.height) {
@@ -164,10 +144,7 @@ function getClampedPos(pos: DOMPosition, canvasSize: CanvasSize): DOMPosition {
       ? Math.max(height + top, 0)
       : Math.max(Math.min(height, canvasSize.height - Math.abs(top) - 1), 0)
   const clampedLeft = Math.max(0, left)
-  const clampedWidth = Math.max(
-    0,
-    Math.min(width, canvasSize.width - Math.abs(left) - 1),
-  )
+  const clampedWidth = Math.max(0, Math.min(width, canvasSize.width - Math.abs(left) - 1))
 
   return {
     top: clampedTop,
@@ -239,10 +216,7 @@ function Container({
           const dpr = state.gl.getPixelRatio()
           const viewWidth = Math.round(position.width * dpr)
           const viewHeight = Math.round(position.height * dpr)
-          if (
-            targetCanvas.width !== viewWidth ||
-            targetCanvas.height !== viewHeight
-          ) {
+          if (targetCanvas.width !== viewWidth || targetCanvas.height !== viewHeight) {
             targetCanvas.width = viewWidth
             targetCanvas.height = viewHeight
           } else ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
@@ -319,12 +293,7 @@ const CanvasView = /* @__PURE__ */ React.forwardRef(function CanvasView(
 
   const compute: ComputeFunction = React.useCallback(
     (event, state) => {
-      if (
-        rect.current &&
-        track &&
-        track.current &&
-        event.target === track.current
-      ) {
+      if (rect.current && track && track.current && event.target === track.current) {
         const { width, height, left, top } = rect.current
         const x = event.clientX - left
         const y = event.clientY - top
@@ -417,9 +386,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
 
 export type ViewportProps = {
   Port: () => React.JSX.Element
-} & React.ForwardRefExoticComponent<
-  ViewProps & React.RefAttributes<HTMLElement | THREE.Group>
->
+} & React.ForwardRefExoticComponent<ViewProps & React.RefAttributes<HTMLElement | THREE.Group>>
 
 export const ScissorView = /* @__PURE__ */ (() => {
   const _View = React.forwardRef(function View_(
@@ -430,20 +397,9 @@ export const ScissorView = /* @__PURE__ */ (() => {
     const store = React.useContext(context)
     // If that's not the case we render a tunnel
     if (!store)
-      return (
-        <HtmlView
-          ref={fref as unknown as React.ForwardedRef<HTMLElement>}
-          {...props}
-        />
-      )
+      return <HtmlView ref={fref as unknown as React.ForwardedRef<HTMLElement>} {...props} />
     // Otherwise a plain canvas-view
-    else
-      return (
-        <CanvasView
-          ref={fref as unknown as React.ForwardedRef<THREE.Group>}
-          {...props}
-        />
-      )
+    else return <CanvasView ref={fref as unknown as React.ForwardedRef<THREE.Group>} {...props} />
   }) as ViewportProps
 
   return _View

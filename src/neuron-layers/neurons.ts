@@ -41,12 +41,8 @@ export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
   const prevLayer = layer.prevLayer
   const inputNids =
     prevLayer && withInputs
-      ? (layerDef?.getInputNids?.(
-          layer.tfLayer,
-          neuronIdx,
-          prevLayer.tfLayer,
-          prevLayer.index,
-        ) ?? [])
+      ? (layerDef?.getInputNids?.(layer.tfLayer, neuronIdx, prevLayer.tfLayer, prevLayer.index) ??
+        [])
       : []
   const neuron: Neuron = {
     index: neuronIdx,
@@ -57,9 +53,7 @@ export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
     indexInChannel: Math.floor(neuronIdx / numChannels),
     meshRef: hasColorChannels ? layer.meshRefs[channelIdx] : layer.meshRefs[0],
     inputNids,
-    inputNeurons: inputNids
-      .map((nid) => createNeuron(nid, false))
-      .filter(Boolean) as Neuron[],
+    inputNeurons: inputNids.map((nid) => createNeuron(nid, false)).filter(Boolean) as Neuron[],
   }
   return neuron
 }

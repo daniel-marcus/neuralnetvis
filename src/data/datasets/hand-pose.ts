@@ -13,8 +13,7 @@ export const handPose: DatasetDef = {
   isModelDs: true,
   sampleViewer: true,
   description: `A handpose classification top for MediaPipe's Hand Landmarker`,
-  aboutUrl:
-    "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
+  aboutUrl: "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
   inputDims: [21, 3, hands],
   inputLabels: handPoseLabels(),
   preprocessFunc: "normalizeHandLandmarks",

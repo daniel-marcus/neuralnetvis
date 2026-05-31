@@ -215,9 +215,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: Metric) {
     ctx.clearRect(0, 0, width, height)
     positions.current = []
 
-    const allVals = logs
-      .filter((log) => typeof log[metric] === "number")
-      .map((log) => log[metric]!)
+    const allVals = logs.filter((log) => typeof log[metric] === "number").map((log) => log[metric]!)
     const max = Math.max(...allVals)
     const min = Math.min(...allVals)
     const getX = (i: number) => (i / (logs.length - 1)) * width

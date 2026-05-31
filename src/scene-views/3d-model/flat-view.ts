@@ -31,8 +31,7 @@ export function useFlatView() {
     moveCameraTo([lastFlatCameraX.current, 0, 0], [0, 0, 0])
     return () => {
       clearTimeout(timeoutId)
-      lastFlatCameraX.current =
-        camera.position.toArray()[0] ?? FLAT_VIEW_CAMERA_X
+      lastFlatCameraX.current = camera.position.toArray()[0] ?? FLAT_VIEW_CAMERA_X
       moveCameraTo(
         oldCameraPos ?? defaultState.cameraPos,
         oldCameraLookAt ?? defaultState.cameraLookAt,

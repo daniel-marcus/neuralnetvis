@@ -19,9 +19,7 @@ type TexturedLayerProps = NeuronLayer & {
   measureRef: React.RefObject<THREE.Mesh | null>
 }
 
-export const TexturedLayer = memo(function TexturedLayer(
-  props: TexturedLayerProps,
-) {
+export const TexturedLayer = memo(function TexturedLayer(props: TexturedLayerProps) {
   const { visible, hasColorChannels, channelIdx = 0, measureRef } = props
   const [texture, material, userData] = useActivationTexture(props)
   const { size, spacedSize } = useNeuronSpacing(props.meshParams)
@@ -74,15 +72,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
   }, [height, width, channels, isWebGPU])
 
   const material = useMemo(
-    () =>
-      getTextureMaterial(
-        hasColorChannels,
-        channelIdx,
-        height,
-        width,
-        channels,
-        storageNode,
-      ),
+    () => getTextureMaterial(hasColorChannels, channelIdx, height, width, channels, storageNode),
     [hasColorChannels, channelIdx, height, width, channels, storageNode],
   )
   useEffect(() => {
@@ -153,11 +143,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
   return [texture, material, userData] as const
 }
 
-function updateUvMapping(
-  geometry: THREE.BufferGeometry,
-  width: number,
-  height: number,
-) {
+function updateUvMapping(geometry: THREE.BufferGeometry, width: number, height: number) {
   // https://discoverthreejs.com/book/first-steps/textures-intro/
   const first = (base: number) => 1 / base
   const last = (base: number) => (base - 1) / base

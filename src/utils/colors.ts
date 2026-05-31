@@ -67,11 +67,7 @@ export function getPredQualColor(
   yTrue?: number,
   yMean?: number,
 ) {
-  if (
-    typeof yPred === "undefined" ||
-    typeof yTrue === "undefined" ||
-    typeof yMean === "undefined"
-  )
+  if (typeof yPred === "undefined" || typeof yTrue === "undefined" || typeof yMean === "undefined")
     return POS_HIGHLIGHT_COLORS[0]
 
   const squaredResidual = (yTrue - yPred) ** 2
@@ -79,7 +75,5 @@ export function getPredQualColor(
   const rSquared = 1 - squaredResidual / squaredResidualMean
   const colorVal = Math.min(normalizeTo(Math.abs(rSquared), 255), 255)
   // if (rSquared > 0) console.log({ rSquared, squaredResidual }, yPred, y)
-  return rSquared >= 0
-    ? POS_HIGHLIGHT_COLORS[colorVal]
-    : NEG_HIGHLIGHT_COLORS[colorVal]
+  return rSquared >= 0 ? POS_HIGHLIGHT_COLORS[colorVal] : NEG_HIGHLIGHT_COLORS[colorVal]
 }

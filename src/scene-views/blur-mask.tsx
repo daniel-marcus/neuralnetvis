@@ -7,9 +7,7 @@ export function useMaskMode(): MaskMode {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
   const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)
-  const hasFullscreenConfusionMatrix = useCurrScene(
-    (s) => (s.ds?.outputLabels?.length ?? 0) > 10,
-  )
+  const hasFullscreenConfusionMatrix = useCurrScene((s) => (s.ds?.outputLabels?.length ?? 0) > 10)
   return !!status?.fullscreen
     ? "blur"
     : isEvaluationView && !hasSample

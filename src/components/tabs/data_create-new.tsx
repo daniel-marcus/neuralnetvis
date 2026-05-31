@@ -33,9 +33,7 @@ const MIN_LABELS = 2
 export const CreateNewDataset = () => {
   const [name, setName] = useState<string>("my_handpose_ds")
   const [hands, setHands] = useState<HandsNum>(1)
-  const [labels, setLabels] = useState<string[]>(
-    DEFAULT_LABELS[hands].slice(0, 3),
-  )
+  const [labels, setLabels] = useState<string[]>(DEFAULT_LABELS[hands].slice(0, 3))
   const router = useRouter()
   const ds = useCurrScene((s) => s.ds)
   const setDs = useCurrScene((s) => s.setDs)
@@ -55,9 +53,7 @@ export const CreateNewDataset = () => {
   return (
     <CollapsibleWithTitle title="create new dataset" className="bg-box-solid">
       <InputRowsWrapper>
-        <Select
-          options={[{ value: "handpose", label: "hand pose classification" }]}
-        />
+        <Select options={[{ value: "handpose", label: "hand pose classification" }]} />
         <InputRow label="name">
           <TextInput value={name} onChange={setName} />
         </InputRow>
@@ -87,9 +83,7 @@ export const CreateNewDataset = () => {
                 <TextInput
                   // className="w-full"
                   value={l}
-                  onChange={(val) =>
-                    setLabels([...labels.toSpliced(i, 1, val)])
-                  }
+                  onChange={(val) => setLabels([...labels.toSpliced(i, 1, val)])}
                 />
                 {labels.length > MIN_LABELS && (
                   <button
@@ -121,11 +115,7 @@ export const CreateNewDataset = () => {
   )
 }
 
-function dsDefFromState(
-  name: string,
-  hands: number,
-  outputLabels: string[],
-): DatasetDef {
+function dsDefFromState(name: string, hands: number, outputLabels: string[]): DatasetDef {
   return {
     ...handPose,
     model: undefined, // start with new untrained model

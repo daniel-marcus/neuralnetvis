@@ -7,8 +7,7 @@ export const SampleSlider = () => {
   const isHovered = useSceneStore((s) => s.isHovered)
   const isActive = useSceneStore((s) => s.isActive)
   const hasStatusOrSelected = useHasStatusOrSelected()
-  const hasProgressBar =
-    typeof useGlobalStore((s) => s.status.getPercent()) === "number"
+  const hasProgressBar = typeof useGlobalStore((s) => s.status.getPercent()) === "number"
   const visIsLocked = useSceneStore((s) => s.vis.isLocked)
   const sampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)

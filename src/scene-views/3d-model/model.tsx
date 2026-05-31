@@ -95,9 +95,7 @@ function ModelShifter({ children, visibleLayers }: ModelShifterProps) {
 function useModelOffset(visibleLayers: NeuronLayer[]) {
   const focusIdx = useSceneStore((s) => s.focussedLayerIdx)
   const hasFocussed = typeof focusIdx === "number"
-  const focusVisibleIdx = hasFocussed
-    ? visibleLayers.findIndex((l) => l.index === focusIdx)
-    : -1
+  const focusVisibleIdx = hasFocussed ? visibleLayers.findIndex((l) => l.index === focusIdx) : -1
   const center = (visibleLayers.length - 1) * 0.5
   const offset = !hasFocussed ? 0 : center - focusVisibleIdx
 

@@ -21,8 +21,7 @@ export function useViewState() {
     return () => window.removeEventListener("resize", onResize)
   }, [])
 
-  const onViewStateChange = (e: { viewState: OrthographicViewState }) =>
-    setViewState(e.viewState)
+  const onViewStateChange = (e: { viewState: OrthographicViewState }) => setViewState(e.viewState)
 
   return { viewState, onViewStateChange }
 }

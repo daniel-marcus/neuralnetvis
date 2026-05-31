@@ -20,9 +20,7 @@ const LayerWheel_ = () => {
   const isGraphView = useSceneStore((s) => s.view === "graph")
   const items = useMemo(() => {
     const visibleIdxs = visibleLayers.map((l) => l.index)
-    return modelLayers.map((l, i) =>
-      layer2WheelItem(l, !isGraphView, !visibleIdxs.includes(i)),
-    )
+    return modelLayers.map((l, i) => layer2WheelItem(l, !isGraphView, !visibleIdxs.includes(i)))
   }, [modelLayers, isGraphView, visibleLayers])
   const view = useSceneStore((s) => s.view)
   const hasSample = useHasSample()

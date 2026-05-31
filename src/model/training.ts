@@ -28,12 +28,7 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
     async function startTraining() {
       if (!model || !ds) return
       if (!isDebug()) await backendForTraining()
-      const callbacks = [
-        new DebugCb(),
-        new UpdateCb(),
-        new ProgressCb(),
-        new LogsPlotCb(),
-      ]
+      const callbacks = [new DebugCb(), new UpdateCb(), new ProgressCb(), new LogsPlotCb()]
       await train(model, ds, {
         batchSize,
         epochs,
@@ -91,20 +86,14 @@ export async function getSamplesAsBatch(
 
   return tf.tidy(() => {
     const allYs = dbBatches.flatMap((b) => Array.from(b.ys))
-    const slicedYs = allYs.slice(
-      firstIdxInStoreBatch,
-      firstIdxInStoreBatch + newBatchSize,
-    )
+    const slicedYs = allYs.slice(firstIdxInStoreBatch, firstIdxInStoreBatch + newBatchSize)
     const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
     const shapeX = [currBatchSize, ...ds.inputDims]
     const xTensors = dbBatches.map((b) => tf.tensor(b.xs))
     const _xs = tf
       .concat(xTensors)
       .flatten()
-      .slice(
-        firstIdxInStoreBatch * valsPerSample,
-        currBatchSize * valsPerSample,
-      )
+      .slice(firstIdxInStoreBatch * valsPerSample, currBatchSize * valsPerSample)
       .reshape(shapeX)
     const xs = ds.preprocess?.(_xs) ?? _xs
     const ys =
@@ -115,11 +104,7 @@ export async function getSamplesAsBatch(
   })
 }
 
-function makeGenerator(
-  ds: Dataset,
-  trainBatchSize: number,
-  totalSamples: number,
-) {
+function makeGenerator(ds: Dataset, trainBatchSize: number, totalSamples: number) {
   const totalBatches = Math.ceil(totalSamples / trainBatchSize)
 
   return async function* dataGenerator() {
@@ -137,17 +122,14 @@ export function canUseLazyLoading(ds: Dataset) {
 }
 
 async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
-  const ongoingTraining = useGlobalStore
-    .getState()
-    .scene.getState().trainingPromise
+  const ongoingTraining = useGlobalStore.getState().scene.getState().trainingPromise
   if (ongoingTraining) {
     console.log("Changing ongoing training ...")
     await ongoingTraining
     // useGlobalStore.setState({ trainingPromise: null })
   }
 
-  const _lazyLoading = useGlobalStore.getState().scene.getState()
-    .trainConfig.lazyLoading
+  const _lazyLoading = useGlobalStore.getState().scene.getState().trainConfig.lazyLoading
 
   const lazyLoading = canUseLazyLoading(ds) && _lazyLoading
 
@@ -174,15 +156,10 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const dataset = tf.data.generator(generator)
 
     const batchesPerEpoch = Math.ceil(trainSamples / batchSize)
-    const trainDataset = dataset
-      .take(batchesPerEpoch)
-      .repeat(otherOptions.epochs)
+    const trainDataset = dataset.take(batchesPerEpoch).repeat(otherOptions.epochs)
 
     const firstValidationIdx = trainSamples
-    const validStoreBatchIdx = getStoreBatchIdx(
-      firstValidationIdx,
-      ds.storeBatchSize,
-    )
+    const validStoreBatchIdx = getStoreBatchIdx(firstValidationIdx, ds.storeBatchSize)
     const range = IDBKeyRange.lowerBound(validStoreBatchIdx)
     const validationData = validationSamples
       ? await getDbDataAsTensors(ds, "train", { range })
@@ -192,9 +169,7 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
     const trainingPromise = model.fitDataset(trainDataset, {
       ...otherOptions,
       batchesPerEpoch,
-      validationData: validationData
-        ? [validationData.X, validationData.y]
-        : undefined,
+      validationData: validationData ? [validationData.X, validationData.y] : undefined,
     })
 
     useGlobalStore.getState().scene.setState({ trainingPromise })
@@ -214,9 +189,7 @@ export async function trainOnBatch(xs: tf.Tensor[], ys: number[]) {
   const trainShape = model.layers[0].batchInputShape as number[]
   const [X, y] = tf.tidy(() => {
     const X = tf.concat(xs).reshape([xs.length, ...trainShape.slice(1)]) // input already preprocessed
-    const y = isClassification
-      ? tf.oneHot(ys, ds.outputLabels.length)
-      : tf.tensor(ys)
+    const y = isClassification ? tf.oneHot(ys, ds.outputLabels.length) : tf.tensor(ys)
     return [X, y]
   })
   const [loss, acc] = (await model.trainOnBatch(X, y)) as number[]

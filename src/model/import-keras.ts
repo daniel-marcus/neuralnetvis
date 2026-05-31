@@ -5,12 +5,7 @@ import { isDebug } from "@/store"
 
 // experimantal import for .keras files from Keras 3
 
-const multiHeadAttentionPathNames = [
-  "query_dense",
-  "key_dense",
-  "value_dense",
-  "output_dense",
-]
+const multiHeadAttentionPathNames = ["query_dense", "key_dense", "value_dense", "output_dense"]
 
 export async function importKerasModel(file: File) {
   if (isDebug()) console.log("Importing keras model file:", file)
@@ -65,9 +60,7 @@ export async function importKerasModel(file: File) {
         // 2. Assign the weight from the HDF5 file
         try {
           const hdf5Data = f.get(path)?.value
-          weight.assign(
-            tf.tensor(hdf5Data, weight.shape as number[], weight.dtype),
-          )
+          weight.assign(tf.tensor(hdf5Data, weight.shape as number[], weight.dtype))
         } catch (error) {
           console.error(`Error loading weight from path: ${path}`, error)
           continue
@@ -90,20 +83,14 @@ function parseModelObject<T>(obj: T): T {
         let parsedValue = parseModelObject(value)
 
         // parse inbound_nodes to legacy format
-        if (
-          key === "inbound_nodes" &&
-          Array.isArray(value) &&
-          value.length > 0
-        ) {
+        if (key === "inbound_nodes" && Array.isArray(value) && value.length > 0) {
           const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
             ? value[0].args[0]
             : value[0].args
-          const parsedNodes = nodes
-            .map(parseInboundNode)
-            .filter(Boolean) as LegacyInboundNode[]
+          const parsedNodes = nodes.map(parseInboundNode).filter(Boolean) as LegacyInboundNode[]
           parsedValue = [[...parsedNodes]]
         } else if (
-          /* 
+          /*
         MultiHeadAttention: build_config.shapes_dict -> config
         Keras 3 exports a build_config object with shapes_dict, but tfjs expects the shapes to be directly in the config
         Example:
@@ -127,11 +114,7 @@ function parseModelObject<T>(obj: T): T {
           }
         } else if (["input_layers", "output_layers"].includes(key)) {
           // ["input_layer", 0, 0] -> [["input_layer", 0, 0]]
-          if (
-            Array.isArray(value) &&
-            value.length > 0 &&
-            !Array.isArray(value[0])
-          ) {
+          if (Array.isArray(value) && value.length > 0 && !Array.isArray(value[0])) {
             parsedValue = [[...value]]
           }
         }

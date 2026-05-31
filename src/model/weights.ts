@@ -7,10 +7,7 @@ export function getLayerWeights(layer: Layer) {
   const result = tf.tidy(() => {
     const [_weights, _biases] = layer.getWeights()
     const numWeights = _weights?.shape[_weights?.shape.length - 1]
-    const weights = _weights
-      ?.transpose()
-      .reshape([numWeights, -1])
-      .arraySync() as number[][]
+    const weights = _weights?.transpose().reshape([numWeights, -1]).arraySync() as number[][]
     const biases = _biases?.arraySync() as number[] | undefined
     return { weights, biases }
   })

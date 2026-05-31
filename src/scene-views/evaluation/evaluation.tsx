@@ -29,8 +29,7 @@ function useEvaluation() {
     async function getPreds() {
       if (!ds || !model) return
       const { loss, accuracy } = await getModelEvaluation(subset)
-      const { predictions, rSquared } =
-        (await getPredictions(ds, model, subset)) ?? {}
+      const { predictions, rSquared } = (await getPredictions(ds, model, subset)) ?? {}
       setEvaluation({ loss, accuracy, rSquared, predictions })
     }
     getPreds()
@@ -88,9 +87,7 @@ export function Evaluation({ className = "" }) {
         : ""
 
   const rmse =
-    _lossName === "meanSquaredError" && typeof loss === "number"
-      ? Math.sqrt(loss)
-      : undefined
+    _lossName === "meanSquaredError" && typeof loss === "number" ? Math.sqrt(loss) : undefined
 
   return (
     <div className={`mt-4 ${className}`}>

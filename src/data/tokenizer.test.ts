@@ -20,9 +20,7 @@ describe("IMDBTokenizer", () => {
     const encoded = tokenizer.encode(rawText, length)
     expect(encoded.length).toBe(length)
     expect(encoded[0]).toBe(tokenizer.encodeDict["<START>"])
-    expect(
-      encoded.slice(3).every((tkn) => tkn === tokenizer.encodeDict["<PAD>"]),
-    ).toBe(true)
+    expect(encoded.slice(3).every((tkn) => tkn === tokenizer.encodeDict["<PAD>"])).toBe(true)
   })
 
   it("encode->decode should return (normalized) input w/ <OOV>", () => {

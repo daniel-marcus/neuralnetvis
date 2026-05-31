@@ -38,12 +38,8 @@ async function loadData() {
     ],
     true,
   )
-  const xTrainNames = await fetch("/data/auto-mpg/x_train_names.json").then(
-    (r) => r.json(),
-  )
-  const xTestNames = await fetch("/data/auto-mpg/x_test_names.json").then((r) =>
-    r.json(),
-  )
+  const xTrainNames = await fetch("/data/auto-mpg/x_train_names.json").then((r) => r.json())
+  const xTestNames = await fetch("/data/auto-mpg/x_test_names.json").then((r) => r.json())
   const [xTrainScaled, xTestScaled] = tf.tidy(() => {
     const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
     const scaler = new StandardScaler()

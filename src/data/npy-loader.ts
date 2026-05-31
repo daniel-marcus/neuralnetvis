@@ -13,15 +13,11 @@ async function parseNpz(arrayBuffer: ArrayBuffer) {
   if (!file.name.endsWith(".npy")) throw new Error("No npy file in zip")
   const data = await file.async("arraybuffer")
   const parsed = await load(data)
-  if (!isSafe(parsed))
-    throw new Error("BigUint64Array/BigInt64Array/Float64Array not supported")
+  if (!isSafe(parsed)) throw new Error("BigUint64Array/BigInt64Array/Float64Array not supported")
   return parsed
 }
 
-export async function fetchMutlipleNpzWithProgress(
-  paths: string[],
-  silent?: boolean,
-) {
+export async function fetchMutlipleNpzWithProgress(paths: string[], silent?: boolean) {
   const STATUS_ID = `fetch_npz`
   const allTotalBytes: number[] = []
   const allLoadedBytes: number[] = []
@@ -51,11 +47,7 @@ type OnProgressCb = (arg: {
   totalBytes: number
 }) => void
 
-async function fetchWithProgress(
-  path: string,
-  onProgress?: OnProgressCb,
-  opts?: RequestInit,
-) {
+async function fetchWithProgress(path: string, onProgress?: OnProgressCb, opts?: RequestInit) {
   const response = await fetch(path, opts)
   const contentLength = response.headers.get("Content-Length")
   if (!contentLength || !response.body) {

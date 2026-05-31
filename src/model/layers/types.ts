@@ -76,15 +76,10 @@ interface SelectOption<T extends keyof LayerConfigMap> extends BaseOption<T> {
   getValue: (args: { layerConfig: LayerConfig<T> }) => string | undefined
   options:
     | string[]
-    | ((args: {
-        layerConfig: LayerConfig<T>
-        layerConfigs: LayerConfigArray
-      }) => string[])
+    | ((args: { layerConfig: LayerConfig<T>; layerConfigs: LayerConfigArray }) => string[])
 }
 
-type ControlableOption<T extends keyof LayerConfigMap> =
-  | SliderOption<T>
-  | SelectOption<T>
+type ControlableOption<T extends keyof LayerConfigMap> = SliderOption<T> | SelectOption<T>
 
 export type GetInputNidsFunc = (
   layer: Layer,

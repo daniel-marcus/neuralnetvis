@@ -32,11 +32,7 @@ export const CollapsibleWithTitle = ({
       )}
       <Collapsible isOpen={isOpen}>
         <div className="p-4 pt-0">
-          <div
-            className={`${border ? "pl-4 border-l border-menu-border" : ""}`}
-          >
-            {children}
-          </div>
+          <div className={`${border ? "pl-4 border-l border-menu-border" : ""}`}>{children}</div>
         </div>
       </Collapsible>
     </div>

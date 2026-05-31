@@ -15,13 +15,9 @@ export interface ViewSlice {
   subset: Subset
   setSubset: (subset: Subset) => void
   focussedLayerIdx: number | undefined
-  setFocussedLayerIdx: (
-    arg: number | undefined | SetterFunc<number | undefined>,
-  ) => void
+  setFocussedLayerIdx: (arg: number | undefined | SetterFunc<number | undefined>) => void
   hoveredLayerIdx: number | undefined
-  setHoveredLayerIdx: (
-    arg: number | undefined | SetterFunc<number | undefined>,
-  ) => void
+  setHoveredLayerIdx: (arg: number | undefined | SetterFunc<number | undefined>) => void
   isScrolling: boolean
   setIsScrolling: (isScrolling: boolean) => void
   drawAreaShown: boolean
@@ -73,6 +69,5 @@ export const createViewSlice: StateCreator<
   setIsScrolling: (isScrolling) => set({ isScrolling }),
 
   drawAreaShown: false,
-  toggleDrawAreaShown: () =>
-    set(({ drawAreaShown }) => ({ drawAreaShown: !drawAreaShown })),
+  toggleDrawAreaShown: () => set(({ drawAreaShown }) => ({ drawAreaShown: !drawAreaShown })),
 })

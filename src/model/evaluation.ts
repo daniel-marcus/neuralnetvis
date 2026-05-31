@@ -6,11 +6,7 @@ import type { Subset } from "@/store/data"
 import type { Prediction } from "./types"
 import { Dataset } from "@/data"
 
-async function getEvalData(
-  ds: Dataset,
-  subset: Subset = "test",
-  noOneHot = false,
-) {
+async function getEvalData(ds: Dataset, subset: Subset = "test", noOneHot = false) {
   return getDbDataAsTensors(ds, subset, { noOneHot })
 }
 
@@ -58,18 +54,14 @@ export async function getPredictions(
     const result = tf.tidy(() => {
       const yTrueArr = y.arraySync() as number[]
       const _yPred = model.predict(X) as tf.Tensor // .flatten()
-      const yPred =
-        ds.task === "classification"
-          ? _yPred.argMax(1).flatten()
-          : _yPred.flatten()
+      const yPred = ds.task === "classification" ? _yPred.argMax(1).flatten() : _yPred.flatten()
       const yPredNorm = yPred.div(y.max()).arraySync() as number[]
       const predictions = yPred.arraySync().map((predicted, i) => ({
         actual: yTrueArr[i],
         predicted,
         normPredicted: yPredNorm[i],
       }))
-      const rSquared =
-        ds.task === "regression" ? calculateRSquared(y, yPred) : undefined
+      const rSquared = ds.task === "regression" ? calculateRSquared(y, yPred) : undefined
       return { predictions, rSquared }
     })
     return result

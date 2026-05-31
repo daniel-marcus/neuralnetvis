@@ -1,7 +1,7 @@
 import { openDB } from "idb"
 import { DatasetKey } from "./types"
 
-/* 
+/*
 dbName: ds.key
 storeName: "train" | "test" | "meta
 */
@@ -25,11 +25,7 @@ export function getDb(dbName: DatasetKey) {
   })
 }
 
-export async function putDataBatches<T>(
-  dbName: DatasetKey,
-  storeName: StoreName,
-  batches: T[],
-) {
+export async function putDataBatches<T>(dbName: DatasetKey, storeName: StoreName, batches: T[]) {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
   const store = tx.objectStore(storeName)
@@ -39,11 +35,7 @@ export async function putDataBatches<T>(
   await tx.done
 }
 
-export async function putData<T>(
-  dbName: DatasetKey,
-  storeName: StoreName,
-  value: T,
-) {
+export async function putData<T>(dbName: DatasetKey, storeName: StoreName, value: T) {
   const db = await getDb(dbName)
   const tx = db.transaction(storeName, "readwrite")
   const store = tx.objectStore(storeName)
@@ -85,10 +77,7 @@ export async function deleteAll(dbName: DatasetKey, storeName: StoreName) {
   await tx.done
 }
 
-export async function storeHasEntries(
-  dbName: DatasetKey,
-  storeName: StoreName,
-) {
+export async function storeHasEntries(dbName: DatasetKey, storeName: StoreName) {
   const db = await getDb(dbName)
   const count = await db.count(storeName)
   db.close()

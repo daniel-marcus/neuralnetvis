@@ -5,6 +5,4 @@ export interface Point {
   yNorm: number
 }
 
-export type InputGeoJSON =
-  | GeoJSON.GeometryCollection
-  | GeoJSON.FeatureCollection
+export type InputGeoJSON = GeoJSON.GeometryCollection | GeoJSON.FeatureCollection

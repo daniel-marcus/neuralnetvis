@@ -21,16 +21,12 @@ export const ProgressBar = memo(function ProgressBar() {
     >
       <span
         ref={testRef}
-        className={`absolute ${
-          isSpinner ? "animate-move-left-right text-marker" : "opacity-0"
-        }`}
+        className={`absolute ${isSpinner ? "animate-move-left-right text-marker" : "opacity-0"}`}
       >
         █
       </span>
       <div>
-        {checkedLength > 0 && (
-          <span className="text-marker">{"█".repeat(checkedLength)}</span>
-        )}
+        {checkedLength > 0 && <span className="text-marker">{"█".repeat(checkedLength)}</span>}
         {uncheckedLength > 0 && <span>{"░".repeat(uncheckedLength)}</span>}
       </div>
     </div>
@@ -46,8 +42,7 @@ function useResponsiveSize(
   useEffect(() => {
     const handleResize = () => {
       if (wrapperRef.current) setWrapperWidth(wrapperRef.current.clientWidth)
-      if (testRef.current)
-        setPxPerChar(testRef.current.getBoundingClientRect().width)
+      if (testRef.current) setPxPerChar(testRef.current.getBoundingClientRect().width)
     }
     handleResize()
     window.addEventListener("resize", handleResize)

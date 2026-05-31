@@ -65,13 +65,7 @@ export const Arrow = ({ className, direction: d = "right" }: ArrowProps) => (
     viewBox="0 0 9 5"
     xmlns="http://www.w3.org/2000/svg"
     className={`inline transition-transform ${
-      d === "right"
-        ? "-rotate-90"
-        : d === "up"
-          ? "rotate-180"
-          : d === "left"
-            ? "rotate-90"
-            : ""
+      d === "right" ? "-rotate-90" : d === "up" ? "rotate-180" : d === "left" ? "rotate-90" : ""
     } duration-150 mr-2 ${className}`}
   >
     <path

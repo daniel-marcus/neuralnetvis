@@ -11,11 +11,7 @@ export const Logo = () => {
       href={"/"}
       prefetch={false}
       className={`pointer-events-auto text-logo p-main hover:text-white active:text-white ${
-        isPlayMode
-          ? "screenshot:hidden"
-          : !hasLesson
-            ? "screenshot:scale-150 origin-top-left"
-            : ""
+        isPlayMode ? "screenshot:hidden" : !hasLesson ? "screenshot:scale-150 origin-top-left" : ""
       }`}
       scroll={hasLesson ? true : false}
     >

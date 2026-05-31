@@ -52,11 +52,7 @@ export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
 type BatchCacheKey = string // `${ds.key}_${type}`
 let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
 
-export async function getSample(
-  ds: Dataset,
-  type: "train" | "test",
-  sampleIdx: number,
-) {
+export async function getSample(ds: Dataset, type: "train" | "test", sampleIdx: number) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
   const storeBatchSize = ds.storeBatchSize
   const batchIdx = Math.floor(sampleIdx / storeBatchSize)
@@ -71,10 +67,7 @@ export async function getSample(
   }
   if (!hasCached) currBatchCache = { [batchCacheKey]: batch }
   const idxInBatch = sampleIdx % storeBatchSize
-  const sliceIdxs = [
-    idxInBatch * valsPerSample,
-    (idxInBatch + 1) * valsPerSample,
-  ]
+  const sliceIdxs = [idxInBatch * valsPerSample, (idxInBatch + 1) * valsPerSample]
   const X = batch.xs.slice(...sliceIdxs)
   const rawX = batch.xsRaw?.slice(...sliceIdxs)
   const y = batch.ys[idxInBatch]

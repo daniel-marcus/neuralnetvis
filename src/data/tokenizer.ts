@@ -87,8 +87,7 @@ class IMDbTokenizer extends Tokenizer {
 }
 
 class ShakespeareTokenizer extends Tokenizer {
-  private chars =
-    " !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  private chars = " !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   constructor() {
     super()
     this.chars.split("").forEach((char, idx) => {

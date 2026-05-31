@@ -9,14 +9,9 @@ export interface RecorderProps {
 }
 
 // CaptureFunc: converts video input to raw data for a sample
-export type CaptureFunc = (
-  video: HTMLVideoElement,
-) => Promise<SampleRaw["X"] | undefined>
+export type CaptureFunc = (video: HTMLVideoElement) => Promise<SampleRaw["X"] | undefined>
 
-export function useCaptureLoop(
-  stream: MediaStream | null | undefined,
-  capture: CaptureFunc,
-) {
+export function useCaptureLoop(stream: MediaStream | null | undefined, capture: CaptureFunc) {
   const ds = useSceneStore((s) => s.ds)
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
   const videoRef = useSceneStore((s) => s.videoRef)
@@ -45,10 +40,7 @@ export function useCaptureLoop(
 
 export function DefaultVideoCapture({ stream }: RecorderProps) {
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
-  const capture = useCallback(
-    (v: HTMLVideoElement) => videoToSample(v, inputDims),
-    [inputDims],
-  )
+  const capture = useCallback((v: HTMLVideoElement) => videoToSample(v, inputDims), [inputDims])
   useCaptureLoop(stream, capture)
   return null
 }
@@ -63,9 +55,7 @@ async function videoToSample(video: HTMLVideoElement, inputDims?: number[]) {
   }
   const imgTensor = await tf.browser.fromPixelsAsync(input, channels)
   const flattened = tf.tidy(() =>
-    needsResize
-      ? centerCropResize(imgTensor, height, width).flatten()
-      : imgTensor.flatten(),
+    needsResize ? centerCropResize(imgTensor, height, width).flatten() : imgTensor.flatten(),
   )
   let data: Float32Array | undefined
   try {

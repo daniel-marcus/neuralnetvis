@@ -37,6 +37,5 @@ export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
       hoveredNid: nid === hoveredNid ? undefined : nid,
     })),
 
-  setHovered: (hovered, hoverOrigin) =>
-    set({ hoveredNid: hovered?.nid, hoverOrigin }),
+  setHovered: (hovered, hoverOrigin) => set({ hoveredNid: hovered?.nid, hoverOrigin }),
 })

@@ -48,14 +48,8 @@ const Status = () => {
         !!status?.text ? "opacity-100 duration-0" : "opacity-0 duration-300"
       } transition ease-in-out text-right`}
     >
-      <div
-        className={status?.text ? "pointer-events-auto " : ""}
-        onClick={onClick}
-      >
-        {
-          parsedText ||
-            keptText.current /* eslint-disable-line react-hooks/refs */
-        }
+      <div className={status?.text ? "pointer-events-auto " : ""} onClick={onClick}>
+        {parsedText || keptText.current /* eslint-disable-line react-hooks/refs */}
       </div>
     </div>
   )

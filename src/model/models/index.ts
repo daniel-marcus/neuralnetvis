@@ -48,8 +48,7 @@ const models = defineModels({
     key: "mobilenet-v2-96",
     path: "/models/mobilenet-v2/mobilenetv2_1.00_96.json",
     version: "1.0",
-    sourceUrl:
-      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
+    sourceUrl: "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
   /* "mobilenet-v2-128": {
@@ -64,8 +63,7 @@ const models = defineModels({
     key: "mobilenet-v2-224",
     path: "/models/mobilenet-v2/mobilenetv2_1.00_224.json",
     version: "1.0",
-    sourceUrl:
-      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
+    sourceUrl: "https://keras.io/api/applications/mobilenet/#mobilenetv2-function",
     lazyLoadWeights: true,
   },
   imdb: {

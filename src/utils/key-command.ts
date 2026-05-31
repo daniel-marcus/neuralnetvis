@@ -2,12 +2,7 @@ import { useEffect } from "react"
 
 type Callback = () => void | Promise<void>
 
-export function useKeyCommand(
-  key: string,
-  cb: Callback,
-  isActive = true,
-  preventDefault = false,
-) {
+export function useKeyCommand(key: string, cb: Callback, isActive = true, preventDefault = false) {
   useEffect(() => {
     if (!isActive) return
     const handleKeyDown = (e: KeyboardEvent) => {

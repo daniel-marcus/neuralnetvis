@@ -9,10 +9,7 @@ export const mobileNetV2_96 = getMobileNet(96, "mobile")
 // export const mobileNetV2_128 = getMobileNet(128, "mobile")
 export const mobileNetV2_224 = getMobileNet(224, "desktop")
 
-function getMobileNet(
-  res: MobileNetRes,
-  targetDevice: DatasetDef["targetDevice"],
-): DatasetDef {
+function getMobileNet(res: MobileNetRes, targetDevice: DatasetDef["targetDevice"]): DatasetDef {
   return {
     key: `mobilenet-v2-${res}`,
     name: "MobileNet-V2",
@@ -21,8 +18,7 @@ function getMobileNet(
     targetDevice,
     description: `Google's MobileNetV2, trained on ImageNet data (${res}x${res}x3)`,
     version: new Date("2025-09-26"),
-    aboutUrl:
-      "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
+    aboutUrl: "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
     inputDims: [res, res, 3],
     preprocessFunc: "normalizeImage", // scale?
     camProps: {
@@ -45,9 +41,7 @@ function getMobileNet(
       ]
       const imgs = await fetchImages(imgUrls)
       const xTrainTensor = tf.tidy(() => {
-        const imgTensors = imgs.map((img) =>
-          centerCropResize(tf.browser.fromPixels(img), res, res),
-        )
+        const imgTensors = imgs.map((img) => centerCropResize(tf.browser.fromPixels(img), res, res))
         const all = tf.stack(imgTensors)
         return all.flatten()
       })

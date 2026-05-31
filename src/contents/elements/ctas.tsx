@@ -27,10 +27,7 @@ interface ButtonProps {
 }
 
 export const Button = ({ children, onClick, className = "" }: ButtonProps) => (
-  <button
-    className={`bg-accent text-white px-4 py-2 rounded ${className}`}
-    onClick={onClick}
-  >
+  <button className={`bg-accent text-white px-4 py-2 rounded ${className}`} onClick={onClick}>
     {children}
   </button>
 )

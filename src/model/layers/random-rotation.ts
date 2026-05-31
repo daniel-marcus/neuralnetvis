@@ -50,9 +50,7 @@ export class RandomRotationLayer extends tf.layers.Layer {
 
     const factorRadians = this.factor * Math.PI * 2
     return tf.tidy(() => {
-      const angle = tf
-        .randomUniform([1], -factorRadians, factorRadians)
-        .dataSync()[0]
+      const angle = tf.randomUniform([1], -factorRadians, factorRadians).dataSync()[0]
       return tf.image.rotateWithOffset(inputs as tf.Tensor4D, angle)
     })
   }

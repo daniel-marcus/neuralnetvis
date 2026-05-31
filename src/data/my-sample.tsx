@@ -7,9 +7,7 @@ import type { Dataset, SampleRaw } from "./types"
 interface SampleAdderArgs {
   ds: Dataset
 }
-type SampleAdderFunc = (
-  arg: SampleAdderArgs,
-) => Promise<SampleRaw | undefined> | void
+type SampleAdderFunc = (arg: SampleAdderArgs) => Promise<SampleRaw | undefined> | void
 
 export const AddSampleBtn = () => {
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
@@ -63,9 +61,7 @@ export async function imageToSample(
   const [targetHeight, targetWidth] = inputDims
   const numChannels = inputDims[2] || 1
   const imgTensor = tf.browser.fromPixels(image, numChannels)
-  const resized = tf.tidy(() =>
-    centerCropResize(imgTensor, targetHeight, targetWidth).flatten(),
-  )
+  const resized = tf.tidy(() => centerCropResize(imgTensor, targetHeight, targetWidth).flatten())
   try {
     const X = (await resized.data()) as SampleRaw["X"]
     return { X, index: Date.now() }

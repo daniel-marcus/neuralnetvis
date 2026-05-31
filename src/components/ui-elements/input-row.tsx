@@ -8,8 +8,7 @@ interface HintStore {
 
 const useHintStore = create<HintStore>((set) => ({
   currHint: "",
-  setCurrHint: (id) =>
-    set((state) => ({ currHint: state.currHint === id ? "" : id })),
+  setCurrHint: (id) => set((state) => ({ currHint: state.currHint === id ? "" : id })),
 }))
 
 interface InputRowProps {
@@ -34,10 +33,7 @@ export const InputRow = (props: InputRowProps) => {
   return (
     <div className={`relative flex gap-2 w-full leading-normal ${className}`}>
       <div className={`flex-none w-[7.5em] flex justify-between`}>
-        <div
-          className={`w-full ${!!hint ? "cursor-pointer" : ""}`}
-          onClick={handleLabelClick}
-        >
+        <div className={`w-full ${!!hint ? "cursor-pointer" : ""}`} onClick={handleLabelClick}>
           {label ?? ""}
         </div>
         {!!reset && (

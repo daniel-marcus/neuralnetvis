@@ -52,8 +52,7 @@ export const DrawArea = ({ title = "" }) => {
 
   const handlePointerUp = () => (isDrawing.current = false)
 
-  const clear = () =>
-    getCtx()?.clearRect(0, 0, ref.current!.width, ref.current!.height)
+  const clear = () => getCtx()?.clearRect(0, 0, ref.current!.width, ref.current!.height)
 
   return (
     <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto pt-8">

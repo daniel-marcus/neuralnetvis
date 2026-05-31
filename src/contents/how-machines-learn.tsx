@@ -78,8 +78,7 @@ export const IntroNetworks = (): LessonContent => {
           setVisConfig({ showPointer: false })
         }}
       >
-        And connect every neuron from the input layer to our output layer
-        neurons.
+        And connect every neuron from the input layer to our output layer neurons.
       </Block>
       <Block
         cameraPos={[-17, 0, 27]}
@@ -121,14 +120,12 @@ export const IntroNetworks = (): LessonContent => {
         <Details title="How does that work?">
           <p>Here is some extra content.</p>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
-            scelerisque ligula nec orci tincidunt, non venenatis ligula posuere.
-            Integer facilisis, tortor eget lobortis gravida, felis justo
-            tristique elit, sit amet tempor dui purus sed justo. Vivamus in
-            mauris ut sem vehicula viverra. Ut et arcu ac tortor malesuada
-            mollis. Morbi sed nunc gravida, cursus felis nec, iaculis eros. Sed
-            euismod bibendum sem, ac gravida velit facilisis ut. Nulla facilisi.
-            Sed feugiat varius quam, in volutpat ante eleifend nec.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam scelerisque ligula nec
+            orci tincidunt, non venenatis ligula posuere. Integer facilisis, tortor eget lobortis
+            gravida, felis justo tristique elit, sit amet tempor dui purus sed justo. Vivamus in
+            mauris ut sem vehicula viverra. Ut et arcu ac tortor malesuada mollis. Morbi sed nunc
+            gravida, cursus felis nec, iaculis eros. Sed euismod bibendum sem, ac gravida velit
+            facilisis ut. Nulla facilisi. Sed feugiat varius quam, in volutpat ante eleifend nec.
           </p>
         </Details>
       </Block>

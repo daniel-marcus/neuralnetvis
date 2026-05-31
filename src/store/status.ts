@@ -39,8 +39,7 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
       if (opts.id) get().status.clearTimer(id)
       const duration = (opts.duration ?? DEFAULT_DURATION) * 1000
       const expires =
-        !opts.permanent &&
-        (typeof percent !== "number" || (percent === 1 && !opts.id))
+        !opts.permanent && (typeof percent !== "number" || (percent === 1 && !opts.id))
       let timer: NodeJS.Timeout | undefined
       if (expires) {
         timer = setTimeout(() => get().status.clear(id), duration)
@@ -70,10 +69,7 @@ export const createStatusSlice: StateCreator<StatusSlice> = (set, get) => ({
     getPercent: () => {
       const stack = get().status.stack
       if (stack.length === 0) return null
-      return (
-        stack.filter((s) => typeof s.percent === "number").at(-1)?.percent ??
-        null
-      )
+      return stack.filter((s) => typeof s.percent === "number").at(-1)?.percent ?? null
     },
     getCurrent: () => {
       const stack = get().status.stack

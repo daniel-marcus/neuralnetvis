@@ -6,10 +6,7 @@ import { splitWithThreshold } from "@/components/ui-elements/ascii-text"
 export function SampleName() {
   const isActive = useSceneStore((s) => s.isActive)
   const sampleName = useSceneStore((s) => s.sample?.name)
-  const rows = useMemo(
-    () => splitWithThreshold(sampleName ?? "", 9),
-    [sampleName],
-  )
+  const rows = useMemo(() => splitWithThreshold(sampleName ?? "", 9), [sampleName])
   if (!sampleName) return null
   return (
     <div

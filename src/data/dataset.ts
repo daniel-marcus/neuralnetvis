@@ -94,10 +94,8 @@ export async function getDsFromDef(
   shouldLoadFullDs?: boolean,
 ) {
   const existingMeta = await getData<DatasetMeta>(dsDef.key, "meta", "dsMeta")
-  const hasLatestData =
-    existingMeta?.version.getTime() === dsDef.version.getTime()
-  const needsFullLoad =
-    shouldLoadFullDs && existingMeta?.loaded !== "full" && !isPreview
+  const hasLatestData = existingMeta?.version.getTime() === dsDef.version.getTime()
+  const needsFullLoad = shouldLoadFullDs && existingMeta?.loaded !== "full" && !isPreview
   const shouldLoad = !hasLatestData || !!needsFullLoad
 
   let newMeta: DatasetMeta | undefined
@@ -106,10 +104,8 @@ export async function getDsFromDef(
   }
 
   const { key } = dsDef
-  const train =
-    (await getData<StoreMeta>(key, "meta", "train")) ?? newStoreMeta("train")
-  const test =
-    (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
+  const train = (await getData<StoreMeta>(key, "meta", "train")) ?? newStoreMeta("train")
+  const test = (await getData<StoreMeta>(key, "meta", "test")) ?? newStoreMeta("test")
   const storeBatchSize = dsDef.storeBatchSize || DEFAULT_STORE_BATCH_SIZE
   const preprocess = getPreprocessFunc(dsDef)
   const tokenizer = await getTokenizer(dsDef)
@@ -141,26 +137,14 @@ async function getTokenizer(dsDef: DatasetDef | DatasetMeta) {
   return tokenizer
 }
 
-export async function loadAndSaveDsData(
-  dsDef: DatasetDef,
-  isPreview?: boolean,
-) {
+export async function loadAndSaveDsData(dsDef: DatasetDef, isPreview?: boolean) {
   const load = isPreview ? dsDef.loadPreview : dsDef.loadFull
   if (load) {
     await tf.ready()
-    const {
-      xTrain,
-      yTrain,
-      xTest,
-      yTest,
-      xTrainRaw,
-      xTestRaw,
-      xTrainNames,
-      xTestNames,
-    } = await load()
+    const { xTrain, yTrain, xTest, yTest, xTrainRaw, xTestRaw, xTrainNames, xTestNames } =
+      await load()
     await saveData(dsDef, "train", xTrain, yTrain, xTrainRaw, xTrainNames)
-    if (xTest && yTest)
-      await saveData(dsDef, "test", xTest, yTest, xTestRaw, xTestNames)
+    if (xTest && yTest) await saveData(dsDef, "test", xTest, yTest, xTestRaw, xTestNames)
   }
   const dsMeta = dsDefToDsMeta(dsDef, isPreview)
   const newMeta = { index: "dsMeta", ...dsMeta }
@@ -170,8 +154,7 @@ export async function loadAndSaveDsData(
 
 function dsDefToDsMeta(dsDef: DatasetDef, isPreview?: boolean): DatasetMeta {
   const { loadPreview, loadFull, ...dsMeta } = dsDef // eslint-disable-line @typescript-eslint/no-unused-vars
-  const loaded =
-    isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
+  const loaded = isPreview && !!dsDef.loadFull ? ("preview" as const) : ("full" as const)
   return { ...dsMeta, loaded }
 }
 
@@ -228,16 +211,7 @@ export async function addTrainData(
   xsRaw?: ParsedLike,
   aspectRatio?: number,
 ) {
-  const newTrainMeta = await saveData(
-    dsDef,
-    "train",
-    xs,
-    ys,
-    xsRaw,
-    undefined,
-    false,
-    aspectRatio,
-  )
+  const newTrainMeta = await saveData(dsDef, "train", xs, ys, xsRaw, undefined, false, aspectRatio)
   return newTrainMeta
 }
 
@@ -277,10 +251,7 @@ export async function getDbDataAsTensors(
     const X = ds.preprocess?.(_X) ?? _X
     const yBatches = batches.map((b) => tf.tensor(b.ys))
     const yTensor = tf.concat(yBatches)
-    const y =
-      isClassification && !noOneHot
-        ? tf.oneHot(yTensor, ds.outputLabels.length)
-        : yTensor
+    const y = isClassification && !noOneHot ? tf.oneHot(yTensor, ds.outputLabels.length) : yTensor
     const XRaw =
       returnRawX && batches.find((b) => !!b.xsRaw)
         ? tf.concat(batches.map((b) => tf.tensor(b.xsRaw!))).reshape(shapeX)

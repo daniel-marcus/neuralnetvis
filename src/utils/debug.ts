@@ -35,9 +35,7 @@ function showStats() {
   const data = {
     Backend: tf.getBackend(),
     Memory: `${(memoryInfo.numBytes / 1024 / 1024).toFixed(2)} MB`,
-    GPU: gpuBytes
-      ? `${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB`
-      : undefined,
+    GPU: gpuBytes ? `${(memoryInfo.numBytesInGPU / 1024 / 1024).toFixed(2)} MB` : undefined,
     Tensors: memoryInfo.numTensors,
     Geometries: gl?.info.memory.geometries,
   }

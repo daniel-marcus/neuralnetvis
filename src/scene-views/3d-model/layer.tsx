@@ -80,8 +80,7 @@ function LayerScaler(props: LayerScalerProps) {
   const isExcluded = useIsExcluded(props)
   const invisible = isExcluded || (isFlatView && !isFocussed) || visibleIdx < 0
   const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
-  const isLargeInput =
-    props.layerPos === "input" && props.numNeurons >= 96 * 96 * 3
+  const isLargeInput = props.layerPos === "input" && props.numNeurons >= 96 * 96 * 3
   const scale = invisible
     ? 0.0001
     : hasFocussed && !isFocussed
@@ -90,9 +89,7 @@ function LayerScaler(props: LayerScalerProps) {
         ? (1 / Math.sqrt(props.numNeurons / 3)) * 96 // scale down large input layers
         : 1
   const duration =
-    isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed)
-      ? 0
-      : undefined // default spring
+    isExcluded || visibleIdx < 0 || (isFlatView && !isFocussed && !wasFocussed) ? 0 : undefined // default spring
   useDynamicScale(posRef, scale, duration)
   return (
     <group ref={posRef} visible={visibleIdx >= 0}>
@@ -120,15 +117,11 @@ function LodComp(props: LodCompProps) {
     : !alwaysInstanced // mobile: use mainly TexturedLayer and avoid duplicate layers
   const showInstanced =
     alwaysInstanced ||
-    (!alwaysTextured &&
-      ((isFocussed && !isScrolling) ||
-        (isClose && !hasFocussed && !isScrolling)))
+    (!alwaysTextured && ((isFocussed && !isScrolling) || (isClose && !hasFocussed && !isScrolling)))
   return (
     <>
       {!alwaysTextured && <InstancedLayer {...props} visible={showInstanced} />}
-      {!alwaysInstanced && (
-        <TexturedLayer {...props} visible={!showInstanced} />
-      )}
+      {!alwaysInstanced && <TexturedLayer {...props} visible={!showInstanced} />}
     </>
   )
 }

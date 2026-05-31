@@ -22,10 +22,7 @@ describe("getSamplesAsBatch", () => {
     })
 
     it("should return correct samples (test first)", async () => {
-      const firstFromBatchData = result?.xs
-        .slice(0, 1)
-        .flatten()
-        .arraySync() as number[]
+      const firstFromBatchData = result?.xs.slice(0, 1).flatten().arraySync() as number[]
       const firstFromBatchLabel = result?.ys.slice(0, 1).arraySync() as number[]
       const sample256 = await getSample(dsMnistMock, "train", 256)
       if (!sample256) throw new Error("No sample")
@@ -35,10 +32,7 @@ describe("getSamplesAsBatch", () => {
         return preprocessed.arraySync() as number[]
       })
       const sample256Label = tf.tidy(
-        () =>
-          tf
-            .oneHot(sample256.y!, dsMnistMock.outputLabels.length)
-            .arraySync() as number[],
+        () => tf.oneHot(sample256.y!, dsMnistMock.outputLabels.length).arraySync() as number[],
       )
       expect(firstFromBatchData).toEqual(sample256Data)
       expect(firstFromBatchLabel[0]).toEqual(sample256Label)

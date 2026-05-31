@@ -30,9 +30,7 @@ interface TypedWebGPUBackend extends Backend {
   get: (obj: THREE.StorageBufferAttribute) => { buffer: GPUBuffer } | undefined
 }
 
-export function isWebGPUBackend(
-  backend: Backend,
-): backend is TypedWebGPUBackend {
+export function isWebGPUBackend(backend: Backend): backend is TypedWebGPUBackend {
   return "isWebGPUBackend" in backend && (backend.isWebGPUBackend as boolean)
 }
 

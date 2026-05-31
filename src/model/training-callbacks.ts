@@ -2,10 +2,7 @@ import { CustomCallback, getBackend, nextFrame } from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
 import { useGlobalStore, isDebug, getScene } from "@/store"
 import { getModelEvaluation } from "./evaluation"
-import {
-  resolveScalarsInLogs,
-  type UnresolvedLogs,
-} from "@tensorflow/tfjs-layers/dist/logs"
+import { resolveScalarsInLogs, type UnresolvedLogs } from "@tensorflow/tfjs-layers/dist/logs"
 import type { TypedParams } from "./types"
 
 export class UpdateCb extends CustomCallback {
@@ -55,10 +52,7 @@ export class ProgressCb extends CustomCallback {
   private prochessedBatches = 0
   private epoch = 0
   private statusId = "training_progress"
-  private setStatus = throttle(
-    useGlobalStore.getState().status.update,
-    PROGRESS_UPD_THROTTLE,
-  )
+  private setStatus = throttle(useGlobalStore.getState().status.update, PROGRESS_UPD_THROTTLE)
   private startTime = 0
   private firstRun = true
   private initialEpoch = 0
@@ -93,10 +87,7 @@ export class ProgressCb extends CustomCallback {
   }
 
   get epochBatches() {
-    return (
-      this.params.steps ??
-      Math.ceil(this.params.samples / this.params.batchSize)
-    )
+    return this.params.steps ?? Math.ceil(this.params.samples / this.params.batchSize)
   }
 
   async onBatchEnd(batchIndex: number) {

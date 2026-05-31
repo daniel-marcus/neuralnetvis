@@ -22,8 +22,10 @@ interface WheelMenuProps {
 
 export const WheelMenu = (props: WheelMenuProps) => {
   const degPerItem = Math.min(DEFAULT_DEG_PER_ITEM, 356 / props.items.length)
-  const [scrollerRef, wheelRef, rotation, onClick, isActive] =
-    useWheelInteractions(props, degPerItem)
+  const [scrollerRef, wheelRef, rotation, onClick, isActive] = useWheelInteractions(
+    props,
+    degPerItem,
+  )
   return (
     <div
       ref={scrollerRef} // hidden scroll container
@@ -58,18 +60,8 @@ export const WheelMenu = (props: WheelMenuProps) => {
                 style={{ transform: `rotate(-${degPerItem * (i + 1)}deg)` }}
               >
                 <button onClick={() => onClick(i)} disabled={disabled}>
-                  <span
-                    className={`${
-                      isActive ? "text-accent" : "brightness-25"
-                    } px-1`}
-                  >
-                    •
-                  </span>
-                  <span
-                    className={`${
-                      isActive ? "text-white" : disabled ? "brightness-50" : ""
-                    }`}
-                  >
+                  <span className={`${isActive ? "text-accent" : "brightness-25"} px-1`}>•</span>
+                  <span className={`${isActive ? "text-white" : disabled ? "brightness-50" : ""}`}>
                     {label}
                   </span>
                 </button>
@@ -84,8 +76,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
 }
 
 function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
-  const { items, currIdx, setCurrIdx, onScrollStart, onScrollEnd, autoHide } =
-    props
+  const { items, currIdx, setCurrIdx, onScrollStart, onScrollEnd, autoHide } = props
   const [isActive, setIsActive] = useState(!autoHide)
   const [wheelRotation, setWheelRotation] = useState(0)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -155,8 +146,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       startY = e.touches[0].clientY
       startScrollTop = scroller.scrollTop
       if (
-        (e.target instanceof HTMLElement &&
-          ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)) ||
+        (e.target instanceof HTMLElement && ["BUTTON", "SPAN"].includes(`${e.target.tagName}`)) ||
         e.touches.length >= 2
       )
         return
@@ -207,15 +197,10 @@ function getMaxScroll(scroller: HTMLDivElement) {
   return scroller.scrollHeight - scroller.clientHeight
 }
 
-function useKeyboardNavigation(
-  currIdx: Idx,
-  items: WheelMenuItem[],
-  gotoIdx: (i: number) => void,
-) {
+function useKeyboardNavigation(currIdx: Idx, items: WheelMenuItem[], gotoIdx: (i: number) => void) {
   const next = useCallback(
     (step = 1) => {
-      const getNewIdx = (i: number) =>
-        (((i + step) % items.length) + items.length) % items.length
+      const getNewIdx = (i: number) => (((i + step) % items.length) + items.length) % items.length
       let newIdx = getNewIdx(currIdx ?? -1)
       while (items[newIdx]?.disabled) {
         newIdx = getNewIdx(newIdx)

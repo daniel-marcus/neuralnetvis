@@ -53,18 +53,13 @@ const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
 
 const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const [currGroup, setCurrGroup] = useState(0)
-  const highlightProp = useGlobalStore(
-    (s) => s.scene?.getState().vis?.highlightProp,
-  )
+  const highlightProp = useGlobalStore((s) => s.scene?.getState().vis?.highlightProp)
   const isScreenSm = isScreen("sm")
 
   const { prevLayer } = neuron.layer
 
   // normalize in group?
-  const weights = useMemo(
-    () => normalizeWithSign(neuron.weights) ?? [],
-    [neuron],
-  )
+  const weights = useMemo(() => normalizeWithSign(neuron.weights) ?? [], [neuron])
 
   if (!neuron.weights?.length || !prevLayer) return null
   if (highlightProp === "weights") return null // will be duplication
@@ -94,16 +89,8 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
         } as React.CSSProperties
       }
     >
-      <div
-        className={`${
-          needsShifter ? "block" : "hidden"
-        } flex justify-center gap-4`}
-      >
-        <button
-          disabled={currGroup === 0}
-          className={"disabled:opacity-0"}
-          onClick={prev}
-        >
+      <div className={`${needsShifter ? "block" : "hidden"} flex justify-center gap-4`}>
+        <button disabled={currGroup === 0} className={"disabled:opacity-0"} onClick={prev}>
           &lt;
         </button>
         <div>{currGroup + 1}</div>
@@ -126,9 +113,7 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
             "--cols-shifted": `repeat(${groupCount}, var(--grid-width))`,
             "--cols-shifted-sm": `repeat(${groupCount}, var(--grid-width-sm))`,
             "--cols-all": `repeat(${Math.ceil(Math.sqrt(groupCount))}, 1fr)`,
-            "--current-shift": `translateX(calc(-${
-              currGroup * 100
-            }% - ${currGroup}*0.5rem))`,
+            "--current-shift": `translateX(calc(-${currGroup * 100}% - ${currGroup}*0.5rem))`,
           } as React.CSSProperties
         }
       >
@@ -158,12 +143,7 @@ interface WeightsGridProps {
   isRounded?: boolean
 }
 
-const WeightsGridCanvas = ({
-  weights,
-  rows,
-  cols,
-  isRounded,
-}: WeightsGridProps) => {
+const WeightsGridCanvas = ({ weights, rows, cols, isRounded }: WeightsGridProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const MIN_WIDTH = 400

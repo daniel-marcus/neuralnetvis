@@ -2,15 +2,9 @@ import { WebMercatorViewport } from "@deck.gl/core"
 import { InputGeoJSON } from "./types"
 import { PLOT_HEIGHT, PLOT_WIDTH } from "./constants"
 
-export function xyToPlot(
-  [x, y]: [number, number],
-  center = [0, 0],
-): [number, number] {
+export function xyToPlot([x, y]: [number, number], center = [0, 0]): [number, number] {
   // x, y are normalized values (0-1)
-  return [
-    center[0] + (x - 0.5) * PLOT_WIDTH,
-    center[1] - (y - 0.5) * PLOT_HEIGHT,
-  ]
+  return [center[0] + (x - 0.5) * PLOT_WIDTH, center[1] - (y - 0.5) * PLOT_HEIGHT]
 }
 
 export function lngLatToScreen(
@@ -59,9 +53,7 @@ export function projectGeoJSON(
       case "Polygon":
         return {
           ...geometry,
-          coordinates: geometry.coordinates.map((ring) =>
-            ring.map(projectCoordinate),
-          ),
+          coordinates: geometry.coordinates.map((ring) => ring.map(projectCoordinate)),
         }
 
       case "MultiPoint":
@@ -73,9 +65,7 @@ export function projectGeoJSON(
       case "MultiLineString":
         return {
           ...geometry,
-          coordinates: geometry.coordinates.map((line) =>
-            line.map(projectCoordinate),
-          ),
+          coordinates: geometry.coordinates.map((line) => line.map(projectCoordinate)),
         }
 
       case "MultiPolygon":

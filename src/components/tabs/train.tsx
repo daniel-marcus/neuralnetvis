@@ -12,9 +12,7 @@ export const Train = () => {
   const toggleTraining = useCurrScene((s) => s.toggleTraining)
 
   const [logsExpanded, setLogsExpanded] = useState(true)
-  const hasLogs = useCurrScene(
-    (s) => s.epochLogs.length + s.batchLogs.length > 0,
-  )
+  const hasLogs = useCurrScene((s) => s.epochLogs.length + s.batchLogs.length > 0)
   const showLogs = logsExpanded && hasLogs
   const resetWeights = useCurrScene((s) => s.resetWeights)
   const batchCount = useCurrScene((s) => s.batchCount)
@@ -25,9 +23,7 @@ export const Train = () => {
   return (
     <Box>
       <TrainConfigControl />
-      <Collapsible isOpen={showLogs}>
-        {hasLogs && <LogsPlot className="px-4 pt-4" />}
-      </Collapsible>
+      <Collapsible isOpen={showLogs}>{hasLogs && <LogsPlot className="px-4 pt-4" />}</Collapsible>
       <div className="p-4 flex justify-between">
         <button
           className={`${hasLogs ? "" : "opacity-0 pointer-events-none"}`}
@@ -53,9 +49,7 @@ export const Train = () => {
               evaluate
             </Button>
           )}
-          <Button onClick={toggleTraining}>
-            {isTraining ? "stop" : "train"}
-          </Button>
+          <Button onClick={toggleTraining}>{isTraining ? "stop" : "train"}</Button>
         </div>
       </div>
     </Box>
@@ -76,10 +70,7 @@ const TrainConfigControl = () => {
           } as React.CSSProperties
         }
       >
-        <InputRow
-          label="batchSize"
-          hint="How many samples should be processed at once?"
-        >
+        <InputRow label="batchSize" hint="How many samples should be processed at once?">
           <Slider
             // value={config.batchSize}
             value={Math.log2(config.batchSize)}
@@ -91,10 +82,7 @@ const TrainConfigControl = () => {
             lazyUpdate
           />
         </InputRow>
-        <InputRow
-          label="epochs"
-          hint={"How often should the model see the entire dataset?"}
-        >
+        <InputRow label="epochs" hint={"How often should the model see the entire dataset?"}>
           <Slider
             value={config.epochs}
             min={1}
@@ -104,10 +92,7 @@ const TrainConfigControl = () => {
             lazyUpdate
           />
         </InputRow>
-        <InputRow
-          label="validSplit"
-          hint="How much of the data should be used for validation?"
-        >
+        <InputRow label="validSplit" hint="How much of the data should be used for validation?">
           <Slider
             value={config.validationSplit}
             min={0}
@@ -130,14 +115,8 @@ const TrainConfigControl = () => {
             lazyUpdate
           />
         </InputRow>
-        <InputRow
-          label="silent"
-          hint="Update visualization only after training (faster)"
-        >
-          <Checkbox
-            checked={config.silent}
-            onChange={(silent) => setConfig({ silent: silent })}
-          />
+        <InputRow label="silent" hint="Update visualization only after training (faster)">
+          <Checkbox checked={config.silent} onChange={(silent) => setConfig({ silent: silent })} />
         </InputRow>
         {!!ds && canUseLazyLoading(ds) && (
           <InputRow

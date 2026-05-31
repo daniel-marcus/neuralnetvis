@@ -9,9 +9,7 @@ const HEIGHT = 630
 
 const DOCROOT = "out/"
 const SCREENSHOT_FOLDER = "public/images/og"
-const paths = ["", ...getPaths()].filter(
-  (p) => !["index", "404", "_not-found"].includes(p),
-)
+const paths = ["", ...getPaths()].filter((p) => !["index", "404", "_not-found"].includes(p))
 
 async function run() {
   // fs.rmSync(SCREENSHOT_FOLDER, { recursive: true, force: true })
@@ -65,9 +63,7 @@ function getPaths(dir = DOCROOT): string[] {
     if (file.isDirectory()) {
       htmlFiles = [...htmlFiles, ...getPaths(fullPath)]
     } else if (file.isFile() && path.extname(file.name) === ".html") {
-      const relativePath = path
-        .relative(DOCROOT, fullPath)
-        .replace(/\.html$/, "")
+      const relativePath = path.relative(DOCROOT, fullPath).replace(/\.html$/, "")
       htmlFiles.push(relativePath)
     }
   }

@@ -46,9 +46,7 @@ export function useActivationStats() {
         console.log("error")
       } finally {
         Object.values(data).forEach((t) => t?.dispose())
-        statsTensors.forEach((t) =>
-          Object.values(t).forEach((v) => v.dispose()),
-        )
+        statsTensors.forEach((t) => Object.values(t).forEach((v) => v.dispose()))
       }
     }
     getActivationStats()

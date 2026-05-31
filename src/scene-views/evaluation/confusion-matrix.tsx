@@ -39,9 +39,7 @@ export const ConfusionMatrix = () => {
   return (
     <OuterGrid numClasses={numClasses} long={long} maxChars={maxChars}>
       <div
-        className={`sticky top-(--stick-top-offset) left-0 ${
-          isLarge ? "bg-background" : ""
-        } z-3`}
+        className={`sticky top-(--stick-top-offset) left-0 ${isLarge ? "bg-background" : ""} z-3`}
       />
       <Labels
         position="top"
@@ -67,9 +65,7 @@ export const ConfusionMatrix = () => {
               isCorrect={isCorrect}
               color={getCellColor(cell.normalized ?? 0, isCorrect)}
               onClick={() => setSelected((c) => (c === cell ? null : cell))}
-              onMouseEnter={
-                !isTouch() && !isLarge ? () => setHovered(cell) : undefined
-              }
+              onMouseEnter={!isTouch() && !isLarge ? () => setHovered(cell) : undefined}
               onMouseLeave={() => setHovered(null)}
             >
               {cell.count}
@@ -81,10 +77,7 @@ export const ConfusionMatrix = () => {
   )
 }
 
-type DivProps = React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLElement>,
-  HTMLDivElement
->
+type DivProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLDivElement>
 
 const Cell = (
   props: {
@@ -98,9 +91,7 @@ const Cell = (
   return (
     <div
       className={`flex items-center justify-center cursor-pointer border-2 ${
-        isHighlighted || isSelected
-          ? "border-marker"
-          : "border-transparent hover:border-marker"
+        isHighlighted || isSelected ? "border-marker" : "border-transparent hover:border-marker"
       } ${isSelected ? "rounded-sm" : ""} ${isCorrect ? "text-white" : ""}`}
       style={{ backgroundColor: color }}
       {...otherProps}
@@ -128,12 +119,8 @@ function labelHandlers(
   }
 
   const onClick = (val: number) =>
-    setSelected((s) =>
-      s?.groupProp === prop && s[prop] === val ? null : groupedCell(val),
-    )
-  const onMouseEnter = isLarge
-    ? undefined
-    : (val: number) => setHovered(groupedCell(val))
+    setSelected((s) => (s?.groupProp === prop && s[prop] === val ? null : groupedCell(val)))
+  const onMouseEnter = isLarge ? undefined : (val: number) => setHovered(groupedCell(val))
   const onMouseLeave = () => setHovered(null)
 
   return { onClick, onMouseEnter, onMouseLeave }
@@ -164,15 +151,13 @@ const OuterGrid = ({ numClasses, long, maxChars, children }: GridProps) => (
             "min(var(--grid-base), calc(100vw - 2 * var(--padding-main) - var(--label-max-w) - var(--axis-label-size) - var(--gap)))",
           "--ideal-cell-size": `calc(var(--ideal-grid-size) / var(--num-classes) - var(--gap))`,
           "--cell-size": "max(1.5rem,var(--ideal-cell-size))",
-          "--grid-size":
-            "calc((var(--cell-size) + var(--gap)) * var(--num-classes))",
+          "--grid-size": "calc((var(--cell-size) + var(--gap)) * var(--num-classes))",
           "--label-width": long
             ? `calc(${maxChars}ch + 2 * var(--label-padding))`
             : "var(--axis-label-size)",
           "--label-max-w": "min(var(--label-width), 4em)",
           "--axis-label-size": "1.5em",
-          "--label-plus-axis":
-            "calc(var(--label-max-w) + var(--axis-label-size) + 2 * var(--gap))",
+          "--label-plus-axis": "calc(var(--label-max-w) + var(--axis-label-size) + 2 * var(--gap))",
         } as React.CSSProperties
       }
     >
@@ -216,9 +201,7 @@ function Labels(props: LabelProps) {
   const rotate = long && orient === "row" && numClasses > 2
   return (
     <div
-      className={`flex gap-(--gap) ${
-        LABEL_FLEX_MAP[position]
-      } text-secondary sticky ${
+      className={`flex gap-(--gap) ${LABEL_FLEX_MAP[position]} text-secondary sticky ${
         orient === "column" ? "left-0" : "top-(--stick-top-offset)"
       } z-2 bg-background ${className}`}
     >
@@ -229,9 +212,7 @@ function Labels(props: LabelProps) {
             : "max-w-[calc(100vw-var(--label-plus-axis))] sticky left-(--label-plus-axis)"
         }`}
       >
-        <div className={`px-2 ${orient === "column" ? "-rotate-90" : ""}`}>
-          {name}
-        </div>
+        <div className={`px-2 ${orient === "column" ? "-rotate-90" : ""}`}>{name}</div>
       </div>
       <div
         className={`grid gap-(--gap) ${
@@ -245,13 +226,9 @@ function Labels(props: LabelProps) {
             key={i}
             className={`${
               highlighted === i
-                ? `bg-marker text-black ${
-                    highlightedIsSelected ? "rounded-sm" : ""
-                  }`
+                ? `bg-marker text-black ${highlightedIsSelected ? "rounded-sm" : ""}`
                 : "bg-box-dark"
-            } ${
-              long ? "px-(--label-padding)" : ""
-            } leading-none flex items-center ${
+            } ${long ? "px-(--label-padding)" : ""} leading-none flex items-center ${
               rotate
                 ? "h-(--cell-size) w-(--label-width) -rotate-90 origin-top-left translate-y-(--label-width)"
                 : long && orient === "column"
@@ -268,9 +245,7 @@ function Labels(props: LabelProps) {
             onMouseEnter={!isTouch() ? () => onMouseEnter?.(i) : undefined}
             onMouseLeave={!isTouch() ? () => onMouseLeave?.(i) : undefined}
           >
-            <div className={long && orient === "column" ? "truncate" : ""}>
-              {label}
-            </div>
+            <div className={long && orient === "column" ? "truncate" : ""}>{label}</div>
           </div>
         ))}
       </div>
@@ -330,9 +305,7 @@ function useConfusionCells() {
           const yTrue = y as tf.Tensor1D
           const yPred = (model.predict(X) as tf.Tensor).argMax(1) as tf.Tensor1D
 
-          const cm = tf.math
-            .confusionMatrix(yTrue, yPred, numClasses)
-            .transpose()
+          const cm = tf.math.confusionMatrix(yTrue, yPred, numClasses).transpose()
 
           const cmValues = cm.flatten().arraySync()
           const maxPerCol = cm.max(0).arraySync() as number[]

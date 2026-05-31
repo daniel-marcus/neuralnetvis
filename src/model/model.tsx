@@ -97,11 +97,7 @@ export function useModelTransition(
   const loadStateToSet = useRef<ModelLoadState | undefined>(undefined)
 
   const setModel = useCallback(
-    async (
-      model?: tf.LayersModel,
-      loadState?: ModelLoadState,
-      silent?: boolean,
-    ) => {
+    async (model?: tf.LayersModel, loadState?: ModelLoadState, silent?: boolean) => {
       modelToSet.current = model
       loadStateToSet.current = loadState
       const id = setStatus(silent ? "" : "Creating model ...", -1)
@@ -159,9 +155,7 @@ function manuallyDisposeUnusedTensors(model: tf.LayersModel) {
       (v) =>
         v.size === size &&
         v.trainable === false &&
-        !v.name.match(
-          /(BatchNormalization|batch_normalization|moving_mean|moving_variance)/,
-        ),
+        !v.name.match(/(BatchNormalization|batch_normalization|moving_mean|moving_variance)/),
     )
     // console.log({ olds })
     olds.forEach((v) => tf.dispose(v))
@@ -186,10 +180,7 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
   const learningRate = useSceneStore((s) => s.trainConfig.learningRate)
   useEffect(() => {
     if (!model || !ds) return
-    if (
-      !isModelCompiled(model) ||
-      model.optimizer.getConfig().learningRate !== learningRate
-    ) {
+    if (!isModelCompiled(model) || model.optimizer.getConfig().learningRate !== learningRate) {
       const isClassification = ds.task === "classification"
       model.compile({
         optimizer: tf.train.adam(learningRate),
@@ -235,10 +226,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
             name: `nnv_Output`,
           }
         : config
-      addDenseWithFlattenIfNeeded(
-        layerStack,
-        newConfig as LayerConfigMap["Dense"],
-      )
+      addDenseWithFlattenIfNeeded(layerStack, newConfig as LayerConfigMap["Dense"])
     } else if (l.className === "Add") {
       const lastNode = layerStack.last
       const makeLayer = getLayerDef(l.className)!.constructorFunc
@@ -252,9 +240,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
       layerStack.add(layer, [lastNode, ...otherNodes])
     } else if (l.className in layerDefMap) {
       const args = config as LayerConfigMap[typeof l.className]
-      const makeLayer = getLayerDef(l.className)?.constructorFunc as (
-        args: unknown,
-      ) => Layer
+      const makeLayer = getLayerDef(l.className)?.constructorFunc as (args: unknown) => Layer
       if (makeLayer) layerStack.add(makeLayer(args))
     } else {
       console.log("Unknown layer", l)
@@ -269,10 +255,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
   return model
 }
 
-function addDenseWithFlattenIfNeeded(
-  layerStack: LayerStack,
-  denseArgs: LayerConfigMap["Dense"],
-) {
+function addDenseWithFlattenIfNeeded(layerStack: LayerStack, denseArgs: LayerConfigMap["Dense"]) {
   const isMutliDim = layerStack.last.shape.length > 2
   if (isMutliDim) {
     layerStack.add(tf.layers.flatten())

@@ -26,8 +26,7 @@ export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
 
   const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
   const prevLayerName = hovered?.layer.prevLayer?.tfLayer.name
-  const prevLayerIsVisible =
-    !!prevLayerName && !excludedLayers.includes(prevLayerName)
+  const prevLayerIsVisible = !!prevLayerName && !excludedLayers.includes(prevLayerName)
 
   const isFlatView = useSceneStore((s) => s.vis.flatView)
   const length = hovered?.inputNeurons?.length ?? 0
@@ -88,8 +87,7 @@ type NeuronConnectionsProps = {
 export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
   const showLines = useSceneStore((s) => s.vis.showLines)
   const isConvOrMaxPool =
-    ["Conv2D", "MaxPooling2D"].includes(layer.layerType) ||
-    ["Conv2D"].includes(prevLayer.layerType)
+    ["Conv2D", "MaxPooling2D"].includes(layer.layerType) || ["Conv2D"].includes(prevLayer.layerType)
   const isRegression = useSceneStore((s) => s.isRegression())
   const invalidate = useThree(({ invalidate }) => invalidate)
   useEffect(invalidate, [showLines, invalidate])
@@ -110,7 +108,7 @@ export const Connections = ({ layer, prevLayer }: NeuronConnectionsProps) => {
 }
 
 // TODO!
-/* 
+/*
 function getConnections(
   layer: NeuronLayer,
   prevNeurons: Neuron[],
@@ -177,19 +175,14 @@ const DynamicLine2 = ({ from, to, toPoint, width = 1 }: DynamicLineProps) => {
   useFrame(() => {
     if (lineRef.current && from && (to || toPoint)) {
       const fromPosition = getWorldPos(from)
-      const toPosition = toPoint
-        ? new THREE.Vector3(...toPoint)
-        : getWorldPos(to)
+      const toPosition = toPoint ? new THREE.Vector3(...toPoint) : getWorldPos(to)
       if (!fromPosition || !toPosition) return
       geometry.setPositions([...fromPosition, ...toPosition])
       lineRef.current.computeLineDistances()
     }
   })
 
-  const obj = useMemo(
-    () => new LineSegments2(geometry, material),
-    [geometry, material],
-  )
+  const obj = useMemo(() => new LineSegments2(geometry, material), [geometry, material])
 
   return <primitive object={obj} ref={lineRef} />
 }

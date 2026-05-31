@@ -21,9 +21,7 @@ export interface UserData {
   instancedActivations: THREE.InstancedBufferAttribute
 }
 
-export const InstancedLayer = memo(function InstancedLayer(
-  props: InstancedLayerProps,
-) {
+export const InstancedLayer = memo(function InstancedLayer(props: InstancedLayerProps) {
   const { meshParams, hasColorChannels, hasLabels, numNeurons } = props
   const { channelIdx, meshRefs, measureRef } = props
   const units = hasColorChannels ? numNeurons / 3 : numNeurons
@@ -67,9 +65,7 @@ export const InstancedLayer = memo(function InstancedLayer(
           })}
         </group>
       )}
-      {props.layerPos === "output" && (
-        <YPointer outputLayer={props} positions={positions} />
-      )}
+      {props.layerPos === "output" && <YPointer outputLayer={props} positions={positions} />}
     </>
   )
 })

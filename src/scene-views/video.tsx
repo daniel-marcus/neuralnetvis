@@ -94,9 +94,7 @@ function useStream() {
     stream?.getTracks().forEach((track) => track.stop())
     setStream(undefined)
   }, [stream, setStream])
-  const videoConstraints = useSceneStore(
-    (s) => s.ds?.camProps?.videoConstraints,
-  )
+  const videoConstraints = useSceneStore((s) => s.ds?.camProps?.videoConstraints)
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()
     else {

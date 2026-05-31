@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
-import {
-  CollapsibleWithTitle,
-  Button,
-  InputRowsWrapper,
-  TextInput,
-} from "@/components/ui-elements"
+import { CollapsibleWithTitle, Button, InputRowsWrapper, TextInput } from "@/components/ui-elements"
 import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
 import type { SubmitEvent } from "react"
 import { useModelTransition } from "@/model/model"
@@ -41,10 +36,7 @@ export function MyModels() {
             <Button onClick={saveModel} disabled={!model}>
               save
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowImportForm((i) => !i)}
-            >
+            <Button variant="secondary" onClick={() => setShowImportForm((i) => !i)}>
               import
             </Button>
           </div>
@@ -89,16 +81,10 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
             {m}
           </button>
           <div className="flex gap-2 flex-nowrap">
-            <button
-              className="px-2 active:text-white"
-              onClick={() => exportModel(m)}
-            >
+            <button className="px-2 active:text-white" onClick={() => exportModel(m)}>
               export
             </button>
-            <button
-              className="active:text-white"
-              onClick={() => removeModel(m)}
-            >
+            <button className="active:text-white" onClick={() => removeModel(m)}>
               x
             </button>
           </div>
@@ -110,9 +96,7 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
 
 async function getModelNamesFromDb(): Promise<string[]> {
   const allModels = await tf.io.listModels()
-  const modelNames = Object.keys(allModels).map((k) =>
-    k.replace(/^indexeddb:\/\//, ""),
-  )
+  const modelNames = Object.keys(allModels).map((k) => k.replace(/^indexeddb:\/\//, ""))
   return modelNames
 }
 
@@ -163,9 +147,7 @@ function ImportForm({ onUploadFinished }: ImportFormProps) {
     <form onSubmit={importModel}>
       <div className="pl-4 border-l border-menu-border flex flex-col gap-2">
         <label className="block cursor-pointer input-appearance">
-          {modelFiles
-            ? modelFiles.length + " model file(s) selected"
-            : "Choose model file(s)"}
+          {modelFiles ? modelFiles.length + " model file(s) selected" : "Choose model file(s)"}
           <input
             type="file"
             multiple

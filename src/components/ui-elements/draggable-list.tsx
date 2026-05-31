@@ -34,34 +34,26 @@ export const DraggableList = ({
     }))
   }, [api, order, rowHeight])
 
-  const bind = useDrag(
-    ({ args: [originalIdx], active, movement: [, y], event, tap }) => {
-      if (!tap && event.type === "pointermove") {
-        event.stopPropagation() // don't drag parent (e.g. menu)
-      }
-      const currIdx = order.indexOf(originalIdx)
-      const dragY = currIdx * rowHeight + y
-      const currRow = clamp(
-        Math.round(dragY / rowHeight),
-        0,
-        children.length - 1,
-      )
-      const newOrder = swap(order, currIdx, currRow)
-      const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
-      if (isValidChange) {
-        const min = -currIdx * rowHeight
-        const max = maxHeight - currIdx * rowHeight - rowHeight
-        const constrainedY = rubberbandIfOutOfBounds(y, min, max)
-        api.start(
-          fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight),
-        )
-      }
-      if (!active) {
-        if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
-        else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
-      }
-    },
-  )
+  const bind = useDrag(({ args: [originalIdx], active, movement: [, y], event, tap }) => {
+    if (!tap && event.type === "pointermove") {
+      event.stopPropagation() // don't drag parent (e.g. menu)
+    }
+    const currIdx = order.indexOf(originalIdx)
+    const dragY = currIdx * rowHeight + y
+    const currRow = clamp(Math.round(dragY / rowHeight), 0, children.length - 1)
+    const newOrder = swap(order, currIdx, currRow)
+    const isValidChange = checkValidChange ? checkValidChange(newOrder) : true
+    if (isValidChange) {
+      const min = -currIdx * rowHeight
+      const max = maxHeight - currIdx * rowHeight - rowHeight
+      const constrainedY = rubberbandIfOutOfBounds(y, min, max)
+      api.start(fn(newOrder, active, originalIdx, currIdx, constrainedY, rowHeight))
+    }
+    if (!active) {
+      if (isValidChange && currRow !== currIdx) onOrderChange(newOrder)
+      else api.start(fn(order, false, originalIdx, currIdx, y, rowHeight))
+    }
+  })
 
   return (
     <div
@@ -94,14 +86,7 @@ export const DraggableList = ({
   )
 }
 
-function fn(
-  order: number[],
-  active = false,
-  originalIdx = 0,
-  currIdx = 0,
-  y = 0,
-  rowHeight = 0,
-) {
+function fn(order: number[], active = false, originalIdx = 0, currIdx = 0, y = 0, rowHeight = 0) {
   return (index: number) =>
     active && index === originalIdx
       ? {

@@ -24,9 +24,7 @@ export interface ModelSlice {
   resetWeights: () => void
 
   activationStats: { [layerIdx: number]: ActivationStats | undefined }
-  setActivationStats: (
-    activationStats?: Record<number, ActivationStats>,
-  ) => void
+  setActivationStats: (activationStats?: Record<number, ActivationStats>) => void
 
   activations: {
     [layerIdx: number]: LayerActivations | undefined
