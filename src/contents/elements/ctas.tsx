@@ -4,7 +4,7 @@ import { getLessonPath, type LessonPreview } from ".."
 export function Ctas({ nextLesson }: { nextLesson?: LessonPreview }) {
   return (
     <div className="mt-[50dvh] flex justify-start translate-y-1/2">
-      {!!nextLesson ? (
+      {nextLesson ? (
         <Link
           href={getLessonPath(nextLesson.slug)}
           className="bg-accent text-white px-4 py-2 rounded"

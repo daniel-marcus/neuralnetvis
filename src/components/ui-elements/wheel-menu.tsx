@@ -136,8 +136,7 @@ function useWheelInteractions(props: WheelMenuProps, degPerItem: number) {
       // update currIdx for human scroll
       const isHumanScroll = typeof jumpTarget.current === "undefined"
       const newIdx = Math.round((newRotation - degPerItem) / degPerItem)
-      if (isHumanScroll && !items[newIdx]?.disabled)
-        setCurrIdx(!!items[newIdx] ? newIdx : undefined)
+      if (isHumanScroll && !items[newIdx]?.disabled) setCurrIdx(items[newIdx] ? newIdx : undefined)
     }
 
     let startY: number | null = null

@@ -22,7 +22,7 @@ interface CustomBtnProps {
 export const CustomBtn = (props: CustomBtnProps) => (
   <button
     className={`flex-none border-2 w-(--item-size) rounded-md hover:border-marker ${
-      !!props.isActive ? "border-accent" : ""
+      props.isActive ? "border-accent" : ""
     } aspect-(--item-aspect-ratio) ${props.className ?? ""}`}
     onClick={props.onClick}
   >

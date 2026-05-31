@@ -83,12 +83,12 @@ export const CreateNewDataset = () => {
                 <TextInput
                   // className="w-full"
                   value={l}
-                  onChange={(val) => setLabels([...labels.toSpliced(i, 1, val)])}
+                  onChange={(val) => setLabels(labels.toSpliced(i, 1, val))}
                 />
                 {labels.length > MIN_LABELS && (
                   <button
                     className="px-2 active:text-white"
-                    onClick={() => setLabels([...labels.toSpliced(i, 1)])}
+                    onClick={() => setLabels(labels.toSpliced(i, 1))}
                   >
                     x
                   </button>

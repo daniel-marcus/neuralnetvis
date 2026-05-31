@@ -33,7 +33,7 @@ export const InputRow = (props: InputRowProps) => {
   return (
     <div className={`relative flex gap-2 w-full leading-normal ${className}`}>
       <div className={`flex-none w-[7.5em] flex justify-between`}>
-        <div className={`w-full ${!!hint ? "cursor-pointer" : ""}`} onClick={handleLabelClick}>
+        <div className={`w-full ${hint ? "cursor-pointer" : ""}`} onClick={handleLabelClick}>
           {label ?? ""}
         </div>
         {!!reset && (

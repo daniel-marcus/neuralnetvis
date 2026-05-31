@@ -38,7 +38,7 @@ export const CanvasView = (props: CanvasViewProps) => {
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
   const mainRenderer = useGlobalStore((s) => s.renderer)
-  if (typeof gpuDevice === null || !mainRenderer) return null // not initialized yet
+  if (gpuDevice === null || !mainRenderer) return null // not initialized yet
   const isWebGPU = isWebGPUBackend(mainRenderer.backend)
   if (isWebGPU)
     return (

@@ -31,7 +31,7 @@ interface MainCanvasProps {
 export function MainCanvas({ eventSource }: MainCanvasProps) {
   const gpuDevice = useGPUDevice()
   const hasActive = useHasActiveTile()
-  if (typeof gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
+  if (gpuDevice === null) return null // not initialized yet, if no WebGPU support it will become undefined (WebGL fallback)
   return (
     <>
       <div

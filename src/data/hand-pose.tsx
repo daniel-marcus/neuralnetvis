@@ -39,7 +39,7 @@ export function HandPoseCapture({ stream }: RecorderProps) {
         ●
       </CustomBtn>
     )
-  else if (!!ds.train.totalSamples)
+  else if (ds.train.totalSamples)
     return (
       <CustomBtn
         onClick={async () => {
