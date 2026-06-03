@@ -2,7 +2,7 @@ import * as THREE from "three/webgpu"
 
 // colors are now caluclated in the shader, see materials.ts
 
-export type ColorObj = {
+type ColorObj = {
   rgb: number[] // as THREE.Color.toArray (float) for instanced meshes
   three: THREE.Color // for label
   style: string // for css

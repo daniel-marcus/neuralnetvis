@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useRef } from "react"
 
-export type DomRefs = {
+type DomRefs = {
   rootRef: React.RefObject<HTMLDivElement | null>
   lessonOverlayRef: React.RefObject<HTMLDivElement | null>
   neuronStatusRef: React.RefObject<HTMLDivElement | null>

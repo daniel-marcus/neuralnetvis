@@ -31,7 +31,7 @@ type DOMPosition = {
   right: number
 }
 
-export type ContainerProps = {
+type ContainerProps = {
   visible: boolean
   scene: THREE.Scene
   index: number
@@ -47,7 +47,7 @@ export type ContainerProps = {
   onFirstRender?: () => void
 }
 
-export type ViewProps = {
+type ViewProps = {
   /** Root element type, default: div */
   as?: string
   /** CSS id prop */
@@ -384,7 +384,7 @@ const HtmlView = /* @__PURE__ */ React.forwardRef(function HtmlView(
   )
 })
 
-export type ViewportProps = {
+type ViewportProps = {
   Port: () => React.JSX.Element
 } & React.ForwardRefExoticComponent<ViewProps & React.RefAttributes<HTMLElement | THREE.Group>>
 

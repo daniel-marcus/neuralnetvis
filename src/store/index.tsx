@@ -47,7 +47,7 @@ export const createSceneStore = (initProps?: InitProps) => {
 
 export const dummySceneStore = createSceneStore({ uid: "dummy" })
 
-export type SceneStore = ReturnType<typeof createSceneStore>
+type SceneStore = ReturnType<typeof createSceneStore>
 export const SceneContext = React.createContext<SceneStore | null>(null)
 
 export function useSceneStore<T>(selector: (state: SceneState) => T): T {
@@ -65,7 +65,7 @@ export function useCurrScene<T>(selector: (state: SceneState) => T): T {
 
 type WindowSize = { width: number; height: number }
 
-export type GlobalStoreType = TabsSlice &
+type GlobalStoreType = TabsSlice &
   StatusSlice & {
     backendReady: boolean
     isDebug: boolean
