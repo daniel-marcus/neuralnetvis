@@ -7,9 +7,9 @@ import { Block, Details, Head } from "@/contents/elements"
 import { trainOnBatch } from "@/model/training"
 import { interpolate } from "@/scene-views/3d-model/utils"
 import { defaultVisConfig } from "@/store/vis"
-import { getNid } from "@/neuron-layers/neurons"
+import { getNid } from "@/neuron-layers/helpers"
 import type { OnScrollProps } from "@/contents/elements/types"
-import type { LessonContent } from "."
+import type { LessonContent } from "./types"
 import type { InitialState } from "@/utils/initial-state"
 
 export const hmlInitialState: InitialState = {

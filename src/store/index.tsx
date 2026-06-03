@@ -118,8 +118,6 @@ export const getModel = () => getScene().getState().model
 export const getThree = () => getScene().getState().three
 export const setLayerConfigs: ModelSlice["setLayerConfigs"] = (layerConfigs) =>
   getScene().getState().setLayerConfigs(layerConfigs)
-export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
-  getScene().getState().vis.setConfig(config)
 export const getVisConfig: VisSlice["vis"]["getConfig"] = (key) =>
   getScene().getState().vis.getConfig(key)
 

@@ -1,4 +1,4 @@
-import { preprocessSample } from "@/data/sample"
+import { preprocessSample } from "@/data/preprocess-sample"
 import type { StateCreator } from "zustand"
 import type { Dataset, Sample, SampleRaw, StoreMeta } from "@/data"
 import type { ModelSlice } from "./model"

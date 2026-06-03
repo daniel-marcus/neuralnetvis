@@ -1,21 +1,6 @@
 import { IntroNetworks, hmlInitialState } from "./how-machines-learn"
-import type { ReactElement } from "react"
-import type { ScrollBlockProps } from "@/contents/elements/types"
-import { InitialState } from "@/utils/initial-state"
-
-export type LessonContent = ReactElement<{
-  children: ReactElement<ScrollBlockProps>[]
-}> // <main> with <Block> children
-
-export interface LessonDef {
-  title: string
-  slug: string
-  description: string
-  content: () => LessonContent
-  disabled?: boolean
-  dsKey?: string
-  initialState?: InitialState
-}
+import { getLessonPath } from "./types"
+import type { LessonDef, LessonPreview } from "./types"
 
 export const lessons: LessonDef[] = [
   {
@@ -29,10 +14,6 @@ export const lessons: LessonDef[] = [
   },
 ]
 
-export type LessonPreview = Omit<LessonDef, "content"> & {
-  path: string
-}
-
 export const lessonPreviews: LessonPreview[] = lessons.map((l) => {
   const { content, ...lessonDef } = l // eslint-disable-line @typescript-eslint/no-unused-vars
   return {
@@ -40,7 +21,3 @@ export const lessonPreviews: LessonPreview[] = lessons.map((l) => {
     path: getLessonPath(lessonDef.slug),
   }
 })
-
-export function getLessonPath(slug: string) {
-  return `/learn/${slug}`
-}

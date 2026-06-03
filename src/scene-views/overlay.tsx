@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type ReactNode } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
-import { getTileDuration, type Section } from "@/components/tile-grid"
+import { getTileDuration, type Section } from "@/components/tile-grid-data"
 import { useBodyFreeze } from "@/utils/body-freeze"
 import { useDomRefs } from "@/utils/dom-refs"
 import { Portal } from "@/utils/portal"

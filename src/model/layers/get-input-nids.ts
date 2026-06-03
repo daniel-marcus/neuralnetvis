@@ -1,5 +1,4 @@
-import { getUnits } from "@/neuron-layers/layers"
-import { getFlatIndex, getIndex3d, getNid } from "@/neuron-layers/neurons"
+import { getFlatIndex, getIndex3d, getNid, getUnits } from "@/neuron-layers/helpers"
 import type { GetInputNidsFunc } from "./types"
 import type { Nid } from "@/neuron-layers"
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react"
 import { useSceneStore } from "@/store"
 import { HandPoseCanvasUpdater, HandPoseCapture } from "@/data/hand-pose"
 import { DefaultVideoCapture } from "@/data/video-capture"
-import { CustomBtn } from "./sample-viewer-btns"
+import { CustomBtn } from "./custom-btn"
 
 export function VideoWindow() {
   const videoRef = useSceneStore((s) => s.videoRef)

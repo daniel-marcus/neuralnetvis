@@ -1,8 +1,7 @@
 import { useEffect } from "react"
-import * as tf from "@tensorflow/tfjs"
 import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { getData } from "./db"
-import type { Dataset, DbBatch, Sample, SampleRaw } from "./types"
+import type { Dataset, DbBatch, SampleRaw } from "./types"
 
 export function useSample() {
   const ds = useSceneStore((s) => s.ds)
@@ -35,18 +34,6 @@ export function useRawInput(layerIdx: number, neuronIdx: number) {
   const sample = useSceneStore((s) => s.sample)
   if (layerIdx !== 0) return undefined
   return sample?.rawX?.[neuronIdx]
-}
-
-export function preprocessSample(sampleRaw?: SampleRaw, ds?: Dataset) {
-  if (!sampleRaw || !ds) return
-  const rawX = sampleRaw.rawX ?? sampleRaw.X
-  const xTensor = tf.tidy(() => {
-    const tensor = tf.tensor(sampleRaw.X, [1, ...ds.inputDims])
-    return ds.preprocess ? ds.preprocess(tensor) : tensor
-  })
-  // const X = tf.tidy(() => xTensor.flatten().arraySync() as number[])
-  const sample: Sample = { ...sampleRaw, rawX, xTensor }
-  return sample
 }
 
 type BatchCacheKey = string // `${ds.key}_${type}`

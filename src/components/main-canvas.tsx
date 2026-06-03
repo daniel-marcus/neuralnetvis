@@ -2,11 +2,10 @@ import { useEffect, type RefObject } from "react"
 import throttle from "lodash.throttle"
 import * as THREE from "three/webgpu"
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
-import tunnel from "tunnel-rat"
 import { isWebGPUBackend, useGPUDevice, useIsWebGPU } from "@/utils/webgpu"
-import { useHasActiveTile } from "./tile-grid"
+import { useHasActiveTile } from "./tile-grid-data"
 import { useGlobalStore } from "@/store"
-import type { RootState as RootStateGL } from "@react-three/fiber"
+import { Tunnel, type RootState } from "./main-canvas-tunnel"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
@@ -15,14 +14,6 @@ declare module "@react-three/fiber" {
 }
 
 extend(THREE as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-
-export const Tunnel = tunnel()
-
-export type RootState = Omit<RootStateGL, "gl"> & {
-  gl: THREE.WebGPURenderer & {
-    setCanvasTarget: (target: THREE.CanvasTarget) => void
-  }
-}
 
 interface MainCanvasProps {
   eventSource: RefObject<HTMLDivElement | null>

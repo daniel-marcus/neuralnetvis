@@ -2,7 +2,7 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import { isWebGPUBackend } from "@/utils/webgpu"
-import { RootState, Tunnel } from "@/components/main-canvas"
+import { RootState, Tunnel } from "@/components/main-canvas-tunnel"
 import type { ComputeFunction } from "@react-three/fiber"
 
 /* eslint-disable react-hooks/refs, react-hooks/immutability, react-hooks/exhaustive-deps, @typescript-eslint/no-unused-vars */

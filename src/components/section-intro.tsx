@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import { useSection } from "./tile-grid"
+import { useSection } from "./use-section"
 import { metadata, learnMetadata, playMetadata } from "@/app/metadata"
 
 const introTexts = {

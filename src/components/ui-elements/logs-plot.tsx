@@ -3,28 +3,13 @@ import { useEffect, useLayoutEffect } from "react"
 import { Button, Table } from "@/components/ui-elements"
 import { useCurrScene } from "@/store"
 import { clamp } from "@/utils/helpers"
+import { isBatchLog, VAL_METRICS } from "./training-log"
+import type { Metric, TrainingLog } from "./training-log"
 import type { ReactNode, Ref, RefObject } from "react"
 
 // reference: https://github.com/pmndrs/leva/blob/main/packages/plugin-plot/src/PlotCanvas.tsx
 
-interface EpochLog {
-  epoch: number
-  loss?: number
-  acc?: number
-  val_loss?: number
-  val_acc?: number
-}
-
-interface BatchLog extends EpochLog {
-  batch: number
-  size: number
-}
-
-export type TrainingLog = BatchLog | EpochLog
-
-const VAL_METRICS: (keyof EpochLog)[] = ["val_loss", "val_acc"]
 const METRICS: (keyof TrainingLog)[] = ["loss", "acc", ...VAL_METRICS]
-export type Metric = (typeof METRICS)[number]
 
 export function LogsPlot({ className = "" }) {
   const [logs, currMetrics] = useLogs()
@@ -161,10 +146,6 @@ function Metrics({ currMetrics }: { currMetrics: Set<string> }) {
       ))}
     </div>
   )
-}
-
-export function isBatchLog(log: TrainingLog): log is BatchLog {
-  return "batch" in log && typeof log.batch === "number"
 }
 
 const Dot = ({ ref }: { ref: Ref<HTMLDivElement> }) => (

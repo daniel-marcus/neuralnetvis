@@ -1,26 +1,26 @@
-import {
+import type {
   ActivationLayerArgs,
   DenseLayerArgs,
   DropoutLayerArgs,
   FlattenLayerArgs,
 } from "@tensorflow/tfjs-layers/dist/layers/core"
-import { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
-import { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
-import { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
-import {
+import type { ConvLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional"
+import type { Pooling2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/pooling"
+import type { InputLayerArgs } from "@tensorflow/tfjs-layers/dist/engine/input_layer"
+import type {
   BatchNormalizationLayerArgs,
   LayerNormalizationLayerArgs,
 } from "@tensorflow/tfjs-layers/dist/layers/normalization"
-import { RandomRotationLayerArgs } from "./random-rotation"
-import { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
-import { Nid } from "@/neuron-layers"
-import { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional_depthwise"
-import { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
-import { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
-import { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
-import { PositionEmbeddingLayerArgs } from "./position-embedding"
-import { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
-import { MultiHeadAttentionArgs } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
+import type { RandomRotationLayerArgs } from "./random-rotation"
+import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
+import type { Nid } from "@/neuron-layers/types"
+import type { DepthwiseConv2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/convolutional_depthwise"
+import type { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced_activations"
+import type { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
+import type { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
+import type { PositionEmbeddingLayerArgs } from "./position-embedding"
+import type { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
+import type { MultiHeadAttentionArgs } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {

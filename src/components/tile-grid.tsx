@@ -2,67 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useDrag } from "@use-gesture/react"
-import { datasets } from "@/data/datasets"
-import { lessonPreviews } from "@/contents"
 import { usePathname, useRouter } from "next/navigation"
 import { useGlobalStore } from "@/store"
 import { SectionIntro } from "./section-intro"
+import { useSection } from "./use-section"
 import { Footer } from "./footer"
 import { SceneViewer } from "@/scene-views/scene-viewer"
-import { getDsPath } from "@/data/dataset"
-import { cameraSvg } from "@/scene-views/video"
+import { tiles, useHasActiveTile, getTileDuration, type Section } from "./tile-grid-data"
 import { usePrevious } from "@/utils/helpers"
 import { useIsScreen } from "@/utils/screen"
 import { useHasLesson } from "./lesson"
 import type { ReactNode, CSSProperties } from "react"
-import type { InitialState } from "@/utils/initial-state"
-import type { DatasetDef } from "@/data"
 
-export type Section = "learn" | "play"
 const sections = ["learn", "play"] as const
-
-export interface TileDef {
-  path: string
-  title: string
-  tags: ReactNode[]
-  section: Section
-  dsKey?: string
-  isFeatured?: boolean
-  disabled?: boolean
-  initialState?: InitialState
-  shouldLoadFullDs?: boolean
-  isLargeModel?: boolean // don't expand hidden layers by default
-  targetDevice?: DatasetDef["targetDevice"]
-  hasDraw?: boolean
-}
-
-const tiles: TileDef[] = [
-  ...lessonPreviews.map((l) => ({
-    ...l,
-    section: "learn" as const,
-    tags: ["lesson"],
-    shouldLoadFullDs: true,
-  })),
-  ...datasets.map((dsDef) => ({
-    path: getDsPath(dsDef),
-    title: dsDef.name,
-    isFeatured: dsDef.isFeatured,
-    tags: getTags(dsDef),
-    section: "play" as const,
-    dsKey: dsDef.key,
-    disabled: dsDef.disabled,
-    isLargeModel: dsDef.model?.lazyLoadWeights,
-    targetDevice: dsDef.targetDevice,
-    hasDraw: !!dsDef.drawOptions,
-  })),
-]
-
-function getTags(dsDef: DatasetDef) {
-  const tags: ReactNode[] = []
-  if (dsDef.camProps) tags.push(cameraSvg)
-  tags.push(dsDef.isModelDs ? "model" : "dataset")
-  return tags
-}
 
 export const TileGrid = () => {
   const active = usePathname()
@@ -222,30 +174,9 @@ const Tags = ({ tags, section }: { tags: ReactNode[]; section: Section }) => (
   </div>
 )
 
-export function useHasActiveTile() {
-  const pathname = usePathname()
-  return tiles.some(({ path }) => path === pathname)
-}
-
-export function useSection() {
-  // only for overview pages /learn and /play
-  const pathname = usePathname()
-  const splits = pathname.split("/")
-  return splits.length === 2 ? splits[1] : ""
-}
-
 function useIs404() {
   const hasActive = useHasActiveTile()
   const section = useSection()
   const pathname = usePathname()
   return pathname !== "/" && !hasActive && (!section || !sections.includes(section as Section))
-}
-
-export function getTileDuration() {
-  const s = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--tile-duration"),
-  )
-  const ms = s * 1000
-  if (!ms) console.warn("--tile-duration not set!", ms)
-  return ms
 }

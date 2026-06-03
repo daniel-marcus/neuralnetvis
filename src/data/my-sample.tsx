@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs"
 import { useSceneStore } from "@/store"
 import { centerCropResize } from "./utils"
-import { CustomBtn } from "@/scene-views/sample-viewer-btns"
+import { CustomBtn } from "@/scene-views/custom-btn"
 import type { Dataset, SampleRaw } from "./types"
 
 interface SampleAdderArgs {

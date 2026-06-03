@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { getLessonPath, type LessonPreview } from ".."
+import { getLessonPath, type LessonPreview } from "../types"
 
 export function Ctas({ nextLesson }: { nextLesson?: LessonPreview }) {
   return (

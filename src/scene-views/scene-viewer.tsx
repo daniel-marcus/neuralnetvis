@@ -25,7 +25,7 @@ import { SampleViewer } from "./sample-viewer"
 import { useScreenshotSettings } from "@/utils/screenshot"
 import { useDidMount } from "@/utils/helpers"
 
-import type { TileDef } from "@/components/tile-grid"
+import type { TileDef } from "@/components/tile-grid-data"
 
 type SceneViewerProps = TileDef & {
   isActive: boolean

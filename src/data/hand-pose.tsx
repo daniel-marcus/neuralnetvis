@@ -6,7 +6,7 @@ import hand from "@mediapipe/hands"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { addTrainData, resetData } from "@/data/dataset"
 import { useCaptureLoop } from "./video-capture"
-import { CustomBtn } from "@/scene-views/sample-viewer-btns"
+import { CustomBtn } from "@/scene-views/custom-btn"
 import type { CaptureFunc, RecorderProps } from "./video-capture"
 import type { SampleRaw } from "./types"
 

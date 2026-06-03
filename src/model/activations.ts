@@ -4,6 +4,7 @@ import { useThree } from "@react-three/fiber"
 import { useSample, type Sample } from "@/data"
 import { useSceneStore, isDebug } from "@/store"
 import { ActivationStats, useActivationStats } from "./activation-stats"
+import { getLayerActivations, getSingleOutput } from "./get-layer-activations"
 import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
 import { normalize, scaleNormalize } from "@/data/utils"
 import type Backend from "three/src/renderers/common/Backend.js"
@@ -102,12 +103,6 @@ export function useLayerActivations(layerIdx: number) {
 
 export function useActivation(layerIdx: number, neuronIdx: number) {
   return useSceneStore((s) => s.activations[layerIdx]?.activations?.[neuronIdx])
-}
-
-function getSingleOutput(tfLayer: tf.layers.Layer) {
-  const nodeIdx = tfLayer.inboundNodes.length - 1 // last inbound node; normally this is just 0, but in cases of nested models (e.g. Sequential as a layer) it is 1
-  const result = tfLayer.getOutputAt(nodeIdx)
-  return Array.isArray(result) ? result[0] : result
 }
 
 async function getActivations(
@@ -226,32 +221,4 @@ async function getActivations(
   } finally {
     activationTensors?.forEach((t) => t?.dispose())
   }
-}
-
-export function getLayerActivations(
-  model: tf.LayersModel,
-  inputTensor: tf.Tensor,
-  outputs?: tf.SymbolicTensor[],
-) {
-  const inputDimsModel = model.layers[0].batchInputShape.slice(1)
-  const inputDimsSample = inputTensor.shape.slice(1)
-  if (!checkShapeMatch(inputDimsModel, inputDimsSample)) return
-  try {
-    return tf.tidy(() => {
-      const tmpModel = tf.model({
-        inputs: model.input,
-        outputs: outputs ?? model.layers.map(getSingleOutput),
-      })
-      const result = tmpModel.predict(inputTensor)
-      return Array.isArray(result) ? result : [result]
-    })
-  } catch {
-    return
-  }
-}
-
-type Shape = (number | null)[]
-
-function checkShapeMatch(s1: Shape, s2: Shape) {
-  return s1.every((value, idx) => value === s2[idx])
 }

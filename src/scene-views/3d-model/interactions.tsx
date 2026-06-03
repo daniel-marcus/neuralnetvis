@@ -7,7 +7,7 @@ import { setStatus, clearStatus, useGlobalStore } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
 import { HoverConnections } from "./connections"
-import { getNid } from "@/neuron-layers/neurons"
+import { getNid } from "@/neuron-layers/helpers"
 import type { Neuron, NeuronLayer } from "@/neuron-layers"
 
 const LAYER_HOVER_STATUS = "layer-hover-status"

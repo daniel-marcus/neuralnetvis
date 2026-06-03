@@ -5,7 +5,7 @@ import { useSceneStore } from "@/store"
 import { round } from "@/data/utils"
 import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
-import { getIndex3d } from "@/neuron-layers/neurons"
+import { getIndex3d } from "@/neuron-layers/helpers"
 import { text2Texture } from "./text-to-texture"
 import type { NeuronLayer } from "@/neuron-layers/types"
 

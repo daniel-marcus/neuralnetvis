@@ -6,7 +6,7 @@ import { useGlobalStore } from "@/store"
 import { useDomRefs } from "@/utils/dom-refs"
 import { useLock } from "@/scene-views/3d-model/lock"
 import { Ctas } from "@/contents/elements"
-import type { LessonContent, LessonDef, LessonPreview } from "@/contents"
+import type { LessonContent, LessonDef, LessonPreview } from "@/contents/types"
 
 interface LessonProps extends LessonDef {
   nextLesson?: LessonPreview

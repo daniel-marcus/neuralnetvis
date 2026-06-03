@@ -1,7 +1,7 @@
-import { setVisConfig } from "."
 import type { StateCreator } from "zustand"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { DataSlice } from "./data"
+import type { VisSlice } from "./vis"
 import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
 import type { ActivationStats } from "@/model/activation-stats"
@@ -37,11 +37,11 @@ export interface ModelSlice {
 }
 
 export const createModelSlice: StateCreator<
-  ModelSlice & DataSlice & ViewSlice,
+  ModelSlice & DataSlice & ViewSlice & VisSlice,
   [],
   [],
   ModelSlice
-> = (set) => ({
+> = (set, get) => ({
   model: undefined,
   modelLoadState: null,
   shouldLoadWeights: false,
@@ -66,7 +66,7 @@ export const createModelSlice: StateCreator<
     })),
   resetLayerConfigs: () => {
     set({ layerConfigs: null })
-    setVisConfig({ excludedLayers: [] })
+    get().vis.setConfig({ excludedLayers: [] })
   },
   resetWeights: () =>
     set(({ layerConfigs }) => ({

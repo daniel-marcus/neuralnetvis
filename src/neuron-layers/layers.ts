@@ -4,6 +4,7 @@ import * as THREE from "three/webgpu"
 import { storage } from "three/tsl"
 import { isDebug, useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
+import { getUnits } from "./helpers"
 import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
@@ -149,11 +150,6 @@ const getVisibleIdxMap = (model: tf.LayersModel, showHiddenLayers: boolean) => {
     if (!showHiddenLayers && layerPos === "hidden") return map
     return isVisible(layer) ? map.set(i, map.size) : map
   }, new Map<number, number>())
-}
-
-export function getUnits(layer: Layer) {
-  const [, ...dims] = layer.outputShape as number[]
-  return dims.reduce((a, b) => a * b, 1)
 }
 
 function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {

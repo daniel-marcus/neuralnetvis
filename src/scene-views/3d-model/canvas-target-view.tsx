@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react"
 import { CanvasTarget, Scene } from "three/webgpu"
 import { useFrame, createPortal } from "@react-three/fiber"
-import { Tunnel, type RootState } from "@/components/main-canvas"
+import { Tunnel, type RootState } from "@/components/main-canvas-tunnel"
 import { useInView } from "@/utils/screen"
 
 // inspirations:
