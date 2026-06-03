@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { loadGrayscaleImageDataset } from "./load-helpers"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
@@ -68,29 +68,5 @@ export const quickDraw: DatasetDef = {
   drawOptions: {
     title: "Draw something",
   },
-  loadFull: async () => {
-    const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
-      "/data/quickdraw/x_train.npz",
-      "/data/quickdraw/y_train.npz",
-      "/data/quickdraw/x_test.npz",
-      "/data/quickdraw/y_test.npz",
-    ])
-    // add depth dim for Conv2D layers
-    xTrain.shape = [...xTrain.shape, 1]
-    xTest.shape = [...xTest.shape, 1]
-    return {
-      xTrain,
-      yTrain,
-      xTest,
-      yTest,
-    }
-  },
-  loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
-      ["/data/quickdraw/x_train_preview.npz", "/data/quickdraw/y_train_preview.npz"],
-      true,
-    )
-    xTrain.shape = [...xTrain.shape, 1]
-    return { xTrain, yTrain }
-  },
+  ...loadGrayscaleImageDataset("quickdraw"),
 }

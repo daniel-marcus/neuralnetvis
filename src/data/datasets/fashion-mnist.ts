@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { loadGrayscaleImageDataset } from "./load-helpers"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
@@ -25,33 +25,5 @@ export const fashionMnist: DatasetDef = {
   ],
   sampleViewer: true,
   model: getModelDef("fashion-mnist"),
-  loadFull: async () => {
-    const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
-      "/data/fashion_mnist_20k/x_train.npz",
-      "/data/fashion_mnist_20k/y_train.npz",
-      "/data/fashion_mnist_20k/x_test.npz",
-      "/data/fashion_mnist_20k/y_test.npz",
-    ])
-    // add depth dim for Conv2D layers
-    xTrain.shape = [...xTrain.shape, 1]
-    xTest.shape = [...xTest.shape, 1]
-    return {
-      xTrain,
-      yTrain,
-      xTest,
-      yTest,
-    }
-  },
-  loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
-      [
-        "/data/fashion_mnist_20k/x_train_preview.npz",
-        "/data/fashion_mnist_20k/y_train_preview.npz",
-      ],
-      true,
-    )
-    // add depth dim for Conv2D layers
-    xTrain.shape = [...xTrain.shape, 1]
-    return { xTrain, yTrain }
-  },
+  ...loadGrayscaleImageDataset("fashion_mnist_20k"),
 }

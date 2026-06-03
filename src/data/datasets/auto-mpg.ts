@@ -1,6 +1,5 @@
-import * as tf from "@tensorflow/tfjs"
-import { StandardScaler } from "@/data/utils"
 import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { scaleFeatures } from "./load-helpers"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
@@ -40,15 +39,7 @@ async function loadData() {
   )
   const xTrainNames = await fetch("/data/auto-mpg/x_train_names.json").then((r) => r.json())
   const xTestNames = await fetch("/data/auto-mpg/x_test_names.json").then((r) => r.json())
-  const [xTrainScaled, xTestScaled] = tf.tidy(() => {
-    const trainXRaw = tf.tensor(xTrain.data, xTrain.shape)
-    const scaler = new StandardScaler()
-    const trainX = scaler.fitTransform(trainXRaw)
-    const testX = scaler.transform(tf.tensor(xTest.data, xTest.shape))
-    const xTrainScaled = trainX.reshape([-1]).dataSync() as Float32Array
-    const xTestScaled = testX.reshape([-1]).dataSync() as Float32Array
-    return [xTrainScaled, xTestScaled] as const
-  })
+  const [xTrainScaled, xTestScaled] = scaleFeatures(xTrain, xTest)
   return {
     xTrain: { data: xTrainScaled, shape: xTrain.shape },
     xTrainRaw: xTrain,
