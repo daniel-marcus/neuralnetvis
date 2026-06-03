@@ -9,7 +9,7 @@ export type DomRefs = {
   sampleViewerRef: React.RefObject<HTMLDivElement | null>
 }
 
-export const DomRefsContext = createContext<DomRefs | null>(null)
+const DomRefsContext = createContext<DomRefs | null>(null)
 
 export function DomRefsProvider({ children }: { children: React.ReactNode }) {
   const refs = {

@@ -22,7 +22,7 @@ export interface PositionEmbeddingLayerArgs extends LayerArgs {
   initializer?: string
 }
 
-export class PositionEmbeddingLayer extends tf.layers.Layer {
+class PositionEmbeddingLayer extends tf.layers.Layer {
   static className = "PositionEmbedding"
   private sequenceLength: number
   private initializer: Initializer

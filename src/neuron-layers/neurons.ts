@@ -29,7 +29,7 @@ function useNeuron(nid?: Nid) {
   }, [neuron, activations, rawX])
 }
 
-export function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
+function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
   if (!nid) return undefined
   const { layerIdx, neuronIdx } = parseNid(nid)
   const layer = getLayers().find((l) => l.index === layerIdx)
@@ -83,7 +83,7 @@ export function getNid(layerIdx: number, neuronIdx: number) {
   return `${layerIdx}_${neuronIdx}` as Nid
 }
 
-export function parseNid(nid: Nid): {
+function parseNid(nid: Nid): {
   layerIdx: number
   neuronIdx: number
 } {

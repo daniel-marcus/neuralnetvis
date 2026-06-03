@@ -93,7 +93,7 @@ export interface PosObj {
 
 // when output layer has more than 10 neurons, only the first 5 are shown
 const OUTPUT_TRUNC_THRESHOLD = 10
-export const MAX_OUTPUT_NEURONS = 5
+const MAX_OUTPUT_NEURONS = 5
 
 function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   const { layerPos, meshParams, tfLayer, hasColorChannels } = props

@@ -1,8 +1,8 @@
-import React, { useContext, useMemo } from "react"
+import React, { useContext } from "react"
 
 import { create, createStore, useStore } from "zustand"
 import { createTabsSlice, TabsSlice } from "./tabs"
-import { createViewSlice, View, ViewSlice } from "./view"
+import { createViewSlice, ViewSlice } from "./view"
 import { createDataSlice, DataSlice } from "./data"
 import { createStatusSlice, StatusSlice } from "./status"
 import { createModelSlice, ModelSlice } from "./model"
@@ -61,17 +61,6 @@ export function useCurrScene<T>(selector: (state: SceneState) => T): T {
   return useStore(store, selector)
 }
 
-export function usePrevScene<T>(selector: (state: SceneState) => T): T {
-  const scenes = useGlobalStore((s) => s.scenes)
-  const currUid = useSceneStore((s) => s.uid)
-  const prevSceneStore = useMemo(() => {
-    const allScenes = scenes.map((s) => s.getState())
-    const currIdx = allScenes.findIndex((s) => s.uid === currUid)
-    return scenes[currIdx - 1] ?? dummySceneStore
-  }, [scenes, currUid])
-  return useStore(prevSceneStore, selector)
-}
-
 // Global Store
 
 type WindowSize = { width: number; height: number }
@@ -117,7 +106,6 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
 // shortcut getters and setters to use from everywhere
 
 export const isDebug = () => useGlobalStore.getState().isDebug
-export const setTab = useGlobalStore.getState().setTab
 export const setStatus: StatusSlice["status"]["update"] = (...args) =>
   useGlobalStore.getState().status.update(...args)
 export const clearStatus: StatusSlice["status"]["clear"] = (id) =>
@@ -134,8 +122,6 @@ export const setVisConfig: VisSlice["vis"]["setConfig"] = (config) =>
   getScene().getState().vis.setConfig(config)
 export const getVisConfig: VisSlice["vis"]["getConfig"] = (key) =>
   getScene().getState().vis.getConfig(key)
-export const setView = (view: View) => getScene().setState({ view })
-export const getExcludedLayers = () => getScene().getState().vis.excludedLayers
 
 export const getLayers = () => getScene().getState().allLayers
 export function useHasFocussed() {

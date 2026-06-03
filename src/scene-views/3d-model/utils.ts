@@ -43,12 +43,6 @@ export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
 
 export type Pos = [number, number, number]
 
-export function getCameraPos() {
-  const three = getThree()
-  if (!three) return
-  return three.camera.position.toArray() as Pos
-}
-
 export function moveCameraTo(
   targetPos?: Pos,
   lookAt?: Pos,

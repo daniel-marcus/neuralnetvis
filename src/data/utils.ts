@@ -9,15 +9,6 @@ export function normalize(tensor: tf.Tensor): tf.Tensor {
   })
 }
 
-export function minMaxNormalize(tensor: tf.Tensor, min: tf.Tensor, max: tf.Tensor): tf.Tensor {
-  // normalization between 0 and 1
-  return tf.tidy(() => {
-    const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
-    const range = max.sub(min).maximum(epsilon)
-    return tensor.sub(min).div(range)
-  })
-}
-
 export function scaleNormalize(tensor: tf.Tensor, _mean?: tf.Tensor, _std?: tf.Tensor) {
   // z-scale and normalize between -1 and 1
   return tf.tidy(() => {
@@ -25,20 +16,6 @@ export function scaleNormalize(tensor: tf.Tensor, _mean?: tf.Tensor, _std?: tf.T
     const std = _std ?? tf.moments(tensor).variance.sqrt()
     const scaled = tensor.sub(mean).div(std)
     return normalize(scaled)
-  })
-}
-
-export function channelNormalize(tensor: tf.Tensor4D): tf.Tensor4D {
-  // normalize per channel, between -1 and 1
-  return tf.tidy(() => {
-    const [, height, width, channels] = tensor.shape
-    const reshapedTensor = tensor.reshape([height * width, channels])
-
-    const epsilon = tf.scalar(1e-7) // Small value to prevent division by zero
-    const maxAbs = reshapedTensor.abs().max(0).maximum(epsilon)
-
-    const normalizedTensor = reshapedTensor.div(maxAbs)
-    return normalizedTensor.reshape([1, height, width, channels])
   })
 }
 
@@ -89,10 +66,6 @@ export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {
 export function round(val: number | undefined, dec = 1) {
   if (typeof val === "undefined") return
   return Math.round(val * 10 ** dec) / 10 ** dec
-}
-
-export function getMaxAbs(vals: Float32Array) {
-  return vals.reduce((max, val) => Math.max(max, Math.abs(val)), 0)
 }
 
 export function centerCropResize(

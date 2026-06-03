@@ -25,7 +25,7 @@ interface TitleProps {
   className?: string
 }
 
-export function Title({ children, className = "" }: TitleProps) {
+function Title({ children, className = "" }: TitleProps) {
   return (
     <div className={`${className}`}>
       <h1 className="hidden">{children}</h1>

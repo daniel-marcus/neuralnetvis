@@ -53,7 +53,7 @@ async function loadExternalImage(url: string) {
   })
 }
 
-export async function imageToSample(
+async function imageToSample(
   image: HTMLImageElement | HTMLCanvasElement,
   inputDims?: number[],
 ): Promise<SampleRaw | undefined> {

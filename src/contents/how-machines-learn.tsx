@@ -1,7 +1,7 @@
 "use client"
 
 import { useCurrScene, useGlobalStore } from "@/store"
-import { setStatus, clearStatus, getThree } from "@/store"
+import { setStatus, clearStatus } from "@/store"
 import { LockButton } from "@/scene-views/3d-model/lock"
 import { Block, Details, Head } from "@/contents/elements"
 import { trainOnBatch } from "@/model/training"
@@ -131,21 +131,6 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
     </main>
   )
-}
-
-export function rotate({ percent }: OnScrollProps) {
-  const three = getThree()
-  if (!three) return
-  const camera = three.camera
-  function rotate(percent: number) {
-    const angle = percent * Math.PI * 2 // Full rotation
-    const radius = Math.sqrt(22.5 * 22.5 + 35 * 35) // Distance from origin
-    camera.position.x = Math.sin(angle) * radius
-    camera.position.z = Math.cos(angle) * radius
-    camera.lookAt(0, 0, 0)
-    three?.invalidate()
-  }
-  rotate(percent)
 }
 
 let batch = 0

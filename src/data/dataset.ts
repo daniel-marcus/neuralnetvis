@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { tokenizers, TokenizerType } from "./tokenizer"
 
-export const DEFAULT_STORE_BATCH_SIZE = 100
+const DEFAULT_STORE_BATCH_SIZE = 100
 
 export function useDataset(dsDef?: DatasetDef) {
   const isPreview = useSceneStore((s) => !s.isActive)

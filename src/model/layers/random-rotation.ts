@@ -29,7 +29,7 @@ export interface RandomRotationLayerArgs extends LayerArgs {
   applyAtInference?: boolean
 }
 
-export class RandomRotationLayer extends tf.layers.Layer {
+class RandomRotationLayer extends tf.layers.Layer {
   factor: number
   applyAtInference: boolean
 

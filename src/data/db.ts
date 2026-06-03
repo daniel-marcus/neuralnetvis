@@ -13,7 +13,7 @@ const STORE_NAMES = ["train", "test", "meta"] as const
 // TODO: dbName: DatasetDef.name
 type StoreName = (typeof STORE_NAMES)[number]
 
-export function getDb(dbName: DatasetKey) {
+function getDb(dbName: DatasetKey) {
   return openDB(`${DB_PREFIX}${dbName}`, 1, {
     upgrade(db) {
       STORE_NAMES.forEach((storeName) => {
@@ -75,11 +75,4 @@ export async function deleteAll(dbName: DatasetKey, storeName: StoreName) {
   const store = tx.objectStore(storeName)
   await store.clear()
   await tx.done
-}
-
-export async function storeHasEntries(dbName: DatasetKey, storeName: StoreName) {
-  const db = await getDb(dbName)
-  const count = await db.count(storeName)
-  db.close()
-  return count > 0
 }

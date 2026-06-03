@@ -45,7 +45,7 @@ export const LayerWheel = () => (
   </ClientOnly>
 )
 
-export function useAutoFlatView(isActive = true) {
+function useAutoFlatView(isActive = true) {
   const setFlatView = useSceneStore((s) => s.vis.setFlatView)
   const hasFocussed = useHasFocussed()
   const isScrolling = useSceneStore((s) => s.isScrolling)

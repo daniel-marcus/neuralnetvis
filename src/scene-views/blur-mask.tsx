@@ -3,7 +3,7 @@ import { useCurrScene, useGlobalStore } from "@/store"
 
 type MaskMode = "blur" | "dark" | undefined
 
-export function useMaskMode(): MaskMode {
+function useMaskMode(): MaskMode {
   const status = useGlobalStore((s) => s.status.getCurrent())
   const isEvaluationView = useCurrScene((s) => s.view === "evaluation")
   const hasSample = useCurrScene((s) => s.sampleIdx !== undefined)

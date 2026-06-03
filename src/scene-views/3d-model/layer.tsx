@@ -126,7 +126,7 @@ function LodComp(props: LodCompProps) {
   )
 }
 
-export function useFocussed(layerIdx: number) {
+function useFocussed(layerIdx: number) {
   const focussedIdx = useSceneStore((s) => s.focussedLayerIdx)
   const isFocussed = focussedIdx === layerIdx
   const wasFocussed = usePrevious(isFocussed)

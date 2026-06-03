@@ -20,11 +20,6 @@ function toColorObj(r: number, g: number, b: number, a = 255): ColorObj {
   }
 }
 
-const R_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(i, 0, 0))
-const G_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, i, 0))
-const B_COLORS = Array.from({ length: 256 }, (_, i) => toColorObj(0, 0, i))
-const CHANNEL_COLORS = [R_COLORS, G_COLORS, B_COLORS]
-
 export const ZERO_BASE = [30, 31, 34] //  --color-gray-text / x // brighter: [30, 31, 34] // darker: [25, 26, 29]
 export const POS_BASE = [255, 20, 100] // --color-primary
 export const NEG_BASE = POS_BASE.toReversed()
@@ -52,28 +47,8 @@ function normalizeTo(val?: number, max = 255) {
   return Math.ceil((val ?? 0) * max)
 }
 
-export function getChannelColor(rgbIdx: number, val: number) {
-  return CHANNEL_COLORS[rgbIdx][normalizeTo(val, 255)]
-}
-
 export function getActColor(val: number) {
   // val between -1 and 1
   const absVal = normalizeTo(Math.abs(val), 255)
   return val >= 0 ? POS_HIGHLIGHT_COLORS[absVal] : NEG_HIGHLIGHT_COLORS[absVal]
-}
-
-export function getPredQualColor(
-  yPred?: number, // activation
-  yTrue?: number,
-  yMean?: number,
-) {
-  if (typeof yPred === "undefined" || typeof yTrue === "undefined" || typeof yMean === "undefined")
-    return POS_HIGHLIGHT_COLORS[0]
-
-  const squaredResidual = (yTrue - yPred) ** 2
-  const squaredResidualMean = (yTrue - yMean) ** 2
-  const rSquared = 1 - squaredResidual / squaredResidualMean
-  const colorVal = Math.min(normalizeTo(Math.abs(rSquared), 255), 255)
-  // if (rSquared > 0) console.log({ rSquared, squaredResidual }, yPred, y)
-  return rSquared >= 0 ? POS_HIGHLIGHT_COLORS[colorVal] : NEG_HIGHLIGHT_COLORS[colorVal]
 }

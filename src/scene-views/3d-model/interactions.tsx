@@ -157,7 +157,7 @@ interface HighlightedProps {
 
 // const COLOR = "rgb(150, 156, 171)"
 
-export function Highlighted({ neuron, thick }: HighlightedProps) {
+function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<THREE.Mesh>(null)
   const invalidate = useThree((s) => s.invalidate)
   useEffect(invalidate, [neuron, invalidate])

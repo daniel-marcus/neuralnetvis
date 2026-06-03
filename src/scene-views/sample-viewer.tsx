@@ -22,7 +22,7 @@ interface VisibleSample {
   offsetLeft: number
 }
 
-export function SampleViewer_() {
+function SampleViewer_() {
   const idxs = useSceneStore((s) => s.sampleViewerIdxs)
   const ds = useSceneStore((s) => s.ds)
 

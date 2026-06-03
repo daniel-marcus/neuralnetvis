@@ -43,7 +43,7 @@ interface FnProps {
   renderer: THREE.WebGPURenderer
 }
 
-export function activationColor(hasColors: boolean, channelIdx: number, storageNode: StorageNode) {
+function activationColor(hasColors: boolean, channelIdx: number, storageNode: StorageNode) {
   const posBase = hasColors ? colorBases[channelIdx] : basePos
   // @ts-expect-error function not fully typed
   return Fn(({ object, renderer: { backend } }: FnProps) => {
@@ -85,7 +85,7 @@ export function getTextureMaterial(
 }
 
 // TODO: use uniforms for height, width, channels?
-export function activationColorTexture(
+function activationColorTexture(
   hasColors: boolean,
   channelIdx: number,
   height: number,
@@ -159,7 +159,7 @@ export function activationColorTexture(
 }
 
 // https://github.com/pmndrs/drei/blob/master/src/materials/DiscardMaterial.tsx
-export const discardMaterial = new THREE.NodeMaterial()
+const discardMaterial = new THREE.NodeMaterial()
 discardMaterial.transparent = true
 discardMaterial.colorNode = vec4(0, 0, 0, 0)
 

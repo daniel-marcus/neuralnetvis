@@ -72,7 +72,7 @@ const LOSS_DICT = {
   categoricalCrossentropy: "CCE",
 } as Record<string, string>
 
-export function Evaluation({ className = "" }) {
+function Evaluation({ className = "" }) {
   const ds = useSceneStore((s) => s.ds)
   const model = useSceneStore((s) => s.model)
   const subset = useSceneStore((s) => s.subset)
