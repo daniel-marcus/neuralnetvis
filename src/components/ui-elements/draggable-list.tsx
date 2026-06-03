@@ -5,7 +5,12 @@ import { clamp } from "@/utils/helpers"
 
 // reference: https://codesandbox.io/p/sandbox/zfy9p
 
-const AnimatedDiv = animated("div")
+// @react-spring's `animated("div")` instantiates a mapped type over every HTML
+// attribute, which TS 7 flags as too complex (TS2590). Narrow it for our use.
+type AnimatedDivProps = Omit<React.HTMLAttributes<HTMLDivElement>, "style"> & {
+  style?: object
+}
+const AnimatedDiv = animated.div as unknown as React.FC<AnimatedDivProps>
 
 interface DraggableListProps {
   children: ReactElement[]

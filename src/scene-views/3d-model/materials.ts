@@ -53,7 +53,7 @@ export function activationColor(hasColors: boolean, channelIdx: number, storageN
     const normalizedNode = isWebGPUBackend(backend)
       ? storageNode.element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
       : instancedBufferAttribute<"float">(instancedActivations)
-    const baseNode = normalizedNode.greaterThanEqual(0.0).select(posBase, baseNeg)
+    const baseNode = normalizedNode.greaterThanEqual(0.0).select<"vec3">(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     // @ts-expect-error TSL pow types don't reflect vec3 support
     const vColor = pow(srgbColor, vec3(2.2))
@@ -150,7 +150,7 @@ export function activationColorTexture(
       })
     }
 
-    const baseNode = normalizedNode.greaterThanEqual(0.0).select(posBase, baseNeg)
+    const baseNode = normalizedNode.greaterThanEqual(0.0).select<"vec3">(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
     // @ts-expect-error TSL pow types don't reflect vec3 support
     const colorNode = pow(srgbColor, vec3(2.2))
