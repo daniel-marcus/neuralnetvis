@@ -13,7 +13,7 @@ export const Logo = () => {
       className={`pointer-events-auto text-logo p-main hover:text-white active:text-white ${
         isPlayMode ? "screenshot:hidden" : !hasLesson ? "screenshot:scale-150 origin-top-left" : ""
       }`}
-      scroll={hasLesson ? true : false}
+      scroll={hasLesson}
     >
       <AsciiText>{isPlayMode ? "../" : "Neural"}</AsciiText>
       {!isPlayMode && (

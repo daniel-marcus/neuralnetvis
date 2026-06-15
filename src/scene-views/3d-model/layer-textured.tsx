@@ -60,15 +60,7 @@ function useActivationTexture(layer: TexturedLayerProps) {
       ? null // in webgpu we do everything in the shader, so data will be null here
       : new Float32Array(texWidth * texHeight * 4).fill(-999.0) // use -999.0 as marker for empty (transparent) pixels
 
-    const texture = new THREE.DataTexture(
-      data,
-      texWidth,
-      texHeight,
-      THREE.RedFormat,
-      THREE.FloatType,
-    )
-    // texture.colorSpace = THREE.SRGBColorSpace
-    return texture
+    return new THREE.DataTexture(data, texWidth, texHeight, THREE.RedFormat, THREE.FloatType)
   }, [height, width, channels, isWebGPU])
 
   const material = useMemo(
@@ -143,10 +135,11 @@ function useActivationTexture(layer: TexturedLayerProps) {
   return [texture, material, userData] as const
 }
 
+const last = (base: number) => (base - 1) / base
+const first = (base: number) => 1 / base
+
 function updateUvMapping(geometry: THREE.BufferGeometry, width: number, height: number) {
   // https://discoverthreejs.com/book/first-steps/textures-intro/
-  const first = (base: number) => 1 / base
-  const last = (base: number) => (base - 1) / base
 
   const uvAttr = geometry.attributes.uv
   type UV = [number, number]
@@ -175,14 +168,14 @@ function useCachedGeometry(texture: THREE.DataTexture) {
   const id = `${width}-${height}`
 
   const getGeometry = useCallback(
-    (id: string): THREE.BoxGeometry => {
-      if (geometryCache.has(id)) return geometryCache.get(id)!
+    (gId: string): THREE.BoxGeometry => {
+      if (geometryCache.has(gId)) return geometryCache.get(gId)!
 
       const size = [1, height, width]
       const geom = new THREE.BoxGeometry(...size)
       updateUvMapping(geom, width, height)
 
-      geometryCache.set(id, geom)
+      geometryCache.set(gId, geom)
       return geom
     },
     [width, height],

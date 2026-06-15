@@ -48,8 +48,8 @@ async function loadExternalImage(url: string) {
   image.crossOrigin = "anonymous"
   image.src = url
   return new Promise<HTMLImageElement>((resolve, reject) => {
-    image.onload = () => resolve(image)
-    image.onerror = reject
+    image.addEventListener("load", () => resolve(image))
+    image.addEventListener("error", reject)
   })
 }
 

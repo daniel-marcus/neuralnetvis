@@ -15,11 +15,11 @@ import type { UserData } from "@/scene-views/3d-model/layer-instanced"
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
 
 export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
-  const sample = useSample()
+  const currSample = useSample()
   const model = useSceneStore((s) => s.model)
   const stats = useActivationStats()
   const setActivations = useSceneStore((s) => s.setActivations)
-  const focusIdx = useFlatViewFocussed()
+  const currFocusIdx = useFlatViewFocussed()
   const invalidate = useThree((s) => s.invalidate)
   const backend = useBackend()
   const hasRendered = useSceneStore((s) => s.hasRendered)
@@ -84,8 +84,8 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
 
   useEffect(() => {
     if (!hasRendered) return // make sure scene has rendered at least once for activation buffer binding
-    maybeUpdate(sample, focusIdx)
-  }, [sample, focusIdx, maybeUpdate, hasRendered])
+    maybeUpdate(currSample, currFocusIdx)
+  }, [currSample, currFocusIdx, maybeUpdate, hasRendered])
 
   return null
 }

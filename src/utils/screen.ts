@@ -55,7 +55,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
     direction: "none",
   })
   useEffect(() => {
-    const options = { root, rootMargin, threshold }
+    const opts = { root, rootMargin, threshold }
     if (!ref.current) return
     const o = new IntersectionObserver(([entry]) => {
       const { y } = entry.boundingClientRect
@@ -64,7 +64,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
         y,
         direction: typeof oldState.y === "undefined" ? "none" : y > oldState.y ? "up" : "down",
       }))
-    }, options)
+    }, opts)
     o.observe(ref.current)
     return () => o.disconnect()
   }, [ref, root, rootMargin, threshold])

@@ -38,7 +38,7 @@ export async function setBackend(
 export function getAvailableBackends() {
   // sort backends by priority: [webgpu, webgl, wasm, cpu]
   return Object.entries(tf.engine().registryFactory)
-    .sort(([, a], [, b]) => b.priority - a.priority)
+    .toSorted(([, a], [, b]) => b.priority - a.priority)
     .map(([name]) => name as Backend)
 }
 

@@ -161,7 +161,7 @@ function useDynamicScale(
   scale: number = 1,
   duration?: number,
 ) {
-  const invalidate = useThree(({ invalidate }) => invalidate)
+  const invalidate = useThree((t) => t.invalidate)
   const [, didMount] = useDidMount(ref)
   // would use @react-spring/three, but that breaks @react-spring/web:
   // https://github.com/pmndrs/react-spring/issues/1586

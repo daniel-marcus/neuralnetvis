@@ -55,7 +55,7 @@ function useAutoFlatView(isActive = true) {
 
   useEffect(() => {
     if (!isActive) return
-    setFlatView(hasFocussed && !isScrolling ? true : false)
+    setFlatView(hasFocussed && !isScrolling)
   }, [isActive, isScrolling, hasFocussed, setFlatView])
 
   return isActive ? { onScrollStart, onScrollEnd } : {}

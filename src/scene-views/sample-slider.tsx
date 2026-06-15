@@ -42,7 +42,7 @@ export const SampleSlider = () => {
         >
           <Slider
             value={sampleIdx ?? 0}
-            onChange={(sampleIdx) => setSampleIdx(sampleIdx)}
+            onChange={(idx) => setSampleIdx(idx)}
             min={0}
             max={totalSamples - 1}
             yPad={0.25}

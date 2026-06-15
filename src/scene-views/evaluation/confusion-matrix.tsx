@@ -300,7 +300,7 @@ function useConfusionCells() {
       if (!res) return
       await setBackend("webgl")
       try {
-        const cm = tf.tidy(() => {
+        const newCells = tf.tidy(() => {
           const { X, y } = res
           const yTrue = y as tf.Tensor1D
           const yPred = (model.predict(X) as tf.Tensor).argMax(1) as tf.Tensor1D
@@ -324,7 +324,7 @@ function useConfusionCells() {
           }
           return resultCells
         })
-        setCells(cm)
+        setCells(newCells)
       } catch (e) {
         console.warn(e)
       } finally {

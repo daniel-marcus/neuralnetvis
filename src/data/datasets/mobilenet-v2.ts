@@ -71,8 +71,8 @@ async function fetchImages(urls: string[]): Promise<HTMLImageElement[]> {
       return new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image()
         img.crossOrigin = "Anonymous"
-        img.onload = () => resolve(img)
-        img.onerror = (err) => reject(err)
+        img.addEventListener("load", () => resolve(img))
+        img.addEventListener("error", (err) => reject(err))
         img.src = url
       })
     }),

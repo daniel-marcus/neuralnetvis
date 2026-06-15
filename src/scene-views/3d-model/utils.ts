@@ -9,7 +9,7 @@ import type { Three } from "@/store/vis"
 export function useAnimatedPosition(position: number[], speed = 0.4) {
   const ref = useRef<THREE.Mesh>(null)
   const currentPosition = useRef(new THREE.Vector3())
-  const invalidate = useThree(({ invalidate }) => invalidate)
+  const invalidate = useThree((t) => t.invalidate)
   const targetPos = useMemo(() => new THREE.Vector3(...position), [position])
   useEffect(() => {
     requestAnimationFrame(invalidate)

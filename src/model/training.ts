@@ -188,9 +188,9 @@ export async function trainOnBatch(xs: tf.Tensor[], ys: number[]) {
   const isClassification = ds?.task === "classification"
   const trainShape = model.layers[0].batchInputShape as number[]
   const [X, y] = tf.tidy(() => {
-    const X = tf.concat(xs).reshape([xs.length, ...trainShape.slice(1)]) // input already preprocessed
-    const y = isClassification ? tf.oneHot(ys, ds.outputLabels.length) : tf.tensor(ys)
-    return [X, y]
+    const returnX = tf.concat(xs).reshape([xs.length, ...trainShape.slice(1)]) // input already preprocessed
+    const returny = isClassification ? tf.oneHot(ys, ds.outputLabels.length) : tf.tensor(ys)
+    return [returnX, returny]
   })
   const [loss, acc] = (await model.trainOnBatch(X, y)) as number[]
   setBatchCount((prev) => prev + 1)

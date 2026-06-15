@@ -52,8 +52,8 @@ function SampleViewer_() {
     [scrollLeft, containerWidth, idxs],
   )
   const visibleSamples: VisibleSample[] = useMemo(() => {
-    return idxs.slice(visibleStart, visibleEnd).map((sampleIdx, idxInSlice) => ({
-      sampleIdx,
+    return idxs.slice(visibleStart, visibleEnd).map((idx, idxInSlice) => ({
+      sampleIdx: idx,
       offsetLeft: (visibleStart + idxInSlice) * ITEM_WIDTH,
     }))
   }, [visibleStart, visibleEnd, idxs])
@@ -229,8 +229,8 @@ function useSample(sampleIdx: number) {
     async function loadSample() {
       if (!ds) return
       await new Promise((res) => setTimeout(res, 0))
-      const sample = await getSample(ds, subset, sampleIdx)
-      if (sample) setSample(sample)
+      const newSample = await getSample(ds, subset, sampleIdx)
+      if (newSample) setSample(newSample)
     }
     loadSample()
   }, [sampleIdx, ds, subset])

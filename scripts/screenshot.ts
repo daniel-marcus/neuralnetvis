@@ -11,6 +11,8 @@ const DOCROOT = "out/"
 const SCREENSHOT_FOLDER = "public/images/og"
 const paths = ["", ...getPaths()].filter((p) => !["index", "404", "_not-found"].includes(p))
 
+const bold = (str: string) => `\x1b[1m${str}\x1b[0m`
+
 async function run() {
   // fs.rmSync(SCREENSHOT_FOLDER, { recursive: true, force: true })
   // fs.mkdirSync(SCREENSHOT_FOLDER)
@@ -26,7 +28,6 @@ async function run() {
     await page.goto(PAGEROOT)
     await new Promise((resolve) => setTimeout(resolve, 2000))
   } catch {
-    const bold = (str: string) => `\x1b[1m${str}\x1b[0m`
     console.error(
       `Error: Could not connect to ${PAGEROOT}. \nRun ${bold("pnpm build && pnpm serve")} before executing this script.\n`,
     )
@@ -70,6 +71,6 @@ function getPaths(dir = DOCROOT): string[] {
   return htmlFiles
 }
 
-function pathToFileName(path: string): string {
-  return path.replace(/^\//, "").replace(/\//g, "_")
+function pathToFileName(p: string): string {
+  return p.replace(/^\//, "").replace(/\//g, "_")
 }

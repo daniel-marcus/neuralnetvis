@@ -119,9 +119,9 @@ async function exportDs(ds: DatasetMeta) {
   const [X, y] = tf.tidy(() => {
     const xBatchTensors = batches.map((b) => tf.tensor(b.xsRaw ?? b.xs))
     const shapeX = [-1, ...ds.inputDims]
-    const X = tf.concat(xBatchTensors).reshape(shapeX).arraySync() as number[][]
-    const y = batches.flatMap((b) => Array.from(b.ys))
-    return [X, y] as const
+    const returnX = tf.concat(xBatchTensors).reshape(shapeX).arraySync() as number[][]
+    const returny = batches.flatMap((b) => Array.from(b.ys))
+    return [returnX, returny] as const
   })
   saveArrayAsJson(X, `x_train.json`)
   saveArrayAsJson(y, `y_train.json`)

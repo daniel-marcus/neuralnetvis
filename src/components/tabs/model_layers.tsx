@@ -23,7 +23,6 @@ function getInputComp<T extends keyof LayerConfigMap>(
   const option = layerDef?.options?.[0]
 
   if (className === "InputLayer") {
-    const config = layerConfig.config as LayerConfigMap["InputLayer"]
     const [, ...dims] = config.batchInputShape as number[]
     return <div className="text-right">{dims.join(" x ")}</div>
   } else if (className === "Dense" && isLast)

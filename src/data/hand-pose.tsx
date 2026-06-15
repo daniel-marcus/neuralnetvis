@@ -216,13 +216,13 @@ function useSampleRecorder(hpPredict: CaptureFunc, numHands: number) {
       setStatus(`Recording "${label}" ...`, 0, { id: RECORDING_STATUS_ID })
       let xData: number[] = []
       const yData: number[] = []
-      for (const i of Array.from({ length: SAMPLES }, (_, i) => i)) {
+      for (const idx of Array.from({ length: SAMPLES }, (_, i) => i)) {
         if (shouldCancelRecording) {
           setStatus(`Recording canceled.`, null, { id: RECORDING_STATUS_ID })
           return
         }
-        const percent = (i + 1) / SAMPLES
-        setStatus(`Recording "${label}": Sample ${i + 1}/${SAMPLES}`, percent, {
+        const percent = (idx + 1) / SAMPLES
+        setStatus(`Recording "${label}": Sample ${idx + 1}/${SAMPLES}`, percent, {
           id: RECORDING_STATUS_ID,
           fullscreen: true,
         })

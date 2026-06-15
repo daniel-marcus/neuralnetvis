@@ -25,7 +25,7 @@ export const TabMenu = () => {
   const tabIsShown = useGlobalStore((s) => s.tabIsShown)
 
   const isPlayMode = useIsPlayMode()
-  const tabs = useMemo(() => (isPlayMode ? playTabs : rootTabs), [isPlayMode])
+  const currTabs = useMemo(() => (isPlayMode ? playTabs : rootTabs), [isPlayMode])
   useEffect(() => {
     setTab(null)
   }, [isPlayMode, setTab])
@@ -65,7 +65,7 @@ export const TabMenu = () => {
         >
           &lt;
         </TabButton>
-        {renderTabs(tabs)}
+        {renderTabs(currTabs)}
       </div>
       <div
         className={`overflow-hidden pb-8 pointer-events-none absolute right-0 w-100 max-w-[100vw]`}

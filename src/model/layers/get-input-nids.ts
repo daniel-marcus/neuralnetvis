@@ -9,7 +9,7 @@ import type { Nid } from "@/neuron-layers"
 export const getFullyConnectedInputNids: GetInputNidsFunc = (_, __, prevLayer, prevLayerIdx) => {
   // each neuron is connected to all neurons in the previous layer
   const prevUnits = getUnits(prevLayer)
-  return Array.from({ length: prevUnits }).map((_, i) => {
+  return Array.from({ length: prevUnits }).map((___, i) => {
     return getNid(prevLayerIdx, i)
   })
 }

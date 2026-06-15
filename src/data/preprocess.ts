@@ -13,11 +13,7 @@ export const normalizeHandLandmarks: PreprocessFuncDef = (inputTensor, inputDims
     const reshaped = inputTensor.reshape([-1, ...inputDims])
     const wrists = reshaped.slice([0, 0, 0, 0], [-1, 1, 3, numHands ?? 1])
     const xyzAxisInvertMask = tf.tensor([-1, -1, -1], [1, 1, 3, 1]).tile([1, 21, 1, 1])
-    const normalized = reshaped
-      .sub(wrists)
-      .mul(xyzAxisInvertMask)
-      .reshape(inputShape) as typeof inputTensor
-    return normalized
+    return reshaped.sub(wrists).mul(xyzAxisInvertMask).reshape(inputShape) as typeof inputTensor
   })
   return normalized
 }

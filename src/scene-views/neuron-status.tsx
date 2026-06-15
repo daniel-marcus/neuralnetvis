@@ -118,7 +118,7 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
         }
       >
         {Array.from({ length: groupCount }).map((_, i) => {
-          const groupWeights = weights.filter((_, j) => j % groupCount === i)
+          const groupWeights = weights.filter((_weight, j) => j % groupCount === i)
           const isInView = needsShifter ? i === currGroup : true
           if (!isInView) return null
           return (

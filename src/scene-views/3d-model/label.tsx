@@ -96,7 +96,7 @@ function NeuronLabel(props: NeuronLabelProps) {
   return <TextLabel {...props} position={offsetPos} lookAtCamera={true} />
 }
 
-export const TextLabel = memo(function NeuronLabel({
+export const TextLabel = memo(function TextLabel_({
   text,
   position,
   side = "right",

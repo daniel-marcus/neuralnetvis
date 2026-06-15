@@ -35,16 +35,16 @@ export function usePoints() {
 
       try {
         if (!coordsTensor) return
-        const coords = (await coordsTensor.array()) as number[][]
+        const newCoords = (await coordsTensor.array()) as number[][]
         const yScaled = (await yScaledTensor.array()) as number[]
         const yNorm = (await yNormTensor.array()) as number[]
-        const minY = (await minYTensor.data())[0]
+        const newMinY = (await minYTensor.data())[0]
 
         const projectCoords = (coords: [number, number]) =>
           ds.mapProps ? lngLatToScreen(coords, ds.mapProps.center, ds.mapProps.zoom) : coords
 
-        const points = Array.from({ length: yScaled.length }).map((_, i) => {
-          const c = (coords?.[i] as [number, number]) ?? [0, 0]
+        const newPoints = Array.from({ length: yScaled.length }).map((_, i) => {
+          const c = (newCoords?.[i] as [number, number]) ?? [0, 0]
           const [lon, lat] = projectCoords(c)
           return {
             lon,
@@ -53,8 +53,8 @@ export function usePoints() {
             yNorm: yNorm[i],
           }
         })
-        setMinY(minY)
-        setPoints(points)
+        setMinY(newMinY)
+        setPoints(newPoints)
       } catch (e) {
         console.warn(e)
       } finally {

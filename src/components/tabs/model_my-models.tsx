@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { CollapsibleWithTitle, Button, InputRowsWrapper, TextInput } from "@/components/ui-elements"
-import { clearStatus, setStatus, useCurrScene, useGlobalStore } from "@/store"
+import { clearStatus, setStatus, useCurrScene } from "@/store"
 import type { SubmitEvent } from "react"
 import { useModelTransition } from "@/model/model"
 import { importKerasModel } from "@/model/import-keras"
@@ -11,7 +11,6 @@ export function MyModels() {
   const [updTrigger, setUpdTrigger] = useState(0)
   const updateList = useCallback(() => setUpdTrigger((t) => t + 1), [])
   const [showImportForm, setShowImportForm] = useState(false)
-  const setStatus = useGlobalStore((s) => s.status.update)
   const defaultName = useCurrScene((s) => `my_${s.ds?.key ?? ""}_model`)
   const [modelName, setModelName] = useState<string>(defaultName)
   const saveModel = async () => {
@@ -47,6 +46,11 @@ export function MyModels() {
   )
 }
 
+const exportModel = async (modelKey: string) => {
+  const model = await tf.loadLayersModel(`indexeddb://${modelKey}`)
+  await model.save(`downloads://${modelKey}`)
+}
+
 function SavedModels({ updTrigger }: { updTrigger: number }) {
   const [savedModels, setSavedModels] = useState<string[]>([])
   const updateModelList = () => getModelNamesFromDb().then(setSavedModels)
@@ -60,10 +64,6 @@ function SavedModels({ updTrigger }: { updTrigger: number }) {
   const loadModel = async (modelName: string) => {
     const newModel = await tf.loadLayersModel(`indexeddb://${modelName}`)
     setModel(newModel)
-  }
-  const exportModel = async (modelKey: string) => {
-    const exportModel = await tf.loadLayersModel(`indexeddb://${modelKey}`)
-    await exportModel.save(`downloads://${modelKey}`)
   }
   const removeModel = async (modelName: string) => {
     await tf.io.removeModel(`indexeddb://${modelName}`)

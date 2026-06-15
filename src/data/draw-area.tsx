@@ -4,6 +4,19 @@ import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
 import type { SampleRaw } from "./types"
 
+const getCoords = (e: PointerEvent, rect: DOMRect) => ({
+  x: e.clientX - rect.left,
+  y: e.clientY - rect.top,
+})
+
+const scaleCanvas = (canvas: HTMLCanvasElement, rect: DOMRect) => {
+  const dpr = window.devicePixelRatio || 1
+  if (canvas.width === rect.width * dpr) return
+  canvas.width = rect.width * dpr
+  canvas.height = rect.height * dpr
+  canvas.getContext("2d")?.scale(dpr, dpr)
+}
+
 export const DrawArea = ({ title = "" }) => {
   const ref = useRef<HTMLCanvasElement>(null)
   const toggleDrawAreaShown = useSceneStore((s) => s.toggleDrawAreaShown)
@@ -12,17 +25,6 @@ export const DrawArea = ({ title = "" }) => {
   const isDrawing = useRef(false)
 
   const getCtx = () => ref.current?.getContext("2d")
-  const getCoords = (e: PointerEvent, rect: DOMRect) => ({
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
-  })
-  const scaleCanvas = (canvas: HTMLCanvasElement, rect: DOMRect) => {
-    const dpr = window.devicePixelRatio || 1
-    if (canvas.width === rect.width * dpr) return
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    canvas.getContext("2d")?.scale(dpr, dpr)
-  }
 
   const handlePointerDown = (e: PointerEvent) => {
     const ctx = getCtx()

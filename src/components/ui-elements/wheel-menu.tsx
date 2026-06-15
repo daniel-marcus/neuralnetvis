@@ -52,7 +52,7 @@ export const WheelMenu = (props: WheelMenuProps) => {
           ref={wheelRef}
         >
           {props.items.map(({ label, disabled }, i) => {
-            const isActive = i === props.currIdx
+            const activeItem = i === props.currIdx
             return (
               <li
                 key={i}
@@ -60,8 +60,10 @@ export const WheelMenu = (props: WheelMenuProps) => {
                 style={{ transform: `rotate(-${degPerItem * (i + 1)}deg)` }}
               >
                 <button onClick={() => onClick(i)} disabled={disabled}>
-                  <span className={`${isActive ? "text-accent" : "brightness-25"} px-1`}>•</span>
-                  <span className={`${isActive ? "text-white" : disabled ? "brightness-50" : ""}`}>
+                  <span className={`${activeItem ? "text-accent" : "brightness-25"} px-1`}>•</span>
+                  <span
+                    className={`${activeItem ? "text-white" : disabled ? "brightness-50" : ""}`}
+                  >
                     {label}
                   </span>
                 </button>

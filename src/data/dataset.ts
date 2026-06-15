@@ -27,9 +27,9 @@ export function useDataset(dsDef?: DatasetDef) {
   useEffect(() => {
     async function loadDs() {
       if (!dsDef) return
-      const ds = await getDsFromDef(dsDef, isPreview, shouldLoadFullDs)
-      setDs(ds, true)
-      if (shouldLoadFullDs && ds.loaded === "full") {
+      const nextDs = await getDsFromDef(dsDef, isPreview, shouldLoadFullDs)
+      setDs(nextDs, true)
+      if (shouldLoadFullDs && nextDs.loaded === "full") {
         setLoadFullDs(false)
       }
     }

@@ -98,10 +98,10 @@ function useStream() {
   const toggleStream = useCallback(async () => {
     if (stream) stopStream()
     else {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const newStream = await navigator.mediaDevices.getUserMedia({
         video: videoConstraints ?? true,
       })
-      setStream(stream)
+      setStream(newStream)
     }
   }, [stream, setStream, stopStream, videoConstraints])
   useEffect(() => {
