@@ -86,7 +86,7 @@
     "happy-dom": "^20.10.4",
     "lefthook": "^2.1.9",
     "oxfmt": "^0.55.0",
-    "oxlint": "^1.69.0",
+    "oxlint": "^1.70.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.15",
     "puppeteer": "^25.1.0",
