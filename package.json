@@ -78,12 +78,12 @@
     "@types/react-dom": "^19.2.3",
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.184.1",
-    "@typescript/native-preview": "7.0.0-dev.20260615.1",
+    "@typescript/native-preview": "7.0.0-dev.20260618.1",
     "@vitejs/plugin-react": "^6.0.2",
     "commit-and-tag-version": "^12.7.3",
     "eslint": "^10.5.0",
     "fake-indexeddb": "^6.2.5",
-    "happy-dom": "^20.10.4",
+    "happy-dom": "^20.10.6",
     "lefthook": "^2.1.9",
     "oxfmt": "^0.55.0",
     "oxlint": "^1.70.0",
@@ -94,7 +94,7 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.9"
   },
-  "packageManager": "pnpm@11.7.0",
+  "packageManager": "pnpm@11.8.0",
   "postcss": {
     "plugins": {
       "@tailwindcss/postcss": {}
