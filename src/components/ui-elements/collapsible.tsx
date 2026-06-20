@@ -1,4 +1,4 @@
-import { ReactNode, useLayoutEffect, useRef, useState } from "react"
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react"
 import { Arrow } from "./buttons"
 
 interface CollapsibleWithTitleProps {

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, ReactNode, useMemo } from "react"
+import React, { useRef, useEffect, type ReactNode, useMemo } from "react"
 import { clearStatus, useGlobalStore } from "@/store"
 import { useDomRefs } from "@/utils/dom-refs"
 import { ProgressBar } from "./progress-bar"

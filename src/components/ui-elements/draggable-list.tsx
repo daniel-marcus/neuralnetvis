@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useMemo } from "react"
+import { type ReactElement, useEffect, useMemo } from "react"
 import { useSprings, animated } from "@react-spring/web"
 import { rubberbandIfOutOfBounds, useDrag } from "@use-gesture/react"
 import { clamp } from "@/utils/helpers"

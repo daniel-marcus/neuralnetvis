@@ -14,7 +14,7 @@ import type {
 import { preprocessFuncs } from "./preprocess"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { tokenizers, TokenizerType } from "./tokenizer"
+import { tokenizers, type TokenizerType } from "./tokenizer"
 
 const DEFAULT_STORE_BATCH_SIZE = 100
 

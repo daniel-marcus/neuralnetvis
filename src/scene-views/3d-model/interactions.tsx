@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo, RefObject } from "react"
+import { useRef, useEffect, useCallback, useMemo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"

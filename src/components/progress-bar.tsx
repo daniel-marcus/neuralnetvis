@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, RefObject, memo } from "react"
+import { useEffect, useRef, useState, type RefObject, memo } from "react"
 import { useGlobalStore } from "@/store"
 
 export const ProgressBar = memo(function ProgressBar() {

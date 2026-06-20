@@ -1,9 +1,9 @@
 import { useEffect, useId, useState } from "react"
 import { moveCameraTo } from "@/scene-views/3d-model/utils"
-import { defaultState, InitialState } from "@/utils/initial-state"
+import { defaultState, type InitialState } from "@/utils/initial-state"
 import {
   SceneContext,
-  SceneState,
+  type SceneState,
   useGlobalStore,
   createSceneStore,
   dummySceneStore,

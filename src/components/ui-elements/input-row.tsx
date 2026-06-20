@@ -1,4 +1,4 @@
-import { MouseEvent, ReactNode, useId } from "react"
+import { type MouseEvent, type ReactNode, useId } from "react"
 import { create } from "zustand"
 
 interface HintStore {
