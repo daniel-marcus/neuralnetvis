@@ -20,9 +20,9 @@ export function useCaptureLoop(stream: MediaStream | null | undefined, capture: 
     let animationFrame: number
     let isCapturing = false
     async function captureLoop() {
-      const isTraning = useGlobalStore.getState().scene.getState().isTraining
+      const isTraining = useGlobalStore.getState().scene.getState().isTraining
       const videoReady = (videoRef.current?.readyState ?? 0) >= 2
-      if (!isTraning && !isCapturing && videoReady) {
+      if (!isTraining && !isCapturing && videoReady) {
         isCapturing = true
         try {
           const X = await capture(videoRef.current!)

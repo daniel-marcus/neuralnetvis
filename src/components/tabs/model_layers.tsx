@@ -96,7 +96,7 @@ export const LayerConfigControl = () => {
   const handleRemove = (i: number) => {
     setLayerConfigs(layerConfigs.filter((_, j) => j !== i))
   }
-  const hasMutliDimInput =
+  const hasMultiDimInput =
     model?.layers[0].batchInputShape && model?.layers[0].batchInputShape.length > 2
   const selectOptions = [
     {
@@ -108,7 +108,7 @@ export const LayerConfigControl = () => {
       .filter((key) => getLayerDef(key)?.isUserAddable)
       .map((key) => ({
         value: key,
-        disabled: getLayerDef(key)?.needsMultiDim && !hasMutliDimInput,
+        disabled: getLayerDef(key)?.needsMultiDim && !hasMultiDimInput,
       })),
   ]
   const excludedLayers = useCurrScene((s) => s.vis.excludedLayers)
@@ -122,7 +122,7 @@ export const LayerConfigControl = () => {
             const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
             setLayerConfigs([...newLayerConfigs])
           }}
-          checkValidChange={(newOrder) => checkVaildOrder(newOrder, layerConfigs)}
+          checkValidChange={(newOrder) => checkValidOrder(newOrder, layerConfigs)}
         >
           {layerConfigs.map((layer, i) => {
             function updateLayerConfig<T extends keyof LayerConfigMap>(
@@ -186,7 +186,7 @@ export const LayerConfigControl = () => {
   )
 }
 
-function checkVaildOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
+function checkValidOrder(newOrder: number[], layerConfigs: LayerConfigArray) {
   const setStatus = useGlobalStore.getState().status.update
   const newLayerConfigs = newOrder.map((i) => layerConfigs[i])
 

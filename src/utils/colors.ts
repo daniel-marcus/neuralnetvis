@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu"
 
-// colors are now caluclated in the shader, see materials.ts
+// colors are now calculated in the shader, see materials.ts
 
 type ColorObj = {
   rgb: number[] // as THREE.Color.toArray (float) for instanced meshes

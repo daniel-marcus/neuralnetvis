@@ -17,7 +17,7 @@ async function parseNpz(arrayBuffer: ArrayBuffer) {
   return parsed
 }
 
-export async function fetchMutlipleNpzWithProgress(paths: string[], silent?: boolean) {
+export async function fetchMultipleNpzWithProgress(paths: string[], silent?: boolean) {
   const STATUS_ID = `fetch_npz`
   const allTotalBytes: number[] = []
   const allLoadedBytes: number[] = []

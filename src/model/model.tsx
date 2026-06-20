@@ -256,8 +256,8 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
 }
 
 function addDenseWithFlattenIfNeeded(layerStack: LayerStack, denseArgs: LayerConfigMap["Dense"]) {
-  const isMutliDim = layerStack.last.shape.length > 2
-  if (isMutliDim) {
+  const isMultiDim = layerStack.last.shape.length > 2
+  if (isMultiDim) {
     layerStack.add(tf.layers.flatten())
   }
   layerStack.add(tf.layers.dense(denseArgs))

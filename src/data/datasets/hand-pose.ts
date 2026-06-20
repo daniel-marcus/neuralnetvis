@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "../npy-loader"
+import { fetchMultipleNpzWithProgress } from "../npy-loader"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
@@ -25,7 +25,7 @@ export const handPose: DatasetDef = {
   },
   model: getModelDef("hand-pose"),
   loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+    const [xTrain, yTrain] = await fetchMultipleNpzWithProgress(
       ["/data/hand-pose/x_train.npz", "/data/hand-pose/y_train.npz"],
       true,
     )

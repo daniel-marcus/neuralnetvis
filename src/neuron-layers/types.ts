@@ -14,7 +14,7 @@ export type MeshRef = RefObject<THREE.InstancedMesh | null>
 export interface NeuronLayer {
   lid: string // for React keys: `${model.name}_${tfLayer.name}_${units}`
   index: number
-  visibleIdx: number // to find neighbours throu "invisible" layers (e.g. Flatten)
+  visibleIdx: number // to find neighbours through "invisible" layers (e.g. Flatten)
   layerType: LayerType
   layerPos: LayerPos
   tfLayer: tf.layers.Layer

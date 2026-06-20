@@ -1,13 +1,13 @@
 import * as tf from "@tensorflow/tfjs"
 import { StandardScaler } from "@/data/utils"
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { fetchMultipleNpzWithProgress } from "@/data/npy-loader"
 
-type NpzArray = Awaited<ReturnType<typeof fetchMutlipleNpzWithProgress>>[number]
+type NpzArray = Awaited<ReturnType<typeof fetchMultipleNpzWithProgress>>[number]
 
 export function loadGrayscaleImageDataset(prefix: string) {
   return {
     loadFull: async () => {
-      const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
+      const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress([
         `/data/${prefix}/x_train.npz`,
         `/data/${prefix}/y_train.npz`,
         `/data/${prefix}/x_test.npz`,
@@ -19,7 +19,7 @@ export function loadGrayscaleImageDataset(prefix: string) {
       return { xTrain, yTrain, xTest, yTest }
     },
     loadPreview: async () => {
-      const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      const [xTrain, yTrain] = await fetchMultipleNpzWithProgress(
         [`/data/${prefix}/x_train_preview.npz`, `/data/${prefix}/y_train_preview.npz`],
         true,
       )
@@ -32,7 +32,7 @@ export function loadGrayscaleImageDataset(prefix: string) {
 export function loadCifarDataset(prefix: string) {
   return {
     loadFull: async () => {
-      const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
+      const [xTrain1, xTrain2, xTrain3, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress([
         `/data/${prefix}/x_train_1.npz`,
         `/data/${prefix}/x_train_2.npz`,
         `/data/${prefix}/x_train_3.npz`,
@@ -57,7 +57,7 @@ export function loadCifarDataset(prefix: string) {
       return { xTrain, yTrain, xTest, yTest }
     },
     loadPreview: async () => {
-      const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+      const [xTrain, yTrain] = await fetchMultipleNpzWithProgress(
         [`/data/${prefix}/x_train_preview.npz`, `/data/${prefix}/y_train_preview.npz`],
         true,
       )

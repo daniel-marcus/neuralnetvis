@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import JSZip from "jszip"
 import { isDebug } from "@/store"
 
-// experimantal import for .keras files from Keras 3
+// experimental import for .keras files from Keras 3
 
 const multiHeadAttentionPathNames = ["query_dense", "key_dense", "value_dense", "output_dense"]
 

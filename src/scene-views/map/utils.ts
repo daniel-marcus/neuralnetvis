@@ -12,7 +12,7 @@ export function lngLatToScreen(
   centerLngLat: [number, number],
   zoom: number,
 ): [number, number] {
-  // returns x, y as carthesian coordinates relative to center
+  // returns x, y as cartesian coordinates relative to center
   const WIDTH = 300
   const HEIGHT = 300
   const viewport = new WebMercatorViewport({

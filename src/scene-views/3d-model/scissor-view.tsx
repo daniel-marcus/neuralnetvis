@@ -68,7 +68,7 @@ type ViewProps = {
    * @deprecated You can use inline Views now, see: https://github.com/pmndrs/drei/pull/1784
    */
   track?: React.RefObject<HTMLElement>
-  /** If set true, the content from the background rendering canvas will be copied to a canvas for the current view. Might be helpful when the content needs to appear in a specific stacking context (befor a map background etc.)   */
+  /** If set true, the content from the background rendering canvas will be copied to a canvas for the current view. Might be helpful when the content needs to appear in a specific stacking context (before a map background etc.)   */
   copyCanvas?: boolean
   onFirstRender?: () => void
 }

@@ -79,7 +79,7 @@ interface SelectOption<T extends keyof LayerConfigMap> extends BaseOption<T> {
     | ((args: { layerConfig: LayerConfig<T>; layerConfigs: LayerConfigArray }) => string[])
 }
 
-type ControlableOption<T extends keyof LayerConfigMap> = SliderOption<T> | SelectOption<T>
+type ControllableOption<T extends keyof LayerConfigMap> = SliderOption<T> | SelectOption<T>
 
 export type GetInputNidsFunc = (
   layer: Layer,
@@ -92,7 +92,7 @@ export type GetInputNidsFunc = (
 export interface LayerDef<T extends keyof LayerConfigMap> {
   constructorFunc: (args: LayerConfigMap[T]) => Layer
   defaultConfig?: LayerConfigMap[T]
-  options?: ControlableOption<T>[]
+  options?: ControllableOption<T>[]
   getInputNids?: GetInputNidsFunc
   needsMultiDim?: boolean // TODO: better name?
   isInvisible?: boolean

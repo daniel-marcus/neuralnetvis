@@ -6,7 +6,7 @@ import type { PreprocessFuncDef } from "./types"
 const normalizeImage: PreprocessFuncDef = (inputTensor) => inputTensor.div(255)
 
 export const normalizeHandLandmarks: PreprocessFuncDef = (inputTensor, inputDims) => {
-  // all coordinates relative to wrist (0, 0, 0) + invert axises
+  // all coordinates relative to wrist (0, 0, 0) + invert axes
   const numHands = inputDims[2]
   const inputShape = inputTensor.shape
   const normalized = tf.tidy(() => {

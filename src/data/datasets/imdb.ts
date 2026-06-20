@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { fetchMultipleNpzWithProgress } from "@/data/npy-loader"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
@@ -15,7 +15,7 @@ export const imdb: DatasetDef = {
   sampleViewer: true,
   model: getModelDef("imdb"),
   loadFull: async () => {
-    const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress([
+    const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress([
       "/data/imdb/x_train.npz",
       "/data/imdb/y_train.npz",
       "/data/imdb/x_test.npz",
@@ -29,7 +29,7 @@ export const imdb: DatasetDef = {
     }
   },
   loadPreview: async () => {
-    const [xTrain, yTrain] = await fetchMutlipleNpzWithProgress(
+    const [xTrain, yTrain] = await fetchMultipleNpzWithProgress(
       ["/data/imdb/x_train_preview.npz", "/data/imdb/y_train_preview.npz"],
       true,
     )

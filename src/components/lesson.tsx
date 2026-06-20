@@ -65,7 +65,7 @@ export function useHasLesson() {
 }
 
 function useScrollZero() {
-  const [scollZero, setScrollZero] = useState(true)
+  const [scrollZero, setScrollZero] = useState(true)
   useEffect(() => {
     const onScroll = () => setScrollZero(window.scrollY <= 0)
     window.addEventListener("scroll", onScroll)
@@ -75,7 +75,7 @@ function useScrollZero() {
     }
   }, [])
   useEffect(() => {
-    if (scollZero) document.body.classList.add("scroll-zero")
+    if (scrollZero) document.body.classList.add("scroll-zero")
     else document.body.classList.remove("scroll-zero")
-  }, [scollZero])
+  }, [scrollZero])
 }

@@ -38,7 +38,7 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
             const renderer = new THREE.WebGPURenderer({
               ...(renderProps as WebGPURendererParameters),
               device: gpuDevice ? gpuDevice : undefined,
-              // logarithmicDepthBuffer: true, // helps with color channel z-fighing, but bad for lines
+              // logarithmicDepthBuffer: true, // helps with color channel z-fighting, but bad for lines
               // forceWebGL: true,
             })
             await renderer.init()

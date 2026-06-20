@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { fetchMultipleNpzWithProgress } from "@/data/npy-loader"
 import { scaleFeatures } from "./load-helpers"
 import type { DatasetDef } from "@/data/types"
 import { getModelDef } from "@/model/models"
@@ -32,7 +32,7 @@ export const californiaHousing: DatasetDef = {
 }
 
 async function loadData() {
-  const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+  const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress(
     [
       "/data/california_housing/x_train.npz",
       "/data/california_housing/y_train.npz",

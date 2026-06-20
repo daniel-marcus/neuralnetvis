@@ -1,4 +1,4 @@
-import { fetchMutlipleNpzWithProgress } from "@/data/npy-loader"
+import { fetchMultipleNpzWithProgress } from "@/data/npy-loader"
 import { scaleFeatures } from "./load-helpers"
 import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
@@ -28,7 +28,7 @@ export const autoMpg: DatasetDef = {
 }
 
 async function loadData() {
-  const [xTrain, yTrain, xTest, yTest] = await fetchMutlipleNpzWithProgress(
+  const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress(
     [
       "/data/auto-mpg/x_train.npz",
       "/data/auto-mpg/y_train.npz",
