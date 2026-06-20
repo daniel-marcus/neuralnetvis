@@ -4,7 +4,7 @@ import { PathStyleExtension } from "@deck.gl/extensions"
 import { useSceneStore } from "@/store"
 import { getColorVals, NEG_BASE, POS_BASE } from "@/utils/colors"
 import { usePoints } from "./points"
-import { InputGeoJSON, Point } from "./types"
+import type { InputGeoJSON, Point } from "./types"
 import { projectGeoJSON, xyToPlot } from "./utils"
 import { PLOT_WIDTH } from "./constants"
 

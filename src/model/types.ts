@@ -1,4 +1,4 @@
-import { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
+import type { Params } from "@tensorflow/tfjs-layers/dist/base_callbacks"
 
 // state
 

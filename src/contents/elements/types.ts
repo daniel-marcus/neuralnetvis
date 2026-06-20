@@ -1,4 +1,4 @@
-import { Pos } from "@/scene-views/3d-model/utils"
+import type { Pos } from "@/scene-views/3d-model/utils"
 
 export interface OnScrollProps {
   percent: number

@@ -7,7 +7,7 @@ import { CollapsibleWithTitle } from "../ui-elements"
 import { datasets } from "@/data/datasets"
 import { getDsPath, resetData, getDsMetaFromDb } from "@/data/dataset"
 import { useRouter } from "next/navigation"
-import { DatasetMeta, DbBatch } from "@/data"
+import type { DatasetMeta, DbBatch } from "@/data"
 
 export const MyDatasets = () => {
   const ds = useCurrScene((s) => s.ds)

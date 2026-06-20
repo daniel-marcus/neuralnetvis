@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import * as tf from "@tensorflow/tfjs"
+import type * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { storage } from "three/tsl"
 import { isDebug, useSceneStore } from "@/store"

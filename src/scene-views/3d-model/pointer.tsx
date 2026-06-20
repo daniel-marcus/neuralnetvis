@@ -1,4 +1,4 @@
-import * as THREE from "three/webgpu"
+import type * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition } from "@/scene-views/3d-model/utils"
 import { TextLabel } from "./label"

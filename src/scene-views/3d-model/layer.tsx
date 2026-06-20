@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef } from "react"
-import * as THREE from "three/webgpu"
+import type * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"

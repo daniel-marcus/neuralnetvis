@@ -1,4 +1,4 @@
-import { ReactNode } from "react"
+import type { ReactNode } from "react"
 import { useSection } from "./use-section"
 import { metadata, learnMetadata, playMetadata } from "@/app/metadata"
 

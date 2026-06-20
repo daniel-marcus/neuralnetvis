@@ -1,6 +1,6 @@
 "use client"
 
-import { SceneState } from "@/store"
+import type { SceneState } from "@/store"
 import { defaultVisConfig } from "@/store/vis"
 import type { Pos } from "@/scene-views/3d-model/utils"
 

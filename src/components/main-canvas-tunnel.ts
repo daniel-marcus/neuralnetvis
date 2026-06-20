@@ -1,4 +1,4 @@
-import * as THREE from "three/webgpu"
+import type * as THREE from "three/webgpu"
 import tunnel from "tunnel-rat"
 import type { RootState as RootStateGL } from "@react-three/fiber"
 

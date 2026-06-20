@@ -4,7 +4,7 @@ import { getDbDataAsTensors } from "@/data/dataset"
 import { calculateRSquared } from "@/data/utils"
 import type { Subset } from "@/store/data"
 import type { Prediction } from "./types"
-import { Dataset } from "@/data"
+import type { Dataset } from "@/data"
 
 async function getEvalData(ds: Dataset, subset: Subset = "test", noOneHot = false) {
   return getDbDataAsTensors(ds, subset, { noOneHot })

@@ -1,4 +1,4 @@
-import * as tf from "@tensorflow/tfjs"
+import type * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import type { LayerPos } from "./types"
 

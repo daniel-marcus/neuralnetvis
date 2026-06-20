@@ -1,5 +1,5 @@
 import { WebMercatorViewport } from "@deck.gl/core"
-import { InputGeoJSON } from "./types"
+import type { InputGeoJSON } from "./types"
 import { PLOT_HEIGHT, PLOT_WIDTH } from "./constants"
 
 export function xyToPlot([x, y]: [number, number], center = [0, 0]): [number, number] {

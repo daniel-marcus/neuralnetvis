@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
-import * as THREE from "three/webgpu"
+import type * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
 import { useGlobalStore } from "@/store"
 import type Backend from "three/src/renderers/common/Backend.js"
