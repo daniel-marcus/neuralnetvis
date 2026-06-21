@@ -116,13 +116,7 @@ async function getActivations(
   const tfBackend = tf.getBackend()
   const outputs = layers.map(({ tfLayer }) => getSingleOutput(tfLayer))
   await tf.ready()
-  const activationTensors = tf.tidy(() => {
-    const t0 = performance.now()
-    const allActivations = getLayerActivations(model, sample.xTensor, outputs)
-    const t1 = performance.now()
-    if (isDebug()) console.log(`inference: ${t1 - t0}ms`)
-    return allActivations
-  })
+  const activationTensors = tf.tidy(() => getLayerActivations(model, sample.xTensor, outputs))
 
   await new Promise((r) => setTimeout(r, 0)) // make sure layer component has mounted and buffer is attached
 
@@ -130,77 +124,22 @@ async function getActivations(
   try {
     const start = performance.now()
     for (const [i, layer] of layers.entries()) {
-      if (!activationTensors?.[i]) continue
-      const actTensor = activationTensors[i] as tf.Tensor
-      const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
-      const normalized = tf.tidy(() => {
-        const tensor = layer.hasColorChannels
-          ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
-          : actTensor
-        if (isRegression && layer.layerPos === "hidden" && stats?.[layer.index]) {
-          const { mean, std } = stats[layer.index]!
-          const meanTensor = tf.tensor(mean)
-          const stdTensor = tf.tensor(std)
-          return scaleNormalize(tensor, meanTensor, stdTensor)
-        } else if (isSoftmax) {
-          return tensor
-        } else return normalize(tensor)
-      })
+      const actTensor = activationTensors?.[i] as tf.Tensor | undefined
+      if (!actTensor) continue
+      const layerStats = stats?.[layer.index]
+      const normalized = normalizeForLayer({ actTensor, layer, isRegression, layerStats })
       try {
-        let gpuUpdateSuccess = false
-        if (isWebGPUBackend(backend) && tfBackend === "webgpu") {
-          // WebGPU is available: we can copy the buffer directly in GPU
-          // @ts-expect-error type not compatible with tensor container
-          const newGpuBuffer = tf.tidy(() => {
-            return normalized.dataToGPU().buffer
-          }) as GPUBuffer | undefined
-          const existingGpuBuffer = backend.get(layer.activationsBuffer)?.buffer
-          if (newGpuBuffer && existingGpuBuffer) {
-            if (isDebug()) console.log("copy GPU buffer")
-            const commandEncoder = backend.device.createCommandEncoder()
-            commandEncoder.copyBufferToBuffer(
-              newGpuBuffer, // from
-              0, // sourceOffset
-              existingGpuBuffer, // to
-              0, // destinationOffset
-              newGpuBuffer.size,
-            )
-
-            const commands = commandEncoder.finish()
-            backend.device.queue.submit([commands])
-            gpuUpdateSuccess = true
-            // await device.queue.onSubmittedWorkDone()
-            // newGpuBuffer.destroy()
-            // continue
-          } else {
-            console.warn("WebGPU buffer update: Coulnd't match buffers", {
-              existingGpuBuffer,
-              newGpuBuffer,
-              backend,
-              layer,
-            })
-          }
-        }
+        // WebGPU: try to copy the buffer directly in GPU
+        let gpuUpdateSuccess = tryWebGPUUpdate({ backend, tfBackend, normalized, layer })
+        // fallback if WebGPU is not available or failed: WASM/WebGL via CPU
         if (!gpuUpdateSuccess) {
-          // fallback if WebGPU is not available or failed: WASM/WebGL via CPU
-          if (isDebug()) console.log("using fallback")
-          const data = (await normalized.data()) as Float32Array
-          layer.activations.set(data)
-          layer.activationsBuffer.needsUpdate = true // storage buffer updated via CPU
-          for (const meshRef of layer.meshRefs) {
-            const userData = meshRef.current?.userData as UserData | undefined
-            if (!userData?.instancedActivations) continue
-            userData.instancedActivations.needsUpdate = true // instanced buffer updated via CPU
-          }
+          const data = await fallbackCPUUpdate({ normalized, layer })
           // textures are updated in textured-layer.tsx
-          newLayerActivations[layer.index] = {
-            normalizedActivations: data,
-          }
+          newLayerActivations[layer.index] = { normalizedActivations: data }
         }
 
         if (layer.layerPos === "output") {
-          // for output layers we still need to download the activations
-          // for output ranking & regression labels
+          // for output layers we still need to download the activations for output ranking & regression labels
           const activations = (await actTensor.data()) as Float32Array
           newLayerActivations[layer.index] = newLayerActivations[layer.index] ?? {}
           newLayerActivations[layer.index].activations = activations
@@ -221,4 +160,74 @@ async function getActivations(
   } finally {
     activationTensors?.forEach((t) => t?.dispose())
   }
+}
+
+interface NormalizeForLayerProps {
+  actTensor: tf.Tensor<tf.Rank>
+  layer: NeuronLayer
+  isRegression?: boolean
+  layerStats?: ActivationStats
+}
+
+function normalizeForLayer({ actTensor, layer, isRegression, layerStats }: NormalizeForLayerProps) {
+  const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
+  return tf.tidy(() => {
+    const tensor = layer.hasColorChannels
+      ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
+      : actTensor
+    if (isRegression && layer.layerPos === "hidden" && layerStats) {
+      const { mean, std } = layerStats
+      const meanTensor = tf.tensor(mean)
+      const stdTensor = tf.tensor(std)
+      return scaleNormalize(tensor, meanTensor, stdTensor)
+    } else if (isSoftmax) {
+      return tensor
+    } else return normalize(tensor)
+  })
+}
+
+interface TryWebGPUUpdateProps {
+  backend: Backend
+  tfBackend: string
+  normalized: tf.Tensor<tf.Rank>
+  layer: NeuronLayer
+}
+function tryWebGPUUpdate({ backend, tfBackend, normalized, layer }: TryWebGPUUpdateProps) {
+  let success = false
+  if (isWebGPUBackend(backend) && tfBackend === "webgpu") {
+    // @ts-expect-error type not compatible with tensor container
+    const newGpuBuffer = tf.tidy(() => normalized.dataToGPU().buffer) as GPUBuffer | undefined
+    const existingGpuBuffer = backend.get(layer.activationsBuffer)?.buffer
+    if (newGpuBuffer && existingGpuBuffer) {
+      if (isDebug()) console.log("copy GPU buffer")
+      const commandEncoder = backend.device.createCommandEncoder()
+      // args: from, sourceOffset, to, destinationOffset
+      commandEncoder.copyBufferToBuffer(newGpuBuffer, 0, existingGpuBuffer, 0, newGpuBuffer.size)
+
+      const commands = commandEncoder.finish()
+      backend.device.queue.submit([commands])
+      success = true
+    } else {
+      console.warn("WebGPU buffer update: Coulnd't match buffers")
+    }
+  }
+  return success
+}
+
+interface CPUUpdateProps {
+  normalized: tf.Tensor<tf.Rank>
+  layer: NeuronLayer
+}
+
+async function fallbackCPUUpdate({ normalized, layer }: CPUUpdateProps) {
+  if (isDebug()) console.log("using fallback")
+  const data = (await normalized.data()) as Float32Array
+  layer.activations.set(data)
+  layer.activationsBuffer.needsUpdate = true // storage buffer updated via CPU
+  for (const meshRef of layer.meshRefs) {
+    const userData = meshRef.current?.userData as UserData | undefined
+    if (!userData?.instancedActivations) continue
+    userData.instancedActivations.needsUpdate = true // instanced buffer updated via CPU
+  }
+  return data
 }
