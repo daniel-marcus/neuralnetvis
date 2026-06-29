@@ -42,7 +42,7 @@
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
     "@mediapipe/tasks-vision": "0.10.35",
-    "@react-spring/web": "^10.1.1",
+    "@react-spring/web": "^10.1.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@tensorflow/tfjs": "^4.22.0",
