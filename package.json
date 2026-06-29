@@ -79,7 +79,7 @@
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.184.1",
     "@typescript/native-preview": "7.0.0-dev.20260626.1",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-react": "^6.0.3",
     "commit-and-tag-version": "^12.7.3",
     "eslint": "^10.5.0",
     "fake-indexeddb": "^6.2.5",
