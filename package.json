@@ -89,7 +89,7 @@
     "oxlint": "^1.70.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.15",
-    "puppeteer": "^25.1.0",
+    "puppeteer": "^25.2.1",
     "tailwindcss": "^4.3.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.9"
