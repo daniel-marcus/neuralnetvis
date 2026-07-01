@@ -88,7 +88,7 @@
     "oxfmt": "^0.56.0",
     "oxlint": "^1.71.0",
     "patch-package": "^8.0.1",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.16",
     "puppeteer": "^25.2.1",
     "tailwindcss": "^4.3.1",
     "vite": "^8.1.0",
