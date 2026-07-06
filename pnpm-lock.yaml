@@ -18,8 +18,8 @@ importers:
         specifier: ^9.3.5
         version: 9.3.5(@deck.gl/core@9.3.5)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.5)(@luma.gl/engine@9.3.5(@luma.gl/core@9.3.5)(@luma.gl/shadertools@9.3.5(@luma.gl/core@9.3.5)))
       '@deck.gl/react':
-        specifier: ^9.3.5
-        version: 9.3.5(@deck.gl/core@9.3.5)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.3.5))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^9.3.6
+        version: 9.3.6(@deck.gl/core@9.3.5)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.3.5))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@mediapipe/drawing_utils':
         specifier: ^0.3.1675466124
         version: 0.3.1675466124
@@ -214,8 +214,8 @@ packages:
       '@luma.gl/core': ~9.3.3
       '@luma.gl/engine': ~9.3.3
 
-  '@deck.gl/react@9.3.5':
-    resolution: {integrity: sha512-C6NWSXI0bKQmiPCJ4qANmFzeKOu0ODkn6Houf6TH51/9ssJDT8+yAkZiA0/YsKiC74vwB8o2JjCZ0no98iy5rw==}
+  '@deck.gl/react@9.3.6':
+    resolution: {integrity: sha512-oZ8Bvj8GzTU50864X4aujrlzeGytf60Azd7pAeotQO+8vZkIw8e9pxoZo6S4NM2NOtHKHWkGVCy08Fx9482lpA==}
     peerDependencies:
       '@deck.gl/core': ~9.3.0
       '@deck.gl/widgets': ~9.3.0
@@ -2993,8 +2993,8 @@ packages:
   potpack@1.0.2:
     resolution: {integrity: sha512-choctRBIV9EMT9WGAZHn3V7t0Z2pMQyl0EZE6pFc/6ml3ssw7Dlf/oAOvFwjm1HVsqfQN8GfeFyJ+d8tRzqueQ==}
 
-  preact@10.29.3:
-    resolution: {integrity: sha512-D9NL1GAnJZhc3RndVs4gDdxEeU9TcHgywMrhhOsnpdlvFjdbx0gAsLUnH6JEhlJH5giL7Tx5biWPUSEXE/HPzw==}
+  preact@10.29.4:
+    resolution: {integrity: sha512-GMpwh9+NJ8tSmqwIaVyFRQkiKfBEzQ+k7r7tle4W+kaJ+7wJiB9hFz9BixAomMtenPPSBfM4bZhXozGxhf0uFQ==}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -3765,7 +3765,7 @@ snapshots:
     transitivePeerDependencies:
       - '@75lb/nature'
 
-  '@deck.gl/react@9.3.5(@deck.gl/core@9.3.5)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.3.5))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@deck.gl/react@9.3.6(@deck.gl/core@9.3.5)(@deck.gl/widgets@9.1.14(@deck.gl/core@9.3.5))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@deck.gl/core': 9.3.5
       '@deck.gl/widgets': 9.1.14(@deck.gl/core@9.3.5)
@@ -3775,7 +3775,7 @@ snapshots:
   '@deck.gl/widgets@9.1.14(@deck.gl/core@9.3.5)':
     dependencies:
       '@deck.gl/core': 9.3.5
-      preact: 10.29.3
+      preact: 10.29.4
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 
@@ -6284,7 +6284,7 @@ snapshots:
 
   potpack@1.0.2: {}
 
-  preact@10.29.3: {}
+  preact@10.29.4: {}
 
   prelude-ls@1.2.1: {}
 
