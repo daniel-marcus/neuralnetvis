@@ -55,7 +55,6 @@ function activationColor(hasColors: boolean, channelIdx: number, storageNode: St
       : instancedBufferAttribute<"float">(instancedActivations)
     const baseNode = normalizedNode.greaterThanEqual(0.0).select<"vec3">(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
-    // @ts-expect-error TSL pow types don't reflect vec3 support
     const vColor = pow(srgbColor, vec3(2.2))
     return varying(vColor) // compute in vertex stage
   })()
@@ -152,7 +151,6 @@ function activationColorTexture(
 
     const baseNode = normalizedNode.greaterThanEqual(0.0).select<"vec3">(posBase, baseNeg)
     const srgbColor = mix(baseZero, baseNode, abs(normalizedNode))
-    // @ts-expect-error TSL pow types don't reflect vec3 support
     const colorNode = pow(srgbColor, vec3(2.2))
     return colorNode
   })()
