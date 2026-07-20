@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.7",
-    "@deck.gl/extensions": "^9.3.6",
+    "@deck.gl/extensions": "^9.3.7",
     "@deck.gl/layers": "^9.3.7",
     "@deck.gl/react": "^9.3.6",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
