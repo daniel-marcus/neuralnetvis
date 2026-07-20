@@ -9,17 +9,17 @@ importers:
   .:
     dependencies:
       '@deck.gl/core':
-        specifier: ^9.3.6
-        version: 9.3.6
+        specifier: ^9.3.7
+        version: 9.3.7
       '@deck.gl/extensions':
         specifier: ^9.3.6
-        version: 9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
+        version: 9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
       '@deck.gl/layers':
         specifier: ^9.3.6
-        version: 9.3.6(@deck.gl/core@9.3.6)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
+        version: 9.3.6(@deck.gl/core@9.3.7)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
       '@deck.gl/react':
         specifier: ^9.3.6
-        version: 9.3.6(@deck.gl/core@9.3.6)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 9.3.6(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@mediapipe/drawing_utils':
         specifier: ^0.3.1675466124
         version: 0.3.1675466124
@@ -196,8 +196,8 @@ packages:
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
-  '@deck.gl/core@9.3.6':
-    resolution: {integrity: sha512-dCwF+ATE382DdbIqbaoHYCTAW7vutkVlQvWlmMebTDW1j7rPnKrT6ZPa0Y996U/8ZL5NNWc2/wWWY9LYhZVm2Q==}
+  '@deck.gl/core@9.3.7':
+    resolution: {integrity: sha512-l+YPm1I0Fwj+b7xsu8FvyDT5MGPgEPJe2cQJUpQNgG742b2goB4tyYpteUhNAOeVo1gmenvqv36ZJGNsGxipJA==}
 
   '@deck.gl/extensions@9.3.6':
     resolution: {integrity: sha512-zWAyeyFlbryrjvlQYYUn+0g7u7LUtS4J6WDWMjrJOP89WCiYitWPz+aqL+0x6iNTZk5xz0YK5FxSarDRCWxZCQ==}
@@ -3689,7 +3689,7 @@ snapshots:
 
   '@babel/runtime@7.29.7': {}
 
-  '@deck.gl/core@9.3.6':
+  '@deck.gl/core@9.3.7':
     dependencies:
       '@loaders.gl/core': 4.4.3
       '@loaders.gl/images': 4.4.3(@loaders.gl/core@4.4.3)
@@ -3710,18 +3710,18 @@ snapshots:
     transitivePeerDependencies:
       - '@75lb/nature'
 
-  '@deck.gl/extensions@9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
+  '@deck.gl/extensions@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
     dependencies:
-      '@deck.gl/core': 9.3.6
+      '@deck.gl/core': 9.3.7
       '@luma.gl/core': 9.3.6
       '@luma.gl/engine': 9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6))
       '@luma.gl/shadertools': 9.3.6(@luma.gl/core@9.3.6)
       '@luma.gl/webgl': 9.3.6(@luma.gl/core@9.3.6)
       '@math.gl/core': 4.1.0
 
-  '@deck.gl/layers@9.3.6(@deck.gl/core@9.3.6)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
+  '@deck.gl/layers@9.3.6(@deck.gl/core@9.3.7)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
     dependencies:
-      '@deck.gl/core': 9.3.6
+      '@deck.gl/core': 9.3.7
       '@loaders.gl/core': 4.4.3
       '@loaders.gl/images': 4.4.3(@loaders.gl/core@4.4.3)
       '@loaders.gl/schema': 4.4.3
@@ -3737,16 +3737,16 @@ snapshots:
     transitivePeerDependencies:
       - '@75lb/nature'
 
-  '@deck.gl/react@9.3.6(@deck.gl/core@9.3.6)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@deck.gl/react@9.3.6(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@deck.gl/core': 9.3.6
-      '@deck.gl/widgets': 9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6)
+      '@deck.gl/core': 9.3.7
+      '@deck.gl/widgets': 9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6)
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  '@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.6)(@luma.gl/core@9.3.6)':
+  '@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6)':
     dependencies:
-      '@deck.gl/core': 9.3.6
+      '@deck.gl/core': 9.3.7
       '@floating-ui/dom': 1.8.0
       '@luma.gl/core': 9.3.6
       preact: 10.29.7
