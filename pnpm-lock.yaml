@@ -72,8 +72,8 @@ importers:
         specifier: ^16.2.11
         version: 16.2.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       npyjs:
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       r3f-forcegraph:
         specifier: ^1.1.1
         version: 1.1.1(react@19.2.8)(three@0.185.1)
@@ -2561,8 +2561,8 @@ packages:
     resolution: {integrity: sha512-AqZtDUWOMKs1G/8lwylVjrdYgqA4d9nu8hc+0gzRxlDb1I10+FHBGMXs6aiQHFdCUUlqH99MUMuLfzWDNDtfxw==}
     deprecated: This package is no longer supported.
 
-  npyjs@1.1.0:
-    resolution: {integrity: sha512-hHCr0iPGXWU4qWw5p0TztZgfUOmm7VEg4ztY9en/99wnetPGCvOtqSROL9VWk+UZgBu240JQWupY55srvmApnA==}
+  npyjs@1.2.0:
+    resolution: {integrity: sha512-HrooNo+/Q7Vx/gQFaSoiveX0xVkYlQ+jOcgp2WhfGt1C8qdANeK480Sl0s2RWe0+Hf532h45BEitCX3jkddK2Q==}
     engines: {node: '>=18'}
 
   object-assign@4.1.1:
@@ -5455,7 +5455,7 @@ snapshots:
       gauge: 3.0.2
       set-blocking: 2.0.0
 
-  npyjs@1.1.0:
+  npyjs@1.2.0:
     dependencies:
       cross-fetch: 4.1.0
     transitivePeerDependencies:
