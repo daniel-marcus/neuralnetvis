@@ -79,7 +79,7 @@
     "@types/react-headroom": "^3.2.3",
     "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^6.0.4",
-    "commit-and-tag-version": "^13.1.0",
+    "commit-and-tag-version": "^13.1.2",
     "eslint": "^10.8.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.11.1",
