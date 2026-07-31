@@ -27,8 +27,8 @@ importers:
         specifier: ^0.4.1675469240
         version: 0.4.1675469240
       '@mediapipe/tasks-vision':
-        specifier: 0.10.35
-        version: 0.10.35
+        specifier: 1.0.0
+        version: 1.0.0
       '@react-spring/web':
         specifier: ^10.1.2
         version: 10.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -564,8 +564,8 @@ packages:
   '@mediapipe/tasks-vision@0.10.17':
     resolution: {integrity: sha512-CZWV/q6TTe8ta61cZXjfnnHsfWIdFhms03M9T7Cnd5y2mdpylJM0rF1qRq+wsQVRMLz1OYPVEBU9ph2Bx8cxrg==}
 
-  '@mediapipe/tasks-vision@0.10.35':
-    resolution: {integrity: sha512-HOvadwVRE6JC+45nyYhmnywnr5h/J8KZvOeUNVOG9q/0875pZgItznFB9bRTvLc264YSJqiZ1NsIpCStJw/egg==}
+  '@mediapipe/tasks-vision@1.0.0':
+    resolution: {integrity: sha512-D9xp3MEMArzkx4s+M7rDWCIIST7Bh0uqIImSazgX5nS05o3gfw/bT/wY6j7N6R+H6/AgvUM2lOPvAnniwdeQbg==}
 
   '@monogrid/gainmap-js@3.4.0':
     resolution: {integrity: sha512-2Z0FATFHaoYJ8b+Y4y4Hgfn3FRFwuU5zRrk+9dFWp4uGAdHGqVEdP7HP+gLA3X469KXHmfupJaUbKo1b/aDKIg==}
@@ -3719,7 +3719,7 @@ snapshots:
 
   '@mediapipe/tasks-vision@0.10.17': {}
 
-  '@mediapipe/tasks-vision@0.10.35': {}
+  '@mediapipe/tasks-vision@1.0.0': {}
 
   '@monogrid/gainmap-js@3.4.0(three@0.185.1)':
     dependencies:
