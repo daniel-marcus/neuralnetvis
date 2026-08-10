@@ -18,8 +18,8 @@ importers:
         specifier: ^9.3.7
         version: 9.3.7(@deck.gl/core@9.3.7)(@loaders.gl/core@4.4.3)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
       '@deck.gl/react':
-        specifier: ^9.3.7
-        version: 9.3.7(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^9.3.8
+        version: 9.3.8(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@mediapipe/drawing_utils':
         specifier: ^0.3.1675466124
         version: 0.3.1675466124
@@ -230,8 +230,8 @@ packages:
       '@luma.gl/core': ~9.3.3
       '@luma.gl/engine': ~9.3.3
 
-  '@deck.gl/react@9.3.7':
-    resolution: {integrity: sha512-lC86Daz/3d/cSX2qpyqKc0Ju+OJZVaQ+K9JyrYp76Zqzi4qej0plDWkkRNyo0pAvzL5LSaIpJpGO45QusgbtSw==}
+  '@deck.gl/react@9.3.8':
+    resolution: {integrity: sha512-9EdoNO3hQnRjN3DJfQUAcICGAr/2l35fDadB19K4UMG4mg1gXYBH5E7xN6obz3V9a3K4IZsPcFTGRkKK37vQqQ==}
     peerDependencies:
       '@deck.gl/core': ~9.3.0
       '@deck.gl/widgets': ~9.3.0
@@ -3426,7 +3426,7 @@ snapshots:
       '@types/geojson': 7946.0.16
       earcut: 2.2.4
 
-  '@deck.gl/react@9.3.7(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@deck.gl/react@9.3.8(@deck.gl/core@9.3.7)(@deck.gl/widgets@9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@deck.gl/core': 9.3.7
       '@deck.gl/widgets': 9.3.6(@deck.gl/core@9.3.7)(@luma.gl/core@9.3.6)
