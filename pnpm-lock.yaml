@@ -12,8 +12,8 @@ importers:
         specifier: ^9.3.8
         version: 9.3.8
       '@deck.gl/extensions':
-        specifier: ^9.3.7
-        version: 9.3.7(@deck.gl/core@9.3.8)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
+        specifier: ^9.3.8
+        version: 9.3.8(@deck.gl/core@9.3.8)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
       '@deck.gl/layers':
         specifier: ^9.3.8
         version: 9.3.8(@deck.gl/core@9.3.8)(@loaders.gl/core@4.4.4)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))
@@ -215,12 +215,12 @@ packages:
   '@deck.gl/core@9.3.8':
     resolution: {integrity: sha512-a3VFDY/V3F1soHyO48F56DD+QkPbQN2UYE9ZjgTAZ+tR1P5uUKBTrf/Q3B9IQtVZWrpIvub4sjGuDvKZ1FxlmQ==}
 
-  '@deck.gl/extensions@9.3.7':
-    resolution: {integrity: sha512-CY4Hi7yeVNMOjYfbrxNZ5PF3ftH16zGwV4JSH6g9opCTfLFxBgT2Rxbs3cwywanAs5yO7RraDDM9WyQSzAU7qg==}
+  '@deck.gl/extensions@9.3.8':
+    resolution: {integrity: sha512-3uMUtGwZFVptEs8yhuidRryHGcPasB2D0A0Ns+PBYc9IPRIJjaC0U15+qf2ZgGQSKH7AWfdDHefiW1oGZjHpcg==}
     peerDependencies:
       '@deck.gl/core': ~9.3.0
-      '@luma.gl/core': ~9.3.3
-      '@luma.gl/engine': ~9.3.3
+      '@luma.gl/core': ~9.3.5
+      '@luma.gl/engine': ~9.3.5
 
   '@deck.gl/layers@9.3.8':
     resolution: {integrity: sha512-kxinglMbL+orSujpuzMvIPLThqNMSHhzkZKSteGzHdj60SdwwbOIsERuUuJslOMwT1qCgpAIucdZ8Lf9h7cHWQ==}
@@ -3378,7 +3378,7 @@ snapshots:
       gl-matrix: 3.4.4
       mjolnir.js: 3.0.1
 
-  '@deck.gl/extensions@9.3.7(@deck.gl/core@9.3.8)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
+  '@deck.gl/extensions@9.3.8(@deck.gl/core@9.3.8)(@luma.gl/core@9.3.6)(@luma.gl/engine@9.3.6(@luma.gl/core@9.3.6)(@luma.gl/shadertools@9.3.6(@luma.gl/core@9.3.6)))':
     dependencies:
       '@deck.gl/core': 9.3.8
       '@luma.gl/core': 9.3.6
