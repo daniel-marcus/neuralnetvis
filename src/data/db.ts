@@ -3,7 +3,7 @@ import type { DatasetKey } from "./types"
 
 /*
 dbName: ds.key
-storeName: "train" | "test" | "meta
+storeName: "train" | "test" | "meta
 */
 
 export const DB_PREFIX = "nnv-"
