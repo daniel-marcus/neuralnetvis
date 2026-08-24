@@ -80,7 +80,7 @@
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^6.1.0",
     "commit-and-tag-version": "^13.1.2",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.11.6",
     "lefthook": "^2.1.10",
