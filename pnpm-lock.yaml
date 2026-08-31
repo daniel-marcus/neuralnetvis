@@ -145,8 +145,8 @@ importers:
         specifier: ^6.2.5
         version: 6.2.5
       happy-dom:
-        specifier: ^20.11.6
-        version: 20.11.6
+        specifier: ^20.11.13
+        version: 20.11.13
       lefthook:
         specifier: ^2.1.10
         version: 2.1.10
@@ -176,7 +176,7 @@ importers:
         version: 8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.3.0)(happy-dom@20.11.6)(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.3.0)(happy-dom@20.11.13)(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
 
 packages:
 
@@ -1307,6 +1307,9 @@ packages:
   '@types/node@26.3.0':
     resolution: {integrity: sha512-L3fgrnchriRC2ExBflb8j4uZZURHZfQsmQeyVzhjcHW4kkwVyo8/0h1B2MVzMTrYUJYu6G7EWs14hW/L9putqw==}
 
+  '@types/node@26.4.0':
+    resolution: {integrity: sha512-faiGnoIrLH/V8cibOMEAZ8pMw6oXqSukl29ra4mN8GdaB2ZewzeaLj+INpV5N+Z1eKWzY+IzaIZH2EIR6YZRNQ==}
+
   '@types/offscreencanvas@2019.3.0':
     resolution: {integrity: sha512-esIJx9bQg+QYF0ra8GnvfianIY8qWB0GBx54PK5Eps6m+xTj86KLavHv6qDhzKcu5UUOgNfJ2pWaIIV7TRUd9Q==}
 
@@ -2054,8 +2057,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  happy-dom@20.11.6:
-    resolution: {integrity: sha512-Hldbg8AdAa5a5oDcZpjqnGitp7JB0hqWmfv/8qr+kft4vzSD8BHsbdRfzYvL/0QcbKcURC/yyoygbeDQarPvYg==}
+  happy-dom@20.11.13:
+    resolution: {integrity: sha512-UUGd67JqTs0BaH4UbTaq8jCxdtNoYjvbmZM5iwgQKK60tLad0p2uPc48WcVTj1MxlIP43z48WahJcViKbxnprQ==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -4274,6 +4277,10 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
+  '@types/node@26.4.0':
+    dependencies:
+      undici-types: 8.3.0
+
   '@types/offscreencanvas@2019.3.0': {}
 
   '@types/offscreencanvas@2019.7.3': {}
@@ -4313,7 +4320,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 26.3.0
+      '@types/node': 26.4.0
 
   '@use-gesture/core@10.3.1': {}
 
@@ -4473,7 +4480,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 26.3.0
+      '@types/node': 26.4.0
 
   buffer@6.0.3:
     dependencies:
@@ -5028,9 +5035,9 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  happy-dom@20.11.6:
+  happy-dom@20.11.13:
     dependencies:
-      '@types/node': 26.3.0
+      '@types/node': 26.4.0
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
@@ -6055,7 +6062,7 @@ snapshots:
       terser: 5.48.0
       yaml: 2.9.0
 
-  vitest@4.1.11(@types/node@26.3.0)(happy-dom@20.11.6)(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)):
+  vitest@4.1.11(@types/node@26.3.0)(happy-dom@20.11.13)(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
@@ -6079,7 +6086,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 26.3.0
-      happy-dom: 20.11.6
+      happy-dom: 20.11.13
     transitivePeerDependencies:
       - msw
 
