@@ -84,7 +84,7 @@
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.14.0",
     "lefthook": "^2.1.12",
-    "oxfmt": "^0.66.0",
+    "oxfmt": "^0.67.0",
     "oxlint": "^1.82.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.28",
