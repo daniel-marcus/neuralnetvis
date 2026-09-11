@@ -136,8 +136,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.2.2(@types/node@26.5.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       commit-and-tag-version:
-        specifier: ^13.1.2
-        version: 13.1.2(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)
+        specifier: ^13.2.0
+        version: 13.2.0(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -226,8 +226,12 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@conventional-changelog/template@1.3.0':
-    resolution: {integrity: sha512-GsCw/qu92GI0EX6s7fxUi/SG1lmFjG9XZivxxEDZXqztuQKCn5o5wKdz4v005zci0Md7EZzgAwmQLoIEDZoaow==}
+  '@conventional-changelog/template@1.2.1':
+    resolution: {integrity: sha512-TzlTVpKPjaqW6qOYjQcYUDuGsLCNsvFHVBXkYGTAnf5V37jCWrE5haKNXzz0WZUtVHjrpV76L1buANjwXMfT8w==}
+    engines: {node: '>=22'}
+
+  '@conventional-changelog/template@1.4.0':
+    resolution: {integrity: sha512-aalGyl7dbB5PArRebDIX43ZvBlXrYm9uWzGJ26t+4SzJVPsOuvfILGGbw5X4yX7i50YEmJ8zvbiWnqH/AAnZqg==}
     engines: {node: '>=22'}
 
   '@deck.gl/core@9.3.11':
@@ -1473,8 +1477,8 @@ packages:
   argparse@1.0.10:
     resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
 
-  argue-cli@3.1.0:
-    resolution: {integrity: sha512-DhBpBfXL4SS2uC0N922MMajKR3CdrTG0u2or1PNYgXMsrSzViJrbtvT0nCLlLGUI0plam/ZZCs7aAauHtW9thw==}
+  argue-cli@3.2.0:
+    resolution: {integrity: sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==}
     engines: {node: '>=22'}
 
   aria-query@5.3.0:
@@ -1558,9 +1562,9 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+  chalk@6.0.0:
+    resolution: {integrity: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==}
+    engines: {node: '>=22'}
 
   chownr@2.0.0:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
@@ -1612,8 +1616,8 @@ packages:
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
-  commit-and-tag-version@13.1.2:
-    resolution: {integrity: sha512-NEBJycEVXM6XExM7k9WunQAIMccFAHv3/ZtmA2s4L0VI0P6srUwrbCoNbE+Exo2B86agc9/NVty4m3PAxGPgTA==}
+  commit-and-tag-version@13.2.0:
+    resolution: {integrity: sha512-VTEimOv7cYWNBROM80r/UQTmCHu+pui723jf3QSd4nS3UHQgtsCxWhZCtr8CfCNfLk/ZDME4VUX5snp/kBPIjg==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -1923,8 +1927,8 @@ packages:
   fast-xml-builder@1.3.1:
     resolution: {integrity: sha512-pIM/1n3ntFXKYrUZwW7QCK0gAW7XY+wzj1YMIV3tLDvPj/V+zTGJK5e3/4WJfwj0qWw2ElNXiTixda/R+3YSug==}
 
-  fast-xml-parser@5.11.0:
-    resolution: {integrity: sha512-9IGxMqvqLOnqP+Egi1nqDHKv5k8aZ7r9n558enxcucmyVGEBNPAU+MOg/8jPIS7rO7sSq4gFm1/nHtiaubMruw==}
+  fast-xml-parser@5.11.1:
+    resolution: {integrity: sha512-TBw6K/fxoQGGjCmZDw9w/ZwP3uDcnTM4YH/g+PFRWr8sbe5idXtxNN6vITh4+1ruCZaho6uBFurElsA7F0zzgw==}
     hasBin: true
 
   fd-package-json@2.0.0:
@@ -2148,8 +2152,8 @@ packages:
   is-promise@2.2.2:
     resolution: {integrity: sha512-+lP4/6lKUBfQjZ2pdxThZvLUAafmZb8OAxFb8XXtiQmS35INgr85hdOGoEs124ez1FCnZJt6jau/T+alh58QFQ==}
 
-  is-unsafe@2.0.0:
-    resolution: {integrity: sha512-2LdV822R+wmI86unXA93WCFpL6g+av8ynWk0nrHyJqGop5VoocYsSLFgN8jrfalT6iGeLNM4KXuVSsULP53kEA==}
+  is-unsafe@2.0.2:
+    resolution: {integrity: sha512-HgbIHPBH0KHHCcjLfGsCvhtPTVxjaAZlXjwdz7/GQC40SjSe4sfQsar8J5VFo8JOSbarkpV0OLG95bbaNd9aAQ==}
 
   is-wsl@2.2.0:
     resolution: {integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==}
@@ -3389,7 +3393,9 @@ snapshots:
       conventional-commits-filter: 6.0.1
       conventional-commits-parser: 7.1.2
 
-  '@conventional-changelog/template@1.3.0': {}
+  '@conventional-changelog/template@1.2.1': {}
+
+  '@conventional-changelog/template@1.4.0': {}
 
   '@deck.gl/core@9.3.11':
     dependencies:
@@ -4428,7 +4434,7 @@ snapshots:
     dependencies:
       sprintf-js: 1.0.3
 
-  argue-cli@3.1.0: {}
+  argue-cli@3.2.0: {}
 
   aria-query@5.3.0:
     dependencies:
@@ -4513,7 +4519,7 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  chalk@5.6.2: {}
+  chalk@6.0.0: {}
 
   chownr@2.0.0: {}
 
@@ -4562,10 +4568,11 @@ snapshots:
   commander@2.20.3:
     optional: true
 
-  commit-and-tag-version@13.1.2(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2):
+  commit-and-tag-version@13.2.0(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2):
     dependencies:
       '@conventional-changelog/git-client': 3.1.0(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)
-      chalk: 5.6.2
+      '@conventional-changelog/template': 1.2.1
+      chalk: 6.0.0
       conventional-changelog: 8.1.0(conventional-commits-filter@6.0.1)
       conventional-changelog-config-spec: 2.1.0
       conventional-changelog-conventionalcommits: 10.2.1
@@ -4573,7 +4580,7 @@ snapshots:
       detect-indent: 7.0.2
       detect-newline: 3.1.0
       dotgitignore: 2.1.0
-      fast-xml-parser: 5.11.0
+      fast-xml-parser: 5.11.1
       figures: 3.2.0
       find-up: 5.0.0
       semver: 7.8.5
@@ -4591,15 +4598,15 @@ snapshots:
 
   conventional-changelog-conventionalcommits@10.2.1:
     dependencies:
-      '@conventional-changelog/template': 1.3.0
+      '@conventional-changelog/template': 1.4.0
 
   conventional-changelog-preset-loader@6.0.1: {}
 
   conventional-changelog-writer@9.2.1:
     dependencies:
-      '@conventional-changelog/template': 1.3.0
+      '@conventional-changelog/template': 1.4.0
       '@simple-libs/stream-utils': 2.0.0
-      argue-cli: 3.1.0
+      argue-cli: 3.2.0
       conventional-commits-filter: 6.0.1
       semver: 7.8.5
 
@@ -4608,7 +4615,7 @@ snapshots:
       '@conventional-changelog/git-client': 3.1.2(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)
       '@simple-libs/hosted-git-info': 2.0.0
       '@simple-libs/normalize-package-data': 1.0.0
-      argue-cli: 3.1.0
+      argue-cli: 3.2.0
       conventional-changelog-preset-loader: 6.0.1
       conventional-changelog-writer: 9.2.1
       conventional-commits-parser: 7.1.2
@@ -4621,12 +4628,12 @@ snapshots:
   conventional-commits-parser@7.1.2:
     dependencies:
       '@simple-libs/stream-utils': 2.0.0
-      argue-cli: 3.1.0
+      argue-cli: 3.2.0
 
   conventional-recommended-bump@12.1.0:
     dependencies:
       '@conventional-changelog/git-client': 3.1.2(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)
-      argue-cli: 3.1.0
+      argue-cli: 3.2.0
       conventional-changelog-preset-loader: 6.0.1
       conventional-commits-filter: 6.0.1
       conventional-commits-parser: 7.1.2
@@ -4888,11 +4895,11 @@ snapshots:
       path-expression-matcher: 1.6.2
       xml-naming: 0.3.0
 
-  fast-xml-parser@5.11.0:
+  fast-xml-parser@5.11.1:
     dependencies:
       '@nodable/entities': 3.0.0
       fast-xml-builder: 1.3.1
-      is-unsafe: 2.0.0
+      is-unsafe: 2.0.2
       path-expression-matcher: 1.6.2
       strnum: 2.4.2
       xml-naming: 0.3.0
@@ -5118,7 +5125,7 @@ snapshots:
 
   is-promise@2.2.2: {}
 
-  is-unsafe@2.0.0: {}
+  is-unsafe@2.0.2: {}
 
   is-wsl@2.2.0:
     dependencies:
