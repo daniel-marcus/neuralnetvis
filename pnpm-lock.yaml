@@ -60,8 +60,8 @@ importers:
         specifier: ^8.0.3
         version: 8.0.3
       jsfive:
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.2
+        version: 0.4.2
       jszip:
         specifier: ^3.10.2
         version: 3.10.2
@@ -2184,8 +2184,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  jsfive@0.4.0:
-    resolution: {integrity: sha512-3I3feGAFleVsChR4o4g9McAOa3bLlJ8af3oimjHt4nJNnmnbGROqRghb7m4VXNSZO8UbImN3UPc0uY2EZGIw6Q==}
+  jsfive@0.4.2:
+    resolution: {integrity: sha512-OLcs8QNnk/p2kUGjTLAB7GzVS0+5+oClrl2bCLfL7dl0/vIB13902oDINJhQM++QT9QQdP+tiZTxT4oX5YkdjQ==}
 
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
@@ -5156,7 +5156,7 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  jsfive@0.4.0:
+  jsfive@0.4.2:
     dependencies:
       pako: 2.2.0
 
