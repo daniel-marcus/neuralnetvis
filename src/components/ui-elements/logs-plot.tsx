@@ -227,8 +227,7 @@ function useCanvasUpdate(logs: TrainingLog[], metric: Metric) {
       const x = getX(i)
       const y = getY(value)
       positions.current.push([x, y])
-      if (i === 0)
-        ctx.moveTo(x, y) // Move to the first point
+      if (i === 0) ctx.moveTo(x, y) // Move to the first point
       else ctx.lineTo(x, y) // Draw line to the next point
     })
     ctx.stroke()
