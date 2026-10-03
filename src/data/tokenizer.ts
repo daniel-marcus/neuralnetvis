@@ -49,7 +49,36 @@ class Tokenizer implements TokenizerType {
   }
 }
 
-class IMDbTokenizer extends Tokenizer {
+// word-level tokenizers: <START> + words (+ <PAD>...), special tokens are identified by id because
+// their names are regular words too (e.g. "start", "pad", "end", "oov")
+class WordTokenizer extends Tokenizer {
+  public encode(rawText: string, _length?: number): Int32Array {
+    const text = this.normalize(rawText)
+    const words = text ? text.split(" ") : []
+    const length = _length ?? words.length + 1 // +1 for <START> token
+    const encoded = new Int32Array(length)
+    encoded[0] = this.encodeDict["<START>"]
+    for (let i = 1; i < length; i++) {
+      let tkn: number
+      const wordIdx = i - 1
+      if (wordIdx >= words.length) tkn = this.encodeDict["<PAD>"]
+      else tkn = this.encodeDict[words[wordIdx]] ?? this.encodeDict["<OOV>"]
+      encoded[i] = tkn
+    }
+    return encoded
+  }
+
+  public decodeText(tokens: ArrayLike<number>): string {
+    // skip <START>, <PAD> and <END> (if any), <OOV> is normalized to "oov" -> <OOV> or the word "oov"
+    const { "<START>": start, "<PAD>": pad, "<END>": end } = this.encodeDict
+    return Array.from(tokens)
+      .filter((tkn) => tkn !== start && tkn !== pad && tkn !== end)
+      .map(this.decode)
+      .join(" ")
+  }
+}
+
+class IMDbTokenizer extends WordTokenizer {
   async init() {
     const specialTokens = {
       "<PAD>": 0,
@@ -77,30 +106,25 @@ class IMDbTokenizer extends Tokenizer {
       .replaceAll(/\s+/g, " ")
       .trim()
   }
+}
 
-  public encode(rawText: string, _length?: number): Int32Array {
-    const text = this.normalize(rawText)
-    const words = text.split(" ")
-    const length = _length ?? words.length + 1 // +1 for <START> token
-    const encoded = new Int32Array(length)
-    encoded[0] = this.encodeDict["<START>"]
-    for (let i = 1; i < length; i++) {
-      let tkn: number
-      const wordIdx = i - 1
-      if (wordIdx >= words.length) tkn = this.encodeDict["<PAD>"]
-      else tkn = this.encodeDict[words[wordIdx]] ?? this.encodeDict["<OOV>"]
-      encoded[i] = tkn
-    }
-    return encoded
+class TweetsTokenizer extends WordTokenizer {
+  async init() {
+    // word -> token id, incl. special tokens: <PAD> 0, <START> 1, <OOV> 2, <END> 3
+    const res = await fetch("/data/tweets/tweets_word_index.json")
+    this.encodeDict = (await res.json()) as EncodeDict
+    this.decodeDict = this._reverse(this.encodeDict)
   }
 
-  public decodeText(tokens: ArrayLike<number>): string {
-    // skip <START> and <PAD> ("start" and "pad" are regular words), <OOV> is normalized to "oov" -> <OOV>
-    const { "<START>": start, "<PAD>": pad } = this.encodeDict
-    return Array.from(tokens)
-      .filter((tkn) => tkn !== start && tkn !== pad)
-      .map(this.decode)
-      .join(" ")
+  public normalize(rawText: string): string {
+    // same as normalize() in ml-notebooks/tweets.py
+    return rawText
+      .replaceAll(/https?:\/\/\S+|www\.\S+|@\w+/g, " ") // drop links and mentions
+      .toLowerCase()
+      .replaceAll("’", "'") // e.g. "don’t" -> "don't"
+      .replaceAll(/[^a-z0-9' ]/g, " ") // keep letters, digits and apostrophes
+      .replaceAll(/\s+/g, " ")
+      .trim()
   }
 }
 
@@ -117,6 +141,7 @@ class ShakespeareTokenizer extends Tokenizer {
 
 export const tokenizers = {
   IMDbTokenizer,
+  TweetsTokenizer,
   ShakespeareTokenizer,
 } as const
 

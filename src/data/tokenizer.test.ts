@@ -66,3 +66,47 @@ describe("IMDBTokenizer", () => {
     expect(checked).toBeGreaterThan(numSamples * 0.9)
   })
 })
+
+describe("TweetsTokenizer", () => {
+  const tokenizer = new tokenizers.TweetsTokenizer()
+
+  beforeAll(async () => {
+    await tokenizer.init()
+  })
+
+  it("should normalize text like tweets.py (drop links and mentions, keep apostrophes)", () => {
+    const rawText = "@User Can’t WAIT!!! 2day :) http://t.co/abc www.example.com #fun"
+    expect(tokenizer.normalize(rawText)).toBe("can't wait 2day fun")
+  })
+
+  it("encode should add <START> token and pad text to specified length", () => {
+    const encoded = tokenizer.encode("i love it", 8)
+    expect(encoded.length).toBe(8)
+    expect(encoded[0]).toBe(tokenizer.encodeDict["<START>"])
+    expect(Array.from(encoded.slice(1, 4), tokenizer.decode)).toEqual(["i", "love", "it"])
+    expect(encoded.slice(4).every((tkn) => tkn === tokenizer.encodeDict["<PAD>"])).toBe(true)
+  })
+
+  it("encode empty text to <START> only (prediction of the first word)", () => {
+    expect(Array.from(tokenizer.encode(""))).toEqual([tokenizer.encodeDict["<START>"]])
+  })
+
+  it("decodeText should skip <START>, <PAD> and <END> but keep words with the same names", () => {
+    const { "<START>": start, "<END>": end, "<PAD>": pad, start: startWord } = tokenizer.encodeDict
+    expect(tokenizer.decodeText([start, startWord, end, pad])).toEqual("start")
+    expect(tokenizer.decodeText(tokenizer.encode("i love outofvocabulary"))).toEqual("i love <OOV>")
+  })
+
+  it("encode(decodeText(tokens)) should return the same tokens (dataset samples)", async () => {
+    const [xTrain] = await fetchMultipleNpzWithProgress(["/data/tweets/x_train_preview.npz"], true)
+    const [numSamples, length] = xTrain.shape
+    const { "<END>": end, "<PAD>": pad } = tokenizer.encodeDict
+    for (let i = 0; i < numSamples; i++) {
+      const tokens = Array.from(xTrain.data.slice(i * length, (i + 1) * length), Number)
+      const reEncoded = tokenizer.encode(tokenizer.decodeText(tokens), length)
+      // user input has no <END> token (the model predicts it)
+      const expected = tokens.map((tkn) => (tkn === end ? pad : tkn))
+      expect(Array.from(reEncoded), `sample ${i}`).toEqual(expected)
+    }
+  })
+})
