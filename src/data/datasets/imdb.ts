@@ -14,6 +14,11 @@ export const imdb: DatasetDef = {
   tokenizerName: "IMDbTokenizer",
   sampleViewer: true,
   model: getModelDef("imdb"),
+  // Note: token ids in the npz files go up to ~88k (full word index), but the models' Embedding
+  // layers only have inputDim 20000 (ids >= 20000 were <OOV> = 2 in training). WebGPU/WebGL gather
+  // returns zero vectors for out-of-range ids (~2% of tokens), the WASM and CPU backends throw
+  // "GatherV2: the index value ... is not in [0, 19999]". Fix if needed: map ids >= 20000 to 2 here
+  // and pass the original data as xTrainRaw/xTestRaw so the sample viewer still shows the words.
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress([
       "/data/imdb/x_train.npz",
