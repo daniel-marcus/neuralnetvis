@@ -3,7 +3,6 @@ import * as tf from "@tensorflow/tfjs"
 import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
 import { getDbDataAsTensors } from "@/data/dataset"
 import { getActColor } from "@/utils/colors"
-import { setBackend } from "@/model/tf-backend"
 import { isTouch } from "@/utils/screen"
 
 const LARGE_THRESHOLD = 10
@@ -297,40 +296,41 @@ function useConfusionCells() {
       const statusId = setStatus("Calculating confusion matrix ...", -1)
       const numClasses = ds.outputLabels.length
       const res = await getDbDataAsTensors(ds, subset, { noOneHot: true })
-      if (!res) return
-      await setBackend("webgl")
+      if (!res) {
+        clearStatus(statusId)
+        return
+      }
+      let yPredT: tf.Tensor | undefined
       try {
-        const newCells = tf.tidy(() => {
-          const { X, y } = res
-          const yTrue = y as tf.Tensor1D
-          const yPred = (model.predict(X) as tf.Tensor).argMax(1) as tf.Tensor1D
+        yPredT = tf.tidy(() => (model.predict(res.X) as tf.Tensor).argMax(1))
+        // count in JS: tf.math.confusionMatrix uses an int32 matMul, which the wasm backend doesn't support
+        const [yTrue, yPred] = await Promise.all([res.y.data(), yPredT.data()])
+        const counts = Array.from({ length: numClasses * numClasses }, () => 0) // rows: predicted, cols: actual
+        for (let i = 0; i < yTrue.length; i++) counts[yPred[i] * numClasses + yTrue[i]]++
 
-          const cm = tf.math.confusionMatrix(yTrue, yPred, numClasses).transpose()
+        const maxPerCol = Array.from({ length: numClasses }, () => 0)
+        counts.forEach((count, i) => {
+          const colIdx = i % numClasses
+          maxPerCol[colIdx] = Math.max(maxPerCol[colIdx], count)
+        })
 
-          const cmValues = cm.flatten().arraySync()
-          const maxPerCol = cm.max(0).arraySync() as number[]
-
-          const resultCells = []
-
-          for (const [i, count] of cmValues.entries()) {
-            const rowIdx = Math.floor(i / numClasses)
-            const colIdx = i % numClasses
-            resultCells.push({
-              count,
-              normalized: count / (maxPerCol[colIdx] || Infinity),
-              actual: colIdx,
-              predicted: rowIdx,
-            })
+        const newCells = counts.map((count, i) => {
+          const rowIdx = Math.floor(i / numClasses)
+          const colIdx = i % numClasses
+          return {
+            count,
+            normalized: count / (maxPerCol[colIdx] || Infinity),
+            actual: colIdx,
+            predicted: rowIdx,
           }
-          return resultCells
         })
         setCells(newCells)
       } catch (e) {
         console.warn(e)
       } finally {
         clearStatus(statusId)
+        yPredT?.dispose()
         Object.values(res).forEach((t) => t?.dispose())
-        setBackend() // reset to default backend
       }
     }
     getCells()
