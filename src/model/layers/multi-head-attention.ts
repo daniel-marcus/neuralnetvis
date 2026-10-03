@@ -1,20 +1,39 @@
 import * as tf from "@tensorflow/tfjs"
 import { MultiHeadAttention as MultiHeadAttentionLayer } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
+import { Layer, type SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/topology"
 import { nameScope } from "@tensorflow/tfjs-layers/dist/common"
+import type { Kwargs } from "@tensorflow/tfjs-layers/dist/types"
 import type { LayerDef } from "./types"
 
+type Input = tf.Tensor | SymbolicTensor
+const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
+
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
-  // @ts-expect-error inputs type
-  apply(inputs, kwargs = {}) {
-    const [query, value, key] = inputs
-    const newKwargs = { ...kwargs, value, key }
-    return super.apply(query, newKwargs)
+  // inputs: [query, value, key?] as in Keras 3, or a single tensor for self-attention
+  apply(inputs: Input | Input[], kwargs: Kwargs = {}) {
+    const [query, value, key] = toList(inputs)
+    const isSelfAttention = (!value || value === query) && (!key || key === query)
+    if (!isSelfAttention) return super.apply(query as tf.Tensor, { ...kwargs, value, key })
+    // Self-attention gets a single graph input: with [x, x], tfjs' executor disposes x too early in
+    // predict/evaluate ("Tensor is disposed") and stores tensors in non-serializable kwargs
+    if (!this.builtFromSignature) this.buildFromSignature(query.shape, query.shape, query.shape)
+    return Layer.prototype.apply.call(this, query, kwargs)
   }
-  // @ts-expect-error inputs type
-  call(inputs, kwargs = {}) {
-    const [query, value, key] = inputs
-    const newKwargs = { ...kwargs, value, key }
-    return super.call(query, newKwargs)
+  call(inputs: tf.Tensor | tf.Tensor[], kwargs: Kwargs = {}) {
+    const [query, value = query, key] = toList(inputs)
+    return super.call(query, { ...kwargs, value, key })
+  }
+
+  computeOutputShape(inputShape: tf.Shape | [tf.Shape, tf.Shape, tf.Shape | null]) {
+    const isSingleShape = !Array.isArray(inputShape[0])
+    const shape = inputShape as tf.Shape
+    const shapes = inputShape as [tf.Shape, tf.Shape, tf.Shape | null]
+    return super.computeOutputShape(isSingleShape ? [shape, shape, null] : shapes)
+  }
+
+  getAttentionScores(query: tf.Tensor, value = query, key?: tf.Tensor) {
+    // returns [batch, numHeads, queryLength, keyLength]
+    return tf.tidy(() => this.callAndReturnAttentionScores(query, { value, key })[1])
   }
 
   buildFromSignature(queryShape: tf.Shape, valueShape: tf.Shape, keyShape: tf.Shape) {
