@@ -19,7 +19,7 @@ const scaleCanvas = (canvas: HTMLCanvasElement, rect: DOMRect) => {
 
 export const DrawArea = ({ title = "" }) => {
   const ref = useRef<HTMLCanvasElement>(null)
-  const toggleDrawAreaShown = useSceneStore((s) => s.toggleDrawAreaShown)
+  const toggleInputAreaShown = useSceneStore((s) => s.toggleInputAreaShown)
   const ds = useSceneStore((s) => s.ds)
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
   const isDrawing = useRef(false)
@@ -69,7 +69,7 @@ export const DrawArea = ({ title = "" }) => {
       />
       <div className="flex gap-2">
         <Button onClick={clear}>clear</Button>
-        <Button onClick={toggleDrawAreaShown} variant="secondary">
+        <Button onClick={toggleInputAreaShown} variant="secondary">
           close
         </Button>
       </div>

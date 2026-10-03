@@ -6,7 +6,7 @@ export function useKeyCommand(key: string, cb: Callback, isActive = true, preven
   useEffect(() => {
     if (!isActive) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName.toLowerCase() === "input") return
+      if (isEditable(document.activeElement)) return
       if (e.key === key) {
         if (preventDefault) e.preventDefault()
         cb()
@@ -15,4 +15,11 @@ export function useKeyCommand(key: string, cb: Callback, isActive = true, preven
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [key, cb, isActive, preventDefault])
+}
+
+function isEditable(el: Element | null) {
+  const tagName = el?.tagName.toLowerCase()
+  return (
+    tagName === "input" || tagName === "textarea" || (el as HTMLElement | null)?.isContentEditable
+  )
 }

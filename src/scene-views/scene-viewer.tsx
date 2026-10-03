@@ -17,6 +17,7 @@ import { SampleSlider } from "./sample-slider"
 
 import { LoadWeightsButton, SceneButtons } from "./scene-buttons"
 import { DrawArea } from "@/data/draw-area"
+import { TextArea } from "@/data/text-area"
 import { LayerWheel } from "./layer-wheel"
 import { NeuronStatus } from "./neuron-status"
 import { Portal } from "@/utils/portal"
@@ -48,7 +49,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   useScreenshotSettings(isActive)
   const [ref, didMount] = useDidMount<HTMLDivElement>()
   const { neuronStatusRef, sampleViewerRef } = useDomRefs()
-  const drawAreaShown = useSceneStore((s) => s.drawAreaShown)
+  const inputAreaShown = useSceneStore((s) => s.inputAreaShown)
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}
@@ -71,9 +72,14 @@ function SceneViewerInner(props: SceneViewerProps) {
           <SceneTitle title={title} href={path} section={section} ds={ds ?? dsDef} />
           <LoadWeightsButton />
           {section === "play" && isActive && <SceneButtons />}
-          {isActive && view === "layers" && drawAreaShown && (
-            <DrawArea title={dsDef?.drawOptions?.title} />
-          )}
+          {isActive &&
+            view === "layers" &&
+            inputAreaShown &&
+            (dsDef?.tokenizerName ? (
+              <TextArea title="Write a review" />
+            ) : (
+              <DrawArea title={dsDef?.drawOptions?.title} />
+            ))}
         </div>
         {view === "evaluation" && <EvaluationView />}
       </SceneOverlay>
@@ -101,7 +107,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
       uid={path}
       initialState={initialState}
       isLargeModel={props.isLargeModel}
-      drawAreaShown={props.hasDraw}
+      inputAreaShown={props.hasInputArea}
     >
       <Suspense>
         <SceneViewerInner {...props} />

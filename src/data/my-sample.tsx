@@ -11,16 +11,14 @@ type SampleAdderFunc = (arg: SampleAdderArgs) => Promise<SampleRaw | undefined> 
 
 export const AddSampleBtn = () => {
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
-  const toggleDrawAreaShown = useSceneStore((s) => s.toggleDrawAreaShown)
+  const toggleInputAreaShown = useSceneStore((s) => s.toggleInputAreaShown)
   const ds = useSceneStore((s) => s.ds)
   const isTextInput = !!ds?.tokenizer
-  const addFunc: SampleAdderFunc | undefined = isTextInput
-    ? textToSample
-    : ds?.showAddImgBtn
-      ? getSampleFromImgUrl
-      : ds?.drawOptions
-        ? toggleDrawAreaShown
-        : undefined
+  const addFunc: SampleAdderFunc | undefined = ds?.showAddImgBtn
+    ? getSampleFromImgUrl
+    : ds?.drawOptions || isTextInput
+      ? toggleInputAreaShown // DrawArea or TextArea
+      : undefined
 
   if (!addFunc) return null
 
@@ -69,17 +67,4 @@ async function imageToSample(
     resized.dispose()
     imgTensor.dispose()
   }
-}
-
-const textToSample: SampleAdderFunc = async ({ ds }) => {
-  const tokenizer = ds.tokenizer!
-  const text = window.prompt("Enter some text:")
-  const length = ds.inputDims[0]
-  const tokens = tokenizer.encode(text ?? "", length)
-  if (!tokens) return
-  const newSample: SampleRaw = {
-    X: tokens,
-    index: Date.now(),
-  }
-  return newSample
 }
