@@ -7,7 +7,7 @@ export const imdb: DatasetDef = {
   name: "IMDb",
   task: "classification",
   description: "Movie review sentiment analysis",
-  version: new Date("2025-06-16"),
+  version: new Date("2026-10-03"),
   aboutUrl: "https://ai.stanford.edu/~amaas/data/sentiment/",
   inputDims: [200],
   outputLabels: ["negative", "positive"],
