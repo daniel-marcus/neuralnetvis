@@ -68,8 +68,8 @@ const models = defineModels({
   },
   imdb: {
     key: "imdb",
-    path: "/models/imdb/model.json",
-    version: "1.0",
+    path: "/models/imdb/transformer/model.json",
+    version: "1.1",
   },
   quickdraw: {
     key: "quickdraw",
