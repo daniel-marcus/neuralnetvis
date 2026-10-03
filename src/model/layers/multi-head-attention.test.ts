@@ -91,6 +91,39 @@ describe("MultiHeadAttention (self-attention)", () => {
     expect((loaded.predict(xs) as tf.Tensor).arraySync()).toEqual(expected)
   })
 
+  it("applies the causal mask from the call kwargs of models exported from Keras", async () => {
+    // Keras: mha(x, x, use_causal_mask=True), see parseModelObject in import-keras.ts
+    const inp = input({ shape: [seqLen, dim] })
+    const mha = MultiHeadAttention.constructorFunc({ numHeads, keyDim }) as AttentionLayer
+    const model = createModel({ inputs: inp, outputs: mha.apply([inp, inp]) as SymbolicTensor })
+    const artifacts = await getArtifacts(model)
+    const topology = artifacts.modelTopology as { config: { layers: KerasLayerJson[] } }
+    const mhaJson = topology.config.layers.find((l) => l.class_name === "MultiHeadAttention")!
+    const [x] = mhaJson.inbound_nodes[0] as [string, number, number, object]
+    const xWithKwargs = [x[0], x[1], x[2], { use_causal_mask: true }] // tfjs: snake_case in model.json
+    mhaJson.inbound_nodes = [[xWithKwargs, xWithKwargs]]
+    const loaded = await loadLayersModel(tf.io.fromMemory(artifacts))
+
+    // changing the last position must not change the outputs of the earlier positions
+    const xs1 = tf.randomNormal([1, seqLen, dim])
+    const xs2 = tf.concat([xs1.slice([0, 0, 0], [1, seqLen - 1, dim]), tf.ones([1, 1, dim])], 1)
+    const [out1, out2] = [xs1, xs2].map((batch) => loaded.predict(batch) as tf.Tensor)
+    const earlier = (t: tf.Tensor) => t.slice([0, 0, 0], [1, seqLen - 1, dim])
+    expect(maxDiff(earlier(out1), earlier(out2))).toBeLessThan(1e-6)
+    expect(maxDiff(out1, out2)).toBeGreaterThan(1e-3)
+
+    // attention scores above the diagonal (attending to future positions) are zero
+    const loadedMha = loaded.layers.find((l) => l.getClassName() === mha.getClassName())
+    const scores = (loadedMha as AttentionLayer).getAttentionScores(xs1)
+    const future = tf.sub(1, tf.linalg.bandPart(tf.ones([seqLen, seqLen]), -1, 0))
+    expect(scores.mul(future).abs().max().dataSync()[0]).toBe(0)
+
+    // and saving the model keeps it
+    const resaved = (await getArtifacts(loaded)).modelTopology as typeof topology
+    const resavedMha = resaved.config.layers.find((l) => l.class_name === "MultiHeadAttention")!
+    expect(resavedMha.inbound_nodes[0][0]).toEqual(xWithKwargs)
+  })
+
   it("returns attention scores equal to softmax(QK^T / sqrt(keyDim))", () => {
     const { model, mha, mhaInput } = createSelfAttentionModel()
     const x = createModel({ inputs: model.inputs, outputs: mhaInput }).predict(xs) as tf.Tensor

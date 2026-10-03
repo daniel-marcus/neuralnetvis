@@ -73,7 +73,7 @@ export async function importKerasModel(file: File) {
   }
 }
 
-function parseModelObject<T>(obj: T): T {
+export function parseModelObject<T>(obj: T): T {
   if (Array.isArray(obj)) {
     return obj.map((item) => parseModelObject(item)) as T
   } else if (obj !== null && typeof obj === "object") {
@@ -87,7 +87,10 @@ function parseModelObject<T>(obj: T): T {
           const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
             ? value[0].args[0]
             : value[0].args
-          const parsedNodes = nodes.map(parseInboundNode).filter(Boolean) as LegacyInboundNode[]
+          const kwargs = parseCallKwargs(value[0].kwargs)
+          const parsedNodes = nodes
+            .map((node) => parseInboundNode(node, kwargs))
+            .filter(Boolean) as LegacyInboundNode[]
           parsedValue = [[...parsedNodes]]
         } else if (
           /*
@@ -143,7 +146,21 @@ type NewInboundNode = {
 // Legacy inbound node format: [layerName, nodeIdx = 0, tensorIdx = 0, args = {}]
 type LegacyInboundNode = [string, number, number, Record<string, unknown>]
 
-function parseInboundNode(node: NewInboundNode): LegacyInboundNode | undefined {
+// Keras 3 call kwargs that are passed on to the tfjs layers (e.g. mha(x, x, use_causal_mask=True)),
+// tfjs converts them to camelCase. Others are dropped: Dropout's {"training": false} would disable
+// dropout when training in the browser.
+const supportedCallKwargs = ["use_causal_mask"]
+
+function parseCallKwargs(kwargs: Record<string, unknown> = {}): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(kwargs).filter(([key]) => supportedCallKwargs.includes(key)),
+  )
+}
+
+function parseInboundNode(
+  node: NewInboundNode,
+  kwargs: Record<string, unknown> = {},
+): LegacyInboundNode | undefined {
   if (typeof node !== "object" || node === null) {
     console.warn("Unknown inbound node format:", node)
     return
@@ -151,7 +168,7 @@ function parseInboundNode(node: NewInboundNode): LegacyInboundNode | undefined {
   const keras_history = node.config.keras_history
   const inboundLayerName = keras_history[0]
   const nodeIdx = inboundLayerName.startsWith("sequential") ? 1 : 0 // TODO: find a better way to determine if another nodeIdx than 0 is needed
-  return [inboundLayerName, nodeIdx, 0, {}]
+  return [inboundLayerName, nodeIdx, 0, kwargs] // tfjs reads the kwargs from the node's last input
 }
 
 function camelCaseToSnakeCase(str: string): string {

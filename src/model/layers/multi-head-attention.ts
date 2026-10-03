@@ -11,8 +11,13 @@ const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
 const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H] <-> [B, N, T, H]
 
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
+  // Keras: mha(x, x, use_causal_mask=True). tfjs stores call kwargs on the node (and serializes them),
+  // but predict/evaluate/fit don't pass them to call(), so keep it on the layer
+  private useCausalMask = false
+
   // inputs: [query, value, key?] as in Keras 3, or a single tensor for self-attention
   apply(inputs: Input | Input[], kwargs: Kwargs = {}) {
+    if (kwargs.useCausalMask) this.useCausalMask = true
     const [query, value, key] = toList(inputs)
     const isSelfAttention = (!value || value === query) && (!key || key === query)
     if (!isSelfAttention) return super.apply(query as tf.Tensor, { ...kwargs, value, key })
@@ -23,7 +28,7 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
   }
   call(inputs: tf.Tensor | tf.Tensor[], kwargs: Kwargs = {}) {
     const [query, value = query, key] = toList(inputs)
-    return super.call(query, { ...kwargs, value, key })
+    return super.call(query, { useCausalMask: this.useCausalMask, ...kwargs, value, key })
   }
 
   computeOutputShape(inputShape: tf.Shape | [tf.Shape, tf.Shape, tf.Shape | null]) {
@@ -58,7 +63,8 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
 
   getAttentionScores(query: tf.Tensor, value = query, key?: tf.Tensor) {
     // returns [batch, numHeads, queryLength, keyLength]
-    return tf.tidy(() => this.callAndReturnAttentionScores(query, { value, key })[1])
+    const { useCausalMask } = this
+    return tf.tidy(() => this.callAndReturnAttentionScores(query, { value, key, useCausalMask })[1])
   }
 
   buildFromSignature(queryShape: tf.Shape, valueShape: tf.Shape, keyShape: tf.Shape) {
