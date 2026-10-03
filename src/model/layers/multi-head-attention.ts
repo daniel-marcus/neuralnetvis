@@ -2,11 +2,13 @@ import * as tf from "@tensorflow/tfjs"
 import { MultiHeadAttention as MultiHeadAttentionLayer } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
 import { Layer, type SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/topology"
 import { nameScope } from "@tensorflow/tfjs-layers/dist/common"
+import type { EinsumDense } from "@tensorflow/tfjs-layers/dist/layers/nlp/einsum_dense"
 import type { Kwargs } from "@tensorflow/tfjs-layers/dist/types"
 import type { LayerDef } from "./types"
 
 type Input = tf.Tensor | SymbolicTensor
 const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
+const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H] <-> [B, N, T, H]
 
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
   // inputs: [query, value, key?] as in Keras 3, or a single tensor for self-attention
@@ -29,6 +31,29 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     const shape = inputShape as tf.Shape
     const shapes = inputShape as [tf.Shape, tf.Shape, tf.Shape | null]
     return super.computeOutputShape(isSingleShape ? [shape, shape, null] : shapes)
+  }
+
+  protected computeAttention(
+    query: tf.Tensor, // [B, T, N, H]
+    key: tf.Tensor, // [B, S, N, H]
+    value: tf.Tensor, // [B, S, N, H]
+    attentionMask?: tf.Tensor,
+    training?: boolean,
+  ): [tf.Tensor, tf.Tensor] {
+    // tfjs implements einsum as broadcast multiply + sum, which materializes [B, N, T, S, H] and is
+    // very slow for longer sequences. Use batched matMul for the common case of one attention axis.
+    const isSequenceAttention = query.rank === 4 && this.attentionAxes.join() === "1"
+    if (!isSequenceAttention) {
+      return super.computeAttention(query, key, value, attentionMask, training)
+    }
+    return tf.tidy(() => {
+      const q = toHeadsFirst(query.mul(1 / Math.sqrt(this.keyDim)))
+      const rawScores = tf.matMul(q, toHeadsFirst(key), false, true) // [B, N, T, S]
+      const scores = this.maskedSoftmax(rawScores, attentionMask) // [B, N, T, S]
+      const dropped = this.dropoutLayer.apply(scores, { training }) as tf.Tensor
+      const output = toHeadsFirst(tf.matMul(dropped, toHeadsFirst(value))) // [B, T, N, H]
+      return [output, scores]
+    })
   }
 
   getAttentionScores(query: tf.Tensor, value = query, key?: tf.Tensor) {
@@ -54,12 +79,59 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
       this.outputDense.build([null, null, this.numHeads, this.valueDim]) // ??
     })
 
-    // 3. Register the trainable weights
+    // 3. Compute the projections with matMul instead of einsum (see computeAttention)
+    for (const dense of [this.queryDense, this.keyDense, this.valueDense, this.outputDense]) {
+      replaceEinsumWithMatMul(dense)
+    }
+
+    // 4. Register the trainable weights
     this._trainableWeights.push(...this.queryDense.trainableWeights)
     this._trainableWeights.push(...this.keyDense.trainableWeights)
     this._trainableWeights.push(...this.valueDense.trainableWeights)
     this._trainableWeights.push(...this.outputDense.trainableWeights)
   }
+}
+
+// fields of tfjs' EinsumDense that are private in its typings
+type EinsumDenseInternals = {
+  equation: string
+  activation?: { apply: (x: tf.Tensor) => tf.Tensor }
+  kernel: { read: () => tf.Tensor }
+  bias?: { read: () => tf.Tensor } | null
+  call: (inputs: tf.Tensor | tf.Tensor[]) => tf.Tensor
+}
+
+/**
+ * The projections ("abc,cde->abde" for query/key/value, "abcd,cde->abe" for the output) contract
+ * the last input dims with the first kernel dims, which is a single matMul after reshaping.
+ * Other equations keep using einsum.
+ */
+function replaceEinsumWithMatMul(dense: EinsumDense) {
+  const layer = dense as unknown as EinsumDenseInternals
+  const [operands, output] = layer.equation.split("->")
+  const [x, kernel] = operands.split(",")
+  const contracted = [...x].filter((c) => kernel.includes(c) && !output.includes(c)).join("")
+  const free = x.slice(0, x.length - contracted.length)
+  const isMatMul =
+    contracted.length > 0 &&
+    x.endsWith(contracted) &&
+    kernel.startsWith(contracted) &&
+    output === free + kernel.slice(contracted.length)
+  if (!isMatMul) return
+
+  layer.call = (inputs: tf.Tensor | tf.Tensor[]) =>
+    tf.tidy(() => {
+      const [input] = toList(inputs)
+      const k = layer.kernel.read()
+      const freeShape = input.shape.slice(0, free.length)
+      const contractedSize = k.shape.slice(0, contracted.length).reduce((a, b) => a * b, 1)
+      let ret = tf
+        .matMul(input.reshape([-1, contractedSize]), k.reshape([contractedSize, -1]))
+        .reshape([...freeShape, ...k.shape.slice(contracted.length)])
+      if (layer.bias) ret = ret.add(layer.bias.read())
+      if (layer.activation) ret = layer.activation.apply(ret)
+      return ret
+    })
 }
 
 export const MultiHeadAttention: LayerDef<"MultiHeadAttention"> = {
