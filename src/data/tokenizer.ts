@@ -6,6 +6,7 @@ type DecodeDict = { [token: number]: string }
 export interface TokenizerType {
   encode(text: string, length?: number): SupportedTypedArray
   decode(token: number): string
+  decodeText(tokens: ArrayLike<number>): string // inverse of encode: encode(decodeText(tkns)) === tkns
   encodeDict: EncodeDict
   decodeDict: DecodeDict
   init?: () => Promise<void>
@@ -19,6 +20,7 @@ class Tokenizer implements TokenizerType {
   constructor() {
     this.encode = this.encode.bind(this)
     this.decode = this.decode.bind(this)
+    this.decodeText = this.decodeText.bind(this)
     this.normalize = this.normalize.bind(this)
   }
 
@@ -36,6 +38,10 @@ class Tokenizer implements TokenizerType {
 
   public decode(token: number): string {
     return this.decodeDict[token] ?? ""
+  }
+
+  public decodeText(tokens: ArrayLike<number>): string {
+    return Array.from(tokens, this.decode).join("")
   }
 
   _reverse(dict: EncodeDict): DecodeDict {
@@ -63,9 +69,12 @@ class IMDbTokenizer extends Tokenizer {
 
   public normalize(rawText: string): string {
     return rawText
+      .normalize("NFC") // combine accents, e.g. "e" + "́" -> "é"
       .toLowerCase()
-      .replaceAll(/[^a-z0-9 ']/g, "")
-      .replaceAll(/\s+/g, " ") // replace multiple spaces with single space
+      .replaceAll(/\s+/g, " ") // whitespace incl. line breaks -> single space
+      .replaceAll("’", "'") // e.g. "doesn’t" -> "doesn't"
+      .replaceAll(/[^\p{L}\p{N} ']/gu, "") // keep letters incl. accents (e.g. "cliché") and digits
+      .replaceAll(/\s+/g, " ")
       .trim()
   }
 
@@ -83,6 +92,15 @@ class IMDbTokenizer extends Tokenizer {
       encoded[i] = tkn
     }
     return encoded
+  }
+
+  public decodeText(tokens: ArrayLike<number>): string {
+    // skip <START> and <PAD> ("start" and "pad" are regular words), <OOV> is normalized to "oov" -> <OOV>
+    const { "<START>": start, "<PAD>": pad } = this.encodeDict
+    return Array.from(tokens)
+      .filter((tkn) => tkn !== start && tkn !== pad)
+      .map(this.decode)
+      .join(" ")
   }
 }
 
