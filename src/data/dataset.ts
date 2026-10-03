@@ -180,6 +180,7 @@ async function saveData(
 
   const [newSamplesX] = xs.shape
   const valsPerSample = dsDef.inputDims.reduce((a, b) => a * b)
+  const valsPerSampleY = ys.shape.slice(1).reduce((a, b) => a * b, 1) // > 1 for sequences
 
   const batches: DbBatch[] = []
   for (let i = 0; i < newSamplesX; i += storeBatchSize) {
@@ -188,7 +189,7 @@ async function saveData(
     const batch = {
       index,
       xs: xs.data.slice(...sliceIdxs),
-      ys: ys.data.slice(i, i + storeBatchSize),
+      ys: ys.data.slice(i * valsPerSampleY, (i + storeBatchSize) * valsPerSampleY),
       xsRaw: xsRaw?.data.slice(...sliceIdxs),
       sampleNames: sampleNames?.slice(i, i + storeBatchSize),
     }
