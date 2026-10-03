@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useSceneStore } from "@/store"
-import { getModelEvaluation, getPredictions } from "@/model/evaluation"
+import { getEvaluation } from "@/model/evaluation"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { ConfusionMatrix } from "./confusion-matrix"
@@ -21,19 +21,22 @@ function useEvaluation() {
   const ds = useSceneStore((s) => s.ds)
   const subset = useSceneStore((s) => s.subset)
   const model = useSceneStore((s) => s.model)
-  const batchCount = useSceneStore((s) => s.batchCount)
+  const isTraining = useSceneStore((s) => s.isTraining)
   const setEvaluation = useSceneStore((s) => s.setEvaluation)
   const resetEvaluation = useSceneStore((s) => s.resetEvaluation)
   useEffect(() => () => resetEvaluation(), [ds, subset, resetEvaluation])
   useEffect(() => {
-    async function getPreds() {
-      if (!ds || !model) return
-      const { loss, accuracy } = await getModelEvaluation(subset)
-      const { predictions, rSquared } = (await getPredictions(ds, model, subset)) ?? {}
-      setEvaluation({ loss, accuracy, rSquared, predictions })
+    if (!ds || !model || isTraining) return // evaluate after training, not during
+    let cancelled = false
+    getEvaluation(ds, model, subset)
+      .then((evaluation) => {
+        if (!cancelled) setEvaluation(evaluation)
+      })
+      .catch(console.warn)
+    return () => {
+      cancelled = true
     }
-    getPreds()
-  }, [ds, subset, model, batchCount, setEvaluation, resetEvaluation])
+  }, [ds, subset, model, isTraining, setEvaluation])
 }
 
 export function useHasSample() {

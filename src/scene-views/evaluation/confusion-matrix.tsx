@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
-import * as tf from "@tensorflow/tfjs"
-import { clearStatus, setStatus, useGlobalStore, useSceneStore } from "@/store"
-import { getDbDataAsTensors } from "@/data/dataset"
+import { useSceneStore } from "@/store"
 import { getActColor } from "@/utils/colors"
 import { isTouch } from "@/utils/screen"
 
@@ -282,61 +280,33 @@ function useSampleViewer(currCell: ConfusionCell | null) {
   }, [currCell, predictions, setSampleIdxs])
 }
 
-function useConfusionCells() {
-  const [cells, setCells] = useState<ConfusionCell[]>([])
-  const model = useSceneStore((s) => s.model)
-  const ds = useSceneStore((s) => s.ds)
-  const subset = useSceneStore((s) => s.subset)
-  const backendReady = useGlobalStore((s) => s.backendReady)
-  const batchCount = useSceneStore((s) => s.batchCount)
+function useConfusionCells(): ConfusionCell[] {
+  // derived from the predictions of the evaluation (single forward pass, see useEvaluation)
+  const predictions = useSceneStore((s) => s.evaluation.predictions)
+  const numClasses = useSceneStore((s) => s.ds?.outputLabels.length ?? 0)
 
-  useEffect(() => {
-    async function getCells() {
-      if (!model || !ds || !backendReady) return
-      const statusId = setStatus("Calculating confusion matrix ...", -1)
-      const numClasses = ds.outputLabels.length
-      const res = await getDbDataAsTensors(ds, subset, { noOneHot: true })
-      if (!res) {
-        clearStatus(statusId)
-        return
+  return useMemo(() => {
+    if (!predictions || !numClasses) return []
+    const counts = Array.from({ length: numClasses * numClasses }, () => 0) // rows: predicted, cols: actual
+    for (const { actual, predicted } of predictions) counts[predicted * numClasses + actual]++
+
+    const maxPerCol = Array.from({ length: numClasses }, () => 0)
+    counts.forEach((count, i) => {
+      const colIdx = i % numClasses
+      maxPerCol[colIdx] = Math.max(maxPerCol[colIdx], count)
+    })
+
+    return counts.map((count, i) => {
+      const rowIdx = Math.floor(i / numClasses)
+      const colIdx = i % numClasses
+      return {
+        count,
+        normalized: count / (maxPerCol[colIdx] || Infinity),
+        actual: colIdx,
+        predicted: rowIdx,
       }
-      let yPredT: tf.Tensor | undefined
-      try {
-        yPredT = tf.tidy(() => (model.predict(res.X) as tf.Tensor).argMax(1))
-        // count in JS: tf.math.confusionMatrix uses an int32 matMul, which the wasm backend doesn't support
-        const [yTrue, yPred] = await Promise.all([res.y.data(), yPredT.data()])
-        const counts = Array.from({ length: numClasses * numClasses }, () => 0) // rows: predicted, cols: actual
-        for (let i = 0; i < yTrue.length; i++) counts[yPred[i] * numClasses + yTrue[i]]++
-
-        const maxPerCol = Array.from({ length: numClasses }, () => 0)
-        counts.forEach((count, i) => {
-          const colIdx = i % numClasses
-          maxPerCol[colIdx] = Math.max(maxPerCol[colIdx], count)
-        })
-
-        const newCells = counts.map((count, i) => {
-          const rowIdx = Math.floor(i / numClasses)
-          const colIdx = i % numClasses
-          return {
-            count,
-            normalized: count / (maxPerCol[colIdx] || Infinity),
-            actual: colIdx,
-            predicted: rowIdx,
-          }
-        })
-        setCells(newCells)
-      } catch (e) {
-        console.warn(e)
-      } finally {
-        clearStatus(statusId)
-        yPredT?.dispose()
-        Object.values(res).forEach((t) => t?.dispose())
-      }
-    }
-    getCells()
-  }, [model, ds, subset, backendReady, batchCount])
-
-  return cells
+    })
+  }, [predictions, numClasses])
 }
 
 function getCellColor(normalized: number, isCorrect: boolean) {

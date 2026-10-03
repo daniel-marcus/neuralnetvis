@@ -53,16 +53,6 @@ export class StandardScaler {
   }
 }
 
-export function calculateRSquared(yTrue: tf.Tensor, yPred: tf.Tensor): number {
-  return tf.tidy(() => {
-    const yTrueMean = yTrue.mean()
-    const residualSumSquares = yTrue.sub(yPred).pow(2).sum()
-    const totalSumSquares = yTrue.sub(yTrueMean).pow(2).sum()
-    const result = tf.scalar(1).sub(residualSumSquares.div(totalSumSquares))
-    return result.dataSync()[0]
-  })
-}
-
 export function round(val: number | undefined, dec = 1) {
   if (typeof val === "undefined") return
   return Math.round(val * 10 ** dec) / 10 ** dec

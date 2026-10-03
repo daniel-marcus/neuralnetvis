@@ -1,71 +1,118 @@
 import * as tf from "@tensorflow/tfjs"
-import { getDs, getModel } from "@/store"
+import { clearStatus, getDs, getModel, setStatus } from "@/store"
 import { getDbDataAsTensors } from "@/data/dataset"
-import { calculateRSquared } from "@/data/utils"
 import type { Subset } from "@/store/data"
-import type { Prediction } from "./types"
+import type { Evaluation, Prediction } from "./types"
 import type { Dataset } from "@/data"
 
-async function getEvalData(ds: Dataset, subset: Subset = "test", noOneHot = false) {
-  return getDbDataAsTensors(ds, subset, { noOneHot })
+const BATCH_SIZE = 128
+const EPSILON = 1e-7 // clipping as in tfjs' categoricalCrossentropy
+
+/**
+ * Single forward pass over the subset: loss, accuracy / R² and per-sample predictions.
+ * Loss matches the compiled loss (categoricalCrossentropy or meanSquaredError).
+ */
+export async function getEvaluation(
+  ds: Dataset,
+  model: tf.LayersModel,
+  subset: Subset = "test",
+  silent = false,
+): Promise<Evaluation> {
+  const data = await getDbDataAsTensors(ds, subset, { noOneHot: true })
+  if (!data) return {}
+  const statusId = silent ? undefined : setStatus("Evaluating ...", 0)
+  const onProgress = (percent: number) => {
+    if (statusId) setStatus("Evaluating ...", percent, { id: statusId })
+  }
+  try {
+    const yTrue = await data.y.data()
+    const yPred = await predictBatched(model, data.X, onProgress)
+    return ds.task === "classification"
+      ? getClassificationEvaluation(yTrue, yPred, ds.outputLabels.length)
+      : getRegressionEvaluation(yTrue, yPred)
+  } finally {
+    if (statusId) clearStatus(statusId)
+    Object.values(data).forEach((t) => t?.dispose())
+  }
 }
 
 export async function getModelEvaluation(subset: Subset = "test") {
   const ds = getDs()
-  if (!ds) return { loss: undefined, accuracy: undefined }
   const model = getModel()
-  const data = await getEvalData(ds, subset)
-  if (!model || !data) return { loss: undefined, accuracy: undefined }
-  const { X, y } = data
-
-  await tf.ready()
-  const result = model.evaluate(X, y, { batchSize: 64 })
-  const [lossT, accuracyT] = Array.isArray(result) ? result : [result]
-  try {
-    // TODO: allow other metrics
-    const loss = await lossT.array()
-    const accuracy = await accuracyT?.array()
-    return { loss, accuracy }
-  } catch (e) {
-    console.warn(e)
-    return { loss: undefined, accuracy: undefined }
-  } finally {
-    Object.values(data).forEach((t) => t?.dispose())
-    lossT.dispose()
-    accuracyT?.dispose()
-  }
+  if (!ds || !model) return { loss: undefined, accuracy: undefined }
+  const { loss, accuracy } = await getEvaluation(ds, model, subset, true)
+  return { loss, accuracy }
 }
 
-type PredictionResult = {
-  predictions: Prediction[]
-  rSquared?: number
-}
-
-export async function getPredictions(
-  ds: Dataset,
+async function predictBatched(
   model: tf.LayersModel,
-  subset: Subset = "test",
-): Promise<PredictionResult | undefined> {
-  if (!ds) return
-  const data = await getEvalData(ds, subset, true) // TODO: share with getModelEvaluation
-  if (!model || !data) return
-  const { X, y } = data
-  try {
-    const result = tf.tidy(() => {
-      const yTrueArr = y.arraySync() as number[]
-      const _yPred = model.predict(X) as tf.Tensor // .flatten()
-      const yPred = ds.task === "classification" ? _yPred.argMax(1).flatten() : _yPred.flatten()
-      const yPredNorm = yPred.div(y.max()).arraySync() as number[]
-      const predictions = yPred.arraySync().map((predicted, i) => ({
-        actual: yTrueArr[i],
-        predicted,
-        normPredicted: yPredNorm[i],
-      }))
-      const rSquared = ds.task === "regression" ? calculateRSquared(y, yPred) : undefined
-      return { predictions, rSquared }
-    })
-    return result
-  } finally {
-    Object.values(data).forEach((t) => t?.dispose())
+  X: tf.Tensor,
+  onProgress?: (percent: number) => void,
+) {
+  // batched and async, so that the main thread stays responsive
+  const numSamples = X.shape[0]
+  let result = new Float32Array(0)
+  for (let start = 0; start < numSamples; start += BATCH_SIZE) {
+    const size = Math.min(BATCH_SIZE, numSamples - start)
+    const batchPred = tf.tidy(() => model.predict(X.slice(start, size)) as tf.Tensor)
+    try {
+      const values = await batchPred.data()
+      if (start === 0) result = new Float32Array(numSamples * (values.length / size))
+      result.set(values, start * (values.length / size))
+    } finally {
+      batchPred.dispose()
+    }
+    onProgress?.((start + size) / numSamples)
   }
+  return result
+}
+
+function getClassificationEvaluation(
+  yTrue: ArrayLike<number>,
+  probs: Float32Array,
+  numClasses: number,
+): Evaluation {
+  const maxActual = getMax(yTrue)
+  const predictions: Prediction[] = []
+  let lossSum = 0
+  let correct = 0
+  for (let i = 0; i < yTrue.length; i++) {
+    const row = probs.subarray(i * numClasses, (i + 1) * numClasses)
+    const actual = yTrue[i]
+    const predicted = row.indexOf(Math.max(...row))
+    const rowSum = row.reduce((a, b) => a + b, 0)
+    const pActual = Math.min(Math.max(row[actual] / rowSum, EPSILON), 1 - EPSILON)
+    lossSum -= Math.log(pActual)
+    if (predicted === actual) correct++
+    predictions.push({ actual, predicted, normPredicted: predicted / maxActual })
+  }
+  const n = yTrue.length
+  return { loss: lossSum / n, accuracy: correct / n, predictions }
+}
+
+function getRegressionEvaluation(yTrue: ArrayLike<number>, yPred: Float32Array): Evaluation {
+  const n = yTrue.length
+  const maxActual = getMax(yTrue)
+  const meanActual = Array.from(yTrue).reduce((a, b) => a + b, 0) / n
+  let residualSumSquares = 0
+  let totalSumSquares = 0
+  const predictions: Prediction[] = []
+  for (let i = 0; i < n; i++) {
+    const actual = yTrue[i]
+    const predicted = yPred[i]
+    residualSumSquares += (actual - predicted) ** 2
+    totalSumSquares += (actual - meanActual) ** 2
+    predictions.push({ actual, predicted, normPredicted: predicted / maxActual })
+  }
+  return {
+    loss: residualSumSquares / n, // meanSquaredError
+    rSquared: 1 - residualSumSquares / totalSumSquares,
+    predictions,
+  }
+}
+
+function getMax(values: ArrayLike<number>) {
+  let max = -Infinity
+  for (let i = 0; i < values.length; i++) max = Math.max(max, values[i])
+  return max
 }
