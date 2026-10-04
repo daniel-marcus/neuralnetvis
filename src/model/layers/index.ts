@@ -15,6 +15,7 @@ import { Embedding } from "./embedding"
 import { PositionEmbedding } from "./position-embedding"
 import { Add } from "./add"
 import { MultiHeadAttention } from "./multi-head-attention"
+import { ReversibleEmbedding } from "./reversible-embedding"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -35,6 +36,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   PositionEmbedding,
   Add,
   MultiHeadAttention,
+  ReversibleEmbedding,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(

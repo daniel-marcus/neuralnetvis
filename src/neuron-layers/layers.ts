@@ -145,7 +145,9 @@ function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
 export function isVisible(layer: Layer) {
   const className = layer.getClassName()
   const layerDef = getLayerDef(className)
-  return !layerDef?.isInvisible
+  // the output layer is always visible, even an Activation (e.g. softmax after a tied ReversibleEmbedding)
+  const isOutput = layer.outboundNodes.length === 0
+  return !layerDef?.isInvisible || isOutput
 }
 
 const getVisibleIdxMap = (model: tf.LayersModel, showHiddenLayers: boolean) => {

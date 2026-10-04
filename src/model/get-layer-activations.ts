@@ -1,7 +1,10 @@
 import * as tf from "@tensorflow/tfjs"
 
 export function getSingleOutput(tfLayer: tf.layers.Layer) {
-  const nodeIdx = tfLayer.inboundNodes.length - 1 // last inbound node; normally this is just 0, but in cases of nested models (e.g. Sequential as a layer) it is 1
+  // last inbound node; normally this is just 0, but in cases of nested models (e.g. Sequential as a layer) it is 1
+  // ReversibleEmbedding: 1st call (embeddings), the 2nd call (logits) is visualized by the softmax output layer
+  const nodeIdx =
+    tfLayer.getClassName() === "ReversibleEmbedding" ? 0 : tfLayer.inboundNodes.length - 1
   const result = tfLayer.getOutputAt(nodeIdx)
   return Array.isArray(result) ? result[0] : result
 }

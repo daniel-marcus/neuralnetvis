@@ -18,7 +18,7 @@ export async function importKerasModel(file: File) {
     const modelFile = zip.files["config.json"]
     const modelBuffer = await modelFile.async("string")
     const modelJson = JSON.parse(modelBuffer)
-    const parsedModelJson = parseModelObject(modelJson)
+    const parsedModelJson = adaptReversibleEmbedding(parseModelObject(modelJson))
     if (isDebug()) console.log("Model JSON:", { modelJson, parsedModelJson })
     const model = await tf.models.modelFromJSON(parsedModelJson)
     if (isDebug()) console.log("Created model from JSON:", model)
@@ -82,16 +82,17 @@ export function parseModelObject<T>(obj: T): T {
         const parsedKey = parseKey(key)
         let parsedValue = parseModelObject(value)
 
-        // parse inbound_nodes to legacy format
+        // parse inbound_nodes to legacy format, one entry per call of the layer (shared layers have several)
         if (key === "inbound_nodes" && Array.isArray(value) && value.length > 0) {
-          const nodes: NewInboundNode[] = Array.isArray(value[0].args[0])
-            ? value[0].args[0]
-            : value[0].args
-          const kwargs = parseCallKwargs(value[0].kwargs)
-          const parsedNodes = nodes
-            .map((node) => parseInboundNode(node, kwargs))
-            .filter(Boolean) as LegacyInboundNode[]
-          parsedValue = [[...parsedNodes]]
+          parsedValue = value.map((call: NewCall) => {
+            const nodes = (
+              Array.isArray(call.args[0]) ? call.args[0] : call.args
+            ) as NewInboundNode[]
+            const kwargs = parseCallKwargs(call.kwargs)
+            return nodes
+              .map((node) => parseInboundNode(node, kwargs))
+              .filter(Boolean) as LegacyInboundNode[]
+          })
         } else if (
           /*
         MultiHeadAttention: build_config.shapes_dict -> config
@@ -135,6 +136,11 @@ function parseKey(str: string) {
   return str.replace("batch_shape", "batch_input_shape")
 }
 
+type NewCall = {
+  args: NewInboundNode[] | [NewInboundNode[]]
+  kwargs?: Record<string, unknown>
+}
+
 type NewInboundNode = {
   class_name: string
   config: {
@@ -165,10 +171,54 @@ function parseInboundNode(
     console.warn("Unknown inbound node format:", node)
     return
   }
-  const keras_history = node.config.keras_history
-  const inboundLayerName = keras_history[0]
-  const nodeIdx = inboundLayerName.startsWith("sequential") ? 1 : 0 // TODO: find a better way to determine if another nodeIdx than 0 is needed
+  const [inboundLayerName, kerasNodeIdx] = node.config.keras_history
+  const nodeIdx = inboundLayerName.startsWith("sequential") ? 1 : kerasNodeIdx // TODO: find a better way to determine the nodeIdx of nested models
   return [inboundLayerName, nodeIdx, 0, kwargs] // tfjs reads the kwargs from the node's last input
+}
+
+type ParsedLayer = {
+  class_name: string
+  name: string
+  config: Record<string, unknown>
+  inbound_nodes: LegacyInboundNode[][]
+}
+type ParsedModel = {
+  config: {
+    layers: ParsedLayer[]
+    output_layers: [string, number, number][]
+  }
+}
+
+/*
+Models with tied input / output embeddings (keras.layers.ReversibleEmbedding, 2nd call with reverse=True):
+- the model outputs logits, but neuralnetvis expects probabilities (loss, next word suggestions): add a softmax layer
+- trained with variable sequence length (input shape [null, null]): use the length of the PositionEmbedding
+*/
+export function adaptReversibleEmbedding<T>(modelJson: T): T {
+  const model = modelJson as ParsedModel
+  const layers = model.config?.layers
+  if (!layers?.some((l) => l.class_name === "ReversibleEmbedding")) return modelJson
+
+  const seqLen = layers.find((l) => l.class_name === "PositionEmbedding")?.config.sequence_length
+  for (const layer of layers) {
+    const shape = layer.config.batch_input_shape
+    if (layer.class_name !== "InputLayer" || !Array.isArray(shape)) continue
+    if (shape.length === 2 && shape[1] === null && typeof seqLen === "number") shape[1] = seqLen
+  }
+
+  const outputs = model.config.output_layers
+  const [outputName, nodeIdx, tensorIdx] = outputs[0] ?? []
+  const outputLayer = layers.find((l) => l.name === outputName)
+  if (outputs.length !== 1 || outputLayer?.class_name !== "ReversibleEmbedding") return modelJson
+  const name = "softmax"
+  layers.push({
+    class_name: "Activation",
+    name,
+    config: { name, activation: "softmax", trainable: true },
+    inbound_nodes: [[[outputName, nodeIdx, tensorIdx, {}]]],
+  })
+  model.config.output_layers = [[name, 0, 0]]
+  return modelJson
 }
 
 function camelCaseToSnakeCase(str: string): string {

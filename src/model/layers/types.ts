@@ -19,6 +19,7 @@ import type { ReLULayerArgs } from "@tensorflow/tfjs-layers/dist/layers/advanced
 import type { ZeroPadding2DLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/padding"
 import type { EmbeddingLayerArgs } from "@tensorflow/tfjs-layers/dist/layers/embeddings"
 import type { PositionEmbeddingLayerArgs } from "./position-embedding"
+import type { ReversibleEmbeddingLayerArgs } from "./reversible-embedding"
 import type { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
 import type { MultiHeadAttentionArgs } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
 
@@ -41,6 +42,7 @@ export type LayerConfigMap = {
   PositionEmbedding: PositionEmbeddingLayerArgs
   Add: AddLayerArgs
   MultiHeadAttention: MultiHeadAttentionArgs
+  ReversibleEmbedding: ReversibleEmbeddingLayerArgs
 }
 
 interface AddLayerArgs extends LayerArgs {

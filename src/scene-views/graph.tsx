@@ -109,8 +109,16 @@ function useModelGraph() {
     const layerIdxMap = new Map(model.layers.map((layer, index) => [layer.name, index]))
 
     model.layers.forEach((layer, layerIdx) => {
-      layer.inboundNodes.forEach((node) => {
-        node.inboundLayers.forEach((inboundLayer) => {
+      layer.inboundNodes.forEach((node, nodeIdx) => {
+        // shared layers (ReversibleEmbedding): only link the 1st call, the later ones are linked directly
+        // to their consumers below (instead of a link from the end of the model back to the shared layer)
+        if (nodeIdx > 0 && layer.getClassName() === "ReversibleEmbedding") return
+        node.inboundLayers.forEach((_inboundLayer, i) => {
+          const inboundNodeIdx = node.nodeIndices[i]
+          const inboundLayer =
+            inboundNodeIdx > 0 && _inboundLayer?.getClassName() === "ReversibleEmbedding"
+              ? _inboundLayer.inboundNodes[inboundNodeIdx].inboundLayers[0]
+              : _inboundLayer
           if (inboundLayer) {
             const inboundIdx = layerIdxMap.get(inboundLayer.name) ?? -Infinity
             result.links.push({
