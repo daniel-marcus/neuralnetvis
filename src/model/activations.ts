@@ -13,6 +13,7 @@ import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
 import type { TokenizerType } from "@/data/tokenizer"
+import type { Dataset } from "@/data/types"
 import type { UserData } from "@/scene-views/3d-model/layer-instanced"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
@@ -52,8 +53,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       if (!layersToUpdate.length) return
 
       const seqPos = ds?.task === "nextToken" ? getSeqPosition(sample.X, ds.tokenizer) : undefined
-      // text classification: color the input tokens by their impact on the prediction
-      const attributionTokenizer = ds?.task === "classification" ? ds.tokenizer : undefined
+      const tokenInput = ds?.tokenizer ? { tokenizer: ds.tokenizer, task: ds.task } : undefined
       const isStale = () => latestSampleIdx.current !== sample.index // model changed (see reset below)
 
       const t0 = performance.now()
@@ -71,7 +71,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           isRegression,
           stats,
           seqPos,
-          attributionTokenizer,
+          tokenInput,
           isStale,
         )
         if (!newActivations) return // aborted
@@ -152,7 +152,7 @@ async function getActivations(
   isRegression?: boolean,
   stats?: { [layerIdx: number]: ActivationStats | undefined },
   seqPos?: number, // nextToken: show only the output at this position
-  attributionTokenizer?: TokenizerType, // input layer shows token attribution instead of token ids
+  tokenInput?: TokenInput, // input layer colors for tokenizer datasets, see getTokenInputColors
   shouldAbort?: () => boolean,
 ) {
   const tfBackend = tf.getBackend()
@@ -180,8 +180,8 @@ async function getActivations(
       if (!actTensor) continue
       const layerStats = stats?.[layer.index]
       const normalized =
-        attributionTokenizer && layer.layerPos === "input"
-          ? getTokenAttribution(model, sample.xTensor, sample.X, attributionTokenizer)
+        tokenInput && layer.layerPos === "input"
+          ? getTokenInputColors(model, sample, tokenInput)
           : normalizeForLayer({ actTensor, layer, isRegression, layerStats })
       try {
         // WebGPU: try to copy the buffer directly in GPU
@@ -217,6 +217,23 @@ async function getActivations(
   }
 }
 
+interface TokenInput {
+  tokenizer: TokenizerType
+  task?: Dataset["task"]
+}
+
+// token ids as colors don't mean anything: classification shows the impact of each token on the prediction,
+// nextToken stays neutral
+function getTokenInputColors(
+  model: tf.LayersModel,
+  sample: Sample,
+  { tokenizer, task }: TokenInput,
+) {
+  return task === "classification"
+    ? getTokenAttribution(model, sample.xTensor, sample.X, tokenizer)
+    : tf.zeros(sample.xTensor.shape)
+}
+
 interface NormalizeForLayerProps {
   actTensor: tf.Tensor<tf.Rank>
   layer: NeuronLayer
@@ -250,8 +267,13 @@ interface TryWebGPUUpdateProps {
 function tryWebGPUUpdate({ backend, tfBackend, normalized, layer }: TryWebGPUUpdateProps) {
   let success = false
   if (isWebGPUBackend(backend) && tfBackend === "webgpu") {
-    // @ts-expect-error type not compatible with tensor container
-    const newGpuBuffer = tf.tidy(() => normalized.dataToGPU().buffer) as GPUBuffer | undefined
+    let newGpuBuffer: GPUBuffer | undefined
+    try {
+      // @ts-expect-error type not compatible with tensor container
+      newGpuBuffer = tf.tidy(() => normalized.dataToGPU().buffer) as GPUBuffer | undefined
+    } catch {
+      return false // data not on GPU (e.g. tf.zeros), use CPU fallback
+    }
     const existingGpuBuffer = backend.get(layer.activationsBuffer)?.buffer
     if (newGpuBuffer && existingGpuBuffer) {
       if (isDebug()) console.log("copy GPU buffer")
