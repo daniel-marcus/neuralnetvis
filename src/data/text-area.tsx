@@ -48,6 +48,12 @@ export const TextArea = ({ title = "" }) => {
     if (ds?.tokenizer) handleChange(ds.tokenizer.append(text, token))
   }
   useAutocomplete(isAutocompleting, setIsAutocompleting, text, probs, appendToken)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    // autocomplete: keep the newest words in view (runs after each appended word)
+    const textarea = textareaRef.current
+    if (isAutocompleting && text && textarea) textarea.scrollTop = textarea.scrollHeight
+  }, [isAutocompleting, text])
   const handleInput = (newText: string) => {
     setIsAutocompleting(false) // typing stops autocomplete
     handleChange(newText)
@@ -85,13 +91,15 @@ export const TextArea = ({ title = "" }) => {
     >
       <div className="w-full aspect-square flex flex-col border-2 rounded-2xl bg-box-dark border-menu-border focus-within:border-accent">
         <textarea
+          ref={textareaRef}
           className="flex-1 min-h-0 p-3 bg-transparent resize-none outline-none"
           value={text}
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
         />
         {!!suggestions.length && (
-          <div className="flex overflow-auto sm:flex-wrap gap-1 p-2">
+          // sm: max. 2 rows of chips (2 * h-6.5 + gap-1 + p-2), a 3rd row is cut off: no layout shifts
+          <div className="flex overflow-auto sm:flex-wrap sm:h-18 sm:overflow-hidden gap-1 p-2">
             {suggestions.map(({ token, word, prob }) => (
               <Button key={token} variant="chip" onClick={() => appendToken(token)}>
                 {word}&nbsp;<span className="opacity-50">{Math.round(prob * 100)}%</span>
