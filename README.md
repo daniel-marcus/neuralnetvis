@@ -41,6 +41,7 @@ Custom pretrained models from Python Tensorflow can be imported in the _my model
 
 - Only _LayersModel_ models are supported
 - For Keras 3.x, use `model.save('model.keras')` to export the model
+- To add a `.keras` model to the app (`public/models`), convert it to tfjs format with `pnpm convert-keras <model.keras> <outDir>` (Node 22)
 - For Keras 2.x, use [tfjs-converter](https://github.com/tensorflow/tfjs/tree/master/tfjs-converter): `tfjs.converters.save_keras_model(model, './export/')`
 
 ## Development

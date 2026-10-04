@@ -30,6 +30,7 @@
     "test:watch": "vitest",
     "setup-puppeteer": "pnpm dlx puppeteer browsers install",
     "screenshot": "node --import @swc-node/register/esm-register scripts/screenshot.ts",
+    "convert-keras": "node scripts/convert-keras.mts",
     "analyze": "next experimental-analyze",
     "bump": "commit-and-tag-version --no-verify",
     "changelog": "commit-and-tag-version --dry-run"
