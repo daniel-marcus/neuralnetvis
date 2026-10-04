@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu"
-import { abs, mix, pow, varying, uv, float, floor, mod } from "three/tsl"
+import { abs, mix, pow, varying, uv, floor, mod } from "three/tsl"
 import { vec2, vec3, vec4 } from "three/tsl"
-import { texture, instanceIndex } from "three/tsl"
+import { texture, instanceIndex, uniform } from "three/tsl"
 import { Fn, If, Discard, instancedBufferAttribute } from "three/tsl"
 import { isWebGPUBackend } from "@/utils/webgpu"
 import { NEG_BASE, POS_BASE, ZERO_BASE } from "@/utils/colors"
@@ -49,7 +49,7 @@ function activationColor(hasColors: boolean, channelIdx: number, storageNode: St
   return Fn(({ object, renderer: { backend } }: FnProps) => {
     const { activations, instancedActivations } = object.userData as UserData
     const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
-    const idx = instanceIndex.add(offset)
+    const idx = instanceIndex.add(uniform(offset, "uint"))
     const normalizedNode = isWebGPUBackend(backend)
       ? storageNode.element(idx) // uniformArray(activations.array) would also work for WebGL fallback, but is slow in compilation
       : instancedBufferAttribute<"float">(instancedActivations)
@@ -83,7 +83,6 @@ export function getTextureMaterial(
   return material
 }
 
-// TODO: use uniforms for height, width, channels?
 function activationColorTexture(
   hasColors: boolean,
   channelIdx: number,
@@ -104,23 +103,29 @@ function activationColorTexture(
     const texWidth = gridCols * width + (gridCols - 1) * cellGap
     const texHeight = gridRows * height + (gridRows - 1) * cellGap
 
-    const uvNode = uv()
-    const fragCoord = floor(uvNode.mul(vec2(float(texWidth), float(texHeight))))
+    // layer-specific values as uniforms (not constants), so that all layers share the same shader code & pipeline
+    const uWidth = uniform(width)
+    const uHeight = uniform(height)
+    const uChannels = uniform(channels)
+    const uGridCols = uniform(gridCols)
 
-    const tileWidth = float(width + cellGap)
-    const tileHeight = float(height + cellGap)
+    const uvNode = uv()
+    const fragCoord = floor(uvNode.mul(vec2(uniform(texWidth), uniform(texHeight))))
+
+    const tileWidth = uWidth.add(cellGap)
+    const tileHeight = uHeight.add(cellGap)
 
     const tileX = floor(fragCoord.x.div(tileWidth))
     const tileY = floor(fragCoord.y.div(tileHeight))
-    const channel = floor(tileY.mul(gridCols).add(tileX))
+    const channel = floor(tileY.mul(uGridCols).add(tileX))
 
-    If(channel.greaterThanEqual(float(channels)), () => Discard())
+    If(channel.greaterThanEqual(uChannels), () => Discard())
 
     const localX = floor(mod(fragCoord.x, tileWidth))
     const localY = floor(mod(fragCoord.y, tileHeight))
 
-    If(localX.greaterThanEqual(float(width)), () => Discard())
-    If(localY.greaterThanEqual(float(height)), () => Discard())
+    If(localX.greaterThanEqual(uWidth), () => Discard())
+    If(localY.greaterThanEqual(uHeight), () => Discard())
 
     /*
     return vec3(  // DEBUG: use this to visualize the grid
@@ -130,13 +135,10 @@ function activationColorTexture(
     )
     */
 
-    const idx = localY
-      .mul(float(width * channels))
-      .add(localX.mul(float(channels)))
-      .add(channel)
+    const idx = localY.mul(uWidth.mul(uChannels)).add(localX.mul(uChannels)).add(channel)
 
     const offset = hasColors ? channelIdx * (activations.array.length / 3) : 0
-    const idxWithOffset = idx.add(offset)
+    const idxWithOffset = idx.add(uniform(offset))
     // WebGPU can pick the value directly from the storage buffer, WebGL needs precomputed texture
     const normalizedNode = isWebGPUBackend(backend)
       ? storageNode.element(idxWithOffset)

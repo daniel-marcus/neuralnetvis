@@ -81,7 +81,8 @@ export function useLayers() {
           activations,
           channelActivations,
           activationsBuffer: actBuffer,
-          storageNode: storage(actBuffer, "float", units),
+          // fixed name: otherwise the WGSL var is named after the node id, making every layer's shader unique (no pipeline reuse)
+          storageNode: storage(actBuffer, "float", units).setName("activations"),
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
