@@ -3,6 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useGlobalStore, setStatus, useSceneStore, clearStatus } from "@/store"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
+import { useKeyCommand } from "@/utils/key-command"
 import { getLayerDef, layerDefMap } from "./layers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { Dataset, DatasetDef } from "@/data"
@@ -14,6 +15,7 @@ export function useModel(ds?: Dataset) {
   const model = useModelCreate(ds)
   useModelDispose(model)
   useModelCompile(model, ds)
+  useKeyCommand("m", showModelStatus)
   return model
 }
 
@@ -167,10 +169,10 @@ function showModelStatus() {
   const { model, ds } = scene
   if (!model || !ds) return
   const totalSamples = ds.train?.totalSamples ?? 0
-  const label = ds.isModelDs ? "Model" : "Dataset"
   const data = {
-    [label]: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
+    Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
     Samples: totalSamples.toLocaleString("en-US"),
+    Model: model.name,
     Params: model.countParams().toLocaleString("en-US"),
   }
   setStatus({ data }, null, { id: MODEL_STATUS_ID })
