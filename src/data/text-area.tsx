@@ -19,7 +19,7 @@ export const TextArea = ({ title = "" }) => {
       throttle((newText: string) => {
         const newSample = ds && textToSample(newText, ds)
         if (newSample) setCustomSample(newSample)
-      }, 150),
+      }, INPUT_THROTTLE),
     [ds, setCustomSample],
   )
   useEffect(() => () => updateSample.cancel(), [updateSample])
@@ -87,9 +87,10 @@ export const TextArea = ({ title = "" }) => {
   )
 }
 
+const INPUT_THROTTLE = 10 // ms, min. time between sample updates (typing, suggestions, autocomplete)
 const NUM_SUGGESTIONS = 5
 const AUTOCOMPLETE_TEMPERATURE = 0.8 // < 1: more likely words, as generate() in ml-notebooks/tweets.py
-const AUTOCOMPLETE_DELAY = 300 // ms between words, to follow the activations
+const AUTOCOMPLETE_DELAY = 0 // ms between words: as fast as inference and rendering allow (min. INPUT_THROTTLE)
 
 // nextToken: probabilities for the next word (output layer activations at the current position)
 function useNextWordProbs() {
