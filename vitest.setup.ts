@@ -1,3 +1,8 @@
+// @tensorflow/tfjs-node uses util.isNullOrUndefined etc., which were removed in Node 23
+if (Number(process.versions.node.split(".")[0]) > 22) {
+  throw new Error(`Tests require Node 22 (see .node-version), found ${process.version}`)
+}
+
 import "fake-indexeddb/auto"
 import "@tensorflow/tfjs-node"
 import { beforeAll, vi } from "vitest"

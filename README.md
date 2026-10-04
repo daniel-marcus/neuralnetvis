@@ -41,6 +41,16 @@ Custom pretrained models from Python Tensorflow can be imported in the _my model
 - For Keras 3.x, use `model.save('model.keras')` to export the model
 - For Keras 2.x, use [tfjs-converter](https://github.com/tensorflow/tfjs/tree/master/tfjs-converter): `tfjs.converters.save_keras_model(model, './export/')`
 
+## Development
+
+```
+pnpm install
+pnpm dev    # http://localhost:3000
+pnpm test
+```
+
+The tests require Node 22 (see `.node-version`, picked up by fnm, nvm, mise etc.): `@tensorflow/tfjs-node` uses Node APIs that were removed in Node 23.
+
 ## Folder Structure
 
 ```
