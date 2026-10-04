@@ -24,14 +24,16 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | [Auto MPG](https://archive.ics.uci.edu/dataset/9/auto+mpg)              | Predict fuel efficiency | Regression           |        9 |           314 |           50 |
 | [California Housing](https://keras.io/api/datasets/california_housing/) | Predict housing prices  | Regression           |        8 |        16,512 |        4,128 |
 | [IMDb](https://ai.stanford.edu/~amaas/data/sentiment/)                  | Sentiment analysis      | Classification (2)   |      200 |        25,000 |        5,000 |
-| [Tweets](https://www.kaggle.com/datasets/kazanova/sentiment140)         | Next word prediction    | Next word (10,000)   |       32 |        20,000 |        5,000 |
+| [Tweets](https://www.kaggle.com/datasets/kazanova/sentiment140)         | Next word prediction    | Next token (10,000)  |       32 |        20,000 |        5,000 |
+| [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories)   | Next token prediction   | Next token (10,247)  |      256 |         2,000 |        1,000 |
 
 ## Models
 
-The app comes with a pretrained model for each of the above mentioned datasets. Other models:
+The app comes with a pretrained model for each of the above-mentioned datasets. Other models:
 
 - [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker): Detects coordinates of 21 landmarks for each hand which can be used for hand pose classifications with webcam input
 - [MobileNetV2](https://keras.io/api/applications/mobilenet/#mobilenetv2-function): Google's MobileNetV2 for image classification, trained on ImageNet data (224x224x3)
+- [TinyStories-1M](https://huggingface.co/roneneldan/TinyStories-1M): GPT-Neo model trained on TinyStories, converted with a smaller vocabulary (10,247 tokens), see ml-notebooks/tinystories.py
 
 ### Model Import (experimental)
 

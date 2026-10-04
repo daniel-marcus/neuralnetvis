@@ -81,6 +81,12 @@ const models = defineModels({
     path: "/models/tweets/model.json",
     version: "0.3",
   },
+  tinystories: {
+    key: "tinystories",
+    path: "/models/tinystories/model.json",
+    version: "1.0",
+    sourceUrl: "https://huggingface.co/roneneldan/TinyStories-1M",
+  },
 })
 
 export type ModelKey = keyof typeof models

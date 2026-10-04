@@ -7,6 +7,7 @@ export interface TokenizerType {
   encode(text: string, length?: number): SupportedTypedArray
   decode(token: number): string
   decodeText(tokens: ArrayLike<number>): string // inverse of encode: encode(decodeText(tkns)) === tkns
+  append(text: string, token: number): string // text + token, e.g. a suggested next word
   encodeDict: EncodeDict
   decodeDict: DecodeDict
   init?: () => Promise<void>
@@ -21,6 +22,7 @@ class Tokenizer implements TokenizerType {
     this.encode = this.encode.bind(this)
     this.decode = this.decode.bind(this)
     this.decodeText = this.decodeText.bind(this)
+    this.append = this.append.bind(this)
     this.normalize = this.normalize.bind(this)
   }
 
@@ -42,6 +44,10 @@ class Tokenizer implements TokenizerType {
 
   public decodeText(tokens: ArrayLike<number>): string {
     return Array.from(tokens, this.decode).join("")
+  }
+
+  public append(text: string, token: number): string {
+    return text + this.decode(token)
   }
 
   _reverse(dict: EncodeDict): DecodeDict {
@@ -75,6 +81,10 @@ class WordTokenizer extends Tokenizer {
       .filter((tkn) => tkn !== start && tkn !== pad && tkn !== end)
       .map(this.decode)
       .join(" ")
+  }
+
+  public append(text: string, token: number): string {
+    return `${text.trimEnd()} ${this.decode(token)} `.trimStart()
   }
 }
 
@@ -128,6 +138,97 @@ class TweetsTokenizer extends WordTokenizer {
   }
 }
 
+// GPT-2 byte-level BPE: the tokens are strings of bytes, each byte mapped to a printable character
+// (e.g. " " -> "Ġ", "\n" -> "Ċ"), see bytes_to_unicode in https://github.com/openai/gpt-2/blob/master/src/encoder.py
+const isPrintableByte = (b: number) =>
+  (b >= 33 && b <= 126) || (b >= 161 && b <= 172) || (b >= 174 && b <= 255)
+const BYTE_TO_CHAR = (() => {
+  let n = 0
+  return Array.from({ length: 256 }, (_, b) =>
+    String.fromCharCode(isPrintableByte(b) ? b : 256 + n++),
+  )
+})()
+const CHAR_TO_BYTE = new Map(BYTE_TO_CHAR.map((char, b) => [char, b]))
+// GPT-2's pre-tokenizer: BPE merges only within these pieces (words with leading space, numbers, ...)
+const PRE_TOKENIZE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu
+
+// TinyStories-1M (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
+// <|endoftext|> (id 0) is the start, end and padding token, also as <PAD>, <START> and <END>.
+// As in the training data, the story starts after a line break: <|endoftext|> \n Once upon a time ...
+class TinyStoriesTokenizer extends Tokenizer {
+  private vocab: EncodeDict = {} // byte-level token -> id
+  private mergeRanks = new Map<string, number>() // "a b" -> priority (lower: merged first)
+  private cache = new Map<string, number[]>() // pre-tokenized piece -> token ids
+  private endToken = 0
+
+  async init() {
+    // Hugging Face tokenizer.json format
+    const res = await fetch("/data/tinystories/tinystories_tokenizer.json")
+    const { model } = (await res.json()) as { model: { vocab: EncodeDict; merges: string[] } }
+    this.vocab = model.vocab
+    this.mergeRanks = new Map(model.merges.map((merge, rank) => [merge, rank]))
+    this.endToken = model.vocab["<|endoftext|>"]
+    const end = this.endToken
+    this.encodeDict = { ...model.vocab, "<PAD>": end, "<START>": end, "<END>": end }
+    this.decodeDict = this._reverse(model.vocab)
+  }
+
+  public encode(rawText: string, length?: number): Int32Array {
+    const text = "\n" + this.normalize(rawText)
+    const pieces = text.match(PRE_TOKENIZE) ?? []
+    const tokens = [this.endToken, ...pieces.flatMap((piece) => this.bpe(piece))]
+    const encoded = new Int32Array(length ?? tokens.length).fill(this.endToken) // padding
+    encoded.set(tokens.slice(0, encoded.length))
+    return encoded
+  }
+
+  public decode(token: number): string {
+    if (token === this.endToken) return this.decodeDict[token]
+    return this.decodeBytes([token])
+  }
+
+  public decodeText(tokens: ArrayLike<number>): string {
+    const text = this.decodeBytes(Array.from(tokens).filter((t) => t !== this.endToken))
+    return text.replace(/^\n/, "") // added by encode
+  }
+
+  public append(text: string, token: number): string {
+    const next = this.decode(token)
+    return (next.startsWith(" ") ? text.replace(/ $/, "") : text) + next // no double spaces
+  }
+
+  public normalize(rawText: string): string {
+    return rawText.replaceAll("\r\n", "\n")
+  }
+
+  private bpe(piece: string): number[] {
+    const cached = this.cache.get(piece)
+    if (cached) return cached
+    let parts = Array.from(new TextEncoder().encode(piece), (b) => BYTE_TO_CHAR[b])
+    // merge the adjacent pair with the highest priority until no more merges apply
+    while (parts.length > 1) {
+      let best = -1
+      let bestRank = Infinity
+      for (let i = 0; i < parts.length - 1; i++) {
+        const rank = this.mergeRanks.get(`${parts[i]} ${parts[i + 1]}`)
+        if (rank !== undefined && rank < bestRank) [best, bestRank] = [i, rank]
+      }
+      if (best < 0) break
+      parts = [...parts.slice(0, best), parts[best] + parts[best + 1], ...parts.slice(best + 2)]
+    }
+    const ids = parts.map((part) => this.vocab[part]) // single bytes are always in the vocabulary
+    this.cache.set(piece, ids)
+    return ids
+  }
+
+  private decodeBytes(tokens: number[]): string {
+    const bytes = tokens.flatMap((t) =>
+      Array.from(this.decodeDict[t] ?? "", (char) => CHAR_TO_BYTE.get(char) ?? 0),
+    )
+    return new TextDecoder().decode(new Uint8Array(bytes))
+  }
+}
+
 class ShakespeareTokenizer extends Tokenizer {
   private chars = " !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   constructor() {
@@ -142,6 +243,7 @@ class ShakespeareTokenizer extends Tokenizer {
 export const tokenizers = {
   IMDbTokenizer,
   TweetsTokenizer,
+  TinyStoriesTokenizer,
   ShakespeareTokenizer,
 } as const
 

@@ -110,3 +110,59 @@ describe("TweetsTokenizer", () => {
     }
   })
 })
+
+describe("TinyStoriesTokenizer", () => {
+  const tokenizer = new tokenizers.TinyStoriesTokenizer()
+
+  beforeAll(async () => {
+    await tokenizer.init()
+  })
+
+  it("encode should give the same tokens as the Hugging Face tokenizer in tinystories.py", () => {
+    // [0] + tokenizer.encode("\n" + text).ids
+    const expected = {
+      "Once upon a time, there was a little girl named Lily.": [
+        0, 199, 4649, 2082, 258, 637, 12, 610, 373, 258, 1253, 2197, 2921, 7619, 14,
+      ],
+      'She said, "I\'m happy!"\n\nThe end.': [
+        0, 199, 2699, 530, 12, 366, 41, 1067, 2959, 2126, 199, 199, 464, 869, 14,
+      ],
+      // rare words are split into smaller tokens, down to single bytes
+      "Supercalifragilistic 123 café": [
+        0, 199, 3890, 524, 67, 283, 361, 82, 363, 347, 396, 292, 1071, 19, 1223, 70, 2236,
+      ],
+    }
+    for (const [text, tokens] of Object.entries(expected)) {
+      expect(Array.from(tokenizer.encode(text)), text).toEqual(tokens)
+    }
+  })
+
+  it("encode should pad with <|endoftext|> (= <PAD>, <START>, <END>)", () => {
+    const { "<|endoftext|>": end, "<PAD>": pad, "<START>": start } = tokenizer.encodeDict
+    expect([pad, start]).toEqual([end, end])
+    expect(Array.from(tokenizer.encode("Once", 5))).toEqual([end, 199, 4649, end, end])
+  })
+
+  it("decode should return readable tokens", () => {
+    expect([199, 4649, 2082].map(tokenizer.decode)).toEqual(["\n", "Once", " upon"])
+  })
+
+  it("append should join tokens without double spaces", () => {
+    expect(tokenizer.append("Once", 2082)).toBe("Once upon")
+    expect(tokenizer.append("Once ", 2082)).toBe("Once upon")
+    expect(tokenizer.append("time", 12)).toBe("time,")
+  })
+
+  it("encode(decodeText(tokens)) should return the same tokens (dataset samples)", async () => {
+    const [xTrain] = await fetchMultipleNpzWithProgress(
+      ["/data/tinystories/x_train_preview.npz"],
+      true,
+    )
+    const [numSamples, length] = xTrain.shape
+    for (let i = 0; i < numSamples; i++) {
+      const tokens = Array.from(xTrain.data.slice(i * length, (i + 1) * length), Number)
+      const reEncoded = tokenizer.encode(tokenizer.decodeText(tokens), length)
+      expect(Array.from(reEncoded), `sample ${i}`).toEqual(tokens)
+    }
+  })
+})

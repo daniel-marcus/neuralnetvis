@@ -9,6 +9,7 @@ import { mobileNetV2_96, mobileNetV2_224 } from "./mobilenet-v2"
 import { imdb } from "./imdb"
 import { quickDraw } from "./quickdraw"
 import { tweets } from "./tweets"
+import { tinyStories } from "./tinystories"
 import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
@@ -24,4 +25,5 @@ export const datasets: DatasetDef[] = [
   mnist,
   imdb,
   tweets,
+  tinyStories,
 ] as const

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import throttle from "lodash.throttle"
 import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
-import { sampleNextToken } from "./next-token"
+import { getSeqPosition, sampleNextToken } from "./next-token"
 import { InputArea } from "./input-area"
 import type { Dataset, SampleRaw } from "./types"
 
@@ -44,8 +44,10 @@ export const TextArea = ({ title = "" }) => {
 
   const probs = useNextWordProbs()
   const suggestions = useNextWordSuggestions(probs)
-  const appendWord = (word: string) => handleChange(`${text.trimEnd()} ${word} `.trimStart())
-  useAutocomplete(isAutocompleting, setIsAutocompleting, text, probs, appendWord)
+  const appendToken = (token: number) => {
+    if (ds?.tokenizer) handleChange(ds.tokenizer.append(text, token))
+  }
+  useAutocomplete(isAutocompleting, setIsAutocompleting, text, probs, appendToken)
   const handleInput = (newText: string) => {
     setIsAutocompleting(false) // typing stops autocomplete
     handleChange(newText)
@@ -90,8 +92,8 @@ export const TextArea = ({ title = "" }) => {
         />
         {!!suggestions.length && (
           <div className="flex overflow-auto sm:flex-wrap gap-1 p-2">
-            {suggestions.map(({ word, prob }) => (
-              <Button key={word} variant="chip" onClick={() => appendWord(word)}>
+            {suggestions.map(({ token, word, prob }) => (
+              <Button key={token} variant="chip" onClick={() => appendToken(token)}>
                 {word}&nbsp;<span className="opacity-50">{Math.round(prob * 100)}%</span>
               </Button>
             ))}
@@ -131,7 +133,11 @@ function useNextWordSuggestions(probs?: Float32Array) {
       .filter(({ token }) => !specialTokens.has(token))
       .toSorted((a, b) => b.prob - a.prob)
       .slice(0, NUM_SUGGESTIONS)
-      .map(({ prob, token }) => ({ word: tokenizer.decode(token), prob }))
+      .map(({ prob, token }) => ({
+        token,
+        word: tokenizer.decode(token).replaceAll("\n", "↵"),
+        prob,
+      }))
   }, [ds, probs])
 }
 
@@ -142,12 +148,12 @@ function useAutocomplete(
   setIsAutocompleting: (value: boolean) => void,
   text: string,
   probs: Float32Array | undefined,
-  appendWord: (word: string) => void,
+  appendToken: (token: number) => void,
 ) {
   const ds = useSceneStore((s) => s.ds)
-  const latest = useRef({ text, appendWord }) // not as effect deps: re-renders would restart the delay
+  const latest = useRef({ text, appendToken }) // not as effect deps: re-renders would restart the delay
   useEffect(() => {
-    latest.current = { text, appendWord }
+    latest.current = { text, appendToken }
   })
   const usedProbs = useRef<Float32Array>(undefined) // each prediction is used only once
   useEffect(() => {
@@ -162,12 +168,13 @@ function useAutocomplete(
       const token = sampleNextToken(probs, {
         temperature: AUTOCOMPLETE_TEMPERATURE,
         topP: AUTOCOMPLETE_TOP_P,
-        excludedTokens: [pad, start, oov],
+        // <END> can be the same token as <PAD> and <START> (TinyStories: <|endoftext|>)
+        excludedTokens: [pad, start, oov].filter((t) => t !== undefined && t !== end),
       })
-      const numWords = latest.current.text.split(" ").filter(Boolean).length
-      const maxWords = ds.inputDims[0] - 1 // without <START>
-      if (token === end || numWords >= maxWords) setIsAutocompleting(false)
-      else latest.current.appendWord(tokenizer.decode(token))
+      const seqLen = ds.inputDims[0]
+      const seqPos = getSeqPosition(tokenizer.encode(latest.current.text, seqLen), tokenizer)
+      if (token === end || seqPos >= seqLen - 1) setIsAutocompleting(false)
+      else latest.current.appendToken(token)
     }, AUTOCOMPLETE_DELAY)
     return () => clearTimeout(timeout)
   }, [isAutocompleting, setIsAutocompleting, probs, ds])
