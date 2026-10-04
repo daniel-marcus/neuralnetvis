@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import throttle from "lodash.throttle"
-import { useSceneStore } from "@/store"
+import { clearStatus, setStatus, useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
 import { getSeqPosition, sampleNextToken } from "./next-token"
 import { InputArea } from "./input-area"
@@ -117,6 +117,7 @@ const NUM_SUGGESTIONS = 5
 const AUTOCOMPLETE_TEMPERATURE = 0.8 // < 1: more likely words, as generate() in ml-notebooks/tweets.py
 const AUTOCOMPLETE_TOP_P = 0.9 // only the most likely words that cover 90% of the probability
 const AUTOCOMPLETE_DELAY = 0 // ms between words: as fast as inference and rendering allow (min. INPUT_THROTTLE)
+const AUTOCOMPLETE_STATUS_ID = "autocomplete"
 
 // nextToken: probabilities for the next word (output layer activations at the current position)
 function useNextWordProbs() {
@@ -164,8 +165,18 @@ function useAutocomplete(
     latest.current = { text, appendToken }
   })
   const usedProbs = useRef<Float32Array>(undefined) // each prediction is used only once
+  const stats = useRef({ numTokens: 0, firstTokenTime: 0, lastTokenTime: 0, contextUsed: 0 })
   useEffect(() => {
-    if (isAutocompleting) usedProbs.current = undefined // (re)start with the current prediction
+    if (!isAutocompleting) return
+    usedProbs.current = undefined // (re)start with the current prediction
+    stats.current = { numTokens: 0, firstTokenTime: 0, lastTokenTime: 0, contextUsed: 0 }
+    return () => {
+      // stopped (or unmounted): keep the final stats, expiring
+      const { numTokens } = stats.current
+      if (!numTokens) return clearStatus(AUTOCOMPLETE_STATUS_ID)
+      const data = getAutocompleteStats(stats.current)
+      setStatus({ title: "Autocomplete finished", data }, null, { id: AUTOCOMPLETE_STATUS_ID })
+    }
   }, [isAutocompleting])
   useEffect(() => {
     const tokenizer = ds?.tokenizer
@@ -182,10 +193,36 @@ function useAutocomplete(
       const seqLen = ds.inputDims[0]
       const seqPos = getSeqPosition(tokenizer.encode(latest.current.text, seqLen), tokenizer)
       if (token === end || seqPos >= seqLen - 1) setIsAutocompleting(false)
-      else latest.current.appendToken(token)
+      else {
+        latest.current.appendToken(token)
+        const { current } = stats
+        current.numTokens++
+        current.lastTokenTime = performance.now()
+        if (current.numTokens === 1) current.firstTokenTime = current.lastTokenTime
+        current.contextUsed = Math.min((seqPos + 1) / (seqLen - 1), 1)
+        const data = getAutocompleteStats(current)
+        setStatus({ title: "Autocomplete ...", data }, null, { id: AUTOCOMPLETE_STATUS_ID })
+      }
     }, AUTOCOMPLETE_DELAY)
     return () => clearTimeout(timeout)
   }, [isAutocompleting, setIsAutocompleting, probs, ds])
+}
+
+// tokens/s: average from the first to the last token (the 1st one uses the prediction that was already there)
+function getAutocompleteStats(stats: {
+  numTokens: number
+  firstTokenTime: number
+  lastTokenTime: number
+  contextUsed: number
+}) {
+  const { numTokens, firstTokenTime, lastTokenTime } = stats
+  const seconds = (lastTokenTime - firstTokenTime) / 1000
+  const tokensPerSec = numTokens > 1 && seconds > 0 ? (numTokens - 1) / seconds : undefined
+  return {
+    // Tokens: `${numTokens}`,
+    // Context: `${Math.round(contextUsed * 100)} %`,
+    "": tokensPerSec ? `${tokensPerSec.toFixed(1)} tokens/s` : "",
+  }
 }
 
 function textToSample(text: string, ds: Dataset): SampleRaw | undefined {
