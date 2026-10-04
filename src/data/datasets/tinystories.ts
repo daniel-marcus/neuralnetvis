@@ -6,7 +6,7 @@ export const tinyStories: DatasetDef = {
   key: "tinystories",
   name: "TinyStories",
   task: "nextToken",
-  description: "Next token prediction on short stories (pretrained TinyStories-1M)",
+  description: "Next token prediction on short stories (pretrained TinyStories-3M)",
   version: new Date("2026-10-04"),
   aboutUrl: "https://huggingface.co/datasets/roneneldan/TinyStories",
   // <|endoftext|> \n story \n <|endoftext|> + padding (<|endoftext|>), cut off after 256 tokens,

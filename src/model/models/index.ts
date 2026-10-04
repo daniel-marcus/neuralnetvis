@@ -84,8 +84,8 @@ const models = defineModels({
   tinystories: {
     key: "tinystories",
     path: "/models/tinystories/model.json",
-    version: "1.0",
-    sourceUrl: "https://huggingface.co/roneneldan/TinyStories-1M",
+    version: "2.0", // TinyStories-3M (1.0: TinyStories-1M)
+    sourceUrl: "https://huggingface.co/roneneldan/TinyStories-3M",
   },
 })
 

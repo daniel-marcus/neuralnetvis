@@ -33,7 +33,7 @@ The app comes with a pretrained model for each of the above-mentioned datasets. 
 
 - [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker): Detects coordinates of 21 landmarks for each hand which can be used for hand pose classifications with webcam input
 - [MobileNetV2](https://keras.io/api/applications/mobilenet/#mobilenetv2-function): Google's MobileNetV2 for image classification, trained on ImageNet data (224x224x3)
-- [TinyStories-1M](https://huggingface.co/roneneldan/TinyStories-1M): GPT-Neo model trained on TinyStories, converted with a smaller vocabulary (10,247 tokens), see ml-notebooks/tinystories.py
+- [TinyStories-3M](https://huggingface.co/roneneldan/TinyStories-3M): GPT-Neo model trained on TinyStories, converted with a smaller vocabulary (10,247 tokens), see ml-notebooks/tinystories.py
 
 ### Model Import (experimental)
 

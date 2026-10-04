@@ -152,7 +152,7 @@ const CHAR_TO_BYTE = new Map(BYTE_TO_CHAR.map((char, b) => [char, b]))
 // GPT-2's pre-tokenizer: BPE merges only within these pieces (words with leading space, numbers, ...)
 const PRE_TOKENIZE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu
 
-// TinyStories-1M (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
+// TinyStories models (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
 // <|endoftext|> (id 0) is the start, end and padding token, also as <PAD>, <START> and <END>.
 // As in the training data, the story starts after a line break: <|endoftext|> \n Once upon a time ...
 class TinyStoriesTokenizer extends Tokenizer {
