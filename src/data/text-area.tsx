@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import throttle from "lodash.throttle"
 import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
@@ -51,6 +51,20 @@ export const TextArea = ({ title = "" }) => {
     handleChange(newText)
   }
 
+  const canAutocomplete = ds?.task === "nextToken" && !!probs
+  const toggleAutocomplete = () => setIsAutocompleting((v) => !v)
+  // Enter: autocomplete (Shift+Enter: new line), Esc: clear
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing) return // e.g. confirming an IME candidate
+    if (e.key === "Enter" && !e.shiftKey && canAutocomplete) {
+      e.preventDefault()
+      toggleAutocomplete()
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      handleInput("")
+    }
+  }
+
   return (
     <InputArea
       title={title}
@@ -60,7 +74,7 @@ export const TextArea = ({ title = "" }) => {
             clear
           </Button>
           {ds?.task === "nextToken" && (
-            <Button onClick={() => setIsAutocompleting((v) => !v)} disabled={!probs}>
+            <Button onClick={toggleAutocomplete} disabled={!canAutocomplete}>
               {isAutocompleting ? "stop" : "autocomplete"}
             </Button>
           )}
@@ -72,6 +86,7 @@ export const TextArea = ({ title = "" }) => {
           className="flex-1 min-h-0 p-3 bg-transparent resize-none outline-none"
           value={text}
           onChange={(e) => handleInput(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
         {!!suggestions.length && (
           <div className="flex overflow-auto sm:flex-wrap gap-1 p-2">
