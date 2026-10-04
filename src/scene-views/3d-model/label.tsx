@@ -7,6 +7,7 @@ import { useActivation } from "@/model/activations"
 import { useRawInput } from "@/data/sample"
 import { getIndex3d } from "@/neuron-layers/helpers"
 import { text2Texture } from "./text-to-texture"
+import { isSceneRendered } from "./utils"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 export const LABEL_COLOR = new THREE.Color("rgb(150, 156, 171)")
@@ -107,7 +108,11 @@ export const TextLabel = memo(function TextLabel_({
   const labelRef = useRef<THREE.Object3D>(null)
 
   const camera = useThree((s) => s.camera)
-  useFrame(() => lookAtCamera && labelRef.current?.lookAt(camera.position))
+  const scene = useThree((s) => s.scene)
+  useFrame(() => {
+    if (!lookAtCamera || !isSceneRendered(scene)) return // e.g. offscreen tiles
+    labelRef.current?.lookAt(camera.position)
+  })
 
   const labelState = useMemo(() => {
     if (!text) return

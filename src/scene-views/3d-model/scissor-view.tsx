@@ -2,6 +2,7 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import { isWebGPUBackend } from "@/utils/webgpu"
+import { setIsRendered } from "./utils"
 import { type RootState, Tunnel } from "@/components/main-canvas-tunnel"
 import type { ComputeFunction } from "@react-three/fiber"
 
@@ -196,6 +197,7 @@ function Container({
         rect.current,
       )
       if (isOffscreen !== _isOffscreen) setOffscreen(_isOffscreen)
+      setIsRendered(state, visible && !_isOffscreen)
       if (visible && !_isOffscreen && rect.current) {
         // console.log("rendering", index)
         prepareSkissor(state, position, canvasSize)
@@ -240,7 +242,7 @@ function Container({
           onFirstRender()
         }
       }
-    }
+    } else setIsRendered(state, false)
   }, index)
 
   React.useEffect(() => {

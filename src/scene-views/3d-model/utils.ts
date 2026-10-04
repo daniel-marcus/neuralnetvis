@@ -161,3 +161,19 @@ export function useIsClose(
 
   return isClose
 }
+
+// views (CanvasTargetView, ScissorView) flag whether they rendered their scene in the current frame,
+// so that objects can skip per-frame work while the view is offscreen or invisible (e.g. TextLabel)
+export function setIsRendered(
+  state: { scene: THREE.Scene; invalidate: () => void },
+  isRendered: boolean,
+) {
+  const { userData } = state.scene
+  if (userData.isRendered === isRendered) return
+  userData.isRendered = isRendered
+  if (isRendered) state.invalidate() // one more frame, so that skipped updates can catch up
+}
+
+export function isSceneRendered(scene: THREE.Scene) {
+  return scene.userData.isRendered !== false
+}

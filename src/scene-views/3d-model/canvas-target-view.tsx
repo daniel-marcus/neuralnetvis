@@ -3,6 +3,7 @@ import { CanvasTarget, Scene } from "three/webgpu"
 import { useFrame, createPortal } from "@react-three/fiber"
 import { Tunnel, type RootState } from "@/components/main-canvas-tunnel"
 import { useInView } from "@/utils/screen"
+import { setIsRendered } from "./utils"
 
 // inspirations:
 // - https://github.com/mrdoob/three.js/blob/dev/examples/webgpu_multiple_canvas.html
@@ -80,6 +81,7 @@ const Container = (props: ContainerProps) => {
   const { children, canvasTarget, visible = true, index, inView } = props
   useFrame((_state) => {
     const state = _state as unknown as RootState
+    setIsRendered(state, visible && inView)
     if (visible && inView) {
       // console.log("RENDER", index, inView)
       state.gl.setCanvasTarget(canvasTarget)
