@@ -24,6 +24,7 @@ These datasets are available at the moment; most of them are smaller subsets of 
 | [Auto MPG](https://archive.ics.uci.edu/dataset/9/auto+mpg)              | Predict fuel efficiency | Regression           |        9 |           314 |           50 |
 | [California Housing](https://keras.io/api/datasets/california_housing/) | Predict housing prices  | Regression           |        8 |        16,512 |        4,128 |
 | [IMDb](https://ai.stanford.edu/~amaas/data/sentiment/)                  | Sentiment analysis      | Classification (2)   |      200 |        25,000 |        5,000 |
+| [Tweets](https://www.kaggle.com/datasets/kazanova/sentiment140)         | Next word prediction    | Next word (10,000)   |       32 |        20,000 |        5,000 |
 
 ## Models
 
