@@ -10,10 +10,59 @@ type Input = tf.Tensor | SymbolicTensor
 const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
 const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H] <-> [B, N, T, H]
 
+type CausalMask = { mask: tf.Tensor; adder: tf.Tensor }
+
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
   // Keras: mha(x, x, use_causal_mask=True). tfjs stores call kwargs on the node (and serializes them),
   // but predict/evaluate/fit don't pass them to call(), so keep it on the layer
   private useCausalMask = false
+  // the causal mask only depends on the sequence lengths: computed once instead of in every call
+  // (tfjs: bandPart + the additive mask for the softmax, ~20 kernels per call)
+  private causalMasks = new Map<string, CausalMask>()
+
+  constructor(args: ConstructorParameters<typeof MultiHeadAttentionLayer>[0]) {
+    super(args)
+    // computeCausalMask is private in tfjs' typings, so it can't be overridden as a method
+    const self = this as unknown as {
+      computeCausalMask: (q: tf.Tensor, v?: tf.Tensor) => tf.Tensor
+    }
+    self.computeCausalMask = (query, value) => this.getCausalMask(query, value).mask
+  }
+
+  private getCausalMask(query: tf.Tensor, value?: tf.Tensor) {
+    const [qSeqLength, vSeqLength] = [query.shape[1]!, (value ?? query).shape[1]!]
+    const cacheKey = `${qSeqLength}x${vSeqLength}`
+    let cached = this.causalMasks.get(cacheKey)
+    if (!cached) {
+      cached = tf.tidy(() => {
+        // lower triangular matrix [1, T, S], as tfjs' computeCausalMask
+        const mask = tf.linalg.bandPart(tf.ones([1, qSeqLength, vSeqLength], "bool"), -1, 0)
+        // [1, 1, T, S] (broadcast over the heads): 0 for attended positions, -1e9 for masked ones,
+        // as in tfjs' Softmax layer with a mask
+        const adder = tf
+          .ones(mask.shape)
+          .sub(mask.cast("float32"))
+          .mul(tf.scalar(-1e9))
+          .expandDims(1)
+        return { mask: tf.keep(mask), adder: tf.keep(adder) }
+      })
+      this.causalMasks.set(cacheKey, cached)
+    }
+    return cached
+  }
+
+  protected maskedSoftmax(attentionScores: tf.Tensor, attentionMask?: tf.Tensor) {
+    const causal = [...this.causalMasks.values()].find(({ mask }) => mask === attentionMask)
+    const isSequenceAttention = attentionScores.rank === 4 && this.attentionAxes.length === 1
+    if (!causal || !isSequenceAttention) return super.maskedSoftmax(attentionScores, attentionMask)
+    return tf.tidy(() => tf.softmax(attentionScores.add(causal.adder))) // [B, N, T, S], softmax over S
+  }
+
+  dispose() {
+    for (const { mask, adder } of this.causalMasks.values()) tf.dispose([mask, adder])
+    this.causalMasks.clear()
+    return super.dispose()
+  }
 
   // inputs: [query, value, key?] as in Keras 3, or a single tensor for self-attention
   apply(inputs: Input | Input[], kwargs: Kwargs = {}) {

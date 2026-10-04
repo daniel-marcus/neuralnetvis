@@ -206,3 +206,38 @@ type KerasLayerJson = {
   class_name: string
   inbound_nodes: unknown[][]
 }
+
+describe("MultiHeadAttention causal mask cache", () => {
+  const inp = input({ shape: [seqLen, dim] })
+  const mha = MultiHeadAttention.constructorFunc({ numHeads, keyDim }) as AttentionLayer
+  const model = createModel({
+    inputs: inp,
+    outputs: mha.apply([inp, inp], { useCausalMask: true }) as SymbolicTensor,
+  })
+  const xs = tf.randomNormal([2, seqLen, dim])
+
+  it("gives the same outputs as tfjs' computeCausalMask and maskedSoftmax", () => {
+    const cached = model.predict(xs) as tf.Tensor
+    const layer = mha as unknown as Record<string, unknown>
+    const proto = TfjsMultiHeadAttention.prototype as unknown as Record<string, unknown>
+    const [ownMask, ownSoftmax] = [layer.computeCausalMask, layer.maskedSoftmax]
+    layer.computeCausalMask = proto.computeCausalMask
+    layer.maskedSoftmax = proto.maskedSoftmax
+    try {
+      expect(maxDiff(cached, model.predict(xs) as tf.Tensor)).toBe(0)
+    } finally {
+      layer.computeCausalMask = ownMask
+      layer.maskedSoftmax = ownSoftmax
+    }
+  })
+
+  it("computes the mask only once", () => {
+    const cache = (mha as unknown as { causalMasks: Map<string, unknown> }).causalMasks
+    tf.tidy(() => model.predict(xs))
+    const [cached] = [...cache.values()]
+    tf.tidy(() => model.predict(xs))
+    tf.tidy(() => model.predict(xs.slice([0, 0, 0], [1, -1, -1]))) // other batch size: same mask
+    expect(cache.size).toBe(1)
+    expect([...cache.values()][0]).toBe(cached)
+  })
+})

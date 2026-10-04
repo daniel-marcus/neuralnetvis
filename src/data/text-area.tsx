@@ -112,7 +112,7 @@ export const TextArea = ({ title = "" }) => {
   )
 }
 
-const INPUT_THROTTLE = 10 // ms, min. time between sample updates (typing, suggestions, autocomplete)
+const INPUT_THROTTLE = 0 // ms, min. time between sample updates (typing, suggestions, autocomplete)
 const NUM_SUGGESTIONS = 5
 const AUTOCOMPLETE_TEMPERATURE = 0.8 // < 1: more likely words, as generate() in ml-notebooks/tweets.py
 const AUTOCOMPLETE_TOP_P = 0.9 // only the most likely words that cover 90% of the probability
