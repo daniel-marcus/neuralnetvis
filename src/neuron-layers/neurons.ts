@@ -35,8 +35,8 @@ function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
   const { layerIdx, neuronIdx } = parseNid(nid)
   const layer = getLayers().find((l) => l.index === layerIdx)
   if (!layer) return undefined
-  const { hasColorChannels, tfLayer } = layer
-  const numChannels = (tfLayer.outputShape?.[3] as number | undefined) ?? 1
+  const { hasColorChannels, outputShape } = layer
+  const numChannels = outputShape[3] ?? 1
   const channelIdx = neuronIdx % numChannels
   const layerDef = getLayerDef(layer.layerType)
   const prevLayer = layer.prevLayer
@@ -49,7 +49,7 @@ function createNeuron(nid?: Nid, withInputs = true): Neuron | undefined {
     index: neuronIdx,
     nid,
     layer,
-    index3d: getIndex3d(neuronIdx, tfLayer.outputShape as number[]),
+    index3d: getIndex3d(neuronIdx, outputShape),
     channelIdx,
     indexInChannel: Math.floor(neuronIdx / numChannels),
     meshRef: hasColorChannels ? layer.meshRefs[channelIdx] : layer.meshRefs[0],

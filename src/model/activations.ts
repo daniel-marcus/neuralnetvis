@@ -7,6 +7,7 @@ import { type ActivationStats, useActivationStats } from "./activation-stats"
 import { getLayerActivations, getSingleOutput } from "./get-layer-activations"
 import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
 import { normalize, scaleNormalize } from "@/data/utils"
+import { getSeqPosition } from "@/data/next-token"
 import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
@@ -24,6 +25,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const backend = useBackend()
   const hasRendered = useSceneStore((s) => s.hasRendered)
   const isRegression = useSceneStore((s) => s.isRegression())
+  const ds = useSceneStore((s) => s.ds)
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
@@ -44,6 +46,8 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
 
       if (!layersToUpdate.length) return
 
+      const seqPos = ds?.task === "nextToken" ? getSeqPosition(sample.X, ds.tokenizer) : undefined
+
       const t0 = performance.now()
       // let lastYield = t0
 
@@ -58,6 +62,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           sample,
           isRegression,
           stats,
+          seqPos,
         )
         if (newActivations) setActivations(newActivations)
         invalidate()
@@ -71,7 +76,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       updateTracker.current = new Map()
       updateTracker.current.set(sample.index, newUpdated)
     },
-    [backend, model, layers, invalidate, setActivations, isRegression, stats],
+    [backend, model, layers, invalidate, setActivations, isRegression, stats, ds],
   )
 
   // reset update tracker when model changes
@@ -112,11 +117,19 @@ async function getActivations(
   sample: Sample,
   isRegression?: boolean,
   stats?: { [layerIdx: number]: ActivationStats | undefined },
+  seqPos?: number, // nextToken: show only the output at this position
 ) {
   const tfBackend = tf.getBackend()
   const outputs = layers.map(({ tfLayer }) => getSingleOutput(tfLayer))
   await tf.ready()
-  const activationTensors = tf.tidy(() => getLayerActivations(model, sample.xTensor, outputs))
+  const activationTensors = tf.tidy(() => {
+    const tensors = getLayerActivations(model, sample.xTensor, outputs)
+    return tensors?.map((t, i) =>
+      typeof seqPos === "number" && layers[i].layerPos === "output"
+        ? t.slice([0, seqPos, 0], [1, 1, -1]).reshape([1, -1]) // [1, seqLen, vocab] -> [1, vocab]
+        : t,
+    )
+  })
 
   await new Promise((r) => setTimeout(r, 0)) // make sure layer component has mounted and buffer is attached
 

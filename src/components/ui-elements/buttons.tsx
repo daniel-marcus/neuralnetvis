@@ -7,7 +7,7 @@ interface ButtonProps {
   onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>
   disabled?: boolean
   type?: "submit"
-  variant?: "primary" | "secondary" | "transparent"
+  variant?: "primary" | "secondary" | "transparent" | "chip" // chip: options inside a box, e.g. suggestions
   className?: string
 }
 
@@ -24,12 +24,14 @@ export const Button = ({
   return (
     <Comp
       href={href as string}
-      className={`px-2 h-6.5 border border-transparent ${
+      className={`px-2 h-6.5 border ${
         variant === "primary"
-          ? "bg-accent text-white disabled:brightness-50 active:bg-accent-hover"
+          ? "border-transparent bg-accent text-white disabled:brightness-50 active:bg-accent-hover"
           : variant === "secondary"
-            ? "bg-secondary active:text-white"
-            : "hover:text-white active:text-white"
+            ? "border-transparent bg-secondary active:text-white"
+            : variant === "chip"
+              ? "border-menu-border hover:text-white hover:border-accent active:text-white"
+              : "border-transparent hover:text-white active:text-white"
       } rounded-btn ${className}`}
       onClick={onClick}
       disabled={disabled}

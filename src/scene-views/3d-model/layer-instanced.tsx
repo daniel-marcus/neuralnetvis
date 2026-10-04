@@ -96,9 +96,9 @@ const OUTPUT_TRUNC_THRESHOLD = 10
 const MAX_OUTPUT_NEURONS = 5
 
 function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
-  const { layerPos, meshParams, tfLayer, hasColorChannels } = props
+  const { layerPos, meshParams, outputShape, hasColorChannels } = props
   const { spacedSize } = useNeuronSpacing(meshParams)
-  const [, h, w = 1, _channels = 1] = tfLayer.outputShape as number[]
+  const [, h, w = 1, _channels = 1] = outputShape
   const tempObj = useMemo(() => new THREE.Object3D(), [])
 
   const c = hasColorChannels ? 1 : _channels // for color channels: channel separation is done on layer level

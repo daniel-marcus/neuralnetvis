@@ -1,19 +1,23 @@
 import { fetchMultipleNpzWithProgress } from "@/data/npy-loader"
+import { getModelDef } from "@/model/models"
 import type { DatasetDef } from "@/data/types"
 
 export const tweets: DatasetDef = {
   key: "tweets",
   name: "Tweets",
-  task: "classification", // TODO: next word prediction task (ys are token sequences, xs shifted by one)
+  task: "nextToken",
   description: "Next word prediction on tweets",
   version: new Date("2026-10-04"),
-  disabled: true, // until next word prediction is supported (training, evaluation, sample y)
-  aboutUrl: "http://help.sentiment140.com/",
+  aboutUrl: "https://www.kaggle.com/datasets/kazanova/sentiment140",
   // <START> + up to 31 words (+ <END>) + <PAD>..., see ml-notebooks/tweets.py
   inputDims: [32],
-  outputLabels: [], // TODO: vocabulary (10k words in tweets_word_index.json)
+  outputLabels: [], // vocabulary from the tokenizer, see getVocabulary in dataset.ts
   tokenizerName: "TweetsTokenizer",
+  model: getModelDef("tweets"),
   sampleViewer: true,
+  drawOptions: {
+    title: "Write a tweet",
+  },
   loadFull: async () => {
     const [xTrain, yTrain, xTest, yTest] = await fetchMultipleNpzWithProgress([
       "/data/tweets/x_train.npz",

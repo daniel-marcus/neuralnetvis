@@ -10,7 +10,7 @@ export type DatasetKey = string
 export interface DatasetMeta {
   key: DatasetKey // aka slug
   parentKey?: DatasetKey // for user-generated datasets
-  task: "classification" | "regression"
+  task: "classification" | "regression" | "nextToken" // nextToken: ys are xs shifted by one token
   name: string
   description: string
   version: Date
@@ -32,7 +32,7 @@ export interface DatasetMeta {
   sampleViewer?: boolean // show sample viewer instead of sample slider
   targetDevice?: "desktop" | "mobile" // to load smaller model versions on mobile
   tokenizerName?: TokenizerName
-  drawOptions?: DrawOptions // for datasets that support drawing input samples
+  drawOptions?: DrawOptions // for datasets with an input area (drawing, or text with tokenizer)
 }
 
 interface DrawOptions {

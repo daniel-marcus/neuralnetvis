@@ -182,10 +182,15 @@ function useModelCompile(model?: tf.LayersModel, ds?: Dataset) {
     if (!model || !ds) return
     if (!isModelCompiled(model) || model.optimizer.getConfig().learningRate !== learningRate) {
       const isClassification = ds.task === "classification"
+      const isNextToken = ds.task === "nextToken" // sparse targets, incl. <PAD> and <OOV> (no masking)
       model.compile({
         optimizer: tf.train.adam(learningRate),
-        loss: isClassification ? "categoricalCrossentropy" : "meanSquaredError",
-        metrics: isClassification ? ["accuracy"] : [],
+        loss: isNextToken
+          ? "sparseCategoricalCrossentropy"
+          : isClassification
+            ? "categoricalCrossentropy"
+            : "meanSquaredError",
+        metrics: isClassification || isNextToken ? ["accuracy"] : [],
       })
     }
   }, [model, ds, learningRate])
@@ -222,7 +227,7 @@ function createModel(ds: DatasetDef, layerConfigs: LayerConfigArray) {
         ? {
             ...config,
             units: ds.outputLabels.length,
-            activation: ds.task === "classification" ? "softmax" : "linear",
+            activation: ds.task === "regression" ? "linear" : "softmax",
             name: `nnv_Output`,
           }
         : config

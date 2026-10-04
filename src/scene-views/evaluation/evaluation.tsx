@@ -10,6 +10,7 @@ export function EvaluationView() {
   useEvaluation()
   if (!task) return null
   if (task === "classification") return <ConfusionViewer />
+  else if (task === "nextToken") return null // TODO: evaluation for next token prediction
   else
     return (
       <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-(--plot-size) pt-8" />

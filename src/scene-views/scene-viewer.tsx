@@ -76,7 +76,7 @@ function SceneViewerInner(props: SceneViewerProps) {
             view === "layers" &&
             inputAreaShown &&
             (dsDef?.tokenizerName ? (
-              <TextArea title="Write a review" />
+              <TextArea title={dsDef.drawOptions?.title ?? "Write a review"} />
             ) : (
               <DrawArea title={dsDef?.drawOptions?.title} />
             ))}

@@ -18,6 +18,8 @@ export async function getEvaluation(
   subset: Subset = "test",
   silent = false,
 ): Promise<Evaluation> {
+  // TODO: evaluation for next token prediction (masked accuracy, top-5 accuracy, perplexity)
+  if (ds.task === "nextToken") return {}
   const data = await getDbDataAsTensors(ds, subset, { noOneHot: true })
   if (!data) return {}
   const statusId = silent ? undefined : setStatus("Evaluating ...", 0)

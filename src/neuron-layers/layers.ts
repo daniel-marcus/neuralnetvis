@@ -41,13 +41,16 @@ export function useLayers() {
 
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
 
-        const units = getUnits(tfLayer)
+        // nextToken: output layer shows only the prediction at the current position (see next-token.ts)
+        const isSeqOutput = layerPos === "output" && ds?.task === "nextToken"
+        const tfShape = tfLayer.outputShape as number[]
+        const outputShape = isSeqOutput ? [tfShape[0], tfShape[tfShape.length - 1]] : tfShape
+        const units = isSeqOutput ? outputShape[1] : getUnits(tfLayer)
         const meshParams =
           ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
             ? prevLayer.meshParams
             : getMeshParams(tfLayer, layerPos, units)
         const numBiases = (tfLayer.getConfig().filters as number) ?? units
-        const outputShape = tfLayer.outputShape as number[]
 
         const hasColorChannels = layerPos === "input" && outputShape[3] === 3
         const channels = hasColorChannels ? 3 : 1
@@ -64,6 +67,7 @@ export function useLayers() {
           layerType: className,
           layerPos,
           tfLayer,
+          outputShape,
           prevLayer,
           numNeurons: units,
           numBiases,

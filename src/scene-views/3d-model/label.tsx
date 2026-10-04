@@ -39,7 +39,7 @@ export function NeuronLabels(props: NeuronLabelsProps) {
 function useLabelFromDs(layer: NeuronLayer, neuronIdx: number) {
   const ds = useSceneStore((s) => s.ds)
   return useMemo(() => {
-    const index3d = getIndex3d(neuronIdx, layer.tfLayer.outputShape as number[])
+    const index3d = getIndex3d(neuronIdx, layer.outputShape)
     return layer.layerPos === "input" && index3d[1] === 0 && index3d[2] === 0
       ? ds?.inputLabels?.[index3d[0]]
       : layer.layerPos === "output"

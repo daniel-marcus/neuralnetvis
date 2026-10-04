@@ -111,6 +111,7 @@ export async function getDsFromDef(
   const tokenizer = await getTokenizer(dsDef)
   const ds: Dataset = {
     ...dsDef,
+    ...(dsDef.task === "nextToken" && tokenizer && { outputLabels: getVocabulary(tokenizer) }),
     train,
     test,
     preprocess,
@@ -135,6 +136,12 @@ async function getTokenizer(dsDef: DatasetDef | DatasetMeta) {
   const tokenizer = new Tokenizer() as TokenizerType
   if (tokenizer.init) await tokenizer.init()
   return tokenizer
+}
+
+// nextToken: one output neuron per token
+function getVocabulary(tokenizer: TokenizerType) {
+  const vocabSize = Object.keys(tokenizer.decodeDict).length
+  return Array.from({ length: vocabSize }, (_, i) => tokenizer.decode(i))
 }
 
 export async function loadAndSaveDsData(dsDef: DatasetDef, isPreview?: boolean) {
@@ -251,7 +258,9 @@ export async function getDbDataAsTensors(
     const _X = tf.concat(xBatchTensors).reshape(shapeX)
     const X = ds.preprocess?.(_X) ?? _X
     const yBatches = batches.map((b) => tf.tensor(b.ys))
-    const yTensor = tf.concat(yBatches)
+    const _yTensor = tf.concat(yBatches)
+    // nextToken: sparse targets [samples, seqLen, 1] for sparseCategoricalCrossentropy
+    const yTensor = ds.task === "nextToken" ? _yTensor.reshape([...shapeX, 1]).toFloat() : _yTensor
     const y = isClassification && !noOneHot ? tf.oneHot(yTensor, ds.outputLabels.length) : yTensor
     const XRaw =
       returnRawX && batches.find((b) => !!b.xsRaw)

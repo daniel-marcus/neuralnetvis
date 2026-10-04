@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { isDebug, useGlobalStore, useSceneStore } from "@/store"
 import { getData } from "./db"
+import { getSeqPosition } from "./next-token"
 import type { Dataset, DbBatch, SampleRaw } from "./types"
 
 export function useSample() {
@@ -57,7 +58,11 @@ export async function getSample(ds: Dataset, type: "train" | "test", sampleIdx: 
   const sliceIdxs = [idxInBatch * valsPerSample, (idxInBatch + 1) * valsPerSample]
   const X = batch.xs.slice(...sliceIdxs)
   const rawX = batch.xsRaw?.slice(...sliceIdxs)
-  const y = batch.ys[idxInBatch]
+  // nextToken: target = next token at the current position (last word), see next-token.ts
+  const y =
+    ds.task === "nextToken"
+      ? batch.ys[idxInBatch * valsPerSample + getSeqPosition(X, ds.tokenizer)]
+      : batch.ys[idxInBatch]
   const name = batch.sampleNames?.[idxInBatch]
   const result: SampleRaw = {
     index: sampleIdx,

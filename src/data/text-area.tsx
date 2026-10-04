@@ -39,14 +39,28 @@ export const TextArea = ({ title = "" }) => {
     updateSample(newText)
   }
 
+  const suggestions = useNextWordSuggestions()
+  const appendWord = (word: string) => handleChange(`${text.trimEnd()} ${word} `.trimStart())
+
   return (
     <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto pt-8">
       <div>{title}</div>
-      <textarea
-        className={`w-40 lg:w-75 aspect-square border-2 rounded-2xl bg-box-dark border-menu-border p-3 resize-none`}
-        value={text}
-        onChange={(e) => handleChange(e.target.value)}
-      />
+      <div className="w-40 lg:w-75 aspect-square flex flex-col border-2 rounded-2xl bg-box-dark border-menu-border focus-within:border-accent">
+        <textarea
+          className="flex-1 min-h-0 p-3 bg-transparent resize-none outline-none"
+          value={text}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+        {!!suggestions.length && (
+          <div className="flex flex-wrap gap-1 p-2">
+            {suggestions.map(({ word, prob }) => (
+              <Button key={word} variant="chip" onClick={() => appendWord(word)}>
+                {word} <span className="opacity-50">{Math.round(prob * 100)}%</span>
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="flex gap-2">
         <Button onClick={() => handleChange("")}>clear</Button>
         <Button onClick={toggleInputAreaShown} variant="secondary">
@@ -55,6 +69,29 @@ export const TextArea = ({ title = "" }) => {
       </div>
     </div>
   )
+}
+
+const NUM_SUGGESTIONS = 5
+
+// nextToken: most probable next words (output layer activations at the current position)
+function useNextWordSuggestions() {
+  const ds = useSceneStore((s) => s.ds)
+  const outputLayerIdx = useSceneStore((s) => s.allLayers.at(-1)?.index)
+  const probs = useSceneStore((s) =>
+    outputLayerIdx === undefined ? undefined : s.activations[outputLayerIdx]?.activations,
+  )
+  return useMemo(() => {
+    const tokenizer = ds?.tokenizer
+    if (ds?.task !== "nextToken" || !tokenizer || !probs) return []
+    const specialTokens = new Set(
+      ["<PAD>", "<START>", "<OOV>", "<END>"].map((t) => tokenizer.encodeDict[t]),
+    )
+    return Array.from(probs, (prob, token) => ({ prob, token }))
+      .filter(({ token }) => !specialTokens.has(token))
+      .toSorted((a, b) => b.prob - a.prob)
+      .slice(0, NUM_SUGGESTIONS)
+      .map(({ prob, token }) => ({ word: tokenizer.decode(token), prob }))
+  }, [ds, probs])
 }
 
 function textToSample(text: string, ds: Dataset): SampleRaw | undefined {

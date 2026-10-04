@@ -18,6 +18,7 @@ export interface NeuronLayer {
   layerType: LayerType
   layerPos: LayerPos
   tfLayer: tf.layers.Layer
+  outputShape: number[] // as visualized, usually tfLayer.outputShape (nextToken output: current position only)
   numNeurons: number
   numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
   meshRefs: MeshRef[] // color layers: 1 per channel, otherwise 1 for layer

@@ -84,10 +84,16 @@ export async function getSamplesAsBatch(
 
   const firstIdxInStoreBatch = firstSampleIdx % storeBatchSize
 
+  const isNextToken = ds.task === "nextToken"
+  const valsPerSampleY = isNextToken ? valsPerSample : 1 // nextToken: ys are token sequences
+
   return tf.tidy(() => {
     const allYs = dbBatches.flatMap((b) => Array.from(b.ys))
-    const slicedYs = allYs.slice(firstIdxInStoreBatch, firstIdxInStoreBatch + newBatchSize)
-    const currBatchSize = Math.min(newBatchSize, slicedYs.length) // last batch may have less samples
+    const slicedYs = allYs.slice(
+      firstIdxInStoreBatch * valsPerSampleY,
+      (firstIdxInStoreBatch + newBatchSize) * valsPerSampleY,
+    )
+    const currBatchSize = Math.min(newBatchSize, slicedYs.length / valsPerSampleY) // last batch may have less samples
     const shapeX = [currBatchSize, ...ds.inputDims]
     const xTensors = dbBatches.map((b) => tf.tensor(b.xs))
     const _xs = tf
@@ -96,8 +102,9 @@ export async function getSamplesAsBatch(
       .slice(firstIdxInStoreBatch * valsPerSample, currBatchSize * valsPerSample)
       .reshape(shapeX)
     const xs = ds.preprocess?.(_xs) ?? _xs
-    const ys =
-      ds.task === "classification"
+    const ys = isNextToken
+      ? tf.tensor(slicedYs, [currBatchSize, ...ds.inputDims, 1]) // sparse targets (float32 for tfjs)
+      : ds.task === "classification"
         ? tf.oneHot(slicedYs, ds.outputLabels.length)
         : tf.tensor(slicedYs) // regression
     return { xs, ys }
@@ -185,6 +192,7 @@ export async function trainOnBatch(xs: tf.Tensor[], ys: number[]) {
   const setBatchCount = useGlobalStore.getState().scene.getState().setBatchCount
   const model = getModel()
   if (!ds || !model) return
+  if (ds.task === "nextToken") return // ys would have to be token sequences
   const isClassification = ds?.task === "classification"
   const trainShape = model.layers[0].batchInputShape as number[]
   const [X, y] = tf.tidy(() => {

@@ -52,7 +52,7 @@ function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
   const numChannels = hasColorChannels ? 3 : 1
   const { spacedSize } = useNeuronSpacing(meshParams)
   const splitColors = useSceneStore((s) => s.vis.splitColors)
-  const [, h, w = 1] = layer.tfLayer.outputShape as number[]
+  const [, h, w = 1] = layer.outputShape
   const position = useMemo(() => {
     const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
 
@@ -106,7 +106,7 @@ interface LodCompProps extends NeuronLayer {
 function LodComp(props: LodCompProps) {
   // Level-of-Detail rendering: use less expensive TexturedLayer for distant & large layers
 
-  const isMultiDim = ((props.tfLayer.outputShape[2] as number) ?? 1) > 1
+  const isMultiDim = (props.outputShape[2] ?? 1) > 1
   const isClose = useIsClose(props.measureRef, 40)
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
