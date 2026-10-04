@@ -52,10 +52,10 @@ export const TextArea = ({ title = "" }) => {
           onChange={(e) => handleChange(e.target.value)}
         />
         {!!suggestions.length && (
-          <div className="flex flex-wrap gap-1 p-2">
+          <div className="flex overflow-auto sm:flex-wrap gap-1 p-2">
             {suggestions.map(({ word, prob }) => (
               <Button key={word} variant="chip" onClick={() => appendWord(word)}>
-                {word} <span className="opacity-50">{Math.round(prob * 100)}%</span>
+                {word}&nbsp;<span className="opacity-50">{Math.round(prob * 100)}%</span>
               </Button>
             ))}
           </div>
