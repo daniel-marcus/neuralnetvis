@@ -8,9 +8,11 @@ import { getLayerActivationsAsync, getSingleOutput } from "./get-layer-activatio
 import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
 import { normalize, scaleNormalize } from "@/data/utils"
 import { getSeqPosition } from "@/data/next-token"
+import { getTokenAttribution } from "./token-attribution"
 import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
+import type { TokenizerType } from "@/data/tokenizer"
 import type { UserData } from "@/scene-views/3d-model/layer-instanced"
 
 type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
@@ -50,6 +52,8 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       if (!layersToUpdate.length) return
 
       const seqPos = ds?.task === "nextToken" ? getSeqPosition(sample.X, ds.tokenizer) : undefined
+      // text classification: color the input tokens by their impact on the prediction
+      const attributionTokenizer = ds?.task === "classification" ? ds.tokenizer : undefined
       const isStale = () => latestSampleIdx.current !== sample.index // model changed (see reset below)
 
       const t0 = performance.now()
@@ -67,6 +71,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           isRegression,
           stats,
           seqPos,
+          attributionTokenizer,
           isStale,
         )
         if (!newActivations) return // aborted
@@ -147,6 +152,7 @@ async function getActivations(
   isRegression?: boolean,
   stats?: { [layerIdx: number]: ActivationStats | undefined },
   seqPos?: number, // nextToken: show only the output at this position
+  attributionTokenizer?: TokenizerType, // input layer shows token attribution instead of token ids
   shouldAbort?: () => boolean,
 ) {
   const tfBackend = tf.getBackend()
@@ -173,7 +179,10 @@ async function getActivations(
       const actTensor = activationTensors?.[i] as tf.Tensor | undefined
       if (!actTensor) continue
       const layerStats = stats?.[layer.index]
-      const normalized = normalizeForLayer({ actTensor, layer, isRegression, layerStats })
+      const normalized =
+        attributionTokenizer && layer.layerPos === "input"
+          ? getTokenAttribution(model, sample.xTensor, sample.X, attributionTokenizer)
+          : normalizeForLayer({ actTensor, layer, isRegression, layerStats })
       try {
         // WebGPU: try to copy the buffer directly in GPU
         let gpuUpdateSuccess = tryWebGPUUpdate({ backend, tfBackend, normalized, layer })
