@@ -44,4 +44,19 @@ describe("sampleNextToken", () => {
     // 0.6^10 / (0.1^10 + 0.6^10 + 0.3^10) > 0.99
     expect(sampleNextToken(probs, { temperature: 0.1, random: () => 0.98 })).toBe(1)
   })
+
+  it("only samples from the nucleus with topP", () => {
+    // sorted: 0.6 (token 1), 0.3 (token 2) reach 0.8, token 0 is cut off
+    for (const r of [0, 0.3, 0.6, 0.99]) {
+      const token = sampleNextToken(probs, { temperature: 1, topP: 0.8, random: () => r })
+      expect(token).not.toBe(0)
+    }
+    // renormalized: [0, 0.67, 0.33]
+    expect(sampleNextToken(probs, { temperature: 1, topP: 0.8, random: () => 0.5 })).toBe(1)
+    expect(sampleNextToken(probs, { temperature: 1, topP: 0.8, random: () => 0.9 })).toBe(2)
+  })
+
+  it("keeps at least the most likely token", () => {
+    expect(sampleNextToken(probs, { temperature: 1, topP: 0.01, random: () => 0.99 })).toBe(1)
+  })
 })

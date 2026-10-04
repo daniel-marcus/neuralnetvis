@@ -105,6 +105,7 @@ export const TextArea = ({ title = "" }) => {
 const INPUT_THROTTLE = 10 // ms, min. time between sample updates (typing, suggestions, autocomplete)
 const NUM_SUGGESTIONS = 5
 const AUTOCOMPLETE_TEMPERATURE = 0.8 // < 1: more likely words, as generate() in ml-notebooks/tweets.py
+const AUTOCOMPLETE_TOP_P = 0.9 // only the most likely words that cover 90% of the probability
 const AUTOCOMPLETE_DELAY = 0 // ms between words: as fast as inference and rendering allow (min. INPUT_THROTTLE)
 
 // nextToken: probabilities for the next word (output layer activations at the current position)
@@ -160,6 +161,7 @@ function useAutocomplete(
       const { "<PAD>": pad, "<START>": start, "<OOV>": oov, "<END>": end } = tokenizer.encodeDict
       const token = sampleNextToken(probs, {
         temperature: AUTOCOMPLETE_TEMPERATURE,
+        topP: AUTOCOMPLETE_TOP_P,
         excludedTokens: [pad, start, oov],
       })
       const numWords = latest.current.text.split(" ").filter(Boolean).length
