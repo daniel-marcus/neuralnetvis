@@ -247,8 +247,16 @@ function tryWebGPUUpdate({ backend, tfBackend, normalized, layer }: TryWebGPUUpd
     if (newGpuBuffer && existingGpuBuffer) {
       if (isDebug()) console.log("copy GPU buffer")
       const commandEncoder = backend.device.createCommandEncoder()
-      // args: from, sourceOffset, to, destinationOffset
-      commandEncoder.copyBufferToBuffer(newGpuBuffer, 0, existingGpuBuffer, 0, newGpuBuffer.size)
+      // buffer is shared with other layers: never write beyond this layer's slot
+      const size = Math.min(newGpuBuffer.size, layer.numNeurons * 4)
+      // args: from, sourceOffset, to, destinationOffset, size
+      commandEncoder.copyBufferToBuffer(
+        newGpuBuffer,
+        0,
+        existingGpuBuffer,
+        layer.bufferOffset * 4,
+        size,
+      )
 
       const commands = commandEncoder.finish()
       backend.device.queue.submit([commands])
@@ -269,7 +277,9 @@ async function fallbackCPUUpdate({ normalized, layer }: CPUUpdateProps) {
   if (isDebug()) console.log("using fallback")
   const data = (await normalized.data()) as Float32Array
   layer.activations.set(data)
-  layer.activationsBuffer.needsUpdate = true // storage buffer updated via CPU
+  // storage buffer updated via CPU (only this layer's range of the shared buffer)
+  layer.activationsBuffer.addUpdateRange(layer.bufferOffset, data.length)
+  layer.activationsBuffer.needsUpdate = true
   for (const meshRef of layer.meshRefs) {
     const userData = meshRef.current?.userData as UserData | undefined
     if (!userData?.instancedActivations) continue

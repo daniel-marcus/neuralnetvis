@@ -17,8 +17,8 @@ type InstancedLayerProps = NeuronLayer & {
 }
 
 export interface UserData {
-  activations: THREE.StorageBufferAttribute // StorageInstancedBufferAttribute
-  instancedActivations: THREE.InstancedBufferAttribute
+  bufferOffset: number // start index in the shared activations storage buffer (WebGPU)
+  instancedActivations: THREE.InstancedBufferAttribute // WebGL fallback
 }
 
 export const InstancedLayer = memo(function InstancedLayer(props: InstancedLayerProps) {
@@ -151,18 +151,19 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
 }
 
 function useColors(props: NeuronLayer, channelIdx: number) {
-  const { activationsBuffer, hasColorChannels, channelActivations } = props
+  const { bufferOffset, hasColorChannels, channelActivations, numNeurons } = props
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx, props.storageNode),
     [hasColorChannels, channelIdx, props.storageNode],
   )
   const colorArray = channelActivations[channelIdx]
+  const channelOffset = hasColorChannels ? channelIdx * (numNeurons / 3) : 0
   const userData: UserData = useMemo(
     () => ({
-      activations: activationsBuffer,
+      bufferOffset: bufferOffset + channelOffset,
       instancedActivations: new THREE.InstancedBufferAttribute(colorArray, 1),
     }),
-    [activationsBuffer, colorArray],
+    [bufferOffset, channelOffset, colorArray],
   )
   return [material, userData] as const
 }

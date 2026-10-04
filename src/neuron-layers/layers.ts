@@ -31,6 +31,7 @@ export function useLayers() {
       return
     }
     const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
+    const bufferSlots = getBufferSlots(model, `${model.name}_${modelLoadState}`, ds?.task)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
         const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
@@ -41,11 +42,7 @@ export function useLayers() {
 
         const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
 
-        // nextToken: output layer shows only the prediction at the current position (see next-token.ts)
-        const isSeqOutput = layerPos === "output" && ds?.task === "nextToken"
-        const tfShape = tfLayer.outputShape as number[]
-        const outputShape = isSeqOutput ? [tfShape[0], tfShape[tfShape.length - 1]] : tfShape
-        const units = isSeqOutput ? outputShape[1] : getUnits(tfLayer)
+        const { outputShape, units } = getLayerShape(tfLayer, layerPos, ds?.task)
         const meshParams =
           ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
             ? prevLayer.meshParams
@@ -57,7 +54,8 @@ export function useLayers() {
         const meshRefs = Array.from({ length: channels }).map(createMeshRef)
 
         const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
-        const { activations, actBuffer } = getBuffers(lid, units)
+        const { page, offset: bufferOffset } = bufferSlots.get(layerIndex)!
+        const activations = page.activations.subarray(bufferOffset, bufferOffset + units)
         const channelActivations = channelViews(activations, units, channels)
 
         const layer: NeuronLayer = {
@@ -80,9 +78,9 @@ export function useLayers() {
           hasColorChannels,
           activations,
           channelActivations,
-          activationsBuffer: actBuffer,
-          // fixed name: otherwise the WGSL var is named after the node id, making every layer's shader unique (no pipeline reuse)
-          storageNode: storage(actBuffer, "float", units).setName("activations"),
+          activationsBuffer: page.actBuffer,
+          storageNode: page.storageNode,
+          bufferOffset,
         }
         return [...acc, layer]
       }, [] as NeuronLayer[]) ?? []
@@ -102,31 +100,77 @@ function channelViews(activations: Float32Array, units: number, channels = 3) {
   // layer activations buffer has to be like: [...allRed, ...allGreen, ...allBlue], see activations.ts
   const channelUnits = units / channels
   return Array.from({ length: channels }).map((_, channelIdx) => {
-    const offset = channelIdx * channelUnits * 4
-    return new Float32Array(activations.buffer, offset, channelUnits)
+    const offset = channelIdx * channelUnits
+    return activations.subarray(offset, offset + channelUnits)
   })
+}
+
+function getLayerShape(tfLayer: tf.layers.Layer, layerPos: LayerPos, task?: string) {
+  // nextToken: output layer shows only the prediction at the current position (see next-token.ts)
+  const isSeqOutput = layerPos === "output" && task === "nextToken"
+  const tfShape = tfLayer.outputShape as number[]
+  const outputShape = isSeqOutput ? [tfShape[0], tfShape[tfShape.length - 1]] : tfShape
+  const units = isSeqOutput ? outputShape[1] : getUnits(tfLayer)
+  return { outputShape, units }
 }
 
 function createMeshRef() {
   return { current: null } as React.RefObject<InstancedMesh | null>
 }
 
-type Buffers = {
+// Activations of all layers share a few large storage buffers ("pages"), each layer reads from its offset.
+// This way all layers can use the same material, so three.js only has to build the shader once.
+// Page size = WebGPU default limit for maxStorageBufferBindingSize (128 MiB)
+const MAX_PAGE_UNITS = (128 * 1024 * 1024) / 4
+
+interface BufferPage {
   activations: Float32Array
   actBuffer: THREE.StorageBufferAttribute
+  storageNode: THREE.StorageBufferNode<"float">
 }
 
-// TODO: implement buffer disposal
-const bufferCache = new Map<NeuronLayer["lid"], Buffers>()
+interface BufferSlot {
+  page: BufferPage
+  offset: number
+}
 
-function getBuffers(lid: NeuronLayer["lid"], units: number): Buffers {
-  if (bufferCache.has(lid)) return bufferCache.get(lid)!
-  const activations = new Float32Array(units)
-  const actBuffer = new THREE.StorageBufferAttribute(activations, 1)
-  actBuffer.name = lid
-  const buffers = { activations, actBuffer }
-  bufferCache.set(lid, buffers)
-  return buffers
+type BufferSlots = Map<number, BufferSlot> // layerIndex -> slot
+
+// TODO: implement buffer disposal
+const bufferSlotsCache = new Map<string, BufferSlots>()
+
+// allocates slots for all layers that might be shown (incl. hidden layers), so buffers don't change when toggling them
+function getBufferSlots(model: tf.LayersModel, modelKey: string, task?: string): BufferSlots {
+  const key = `${modelKey}_${task}`
+  if (bufferSlotsCache.has(key)) return bufferSlotsCache.get(key)!
+  const pageLayers: { layerIndex: number; offset: number }[][] = [[]]
+  let pageUnits = 0
+  const pageSizes: number[] = []
+  for (const [layerIndex, tfLayer] of model.layers.entries()) {
+    if (!isVisible(tfLayer)) continue
+    const { units } = getLayerShape(tfLayer, getLayerPos(layerIndex, model), task)
+    if (pageUnits > 0 && pageUnits + units > MAX_PAGE_UNITS) {
+      pageSizes.push(pageUnits)
+      pageLayers.push([])
+      pageUnits = 0
+    }
+    pageLayers[pageLayers.length - 1].push({ layerIndex, offset: pageUnits })
+    pageUnits += units
+  }
+  pageSizes.push(pageUnits)
+
+  const slots: BufferSlots = new Map()
+  pageLayers.forEach((layers, pageIdx) => {
+    const activations = new Float32Array(Math.max(pageSizes[pageIdx], 1))
+    const actBuffer = new THREE.StorageBufferAttribute(activations, 1)
+    actBuffer.name = `${key}_activations_${pageIdx}`
+    // fixed name: otherwise the WGSL var is named after the node id, making every page's shader unique
+    const storageNode = storage(actBuffer, "float", activations.length).setName("activations")
+    const page = { activations, actBuffer, storageNode }
+    for (const { layerIndex, offset } of layers) slots.set(layerIndex, { page, offset })
+  })
+  bufferSlotsCache.set(key, slots)
+  return slots
 }
 
 const MAX_VISIBLE_LAYERS = 200

@@ -26,10 +26,11 @@ export interface NeuronLayer {
   prevLayer?: NeuronLayer
   hasLabels?: boolean
   hasColorChannels: boolean
-  activations: Float32Array // used for activation colors, reused for performance = not reactive
+  activations: Float32Array // view on the shared buffer page, used for activation colors, reused for performance = not reactive
   channelActivations: Float32Array[] // sliced view on activations for color channels
-  activationsBuffer: THREE.StorageBufferAttribute
+  activationsBuffer: THREE.StorageBufferAttribute // shared by multiple layers, see bufferOffset
   storageNode: THREE.StorageBufferNode<"float">
+  bufferOffset: number // start index of this layer's activations in activationsBuffer
 }
 
 // Types for Neurons

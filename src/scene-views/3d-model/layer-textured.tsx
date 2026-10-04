@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, memo } from "react"
 import * as THREE from "three/webgpu"
 import { useNeuronSpacing } from "./layer-instanced"
-import { getTextureMaterial } from "./materials"
+import { getTextureMaterial, releaseTextureMaterial } from "./materials"
 import { useLayerActivations } from "@/model/activations"
 import { useIsWebGPU } from "@/utils/webgpu"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
 const CELL_GAP = 1 // texture pixel between cells
 
+// layer-specific values for the (shared) material, see activationColorTexture
 export interface UserDataTextured {
-  activations: THREE.StorageBufferAttribute
+  width: number
+  height: number
+  channels: number
+  gridCols: number
+  texWidth: number
+  texHeight: number
+  bufferOffset: number // start index in the shared activations storage buffer (WebGPU)
   actTexture: THREE.DataTexture // for WebGL fallback
 }
 
@@ -41,7 +48,7 @@ export const TexturedLayer = memo(function TexturedLayer(props: TexturedLayerPro
 })
 
 function useActivationTexture(layer: TexturedLayerProps) {
-  const { hasColorChannels, channelIdx = 0, storageNode } = layer
+  const { hasColorChannels, channelIdx = 0, storageNode, bufferOffset, numNeurons } = layer
   const shape = layer.outputShape
   const [, height, width = 1, _channels = 1] = shape
 
@@ -64,13 +71,11 @@ function useActivationTexture(layer: TexturedLayerProps) {
   }, [height, width, channels, isWebGPU])
 
   const material = useMemo(
-    () => getTextureMaterial(hasColorChannels, channelIdx, height, width, channels, storageNode),
-    [hasColorChannels, channelIdx, height, width, channels, storageNode],
+    () => getTextureMaterial(hasColorChannels, channelIdx, storageNode, isWebGPU),
+    [hasColorChannels, channelIdx, storageNode, isWebGPU],
   )
   useEffect(() => {
-    return () => {
-      material.dispose()
-    }
+    return () => releaseTextureMaterial(material)
   }, [material])
 
   const pixelMap = useMemo(() => {
@@ -103,12 +108,19 @@ function useActivationTexture(layer: TexturedLayerProps) {
     return map
   }, [width, height, channels, texture.image.width, isWebGPU])
 
+  const channelOffset = hasColorChannels ? channelIdx * (numNeurons / 3) : 0
   const userData: UserDataTextured = useMemo(
     () => ({
-      activations: layer.activationsBuffer,
+      width,
+      height,
+      channels,
+      gridCols: Math.ceil(Math.sqrt(channels)),
+      texWidth: texture.image.width,
+      texHeight: texture.image.height,
+      bufferOffset: bufferOffset + channelOffset,
       actTexture: texture,
     }),
-    [layer.activationsBuffer, texture],
+    [width, height, channels, texture, bufferOffset, channelOffset],
   )
 
   const layerActivations = useLayerActivations(layer.index)
