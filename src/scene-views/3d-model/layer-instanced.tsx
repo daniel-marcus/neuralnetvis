@@ -150,7 +150,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   return positions
 }
 
-function useColors(props: NeuronLayer, channelIdx: number) {
+export function useColors(props: NeuronLayer, channelIdx: number) {
   const { bufferOffset, hasColorChannels, channelActivations, numNeurons } = props
   const material = useMemo(
     () => getMaterial(hasColorChannels, channelIdx, props.storageNode),

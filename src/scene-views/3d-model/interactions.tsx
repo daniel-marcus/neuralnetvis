@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useMemo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
-import { getWorldPos, useSize } from "./utils"
+import { getWorldTransform, useSize } from "./utils"
 import { setStatus, clearStatus, useGlobalStore } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
@@ -161,11 +161,13 @@ function Highlighted({ neuron, thick }: HighlightedProps) {
   const ref = useRef<THREE.Mesh>(null)
   const invalidate = useThree((s) => s.invalidate)
   useEffect(invalidate, [neuron, invalidate])
+  const factor = thick ? 1.15 : 1.1
   useFrame(() => {
     if (!neuron || !ref.current) return
-    const pos = getWorldPos(neuron)
-    if (!pos) return
-    ref.current!.position.copy(pos)
+    const transform = getWorldTransform(neuron)
+    if (!transform) return
+    ref.current.position.copy(transform.position)
+    ref.current.scale.copy(transform.scale).multiplyScalar(factor)
   })
   if (!neuron) return null
   const { geometry } = neuron.layer.meshParams
@@ -176,7 +178,7 @@ function Highlighted({ neuron, thick }: HighlightedProps) {
   
   */
   return (
-    <mesh ref={ref} scale={thick ? 1.15 : 1.1}>
+    <mesh ref={ref}>
       <primitive object={geometry} attach={"geometry"} />
       <meshBasicMaterial color="white" transparent opacity={0.02} depthWrite={false} />
     </mesh>

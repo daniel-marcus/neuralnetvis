@@ -29,16 +29,22 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
 }
 
 export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
+  return getWorldTransform(neuron)?.position
+}
+
+// instance scale: e.g. token tiles with the width of the token (see TokenLayer)
+export function getWorldTransform(neuron: Neuron) {
   const { meshRef, index, indexInChannel } = neuron
   const idx = neuron.layer.hasColorChannels ? indexInChannel : index
   if (!meshRef?.current) return
-  const worldPos = new THREE.Vector3()
+  const position = new THREE.Vector3()
+  const scale = new THREE.Vector3()
   const tempMatrix = new THREE.Matrix4()
   const tempWorldMatrix = new THREE.Matrix4()
   meshRef.current.getMatrixAt(idx, tempMatrix)
   tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
-  tempWorldMatrix.decompose(worldPos, new THREE.Quaternion(), new THREE.Vector3())
-  return worldPos
+  tempWorldMatrix.decompose(position, new THREE.Quaternion(), scale)
+  return { position, scale }
 }
 
 export type Pos = [number, number, number]

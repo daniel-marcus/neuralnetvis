@@ -8,6 +8,7 @@ import { LayerInteractions } from "./interactions"
 import { useDidMount, usePrevious } from "@/utils/helpers"
 import { InstancedLayer, useNeuronSpacing } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
+import { TokenLayer } from "./layer-token"
 import { useIsScreen } from "@/utils/screen"
 import { getGridSize } from "@/neuron-layers/layout"
 import type { NeuronLayer } from "@/neuron-layers/types"
@@ -110,6 +111,7 @@ function LodComp(props: LodCompProps) {
 
   const isMultiDim = (props.outputShape[2] ?? 1) > 1
   const { isFocussed, hasFocussed } = useFocussed(props.index)
+  const isTokenInput = useSceneStore((s) => props.layerPos === "input" && !!s.ds?.tokenizer)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
   const alwaysInstanced = props.layerPos === "output" || !isMultiDim || props.numNeurons <= 3072
@@ -122,6 +124,7 @@ function LodComp(props: LodCompProps) {
   const showInstanced =
     alwaysInstanced ||
     (!alwaysTextured && ((isFocussed && !isScrolling) || (isClose && !hasFocussed && !isScrolling)))
+  if (isTokenInput) return <TokenLayer {...props} />
   return (
     <>
       {!alwaysTextured && <InstancedLayer {...props} visible={showInstanced} />}
