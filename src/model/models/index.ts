@@ -79,7 +79,7 @@ const models = defineModels({
   tweets: {
     key: "tweets",
     path: "/models/tweets/model.json",
-    version: "0.2", // partially trained (interrupted in epoch 2)
+    version: "0.3",
   },
 })
 
