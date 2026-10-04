@@ -2,6 +2,7 @@ import * as tf from "@tensorflow/tfjs"
 import { useRef, type PointerEvent } from "react"
 import { useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
+import { InputArea } from "./input-area"
 import type { SampleRaw } from "./types"
 
 const getCoords = (e: PointerEvent, rect: DOMRect) => ({
@@ -19,7 +20,6 @@ const scaleCanvas = (canvas: HTMLCanvasElement, rect: DOMRect) => {
 
 export const DrawArea = ({ title = "" }) => {
   const ref = useRef<HTMLCanvasElement>(null)
-  const toggleInputAreaShown = useSceneStore((s) => s.toggleInputAreaShown)
   const ds = useSceneStore((s) => s.ds)
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
   const isDrawing = useRef(false)
@@ -57,23 +57,23 @@ export const DrawArea = ({ title = "" }) => {
   const clear = () => getCtx()?.clearRect(0, 0, ref.current!.width, ref.current!.height)
 
   return (
-    <div className="z-20 flex flex-col items-center gap-2 pointer-events-auto pt-8">
-      <div>{title}</div>
+    <InputArea
+      title={title}
+      buttons={
+        <Button onClick={clear} variant="secondary">
+          clear
+        </Button>
+      }
+    >
       <canvas
         ref={ref}
-        className={`w-40 lg:w-75 aspect-square border-2 rounded-2xl bg-box-dark border-menu-border cursor-pencil touch-none`}
+        className={`w-full aspect-square border-2 rounded-2xl bg-box-dark border-menu-border cursor-pencil touch-none`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       />
-      <div className="flex gap-2">
-        <Button onClick={clear}>clear</Button>
-        <Button onClick={toggleInputAreaShown} variant="secondary">
-          close
-        </Button>
-      </div>
-    </div>
+    </InputArea>
   )
 }
 
