@@ -6,6 +6,9 @@ import * as tf from "@tensorflow/tfjs"
 import "@/model/layers" // registers the custom layers (MultiHeadAttention, ReversibleEmbedding, ...)
 import { importKerasModel } from "@/model/import-keras"
 
+// larger weights are split into shards: GitHub rejects files > 100 MB, tfjs concatenates the shards on load
+const MAX_SHARD_BYTES = 64 * 1024 * 1024
+
 export async function convertKerasModel(kerasPath: string, outDir: string) {
   await tf.setBackend("cpu")
   const buffer = await readFile(kerasPath)
@@ -15,14 +18,20 @@ export async function convertKerasModel(kerasPath: string, outDir: string) {
   await mkdir(outDir, { recursive: true })
   await model.save(
     tf.io.withSaveHandler(async (artifacts) => {
-      const weightData = artifacts.weightData as ArrayBuffer
-      await writeFile(join(outDir, "weights.bin"), Buffer.from(weightData))
+      const weightData = Buffer.from(artifacts.weightData as ArrayBuffer)
+      const paths = getShardPaths(weightData.byteLength)
+      for (const [i, path] of paths.entries()) {
+        const shard = weightData.subarray(i * MAX_SHARD_BYTES, (i + 1) * MAX_SHARD_BYTES)
+        await writeFile(join(outDir, path), shard)
+      }
       const modelJson = {
         modelTopology: artifacts.modelTopology,
         format: artifacts.format,
         generatedBy: artifacts.generatedBy,
         convertedBy: artifacts.convertedBy,
-        weightsManifest: [{ paths: ["./weights.bin"], weights: artifacts.weightSpecs }],
+        weightsManifest: [
+          { paths: paths.map((path) => `./${path}`), weights: artifacts.weightSpecs },
+        ],
       }
       await writeFile(join(outDir, "model.json"), JSON.stringify(modelJson))
       return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: "JSON" } }
@@ -42,9 +51,16 @@ export async function convertKerasModel(kerasPath: string, outDir: string) {
   return { name: model.name, numLayers: model.layers.length, numParams: model.countParams() }
 }
 
+function getShardPaths(numBytes: number) {
+  const numShards = Math.max(1, Math.ceil(numBytes / MAX_SHARD_BYTES))
+  if (numShards === 1) return ["weights.bin"]
+  return Array.from({ length: numShards }, (_, i) => `weights.${i + 1}-of-${numShards}.bin`)
+}
+
 async function loadFromDir(dir: string) {
   const modelJson = JSON.parse(await readFile(join(dir, "model.json"), "utf-8"))
-  const weights = await readFile(join(dir, "weights.bin"))
+  const paths: string[] = modelJson.weightsManifest[0].paths
+  const weights = Buffer.concat(await Promise.all(paths.map((path) => readFile(join(dir, path)))))
   return tf.loadLayersModel(
     tf.io.fromMemory({
       modelTopology: modelJson.modelTopology,
