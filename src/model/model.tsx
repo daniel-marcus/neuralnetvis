@@ -172,7 +172,11 @@ function showModelStatus() {
   const data = {
     Dataset: <ExtLink href={ds.aboutUrl}>{ds.name}</ExtLink>,
     Samples: totalSamples.toLocaleString("en-US"),
-    Model: model.name,
+    Model: ds.model?.sourceUrl ? (
+      <ExtLink href={ds.model.sourceUrl}>{ds.model.name ?? ds.model.key}</ExtLink>
+    ) : (
+      model.name
+    ),
     Params: model.countParams().toLocaleString("en-US"),
   }
   setStatus({ data }, null, { id: MODEL_STATUS_ID })

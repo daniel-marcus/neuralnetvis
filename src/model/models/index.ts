@@ -1,5 +1,6 @@
 export interface ModelDef {
   key: string
+  name?: string // official name, e.g. for external models
   path: string
   version: string
   sourceUrl?: string
@@ -83,6 +84,7 @@ const models = defineModels({
   },
   tinystories: {
     key: "tinystories",
+    name: "TinyStories-3M",
     path: "/models/tinystories/model.json",
     version: "2.0", // TinyStories-3M (1.0: TinyStories-1M)
     sourceUrl: "https://huggingface.co/roneneldan/TinyStories-3M",
