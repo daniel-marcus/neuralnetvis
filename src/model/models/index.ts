@@ -76,6 +76,11 @@ const models = defineModels({
     path: "/models/quickdraw/model.json",
     version: "1.0",
   },
+  tweets: {
+    key: "tweets",
+    path: "/models/tweets/model.json",
+    version: "0.2", // partially trained (interrupted in epoch 2)
+  },
 })
 
 export type ModelKey = keyof typeof models
