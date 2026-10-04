@@ -103,18 +103,22 @@ interface LodCompProps extends NeuronLayer {
   measureRef: React.RefObject<THREE.Mesh | null>
 }
 
+const MAX_CLOSE_INSTANCED = 5
+
 function LodComp(props: LodCompProps) {
   // Level-of-Detail rendering: use less expensive TexturedLayer for distant & large layers
 
   const isMultiDim = (props.outputShape[2] ?? 1) > 1
-  const isClose = useIsClose(props.measureRef, 40)
   const { isFocussed, hasFocussed } = useFocussed(props.index)
   const isScrolling = useSceneStore((s) => s.isScrolling)
   const isScreenSm = useIsScreen("sm")
-  const alwaysInstanced = !isMultiDim || props.numNeurons <= 3072
+  const alwaysInstanced = props.layerPos === "output" || !isMultiDim || props.numNeurons <= 3072
   const alwaysTextured = isScreenSm
     ? !alwaysInstanced && props.numNeurons > 50000 // large layers: prefer less expensive TexturedLayer
     : !alwaysInstanced // mobile: use mainly TexturedLayer and avoid duplicate layers
+  const canSwitch = !alwaysInstanced && !alwaysTextured
+  // limit the number of close layers rendered as InstancedLayer (expensive with many layers, e.g. after "show hidden")
+  const isClose = useIsClose(props.measureRef, 40, canSwitch ? MAX_CLOSE_INSTANCED : Infinity)
   const showInstanced =
     alwaysInstanced ||
     (!alwaysTextured && ((isFocussed && !isScrolling) || (isClose && !hasFocussed && !isScrolling)))

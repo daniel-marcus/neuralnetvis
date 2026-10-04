@@ -101,23 +101,61 @@ export function useSize(ref: React.RefObject<THREE.Object3D | null>, padding = 0
   return size
 }
 
+// distances of all objects that use useIsClose with maxCount, per camera (= per scene view)
+const distanceRegistries = new WeakMap<THREE.Camera, Map<number, number>>()
+let nextRegistryId = 0
+
+// maxCount: only the closest objects count as close (among all that use maxCount)
 export function useIsClose(
   ref: React.RefObject<THREE.Object3D | null>,
   threshold: number,
+  maxCount = Infinity,
 ): boolean {
   const camera = useThree((s) => s.camera)
   const [isClose, setIsClose] = useState(false)
   const isCloseRef = useRef(false)
   const bBox = useMemo(() => new THREE.Box3(), [])
+  const [id] = useState(() => nextRegistryId++)
+  const isLimited = Number.isFinite(maxCount)
+
+  useEffect(() => {
+    if (!isLimited) return
+    let registry = distanceRegistries.get(camera)
+    if (!registry) {
+      registry = new Map()
+      distanceRegistries.set(camera, registry)
+    }
+    const reg = registry
+    return () => {
+      reg.delete(id)
+    }
+  }, [camera, id, isLimited])
 
   useFrame(() => {
     if (!ref.current) return
     bBox.setFromObject(ref.current)
     const distance = bBox.distanceToPoint(camera.position)
+    let close = distance < threshold
 
-    if (distance < threshold !== isCloseRef.current) {
-      isCloseRef.current = distance < threshold
-      setIsClose(isCloseRef.current)
+    const registry = isLimited ? distanceRegistries.get(camera) : undefined
+    if (registry) {
+      // first frame: other objects might not have reported their distance yet, wait for a complete ranking
+      const isFirstFrame = !registry.has(id)
+      registry.set(id, distance)
+      if (isFirstFrame) close = false
+      else if (close) {
+        // ranking based on the distances other objects reported (possibly 1 frame old), ties by id
+        let closerCount = 0
+        for (const [otherId, d] of registry) {
+          if (d < distance || (d === distance && otherId < id)) closerCount++
+        }
+        close = closerCount < maxCount
+      }
+    }
+
+    if (close !== isCloseRef.current) {
+      isCloseRef.current = close
+      setIsClose(close)
     }
   })
 
