@@ -38,7 +38,10 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
 
       const updatedLayers = updateTracker.current.get(sample.index) ?? new Set()
       const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.lid)
-      const isFocussed = (l: NeuronLayer) => l.index === focusIdx
+      // nextToken: the next word suggestions (TextArea) need the output layer even if another layer is focussed
+      const keepOutput = ds?.task === "nextToken"
+      const isFocussed = (l: NeuronLayer) =>
+        l.index === focusIdx || (keepOutput && l.layerPos === "output")
       const layersToUpdate =
         typeof focusIdx === "number"
           ? layers.filter((l) => isFocussed(l) && needsUpdate(l))
