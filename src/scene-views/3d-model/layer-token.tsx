@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo } from "react"
+import { memo, Suspense, useEffect, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { getSeqPosition } from "@/data/next-token"
@@ -11,6 +11,8 @@ import {
 import { useNeuronInteractions } from "./interactions"
 import { useColors, useNeuronSpacing } from "./layer-instanced"
 import { LABEL_COLOR } from "./label"
+import { mergeAndDispose, textGeometry, useFont } from "./vector-text"
+import type { Font } from "three/addons/loaders/FontLoader.js"
 import type { TokenParagraph } from "@/neuron-layers/token-layout"
 import type { NeuronLayer } from "@/neuron-layers/types"
 
@@ -23,8 +25,6 @@ type TokenLayerProps = NeuronLayer & {
 }
 
 const TILE_DEPTH = 0.3
-const PX_PER_UNIT = 96 // text texture resolution
-const FONT_FACE = "Menlo-Regular"
 
 export const TokenLayer = memo(function TokenLayer(props: TokenLayerProps) {
   const { meshParams, meshRefs, measureRef, numNeurons } = props
@@ -61,7 +61,11 @@ export const TokenLayer = memo(function TokenLayer(props: TokenLayerProps) {
         userData={userData}
         {...eventHandlers}
       />
-      {paragraph && <TokenText paragraph={paragraph} />}
+      {paragraph && (
+        <Suspense fallback={null}>
+          <TokenText paragraph={paragraph} />
+        </Suspense>
+      )}
     </group>
   )
 })
@@ -80,43 +84,33 @@ function useTokenParagraph(numNeurons: number) {
 const noRaycast = () => null
 
 function TokenText({ paragraph }: { paragraph: TokenParagraph }) {
-  const texture = useMemo(() => paragraphTexture(paragraph), [paragraph])
-  useEffect(() => () => texture.dispose(), [texture])
+  const font = useFont()
+  const geometry = useMemo(() => paragraphGeometry(font, paragraph), [font, paragraph])
+  useEffect(() => () => geometry.dispose(), [geometry])
   const lightsOn = useSceneStore((s) => s.vis.lightsOn)
   if (!lightsOn) return null
   return (
     <mesh
       position={[-TILE_DEPTH / 2 - 0.01, 0, 0]}
       rotation={[0, -Math.PI / 2, 0]} // facing -x, as the labels
+      geometry={geometry}
       raycast={noRaycast}
     >
-      <planeGeometry args={[paragraph.width, paragraph.height]} />
-      <meshBasicMaterial map={texture} transparent depthWrite={false} color={LABEL_COLOR} />
+      <meshBasicMaterial color={LABEL_COLOR} />
     </mesh>
   )
 }
 
-function paragraphTexture({ tiles, width, height }: TokenParagraph) {
-  const canvas = document.createElement("canvas")
-  canvas.width = Math.ceil(width * PX_PER_UNIT)
-  canvas.height = Math.ceil(height * PX_PER_UNIT)
-  const ctx = canvas.getContext("2d")!
+// vector glyphs for all tiles, merged into one geometry
+function paragraphGeometry(font: Font, { tiles }: TokenParagraph) {
   // font size that matches the char width of the layout
-  ctx.font = `100px ${FONT_FACE}`
-  const advance = ctx.measureText("M").width / 100
-  const fontSize = (TOKEN_CHAR_W * PX_PER_UNIT) / advance
-  ctx.font = `${fontSize}px ${FONT_FACE}`
-  ctx.fillStyle = "#ffffff" // actual color is set on the material
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
+  const fontSize = (TOKEN_CHAR_W * font.data.resolution) / font.data.glyphs["M"].ha
+  const geometries: THREE.BufferGeometry[] = []
   for (const tile of tiles) {
     if (tile.isPadding) continue
-    const x = (tile.x + width / 2) * PX_PER_UNIT
-    const y = (height / 2 - tile.y) * PX_PER_UNIT
-    ctx.fillText(tile.text, x, y)
+    const geometry = textGeometry(font, tile.text, { fontSize, align: "center" })
+    geometry.translate(tile.x, tile.y, 0)
+    geometries.push(geometry)
   }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.generateMipmaps = false
-  texture.minFilter = THREE.LinearFilter
-  return texture
+  return mergeAndDispose(geometries)
 }
