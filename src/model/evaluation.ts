@@ -6,11 +6,14 @@ import type { Evaluation, Prediction } from "./types"
 import type { Dataset } from "@/data"
 
 const BATCH_SIZE = 128
+const NEXT_TOKEN_BATCH_SIZE = 16 // predictions are [batch, seqLen, vocabSize], e.g. 16 * 32 * 10k floats
+const TOP_K = 5 // = number of next word suggestions (TextArea)
 const EPSILON = 1e-7 // clipping as in tfjs' categoricalCrossentropy
 
 /**
  * Single forward pass over the subset: loss, accuracy / R² and per-sample predictions.
  * Loss matches the compiled loss (categoricalCrossentropy or meanSquaredError).
+ * nextToken: loss, accuracy and top-5 accuracy per predicted word, see getNextTokenEvaluation
  */
 export async function getEvaluation(
   ds: Dataset,
@@ -18,8 +21,6 @@ export async function getEvaluation(
   subset: Subset = "test",
   silent = false,
 ): Promise<Evaluation> {
-  // TODO: evaluation for next token prediction (masked accuracy, top-5 accuracy, perplexity)
-  if (ds.task === "nextToken") return {}
   const data = await getDbDataAsTensors(ds, subset, { noOneHot: true })
   if (!data) return {}
   const statusId = silent ? undefined : setStatus("Evaluating ...", 0)
@@ -27,6 +28,7 @@ export async function getEvaluation(
     if (statusId) setStatus("Evaluating ...", percent, { id: statusId })
   }
   try {
+    if (ds.task === "nextToken") return await getNextTokenEvaluation(ds, model, data, onProgress)
     const yTrue = await data.y.data()
     const yPred = await predictBatched(model, data.X, onProgress)
     return ds.task === "classification"
@@ -67,6 +69,67 @@ async function predictBatched(
     onProgress?.((start + size) / numSamples)
   }
   return result
+}
+
+/**
+ * Next token prediction: mean over the predicted words, i.e. targets other than <PAD> and <OOV>
+ * (as in ml-notebooks/tweets.py with sample_weight). Accumulated batch by batch on the backend,
+ * because all predictions (samples * seqLen * vocabSize) wouldn't fit into memory.
+ */
+async function getNextTokenEvaluation(
+  ds: Dataset,
+  model: tf.LayersModel,
+  data: { X: tf.Tensor; y: tf.Tensor },
+  onProgress?: (percent: number) => void,
+): Promise<Evaluation> {
+  const encodeDict = ds.tokenizer?.encodeDict ?? {}
+  const ignoredTokens = ["<PAD>", "<OOV>"].map((t) => encodeDict[t]).filter((t) => t !== undefined)
+  const numSamples = data.X.shape[0]
+  let [lossSum, correct, correctTopK, count] = [0, 0, 0, 0]
+  for (let start = 0; start < numSamples; start += NEXT_TOKEN_BATCH_SIZE) {
+    const size = Math.min(NEXT_TOKEN_BATCH_SIZE, numSamples - start)
+    const sums = tf.tidy(() => {
+      const probs = model.predict(data.X.slice(start, size)) as tf.Tensor // [size, seqLen, vocabSize]
+      const vocabSize = probs.shape[probs.shape.length - 1]!
+      const flatProbs = probs.reshape([-1, vocabSize])
+      const yTrue = data.y.slice(start, size).flatten().toInt()
+      const mask = ignoredTokens
+        .reduce((m, t) => m.logicalAnd(yTrue.notEqual(t)), tf.onesLike(yTrue).cast("bool"))
+        .toFloat()
+      const pTrue = tf.gather(flatProbs, yTrue.expandDims(1), 1, 1).squeeze([1])
+      const losses = pTrue
+        .clipByValue(EPSILON, 1 - EPSILON)
+        .log()
+        .neg()
+      const isCorrect = flatProbs.argMax(1).equal(yTrue).toFloat()
+      const { indices } = tf.topk(flatProbs, TOP_K)
+      const isInTopK = indices.equal(yTrue.expandDims(1)).any(1).toFloat()
+      return tf.stack([
+        losses.mul(mask).sum(),
+        isCorrect.mul(mask).sum(),
+        isInTopK.mul(mask).sum(),
+        mask.sum(),
+      ])
+    })
+    try {
+      const [batchLoss, batchCorrect, batchCorrectTopK, batchCount] = await sums.data()
+      lossSum += batchLoss
+      correct += batchCorrect
+      correctTopK += batchCorrectTopK
+      count += batchCount
+    } finally {
+      sums.dispose()
+    }
+    onProgress?.((start + size) / numSamples)
+  }
+  if (!count) return {}
+  const loss = lossSum / count
+  return {
+    loss,
+    perplexity: Math.exp(loss),
+    accuracy: correct / count,
+    topKAccuracy: correctTopK / count,
+  }
 }
 
 function getClassificationEvaluation(

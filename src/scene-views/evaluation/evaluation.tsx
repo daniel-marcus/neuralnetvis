@@ -10,10 +10,13 @@ export function EvaluationView() {
   useEvaluation()
   if (!task) return null
   if (task === "classification") return <ConfusionViewer />
-  else if (task === "nextToken") return null // TODO: evaluation for next token prediction
+  else if (task === "nextToken")
+    return (
+      <Evaluation className="fixed top-[50vh] left-[50vw] translate-x-[-50%] translate-y-[-50%] w-75 sm:w-106" />
+    )
   else
     return (
-      <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] -translate-x-[50%] w-(--plot-size) pt-8" />
+      <Evaluation className="fixed [--plot-size:300px] sm:[--plot-size:425px] top-[calc(50vh+var(--plot-size)/2)] left-[50vw] translate-x-[-50%] w-(--plot-size) pt-8" />
     ) /* sm:plotsize = PLOT_SIZE * (2 ** zoom) */
 }
 
@@ -54,7 +57,7 @@ function ConfusionViewer() {
       <div
         className={`pointer-events-auto ${
           hasSample
-            ? "-translate-x-[66vw] xl:-translate-x-[50vw] scale-10 max-w-screen max-h-screen overflow-clip"
+            ? "translate-x-[-66vw] xl:translate-x-[-50vw] scale-10 max-w-screen max-h-screen overflow-clip"
             : ""
         } transition-transform duration-500 mx-auto`}
         onClick={hasSample ? () => setSampleIdx(undefined) : undefined}
@@ -74,13 +77,14 @@ const LOSS_DICT = {
   meanSquaredError: "MSE",
   meanAbsoluteError: "MAE",
   categoricalCrossentropy: "CCE",
+  sparseCategoricalCrossentropy: "SCCE",
 } as Record<string, string>
 
 function Evaluation({ className = "" }) {
   const ds = useSceneStore((s) => s.ds)
   const model = useSceneStore((s) => s.model)
   const subset = useSceneStore((s) => s.subset)
-  const { loss, accuracy, rSquared } = useSceneStore((s) => s.evaluation)
+  const { loss, accuracy, rSquared, perplexity, topKAccuracy } = useSceneStore((s) => s.evaluation)
 
   const _lossName = typeof model?.loss === "string" ? model.loss : ""
   const lossName =
@@ -94,13 +98,15 @@ function Evaluation({ className = "" }) {
     _lossName === "meanSquaredError" && typeof loss === "number" ? Math.sqrt(loss) : undefined
 
   return (
-    <div className={`mt-4 ${className}`}>
+    <div className={`mt-4 pointer-events-auto select-text ${className}`}>
       <Table
         data={{
           Samples: ds?.[subset].totalSamples,
           [`Loss ${lossName}`]: loss?.toFixed(3),
           [`Loss (RMSE)`]: rmse?.toFixed(3),
+          Perplexity: perplexity?.toFixed(1), // nextToken
           Accuracy: accuracy?.toFixed(3),
+          "Top-5 accuracy": topKAccuracy?.toFixed(3), // nextToken
           "R²": rSquared?.toFixed(3),
         }}
       />

@@ -58,4 +58,6 @@ export interface Evaluation {
   loss?: number
   accuracy?: number
   rSquared?: number
+  perplexity?: number // nextToken: exp(loss)
+  topKAccuracy?: number // nextToken: correct word among the top 5 (next word suggestions)
 }
