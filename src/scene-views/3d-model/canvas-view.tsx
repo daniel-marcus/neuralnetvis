@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useRef } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
@@ -38,12 +38,13 @@ export const CanvasView = (props: CanvasViewProps) => {
   const store = useContext(SceneContext) // needs to be passed inside the View component
   const setHasRendered = useSceneStore((s) => s.setHasRendered)
   const mainRenderer = useGlobalStore((s) => s.renderer)
+  const fullSize = useFullSize(isActive)
   if (gpuDevice === null || !mainRenderer) return null // not initialized yet
   const isWebGPU = isWebGPUBackend(mainRenderer.backend)
   if (isWebGPU)
     return (
       <CanvasTargetView
-        className={`absolute w-screen h-screen select-none ${
+        className={`absolute ${fullSize ? "w-screen h-screen" : "w-full h-full"} select-none ${
           isActive ? "" : "touch-pan-y!"
         } ${invisible ? "pointer-events-none opacity-0" : ""}`}
         onFirstRender={setHasRendered}
@@ -98,6 +99,21 @@ export const CanvasView = (props: CanvasViewProps) => {
     )
 }
 
+/**
+ * WebGPU: inactive tiles get a tile-sized canvas (less GPU memory), the active scene a fullscreen one.
+ * Stays fullscreen until the collapse transition has finished.
+ */
+function useFullSize(isActive: boolean) {
+  const [fullSize, setFullSize] = useState(isActive)
+  if (isActive && !fullSize) setFullSize(true)
+  useEffect(() => {
+    if (isActive) return
+    const timeout = setTimeout(() => setFullSize(false), getTileDuration())
+    return () => clearTimeout(timeout)
+  }, [isActive])
+  return fullSize
+}
+
 const CanvasViewInner = (props: CanvasViewProps) => {
   const { isActive, initialState, ownCanvas } = props
   const invalidate = useThree((s) => s.invalidate)
@@ -127,6 +143,10 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   const isWebGPU = useIsWebGPU()
   const scene = useThree((s) => s.scene)
   const domElement = isWebGPU ? scene.userData.canvasTarget?.domElement : undefined
+  // OrbitControls scales rotation by the element height: compensate for tile-sized canvases (WebGPU)
+  const rootHeight = useThree((s) => s.size.height)
+  const rotateScale =
+    isWebGPU && !isActive && domElement?.clientHeight ? domElement.clientHeight / rootHeight : 1
 
   return (
     <>
@@ -147,7 +167,7 @@ const CanvasViewInner = (props: CanvasViewProps) => {
         enablePan={!visIsLocked}
         minPolarAngle={isActive || !isTouch() ? 0 : Math.PI / 2}
         maxPolarAngle={isActive || !isTouch() ? Math.PI : Math.PI / 2}
-        rotateSpeed={isActive ? 1 : 1.5}
+        rotateSpeed={(isActive ? 1 : 1.5) * rotateScale}
         autoRotate={autoRotate}
       />
       <DebugUtils />

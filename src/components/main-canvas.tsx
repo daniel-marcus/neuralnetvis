@@ -6,6 +6,7 @@ import { isWebGPUBackend, useGPUDevice, useIsWebGPU } from "@/utils/webgpu"
 import { useHasActiveTile } from "./tile-grid-data"
 import { useGlobalStore } from "@/store"
 import { Tunnel, type RootState } from "./main-canvas-tunnel"
+import { isTouch } from "@/utils/screen"
 import type { ThreeToJSXElements } from "@react-three/fiber"
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js"
 
@@ -38,6 +39,8 @@ export function MainCanvas({ eventSource }: MainCanvasProps) {
             const renderer = new THREE.WebGPURenderer({
               ...(renderProps as WebGPURendererParameters),
               device: gpuDevice ? gpuDevice : undefined,
+              // MSAA hardly visible on high-DPR mobile screens, but multiplies GPU memory per canvas
+              antialias: !(isTouch() && window.devicePixelRatio >= 2),
               // logarithmicDepthBuffer: true, // helps with color channel z-fighting, but bad for lines
               // forceWebGL: true,
             })
