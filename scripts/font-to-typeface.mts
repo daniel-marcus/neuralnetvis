@@ -52,7 +52,7 @@ for (let i = 0; i < font.glyphs.length; i++) {
 const { head, post } = font.tables
 const typeface = {
   glyphs,
-  familyName: font.names.fontFamily.en,
+  familyName: font.getEnglishName("fontFamily"),
   resolution: font.unitsPerEm,
   ascender: font.ascender,
   descender: font.descender,
