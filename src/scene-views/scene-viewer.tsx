@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import { Suspense, useState, type RefObject } from "react"
 import { SceneStoreProvider } from "@/store/scene-provider"
 import { useSceneStore } from "@/store"
 import { useDsDef, useDataset } from "@/data"
@@ -25,6 +25,8 @@ import { useDomRefs } from "@/utils/dom-refs"
 import { SampleViewer } from "./sample-viewer"
 import { useScreenshotSettings } from "@/utils/screenshot"
 import { useDidMount } from "@/utils/helpers"
+import { useInView } from "@/utils/screen"
+import { useHasActiveTile } from "@/components/tile-grid-data"
 
 import type { TileDef } from "@/components/tile-grid-data"
 
@@ -35,8 +37,10 @@ type SceneViewerProps = TileDef & {
 
 function SceneViewerInner(props: SceneViewerProps) {
   const { dsKey, isActive, section, path } = props
+  const [ref, didMount] = useDidMount<HTMLDivElement>()
+  const shouldLoad = useShouldLoad(ref, isActive)
   const dsDef = useDsDef(dsKey)
-  const ds = useDataset(dsDef)
+  const ds = useDataset(shouldLoad ? dsDef : undefined) // no dataset -> no model either
   const model = useModel(ds)
   useTraining(model, ds)
   const view = useSceneStore((s) => s.view)
@@ -47,7 +51,6 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showSampleViewer = isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
-  const [ref, didMount] = useDidMount<HTMLDivElement>()
   const { neuronStatusRef, sampleViewerRef } = useDomRefs()
   const inputAreaShown = useSceneStore((s) => s.inputAreaShown)
   return (
@@ -96,6 +99,18 @@ function SceneViewerInner(props: SceneViewerProps) {
       )}
     </div>
   )
+}
+
+// load dataset & model only for tiles within one screen distance (stays loaded afterwards)
+const NEAR_VIEW_OPTIONS = { rootMargin: "100% 0px" }
+
+function useShouldLoad(ref: RefObject<HTMLDivElement | null>, isActive: boolean) {
+  const hasActive = useHasActiveTile()
+  const [, nearView] = useInView(NEAR_VIEW_OPTIONS, ref)
+  const [wasNearView, setWasNearView] = useState(false)
+  // don't start loading tiles in the background while another scene is open
+  if (nearView && !hasActive && !wasNearView) setWasNearView(true)
+  return isActive || wasNearView
 }
 
 export const SceneViewer = (props: SceneViewerProps) => {
