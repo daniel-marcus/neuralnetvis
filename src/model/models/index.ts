@@ -88,6 +88,7 @@ const models = defineModels({
     path: "/models/tinystories/model.json",
     version: "2.0", // TinyStories-3M (1.0: TinyStories-1M)
     sourceUrl: "https://huggingface.co/roneneldan/TinyStories-3M",
+    lazyLoadWeights: true,
   },
 })
 
