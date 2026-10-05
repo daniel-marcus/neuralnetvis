@@ -7,6 +7,10 @@ import { getModel, useGlobalStore } from "@/store"
 
 setWasmPaths("/wasm/")
 
+// WebGPU: small ops with CPU inputs (e.g. the token ids) would run on the CPU, mixing CPU and GPU tensors slows
+// down the forward pass (TinyStories autocomplete: 13.5 → 22 tokens/s)
+tf.env().set("WEBGPU_CPU_FORWARD", false)
+
 export type Backend = "webgpu" | "wasm" | "webgl" | "cpu"
 
 const DEFAULT_BACKEND: Backend = "webgpu"
