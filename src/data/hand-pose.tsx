@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react"
-import * as tf from "@tensorflow/tfjs"
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision"
 import draw from "@mediapipe/drawing_utils"
 import hand from "@mediapipe/hands"
@@ -101,12 +100,16 @@ function useLandmarker(numHands: number, stream?: MediaStream) {
   return hpPredict
 }
 
+// plain JS instead of tf ops: tiny arrays, no GPU round trip
 function transposeLandmarks(data: number[][][], numHands: number) {
-  return tf.tidy(() => {
-    // move hand dim to the end: [2, 21, 3] -> [21, 3, 2]
-    const tensor = tf.tensor(data, [numHands, 21, 3])
-    return tensor.transpose([1, 2, 0]).flatten().arraySync()
-  })
+  // move hand dim to the end: [2, 21, 3] -> [21, 3, 2], flattened
+  const result: number[] = []
+  for (let l = 0; l < 21; l++) {
+    for (let c = 0; c < 3; c++) {
+      for (let h = 0; h < numHands; h++) result.push(data[h][l][c])
+    }
+  }
+  return result
 }
 
 /* function toRelativeCoords(
@@ -286,11 +289,14 @@ function sampleToLandmarks(sample?: SampleRaw, inputDims?: number[]) {
   const rawX = sample?.rawX ?? sample?.X
   if (!rawX || !inputDims) return
   if (rawX.length !== inputDims.reduce((a, b) => a * b)) return
-  const shapedX = tf.tidy(() =>
-    tf.tensor(rawX, inputDims).transpose([2, 0, 1]).arraySync(),
-  ) as number[][][]
-  const landmarks = shapedX.map((lm) => lm.map(([x, y, z]) => ({ x, y, z, visibility: 0 })))
-  return landmarks
+  // [21, 3, hands] -> [hands, 21] landmarks
+  const [numLandmarks, numCoords, numHands] = inputDims
+  return Array.from({ length: numHands }, (_, h) =>
+    Array.from({ length: numLandmarks }, (__, l) => {
+      const coord = (c: number) => rawX[(l * numCoords + c) * numHands + h]
+      return { x: coord(0), y: coord(1), z: coord(2), visibility: 0 }
+    }),
+  )
 }
 
 export function drawHandPoseSampleToCanvas(

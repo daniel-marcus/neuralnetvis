@@ -20,13 +20,11 @@ export function scaleNormalize(tensor: tf.Tensor, _mean?: tf.Tensor, _std?: tf.T
 }
 
 export function normalizeWithSign(values: number[] | undefined) {
-  // returns values between -1 and 1 and keeps the sign
+  // returns values between -1 and 1 and keeps the sign, as normalize (plain JS: no GPU round trip)
   if (typeof values === "undefined") return values
-  return tf.tidy(() => {
-    const tensor = tf.tensor1d(values)
-    const normalized = normalize(tensor)
-    return normalized.arraySync() as number[]
-  })
+  let maxAbs = 1e-7 // prevents division by zero
+  for (const v of values) maxAbs = Math.max(maxAbs, Math.abs(v))
+  return values.map((v) => v / maxAbs)
 }
 
 export class StandardScaler {
