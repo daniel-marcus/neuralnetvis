@@ -116,7 +116,7 @@ const INPUT_THROTTLE = 0 // ms, min. time between sample updates (typing, sugges
 const NUM_SUGGESTIONS = 5
 const AUTOCOMPLETE_TEMPERATURE = 0.8 // < 1: more likely words, as generate() in ml-notebooks/tweets.py
 const AUTOCOMPLETE_TOP_P = 0.9 // only the most likely words that cover 90% of the probability
-const AUTOCOMPLETE_DELAY = 0 // ms between words: as fast as inference and rendering allow (min. INPUT_THROTTLE)
+const AUTOCOMPLETE_DELAY = 0 // ms between words, 0: as fast as inference allows (min. INPUT_THROTTLE)
 const AUTOCOMPLETE_STATUS_ID = "autocomplete"
 
 // nextToken: probabilities for the next word (output layer activations at the current position)
@@ -138,15 +138,11 @@ function useNextWordSuggestions(probs?: Float32Array) {
     const specialTokens = new Set(
       ["<PAD>", "<START>", "<OOV>", "<END>"].map((t) => tokenizer.encodeDict[t]),
     )
-    return Array.from(probs, (prob, token) => ({ prob, token }))
-      .filter(({ token }) => !specialTokens.has(token))
-      .toSorted((a, b) => b.prob - a.prob)
-      .slice(0, NUM_SUGGESTIONS)
-      .map(({ prob, token }) => ({
-        token,
-        word: tokenizer.decode(token).replaceAll("\n", "↵"),
-        prob,
-      }))
+    return getTopTokens(probs, NUM_SUGGESTIONS, specialTokens).map(({ prob, token }) => ({
+      token,
+      word: tokenizer.decode(token).replaceAll("\n", "↵"),
+      prob,
+    }))
   }, [ds, probs])
 }
 
@@ -181,7 +177,7 @@ function useAutocomplete(
   useEffect(() => {
     const tokenizer = ds?.tokenizer
     if (!isAutocompleting || !tokenizer || !probs || probs === usedProbs.current) return
-    const timeout = setTimeout(() => {
+    const step = () => {
       usedProbs.current = probs
       const { "<PAD>": pad, "<START>": start, "<OOV>": oov, "<END>": end } = tokenizer.encodeDict
       const token = sampleNextToken(probs, {
@@ -203,9 +199,25 @@ function useAutocomplete(
         const data = getAutocompleteStats(current)
         setStatus({ title: "Autocomplete ...", data }, null, { id: AUTOCOMPLETE_STATUS_ID })
       }
-    }, AUTOCOMPLETE_DELAY)
+    }
+    // no delay: right away, a timeout would wait for the next frame to render (~15ms per word)
+    if (AUTOCOMPLETE_DELAY <= 0) return step()
+    const timeout = setTimeout(step, AUTOCOMPLETE_DELAY)
     return () => clearTimeout(timeout)
   }, [isAutocompleting, setIsAutocompleting, probs, ds])
+}
+
+// the n most probable tokens, sorted (single pass instead of sorting the whole vocabulary)
+function getTopTokens(probs: Float32Array, n: number, excluded: Set<number>) {
+  const top: { prob: number; token: number }[] = []
+  for (let token = 0; token < probs.length; token++) {
+    const prob = probs[token]
+    if ((top.length === n && prob <= top[n - 1].prob) || excluded.has(token)) continue
+    const idx = top.findIndex((t) => prob > t.prob)
+    top.splice(idx === -1 ? top.length : idx, 0, { prob, token })
+    if (top.length > n) top.pop()
+  }
+  return top
 }
 
 // tokens/s: average from the first to the last token (the 1st one uses the prediction that was already there)

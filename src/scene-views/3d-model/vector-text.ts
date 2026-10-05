@@ -46,7 +46,7 @@ export function textGeometry(font: Font, text: string, options: TextGeometryOpti
   return mergeAndDispose(geometries)
 }
 
-export function mergeAndDispose(geometries: THREE.BufferGeometry[]) {
+function mergeAndDispose(geometries: THREE.BufferGeometry[]) {
   const nonEmpty = geometries.filter((g) => g.hasAttribute("position")) // e.g. whitespace-only text
   if (nonEmpty.length === 1 && geometries.length === 1) return geometries[0]
   const merged = nonEmpty.length ? mergeGeometries(nonEmpty) : new THREE.BufferGeometry()

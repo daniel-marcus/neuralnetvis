@@ -11,7 +11,7 @@ import {
 import { useNeuronInteractions } from "./interactions"
 import { useColors, useNeuronSpacing } from "./layer-instanced"
 import { LABEL_COLOR } from "./label"
-import { mergeAndDispose, textGeometry, useFont } from "./vector-text"
+import { textGeometry, useFont } from "./vector-text"
 import type { Font } from "three/addons/loaders/FontLoader.js"
 import type { TokenParagraph } from "@/neuron-layers/token-layout"
 import type { NeuronLayer } from "@/neuron-layers/types"
@@ -101,16 +101,53 @@ function TokenText({ paragraph }: { paragraph: TokenParagraph }) {
   )
 }
 
-// vector glyphs for all tiles, merged into one geometry
+// vector glyphs for all tiles, merged into one geometry. The glyphs of each token text are triangulated
+// only once (cache), e.g. autocomplete appends a token and shifts the others, which then are only copied
 function paragraphGeometry(font: Font, { tiles }: TokenParagraph) {
+  const visibleTiles = tiles.filter((tile) => !tile.isPadding)
+  const tileGeometries = visibleTiles.map((tile) => getTokenGeometry(font, tile.text))
+  const numVertices = tileGeometries.reduce((n, g) => n + g.position.length / 3, 0)
+  const numIndices = tileGeometries.reduce((n, g) => n + g.index.length, 0)
+  const position = new Float32Array(numVertices * 3)
+  const index = new Uint32Array(numIndices)
+  let vertexOffset = 0
+  let indexOffset = 0
+  for (const [i, tile] of visibleTiles.entries()) {
+    const g = tileGeometries[i]
+    for (let v = 0; v < g.position.length; v += 3) {
+      position[vertexOffset * 3 + v] = g.position[v] + tile.x
+      position[vertexOffset * 3 + v + 1] = g.position[v + 1] + tile.y
+      position[vertexOffset * 3 + v + 2] = g.position[v + 2]
+    }
+    for (let j = 0; j < g.index.length; j++) index[indexOffset + j] = g.index[j] + vertexOffset
+    vertexOffset += g.position.length / 3
+    indexOffset += g.index.length
+  }
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute("position", new THREE.BufferAttribute(position, 3))
+  geometry.setIndex(new THREE.BufferAttribute(index, 1))
+  return geometry
+}
+
+type TokenGeometry = { position: Float32Array; index: ArrayLike<number> }
+const tokenGeometryCache = new WeakMap<Font, Map<string, TokenGeometry>>()
+const MAX_CACHED_TOKENS = 10_000
+
+// glyphs of a token text, centered at the origin (vertex data only)
+function getTokenGeometry(font: Font, text: string): TokenGeometry {
+  let cache = tokenGeometryCache.get(font)
+  if (!cache) tokenGeometryCache.set(font, (cache = new Map()))
+  const cached = cache.get(text)
+  if (cached) return cached
   // font size that matches the char width of the layout
   const fontSize = (TOKEN_CHAR_W * font.data.resolution) / font.data.glyphs["M"].ha
-  const geometries: THREE.BufferGeometry[] = []
-  for (const tile of tiles) {
-    if (tile.isPadding) continue
-    const geometry = textGeometry(font, tile.text, { fontSize, align: "center" })
-    geometry.translate(tile.x, tile.y, 0)
-    geometries.push(geometry)
+  const geometry = textGeometry(font, text, { fontSize, align: "center" })
+  const result = {
+    position: (geometry.getAttribute("position")?.array as Float32Array) ?? new Float32Array(),
+    index: geometry.getIndex()?.array ?? [],
   }
-  return mergeAndDispose(geometries)
+  geometry.dispose()
+  if (cache.size >= MAX_CACHED_TOKENS) cache.clear()
+  cache.set(text, result)
+  return result
 }

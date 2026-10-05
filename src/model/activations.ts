@@ -170,7 +170,8 @@ async function getActivations(
   )
   tensors.forEach((t, i) => t !== activationTensors[i] && t.dispose()) // replaced by the slice
 
-  await new Promise((r) => setTimeout(r, 0)) // make sure layer component has mounted and buffer is attached
+  // make sure layer component has mounted and buffer is attached (skipped if already, e.g. autocomplete: ~3ms)
+  if (!hasGPUBuffers(backend, layers)) await new Promise((r) => setTimeout(r, 0))
 
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
@@ -217,13 +218,19 @@ async function getActivations(
   }
 }
 
+// WebGPU: buffers exist after the layers have been rendered
+function hasGPUBuffers(backend: Backend, layers: NeuronLayer[]) {
+  if (!isWebGPUBackend(backend)) return false
+  return layers.every((l) => !!backend.get(l.activationsBuffer)?.buffer)
+}
+
 interface TokenInput {
   tokenizer: TokenizerType
   task?: Dataset["task"]
 }
 
 // token ids as colors don't mean anything: classification shows the impact of each token on the prediction,
-// nextToken stays neutral
+// nextToken stays neutral (fill instead of zeros: created on the GPU, so the buffer can be copied directly)
 function getTokenInputColors(
   model: tf.LayersModel,
   sample: Sample,
@@ -231,7 +238,7 @@ function getTokenInputColors(
 ) {
   return task === "classification"
     ? getTokenAttribution(model, sample.xTensor, sample.X, tokenizer)
-    : tf.zeros(sample.xTensor.shape)
+    : tf.fill(sample.xTensor.shape, 0)
 }
 
 interface NormalizeForLayerProps {
@@ -272,7 +279,7 @@ function tryWebGPUUpdate({ backend, tfBackend, normalized, layer }: TryWebGPUUpd
       // @ts-expect-error type not compatible with tensor container
       newGpuBuffer = tf.tidy(() => normalized.dataToGPU().buffer) as GPUBuffer | undefined
     } catch {
-      return false // data not on GPU (e.g. tf.zeros), use CPU fallback
+      return false // data not on GPU (e.g. small tensors forwarded to CPU), use CPU fallback
     }
     const existingGpuBuffer = backend.get(layer.activationsBuffer)?.buffer
     if (newGpuBuffer && existingGpuBuffer) {
