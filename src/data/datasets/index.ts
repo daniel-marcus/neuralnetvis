@@ -10,6 +10,7 @@ import { imdb } from "./imdb"
 import { quickDraw } from "./quickdraw"
 import { tweets } from "./tweets"
 import { tinyStories } from "./tinystories"
+import { gpt2 } from "./gpt2"
 import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
@@ -26,4 +27,5 @@ export const datasets: DatasetDef[] = [
   imdb,
   tweets,
   tinyStories,
+  gpt2,
 ] as const

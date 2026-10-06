@@ -202,6 +202,11 @@ class TinyStoriesTokenizer extends HuggingFaceTokenizer {
   protected prefix = "\n"
 }
 
+// GPT-2 with the original tokenizer.json (<|endoftext|> = 50256), see ml-notebooks/gpt2.py
+class Gpt2Tokenizer extends HuggingFaceTokenizer {
+  protected path = "/data/gpt2/gpt2_tokenizer.json"
+}
+
 class ShakespeareTokenizer extends Tokenizer {
   private chars = " !$&',-.3:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   constructor() {
@@ -217,6 +222,7 @@ export const tokenizers = {
   IMDbTokenizer,
   TweetsTokenizer,
   TinyStoriesTokenizer,
+  Gpt2Tokenizer,
   ShakespeareTokenizer,
 } as const
 

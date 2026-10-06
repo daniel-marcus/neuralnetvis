@@ -1,4 +1,5 @@
 import type * as tf from "@tensorflow/tfjs"
+import { mapGpt2 } from "./gpt2"
 
 // Weights of pretrained models from Hugging Face (model.safetensors) instead of weight files in the repo.
 // Format: 8 bytes header size (little-endian) + JSON header {name: {dtype, shape, data_offsets}} + data,
@@ -51,7 +52,7 @@ export type SafetensorsMapper = {
 }
 
 export const safetensorsMappers = {
-  // gpt2: mapGpt2,
+  gpt2: mapGpt2,
 } satisfies Record<string, SafetensorsMapper>
 
 export type SafetensorsMapperName = keyof typeof safetensorsMappers

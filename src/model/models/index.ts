@@ -94,6 +94,18 @@ const models = defineModels({
     sourceUrl: "https://huggingface.co/roneneldan/TinyStories-3M",
     lazyLoadWeights: true,
   },
+  gpt2: {
+    key: "gpt2",
+    name: "GPT-2",
+    path: "/models/gpt2/model.json", // see ml-notebooks/gpt2.py
+    version: "2.0", // 1.0: weights in the repo, <|endoftext|> = 0
+    sourceUrl: "https://huggingface.co/openai-community/gpt2",
+    lazyLoadWeights: true,
+    safetensors: {
+      url: "https://huggingface.co/openai-community/gpt2/resolve/607a30d783dfa663caf39e06633721c8d4cfcd7e/model.safetensors",
+      mapper: "gpt2",
+    },
+  },
 })
 
 export type ModelKey = keyof typeof models

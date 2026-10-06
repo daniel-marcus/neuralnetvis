@@ -166,3 +166,45 @@ describe("TinyStoriesTokenizer", () => {
     }
   })
 })
+
+describe("Gpt2Tokenizer", () => {
+  const tokenizer = new tokenizers.Gpt2Tokenizer()
+
+  beforeAll(async () => {
+    await tokenizer.init()
+  })
+
+  it("encode should give the same tokens as the Hugging Face tokenizer in gpt2.py", () => {
+    // [50256] + tokenizer.encode(text).ids, original ids: <|endoftext|> = 50256
+    const expected = {
+      "Hello, my name is GPT-2.": [50256, 15496, 11, 616, 1438, 318, 402, 11571, 12, 17, 13],
+      'She said, "I\'m happy!"\n\nThe end.': [
+        50256, 3347, 531, 11, 366, 40, 1101, 3772, 2474, 198, 198, 464, 886, 13,
+      ],
+      "Supercalifragilistic 123 café 🤖": [
+        50256, 12442, 9948, 361, 22562, 346, 2569, 17031, 40304, 12520, 97, 244,
+      ],
+    }
+    for (const [text, tokens] of Object.entries(expected)) {
+      expect(Array.from(tokenizer.encode(text)), text).toEqual(tokens)
+    }
+  })
+
+  it("encode should pad with <|endoftext|> (= <PAD>, <START>, <END>)", () => {
+    const { "<|endoftext|>": end, "<PAD>": pad, "<START>": start } = tokenizer.encodeDict
+    expect([end, pad, start]).toEqual([50256, 50256, 50256])
+    expect(Array.from(tokenizer.encode("Hello", 4))).toEqual([end, 15496, end, end])
+  })
+
+  it("decode should return readable tokens", () => {
+    expect([15496, 11, 616].map(tokenizer.decode)).toEqual(["Hello", ",", " my"])
+    expect(tokenizer.decode(50256)).toBe("<|endoftext|>")
+  })
+
+  it("encode(decodeText(tokens)) should return the same tokens", () => {
+    const text = 'She said, "I\'m happy!"\n\nThe end. Café 🤖'
+    const tokens = Array.from(tokenizer.encode(text, 32))
+    expect(tokenizer.decodeText(tokens)).toBe(text)
+    expect(Array.from(tokenizer.encode(tokenizer.decodeText(tokens), 32))).toEqual(tokens)
+  })
+})
