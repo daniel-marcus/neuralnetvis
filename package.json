@@ -41,6 +41,7 @@
     "@deck.gl/extensions": "^9.4.0",
     "@deck.gl/layers": "^9.4.0",
     "@deck.gl/react": "^9.4.0",
+    "@huggingface/tokenizers": "^0.2.0",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
     "@mediapipe/tasks-vision": "1.0.1",

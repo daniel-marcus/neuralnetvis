@@ -1,4 +1,5 @@
 import type { SupportedTypedArray } from "./types"
+import type { Tokenizer as HFTokenizer } from "@huggingface/tokenizers"
 
 type EncodeDict = { [str: string]: number }
 type DecodeDict = { [token: number]: string }
@@ -138,45 +139,32 @@ class TweetsTokenizer extends WordTokenizer {
   }
 }
 
-// GPT-2 byte-level BPE: the tokens are strings of bytes, each byte mapped to a printable character
-// (e.g. " " -> "Ġ", "\n" -> "Ċ"), see bytes_to_unicode in https://github.com/openai/gpt-2/blob/master/src/encoder.py
-const isPrintableByte = (b: number) =>
-  (b >= 33 && b <= 126) || (b >= 161 && b <= 172) || (b >= 174 && b <= 255)
-const BYTE_TO_CHAR = (() => {
-  let n = 0
-  return Array.from({ length: 256 }, (_, b) =>
-    String.fromCharCode(isPrintableByte(b) ? b : 256 + n++),
-  )
-})()
-const CHAR_TO_BYTE = new Map(BYTE_TO_CHAR.map((char, b) => [char, b]))
-// GPT-2's pre-tokenizer: BPE merges only within these pieces (words with leading space, numbers, ...)
-const PRE_TOKENIZE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu
-
-// TinyStories models (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
-// <|endoftext|> (id 0) is the start, end and padding token, also as <PAD>, <START> and <END>.
-// As in the training data, the story starts after a line break: <|endoftext|> \n Once upon a time ...
-class TinyStoriesTokenizer extends Tokenizer {
-  private vocab: EncodeDict = {} // byte-level token -> id
-  private mergeRanks = new Map<string, number>() // "a b" -> priority (lower: merged first)
-  private cache = new Map<string, number[]>() // pre-tokenized piece -> token ids
+// Hugging Face tokenizers (tokenizer.json format) via Tokenizers.js, loaded only when needed.
+// For now GPT-2's byte-level BPE with <|endoftext|> moved to id 0, the start, end and padding token
+// (also as <PAD>, <START> and <END>), see ml-notebooks/tinystories.py and gpt2.py
+class HuggingFaceTokenizer extends Tokenizer {
+  protected path = "" // tokenizer.json
+  protected prefix = "" // added before each text, as in the training data
+  private hfTokenizer?: HFTokenizer
   private endToken = 0
 
   async init() {
-    // Hugging Face tokenizer.json format
-    const res = await fetch("/data/tinystories/tinystories_tokenizer.json")
-    const { model } = (await res.json()) as { model: { vocab: EncodeDict; merges: string[] } }
-    this.vocab = model.vocab
-    this.mergeRanks = new Map(model.merges.map((merge, rank) => [merge, rank]))
-    this.endToken = model.vocab["<|endoftext|>"]
+    const [{ Tokenizer: HFTokenizer }, tokenizerJson] = await Promise.all([
+      import("@huggingface/tokenizers"),
+      fetch(this.path).then((res) => res.json()),
+    ])
+    this.hfTokenizer = new HFTokenizer(tokenizerJson, {})
+    const vocab = Object.fromEntries(this.hfTokenizer.get_vocab(true)) as EncodeDict
+    this.endToken = vocab["<|endoftext|>"]
     const end = this.endToken
-    this.encodeDict = { ...model.vocab, "<PAD>": end, "<START>": end, "<END>": end }
-    this.decodeDict = this._reverse(model.vocab)
+    this.encodeDict = { ...vocab, "<PAD>": end, "<START>": end, "<END>": end }
+    this.decodeDict = this._reverse(vocab)
   }
 
   public encode(rawText: string, length?: number): Int32Array {
-    const text = "\n" + this.normalize(rawText)
-    const pieces = text.match(PRE_TOKENIZE) ?? []
-    const tokens = [this.endToken, ...pieces.flatMap((piece) => this.bpe(piece))]
+    const text = this.prefix + this.normalize(rawText)
+    const ids = this.hfTokenizer?.encode(text, { add_special_tokens: false }).ids ?? []
+    const tokens = [this.endToken, ...ids]
     const encoded = new Int32Array(length ?? tokens.length).fill(this.endToken) // padding
     encoded.set(tokens.slice(0, encoded.length))
     return encoded
@@ -184,12 +172,12 @@ class TinyStoriesTokenizer extends Tokenizer {
 
   public decode(token: number): string {
     if (token === this.endToken) return this.decodeDict[token]
-    return this.decodeBytes([token])
+    return this.decodeIds([token])
   }
 
   public decodeText(tokens: ArrayLike<number>): string {
-    const text = this.decodeBytes(Array.from(tokens).filter((t) => t !== this.endToken))
-    return text.replace(/^\n/, "") // added by encode
+    const text = this.decodeIds(Array.from(tokens).filter((t) => t !== this.endToken))
+    return text.startsWith(this.prefix) ? text.slice(this.prefix.length) : text // added by encode
   }
 
   public append(text: string, token: number): string {
@@ -201,32 +189,17 @@ class TinyStoriesTokenizer extends Tokenizer {
     return rawText.replaceAll("\r\n", "\n")
   }
 
-  private bpe(piece: string): number[] {
-    const cached = this.cache.get(piece)
-    if (cached) return cached
-    let parts = Array.from(new TextEncoder().encode(piece), (b) => BYTE_TO_CHAR[b])
-    // merge the adjacent pair with the highest priority until no more merges apply
-    while (parts.length > 1) {
-      let best = -1
-      let bestRank = Infinity
-      for (let i = 0; i < parts.length - 1; i++) {
-        const rank = this.mergeRanks.get(`${parts[i]} ${parts[i + 1]}`)
-        if (rank !== undefined && rank < bestRank) [best, bestRank] = [i, rank]
-      }
-      if (best < 0) break
-      parts = [...parts.slice(0, best), parts[best] + parts[best + 1], ...parts.slice(best + 2)]
-    }
-    const ids = parts.map((part) => this.vocab[part]) // single bytes are always in the vocabulary
-    this.cache.set(piece, ids)
-    return ids
+  private decodeIds(ids: number[]): string {
+    // no clean up: would remove spaces before punctuation, e.g. " ," -> ","
+    return this.hfTokenizer?.decode(ids, { clean_up_tokenization_spaces: false }) ?? ""
   }
+}
 
-  private decodeBytes(tokens: number[]): string {
-    const bytes = tokens.flatMap((t) =>
-      Array.from(this.decodeDict[t] ?? "", (char) => CHAR_TO_BYTE.get(char) ?? 0),
-    )
-    return new TextDecoder().decode(new Uint8Array(bytes))
-  }
+// TinyStories models (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
+// As in the training data, the story starts after a line break: <|endoftext|> \n Once upon a time ...
+class TinyStoriesTokenizer extends HuggingFaceTokenizer {
+  protected path = "/data/tinystories/tinystories_tokenizer.json"
+  protected prefix = "\n"
 }
 
 class ShakespeareTokenizer extends Tokenizer {
