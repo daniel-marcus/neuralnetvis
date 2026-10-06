@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useTransition, useState, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
-import { useGlobalStore, setStatus, useSceneStore, clearStatus } from "@/store"
+import { useGlobalStore, setStatus, useSceneStore, clearStatus, isDebug } from "@/store"
+import { fetchWithProgress, type OnProgressCb } from "@/data/npy-loader"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
 import { useKeyCommand } from "@/utils/key-command"
@@ -75,16 +76,60 @@ async function getPretrained(
     return { model, loadState: "full" }
   }
   try {
-    const statusId = setStatus(`Loading model weights ...`, -1)
-    const model = await tf.loadLayersModel(path, { streamWeights: noWeights })
-    if (!noWeights) {
-      await model.save(dbPath)
+    if (noWeights) {
+      const model = await tf.loadLayersModel(path, { streamWeights: true })
+      return { model, loadState: "no-weights" }
     }
+    const statusId = setStatus(`Loading model weights ...`, 0)
+    const time = getTimer()
+    // download first (with progress), then build the model: tfjs creates all variables with random
+    // initial values before assigning the weights, see loadLayersModelFromIOHandler
+    const fetchFunc = getFetchWithProgress((percent) =>
+      setStatus(`Loading model weights (${Math.round(percent * 100)}%)`, percent, {
+        id: statusId,
+      }),
+    )
+    const artifacts = await tf.io.http(path, { fetchFunc }).load?.()
+    if (!artifacts) throw new Error("No model artifacts")
+    time("download")
+    setStatus(`Initializing model ...`, -1, { id: statusId })
+    const model = await tf.loadLayersModel(tf.io.fromMemory(artifacts))
+    time("init")
+    setStatus(`Saving model to cache ...`, -1, { id: statusId })
+    await model.save(dbPath)
+    time("cache")
     clearStatus(statusId)
-    return { model, loadState: noWeights ? "no-weights" : "full" }
+    return { model, loadState: "full" }
   } catch (e) {
     console.warn("Failed to load pretrained model from", path, e)
     return { model: undefined, loadState: null }
+  }
+}
+
+// fetch with the progress of all weight files (bytes), model.json is not counted
+function getFetchWithProgress(onProgress: (percent: number) => void) {
+  const loaded: Record<string, number> = {}
+  const total: Record<string, number> = {}
+  const cb: OnProgressCb = ({ path, loadedBytes, totalBytes }) => {
+    loaded[path] = loadedBytes
+    total[path] = totalBytes
+    onProgress(sum(loaded) / sum(total))
+  }
+  return (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = input instanceof Request ? input.url : input.toString()
+    const isWeights = !new URL(url, location.href).pathname.endsWith(".json")
+    return isWeights ? fetchWithProgress(url, cb, init) : fetch(input, init)
+  }
+}
+
+const sum = (bytes: Record<string, number>) => Object.values(bytes).reduce((a, b) => a + b, 0)
+
+function getTimer() {
+  let last = performance.now()
+  return (step: string) => {
+    const now = performance.now()
+    if (isDebug()) console.log(`model ${step}: ${Math.round(now - last)}ms`)
+    last = now
   }
 }
 

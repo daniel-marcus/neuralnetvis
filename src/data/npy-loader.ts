@@ -40,14 +40,18 @@ export async function fetchMultipleNpzWithProgress(paths: string[], silent?: boo
   return allParsed
 }
 
-type OnProgressCb = (arg: {
+export type OnProgressCb = (arg: {
   path: string
   percent: number
   loadedBytes: number
   totalBytes: number
 }) => void
 
-async function fetchWithProgress(path: string, onProgress?: OnProgressCb, opts?: RequestInit) {
+export async function fetchWithProgress(
+  path: string,
+  onProgress?: OnProgressCb,
+  opts?: RequestInit,
+) {
   const response = await fetch(path, opts)
   const contentLength = response.headers.get("Content-Length")
   if (!contentLength || !response.body) {
