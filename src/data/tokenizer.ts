@@ -140,8 +140,8 @@ class TweetsTokenizer extends WordTokenizer {
 }
 
 // Hugging Face tokenizers (tokenizer.json format) via Tokenizers.js, loaded only when needed.
-// For now GPT-2's byte-level BPE with <|endoftext|> moved to id 0, the start, end and padding token
-// (also as <PAD>, <START> and <END>), see ml-notebooks/tinystories.py and gpt2.py
+// For now GPT-2's byte-level BPE with <|endoftext|> as the start, end and padding token (also as <PAD>,
+// <START> and <END>), its id is read from the vocabulary, see ml-notebooks/tinystories.py and gpt2.py
 class HuggingFaceTokenizer extends Tokenizer {
   protected path = "" // tokenizer.json
   protected prefix = "" // added before each text, as in the training data

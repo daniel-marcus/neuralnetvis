@@ -52,31 +52,36 @@ export async function getCachedFetch(version: string, onProgress?: (percent: num
 const sum = (bytes: Record<string, number>) => Object.values(bytes).reduce((a, b) => a + b, 0)
 
 // all files of the model in the cache (model.json + all weight files)
-export async function isModelCached({ path, version }: ModelDef) {
+export async function isModelCached({ path, version, safetensors }: ModelDef) {
   const cache = await openCache()
   const modelJson = await cache?.match(getCacheKey(path, version))
   if (!cache || !modelJson) return false
   const { weightsManifest = [] } = (await modelJson.json()) as tf.io.ModelJSON
-  const weightPaths = weightsManifest.flatMap((group) => group.paths)
-  const hits = await Promise.all(
-    weightPaths.map((p) =>
-      cache.match(getCacheKey(new URL(p, new URL(path, location.href)).href, version)),
-    ),
-  )
+  const modelUrl = new URL(path, location.href)
+  const weightUrls = safetensors
+    ? [safetensors.url]
+    : weightsManifest.flatMap((group) => group.paths).map((p) => new URL(p, modelUrl).href)
+  const hits = await Promise.all(weightUrls.map((url) => cache.match(getCacheKey(url, version))))
   return hits.every(Boolean)
 }
 
-// removes the files of other versions of the model (same directory, other ?v=)
-export async function removeOldVersions({ path, version }: ModelDef) {
+// removes the files of other versions of the model (same directory or safetensors file, other ?v=)
+export async function removeOldVersions({ path, version, safetensors }: ModelDef) {
   const cache = await openCache()
   if (!cache) return
-  const modelDir = new URL(".", new URL(path, location.href)).pathname
+  const modelDir = new URL(".", new URL(path, location.href)).href
+  const safetensorsUrl = safetensors && withoutVersion(new URL(safetensors.url))
   for (const request of await cache.keys()) {
     const url = new URL(request.url)
-    if (url.pathname.startsWith(modelDir) && url.searchParams.get("v") !== version) {
-      await cache.delete(request)
-    }
+    const isModelFile = url.href.startsWith(modelDir) || withoutVersion(url) === safetensorsUrl
+    if (isModelFile && url.searchParams.get("v") !== version) await cache.delete(request)
   }
+}
+
+function withoutVersion(url: URL) {
+  const u = new URL(url)
+  u.searchParams.delete("v")
+  return u.href
 }
 
 // models that were cached with model.save() in IndexedDB before (user models are not prefixed with nnv_)

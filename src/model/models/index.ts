@@ -1,3 +1,5 @@
+import type { SafetensorsMapperName } from "@/model/safetensors"
+
 export interface ModelDef {
   key: string
   name?: string // official name, e.g. for external models
@@ -5,6 +7,8 @@ export interface ModelDef {
   version: string
   sourceUrl?: string
   lazyLoadWeights?: boolean
+  // weights from a safetensors file (e.g. Hugging Face) instead of the weight files in model.json
+  safetensors?: { url: string; mapper: SafetensorsMapperName }
   // dsKey?: string
 }
 

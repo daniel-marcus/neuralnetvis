@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useTransition, useState, useRef } from "react"
 import * as tf from "@tensorflow/tfjs"
 import { useGlobalStore, setStatus, useSceneStore, clearStatus, isDebug } from "@/store"
+import { getWeightsFromSafetensors } from "./safetensors"
 import { getCachedFetch, isModelCached, removeLegacyCache, removeOldVersions } from "./model-cache"
 import { ExtLink } from "@/components/ui-elements/buttons"
 import { useHasLesson } from "@/components/lesson"
@@ -67,12 +68,14 @@ async function getPretrained(
   modelDef: ModelDef,
   noWeights?: boolean,
 ): Promise<GetPretrainedModelResult> {
-  const { path, version } = modelDef
+  const { path, version, safetensors } = modelDef
   removeLegacyCache()
   try {
     // weights already downloaded: load the full model also for previews
     if (noWeights && !(await isModelCached(modelDef))) {
-      const model = await tf.loadLayersModel(path, { streamWeights: true })
+      const model = safetensors
+        ? await loadTopologyOnly(path) // no weight files for tfjs
+        : await tf.loadLayersModel(path, { streamWeights: true })
       return { model, loadState: "no-weights" }
     }
     const statusId = setStatus(`Loading model weights ...`, 0)
@@ -84,10 +87,22 @@ async function getPretrained(
         id: statusId,
       }),
     )
-    const artifacts = await tf.io.http(path, { fetchFunc }).load?.()
-    if (!artifacts) throw new Error("No model artifacts")
-    time("download")
-    setStatus(`Initializing model ...`, -1, { id: statusId })
+    let artifacts: tf.io.ModelArtifacts | undefined
+    if (safetensors) {
+      const modelJson = (await (await fetchFunc(path)).json()) as tf.io.ModelJSON
+      const weightsBuffer = await (await fetchFunc(safetensors.url)).arrayBuffer()
+      time("download")
+      setStatus(`Initializing model ...`, -1, { id: statusId })
+      const weightSpecs = modelJson.weightsManifest.flatMap((group) => group.weights)
+      const weightData = getWeightsFromSafetensors(weightsBuffer, weightSpecs, safetensors.mapper)
+      artifacts = { modelTopology: modelJson.modelTopology, weightSpecs, weightData }
+      time("mapping")
+    } else {
+      artifacts = await tf.io.http(path, { fetchFunc }).load?.()
+      if (!artifacts) throw new Error("No model artifacts")
+      time("download")
+      setStatus(`Initializing model ...`, -1, { id: statusId })
+    }
     const model = await tf.loadLayersModel(tf.io.fromMemory(artifacts))
     time("init")
     clearStatus(statusId)
@@ -97,6 +112,12 @@ async function getPretrained(
     console.warn("Failed to load pretrained model from", path, e)
     return { model: undefined, loadState: null }
   }
+}
+
+// model with random initial weights
+async function loadTopologyOnly(path: string) {
+  const { modelTopology } = (await (await fetch(path)).json()) as tf.io.ModelJSON
+  return tf.loadLayersModel(tf.io.fromMemory({ modelTopology }))
 }
 
 function getTimer() {
