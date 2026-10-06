@@ -53,6 +53,11 @@ export async function fetchWithProgress(
   opts?: RequestInit,
 ) {
   const response = await fetch(path, opts)
+  return withProgress(response, path, onProgress)
+}
+
+// reports the progress while the body is read (e.g. by response.arrayBuffer())
+export function withProgress(response: Response, path: string, onProgress?: OnProgressCb) {
   const contentLength = response.headers.get("Content-Length")
   if (!contentLength || !response.body) {
     console.error("Content-Length header or body not available.")
