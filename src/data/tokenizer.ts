@@ -198,13 +198,13 @@ class HuggingFaceTokenizer extends Tokenizer {
 // TinyStories models (GPT-Neo) with a smaller vocabulary, see ml-notebooks/tinystories.py
 // As in the training data, the story starts after a line break: <|endoftext|> \n Once upon a time ...
 class TinyStoriesTokenizer extends HuggingFaceTokenizer {
-  protected path = "/data/tinystories/tinystories_tokenizer.json"
+  protected path = "/models/tinystories/tokenizer.json"
   protected prefix = "\n"
 }
 
 // GPT-2 with the original tokenizer.json (<|endoftext|> = 50256), see ml-notebooks/gpt2.py
 class Gpt2Tokenizer extends HuggingFaceTokenizer {
-  protected path = "/data/gpt2/gpt2_tokenizer.json"
+  protected path = "/models/gpt2/tokenizer.json"
 }
 
 class ShakespeareTokenizer extends Tokenizer {
