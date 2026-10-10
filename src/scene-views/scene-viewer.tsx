@@ -19,7 +19,7 @@ import { LoadWeightsButton, SceneButtons } from "./scene-buttons"
 import { DrawArea } from "@/data/draw-area"
 import { TextArea } from "@/data/text-area"
 import { LayerWheel } from "./layer-wheel"
-import { NeuronStatus } from "./neuron-status"
+import { NeuronInspector } from "./neuron-inspector/neuron-inspector"
 import { Portal } from "@/utils/portal"
 import { useDomRefs } from "@/utils/dom-refs"
 import { SampleViewer } from "./sample-viewer"
@@ -51,7 +51,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showSampleViewer = isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
-  const { neuronStatusRef, sampleViewerRef } = useDomRefs()
+  const { neuronInspectorRef, sampleViewerRef } = useDomRefs()
   const inputAreaShown = useSceneStore((s) => s.inputAreaShown)
   return (
     <div
@@ -93,8 +93,8 @@ function SceneViewerInner(props: SceneViewerProps) {
         </Portal>
       )}
       {section === "play" && isActive && (
-        <Portal target={neuronStatusRef}>
-          <NeuronStatus />
+        <Portal target={neuronInspectorRef}>
+          <NeuronInspector />
         </Portal>
       )}
     </div>

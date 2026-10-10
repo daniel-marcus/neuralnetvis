@@ -24,7 +24,7 @@ export interface FeatureVisOptions {
   inputRange?: [number, number] // value range of the model input, see imageInputRanges
   sliceMs?: number
   shouldAbort?: () => boolean
-  onProgress?: (featureVis: FeatureVis) => void
+  onProgress?: (featureVis: FeatureVis, progress: number) => void // progress: 0..1
   progressEvery?: number // steps
 }
 
@@ -127,7 +127,7 @@ export async function maximizeActivation(
         [z],
       )
       if (onProgress && step > 0 && step % progressEvery === 0) {
-        onProgress(await getResult())
+        onProgress(await getResult(), step / steps)
         if (shouldAbort?.()) return
       }
     }
