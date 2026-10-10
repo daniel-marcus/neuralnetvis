@@ -14,9 +14,9 @@ import type { NeuronStateful } from "@/neuron-layers/types"
 type NeuronView = "weights" | "featureVis" | "topSamples"
 
 const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
+  { value: "topSamples", label: "Top samples" },
   { value: "weights", label: "Weights" },
   { value: "featureVis", label: "Preferred input" },
-  { value: "topSamples", label: "Top samples" },
 ]
 
 export const NeuronInspector = () => {
@@ -31,7 +31,7 @@ export const NeuronInspector = () => {
   const preprocessFunc = useSceneStore((s) => s.ds?.preprocessFunc)
   const totalSamples = useSceneStore((s) => s.totalSamples(s.subset))
   const highlightProp = useGlobalStore((s) => s.scene?.getState().vis?.highlightProp)
-  const [view, setView] = useState<NeuronView>("weights")
+  const [view, setView] = useState<NeuronView>("topSamples")
   const handleClick = (e: React.MouseEvent) => {
     if (e.target instanceof Element && e.target.closest("button, select")) return // controls don't deselect
     toggleSelected(undefined)
