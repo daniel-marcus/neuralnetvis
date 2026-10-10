@@ -70,7 +70,7 @@ export const NeuronInspector = () => {
           {currView === "featureVis" && inputRange ? (
             <FeatureVisViewer neuron={selected} inputRange={inputRange} />
           ) : currView === "topSamples" ? (
-            <TopSamplesViewer neuron={selected} />
+            <TopSamplesViewer key={selected.nid} neuron={selected} />
           ) : (
             <WeightsViewer neuron={selected} />
           )}

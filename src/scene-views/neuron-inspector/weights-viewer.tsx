@@ -3,7 +3,7 @@ import { SphereGeometry } from "three/webgpu"
 import { normalizeWithSign } from "@/data/utils"
 import { getActColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
-import { ViewerSlot } from "./viewer-slot"
+import { Pager, ViewerSlot } from "./viewer-slot"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
 export const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
@@ -28,34 +28,12 @@ export const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
       : [sqr, sqr] // 1D Dense to square
   const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
 
-  const prev = () => setCurrGroup((g) => (g - 1 + groupCount) % groupCount)
-  const next = () => setCurrGroup((g) => (g + 1) % groupCount)
   const maxGroupsPerView = isScreenSm ? 16 : 4
   const needsShifter = groupCount > maxGroupsPerView
   return (
     <ViewerSlot
       footer={
-        needsShifter && (
-          <div className="w-full flex justify-between">
-            <button
-              disabled={currGroup === 0}
-              className="hover:text-white disabled:opacity-0"
-              onClick={prev}
-              aria-label="previous"
-            >
-              &lt;--
-            </button>
-            <div>{currGroup + 1}</div>
-            <button
-              disabled={currGroup === groupCount - 1}
-              className="hover:text-white disabled:opacity-0"
-              onClick={next}
-              aria-label="next"
-            >
-              --&gt;
-            </button>
-          </div>
-        )
+        needsShifter && <Pager page={currGroup} numPages={groupCount} setPage={setCurrGroup} />
       }
     >
       <div

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useSceneStore } from "@/store"
 import { getReceptiveField } from "@/model/feature-vis"
 import { getTopSamples } from "@/model/top-samples"
-import { AsciiProgress, ViewerSlot } from "./viewer-slot"
+import { AsciiProgress, Pager, ViewerSlot } from "./viewer-slot"
 import { ImageCanvas } from "./image-canvas"
 import type { LayersModel } from "@tensorflow/tfjs"
 import type { TopSample } from "@/model/top-samples"
@@ -11,6 +11,8 @@ import type { NeuronStateful } from "@/neuron-layers/types"
 export const MIN_SAMPLES = 50 // top samples of a handful of samples don't say much
 
 const SCAN_DELAY = 300 // ms, hovered neurons change quickly
+const PAGE_SIZE = 9
+const NUM_PAGES = 4
 
 type CacheKey = string // `${ds.key}_${subset}_${totalSamples}_${nid}`
 
@@ -40,6 +42,7 @@ function useTopSamples(neuron: NeuronStateful) {
     let aborted = false
     const timeout = setTimeout(async () => {
       const samples = await getTopSamples(model, tfLayer, index, ds, subset, {
+        k: PAGE_SIZE * NUM_PAGES,
         shouldAbort: () => aborted,
         onProgress: (progress, preview) =>
           !aborted && setCurrent({ key, samples: preview, progress }),
@@ -60,8 +63,15 @@ function useTopSamples(neuron: NeuronStateful) {
 }
 
 // samples from the dataset that activate the neuron the most, cropped to its receptive field
+// expects a key per neuron, so that the page is reset
 export const TopSamplesViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const { samples, progress } = useTopSamples(neuron)
+  const [page, setPage] = useState(0)
+  const isScanning = progress < 1
+  const numPages = Math.ceil(samples.length / PAGE_SIZE)
+  const currPage = isScanning ? 0 : Math.min(page, Math.max(numPages - 1, 0)) // paging after the scan
+  const start = currPage * PAGE_SIZE
+  const pageSamples = samples.slice(start, start + PAGE_SIZE)
   const inputDims = useSceneStore((s) => s.ds?.inputDims)
   const currSampleIdx = useSceneStore((s) => s.sampleIdx)
   const setSampleIdx = useSceneStore((s) => s.setSampleIdx)
@@ -71,10 +81,25 @@ export const TopSamplesViewer = ({ neuron }: { neuron: NeuronStateful }) => {
     [tfLayer, neuron.index, inputDims],
   )
   return (
-    <ViewerSlot footer={progress < 1 && <AsciiProgress progress={progress} />}>
+    <ViewerSlot
+      footer={
+        isScanning ? (
+          <AsciiProgress progress={progress} />
+        ) : (
+          numPages > 1 && (
+            <Pager
+              page={currPage}
+              numPages={numPages}
+              setPage={setPage}
+              label={`${start + 1}-${start + pageSamples.length}`}
+            />
+          )
+        )
+      }
+    >
       <div className="w-full self-stretch grid grid-cols-3 grid-rows-3 gap-1">
         {!!inputDims &&
-          samples.map(({ sampleIdx, X }) => (
+          pageSamples.map(({ sampleIdx, X }) => (
             <button
               key={sampleIdx}
               className={`relative min-h-0 border ${

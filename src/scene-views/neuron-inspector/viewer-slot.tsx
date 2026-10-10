@@ -32,3 +32,32 @@ export const AsciiProgress = ({ progress }: { progress: number }) => (
     </span>
   </div>
 )
+
+interface PagerProps {
+  page: number // 0-based
+  numPages: number
+  setPage: (page: number) => void
+  label?: React.ReactNode // default: page number
+}
+
+export const Pager = ({ page, numPages, setPage, label = page + 1 }: PagerProps) => (
+  <div className="w-full flex justify-between">
+    <button
+      disabled={page === 0}
+      className="hover:text-white disabled:opacity-0"
+      onClick={() => setPage(page - 1)}
+      aria-label="previous"
+    >
+      &lt;--
+    </button>
+    <div>{label}</div>
+    <button
+      disabled={page === numPages - 1}
+      className="hover:text-white disabled:opacity-0"
+      onClick={() => setPage(page + 1)}
+      aria-label="next"
+    >
+      --&gt;
+    </button>
+  </div>
+)
