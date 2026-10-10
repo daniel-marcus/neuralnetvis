@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useSceneStore } from "@/store"
 import { maximizeActivation } from "@/model/feature-vis"
-import { ViewerSlot } from "./viewer-slot"
+import { AsciiProgress, ViewerSlot } from "./viewer-slot"
+import { ImageCanvas } from "./image-canvas"
 import type { FeatureVis } from "@/model/feature-vis"
 import type { NeuronStateful, Nid } from "@/neuron-layers/types"
 
@@ -42,34 +43,14 @@ interface FeatureVisViewerProps {
 
 export const FeatureVisViewer = ({ neuron, inputRange }: FeatureVisViewerProps) => {
   const { featureVis, progress } = useFeatureVis(neuron, inputRange)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    if (!canvas || !ctx || !featureVis) return
-    const { data, shape, receptiveField: rf } = featureVis
-    const [, width, channels] = shape
-    canvas.width = rf.width
-    canvas.height = rf.height
-    const imageData = ctx.createImageData(rf.width, rf.height)
-    for (let y = 0; y < rf.height; y++) {
-      for (let x = 0; x < rf.width; x++) {
-        const src = ((rf.y + y) * width + rf.x + x) * channels
-        const dst = (y * rf.width + x) * 4
-        for (let c = 0; c < 3; c++) {
-          imageData.data[dst + c] = data[src + (channels === 1 ? 0 : c)] * 255
-        }
-        imageData.data[dst + 3] = 255
-      }
-    }
-    ctx.putImageData(imageData, 0, 0)
-  }, [featureVis])
   return (
     <ViewerSlot footer={progress < 1 && <AsciiProgress progress={progress} />}>
       {featureVis ? (
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full object-contain [image-rendering:pixelated]"
+        <ImageCanvas
+          data={featureVis.data}
+          shape={featureVis.shape}
+          crop={featureVis.receptiveField}
+          className="w-full h-full object-contain"
         />
       ) : (
         <Noise />
@@ -77,23 +58,6 @@ export const FeatureVisViewer = ({ neuron, inputRange }: FeatureVisViewerProps) 
     </ViewerSlot>
   )
 }
-
-// as ProgressBar / Slider: clipped rows of block characters instead of measuring the available width
-const AsciiProgress = ({ progress }: { progress: number }) => (
-  <div
-    className="absolute top-1 inset-x-0 overflow-hidden whitespace-nowrap leading-none select-none"
-    role="progressbar"
-    aria-valuenow={Math.round(progress * 100)}
-  >
-    {"░".repeat(100)}
-    <span
-      className="absolute top-0 left-0 overflow-hidden text-marker"
-      style={{ width: `${progress * 100}%` }}
-    >
-      {"█".repeat(100)}
-    </span>
-  </div>
-)
 
 const NOISE_CHARS = "░░░▒▒▓"
 const NOISE_SIZE = [30, 40] // rows, cols: more than fit into the slot, the rest is clipped

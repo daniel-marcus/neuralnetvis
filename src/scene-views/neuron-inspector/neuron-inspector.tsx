@@ -8,16 +8,16 @@ import { imageInputRanges } from "@/data/preprocess"
 import { GRID_STYLE } from "./viewer-slot"
 import { WeightsViewer } from "./weights-viewer"
 import { FeatureVisViewer } from "./feature-vis"
+import { MIN_SAMPLES, TopSamplesViewer } from "./top-samples"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
-type NeuronView = "weights" | "featureVis"
+type NeuronView = "weights" | "featureVis" | "topSamples"
 
 const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
   { value: "weights", label: "Weights" },
   { value: "featureVis", label: "Preferred input" },
+  { value: "topSamples", label: "Top samples" },
 ]
-
-const INTERACTIVE_TAGS = ["BUTTON", "SELECT", "OPTION"] // clicks that don't deselect the neuron
 
 export const NeuronInspector = () => {
   const _hovered = useHovered()
@@ -29,10 +29,11 @@ export const NeuronInspector = () => {
   const visLocked = useSceneStore((s) => s.vis.isLocked)
   const model = useSceneStore((s) => s.model)
   const preprocessFunc = useSceneStore((s) => s.ds?.preprocessFunc)
+  const totalSamples = useSceneStore((s) => s.totalSamples(s.subset))
   const highlightProp = useGlobalStore((s) => s.scene?.getState().vis?.highlightProp)
   const [view, setView] = useState<NeuronView>("weights")
   const handleClick = (e: React.MouseEvent) => {
-    if ("tagName" in e.target && INTERACTIVE_TAGS.includes(e.target.tagName as string)) return
+    if (e.target instanceof Element && e.target.closest("button, select")) return // controls don't deselect
     toggleSelected(undefined)
   }
   if (!selected || (hasLesson && visLocked)) return null
@@ -40,7 +41,11 @@ export const NeuronInspector = () => {
   const hasFeatureVis = !!model && !!inputRange && supportsFeatureVis(model, selected.layer.tfLayer)
   const hasWeights =
     !!selected.weights?.length && !!selected.layer.prevLayer && highlightProp !== "weights" // will be duplication
-  const currView = hasWeights && hasFeatureVis ? view : hasFeatureVis ? "featureVis" : "weights"
+  const hasTopSamples =
+    !!model && !!inputRange && selected.layer.layerPos !== "input" && totalSamples >= MIN_SAMPLES
+  const isAvailable = { weights: hasWeights, featureVis: hasFeatureVis, topSamples: hasTopSamples }
+  const options = VIEW_OPTIONS.filter((o) => isAvailable[o.value])
+  const currView = isAvailable[view] ? view : options[0]?.value
   return (
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${
@@ -48,22 +53,24 @@ export const NeuronInspector = () => {
       } pointer-events-auto [&:active:not(:has(button:active,select:active))]:brightness-120`}
       onClick={handleClick}
     >
-      {(hasWeights || hasFeatureVis) && (
+      {!!currView && (
         <div
           className="shrink-0 w-(--grid-width) sm:w-(--grid-width-sm) mb-[0.3em]"
           style={GRID_STYLE}
         >
-          {hasWeights && hasFeatureVis && (
+          {options.length > 1 && (
             <Select
               className="mb-2"
               label="Neuron view"
-              options={VIEW_OPTIONS}
+              options={options}
               value={currView}
               onChange={(val) => setView(val as NeuronView)}
             />
           )}
           {currView === "featureVis" && inputRange ? (
             <FeatureVisViewer neuron={selected} inputRange={inputRange} />
+          ) : currView === "topSamples" ? (
+            <TopSamplesViewer neuron={selected} />
           ) : (
             <WeightsViewer neuron={selected} />
           )}
