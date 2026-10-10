@@ -7,7 +7,10 @@ import { getActColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
-import type { NeuronStateful } from "@/neuron-layers/types"
+import { maximizeActivation, supportsFeatureVis } from "@/model/feature-vis"
+import type { LayersModel } from "@tensorflow/tfjs"
+import type { FeatureVis } from "@/model/feature-vis"
+import type { NeuronStateful, Nid } from "@/neuron-layers/types"
 
 export const NeuronStatus = () => {
   const _hovered = useHovered()
@@ -17,11 +20,14 @@ export const NeuronStatus = () => {
   const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
   const hasLesson = useHasLesson()
   const visLocked = useSceneStore((s) => s.vis.isLocked)
+  const model = useSceneStore((s) => s.model)
+  const [showFeatureVis, setShowFeatureVis] = useState(false)
   const handleClick = (e: React.MouseEvent) => {
     if ("tagName" in e.target && e.target.tagName === "BUTTON") return
     toggleSelected(undefined)
   }
   if (!selected || (hasLesson && visLocked)) return null
+  const hasFeatureVis = !!model && supportsFeatureVis(model, selected.layer.tfLayer)
   return (
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${
@@ -29,7 +35,16 @@ export const NeuronStatus = () => {
       } pointer-events-auto active:brightness-120`}
       onClick={handleClick}
     >
-      <WeightsViewer neuron={selected} />
+      {hasFeatureVis && showFeatureVis ? (
+        <FeatureVisViewer neuron={selected} />
+      ) : (
+        <WeightsViewer neuron={selected} />
+      )}
+      {hasFeatureVis && (
+        <button onClick={() => setShowFeatureVis((v) => !v)}>
+          {showFeatureVis ? "show weights" : "show preferred input"}
+        </button>
+      )}
       <NeuronInfo neuron={selected} />
     </div>
   )
@@ -47,6 +62,85 @@ const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
   return (
     <div className="w-full">
       <Table data={data} />
+    </div>
+  )
+}
+
+const GRID_STYLE = {
+  "--grid-width": "calc(4 * 1em * 1.5 - 0.6em)",
+  "--grid-width-sm": "199px",
+} as React.CSSProperties
+
+const FEATURE_VIS_DELAY = 300 // ms, hovered neurons change quickly
+
+// reset when the weights change (training)
+const featureVisCache = new WeakMap<LayersModel, Map<Nid, FeatureVis>>()
+
+function useFeatureVis(neuron: NeuronStateful) {
+  const model = useSceneStore((s) => s.model)
+  const isTraining = useSceneStore((s) => s.isTraining)
+  const [current, setCurrent] = useState<{ nid: Nid; featureVis: FeatureVis }>()
+  const { nid, index } = neuron
+  const { tfLayer } = neuron.layer
+  useEffect(() => {
+    if (!model) return
+    if (isTraining) {
+      featureVisCache.delete(model)
+      return
+    }
+    if (featureVisCache.get(model)?.has(nid)) return
+    let aborted = false
+    const timeout = setTimeout(async () => {
+      const featureVis = await maximizeActivation(model, tfLayer, index, {
+        shouldAbort: () => aborted,
+        onProgress: (preview) => !aborted && setCurrent({ nid, featureVis: preview }),
+      })
+      if (!featureVis || aborted) return
+      if (!featureVisCache.has(model)) featureVisCache.set(model, new Map())
+      featureVisCache.get(model)!.set(nid, featureVis)
+      setCurrent({ nid, featureVis })
+    }, FEATURE_VIS_DELAY)
+    return () => {
+      aborted = true
+      clearTimeout(timeout)
+    }
+  }, [model, isTraining, nid, index, tfLayer])
+  const cached = model ? featureVisCache.get(model)?.get(nid) : undefined
+  return cached ?? (current?.nid === nid ? current.featureVis : undefined)
+}
+
+// generated input that activates the neuron the most, cropped to its receptive field
+const FeatureVisViewer = ({ neuron }: { neuron: NeuronStateful }) => {
+  const featureVis = useFeatureVis(neuron)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext("2d")
+    if (!canvas || !ctx || !featureVis) return
+    const { data, shape, receptiveField: rf } = featureVis
+    const [, width, channels] = shape
+    canvas.width = rf.width
+    canvas.height = rf.height
+    const imageData = ctx.createImageData(rf.width, rf.height)
+    for (let y = 0; y < rf.height; y++) {
+      for (let x = 0; x < rf.width; x++) {
+        const src = ((rf.y + y) * width + rf.x + x) * channels
+        const dst = (y * rf.width + x) * 4
+        for (let c = 0; c < 3; c++) {
+          imageData.data[dst + c] = data[src + (channels === 1 ? 0 : c)] * 255
+        }
+        imageData.data[dst + 3] = 255
+      }
+    }
+    ctx.putImageData(imageData, 0, 0)
+  }, [featureVis])
+  return (
+    <div className="shrink-0 w-(--grid-width) sm:w-(--grid-width-sm) mb-[0.3em]" style={GRID_STYLE}>
+      {featureVis ? (
+        <canvas ref={canvasRef} className="w-full [image-rendering:pixelated]" />
+      ) : (
+        <div className="aspect-square flex items-center justify-center">…</div>
+      )}
     </div>
   )
 }
@@ -82,12 +176,7 @@ const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   return (
     <div
       className="shrink-0 w-(--grid-width) sm:w-(--grid-width-sm) overflow-hidden mb-[0.3em]"
-      style={
-        {
-          "--grid-width": "calc(4 * 1em * 1.5 - 0.6em)",
-          "--grid-width-sm": "199px",
-        } as React.CSSProperties
-      }
+      style={GRID_STYLE}
     >
       <div className={`${needsShifter ? "block" : "hidden"} flex justify-center gap-4`}>
         <button disabled={currGroup === 0} className={"disabled:opacity-0"} onClick={prev}>
