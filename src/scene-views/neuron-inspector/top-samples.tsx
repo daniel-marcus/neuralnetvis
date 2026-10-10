@@ -74,13 +74,13 @@ export const TopSamplesViewer = ({ neuron }: { neuron: NeuronStateful }) => {
     <ViewerSlot footer={progress < 1 && <AsciiProgress progress={progress} />}>
       <div className="w-full self-stretch grid grid-cols-3 grid-rows-3 gap-1">
         {!!inputDims &&
-          samples.map(({ sampleIdx, activation, X }) => (
+          samples.map(({ sampleIdx, X }) => (
             <button
               key={sampleIdx}
               className={`relative min-h-0 border ${
                 sampleIdx === currSampleIdx ? "border-marker" : "border-transparent"
               } hover:border-white`}
-              title={`#${sampleIdx}: ${activation.toFixed(2)}`}
+              title={`#${sampleIdx}`}
               onClick={() => setSampleIdx(sampleIdx)}
             >
               <ImageCanvas

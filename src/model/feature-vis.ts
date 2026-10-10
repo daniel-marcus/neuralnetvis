@@ -28,13 +28,16 @@ export interface FeatureVisOptions {
   progressEvery?: number // steps
 }
 
-type Objective = (layerInput: tf.Tensor) => tf.Scalar
-
 export function supportsFeatureVis(model: tf.LayersModel, tfLayer: tf.layers.Layer) {
   if (model.inputs.length !== 1) return false
   const [, height, width, channels] = model.inputs[0].shape
   if (!height || !width || (channels !== 1 && channels !== 3)) return false
   if (model.inputs[0].shape.length !== 4) return false
+  return hasWeightedInput(tfLayer)
+}
+
+// layers where the weighted input of a single neuron can be computed, see getWeightedInput
+export function hasWeightedInput(tfLayer: tf.layers.Layer) {
   const className = tfLayer.getClassName()
   if (className === "Conv2D") return tfLayer.getConfig().dataFormat !== "channelsFirst"
   if (className === "Dense") return getLayerInput(tfLayer).shape.length === 2
@@ -77,7 +80,7 @@ export async function maximizeActivation(
   const isFirstLayer = layerInput.sourceLayer.getClassName() === "InputLayer"
   const head = isFirstLayer ? undefined : tf.model({ inputs: model.inputs, outputs: layerInput })
   const filter = tf.keep(getFilter(tfLayer, neuronIdx))
-  const objective = getObjective(tfLayer, neuronIdx, filter)
+  const objective = (x: tf.Tensor) => getWeightedInput(tfLayer, neuronIdx, filter, x).sum()
 
   const z = tf.tidy(() => tf.variable(tf.randomNormal([1, ...shape], 0, 0.01)))
   const optimizer = tf.train.adam(learningRate)
@@ -139,13 +142,13 @@ export async function maximizeActivation(
 }
 
 // last inbound node as in getSingleOutput
-function getLayerInput(tfLayer: tf.layers.Layer) {
+export function getLayerInput(tfLayer: tf.layers.Layer) {
   const input = tfLayer.getInputAt(tfLayer.inboundNodes.length - 1)
   return Array.isArray(input) ? input[0] : input
 }
 
 // the weights of this neuron only: Conv2D [kernelHeight, kernelWidth, inChannels, 1], Dense [inputs, 1]
-function getFilter(tfLayer: tf.layers.Layer, neuronIdx: number) {
+export function getFilter(tfLayer: tf.layers.Layer, neuronIdx: number) {
   const [kernel] = tfLayer.getWeights()
   const numFilters = kernel.shape[kernel.shape.length - 1]
   const filterIdx = neuronIdx % numFilters
@@ -154,25 +157,29 @@ function getFilter(tfLayer: tf.layers.Layer, neuronIdx: number) {
     : kernel.slice([0, filterIdx], [-1, 1])
 }
 
-// weighted input of the neuron, without bias (constant)
-function getObjective(tfLayer: tf.layers.Layer, neuronIdx: number, filter: tf.Tensor): Objective {
-  if (tfLayer.getClassName() === "Dense") return (x) => tf.matMul(x, filter).sum()
+// weighted input of the neuron for each sample in x (= input of the layer), without bias (constant): [batch]
+export function getWeightedInput(
+  tfLayer: tf.layers.Layer,
+  neuronIdx: number,
+  filter: tf.Tensor,
+  x: tf.Tensor,
+) {
+  if (tfLayer.getClassName() === "Dense") return tf.matMul(x, filter).reshape([-1])
   const { strides, padding, dilationRate } = tfLayer.getConfig()
   const [, , outWidth, numFilters] = tfLayer.outputShape as number[]
   const pos = Math.floor(neuronIdx / numFilters)
   const [row, col] = [Math.floor(pos / outWidth), pos % outWidth]
-  return (x) =>
-    tf
-      .conv2d(
-        x as tf.Tensor4D,
-        filter as tf.Tensor4D,
-        strides as [number, number],
-        padding as "same" | "valid",
-        "NHWC",
-        dilationRate as [number, number],
-      )
-      .slice([0, row, col, 0], [1, 1, 1, 1])
-      .sum()
+  return tf
+    .conv2d(
+      x as tf.Tensor4D,
+      filter as tf.Tensor4D,
+      strides as [number, number],
+      padding as "same" | "valid",
+      "NHWC",
+      dilationRate as [number, number],
+    )
+    .slice([0, row, col, 0], [-1, 1, 1, 1])
+    .reshape([-1])
 }
 
 // random translation by up to maxShift px in each direction, filled with gray

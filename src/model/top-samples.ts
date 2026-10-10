@@ -1,11 +1,12 @@
 import * as tf from "@tensorflow/tfjs"
 import { getData } from "@/data/db"
 import { getSingleOutput } from "./get-layer-activations"
+import { getFilter, getLayerInput, getWeightedInput, hasWeightedInput } from "./feature-vis"
 import type { Dataset, DbBatch } from "@/data/types"
 
 export interface TopSample {
   sampleIdx: number
-  activation: number
+  value: number // weighted input (Conv2D, Dense) or activation of the neuron
   X: DbBatch["xs"] // raw input values of the sample
 }
 
@@ -17,8 +18,10 @@ export interface TopSamplesOptions {
 }
 
 /**
- * The samples of the dataset that activate a single neuron the most (output of the layer, as shown in the
- * scene). Reads one stored batch at a time, so that memory stays low and the scan can be aborted in between.
+ * The samples of the dataset that activate a single neuron the most. Conv2D and Dense neurons are ranked by
+ * their weighted input (before the activation function): activations have many ties, e.g. softmax saturates
+ * at 1 and ReLU at 0, so the first samples would win. Other layers are ranked by their output.
+ * Reads one stored batch at a time, so that memory stays low and the scan can be aborted in between.
  * Returns undefined if aborted.
  */
 export async function getTopSamples(
@@ -32,38 +35,61 @@ export async function getTopSamples(
   const totalSamples = Math.min(ds[subset].totalSamples, maxSamples)
   const numBatches = Math.ceil(totalSamples / ds.storeBatchSize)
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
-  const subModel = tf.model({ inputs: model.inputs, outputs: getSingleOutput(tfLayer) })
+  const getValues = getNeuronValues(model, tfLayer, neuronIdx)
   let topSamples: TopSample[] = []
-  for (let batchIdx = 0; batchIdx < numBatches; batchIdx++) {
-    const batch = await getData<DbBatch>(ds.key, subset, batchIdx)
-    if (shouldAbort?.()) return
-    if (!batch) break
-    const batchSize = batch.xs.length / valsPerSample
-    const actTensor = tf.tidy(() => {
-      const X = tf.tensor(batch.xs, [batchSize, ...ds.inputDims], "float32")
-      const out = subModel.predict(ds.preprocess?.(X) ?? X, { batchSize }) as tf.Tensor
-      return out.reshape([batchSize, -1]).gather([neuronIdx], 1).reshape([-1])
-    })
-    let activations: Float32Array
-    try {
-      activations = (await actTensor.data()) as Float32Array
-    } finally {
-      actTensor.dispose()
+  try {
+    for (let batchIdx = 0; batchIdx < numBatches; batchIdx++) {
+      const batch = await getData<DbBatch>(ds.key, subset, batchIdx)
+      if (shouldAbort?.()) return
+      if (!batch) break
+      const batchSize = batch.xs.length / valsPerSample
+      const valuesTensor = tf.tidy(() => {
+        const X = tf.tensor(batch.xs, [batchSize, ...ds.inputDims], "float32")
+        return getValues(ds.preprocess?.(X) ?? X)
+      })
+      let values: Float32Array
+      try {
+        values = (await valuesTensor.data()) as Float32Array
+      } finally {
+        valuesTensor.dispose()
+      }
+      if (shouldAbort?.()) return
+      const candidates: TopSample[] = []
+      for (const [i, value] of values.entries()) {
+        if (topSamples.length === k && value <= topSamples[k - 1].value) continue
+        const sampleIdx = batchIdx * ds.storeBatchSize + i
+        const X = batch.xs.slice(i * valsPerSample, (i + 1) * valsPerSample)
+        candidates.push({ sampleIdx, value, X })
+      }
+      if (candidates.length) {
+        topSamples = [...topSamples, ...candidates]
+          .toSorted((a, b) => b.value - a.value)
+          .slice(0, k)
+      }
+      onProgress?.((batchIdx + 1) / numBatches, topSamples)
     }
-    if (shouldAbort?.()) return
-    const candidates: TopSample[] = []
-    for (const [i, activation] of activations.entries()) {
-      if (topSamples.length === k && activation <= topSamples[k - 1].activation) continue
-      const sampleIdx = batchIdx * ds.storeBatchSize + i
-      const X = batch.xs.slice(i * valsPerSample, (i + 1) * valsPerSample)
-      candidates.push({ sampleIdx, activation, X })
-    }
-    if (candidates.length) {
-      topSamples = [...topSamples, ...candidates]
-        .toSorted((a, b) => b.activation - a.activation)
-        .slice(0, k)
-    }
-    onProgress?.((batchIdx + 1) / numBatches, topSamples)
+    return topSamples
+  } finally {
+    getValues.dispose()
   }
-  return topSamples
+}
+
+const predict = (model: tf.LayersModel, X: tf.Tensor) =>
+  model.predict(X, { batchSize: X.shape[0] }) as tf.Tensor
+
+// value of the neuron for each sample of a (preprocessed) batch: [batch]
+function getNeuronValues(model: tf.LayersModel, tfLayer: tf.layers.Layer, neuronIdx: number) {
+  if (!hasWeightedInput(tfLayer)) {
+    const subModel = tf.model({ inputs: model.inputs, outputs: getSingleOutput(tfLayer) })
+    const getValues = (X: tf.Tensor) =>
+      predict(subModel, X).reshape([X.shape[0], -1]).gather([neuronIdx], 1).reshape([-1])
+    return Object.assign(getValues, { dispose: () => {} })
+  }
+  const layerInput = getLayerInput(tfLayer)
+  const isFirstLayer = layerInput.sourceLayer.getClassName() === "InputLayer"
+  const head = isFirstLayer ? undefined : tf.model({ inputs: model.inputs, outputs: layerInput })
+  const filter = tf.keep(getFilter(tfLayer, neuronIdx))
+  const getValues = (X: tf.Tensor) =>
+    getWeightedInput(tfLayer, neuronIdx, filter, head ? predict(head, X) : X)
+  return Object.assign(getValues, { dispose: () => filter.dispose() })
 }

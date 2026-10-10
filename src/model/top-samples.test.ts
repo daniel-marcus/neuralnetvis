@@ -46,7 +46,7 @@ describe("getTopSamples", () => {
   it("returns the samples with the highest activations across batches", async () => {
     const top = await getTopSamples(model, layer, 0, ds, "train", { k: 3 })
     expect(top!.map((s) => s.sampleIdx)).toEqual([24, 22, 20])
-    expect(top!.map((s) => s.activation)).toEqual([24, 22, 20])
+    expect(top!.map((s) => s.value)).toEqual([24, 22, 20])
     expect(Array.from(top![0].X)).toEqual([24, 0, 0, 0])
   })
 
@@ -77,6 +77,29 @@ describe("getTopSamples", () => {
   it("doesn't leak tensors", async () => {
     const before = tf.memory().numTensors
     await getTopSamples(model, layer, 0, ds, "train")
+    await getTopSamples(model, layer, 0, ds, "train", { shouldAbort: () => true })
     expect(tf.memory().numTensors).toBe(before)
+  })
+
+  it("ranks saturated softmax outputs by their weighted input", async () => {
+    const softmax = tf.sequential()
+    softmax.add(
+      tf.layers.dense({ units: 2, inputShape: [inputDim], useBias: false, activation: "softmax" }),
+    )
+    softmax.layers[0].setWeights([tf.tensor2d([10, -10, 0, 0, 0, 0, 0, 0], [inputDim, 2])])
+    const probs = softmax.predict(tf.tensor2d([[2, 0, 0, 0]])) as tf.Tensor
+    expect(probs.dataSync()[0]).toBe(1) // ties: almost all even samples have a probability of exactly 1
+    const top = await getTopSamples(softmax, softmax.layers[0], 0, ds, "train", { k: 3 })
+    expect(top!.map((s) => s.sampleIdx)).toEqual([24, 22, 20])
+  })
+
+  it("ranks other layers by their output", async () => {
+    const withRelu = tf.sequential()
+    withRelu.add(tf.layers.dense({ units: 2, inputShape: [inputDim], useBias: false }))
+    withRelu.add(tf.layers.reLU())
+    withRelu.layers[0].setWeights([tf.tensor2d([1, -1, 0, 0, 0, 0, 0, 0], [inputDim, 2])])
+    const top = await getTopSamples(withRelu, withRelu.layers[1], 1, ds, "train", { k: 2 })
+    expect(top!.map((s) => s.sampleIdx)).toEqual([23, 21])
+    expect(top!.map((s) => s.value)).toEqual([23, 21])
   })
 })
