@@ -21,6 +21,7 @@ export interface FeatureVisOptions {
   tvWeight?: number // total variation penalty: suppresses high-frequency noise
   l2Weight?: number // pulls pixels without influence back to gray
   jitter?: number // max. random shift in px per step, for patterns that are robust to small translations
+  inputRange?: [number, number] // value range of the model input, see imageInputRanges
   sliceMs?: number
   shouldAbort?: () => boolean
   onProgress?: (featureVis: FeatureVis) => void
@@ -44,7 +45,7 @@ export function supportsFeatureVis(model: tf.LayersModel, tfLayer: tf.layers.Lay
  * Gradient ascent on the input pixels, starting from gray. The objective is the weighted input of the neuron
  * (before the activation function): a ReLU neuron that is not active has no gradient to start with, and for
  * a softmax output the probability could also be raised by just suppressing the other classes.
- * The image is parametrized as sigmoid(z), so that it stays in the [0, 1] range of the normalized samples.
+ * The image is parametrized as sigmoid(z), so that it stays in [0, 1] and is scaled to the input range of the model.
  * Yields to the main thread every ~sliceMs. Returns undefined if aborted or not supported.
  */
 export async function maximizeActivation(
@@ -57,6 +58,7 @@ export async function maximizeActivation(
     tvWeight = 2,
     l2Weight = 0.3,
     jitter = 1,
+    inputRange = [0, 1],
     sliceMs = 8,
     shouldAbort,
     onProgress,
@@ -79,7 +81,11 @@ export async function maximizeActivation(
 
   const z = tf.tidy(() => tf.variable(tf.randomNormal([1, ...shape], 0, 0.01)))
   const optimizer = tf.train.adam(learningRate)
-  const forward = (img: tf.Tensor) => objective(head ? (head.apply(img) as tf.Tensor) : img)
+  const [min, max] = inputRange
+  const forward = (img: tf.Tensor) => {
+    const x = min === 0 && max === 1 ? img : img.mul(max - min).add(min)
+    return objective(head ? (head.apply(x) as tf.Tensor) : x)
+  }
   // the size of the gradients differs a lot between models (e.g. BatchNormalization or not): the objective
   // is scaled by its initial gradient (RMS inside the receptive field), so that the penalties weigh the same
   const scale = tf.tidy(() => {

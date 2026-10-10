@@ -5,6 +5,9 @@ import type { PreprocessFuncDef } from "./types"
 
 const normalizeImage: PreprocessFuncDef = (inputTensor) => inputTensor.div(255)
 
+// [-1, 1] as in keras.applications.mobilenet_v2.preprocess_input
+const normalizeImageSigned: PreprocessFuncDef = (inputTensor) => inputTensor.div(127.5).sub(1)
+
 export const normalizeHandLandmarks: PreprocessFuncDef = (inputTensor, inputDims) => {
   // all coordinates relative to wrist (0, 0, 0) + invert axes
   const numHands = inputDims[2]
@@ -20,7 +23,14 @@ export const normalizeHandLandmarks: PreprocessFuncDef = (inputTensor, inputDims
 
 export const preprocessFuncs = {
   normalizeImage,
+  normalizeImageSigned,
   normalizeHandLandmarks,
 } as const
 
 export type PreprocessFuncName = keyof typeof preprocessFuncs
+
+// value range of the model input for image datasets
+export const imageInputRanges: Partial<Record<PreprocessFuncName, [number, number]>> = {
+  normalizeImage: [0, 1],
+  normalizeImageSigned: [-1, 1],
+}

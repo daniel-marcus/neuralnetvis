@@ -8,6 +8,7 @@ import { isScreen } from "@/utils/screen"
 import { Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
 import { maximizeActivation, supportsFeatureVis } from "@/model/feature-vis"
+import { imageInputRanges } from "@/data/preprocess"
 import type { LayersModel } from "@tensorflow/tfjs"
 import type { FeatureVis } from "@/model/feature-vis"
 import type { NeuronStateful, Nid } from "@/neuron-layers/types"
@@ -21,13 +22,15 @@ export const NeuronStatus = () => {
   const hasLesson = useHasLesson()
   const visLocked = useSceneStore((s) => s.vis.isLocked)
   const model = useSceneStore((s) => s.model)
+  const preprocessFunc = useSceneStore((s) => s.ds?.preprocessFunc)
   const [showFeatureVis, setShowFeatureVis] = useState(false)
   const handleClick = (e: React.MouseEvent) => {
     if ("tagName" in e.target && e.target.tagName === "BUTTON") return
     toggleSelected(undefined)
   }
   if (!selected || (hasLesson && visLocked)) return null
-  const hasFeatureVis = !!model && supportsFeatureVis(model, selected.layer.tfLayer)
+  const inputRange = preprocessFunc && imageInputRanges[preprocessFunc]
+  const hasFeatureVis = !!model && !!inputRange && supportsFeatureVis(model, selected.layer.tfLayer)
   return (
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${
@@ -36,7 +39,7 @@ export const NeuronStatus = () => {
       onClick={handleClick}
     >
       {hasFeatureVis && showFeatureVis ? (
-        <FeatureVisViewer neuron={selected} />
+        <FeatureVisViewer neuron={selected} inputRange={inputRange} />
       ) : (
         <WeightsViewer neuron={selected} />
       )}
@@ -76,7 +79,7 @@ const FEATURE_VIS_DELAY = 300 // ms, hovered neurons change quickly
 // reset when the weights change (training)
 const featureVisCache = new WeakMap<LayersModel, Map<Nid, FeatureVis>>()
 
-function useFeatureVis(neuron: NeuronStateful) {
+function useFeatureVis(neuron: NeuronStateful, inputRange: [number, number]) {
   const model = useSceneStore((s) => s.model)
   const isTraining = useSceneStore((s) => s.isTraining)
   const [current, setCurrent] = useState<{ nid: Nid; featureVis: FeatureVis }>()
@@ -92,6 +95,7 @@ function useFeatureVis(neuron: NeuronStateful) {
     let aborted = false
     const timeout = setTimeout(async () => {
       const featureVis = await maximizeActivation(model, tfLayer, index, {
+        inputRange,
         shouldAbort: () => aborted,
         onProgress: (preview) => !aborted && setCurrent({ nid, featureVis: preview }),
       })
@@ -104,14 +108,19 @@ function useFeatureVis(neuron: NeuronStateful) {
       aborted = true
       clearTimeout(timeout)
     }
-  }, [model, isTraining, nid, index, tfLayer])
+  }, [model, isTraining, nid, index, tfLayer, inputRange])
   const cached = model ? featureVisCache.get(model)?.get(nid) : undefined
   return cached ?? (current?.nid === nid ? current.featureVis : undefined)
 }
 
 // generated input that activates the neuron the most, cropped to its receptive field
-const FeatureVisViewer = ({ neuron }: { neuron: NeuronStateful }) => {
-  const featureVis = useFeatureVis(neuron)
+interface FeatureVisViewerProps {
+  neuron: NeuronStateful
+  inputRange: [number, number]
+}
+
+const FeatureVisViewer = ({ neuron, inputRange }: FeatureVisViewerProps) => {
+  const featureVis = useFeatureVis(neuron, inputRange)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const canvas = canvasRef.current

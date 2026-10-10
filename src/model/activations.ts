@@ -8,6 +8,7 @@ import { getLayerActivationsAsync, getSingleOutput } from "./get-layer-activatio
 import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
 import { normalize, scaleNormalize } from "@/data/utils"
 import { getSeqPosition } from "@/data/next-token"
+import { imageInputRanges } from "@/data/preprocess"
 import { getTokenAttribution } from "./token-attribution"
 import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
@@ -54,6 +55,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
 
       const seqPos = ds?.task === "nextToken" ? getSeqPosition(sample.X, ds.tokenizer) : undefined
       const tokenInput = ds?.tokenizer ? { tokenizer: ds.tokenizer, task: ds.task } : undefined
+      const inputRange = ds?.preprocessFunc && imageInputRanges[ds.preprocessFunc]
       const isStale = () => latestSampleIdx.current !== sample.index // model changed (see reset below)
 
       const t0 = performance.now()
@@ -72,6 +74,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           stats,
           seqPos,
           tokenInput,
+          inputRange,
           isStale,
         )
         if (!newActivations) return // aborted
@@ -153,6 +156,7 @@ async function getActivations(
   stats?: { [layerIdx: number]: ActivationStats | undefined },
   seqPos?: number, // nextToken: show only the output at this position
   tokenInput?: TokenInput, // input layer colors for tokenizer datasets, see getTokenInputColors
+  inputRange?: [number, number], // value range of preprocessed images, see imageInputRanges
   shouldAbort?: () => boolean,
 ) {
   const tfBackend = tf.getBackend()
@@ -183,7 +187,7 @@ async function getActivations(
       const normalized =
         tokenInput && layer.layerPos === "input"
           ? getTokenInputColors(model, sample, tokenInput)
-          : normalizeForLayer({ actTensor, layer, isRegression, layerStats })
+          : normalizeForLayer({ actTensor, layer, isRegression, layerStats, inputRange })
       try {
         // WebGPU: try to copy the buffer directly in GPU
         let gpuUpdateSuccess = tryWebGPUUpdate({ backend, tfBackend, normalized, layer })
@@ -246,14 +250,25 @@ interface NormalizeForLayerProps {
   layer: NeuronLayer
   isRegression?: boolean
   layerStats?: ActivationStats
+  inputRange?: [number, number]
 }
 
-function normalizeForLayer({ actTensor, layer, isRegression, layerStats }: NormalizeForLayerProps) {
+function normalizeForLayer({
+  actTensor,
+  layer,
+  isRegression,
+  layerStats,
+  inputRange,
+}: NormalizeForLayerProps) {
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
   return tf.tidy(() => {
+    // color input: back to [0, 1], as the preprocessed values can be negative (e.g. MobileNet: [-1, 1])
+    const [min, max] = inputRange ?? [0, 1]
+    const isShifted = layer.hasColorChannels && (min !== 0 || max !== 1)
+    const source = isShifted ? actTensor.sub(min).div(max - min) : actTensor
     const tensor = layer.hasColorChannels
-      ? actTensor.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
-      : actTensor
+      ? source.transpose([0, 3, 1, 2]) // make channelIdx the first dimension to access separate color channels with offset ( [...allRed, ...allGreen, ...allBlue] )
+      : source
     if (isRegression && layer.layerPos === "hidden" && layerStats) {
       const { mean, std } = layerStats
       const meanTensor = tf.tensor(mean)

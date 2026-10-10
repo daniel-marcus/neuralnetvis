@@ -20,7 +20,7 @@ function getMobileNet(res: MobileNetRes, targetDevice: DatasetDef["targetDevice"
     version: new Date("2025-09-26"),
     aboutUrl: "https://keras.io/api/applications/mobilenet/#mobilenetv2-function", // "https://www.image-net.org/",
     inputDims: [res, res, 3],
-    preprocessFunc: "normalizeImage", // scale?
+    preprocessFunc: "normalizeImageSigned",
     camProps: {
       videoConstraints: { width: res, height: res, facingMode: "environment" }, // ideally get video input with required dimensions + prefer rear camera on mobile devices
     },
