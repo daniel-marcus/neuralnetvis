@@ -1,72 +1,95 @@
 import { useEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
+import { useFrame, useThree } from "@react-three/fiber"
 
-import { Line2 } from "three/addons/lines/webgpu/Line2.js"
+import { LineSegments2 } from "three/addons/lines/webgpu/LineSegments2.js"
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js"
 
 import { useSceneStore } from "@/store"
-import { getWorldPos, type Pos } from "./utils"
+import { getWorldPosInto } from "./utils"
+import { getActColor } from "@/utils/colors"
+import { getTopInputs, MAX_CONNECTIONS } from "@/neuron-layers/connections"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
-const MAX_LINES_PER_LAYER = 1000
+const MIN_BRIGHTNESS = 0.3 // for the weakest connections
 
-export const HoverConnections = ({ hovered }: { hovered?: NeuronStateful }) => {
+const fromPos = new THREE.Vector3()
+const toPos = new THREE.Vector3()
+
+// shows the strongest input connections of a neuron
+export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
   const showLines = useSceneStore((s) => s.vis.showLines)
-
-  const line = useMemo(() => new Line2(), [])
-  const material = useMemo(() => new THREE.Line2NodeMaterial(), [])
-  const geometry = useMemo(() => new LineSegmentsGeometry(), [])
-  const resolution = useMemo(() => new THREE.Vector2(512, 512), [])
-
+  const isFlatView = useSceneStore((s) => s.vis.flatView) // other layers are hidden in flat view
   const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
-  const prevLayerName = hovered?.layer.prevLayer?.tfLayer.name
-  const prevLayerIsVisible = !!prevLayerName && !excludedLayers.includes(prevLayerName)
+  const invalidate = useThree((s) => s.invalidate)
 
-  const isFlatView = useSceneStore((s) => s.vis.flatView)
-  const length = hovered?.inputNeurons?.length ?? 0
-  const show = length > 0 && showLines && prevLayerIsVisible && !isFlatView
+  const layer = neuron?.layer
+  const prevLayer = layer?.prevLayer
+  const prevActivations = useSceneStore((s) =>
+    prevLayer ? s.activations[prevLayer.index]?.activations : undefined,
+  )
+  const isExcluded =
+    excludedLayers.includes(layer?.tfLayer.name ?? "") ||
+    excludedLayers.includes(prevLayer?.tfLayer.name ?? "")
+  const show = !!prevLayer && showLines && !isFlatView && !isExcluded
+
+  const inputs = useMemo(
+    () => (show && neuron ? getTopInputs(neuron, prevActivations) : []),
+    [show, neuron, prevActivations],
+  )
+
+  // buffers are allocated once and updated in place
+  const line = useMemo(() => {
+    const geometry = new LineSegmentsGeometry()
+    geometry.setPositions(new Float32Array(MAX_CONNECTIONS * 6))
+    geometry.setColors(new Float32Array(MAX_CONNECTIONS * 6))
+    const material = new THREE.Line2NodeMaterial({
+      vertexColors: true,
+      linewidth: 1,
+      transparent: true,
+      depthWrite: false,
+    })
+    const lineSegments = new LineSegments2(geometry, material)
+    lineSegments.frustumCulled = false // bounding volumes are not updated
+    lineSegments.raycast = () => {}
+    lineSegments.visible = false
+    return lineSegments
+  }, [])
+  useEffect(() => {
+    return () => {
+      line.geometry.dispose()
+      line.material.dispose()
+    }
+  }, [line])
 
   useEffect(() => {
-    // reference: https://github.com/pmndrs/drei/blob/master/src/core/Segments.tsx
-    if (!show) return
-    const inputNeurons = hovered?.inputNeurons
-    if (!hovered || !inputNeurons?.length) return
-    const toPosition = getWorldPos(hovered)?.toArray() as Pos
-    if (!toPosition) return
-
-    const positions = new Float32Array(MAX_LINES_PER_LAYER * 6).fill(0)
-    for (const [i, inputN] of inputNeurons.entries()) {
-      if (i >= MAX_LINES_PER_LAYER) break
-      const fromPosition = getWorldPos(inputN)?.toArray() as Pos
-      if (!fromPosition) continue
-      positions[i * 6] = fromPosition[0]
-      positions[i * 6 + 1] = fromPosition[1]
-      positions[i * 6 + 2] = fromPosition[2]
-      positions[i * 6 + 3] = toPosition[0]
-      positions[i * 6 + 4] = toPosition[1]
-      positions[i * 6 + 5] = toPosition[2]
+    line.visible = inputs.length > 0 // eslint-disable-line react-hooks/immutability
+    line.geometry.instanceCount = inputs.length // eslint-disable-line react-hooks/immutability
+    const colors = line.geometry.attributes.instanceColorStart as THREE.InterleavedBufferAttribute
+    for (const [i, { strength }] of inputs.entries()) {
+      const brightness = MIN_BRIGHTNESS + (1 - MIN_BRIGHTNESS) * Math.abs(strength)
+      const color = getActColor(Math.sign(strength) * brightness).rgb
+      const offset = (inputs.length - 1 - i) * 6 // strongest connections are drawn last (on top)
+      colors.data.array.set(color, offset)
+      colors.data.array.set(color, offset + 3)
     }
-    line.geometry.setPositions(positions)
-    line.geometry.attributes.position.needsUpdate = true // eslint-disable-line react-hooks/immutability
-    line.material.needsUpdate = true
-    line.computeLineDistances()
-  }, [hovered, geometry, line, show])
+    colors.data.needsUpdate = true
+    invalidate()
+  }, [line, inputs, invalidate])
 
-  if (!show) return null
-  return (
-    <group name={`hovered_node_connections_${hovered?.nid}`}>
-      <primitive object={line}>
-        <primitive object={geometry} attach="geometry" />
-        <primitive
-          object={material}
-          color={0xffffff}
-          attach="material"
-          vertexColors={true}
-          linewidth={length >= 100 ? 0.1 : 0.5}
-          resolution={resolution}
-          worldUnits={false}
-        />
-      </primitive>
-    </group>
-  )
+  useFrame(() => {
+    // per frame to follow layer transitions
+    if (!inputs.length || !layer || !prevLayer) return
+    if (!getWorldPosInto(layer, neuron.index, toPos)) return
+    const positions = line.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute
+    for (const [i, { index }] of inputs.entries()) {
+      const offset = (inputs.length - 1 - i) * 6
+      const hasPos = getWorldPosInto(prevLayer, index, fromPos)
+      ;(hasPos ? fromPos : toPos).toArray(positions.data.array, offset) // zero length if not found
+      toPos.toArray(positions.data.array, offset + 3)
+    }
+    positions.data.needsUpdate = true // eslint-disable-line react-hooks/immutability
+  })
+
+  return <primitive object={line} />
 }

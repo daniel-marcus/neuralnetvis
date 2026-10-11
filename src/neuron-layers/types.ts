@@ -47,7 +47,6 @@ export type Neuron = {
   layer: NeuronLayer
   meshRef: MeshRef
   inputNids: Nid[]
-  inputNeurons: Neuron[]
 }
 
 export type NeuronState = {

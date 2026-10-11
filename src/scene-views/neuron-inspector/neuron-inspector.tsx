@@ -22,7 +22,8 @@ const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
 export const NeuronInspector = () => {
   const _hovered = useHovered()
   const _selected = useSelected()
-  const selected = _hovered ?? _selected
+  const selected = _selected ?? _hovered // a selected neuron pins the inspector
+  const infoOnly = !_selected // hover: compact info only
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
   const hasLesson = useHasLesson()
@@ -45,7 +46,7 @@ export const NeuronInspector = () => {
     !!model && !!inputRange && selected.layer.layerPos !== "input" && totalSamples >= MIN_SAMPLES
   const isAvailable = { weights: hasWeights, featureVis: hasFeatureVis, topSamples: hasTopSamples }
   const options = VIEW_OPTIONS.filter((o) => isAvailable[o.value])
-  const currView = isAvailable[view] ? view : options[0]?.value
+  const currView = infoOnly ? undefined : isAvailable[view] ? view : options[0]?.value
   return (
     <div
       className={`p-main flex gap-4 items-end sm:flex-col ${
@@ -76,12 +77,12 @@ export const NeuronInspector = () => {
           )}
         </div>
       )}
-      <NeuronInfo neuron={selected} />
+      <NeuronInfo neuron={selected} hint={infoOnly ? "Click to inspect" : undefined} />
     </div>
   )
 }
 
-const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
+const NeuronInfo = ({ neuron, hint }: { neuron: NeuronStateful; hint?: string }) => {
   const { index3d, activation, bias, weights, rawInput } = neuron
   const data = {
     Neuron: `${neuron.layer.index}_${index3d.join(".")}`,
@@ -93,6 +94,7 @@ const NeuronInfo = ({ neuron }: { neuron: NeuronStateful }) => {
   return (
     <div className="w-full">
       <Table data={data} />
+      {!!hint && <p className="text-muted">{hint}</p>}
     </div>
   )
 }

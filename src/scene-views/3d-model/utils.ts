@@ -3,7 +3,7 @@ import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, type SpringConfig, config } from "@react-spring/web"
 import { getThree } from "@/store"
-import type { Neuron } from "@/neuron-layers/types"
+import type { Neuron, NeuronLayer } from "@/neuron-layers/types"
 import type { Three } from "@/store/vis"
 
 export function useAnimatedPosition(position: number[], speed = 0.4) {
@@ -45,6 +45,18 @@ export function getWorldTransform(neuron: Neuron) {
   tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
   tempWorldMatrix.decompose(position, new THREE.Quaternion(), scale)
   return { position, scale }
+}
+
+const _instanceMatrix = new THREE.Matrix4()
+
+// world position of a neuron by layer & index, written into target (no allocations, for per-frame use)
+export function getWorldPosInto(layer: NeuronLayer, neuronIdx: number, target: THREE.Vector3) {
+  const numChannels = layer.hasColorChannels ? (layer.outputShape[3] ?? 1) : 1
+  const mesh = layer.meshRefs[neuronIdx % numChannels]?.current
+  if (!mesh) return false
+  mesh.getMatrixAt(Math.floor(neuronIdx / numChannels), _instanceMatrix)
+  target.setFromMatrixPosition(_instanceMatrix).applyMatrix4(mesh.matrixWorld)
+  return true
 }
 
 export type Pos = [number, number, number]

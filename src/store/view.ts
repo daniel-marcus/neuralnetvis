@@ -55,11 +55,16 @@ export const createViewSlice: StateCreator<
     }),
   focussedLayerIdx: undefined,
   setFocussedLayerIdx: (arg) =>
-    set(({ focussedLayerIdx }) => ({
-      focussedLayerIdx: typeof arg === "function" ? arg(focussedLayerIdx) : arg,
-      hoveredNid: undefined,
-      selectedNid: undefined,
-    })),
+    set(({ focussedLayerIdx, selectedNid }) => {
+      const newIdx = typeof arg === "function" ? arg(focussedLayerIdx) : arg
+      // keep the selected neuron when leaving the focus (to show its connections), but not in other layers
+      const keepSelected = newIdx === undefined || !!selectedNid?.startsWith(`${newIdx}_`)
+      return {
+        focussedLayerIdx: newIdx,
+        hoveredNid: undefined,
+        selectedNid: keepSelected ? selectedNid : undefined,
+      }
+    }),
   hoveredLayerIdx: undefined,
   setHoveredLayerIdx: (arg) =>
     set(({ hoveredLayerIdx }) => ({
