@@ -12,9 +12,10 @@ function makeNeuron(
   inputNids: string[],
   weights?: number[],
 ) {
+  const inputIdxs = Uint32Array.from(inputNids, (nid) => Number(nid.split("_")[1]))
   const prevLayer = { tfLayer: prevTfLayer } as NeuronLayer
   const layer = { layerType, tfLayer, prevLayer } as NeuronLayer
-  return { layer, inputNids, weights } as NeuronStateful
+  return { layer, inputIdxs, weights } as NeuronStateful
 }
 
 describe("getTopInputs", () => {
@@ -47,7 +48,20 @@ describe("getTopInputs", () => {
     const pooling = makeNeuron("MaxPooling2D", dense, prevTfLayer, inputNids)
     const top = getTopInputs(pooling, new Float32Array([0, 3, 1, 0]))
     expect(top.map((t) => t.index)).toEqual([1, 2])
-    expect(getTopInputs(pooling)).toEqual([])
+  })
+
+  it("shows all inputs if there is nothing to rank by", () => {
+    const pooling = makeNeuron("MaxPooling2D", dense, prevTfLayer, inputNids)
+    const top = getTopInputs(pooling)
+    expect(top.map((t) => t.index)).toEqual([0, 1, 2, 3])
+    expect(new Set(top.map((t) => t.strength)).size).toBe(1)
+    expect(getTopInputs(pooling, undefined, 2).length).toBe(2)
+  })
+
+  it("always shows one-to-one connections", () => {
+    const relu = makeNeuron("ReLU", dense, prevTfLayer, ["0_2"])
+    expect(getTopInputs(relu, new Float32Array([1, 1, 0, 1]))).toEqual([{ index: 2, strength: 0 }])
+    expect(getTopInputs(relu).map((t) => t.index)).toEqual([2])
   })
 })
 

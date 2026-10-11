@@ -8,7 +8,7 @@ import { getUnits } from "./helpers"
 import { getLayerDef } from "@/model/layers"
 import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
-import type { LayerPos, NeuronLayer, LayerType } from "./types"
+import type { GroupRef, LayerPos, NeuronLayer, LayerType } from "./types"
 
 // returns an array of all visible layers
 export function useLayers() {
@@ -52,6 +52,7 @@ export function useLayers() {
         const hasColorChannels = layerPos === "input" && outputShape[3] === 3
         const channels = hasColorChannels ? 3 : 1
         const meshRefs = Array.from({ length: channels }).map(createMeshRef)
+        const groupRefs = Array.from({ length: channels }).map(createGroupRef)
 
         const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
         const { page, offset: bufferOffset } = bufferSlots.get(layerIndex)!
@@ -70,6 +71,7 @@ export function useLayers() {
           numNeurons: units,
           numBiases,
           meshRefs,
+          groupRefs,
           meshParams,
           hasLabels:
             (layerPos === "input" && !!ds?.inputLabels?.length) ||
@@ -116,6 +118,10 @@ function getLayerShape(tfLayer: tf.layers.Layer, layerPos: LayerPos, task?: stri
 
 function createMeshRef() {
   return { current: null } as React.RefObject<InstancedMesh | null>
+}
+
+function createGroupRef() {
+  return { current: null } as GroupRef
 }
 
 // Activations of all layers share a few large storage buffers ("pages"), each layer reads from its offset.

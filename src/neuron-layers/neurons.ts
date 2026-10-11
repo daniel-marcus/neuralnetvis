@@ -1,8 +1,9 @@
 import { useMemo } from "react"
 import { getLayers, useSceneStore } from "@/store"
 import { getLayerDef } from "@/model/layers"
-import { getLayerWeights } from "@/model/weights"
-import { getIndex3d } from "./helpers"
+import { getNeuronWeights } from "@/model/weights"
+import { getFullyConnectedInputNids } from "@/model/layers/get-input-nids"
+import { getIndex3d, getUnits } from "./helpers"
 import type { Neuron, NeuronStateful, Nid } from "./types"
 import type { LayerActivations } from "@/model"
 import type { Sample } from "@/data"
@@ -40,9 +41,14 @@ function createNeuron(nid?: Nid): Neuron | undefined {
   const channelIdx = neuronIdx % numChannels
   const layerDef = getLayerDef(layer.layerType)
   const prevLayer = layer.prevLayer
-  const inputNids = prevLayer
-    ? (layerDef?.getInputNids?.(layer.tfLayer, neuronIdx, prevLayer.tfLayer, prevLayer.index) ?? [])
-    : []
+  const getInputNids = prevLayer ? layerDef?.getInputNids : undefined
+  const inputIdxs =
+    getInputNids === getFullyConnectedInputNids
+      ? Uint32Array.from({ length: getUnits(prevLayer!.tfLayer) }, (_, i) => i) // all neurons (without creating nids)
+      : Uint32Array.from(
+          getInputNids?.(layer.tfLayer, neuronIdx, prevLayer!.tfLayer, prevLayer!.index) ?? [],
+          (inputNid) => parseNid(inputNid).neuronIdx,
+        )
   const neuron: Neuron = {
     index: neuronIdx,
     nid,
@@ -51,7 +57,7 @@ function createNeuron(nid?: Nid): Neuron | undefined {
     channelIdx,
     indexInChannel: Math.floor(neuronIdx / numChannels),
     meshRef: hasColorChannels ? layer.meshRefs[channelIdx] : layer.meshRefs[0],
-    inputNids,
+    inputIdxs,
   }
   return neuron
 }
@@ -64,9 +70,7 @@ function makeStateful(
 ): NeuronStateful {
   const nIdx = neuron.index
   const filterIdx = nIdx % neuron.layer.numBiases // for dense layers this would be nIdx
-  const { weights: _weights, biases } = getLayerWeights(neuron.layer.tfLayer)
-  const weights = _weights?.[filterIdx]
-  const bias = biases?.[filterIdx]
+  const { weights, bias } = getNeuronWeights(neuron.layer.tfLayer, filterIdx)
   const statefulNeuron: NeuronStateful = {
     ...neuron,
     activation: layerActivations?.activations?.[nIdx],

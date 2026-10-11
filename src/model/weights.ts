@@ -21,3 +21,32 @@ export function getLayerWeights(layer: Layer) {
   cached = { layer, dataIds, result }
   return result
 }
+
+const MAX_CACHED_WEIGHTS = 1_000_000 // larger kernels: read the weights of single neurons only
+
+type NeuronWeights = { weights?: number[]; bias?: number }
+
+let cachedNeuron: { layer: Layer; dataId: object; idx: number; result: NeuronWeights } | undefined
+
+// weights and bias of a single neuron / filter
+export function getNeuronWeights(layer: Layer, idx: number): NeuronWeights {
+  const kernel = layer.weights[0]?.read()
+  if (!kernel || kernel.size <= MAX_CACHED_WEIGHTS) {
+    const { weights, biases } = getLayerWeights(layer)
+    return { weights: weights?.[idx], bias: biases?.[idx] }
+  }
+  const { dataId } = kernel
+  if (cachedNeuron?.layer === layer && cachedNeuron.dataId === dataId && cachedNeuron.idx === idx) {
+    return cachedNeuron.result
+  }
+  const result = tf.tidy(() => {
+    const [_weights, _biases] = layer.getWeights()
+    // same order as a row in getLayerWeights
+    const row = _weights.gather([idx], _weights.shape.length - 1).transpose()
+    const weights = Array.from(row.dataSync())
+    const bias = _biases?.gather([idx]).dataSync()[0]
+    return { weights, bias }
+  }) as NeuronWeights
+  cachedNeuron = { layer, dataId, idx, result }
+  return result
+}

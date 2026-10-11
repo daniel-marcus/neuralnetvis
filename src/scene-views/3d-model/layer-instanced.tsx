@@ -2,7 +2,7 @@ import { memo, useLayoutEffect, useMemo } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useNeuronInteractions } from "./interactions"
-import { getNeuronPos, type MeshParams } from "@/neuron-layers/layout"
+import { getNeuronPos, getNeuronSize, type MeshParams } from "@/neuron-layers/layout"
 import { NeuronLabels } from "./label"
 import { getMaterial } from "./materials"
 import { useLayerActivations } from "@/model/activations"
@@ -70,19 +70,9 @@ export const InstancedLayer = memo(function InstancedLayer(props: InstancedLayer
   )
 })
 
-export function useNeuronSpacing({ geometry, spacingFactor }: MeshParams) {
+export function useNeuronSpacing(meshParams: MeshParams) {
   const neuronSpacing = useSceneStore((s) => s.vis.neuronSpacing)
-  return useMemo(() => {
-    const size =
-      geometry instanceof THREE.BoxGeometry
-        ? geometry.parameters.width
-        : geometry instanceof THREE.SphereGeometry
-          ? geometry.parameters.radius * 2
-          : 1
-    const factor = spacingFactor ?? 1
-    const spacedSize = size * neuronSpacing * factor
-    return { size, spacedSize }
-  }, [geometry, spacingFactor, neuronSpacing])
+  return useMemo(() => getNeuronSize(meshParams, neuronSpacing), [meshParams, neuronSpacing])
 }
 
 export interface PosObj {

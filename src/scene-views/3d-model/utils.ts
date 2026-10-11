@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, type SpringConfig, config } from "@react-spring/web"
-import { getThree } from "@/store"
+import { getThree, getVisConfig } from "@/store"
+import { getNeuronIdxAt, getNeuronPos, getNeuronSize } from "@/neuron-layers/layout"
 import type { Neuron, NeuronLayer } from "@/neuron-layers/types"
 import type { Three } from "@/store/vis"
 
@@ -34,29 +35,69 @@ export function getWorldPos(neuron: Neuron): THREE.Vector3 | undefined {
 
 // instance scale: e.g. token tiles with the width of the token (see TokenLayer)
 export function getWorldTransform(neuron: Neuron) {
-  const { meshRef, index, indexInChannel } = neuron
-  const idx = neuron.layer.hasColorChannels ? indexInChannel : index
-  if (!meshRef?.current) return
+  if (!getNeuronWorldMatrix(neuron.layer, neuron.index, _matrix)) return
   const position = new THREE.Vector3()
   const scale = new THREE.Vector3()
-  const tempMatrix = new THREE.Matrix4()
-  const tempWorldMatrix = new THREE.Matrix4()
-  meshRef.current.getMatrixAt(idx, tempMatrix)
-  tempWorldMatrix.multiplyMatrices(meshRef.current.matrixWorld, tempMatrix)
-  tempWorldMatrix.decompose(position, new THREE.Quaternion(), scale)
+  _matrix.decompose(position, new THREE.Quaternion(), scale)
   return { position, scale }
 }
 
-const _instanceMatrix = new THREE.Matrix4()
+const _matrix = new THREE.Matrix4()
+const _inverseMatrix = new THREE.Matrix4()
+const _ray = new THREE.Ray()
 
 // world position of a neuron by layer & index, written into target (no allocations, for per-frame use)
 export function getWorldPosInto(layer: NeuronLayer, neuronIdx: number, target: THREE.Vector3) {
-  const numChannels = layer.hasColorChannels ? (layer.outputShape[3] ?? 1) : 1
-  const mesh = layer.meshRefs[neuronIdx % numChannels]?.current
-  if (!mesh) return false
-  mesh.getMatrixAt(Math.floor(neuronIdx / numChannels), _instanceMatrix)
-  target.setFromMatrixPosition(_instanceMatrix).applyMatrix4(mesh.matrixWorld)
+  if (!getNeuronWorldMatrix(layer, neuronIdx, _matrix)) return false
+  target.setFromMatrixPosition(_matrix)
   return true
+}
+
+// textured layers have no instances: the position is calculated from the layout instead
+function getNeuronWorldMatrix(layer: NeuronLayer, neuronIdx: number, target: THREE.Matrix4) {
+  const numChannels = layer.hasColorChannels ? (layer.outputShape[3] ?? 1) : 1
+  const channelIdx = neuronIdx % numChannels
+  const idx = Math.floor(neuronIdx / numChannels)
+  const mesh = layer.meshRefs[channelIdx]?.current
+  if (mesh) {
+    mesh.getMatrixAt(idx, target)
+    target.premultiply(mesh.matrixWorld)
+    return true
+  }
+  const group = layer.groupRefs[channelIdx]?.current
+  if (!group) return false
+  const { height, width, channels, spacedSize } = getLayerGrid(layer)
+  const [x, y, z] = getNeuronPos(idx, layer.layerPos, height, width, channels, spacedSize)
+  target.makeTranslation(x, y, z).premultiply(group.matrixWorld)
+  return true
+}
+
+function getLayerGrid(layer: NeuronLayer) {
+  const [, height, width = 1, _channels = 1] = layer.outputShape
+  const channels = layer.hasColorChannels ? 1 : _channels // color channels have separate groups
+  const { size, spacedSize } = getNeuronSize(layer.meshParams, getVisConfig("neuronSpacing"))
+  return { height, width, channels, size, spacedSize }
+}
+
+// index of the neuron that is hit by the ray, calculated from the layout (no raycasting, e.g. for textured layers)
+export function getNeuronIdxAtRay(layer: NeuronLayer, ray: THREE.Ray) {
+  const { height, width, channels, size, spacedSize } = getLayerGrid(layer)
+  for (const [channelIdx, groupRef] of layer.groupRefs.entries()) {
+    const group = groupRef.current
+    if (!group) continue
+    _ray.copy(ray).applyMatrix4(_inverseMatrix.copy(group.matrixWorld).invert())
+    const { origin, direction } = _ray
+    if (!direction.x) continue
+    // layers are flat on the x axis: intersect with the face on the side of the ray origin
+    const faceX = Math.sign(origin.x) * size * 0.5
+    const t = (faceX - origin.x) / direction.x
+    if (t < 0) continue
+    const y = origin.y + t * direction.y
+    const z = origin.z + t * direction.z
+    const idx = getNeuronIdxAt(y, z, layer.layerPos, height, width, channels, spacedSize)
+    if (typeof idx === "number") return idx + channelIdx // as in useNeuronInteractions
+  }
+  return undefined
 }
 
 export type Pos = [number, number, number]

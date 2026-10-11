@@ -51,6 +51,7 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
     })
     const lineSegments = new LineSegments2(geometry, material)
     lineSegments.frustumCulled = false // bounding volumes are not updated
+    lineSegments.renderOrder = 1 // after the (transparent) textured layers, which would cover the lines otherwise
     lineSegments.raycast = () => {}
     lineSegments.visible = false
     return lineSegments
@@ -68,7 +69,7 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
     const colors = line.geometry.attributes.instanceColorStart as THREE.InterleavedBufferAttribute
     for (const [i, { strength }] of inputs.entries()) {
       const brightness = MIN_BRIGHTNESS + (1 - MIN_BRIGHTNESS) * Math.abs(strength)
-      const color = getActColor(Math.sign(strength) * brightness).rgb
+      const color = getActColor(strength < 0 ? -brightness : brightness).rgb
       const offset = (inputs.length - 1 - i) * 6 // strongest connections are drawn last (on top)
       colors.data.array.set(color, offset)
       colors.data.array.set(color, offset + 3)

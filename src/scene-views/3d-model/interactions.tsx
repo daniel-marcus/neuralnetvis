@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useMemo, type RefObject } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
-import { getWorldTransform, useSize } from "./utils"
+import { getNeuronIdxAtRay, getWorldTransform, useSize } from "./utils"
 import { setStatus, clearStatus, useGlobalStore } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
@@ -46,6 +46,11 @@ export function LayerInteractions(
   }
   // this layer catches the events, but the neurons behind are included in the intersections
   const getNeuronNid = (e: ThreeEvent<MouseEvent>) => {
+    if (!props.meshRefs.some((r) => r.current?.visible)) {
+      // textured layer: no instances to hit
+      const neuronIdx = getNeuronIdxAtRay(props, e.ray)
+      return typeof neuronIdx === "number" ? getNid(props.index, neuronIdx) : undefined
+    }
     const hit = e.intersections.find((i) => props.meshRefs.some((r) => r.current === i.object))
     if (typeof hit?.instanceId !== "number") return undefined
     const channelIdx = props.meshRefs.findIndex((r) => r.current === hit.object)

@@ -1,6 +1,7 @@
 import type { NeuronLayer, NeuronStateful } from "./types"
 
 export const MAX_CONNECTIONS = 48
+const NEUTRAL_STRENGTH = 0.5 // for connections that can't be ranked
 
 export interface InputConnection {
   index: number // neuron index in the previous layer
@@ -9,22 +10,26 @@ export interface InputConnection {
 
 // returns the strongest inputs of a neuron, sorted by descending strength
 // ranked by weighted input (weight * activation), fallback: weight or activation only
+// activations are often not available (WebGPU: only downloaded for the output layer, see getActivations)
 export function getTopInputs(
   neuron: NeuronStateful,
   prevActivations?: Float32Array,
   k = MAX_CONNECTIONS,
 ): InputConnection[] {
-  const { inputNids, weights, layer } = neuron
-  const getWeightIdx = getWeightIdxFunc(layer, inputNids.length, weights?.length)
+  const { inputIdxs, weights, layer } = neuron
+  const getWeightIdx = getWeightIdxFunc(layer, inputIdxs.length, weights?.length)
   const hasWeights = !!weights && !!getWeightIdx
+  if (!hasWeights && !prevActivations) {
+    // nothing to rank by (e.g. pooling, normalization): show the inputs as they are
+    return Array.from(inputIdxs.slice(0, k), (index) => ({ index, strength: NEUTRAL_STRENGTH }))
+  }
 
   // sorted by descending abs score, max length k
-  const topPos: number[] = [] // position in inputNids
+  const topPos: number[] = [] // position in inputIdxs
   const topScores: number[] = []
-  for (let i = 0; i < inputNids.length; i++) {
+  for (let i = 0; i < inputIdxs.length; i++) {
     const weight = hasWeights ? weights[getWeightIdx(i)] : 1
-    const activation = prevActivations ? prevActivations[parseNeuronIdx(inputNids[i])] : 1
-    if (!hasWeights && !prevActivations) break // nothing to rank by
+    const activation = prevActivations ? prevActivations[inputIdxs[i]] : 1
     const score = weight * activation
     const absScore = Math.abs(score)
     if (!absScore) continue // incl. NaN
@@ -39,14 +44,17 @@ export function getTopInputs(
     }
   }
 
+  // one-to-one connections are always shown
+  if (!topPos.length && inputIdxs.length === 1) return [{ index: inputIdxs[0], strength: 0 }]
+
   const maxAbs = Math.abs(topScores[0])
   return topPos.map((pos, i) => ({
-    index: parseNeuronIdx(inputNids[pos]),
+    index: inputIdxs[pos],
     strength: topScores[i] / maxAbs,
   }))
 }
 
-// maps the position in inputNids to the index in neuron.weights (as returned from getLayerWeights)
+// maps the position in inputIdxs to the index in neuron.weights (as returned from getLayerWeights)
 function getWeightIdxFunc(layer: NeuronLayer, numInputs: number, numWeights?: number) {
   if (!numWeights || !layer.prevLayer) return undefined
   if (layer.layerType === "Conv2D") {
@@ -58,7 +66,7 @@ function getWeightIdxFunc(layer: NeuronLayer, numInputs: number, numWeights?: nu
   return undefined
 }
 
-// inputNids (see getReceptiveFieldInputNids) are ordered by [height, width, depth],
+// inputs (see getReceptiveFieldInputNids) are ordered by [height, width, depth],
 // weights by [depth, width, height] (transposed kernel, see getLayerWeights)
 export function getConv2DWeightIdx(
   i: number,
@@ -70,8 +78,4 @@ export function getConv2DWeightIdx(
   const x = Math.floor(i / depth) % kernelWidth
   const y = Math.floor(i / (depth * kernelWidth))
   return (c * kernelWidth + x) * kernelHeight + y
-}
-
-function parseNeuronIdx(nid: string) {
-  return Number(nid.slice(nid.indexOf("_") + 1))
 }

@@ -42,7 +42,7 @@ function ColorChannelShifter({ children, ...props }: ColorChannelShifterProps) {
   const groupRef = useGroupPosition(props, props.channelIdx)
   return (
     <group ref={groupRef} name={`group_${props.lid}_${props.channelIdx}`}>
-      {children}
+      <group ref={props.groupRefs[props.channelIdx]}>{children}</group>
     </group>
   )
 }
