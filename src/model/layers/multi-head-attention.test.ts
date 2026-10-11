@@ -9,7 +9,7 @@ import type { Layer, SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/
 import type { LayersModel } from "@tensorflow/tfjs-layers/dist/engine/training"
 import { MultiHeadAttention as TfjsMultiHeadAttention } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
 import { EinsumDense } from "@tensorflow/tfjs-layers/dist/layers/nlp/einsum_dense"
-import { MultiHeadAttention } from "./multi-head-attention"
+import { getAttentionInputRange, MultiHeadAttention } from "./multi-head-attention"
 
 const seqLen = 6
 const dim = 8
@@ -239,5 +239,30 @@ describe("MultiHeadAttention causal mask cache", () => {
     tf.tidy(() => model.predict(xs.slice([0, 0, 0], [1, -1, -1]))) // other batch size: same mask
     expect(cache.size).toBe(1)
     expect([...cache.values()][0]).toBe(cached)
+  })
+})
+
+describe("getAttentionInputRange", () => {
+  const [seqLength, size] = [6, 4]
+  const shape = [null, seqLength, size]
+  const makeLayer = (isCausal: boolean) => ({ outputShape: shape, isCausal }) as unknown as Layer
+  const prevLayer = { outputShape: shape } as unknown as Layer
+  const nIdx = 2 * size + 1 // position 2
+
+  it("covers the positions up to the neuron's own with a causal mask", () => {
+    expect(getAttentionInputRange(makeLayer(true), nIdx, prevLayer)).toEqual({
+      start: 0,
+      length: 3 * size,
+    })
+    // cross-attention on a shorter sequence
+    const shortLayer = { outputShape: [null, 2, size] } as unknown as Layer
+    expect(getAttentionInputRange(makeLayer(true), nIdx, shortLayer).length).toBe(2 * size)
+  })
+
+  it("covers the whole previous layer without a causal mask", () => {
+    expect(getAttentionInputRange(makeLayer(false), nIdx, prevLayer)).toEqual({
+      start: 0,
+      length: seqLength * size,
+    })
   })
 })

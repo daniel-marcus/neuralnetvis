@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest"
 import * as tf from "@tensorflow/tfjs"
 import {
-  getFullyConnectedInputNids,
   getFullyConnectedInputRange,
   getReceptiveFieldInputNids,
   getReceptiveFieldOrigin,
@@ -109,14 +108,13 @@ describe("getReceptiveFieldInputNids", () => {
   })
 })
 
-describe("getFullyConnectedInputNids", () => {
+describe("getFullyConnectedInputRange", () => {
   it("connects a neuron to all neurons of the previous layer", () => {
     const dense = tf.layers.dense({ units: 3 })
     dense.apply(tf.input({ shape: [8] }))
     // e.g. through Flatten: the shape of the previous layer doesn't matter
     const prevTfLayer = { outputShape: [null, 2, 2, 2] } as tf.layers.Layer
     expect(getFullyConnectedInputRange(dense, 2, prevTfLayer)).toEqual({ start: 0, length: 8 })
-    expect(getFullyConnectedInputNids(dense, 2, prevTfLayer, 1).length).toBe(8)
   })
 
   it("connects a neuron to its own position in a sequence", () => {
@@ -125,10 +123,9 @@ describe("getFullyConnectedInputNids", () => {
     dense.apply(tf.input({ shape: [seqLength, dim] }))
     const prevTfLayer = { outputShape: [null, seqLength, dim] } as tf.layers.Layer
     const nIdx = 2 * units + 1 // position 2, unit 1
-    expect(getFullyConnectedInputRange(dense, nIdx, prevTfLayer)).toEqual({ start: 10, length: 5 })
-    const nids = getFullyConnectedInputNids(dense, nIdx, prevTfLayer, 7)
-    expect(nids).toEqual(["7_10", "7_11", "7_12", "7_13", "7_14"])
+    const range = getFullyConnectedInputRange(dense, nIdx, prevTfLayer)
+    expect(range).toEqual({ start: 10, length: 5 })
     // one weight per input
-    expect((dense.getWeights()[0].shape as number[])[0]).toBe(nids.length)
+    expect((dense.getWeights()[0].shape as number[])[0]).toBe(range.length)
   })
 })

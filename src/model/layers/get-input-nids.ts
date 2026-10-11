@@ -1,5 +1,5 @@
 import { getFlatIndex, getIndex3d, getNid, getUnits } from "@/neuron-layers/helpers"
-import type { GetInputNidsFunc } from "./types"
+import type { GetInputNidsFunc, GetInputRangeFunc } from "./types"
 import type { Nid } from "@/neuron-layers"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
@@ -7,17 +7,9 @@ import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 // for Dense etc
 // each neuron is connected to all neurons in the previous layer
-export const getFullyConnectedInputNids: GetInputNidsFunc = (l, nIdx, prevLayer, prevLayerIdx) => {
-  const { start, length } = getFullyConnectedInputRange(l, nIdx, prevLayer)
-  return Array.from({ length }).map((_, i) => {
-    return getNid(prevLayerIdx, start + i)
-  })
-}
-
-// the range of neuron indices in the previous layer that a neuron is fully connected to
 // inputs with more than one axis (e.g. sequences): Dense is applied to the last axis only,
 // so each neuron is connected to the neurons at its own position (e.g. token) in the previous layer
-export function getFullyConnectedInputRange(l: Layer, nIdx: number, prevLayer: Layer) {
+export const getFullyConnectedInputRange: GetInputRangeFunc = (l, nIdx, prevLayer) => {
   const outputShape = l.outputShape as number[]
   const prevUnits = getUnits(prevLayer)
   if (outputShape.length <= 2) return { start: 0, length: prevUnits }

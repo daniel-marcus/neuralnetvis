@@ -9,6 +9,7 @@ import { useSceneStore } from "@/store"
 import { getNeuronBoundsInto, getWorldPosInto } from "./utils"
 import { getActColor } from "@/utils/colors"
 import { getInputRegions, getTopInputs, MAX_CONNECTIONS } from "@/neuron-layers/connections"
+import { getLayerDef } from "@/model/layers"
 import type { Neuron, NeuronInput, NeuronStateful } from "@/neuron-layers/types"
 
 const MIN_BRIGHTNESS = 0.3 // for the weakest connections
@@ -44,7 +45,7 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
 
   // sorted by descending strength
   const connections = useMemo(() => {
-    if (!neuron) return []
+    if (!neuron || getLayerDef(neuron.layer.layerType)?.hasRegionInputsOnly) return []
     const k = Math.floor(MAX_CONNECTIONS / inputs.length) // the input layers share the buffers
     return inputs
       .flatMap(({ layer, idxs }) => {

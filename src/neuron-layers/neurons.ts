@@ -2,12 +2,8 @@ import { useMemo } from "react"
 import { getLayers, useSceneStore } from "@/store"
 import { getLayerDef } from "@/model/layers"
 import { getNeuronWeights } from "@/model/weights"
-import {
-  getFullyConnectedInputNids,
-  getFullyConnectedInputRange,
-} from "@/model/layers/get-input-nids"
 import { getIndex3d } from "./helpers"
-import type { Neuron, NeuronStateful, Nid } from "./types"
+import type { Neuron, NeuronLayer, NeuronStateful, Nid } from "./types"
 import type { LayerActivations } from "@/model"
 import type { Sample } from "@/data"
 
@@ -43,19 +39,21 @@ function createNeuron(nid?: Nid): Neuron | undefined {
   const numChannels = outputShape[3] ?? 1
   const channelIdx = neuronIdx % numChannels
   const layerDef = getLayerDef(layer.layerType)
-  const getInputNids = layerDef?.getInputNids
-  const inputs = !getInputNids
+  const { getInputNids, getInputRange } = layerDef ?? {}
+  const getInputIdxs = (inputLayer: NeuronLayer) => {
+    if (getInputRange) {
+      const { start, length } = getInputRange(layer.tfLayer, neuronIdx, inputLayer.tfLayer)
+      const idxs = new Uint32Array(length)
+      for (let i = 0; i < length; i++) idxs[i] = start + i
+      return idxs
+    }
+    const nids = getInputNids?.(layer.tfLayer, neuronIdx, inputLayer.tfLayer, inputLayer.index)
+    return Uint32Array.from(nids ?? [], (inputNid) => parseNid(inputNid).neuronIdx)
+  }
+  const hasInputs = !!getInputNids || !!getInputRange
+  const inputs = !hasInputs
     ? []
-    : layer.inputLayers.map((inputLayer) => ({
-        layer: inputLayer,
-        idxs:
-          getInputNids === getFullyConnectedInputNids
-            ? getFullyConnectedIdxs(layer.tfLayer, neuronIdx, inputLayer.tfLayer)
-            : Uint32Array.from(
-                getInputNids(layer.tfLayer, neuronIdx, inputLayer.tfLayer, inputLayer.index),
-                (inputNid) => parseNid(inputNid).neuronIdx,
-              ),
-      }))
+    : layer.inputLayers.map((inputLayer) => ({ layer: inputLayer, idxs: getInputIdxs(inputLayer) }))
   const neuron: Neuron = {
     index: neuronIdx,
     nid,
@@ -68,12 +66,6 @@ function createNeuron(nid?: Nid): Neuron | undefined {
     inputIdxs: inputs[0]?.idxs ?? new Uint32Array(),
   }
   return neuron
-}
-
-// as getFullyConnectedInputNids, but without creating nids (many inputs)
-function getFullyConnectedIdxs(...args: Parameters<typeof getFullyConnectedInputRange>) {
-  const { start, length } = getFullyConnectedInputRange(...args)
-  return Uint32Array.from({ length }, (_, i) => start + i)
 }
 
 // add state to neuron: activations, weights, biases

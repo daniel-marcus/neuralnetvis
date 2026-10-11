@@ -4,7 +4,8 @@ import { Layer, type SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/
 import { nameScope } from "@tensorflow/tfjs-layers/dist/common"
 import type { EinsumDense } from "@tensorflow/tfjs-layers/dist/layers/nlp/einsum_dense"
 import type { Kwargs } from "@tensorflow/tfjs-layers/dist/types"
-import type { LayerDef } from "./types"
+import { getUnits } from "@/neuron-layers/helpers"
+import type { GetInputRangeFunc, LayerDef } from "./types"
 
 type Input = tf.Tensor | SymbolicTensor
 const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
@@ -19,6 +20,10 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
   // the causal mask only depends on the sequence lengths: computed once instead of in every call
   // (tfjs: bandPart + the additive mask for the softmax, ~20 kernels per call)
   private causalMasks = new Map<string, CausalMask>()
+
+  get isCausal() {
+    return this.useCausalMask
+  }
 
   constructor(args: ConstructorParameters<typeof MultiHeadAttentionLayer>[0]) {
     super(args)
@@ -189,6 +194,20 @@ function replaceEinsumWithMatMul(dense: EinsumDense) {
     })
 }
 
+// each neuron is connected to all neurons at the positions (e.g. tokens) it can attend to:
+// with a causal mask these are the positions up to its own, otherwise the whole previous layer
+export const getAttentionInputRange: GetInputRangeFunc = (l, nIdx, prevLayer) => {
+  const outputShape = l.outputShape as number[]
+  const prevShape = prevLayer.outputShape as number[]
+  const prevUnits = getUnits(prevLayer)
+  const { isCausal } = l as { isCausal?: boolean }
+  const isSequence = outputShape.length === 3 && prevShape.length === 3
+  if (!isCausal || !isSequence) return { start: 0, length: prevUnits }
+  const position = Math.floor(nIdx / outputShape[2])
+  const numPositions = Math.min(position + 1, prevShape[1])
+  return { start: 0, length: numPositions * prevShape[2] }
+}
+
 export const MultiHeadAttention: LayerDef<"MultiHeadAttention"> = {
   // @ts-expect-error with computeOutputShape
   constructorFunc: (config) => new Keras3MultiHeadAttentionLayer(config),
@@ -197,6 +216,8 @@ export const MultiHeadAttention: LayerDef<"MultiHeadAttention"> = {
     keyDim: 32,
   },
   isUserAddable: false,
+  getInputRange: getAttentionInputRange,
+  hasRegionInputsOnly: true, // TODO: connections to the attended positions (attention scores)
 }
 
 tf.serialization.registerClass(Keras3MultiHeadAttentionLayer)

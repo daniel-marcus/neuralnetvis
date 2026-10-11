@@ -198,6 +198,17 @@ describe("getInputRegions", () => {
     expect(regions).toEqual([[1, depth + 1, size * depth + 1, (size + 1) * depth + 1]])
   })
 
+  it("reduces large regions to their outermost neurons", () => {
+    const [height, width] = [64, 32]
+    const shape = [-1, height, width]
+    const rows = Uint32Array.from({ length: 40 * width }, (_, i) => i) // the first 40 rows
+    expect(getInputRegions(rows, shape)).toEqual([[0, 39 * width, width - 1]]) // top/left, bottom, right
+    const row = Uint32Array.from({ length: width }, (_, i) => 3 * width + i)
+    expect(getInputRegions(row, shape)[0].length).toBe(width) // small regions are kept
+    // layers without a grid of their own (e.g. Dense) are kept as well
+    expect(getInputRegions(rows, [-1, height * width])[0].length).toBe(rows.length)
+  })
+
   it("returns one region for layers without channels", () => {
     expect(getInputRegions(Uint32Array.of(0, 1, 2, 3), [-1, 4])).toEqual([[0, 1, 2, 3]])
     expect(getInputRegions(Uint32Array.of(2), [-1, 4])).toEqual([[2]])

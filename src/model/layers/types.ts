@@ -91,11 +91,20 @@ export type GetInputNidsFunc = (
   depthwise?: boolean, // for DepthwiseConv2D and MaxPooling2D
 ) => Nid[]
 
+// for inputs that are a contiguous range of neuron indices in the previous layer
+export type GetInputRangeFunc = (
+  layer: Layer,
+  neuronIdx: number,
+  prevLayer: Layer,
+) => { start: number; length: number }
+
 export interface LayerDef<T extends keyof LayerConfigMap> {
   constructorFunc: (args: LayerConfigMap[T]) => Layer
   defaultConfig?: LayerConfigMap[T]
   options?: ControllableOption<T>[]
   getInputNids?: GetInputNidsFunc
+  getInputRange?: GetInputRangeFunc // instead of getInputNids: no nids for (many) contiguous inputs
+  hasRegionInputsOnly?: boolean // the inputs are shown as region only: no connections to single neurons
   needsMultiDim?: boolean // TODO: better name?
   isInvisible?: boolean
   isUserAddable?: boolean

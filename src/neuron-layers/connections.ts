@@ -69,7 +69,26 @@ export function getInputRegions(inputIdxs: ArrayLike<number>, prevShape: number[
     if (region) region.push(inputIdxs[i])
     else regions.set(channelIdx, [inputIdxs[i]])
   }
-  return [...regions.values()]
+  return [...regions.values()].map((region) => getOuterNeurons(region, prevShape))
+}
+
+const MAX_REGION_NEURONS = 1024
+
+// large regions (e.g. all inputs of Dense or MultiHeadAttention) are reduced to their outermost neurons,
+// which have the same bounds in a grid: the bounds are calculated per frame (see InputRegions)
+function getOuterNeurons(region: number[], prevShape: number[]) {
+  const [, , width = 1, depth = 1] = prevShape
+  if (region.length <= MAX_REGION_NEURONS || width <= 1) return region // 1D layers have other layouts
+  let [top, bottom, left, right] = [region[0], region[0], region[0], region[0]]
+  const getRow = (idx: number) => Math.floor(idx / (depth * width))
+  const getCol = (idx: number) => Math.floor(idx / depth) % width
+  for (const idx of region) {
+    if (getRow(idx) < getRow(top)) top = idx
+    if (getRow(idx) > getRow(bottom)) bottom = idx
+    if (getCol(idx) < getCol(left)) left = idx
+    if (getCol(idx) > getCol(right)) right = idx
+  }
+  return [...new Set([top, bottom, left, right])]
 }
 
 // weight * activation of the previous layer for every weight of a neuron, in the order of neuron.weights

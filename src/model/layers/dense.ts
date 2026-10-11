@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs"
-import { getFullyConnectedInputNids } from "./get-input-nids"
+import { getFullyConnectedInputRange } from "./get-input-nids"
 import type { LayerDef } from "./types"
 
 export const Dense: LayerDef<"Dense"> = {
@@ -19,5 +19,5 @@ export const Dense: LayerDef<"Dense"> = {
     },
   ],
   isUserAddable: true,
-  getInputNids: getFullyConnectedInputNids,
+  getInputRange: getFullyConnectedInputRange,
 }
