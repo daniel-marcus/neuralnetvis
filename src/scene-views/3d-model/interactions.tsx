@@ -122,13 +122,17 @@ export function LayerInteractions(
   
   */
   return (
-    <mesh {...(isActive ? interactions : {})} scale={size} renderOrder={-1}>
+    <mesh {...(isActive ? interactions : {})} scale={size} renderOrder={1}>
       <primitive object={layerHoverGeometry} attach={"geometry"} />
       <meshBasicMaterial
         color="white"
         transparent
-        opacity={isHovered ? 0.02 : 0}
+        opacity={isHovered ? 0.01 : 0}
         depthWrite={false}
+        // avoid z-fighting with the layer (low depth precision for distant layers)
+        polygonOffset
+        polygonOffsetFactor={-1}
+        polygonOffsetUnits={-4}
       />
       {/* the fill is barely visible against the (transparent) background */}
       <lineSegments visible={isHovered} raycast={noRaycast} renderOrder={1}>
