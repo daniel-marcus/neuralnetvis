@@ -56,6 +56,20 @@ export function getTopInputs(
   }))
 }
 
+// groups the inputs of a neuron by the channel of the previous layer (neuron indices in the previous layer)
+// every group is a coherent region within the layer, e.g. the receptive field in one of the feature maps
+export function getInputRegions(inputIdxs: ArrayLike<number>, prevShape: number[]) {
+  const depth = prevShape[3] ?? 1
+  const regions = new Map<number, number[]>()
+  for (let i = 0; i < inputIdxs.length; i++) {
+    const channelIdx = inputIdxs[i] % depth
+    const region = regions.get(channelIdx)
+    if (region) region.push(inputIdxs[i])
+    else regions.set(channelIdx, [inputIdxs[i]])
+  }
+  return [...regions.values()]
+}
+
 // weight * activation of the previous layer for every weight of a neuron, in the order of neuron.weights
 // NaN: no input at this kernel position (outside of the previous layer, "same" padding)
 export function getWeightedInputs(neuron: NeuronStateful, prevActivations: ArrayLike<number>) {

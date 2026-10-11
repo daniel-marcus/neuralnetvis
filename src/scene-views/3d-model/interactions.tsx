@@ -6,7 +6,7 @@ import { getNeuronIdxAtRay, getWorldTransform, useSize } from "./utils"
 import { setStatus, clearStatus, useGlobalStore } from "@/store"
 import { getScene, useSceneStore, useHasFocussed } from "@/store"
 import { isTouch } from "@/utils/screen"
-import { HoverConnections } from "./connections"
+import { HoverConnections, InputRegions } from "./connections"
 import { getNid } from "@/neuron-layers/helpers"
 import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 
@@ -201,6 +201,7 @@ export function HoverComponents() {
     <>
       <group onPointerMissed={onPointerMissed} />
       <HoverConnections neuron={hovered ?? selected} />
+      <InputRegions neuron={hovered ?? selected} />
       <Highlighted neuron={selected} thick />
       <Highlighted neuron={hovered} />
     </>

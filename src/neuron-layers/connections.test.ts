@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import * as tf from "@tensorflow/tfjs"
-import { getConv2DWeightIdx, getTopInputs, getWeightedInputs } from "./connections"
+import { getConv2DWeightIdx, getInputRegions, getTopInputs, getWeightedInputs } from "./connections"
 import { getLayerWeights } from "@/model/weights"
 import { getReceptiveFieldInputNids } from "@/model/layers/get-input-nids"
 import type { NeuronLayer, NeuronStateful } from "./types"
@@ -154,5 +154,42 @@ describe("getTopInputs (Conv2D with same padding)", () => {
     const top = getTopInputs(getNeuron(1, 1, 0))
     expect(top.length).toBe(3 * 3 * depth)
     expect(top[0]).toEqual({ index: (2 * size + 2) * depth + 1, strength: 1 }) // kernel [2, 2, 1]
+  })
+})
+
+const toIdxs = (nids: string[]) => nids.map((nid) => Number(nid.split("_")[1]))
+
+describe("getInputRegions", () => {
+  const [size, depth] = [4, 3]
+  const prevShape = [null, size, size, depth] as unknown as number[]
+  const prevTfLayer = { outputShape: prevShape } as tf.layers.Layer
+  const input = tf.input({ shape: [size, size, depth] })
+
+  it("returns the receptive field in every channel of the previous layer", () => {
+    const conv = tf.layers.conv2d({ filters: 2, kernelSize: 2 })
+    conv.apply(input)
+    const inputNids = getReceptiveFieldInputNids(conv, 0, prevTfLayer, 0)
+    const regions = getInputRegions(toIdxs(inputNids), prevShape)
+    expect(regions.length).toBe(depth)
+    for (const [channelIdx, region] of regions.entries()) {
+      const positions = region.map((idx) => Math.floor(idx / depth))
+      expect(positions).toEqual([0, 1, size, size + 1]) // [0, 0], [0, 1], [1, 0], [1, 1]
+      expect(region.every((idx) => idx % depth === channelIdx)).toBe(true)
+    }
+  })
+
+  it("returns one region for inputs from a single channel", () => {
+    const pooling = tf.layers.maxPooling2d({ poolSize: 2 })
+    pooling.apply(input)
+    const neuronIdx = 1 // channel 1
+    const inputNids = getReceptiveFieldInputNids(pooling, neuronIdx, prevTfLayer, 0, true)
+    const regions = getInputRegions(toIdxs(inputNids), prevShape)
+    expect(regions).toEqual([[1, depth + 1, size * depth + 1, (size + 1) * depth + 1]])
+  })
+
+  it("returns one region for layers without channels", () => {
+    expect(getInputRegions(Uint32Array.of(0, 1, 2, 3), [-1, 4])).toEqual([[0, 1, 2, 3]])
+    expect(getInputRegions(Uint32Array.of(2), [-1, 4])).toEqual([[2]])
+    expect(getInputRegions(new Uint32Array(), [-1, 4])).toEqual([])
   })
 })

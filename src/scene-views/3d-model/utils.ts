@@ -71,6 +71,48 @@ function getNeuronWorldMatrix(layer: NeuronLayer, neuronIdx: number, target: THR
   return true
 }
 
+const _position = new THREE.Vector3()
+const _halfSize = new THREE.Vector3()
+const _corner = new THREE.Vector3()
+
+// bounding box of neurons within their mesh / group, incl. half of the spacing to the next neurons
+// returns the world matrix of that mesh / group (color layers: the neurons have to be in the same channel)
+export function getNeuronBoundsInto(
+  layer: NeuronLayer,
+  neuronIdxs: ArrayLike<number>,
+  target: THREE.Box3,
+) {
+  if (!neuronIdxs.length) return undefined
+  const numChannels = layer.hasColorChannels ? (layer.outputShape[3] ?? 1) : 1
+  const channelIdx = neuronIdxs[0] % numChannels
+  const mesh = layer.meshRefs[channelIdx]?.current
+  const parent = mesh ?? layer.groupRefs[channelIdx]?.current
+  if (!parent) return undefined
+  const { height, width, channels, size, spacedSize } = getLayerGrid(layer)
+  target.makeEmpty()
+  for (let i = 0; i < neuronIdxs.length; i++) {
+    const idx = Math.floor(neuronIdxs[i] / numChannels)
+    if (mesh) {
+      mesh.getMatrixAt(idx, _matrix)
+      _position.setFromMatrixPosition(_matrix)
+      _halfSize.setFromMatrixScale(_matrix).multiplyScalar(size * 0.5) // see getWorldTransform
+    } else {
+      // textured layers, as in getNeuronWorldMatrix
+      const pos = getNeuronPos(idx, layer.layerPos, height, width, channels, spacedSize)
+      _position.fromArray(pos)
+      _halfSize.setScalar(size * 0.5)
+    }
+    target.expandByPoint(_corner.copy(_position).sub(_halfSize))
+    target.expandByPoint(_corner.copy(_position).add(_halfSize))
+  }
+  const halfGap = Math.max(spacedSize - size, 0) * 0.5
+  target.min.y -= halfGap
+  target.min.z -= halfGap
+  target.max.y += halfGap
+  target.max.z += halfGap
+  return parent.matrixWorld
+}
+
 function getLayerGrid(layer: NeuronLayer) {
   const [, height, width = 1, _channels = 1] = layer.outputShape
   const channels = layer.hasColorChannels ? 1 : _channels // color channels have separate groups
