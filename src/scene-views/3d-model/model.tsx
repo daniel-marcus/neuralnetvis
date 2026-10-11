@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
-import { useSceneStore } from "@/store"
+import { clearStatus, setStatus, useSceneStore } from "@/store"
 import { useLayers, type NeuronLayer } from "@/neuron-layers"
 import { ActivationUpdater } from "@/model/activations"
 import { moveCameraTo, useAnimatedPosition } from "./utils"
@@ -43,17 +43,65 @@ function useAutoExpand() {
   }, [isActive, isLargeModel, setVisConfig])
 }
 
+const HIDDEN_LAYERS_STATUS = "hidden-layers-status"
+
 // hidden layers are only mounted if they are shown or preloaded (small models: when the scene is hovered or active)
+// they are mounted in batches, so that large models don't block the main thread
 function useMountedLayers(layers: NeuronLayer[]) {
   const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
   const isActive = useSceneStore((s) => s.isActive)
   const isHovered = useSceneStore((s) => s.isHovered)
   const isLargeModel = useSceneStore((s) => s.isLargeModel)
   const withHidden = showHiddenLayers || (!isLargeModel && (isActive || isHovered))
-  return useMemo(
-    () => (withHidden ? layers : layers.filter((l) => l.layerPos !== "hidden")),
-    [layers, withHidden],
-  )
+
+  const numHidden = useMemo(() => layers.filter((l) => l.layerPos === "hidden").length, [layers])
+  const numMounted = useBatchedCount(withHidden ? numHidden : 0)
+
+  const isLoading = showHiddenLayers && numMounted > 0 && numMounted < numHidden
+  useEffect(() => {
+    if (!isLoading) return
+    setStatus("Loading hidden layers ...", numMounted / numHidden, { id: HIDDEN_LAYERS_STATUS })
+  }, [isLoading, numMounted, numHidden])
+  useEffect(() => {
+    if (!isLoading) return
+    return () => clearStatus(HIDDEN_LAYERS_STATUS)
+  }, [isLoading])
+
+  return useMemo(() => {
+    if (numMounted >= numHidden) return layers
+    let hiddenIdx = 0
+    return layers.filter((l) => l.layerPos !== "hidden" || hiddenIdx++ < numMounted)
+  }, [layers, numMounted, numHidden])
+}
+
+const MIN_BATCH = 1
+const INITIAL_BATCH = 8 // small models are mounted in 1-2 frames
+const MAX_BATCH = 32
+const TARGET_FRAME_TIME = 20 // ms
+
+// counts up to the target in batches (1 per frame), the batch size is adapted to the frame time
+function useBatchedCount(target: number) {
+  const [count, setCount] = useState(0)
+  if (count > target) setCount(target) // counting down is not batched
+  const batch = useRef({ size: INITIAL_BATCH, lastTime: 0 })
+  useEffect(() => {
+    if (count >= target) {
+      batch.current = { size: INITIAL_BATCH, lastTime: 0 }
+      return
+    }
+    const id = requestAnimationFrame((time) => {
+      const { size, lastTime } = batch.current
+      const frameTime = lastTime ? time - lastTime : 0
+      const isSlow = frameTime > TARGET_FRAME_TIME * 1.25
+      const isFast = frameTime < TARGET_FRAME_TIME * 0.9 // within 1 frame at 60 fps
+      const newSize = isSlow ? (size * TARGET_FRAME_TIME) / frameTime : isFast ? size * 1.5 : size
+      const clampedSize = lastTime ? Math.min(Math.max(newSize, MIN_BATCH), MAX_BATCH) : size
+      batch.current = { size: clampedSize, lastTime: time }
+      setCount((c) => Math.min(c + Math.ceil(clampedSize), target))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [count, target])
+  return Math.min(count, target)
 }
 
 export function useVisibleLayers(layers: NeuronLayer[]) {
