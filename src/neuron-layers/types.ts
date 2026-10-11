@@ -20,7 +20,7 @@ export interface NeuronLayer {
   tfLayer: tf.layers.Layer
   outputShape: number[] // as visualized, usually tfLayer.outputShape (nextToken output: current position only)
   numNeurons: number
-  numBiases: number // for Dense layers = numNeurons, for Conv2D = numFilters
+  numBiases: number // for Dense layers = units (per position), for Conv2D = numFilters
   meshRefs: MeshRef[] // color layers: 1 per channel, otherwise 1 for layer (empty refs: layer is textured only)
   groupRefs: GroupRef[] // parent groups of the meshes, to find neurons of textured layers (see getNeuronWorldMatrix)
   meshParams: MeshParams

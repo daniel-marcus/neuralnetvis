@@ -63,7 +63,9 @@ function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOpt
       ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
         ? prevLayer.meshParams
         : getMeshParams(tfLayer, layerPos, units)
-    const numBiases = (tfLayer.getConfig().filters as number) ?? units
+    // Dense on sequences: the units are applied to every position
+    const { filters, units: unitsPerPosition } = tfLayer.getConfig()
+    const numBiases = (filters as number) ?? (unitsPerPosition as number) ?? units
 
     const hasColorChannels = layerPos === "input" && outputShape[3] === 3
     const channels = hasColorChannels ? 3 : 1

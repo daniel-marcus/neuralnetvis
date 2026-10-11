@@ -7,12 +7,25 @@ import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 
 // for Dense etc
 // each neuron is connected to all neurons in the previous layer
-export const getFullyConnectedInputNids: GetInputNidsFunc = (_, __, prevLayer, prevLayerIdx) => {
-  // each neuron is connected to all neurons in the previous layer
-  const prevUnits = getUnits(prevLayer)
-  return Array.from({ length: prevUnits }).map((___, i) => {
-    return getNid(prevLayerIdx, i)
+export const getFullyConnectedInputNids: GetInputNidsFunc = (l, nIdx, prevLayer, prevLayerIdx) => {
+  const { start, length } = getFullyConnectedInputRange(l, nIdx, prevLayer)
+  return Array.from({ length }).map((_, i) => {
+    return getNid(prevLayerIdx, start + i)
   })
+}
+
+// the range of neuron indices in the previous layer that a neuron is fully connected to
+// inputs with more than one axis (e.g. sequences): Dense is applied to the last axis only,
+// so each neuron is connected to the neurons at its own position (e.g. token) in the previous layer
+export function getFullyConnectedInputRange(l: Layer, nIdx: number, prevLayer: Layer) {
+  const outputShape = l.outputShape as number[]
+  const prevUnits = getUnits(prevLayer)
+  if (outputShape.length <= 2) return { start: 0, length: prevUnits }
+  const unitsPerPosition = outputShape[outputShape.length - 1]
+  const numPositions = getUnits(l) / unitsPerPosition
+  const length = prevUnits / numPositions
+  if (!Number.isInteger(length)) return { start: 0, length: prevUnits } // positions don't match
+  return { start: Math.floor(nIdx / unitsPerPosition) * length, length }
 }
 
 // for BatchNormalization etc:

@@ -2,8 +2,11 @@ import { useMemo } from "react"
 import { getLayers, useSceneStore } from "@/store"
 import { getLayerDef } from "@/model/layers"
 import { getNeuronWeights } from "@/model/weights"
-import { getFullyConnectedInputNids } from "@/model/layers/get-input-nids"
-import { getIndex3d, getUnits } from "./helpers"
+import {
+  getFullyConnectedInputNids,
+  getFullyConnectedInputRange,
+} from "@/model/layers/get-input-nids"
+import { getIndex3d } from "./helpers"
 import type { Neuron, NeuronStateful, Nid } from "./types"
 import type { LayerActivations } from "@/model"
 import type { Sample } from "@/data"
@@ -47,7 +50,7 @@ function createNeuron(nid?: Nid): Neuron | undefined {
         layer: inputLayer,
         idxs:
           getInputNids === getFullyConnectedInputNids
-            ? Uint32Array.from({ length: getUnits(inputLayer.tfLayer) }, (_, i) => i) // all neurons (without creating nids)
+            ? getFullyConnectedIdxs(layer.tfLayer, neuronIdx, inputLayer.tfLayer)
             : Uint32Array.from(
                 getInputNids(layer.tfLayer, neuronIdx, inputLayer.tfLayer, inputLayer.index),
                 (inputNid) => parseNid(inputNid).neuronIdx,
@@ -67,6 +70,12 @@ function createNeuron(nid?: Nid): Neuron | undefined {
   return neuron
 }
 
+// as getFullyConnectedInputNids, but without creating nids (many inputs)
+function getFullyConnectedIdxs(...args: Parameters<typeof getFullyConnectedInputRange>) {
+  const { start, length } = getFullyConnectedInputRange(...args)
+  return Uint32Array.from({ length }, (_, i) => start + i)
+}
+
 // add state to neuron: activations, weights, biases
 function makeStateful(
   neuron: Neuron,
@@ -74,7 +83,7 @@ function makeStateful(
   rawX?: Sample["rawX"],
 ): NeuronStateful {
   const nIdx = neuron.index
-  const filterIdx = nIdx % neuron.layer.numBiases // for dense layers this would be nIdx
+  const filterIdx = nIdx % neuron.layer.numBiases // Dense: the unit, Conv2D: the filter
   const { weights, bias } = getNeuronWeights(neuron.layer.tfLayer, filterIdx)
   const statefulNeuron: NeuronStateful = {
     ...neuron,

@@ -30,9 +30,11 @@ export const WeightsGrid = ({ neuron, weights }: WeightsGridViewProps) => {
   const [, prevHeight, prevWidth, groupCount = 1] = prevShape
   const kernelSize = neuron.layer.tfLayer.getConfig().kernelSize
   const sqr = Math.ceil(Math.sqrt(weights.length))
+  // Dense on sequences: the weights only cover one position of the previous layer
+  const coversPrevLayer = weights.length === prevLayer.numNeurons
   const [rows, cols] = Array.isArray(kernelSize)
     ? (kernelSize as number[])
-    : prevWidth
+    : prevWidth && coversPrevLayer
       ? [prevHeight, prevWidth]
       : [sqr, sqr] // 1D Dense to square
   const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
