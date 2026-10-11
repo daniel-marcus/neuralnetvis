@@ -204,6 +204,18 @@ export function isVisible(layer: Layer) {
   return !layerDef?.isInvisible || isOutput
 }
 
+// the previous visible layer in the model graph (through invisible layers like Flatten)
+// independent of the layers that are currently built, e.g. for the weights of collapsed models
+export function getPrevVisibleTfLayer(layer: Layer): Layer | undefined {
+  let prev = getInboundLayer(layer)
+  while (prev && !isVisible(prev)) prev = getInboundLayer(prev)
+  return prev
+}
+
+function getInboundLayer(layer: Layer): Layer | undefined {
+  return layer.inboundNodes[0]?.inboundLayers[0] // first input for layers with multiple inputs
+}
+
 const getVisibleIdxMap = (model: tf.LayersModel, showHiddenLayers: boolean) => {
   return model.layers.reduce((map, layer, i) => {
     const layerPos = getLayerPos(i, model)

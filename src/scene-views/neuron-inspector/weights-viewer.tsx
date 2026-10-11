@@ -3,6 +3,7 @@ import { SphereGeometry } from "three/webgpu"
 import { normalizeWithSign } from "@/data/utils"
 import { getActColor } from "@/utils/colors"
 import { isScreen } from "@/utils/screen"
+import { getPrevVisibleTfLayer } from "@/neuron-layers/layers"
 import { Pager, ViewerSlot } from "./viewer-slot"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
@@ -10,14 +11,16 @@ export const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
   const [currGroup, setCurrGroup] = useState(0)
   const isScreenSm = isScreen("sm")
 
-  const { prevLayer } = neuron.layer
+  const { prevLayer, tfLayer } = neuron.layer
+  // from the model: prevLayer is not available if the previous layer is not shown (collapsed models)
+  const prevTfLayer = getPrevVisibleTfLayer(tfLayer)
 
   // normalize in group?
   const weights = useMemo(() => normalizeWithSign(neuron.weights) ?? [], [neuron])
 
-  if (!neuron.weights?.length || !prevLayer) return null
+  if (!neuron.weights?.length || !prevTfLayer) return null
 
-  const prevShape = prevLayer.tfLayer.outputShape as number[]
+  const prevShape = prevTfLayer.outputShape as number[]
   const [, prevHeight, prevWidth, groupCount = 1] = prevShape
   const kernelSize = neuron.layer.tfLayer.getConfig().kernelSize
   const sqr = Math.ceil(Math.sqrt(weights.length))
@@ -26,7 +29,7 @@ export const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
     : prevWidth
       ? [prevHeight, prevWidth]
       : [sqr, sqr] // 1D Dense to square
-  const isRounded = prevLayer.meshParams.geometry instanceof SphereGeometry
+  const isRounded = prevLayer?.meshParams.geometry instanceof SphereGeometry
 
   const maxGroupsPerView = isScreenSm ? 16 : 4
   const needsShifter = groupCount > maxGroupsPerView

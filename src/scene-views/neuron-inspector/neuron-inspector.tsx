@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
+import { getPrevVisibleTfLayer } from "@/neuron-layers/layers"
 import { Select, Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
 import { supportsFeatureVis } from "@/model/feature-vis"
@@ -41,7 +42,9 @@ export const NeuronInspector = () => {
   const inputRange = preprocessFunc && imageInputRanges[preprocessFunc]
   const hasFeatureVis = !!model && !!inputRange && supportsFeatureVis(model, selected.layer.tfLayer)
   const hasWeights =
-    !!selected.weights?.length && !!selected.layer.prevLayer && highlightProp !== "weights" // will be duplication
+    !!selected.weights?.length &&
+    !!getPrevVisibleTfLayer(selected.layer.tfLayer) &&
+    highlightProp !== "weights" // will be duplication
   const hasTopSamples =
     !!model && !!inputRange && selected.layer.layerPos !== "input" && totalSamples >= MIN_SAMPLES
   const isAvailable = { weights: hasWeights, featureVis: hasFeatureVis, topSamples: hasTopSamples }
