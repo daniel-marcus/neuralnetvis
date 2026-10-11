@@ -12,6 +12,7 @@ import type { Pos } from "./utils"
 
 export const Model = () => {
   const layers = useLayers()
+  const mountedLayers = useMountedLayers(layers)
   const visibleLayers = useVisibleLayers(layers)
   useAutoExpand()
   useCameraShifter(visibleLayers)
@@ -19,7 +20,7 @@ export const Model = () => {
     <>
       <ActivationUpdater layers={visibleLayers} />
       <ModelShifter visibleLayers={visibleLayers}>
-        {layers.map((l) => (
+        {mountedLayers.map((l) => (
           <Layer key={l.lid} {...l} visibleLayers={visibleLayers} />
         ))}
       </ModelShifter>
@@ -40,6 +41,19 @@ function useAutoExpand() {
       clearTimeout(to)
     }
   }, [isActive, isLargeModel, setVisConfig])
+}
+
+// hidden layers are only mounted if they are shown or preloaded (small models: when the scene is hovered or active)
+function useMountedLayers(layers: NeuronLayer[]) {
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
+  const isActive = useSceneStore((s) => s.isActive)
+  const isHovered = useSceneStore((s) => s.isHovered)
+  const isLargeModel = useSceneStore((s) => s.isLargeModel)
+  const withHidden = showHiddenLayers || (!isLargeModel && (isActive || isHovered))
+  return useMemo(
+    () => (withHidden ? layers : layers.filter((l) => l.layerPos !== "hidden")),
+    [layers, withHidden],
+  )
 }
 
 export function useVisibleLayers(layers: NeuronLayer[]) {

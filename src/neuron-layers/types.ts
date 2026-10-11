@@ -13,9 +13,8 @@ export type MeshRef = RefObject<THREE.InstancedMesh | null>
 export type GroupRef = RefObject<THREE.Group | null>
 
 export interface NeuronLayer {
-  lid: string // for React keys: `${model.name}_${tfLayer.name}_${units}`
+  lid: string // for React keys: `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
   index: number
-  visibleIdx: number // to find neighbours through "invisible" layers (e.g. Flatten)
   layerType: LayerType
   layerPos: LayerPos
   tfLayer: tf.layers.Layer
@@ -25,7 +24,7 @@ export interface NeuronLayer {
   meshRefs: MeshRef[] // color layers: 1 per channel, otherwise 1 for layer (empty refs: layer is textured only)
   groupRefs: GroupRef[] // parent groups of the meshes, to find neurons of textured layers (see getNeuronWorldMatrix)
   meshParams: MeshParams
-  prevLayer?: NeuronLayer
+  prevLayer?: NeuronLayer // the previous visible layer type (e.g. through Flatten), might not be mounted
   hasLabels?: boolean
   hasColorChannels: boolean
   activations: Float32Array // view on the shared buffer page, used for activation colors, reused for performance = not reactive

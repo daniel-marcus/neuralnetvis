@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo } from "react"
 import type * as tf from "@tensorflow/tfjs"
 import * as THREE from "three/webgpu"
 import { storage } from "three/tsl"
@@ -10,93 +10,92 @@ import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { GroupRef, LayerPos, NeuronLayer, LayerType } from "./types"
 
-// returns an array of all visible layers
+const NO_LAYERS: NeuronLayer[] = []
+
+// returns the layers of the model that can be shown (without invisible layers like Flatten)
+// the layers are created once per model: which of them are mounted and shown is decided in Model
 export function useLayers() {
   const model = useSceneStore((s) => s.model)
-  const ds = useSceneStore((s) => s.ds)
-  const setAllLayers = useSceneStore((s) => s.setAllLayers)
   const modelLoadState = useSceneStore((s) => s.modelLoadState)
-  const isActive = useSceneStore((s) => s.isActive)
-  const isHovered = useSceneStore((s) => s.isHovered)
-  const isLargeModel = useSceneStore((s) => s.isLargeModel)
-  const _showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers) // set to true to preload all layers
-  const showHiddenLayers = _showHiddenLayers || (!isLargeModel && (isActive || isHovered))
+  const task = useSceneStore((s) => s.ds?.task)
+  const hasInputLabels = useSceneStore((s) => !!s.ds?.inputLabels?.length || !!s.ds?.tokenizer)
+  const hasOutputLabels = useSceneStore((s) => !!s.ds?.outputLabels?.length)
+  const setAllLayers = useSceneStore((s) => s.setAllLayers)
 
-  const [layers, setLayers] = useState<NeuronLayer[]>([])
+  const layers = useMemo(() => {
+    if (!model) return NO_LAYERS
+    const modelKey = `${model.name}_${modelLoadState}`
+    return createLayers(model, modelKey, { task, hasInputLabels, hasOutputLabels })
+  }, [model, modelLoadState, task, hasInputLabels, hasOutputLabels])
 
-  useEffect(() => {
-    if (!model) {
-      setLayers([]) // eslint-disable-line react-hooks/set-state-in-effect
-      setAllLayers([])
-      return
+  useEffect(() => setAllLayers(layers), [layers, setAllLayers])
+
+  return layers
+}
+
+interface LayerOptions {
+  task?: string
+  hasInputLabels: boolean
+  hasOutputLabels: boolean
+}
+
+function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOptions) {
+  const { task, hasInputLabels, hasOutputLabels } = options
+  const bufferSlots = getBufferSlots(model, modelKey, task)
+  const tfLayers = [...model.layers.entries()].filter(([, tfLayer]) => isVisible(tfLayer))
+
+  const layers: NeuronLayer[] = []
+  let prevLayer: NeuronLayer | undefined
+  for (const [layerIndex, tfLayer] of tfLayers) {
+    const className = tfLayer.getClassName() as LayerType
+    const layerPos = getLayerPos(layerIndex, model)
+
+    const { outputShape, units } = getLayerShape(tfLayer, layerPos, task)
+    const meshParams =
+      ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
+        ? prevLayer.meshParams
+        : getMeshParams(tfLayer, layerPos, units)
+    const numBiases = (tfLayer.getConfig().filters as number) ?? units
+
+    const hasColorChannels = layerPos === "input" && outputShape[3] === 3
+    const channels = hasColorChannels ? 3 : 1
+    const meshRefs = Array.from({ length: channels }).map(createMeshRef)
+    const groupRefs = Array.from({ length: channels }).map(createGroupRef)
+
+    const { page, offset: bufferOffset } = bufferSlots.get(layerIndex)!
+    const activations = page.activations.subarray(bufferOffset, bufferOffset + units)
+    const channelActivations = channelViews(activations, units, channels)
+
+    const layer: NeuronLayer = {
+      lid: `${modelKey}_${tfLayer.name}_${units}`,
+      index: layerIndex,
+      layerType: className,
+      layerPos,
+      tfLayer,
+      outputShape,
+      prevLayer,
+      numNeurons: units,
+      numBiases,
+      meshRefs,
+      groupRefs,
+      meshParams,
+      hasLabels:
+        (layerPos === "input" && hasInputLabels) || (layerPos === "output" && hasOutputLabels),
+      hasColorChannels,
+      activations,
+      channelActivations,
+      activationsBuffer: page.actBuffer,
+      storageNode: page.storageNode,
+      bufferOffset,
     }
-    const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
-    const allIdxMap = showHiddenLayers ? visibleIdxMap : getVisibleIdxMap(model, true)
-    const bufferSlots = getBufferSlots(model, `${model.name}_${modelLoadState}`, ds?.task)
-    const newLayers =
-      model.layers.reduce((acc, tfLayer, layerIndex) => {
-        const visibleIdx = visibleIdxMap.get(layerIndex) ?? -1
-        if (shouldSkip(visibleIdx, visibleIdxMap.size)) return acc
+    layers.push(layer)
+    prevLayer = layer
+  }
 
-        const className = tfLayer.getClassName() as LayerType
-        const layerPos = getLayerPos(layerIndex, model)
-
-        // only the direct predecessor: not the input layer for the output layer if hidden layers are left out
-        const prevIdx = allIdxMap.get(layerIndex)! - 1
-        const prevLayer = acc.find((l) => allIdxMap.get(l.index) === prevIdx)
-
-        const { outputShape, units } = getLayerShape(tfLayer, layerPos, ds?.task)
-        const meshParams =
-          ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
-            ? prevLayer.meshParams
-            : getMeshParams(tfLayer, layerPos, units)
-        const numBiases = (tfLayer.getConfig().filters as number) ?? units
-
-        const hasColorChannels = layerPos === "input" && outputShape[3] === 3
-        const channels = hasColorChannels ? 3 : 1
-        const meshRefs = Array.from({ length: channels }).map(createMeshRef)
-        const groupRefs = Array.from({ length: channels }).map(createGroupRef)
-
-        const lid = `${model.name}_${modelLoadState}_${tfLayer.name}_${units}`
-        const { page, offset: bufferOffset } = bufferSlots.get(layerIndex)!
-        const activations = page.activations.subarray(bufferOffset, bufferOffset + units)
-        const channelActivations = channelViews(activations, units, channels)
-
-        const layer: NeuronLayer = {
-          lid,
-          index: layerIndex,
-          visibleIdx,
-          layerType: className,
-          layerPos,
-          tfLayer,
-          outputShape,
-          prevLayer,
-          numNeurons: units,
-          numBiases,
-          meshRefs,
-          groupRefs,
-          meshParams,
-          hasLabels:
-            (layerPos === "input" && !!ds?.inputLabels?.length) ||
-            (layerPos === "output" && !!ds?.outputLabels?.length) ||
-            (layerPos === "input" && !!ds?.tokenizer),
-          hasColorChannels,
-          activations,
-          channelActivations,
-          activationsBuffer: page.actBuffer,
-          storageNode: page.storageNode,
-          bufferOffset,
-        }
-        return [...acc, layer]
-      }, [] as NeuronLayer[]) ?? []
-    if (isDebug()) {
-      const totalNeurons = newLayers.reduce((acc, l) => acc + l.numNeurons, 0)
-      console.log({ model: model.name, totalNeurons })
-    }
-    setLayers(newLayers)
-    setAllLayers(newLayers)
-  }, [model, ds, modelLoadState, showHiddenLayers, setAllLayers])
-
+  if (isDebug()) {
+    const totalNeurons = layers.reduce((acc, l) => acc + l.numNeurons, 0)
+    console.log({ model: model.name, totalNeurons })
+  }
   return layers
 }
 
@@ -182,46 +181,12 @@ function getBufferSlots(model: tf.LayersModel, modelKey: string, task?: string):
   return slots
 }
 
-const MAX_VISIBLE_LAYERS = 200
-
-// avoid browser crash with too large models
-function shouldSkip(visibleIdx: number, totalVisibleLayers: number) {
-  if (visibleIdx === -1) return true
-  if (visibleIdx === totalVisibleLayers - 1) return false // always include output layer
-  const result = visibleIdx > MAX_VISIBLE_LAYERS
-  if (result) {
-    const msg = `Max visible layers exceeded. Skipping layer ${visibleIdx}/${totalVisibleLayers}`
-    console.log(msg)
-  }
-  return result
-}
-
 export function isVisible(layer: Layer) {
   const className = layer.getClassName()
   const layerDef = getLayerDef(className)
   // the output layer is always visible, even an Activation (e.g. softmax after a tied ReversibleEmbedding)
   const isOutput = layer.outboundNodes.length === 0
   return !layerDef?.isInvisible || isOutput
-}
-
-// the previous visible layer in the model graph (through invisible layers like Flatten)
-// independent of the layers that are currently built, e.g. for the weights of collapsed models
-export function getPrevVisibleTfLayer(layer: Layer): Layer | undefined {
-  let prev = getInboundLayer(layer)
-  while (prev && !isVisible(prev)) prev = getInboundLayer(prev)
-  return prev
-}
-
-function getInboundLayer(layer: Layer): Layer | undefined {
-  return layer.inboundNodes[0]?.inboundLayers[0] // first input for layers with multiple inputs
-}
-
-const getVisibleIdxMap = (model: tf.LayersModel, showHiddenLayers: boolean) => {
-  return model.layers.reduce((map, layer, i) => {
-    const layerPos = getLayerPos(i, model)
-    if (!showHiddenLayers && layerPos === "hidden") return map
-    return isVisible(layer) ? map.set(i, map.size) : map
-  }, new Map<number, number>())
 }
 
 function getLayerPos(layerIndex: number, model: tf.LayersModel): LayerPos {
