@@ -31,6 +31,7 @@ export function useLayers() {
       return
     }
     const visibleIdxMap = getVisibleIdxMap(model, showHiddenLayers)
+    const allIdxMap = showHiddenLayers ? visibleIdxMap : getVisibleIdxMap(model, true)
     const bufferSlots = getBufferSlots(model, `${model.name}_${modelLoadState}`, ds?.task)
     const newLayers =
       model.layers.reduce((acc, tfLayer, layerIndex) => {
@@ -40,7 +41,9 @@ export function useLayers() {
         const className = tfLayer.getClassName() as LayerType
         const layerPos = getLayerPos(layerIndex, model)
 
-        const prevLayer = acc.find((l) => l.visibleIdx === visibleIdx - 1)
+        // only the direct predecessor: not the input layer for the output layer if hidden layers are left out
+        const prevIdx = allIdxMap.get(layerIndex)! - 1
+        const prevLayer = acc.find((l) => allIdxMap.get(l.index) === prevIdx)
 
         const { outputShape, units } = getLayerShape(tfLayer, layerPos, ds?.task)
         const meshParams =

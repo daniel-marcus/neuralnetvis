@@ -21,6 +21,7 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
   const showLines = useSceneStore((s) => s.vis.showLines)
   const isFlatView = useSceneStore((s) => s.vis.flatView) // other layers are hidden in flat view
   const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
+  const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
   const invalidate = useThree((s) => s.invalidate)
 
   const layer = neuron?.layer
@@ -31,7 +32,8 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
   const isExcluded =
     excludedLayers.includes(layer?.tfLayer.name ?? "") ||
     excludedLayers.includes(prevLayer?.tfLayer.name ?? "")
-  const show = !!prevLayer && showLines && !isFlatView && !isExcluded
+  const isPrevVisible = showHiddenLayers || prevLayer?.layerPos !== "hidden"
+  const show = !!prevLayer && isPrevVisible && showLines && !isFlatView && !isExcluded
 
   const inputs = useMemo(
     () => (show && neuron ? getTopInputs(neuron, prevActivations) : []),
