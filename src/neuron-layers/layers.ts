@@ -144,13 +144,20 @@ interface BufferSlot {
 
 type BufferSlots = Map<number, BufferSlot> // layerIndex -> slot
 
-// TODO: implement buffer disposal
-const bufferSlotsCache = new Map<string, BufferSlots>()
+// keyed by model (not by name): buffers can be garbage collected together with their model,
+// and models that share a name never share slots
+const bufferSlotsCache = new WeakMap<tf.LayersModel, Map<string | undefined, BufferSlots>>() // model -> task -> slots
 
 // allocates slots for all layers that might be shown (incl. hidden layers), so buffers don't change when toggling them
 function getBufferSlots(model: tf.LayersModel, modelKey: string, task?: string): BufferSlots {
+  let modelCache = bufferSlotsCache.get(model)
+  if (!modelCache) {
+    modelCache = new Map()
+    bufferSlotsCache.set(model, modelCache)
+  }
+  const cached = modelCache.get(task)
+  if (cached) return cached
   const key = `${modelKey}_${task}`
-  if (bufferSlotsCache.has(key)) return bufferSlotsCache.get(key)!
   const pageLayers: { layerIndex: number; offset: number }[][] = [[]]
   let pageUnits = 0
   const pageSizes: number[] = []
@@ -177,7 +184,7 @@ function getBufferSlots(model: tf.LayersModel, modelKey: string, task?: string):
     const page = { activations, actBuffer, storageNode }
     for (const { layerIndex, offset } of layers) slots.set(layerIndex, { page, offset })
   })
-  bufferSlotsCache.set(key, slots)
+  modelCache.set(task, slots)
   return slots
 }
 
