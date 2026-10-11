@@ -56,6 +56,23 @@ export function getTopInputs(
   }))
 }
 
+// weight * activation of the previous layer for every weight of a neuron, in the order of neuron.weights
+// NaN: no input at this kernel position (outside of the previous layer, "same" padding)
+export function getWeightedInputs(neuron: NeuronStateful, prevActivations: ArrayLike<number>) {
+  const { inputIdxs, weights } = neuron
+  const getWeightIdx = getWeightIdxFunc(neuron)
+  if (!weights || !getWeightIdx) return undefined
+  const weightedInputs = weights.map(() => NaN)
+  for (let i = 0; i < inputIdxs.length; i++) {
+    const weightIdx = getWeightIdx(i)
+    weightedInputs[weightIdx] = weights[weightIdx] * prevActivations[inputIdxs[i]]
+  }
+  return weightedInputs
+}
+
+// weights that can be assigned to the neurons of the previous layer (Dense, Conv2D)
+export const hasWeightedInputs = (neuron: NeuronStateful) => !!getWeightIdxFunc(neuron)
+
 // maps the position in inputIdxs to the index in neuron.weights (as returned from getLayerWeights)
 function getWeightIdxFunc(neuron: NeuronStateful) {
   const { layer, inputIdxs, weights } = neuron

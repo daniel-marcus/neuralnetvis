@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import * as tf from "@tensorflow/tfjs"
-import { getConv2DWeightIdx, getTopInputs } from "./connections"
+import { getConv2DWeightIdx, getTopInputs, getWeightedInputs } from "./connections"
 import { getLayerWeights } from "@/model/weights"
 import { getReceptiveFieldInputNids } from "@/model/layers/get-input-nids"
 import type { NeuronLayer, NeuronStateful } from "./types"
@@ -58,6 +58,13 @@ describe("getTopInputs", () => {
     expect(getTopInputs(pooling, undefined, 2).length).toBe(2)
   })
 
+  it("returns the weighted inputs in the order of the weights", () => {
+    const activations = new Float32Array([1, 2, 0, 0.5])
+    expect(getWeightedInputs(neuron, activations)).toEqual([1, -4, 0, 2])
+    const pooling = makeNeuron("MaxPooling2D", dense, prevTfLayer, inputNids)
+    expect(getWeightedInputs(pooling, activations)).toBeUndefined()
+  })
+
   it("always shows one-to-one connections", () => {
     const relu = makeNeuron("ReLU", dense, prevTfLayer, ["0_2"])
     expect(getTopInputs(relu, new Float32Array([1, 1, 0, 1]))).toEqual([{ index: 2, strength: 0 }])
@@ -93,6 +100,8 @@ describe("getConv2DWeightIdx", () => {
   })
 })
 
+const sum = (values: number[]) => values.reduce((a, b) => a + (Number.isNaN(b) ? 0 : b), 0)
+
 describe("getTopInputs (Conv2D with same padding)", () => {
   const [size, depth, filters] = [4, 2, 2]
   const input = tf.input({ shape: [size, size, depth] })
@@ -123,6 +132,22 @@ describe("getTopInputs (Conv2D with same padding)", () => {
       expect(y).toBeLessThanOrEqual(1)
       expect(strength).toBeCloseTo(kernelArr[y + 1][x - 2][c][filterIdx] / maxWeight)
     }
+  })
+
+  it("returns weighted inputs that add up to the activation", async () => {
+    const x = tf.randomNormal([1, size, size, depth])
+    const out = (await (conv.apply(x) as tf.Tensor).array()) as number[][][][]
+    const prevActivations = await x.data()
+    for (const [y, xPos, filterIdx] of [
+      [1, 1, 0], // full kernel
+      [0, size - 1, 1], // corner: kernel positions outside of the previous layer are NaN
+    ]) {
+      const weightedInputs = getWeightedInputs(getNeuron(y, xPos, filterIdx), prevActivations)!
+      expect(weightedInputs.length).toBe(3 * 3 * depth)
+      expect(sum(weightedInputs)).toBeCloseTo(out[0][y][xPos][filterIdx], 3)
+    }
+    const corner = getWeightedInputs(getNeuron(0, size - 1, 1), prevActivations)!
+    expect(corner.filter(Number.isNaN).length).toBe(3 * 3 * depth - 2 * 2 * depth)
   })
 
   it("uses the full kernel in the center", () => {

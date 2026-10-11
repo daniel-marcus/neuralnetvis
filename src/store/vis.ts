@@ -1,5 +1,4 @@
 import type { StateCreator } from "zustand"
-import type { HighlightProp } from "@/neuron-layers/types"
 import type { RootState } from "@react-three/fiber"
 import type { OrbitControls } from "three-stdlib"
 
@@ -13,7 +12,6 @@ export const defaultVisConfig = {
   showPointer: true,
   showLines: true,
   splitColors: false,
-  highlightProp: "weightedInputs" as const,
   lineActivationThreshold: 0.5,
   excludedLayers: [],
   isLocked: false,
@@ -31,7 +29,6 @@ export interface VisConfig {
   neuronSpacing: number
   showPointer: boolean
   splitColors: boolean
-  highlightProp: HighlightProp // | string
   showLines: boolean
   lineActivationThreshold: number
   excludedLayers: string[] // currently used only in lesson: temporary switch off layers (positions remain)

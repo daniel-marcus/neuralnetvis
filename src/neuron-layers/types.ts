@@ -58,5 +58,3 @@ export type NeuronState = {
 }
 
 export type NeuronStateful = Neuron & NeuronState
-
-export type HighlightProp = "weights" | "weightedInputs" | null

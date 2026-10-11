@@ -23,7 +23,7 @@ export function normalizeWithSign(values: number[] | undefined) {
   // returns values between -1 and 1 and keeps the sign, as normalize (plain JS: no GPU round trip)
   if (typeof values === "undefined") return values
   let maxAbs = 1e-7 // prevents division by zero
-  for (const v of values) maxAbs = Math.max(maxAbs, Math.abs(v))
+  for (const v of values) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v) // NaN is skipped
   return values.map((v) => v / maxAbs)
 }
 

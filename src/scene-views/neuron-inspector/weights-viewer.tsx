@@ -7,15 +7,24 @@ import { Pager, ViewerSlot } from "./viewer-slot"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
 export const WeightsViewer = ({ neuron }: { neuron: NeuronStateful }) => {
+  // normalize in group?
+  const weights = useMemo(() => normalizeWithSign(neuron.weights) ?? [], [neuron])
+  return <WeightsGrid neuron={neuron} weights={weights} />
+}
+
+interface WeightsGridViewProps {
+  neuron: NeuronStateful
+  weights: number[] // one value per weight of the neuron, between -1 and 1 (NaN: empty cell)
+}
+
+// grid(s) in the shape of the neuron's inputs, also used for weighted inputs
+export const WeightsGrid = ({ neuron, weights }: WeightsGridViewProps) => {
   const [currGroup, setCurrGroup] = useState(0)
   const isScreenSm = isScreen("sm")
 
   const { prevLayer } = neuron.layer
 
-  // normalize in group?
-  const weights = useMemo(() => normalizeWithSign(neuron.weights) ?? [], [neuron])
-
-  if (!neuron.weights?.length || !prevLayer) return null
+  if (!weights.length || !prevLayer) return null
 
   const prevShape = prevLayer.tfLayer.outputShape as number[]
   const [, prevHeight, prevWidth, groupCount = 1] = prevShape
@@ -91,6 +100,7 @@ const WeightsGridCanvas = ({ weights, rows, cols, isRounded }: WeightsGridProps)
         canvas.width = cols * (ps + gap) - gap
         canvas.height = rows * (ps + gap) - gap
         weights.forEach((w, i) => {
+          if (Number.isNaN(w)) return // no value, e.g. weighted inputs outside of the previous layer
           const x = (i % cols) * (ps + gap) + ps / 2
           const y = Math.floor(i / cols) * (ps + gap) + ps / 2
 

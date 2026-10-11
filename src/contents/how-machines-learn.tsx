@@ -21,7 +21,6 @@ export const hmlInitialState: InitialState = {
     xShift: 13,
     excludedLayers: ["nnv_Output"],
     showPointer: false,
-    highlightProp: null,
   },
 }
 
@@ -94,13 +93,11 @@ export const IntroNetworks = (): LessonContent => {
         onScroll={scrollTrain}
         onEnter={() => {
           abortFlag = false // reset abort flag
-          setVisConfig({ highlightProp: "weights" })
           setSelectedNid(getNid(2, 2))
         }}
         onLeave={() => {
           abortFlag = true // silence async training logs
           clearStatus(SCROLL_TRAIN_STATUS_ID)
-          setVisConfig({ highlightProp: null })
           setSelectedNid(undefined)
         }}
       >

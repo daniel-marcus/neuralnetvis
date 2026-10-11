@@ -5,17 +5,20 @@ import { Select, Table } from "@/components/ui-elements"
 import { useHasLesson } from "@/components/lesson"
 import { supportsFeatureVis } from "@/model/feature-vis"
 import { imageInputRanges } from "@/data/preprocess"
+import { hasWeightedInputs } from "@/neuron-layers/connections"
 import { GRID_STYLE } from "./viewer-slot"
 import { WeightsViewer } from "./weights-viewer"
+import { WeightedInputsViewer } from "./weighted-inputs"
 import { FeatureVisViewer } from "./feature-vis"
 import { MIN_SAMPLES, TopSamplesViewer } from "./top-samples"
 import type { NeuronStateful } from "@/neuron-layers/types"
 
-type NeuronView = "weights" | "featureVis" | "topSamples"
+type NeuronView = "weights" | "weightedInputs" | "featureVis" | "topSamples"
 
 const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
   { value: "topSamples", label: "Top samples" },
   { value: "weights", label: "Weights" },
+  { value: "weightedInputs", label: "Weighted inputs" },
   { value: "featureVis", label: "Preferred input" },
 ]
 
@@ -31,7 +34,7 @@ export const NeuronInspector = () => {
   const model = useSceneStore((s) => s.model)
   const preprocessFunc = useSceneStore((s) => s.ds?.preprocessFunc)
   const totalSamples = useSceneStore((s) => s.totalSamples(s.subset))
-  const highlightProp = useGlobalStore((s) => s.scene?.getState().vis?.highlightProp)
+  const hasSample = useSceneStore((s) => !!s.sample)
   const [view, setView] = useState<NeuronView>("topSamples")
   const handleClick = (e: React.MouseEvent) => {
     if (e.target instanceof Element && e.target.closest("button, select")) return // controls don't deselect
@@ -40,11 +43,16 @@ export const NeuronInspector = () => {
   if (!selected || (hasLesson && visLocked)) return null
   const inputRange = preprocessFunc && imageInputRanges[preprocessFunc]
   const hasFeatureVis = !!model && !!inputRange && supportsFeatureVis(model, selected.layer.tfLayer)
-  const hasWeights =
-    !!selected.weights?.length && !!selected.layer.prevLayer && highlightProp !== "weights" // will be duplication
+  const hasWeights = !!selected.weights?.length && !!selected.layer.prevLayer
+  const hasWeighted = hasWeights && hasSample && hasWeightedInputs(selected)
   const hasTopSamples =
     !!model && !!inputRange && selected.layer.layerPos !== "input" && totalSamples >= MIN_SAMPLES
-  const isAvailable = { weights: hasWeights, featureVis: hasFeatureVis, topSamples: hasTopSamples }
+  const isAvailable = {
+    weights: hasWeights,
+    weightedInputs: hasWeighted,
+    featureVis: hasFeatureVis,
+    topSamples: hasTopSamples,
+  }
   const options = VIEW_OPTIONS.filter((o) => isAvailable[o.value])
   const currView = infoOnly ? undefined : isAvailable[view] ? view : options[0]?.value
   return (
@@ -72,6 +80,8 @@ export const NeuronInspector = () => {
             <FeatureVisViewer neuron={selected} inputRange={inputRange} />
           ) : currView === "topSamples" ? (
             <TopSamplesViewer key={selected.nid} neuron={selected} />
+          ) : currView === "weightedInputs" ? (
+            <WeightedInputsViewer neuron={selected} />
           ) : (
             <WeightsViewer neuron={selected} />
           )}
