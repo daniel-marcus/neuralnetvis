@@ -48,7 +48,7 @@ export const ExtLink = ({ href, children }: ExtLinkProps) => (
   <a
     href={href}
     rel="noopener"
-    className="brightness-50 hover:text-accent active:text-accent hover:brightness-100 active:brightness-100"
+    className="text-muted hover:text-accent active:text-accent"
     target="_blank"
   >
     {children}

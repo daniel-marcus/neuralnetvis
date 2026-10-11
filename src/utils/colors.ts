@@ -20,7 +20,7 @@ function toColorObj(r: number, g: number, b: number, a = 255): ColorObj {
   }
 }
 
-export const ZERO_BASE = [30, 31, 34] //  --color-gray-text / x // brighter: [30, 31, 34] // darker: [25, 26, 29]
+export const ZERO_BASE = [30, 31, 34] //  --foreground / x // brighter: [30, 31, 34] // darker: [25, 26, 29]
 export const POS_BASE = [255, 20, 100] // --color-primary
 export const NEG_BASE = POS_BASE.toReversed()
 
