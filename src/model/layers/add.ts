@@ -1,9 +1,11 @@
 import * as tf from "@tensorflow/tfjs"
+import { getOneToOneInputNids } from "./get-input-nids"
 import type { LayerDef } from "./types"
 
 export const Add: LayerDef<"Add"> = {
   constructorFunc: tf.layers.add,
   isUserAddable: true,
+  getInputNids: getOneToOneInputNids, // for every input layer
   options: [
     {
       name: "otherLayerNames",

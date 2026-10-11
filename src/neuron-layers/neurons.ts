@@ -40,15 +40,19 @@ function createNeuron(nid?: Nid): Neuron | undefined {
   const numChannels = outputShape[3] ?? 1
   const channelIdx = neuronIdx % numChannels
   const layerDef = getLayerDef(layer.layerType)
-  const prevLayer = layer.prevLayer
-  const getInputNids = prevLayer ? layerDef?.getInputNids : undefined
-  const inputIdxs =
-    getInputNids === getFullyConnectedInputNids
-      ? Uint32Array.from({ length: getUnits(prevLayer!.tfLayer) }, (_, i) => i) // all neurons (without creating nids)
-      : Uint32Array.from(
-          getInputNids?.(layer.tfLayer, neuronIdx, prevLayer!.tfLayer, prevLayer!.index) ?? [],
-          (inputNid) => parseNid(inputNid).neuronIdx,
-        )
+  const getInputNids = layerDef?.getInputNids
+  const inputs = !getInputNids
+    ? []
+    : layer.inputLayers.map((inputLayer) => ({
+        layer: inputLayer,
+        idxs:
+          getInputNids === getFullyConnectedInputNids
+            ? Uint32Array.from({ length: getUnits(inputLayer.tfLayer) }, (_, i) => i) // all neurons (without creating nids)
+            : Uint32Array.from(
+                getInputNids(layer.tfLayer, neuronIdx, inputLayer.tfLayer, inputLayer.index),
+                (inputNid) => parseNid(inputNid).neuronIdx,
+              ),
+      }))
   const neuron: Neuron = {
     index: neuronIdx,
     nid,
@@ -57,7 +61,8 @@ function createNeuron(nid?: Nid): Neuron | undefined {
     channelIdx,
     indexInChannel: Math.floor(neuronIdx / numChannels),
     meshRef: hasColorChannels ? layer.meshRefs[channelIdx] : layer.meshRefs[0],
-    inputIdxs,
+    inputs,
+    inputIdxs: inputs[0]?.idxs ?? new Uint32Array(),
   }
   return neuron
 }

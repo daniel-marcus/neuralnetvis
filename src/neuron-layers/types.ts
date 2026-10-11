@@ -24,7 +24,8 @@ export interface NeuronLayer {
   meshRefs: MeshRef[] // color layers: 1 per channel, otherwise 1 for layer (empty refs: layer is textured only)
   groupRefs: GroupRef[] // parent groups of the meshes, to find neurons of textured layers (see getNeuronWorldMatrix)
   meshParams: MeshParams
-  prevLayer?: NeuronLayer // the previous visible layer type (e.g. through Flatten), might not be mounted
+  inputLayers: NeuronLayer[] // the visible layers that feed this layer (e.g. through Flatten), might not be mounted
+  prevLayer?: NeuronLayer // the first input layer, e.g. for weights (Add etc. have more than one input)
   hasLabels?: boolean
   hasColorChannels: boolean
   activations: Float32Array // view on the shared buffer page, used for activation colors, reused for performance = not reactive
@@ -47,7 +48,13 @@ export type Neuron = {
   indexInChannel: number
   layer: NeuronLayer
   meshRef: MeshRef
-  inputIdxs: Uint32Array // neuron indices in the previous layer
+  inputs: NeuronInput[] // one per input layer
+  inputIdxs: Uint32Array // neuron indices in the previous layer (= first input)
+}
+
+export type NeuronInput = {
+  layer: NeuronLayer
+  idxs: Uint32Array // neuron indices in the input layer
 }
 
 export type NeuronState = {

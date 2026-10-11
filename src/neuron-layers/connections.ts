@@ -13,13 +13,15 @@ export interface InputConnection {
 // returns the strongest inputs of a neuron, sorted by descending strength
 // ranked by weighted input (weight * activation), fallback: weight or activation only
 // activations are often not available (WebGPU: only downloaded for the output layer, see getActivations)
+// inputIdxs: for neurons with more than one input layer (the weights belong to the first one)
 export function getTopInputs(
   neuron: NeuronStateful,
   prevActivations?: Float32Array,
   k = MAX_CONNECTIONS,
+  inputIdxs = neuron.inputIdxs,
 ): InputConnection[] {
-  const { inputIdxs, weights } = neuron
-  const getWeightIdx = getWeightIdxFunc(neuron)
+  const { weights } = neuron
+  const getWeightIdx = inputIdxs === neuron.inputIdxs ? getWeightIdxFunc(neuron) : undefined
   const hasWeights = !!weights && !!getWeightIdx
   if (!hasWeights && !prevActivations) {
     // nothing to rank by (e.g. pooling, normalization): show the inputs as they are

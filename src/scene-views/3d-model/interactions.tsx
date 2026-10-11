@@ -26,6 +26,13 @@ export function LayerInteractions(
   const isActive = sceneActive && !hasFocussed && !visIsLocked && !isDebug
   const hoveredIdx = useSceneStore((s) => s.hoveredLayerIdx)
   const isHovered = hoveredIdx === props.index
+  // layers with more than one input (e.g. Add): the input layers are outlined as well
+  const isInputOfHovered = useSceneStore((s) => {
+    if (s.hoveredLayerIdx === undefined) return false
+    const hovered = s.allLayers.find((l) => l.index === s.hoveredLayerIdx)
+    if (!hovered || hovered.inputLayers.length < 2) return false
+    return hovered.inputLayers.some((l) => l.index === props.index)
+  })
   const setHoveredLayerIdx = useSceneStore((s) => s.setHoveredLayerIdx)
   const setIsHovered = useCallback(
     (hovered: boolean) => setHoveredLayerIdx(hovered ? props.index : undefined),
@@ -135,7 +142,7 @@ export function LayerInteractions(
         polygonOffsetUnits={-4}
       />
       {/* the fill is barely visible against the (transparent) background */}
-      <lineSegments visible={isHovered} raycast={noRaycast} renderOrder={1}>
+      <lineSegments visible={isHovered || isInputOfHovered} raycast={noRaycast} renderOrder={1}>
         <primitive object={layerHoverEdges} attach={"geometry"} />
         <lineBasicMaterial color="white" transparent opacity={0.25} depthWrite={false} />
       </lineSegments>

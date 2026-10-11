@@ -9,43 +9,50 @@ import { useSceneStore } from "@/store"
 import { getNeuronBoundsInto, getWorldPosInto } from "./utils"
 import { getActColor } from "@/utils/colors"
 import { getInputRegions, getTopInputs, MAX_CONNECTIONS } from "@/neuron-layers/connections"
-import type { Neuron, NeuronStateful } from "@/neuron-layers/types"
+import type { Neuron, NeuronInput, NeuronStateful } from "@/neuron-layers/types"
 
 const MIN_BRIGHTNESS = 0.3 // for the weakest connections
 
 const fromPos = new THREE.Vector3()
 const toPos = new THREE.Vector3()
 
-// the inputs of a neuron are only shown if the previous layer is visible
-function useShowInputs(neuron?: Neuron) {
+const NO_INPUTS: NeuronInput[] = []
+
+// the inputs of a neuron whose layers are visible
+function useVisibleInputs(neuron?: Neuron) {
   const showLines = useSceneStore((s) => s.vis.showLines)
   const isFlatView = useSceneStore((s) => s.vis.flatView) // other layers are hidden in flat view
   const excludedLayers = useSceneStore((s) => s.vis.excludedLayers)
   const showHiddenLayers = useSceneStore((s) => s.vis.showHiddenLayers)
-  const layer = neuron?.layer
-  const prevLayer = layer?.prevLayer
-  const isExcluded =
-    excludedLayers.includes(layer?.tfLayer.name ?? "") ||
-    excludedLayers.includes(prevLayer?.tfLayer.name ?? "")
-  const isPrevVisible = showHiddenLayers || prevLayer?.layerPos !== "hidden"
-  return !!prevLayer && isPrevVisible && showLines && !isFlatView && !isExcluded
+  const inputs = neuron?.inputs
+  const layerName = neuron?.layer.tfLayer.name
+  return useMemo(() => {
+    const show = showLines && !isFlatView && !excludedLayers.includes(layerName ?? "")
+    if (!inputs || !show) return NO_INPUTS
+    return inputs.filter(({ layer }) => {
+      const isVisible = showHiddenLayers || layer.layerPos !== "hidden"
+      return isVisible && !excludedLayers.includes(layer.tfLayer.name)
+    })
+  }, [inputs, layerName, showLines, isFlatView, excludedLayers, showHiddenLayers])
 }
 
-// shows the strongest input connections of a neuron
+// shows the strongest input connections of a neuron (ranked per input layer)
 export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
-  const show = useShowInputs(neuron)
+  const inputs = useVisibleInputs(neuron)
   const invalidate = useThree((s) => s.invalidate)
+  const activations = useSceneStore((s) => s.activations)
 
-  const layer = neuron?.layer
-  const prevLayer = layer?.prevLayer
-  const prevActivations = useSceneStore((s) =>
-    prevLayer ? s.activations[prevLayer.index]?.activations : undefined,
-  )
-
-  const inputs = useMemo(
-    () => (show && neuron ? getTopInputs(neuron, prevActivations) : []),
-    [show, neuron, prevActivations],
-  )
+  // sorted by descending strength
+  const connections = useMemo(() => {
+    if (!neuron) return []
+    const k = Math.floor(MAX_CONNECTIONS / inputs.length) // the input layers share the buffers
+    return inputs
+      .flatMap(({ layer, idxs }) => {
+        const top = getTopInputs(neuron, activations[layer.index]?.activations, k, idxs)
+        return top.map((connection) => ({ ...connection, layer }))
+      })
+      .toSorted((a, b) => Math.abs(b.strength) - Math.abs(a.strength))
+  }, [neuron, inputs, activations])
 
   // buffers are allocated once and updated in place
   const line = useMemo(() => {
@@ -73,28 +80,28 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
   }, [line])
 
   useEffect(() => {
-    line.visible = inputs.length > 0 // eslint-disable-line react-hooks/immutability
-    line.geometry.instanceCount = inputs.length // eslint-disable-line react-hooks/immutability
+    line.visible = connections.length > 0 // eslint-disable-line react-hooks/immutability
+    line.geometry.instanceCount = connections.length // eslint-disable-line react-hooks/immutability
     const colors = line.geometry.attributes.instanceColorStart as THREE.InterleavedBufferAttribute
-    for (const [i, { strength }] of inputs.entries()) {
+    for (const [i, { strength }] of connections.entries()) {
       const brightness = MIN_BRIGHTNESS + (1 - MIN_BRIGHTNESS) * Math.abs(strength)
       const color = getActColor(strength < 0 ? -brightness : brightness).rgb
-      const offset = (inputs.length - 1 - i) * 6 // strongest connections are drawn last (on top)
+      const offset = (connections.length - 1 - i) * 6 // strongest connections are drawn last (on top)
       colors.data.array.set(color, offset)
       colors.data.array.set(color, offset + 3)
     }
     colors.data.needsUpdate = true
     invalidate()
-  }, [line, inputs, invalidate])
+  }, [line, connections, invalidate])
 
   useFrame(() => {
     // per frame to follow layer transitions
-    if (!inputs.length || !layer || !prevLayer) return
-    if (!getWorldPosInto(layer, neuron.index, toPos)) return
+    if (!connections.length || !neuron) return
+    if (!getWorldPosInto(neuron.layer, neuron.index, toPos)) return
     const positions = line.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute
-    for (const [i, { index }] of inputs.entries()) {
-      const offset = (inputs.length - 1 - i) * 6
-      const hasPos = getWorldPosInto(prevLayer, index, fromPos)
+    for (const [i, { layer, index }] of connections.entries()) {
+      const offset = (connections.length - 1 - i) * 6
+      const hasPos = getWorldPosInto(layer, index, fromPos)
       ;(hasPos ? fromPos : toPos).toArray(positions.data.array, offset) // zero length if not found
       toPos.toArray(positions.data.array, offset + 3)
     }
@@ -115,19 +122,17 @@ const center = new THREE.Vector3()
 const size = new THREE.Vector3()
 const vertex = new THREE.Vector3()
 
-// frames the inputs of a neuron in the previous layer (e.g. the receptive field in every feature map):
+// frames the inputs of a neuron in its input layers (e.g. the receptive field in every feature map):
 // the ends of the connections are hidden inside of the layer, the frames enclose it and are visible from both sides
 export const InputRegions = ({ neuron }: { neuron?: Neuron }) => {
-  const show = useShowInputs(neuron)
+  const inputs = useVisibleInputs(neuron)
   const invalidate = useThree((s) => s.invalidate)
 
-  const prevLayer = neuron?.layer.prevLayer
-  const inputIdxs = neuron?.inputIdxs
-  const prevShape = prevLayer?.outputShape
-  const regions = useMemo(
-    () => (show && inputIdxs && prevShape ? getInputRegions(inputIdxs, prevShape) : []),
-    [show, inputIdxs, prevShape],
-  )
+  const regions = useMemo(() => {
+    return inputs.flatMap(({ layer, idxs }) => {
+      return getInputRegions(idxs, layer.outputShape).map((neuronIdxs) => ({ layer, neuronIdxs }))
+    })
+  }, [inputs])
 
   // the buffer only grows in powers of 2 and is updated in place
   const capacity = 2 ** Math.ceil(Math.log2(Math.max(regions.length, 1)))
@@ -158,11 +163,11 @@ export const InputRegions = ({ neuron }: { neuron?: Neuron }) => {
 
   useFrame(() => {
     // per frame to follow layer transitions
-    if (!regions.length || !prevLayer) return
+    if (!regions.length) return
     const positions = frames.geometry.attributes.position as THREE.BufferAttribute
-    for (const [i, neuronIdxs] of regions.entries()) {
+    for (const [i, { layer, neuronIdxs }] of regions.entries()) {
       const offset = i * boxVertices.length
-      const worldMatrix = getNeuronBoundsInto(prevLayer, neuronIdxs, bounds)
+      const worldMatrix = getNeuronBoundsInto(layer, neuronIdxs, bounds)
       if (!worldMatrix) {
         positions.array.fill(0, offset, offset + boxVertices.length) // zero size if not found
         continue

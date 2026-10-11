@@ -6,6 +6,7 @@ import { isDebug, useSceneStore } from "@/store"
 import { getMeshParams } from "./layout"
 import { getUnits } from "./helpers"
 import { getLayerDef } from "@/model/layers"
+import { getNodeIdx } from "@/model/get-layer-activations"
 import type { InstancedMesh } from "three/webgpu"
 import type { Layer } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { GroupRef, LayerPos, NeuronLayer, LayerType } from "./types"
@@ -45,10 +46,17 @@ function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOpt
   const tfLayers = [...model.layers.entries()].filter(([, tfLayer]) => isVisible(tfLayer))
 
   const layers: NeuronLayer[] = []
-  let prevLayer: NeuronLayer | undefined
+  const layersByTfLayer = new Map<Layer, NeuronLayer>()
   for (const [layerIndex, tfLayer] of tfLayers) {
     const className = tfLayer.getClassName() as LayerType
     const layerPos = getLayerPos(layerIndex, model)
+    const inputLayers = getInputTfLayers(tfLayer)
+      .map((l) => layersByTfLayer.get(l))
+      .filter((l) => !!l)
+    // fallback: inputs that are not layers of this model (e.g. from a nested model)
+    const lastLayer = layers.at(-1)
+    if (!inputLayers.length && lastLayer && hasInboundLayers(tfLayer)) inputLayers.push(lastLayer)
+    const prevLayer = inputLayers.at(0)
 
     const { outputShape, units } = getLayerShape(tfLayer, layerPos, task)
     const meshParams =
@@ -73,6 +81,7 @@ function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOpt
       layerPos,
       tfLayer,
       outputShape,
+      inputLayers,
       prevLayer,
       numNeurons: units,
       numBiases,
@@ -89,7 +98,7 @@ function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOpt
       bufferOffset,
     }
     layers.push(layer)
-    prevLayer = layer
+    layersByTfLayer.set(tfLayer, layer)
   }
 
   if (isDebug()) {
@@ -186,6 +195,25 @@ function getBufferSlots(model: tf.LayersModel, modelKey: string, task?: string):
   })
   modelCache.set(task, slots)
   return slots
+}
+
+// the visible layers that feed a layer, in the order of its inputs
+// invisible layers (e.g. Flatten) are skipped: their inputs are used instead
+export function getInputTfLayers(tfLayer: Layer, nodeIdx = getNodeIdx(tfLayer)) {
+  const node = tfLayer.inboundNodes[nodeIdx]
+  const inputLayers = new Set<Layer>()
+  for (const [i, inboundLayer] of (node?.inboundLayers ?? []).entries()) {
+    const inboundNodeIdx = node.nodeIndices[i] ?? 0
+    // shared layers: only the visualized call is shown, other calls are skipped like invisible layers
+    const isShown = isVisible(inboundLayer) && inboundNodeIdx === getNodeIdx(inboundLayer)
+    if (isShown) inputLayers.add(inboundLayer)
+    else for (const l of getInputTfLayers(inboundLayer, inboundNodeIdx)) inputLayers.add(l)
+  }
+  return [...inputLayers]
+}
+
+function hasInboundLayers(tfLayer: Layer) {
+  return !!tfLayer.inboundNodes[getNodeIdx(tfLayer)]?.inboundLayers.length
 }
 
 export function isVisible(layer: Layer) {

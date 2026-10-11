@@ -65,6 +65,17 @@ describe("getTopInputs", () => {
     expect(getWeightedInputs(pooling, activations)).toBeUndefined()
   })
 
+  it("ranks other input layers without the weights", () => {
+    // e.g. the 2nd input of Add: the weights belong to the first input
+    const otherIdxs = Uint32Array.of(0, 1, 2, 3)
+    const top = getTopInputs(neuron, new Float32Array([0, 1, -2, 0]), undefined, otherIdxs)
+    expect(top).toEqual([
+      { index: 2, strength: -1 },
+      { index: 1, strength: 0.5 },
+    ])
+    expect(getTopInputs(neuron, undefined, 2, otherIdxs).map((t) => t.index)).toEqual([0, 1])
+  })
+
   it("always shows one-to-one connections", () => {
     const relu = makeNeuron("ReLU", dense, prevTfLayer, ["0_2"])
     expect(getTopInputs(relu, new Float32Array([1, 1, 0, 1]))).toEqual([{ index: 2, strength: 0 }])
