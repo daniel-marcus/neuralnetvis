@@ -13,9 +13,11 @@ import type { SampleRaw } from "@/data"
 
 const throttledScrollTo = throttle((el: Element | null, left: number) => el?.scrollTo({ left }), 50)
 
-const ITEM_WIDTH = 78 // --item-size + 0.5rem
+const ITEM_SIZE = 70 // --item-size
+const ITEM_WIDTH = ITEM_SIZE + 8 // + 0.5rem
 const BUFFER_SIZE = 3 // items before/after visible items to preload
 const DEFAULT_WIDTH = 600
+const FOLLOW_TAU = 50 // ms, time constant for following the current sample
 
 interface VisibleSample {
   sampleIdx: number
@@ -68,6 +70,36 @@ function SampleViewer_() {
   useEffect(() => {
     scrollElRef.current?.scrollTo({ left: 0, behavior: "smooth" })
   }, [idxs])
+  const followRef = useRef(0) // animation frame id
+  useEffect(() => {
+    // follow the current sample; runs after the reset above, so it wins if the sample is in idxs
+    const el = scrollElRef.current
+    if (!el) return
+    const localIdx = sampleIdx === undefined ? -1 : idxs.indexOf(sampleIdx)
+    if (localIdx < 0) return
+    const centered = localIdx * ITEM_WIDTH - (containerWidth - ITEM_SIZE) / 2
+    const left = Math.max(0, Math.min(centered, el.scrollWidth - el.clientWidth))
+    cancelAnimationFrame(followRef.current)
+    if (Math.abs(left - el.scrollLeft) > containerWidth * 2) {
+      el.scrollTo({ left, behavior: "instant" }) // far jump
+      return
+    }
+    // eased & retargetable: native smooth scrolling lags when holding an arrow key, instant
+    // scrolling by exactly one item per key repeat looks like repeated samples (afterimages)
+    let pos = el.scrollLeft
+    let prevTime = performance.now()
+    const step = (time: number) => {
+      const dt = Math.max(0, time - prevTime)
+      prevTime = time
+      pos += (left - pos) * (1 - Math.exp(-dt / FOLLOW_TAU))
+      const isDone = Math.abs(left - pos) < 0.5
+      el.scrollLeft = isDone ? left : pos
+      if (!isDone) followRef.current = requestAnimationFrame(step)
+    }
+    followRef.current = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(followRef.current)
+  }, [sampleIdx, idxs, containerWidth])
+  const cancelFollow = useCallback(() => cancelAnimationFrame(followRef.current), [])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleScroll = useCallback(
@@ -78,9 +110,13 @@ function SampleViewer_() {
     [],
   )
 
-  const handleSliderChange = useCallback((newVal: number) => {
-    throttledScrollTo(scrollElRef.current, newVal)
-  }, [])
+  const handleSliderChange = useCallback(
+    (newVal: number) => {
+      cancelFollow()
+      throttledScrollTo(scrollElRef.current, newVal)
+    },
+    [cancelFollow],
+  )
 
   const atStart = scrollLeft <= 0
   const atEnd = scrollLeft >= totalWidth - containerWidth
@@ -121,6 +157,8 @@ function SampleViewer_() {
               className={`overflow-auto no-scrollbar grow`}
               ref={scrollElRef}
               onScroll={handleScroll}
+              onWheel={cancelFollow}
+              onTouchStart={cancelFollow}
               style={getMaskStyle(atStart, atEnd)}
             >
               <div
@@ -243,7 +281,6 @@ function SamplePreview({ sampleIdx, isCurrent }: SamplePreviewProps) {
   useEffect(() => {
     if (!isCurrent) return
     const el = ref.current
-    el?.scrollIntoView({ behavior: "smooth" })
     return () => el?.parentElement?.blur()
   }, [isCurrent])
   const isTextSample = useSceneStore((s) => !!s.ds?.tokenizer)
