@@ -13,6 +13,8 @@ import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 const LAYER_HOVER_STATUS = "layer-hover-status"
 
 const layerHoverGeometry = new THREE.BoxGeometry(1, 1, 1)
+const layerHoverEdges = new THREE.EdgesGeometry(layerHoverGeometry)
+const noRaycast = () => null
 
 export function LayerInteractions(
   props: NeuronLayer & { measureRef: RefObject<THREE.Mesh | null> },
@@ -128,6 +130,11 @@ export function LayerInteractions(
         opacity={isHovered ? 0.02 : 0}
         depthWrite={false}
       />
+      {/* the fill is barely visible against the (transparent) background */}
+      <lineSegments visible={isHovered} raycast={noRaycast} renderOrder={1}>
+        <primitive object={layerHoverEdges} attach={"geometry"} />
+        <lineBasicMaterial color="white" transparent opacity={0.25} depthWrite={false} />
+      </lineSegments>
     </mesh>
   )
 }
