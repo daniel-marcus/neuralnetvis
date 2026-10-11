@@ -1,6 +1,6 @@
 import { memo, useMemo, useRef } from "react"
-import type * as THREE from "three/webgpu"
-import { useThree } from "@react-three/fiber"
+import * as THREE from "three/webgpu"
+import { useFrame, useThree } from "@react-three/fiber"
 import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
@@ -47,6 +47,9 @@ function ColorChannelShifter({ children, ...props }: ColorChannelShifterProps) {
   )
 }
 
+const SPLIT_OFFSET_X = 0.1
+const cameraPos = new THREE.Vector3()
+
 function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
   // only used for color channels
   const { meshParams, hasColorChannels } = layer
@@ -56,17 +59,23 @@ function useGroupPosition(layer: NeuronLayer, chnlIdx = 0) {
   const [, h, w = 1] = layer.outputShape
   const position = useMemo(() => {
     const [gHeight] = getGridSize(h, w, spacedSize, spacedSize)
-
-    const OFFSET_X = h > 200 ? 0.5 : 0.05 // to avoid z-fighting
-    const OFFSET_YZ = 0.05
     const splitY = -chnlIdx * gHeight + (numChannels - 1) * gHeight * 0.5
-    return hasColorChannels
-      ? splitColors
-        ? [-chnlIdx * OFFSET_X, splitY, chnlIdx * OFFSET_YZ] // spread on y-axis
-        : [chnlIdx * OFFSET_X, -chnlIdx * OFFSET_YZ, -chnlIdx * OFFSET_YZ]
-      : [0, 0, 0]
+    // channels at the same position don't need offsets: see polygonOffset in materials
+    return hasColorChannels && splitColors ? [0, splitY, 0] : [0, 0, 0] // spread on y-axis
   }, [chnlIdx, numChannels, spacedSize, splitColors, h, w, hasColorChannels])
   const groupRef = useAnimatedPosition(position, 0.1)
+  // split colors (incl. the transition): the channels overlap at different positions, which causes z-fighting.
+  // the outer channels are moved on the x-axis as long as they are displaced, the first one towards the camera
+  useFrame(({ camera }) => {
+    const group = groupRef.current
+    if (!hasColorChannels || !group?.parent) return
+    if (!group.position.y) {
+      group.position.x = 0
+      return
+    }
+    const isFrontView = group.parent.worldToLocal(cameraPos.copy(camera.position)).x < 0
+    group.position.x = (chnlIdx - 1) * SPLIT_OFFSET_X * (isFrontView ? 1 : -1)
+  })
   return groupRef
 }
 

@@ -46,6 +46,7 @@ function createActivationMaterial(
   const material = hasColors
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
     : new THREE.MeshStandardNodeMaterial()
+  if (hasColors) setChannelOffset(material, channelIdx)
   material.colorNode = activationColor(hasColors, channelIdx, storageNode)
   return material
 }
@@ -108,6 +109,7 @@ function createTextureMaterial(hasColors: boolean, channelIdx: number, storageNo
     ? new THREE.MeshBasicNodeMaterial({ blending: THREE.AdditiveBlending })
     : new THREE.MeshStandardNodeMaterial()
   material.transparent = !hasColors // transparency needed for gaps between kernels in Conv layers etc.
+  if (hasColors) setChannelOffset(material, channelIdx)
   material.colorNode = activationColorTexture(hasColors, channelIdx, storageNode)
   return material
 }
@@ -173,6 +175,13 @@ function activationColorTexture(
     const colorNode = pow(srgbColor, vec3(2.2))
     return colorNode
   })()
+}
+
+// color channels are at the same position and blended additively (drawn in reversed order, see renderOrder):
+// the depth bias lets the later channels pass the depth test from every side, without z-fighting
+function setChannelOffset(material: THREE.Material, channelIdx: number) {
+  material.polygonOffset = true
+  material.polygonOffsetUnits = channelIdx - 2 // less than the offset of the layer hover box
 }
 
 // https://github.com/pmndrs/drei/blob/master/src/materials/DiscardMaterial.tsx

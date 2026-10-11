@@ -21,9 +21,8 @@ export function useAnimatedPosition(position: number[], speed = 0.4) {
       currentPosition.current.lerp(targetPos, speed)
       if (currentPosition.current.distanceTo(targetPos) < 0.01) {
         currentPosition.current.copy(targetPos) // allow tolerance for floating point errors
-      } else {
-        ref.current.position.copy(currentPosition.current)
       }
+      ref.current.position.copy(currentPosition.current)
     }
   })
   return ref
