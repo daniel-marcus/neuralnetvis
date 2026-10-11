@@ -81,14 +81,53 @@ describe("getConv2DWeightIdx", () => {
     const inputNids = getReceptiveFieldInputNids(conv, filterIdx, prevTfLayer, 0)
     const weights = getLayerWeights(conv).weights![filterIdx]
     expect(inputNids.length).toBe(weights.length)
-    for (const [i, nid] of inputNids.entries()) {
+    for (const nid of inputNids) {
       // output neuron [0, 0, filterIdx]: input index = (y * prevWidth + x) * depth + c
       const flatIdx = Number(nid.split("_")[1])
       const c = flatIdx % depth
       const x = Math.floor(flatIdx / depth) % 5
       const y = Math.floor(flatIdx / (depth * 5))
-      const weightIdx = getConv2DWeightIdx(i, kernelHeight, kernelWidth, depth)
+      const weightIdx = getConv2DWeightIdx(y, x, c, kernelHeight, kernelWidth)
       expect(weights[weightIdx]).toBe(kernelArr[y][x][c][filterIdx])
     }
+  })
+})
+
+describe("getTopInputs (Conv2D with same padding)", () => {
+  const [size, depth, filters] = [4, 2, 2]
+  const input = tf.input({ shape: [size, size, depth] })
+  const conv = tf.layers.conv2d({ filters, kernelSize: 3, padding: "same" })
+  conv.apply(input)
+  const kernel = tf.range(1, 3 * 3 * depth * filters + 1).reshape([3, 3, depth, filters])
+  conv.setWeights([kernel, tf.zeros([filters])])
+  const prevTfLayer = { outputShape: [null, size, size, depth] } as tf.layers.Layer
+  const getNeuron = (y: number, x: number, filterIdx: number) => {
+    const index = (y * size + x) * filters + filterIdx
+    const inputNids = getReceptiveFieldInputNids(conv, index, prevTfLayer, 0)
+    const weights = getLayerWeights(conv).weights![filterIdx]
+    return { ...makeNeuron("Conv2D", conv, prevTfLayer, inputNids, weights), index }
+  }
+
+  it("uses the weights of the kernel positions inside of the previous layer", async () => {
+    const kernelArr = (await kernel.array()) as number[][][][]
+    const filterIdx = 1
+    // last neuron in the first row: the field starts at [-1, 2]
+    const top = getTopInputs(getNeuron(0, size - 1, filterIdx))
+    expect(top.length).toBe(2 * 2 * depth)
+    const maxWeight = kernelArr[2][1][depth - 1][filterIdx] // largest weight inside
+    for (const { index, strength } of top) {
+      const c = index % depth
+      const x = Math.floor(index / depth) % size
+      const y = Math.floor(index / (depth * size))
+      expect(x).toBeGreaterThanOrEqual(size - 2)
+      expect(y).toBeLessThanOrEqual(1)
+      expect(strength).toBeCloseTo(kernelArr[y + 1][x - 2][c][filterIdx] / maxWeight)
+    }
+  })
+
+  it("uses the full kernel in the center", () => {
+    const top = getTopInputs(getNeuron(1, 1, 0))
+    expect(top.length).toBe(3 * 3 * depth)
+    expect(top[0]).toEqual({ index: (2 * size + 2) * depth + 1, strength: 1 }) // kernel [2, 2, 1]
   })
 })

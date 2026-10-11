@@ -1,4 +1,6 @@
-import type { NeuronLayer, NeuronStateful } from "./types"
+import { getReceptiveFieldOrigin } from "@/model/layers/get-input-nids"
+import { getIndex3d } from "./helpers"
+import type { NeuronStateful } from "./types"
 
 export const MAX_CONNECTIONS = 48
 const NEUTRAL_STRENGTH = 0.5 // for connections that can't be ranked
@@ -16,8 +18,8 @@ export function getTopInputs(
   prevActivations?: Float32Array,
   k = MAX_CONNECTIONS,
 ): InputConnection[] {
-  const { inputIdxs, weights, layer } = neuron
-  const getWeightIdx = getWeightIdxFunc(layer, inputIdxs.length, weights?.length)
+  const { inputIdxs, weights } = neuron
+  const getWeightIdx = getWeightIdxFunc(neuron)
   const hasWeights = !!weights && !!getWeightIdx
   if (!hasWeights && !prevActivations) {
     // nothing to rank by (e.g. pooling, normalization): show the inputs as they are
@@ -55,27 +57,32 @@ export function getTopInputs(
 }
 
 // maps the position in inputIdxs to the index in neuron.weights (as returned from getLayerWeights)
-function getWeightIdxFunc(layer: NeuronLayer, numInputs: number, numWeights?: number) {
-  if (!numWeights || !layer.prevLayer) return undefined
+function getWeightIdxFunc(neuron: NeuronStateful) {
+  const { layer, inputIdxs, weights } = neuron
+  if (!weights?.length || !layer.prevLayer) return undefined
   if (layer.layerType === "Conv2D") {
     const [kernelHeight, kernelWidth] = layer.tfLayer.getConfig().kernelSize as number[]
-    const depth = (layer.prevLayer.tfLayer.outputShape as number[])[3]
-    return (i: number) => getConv2DWeightIdx(i, kernelHeight, kernelWidth, depth)
+    const prevTfLayer = layer.prevLayer.tfLayer
+    const prevShape = prevTfLayer.outputShape as number[]
+    const [top, left] = getReceptiveFieldOrigin(layer.tfLayer, neuron.index, prevTfLayer)
+    return (i: number) => {
+      // the position in the kernel is derived from the input: inputs outside of the previous layer are skipped
+      const [y, x, c] = getIndex3d(inputIdxs[i], prevShape)
+      return getConv2DWeightIdx(y - top, x - left, c, kernelHeight, kernelWidth)
+    }
   }
-  if (numWeights === numInputs) return (i: number) => i // Dense
+  if (weights.length === inputIdxs.length) return (i: number) => i // Dense
   return undefined
 }
 
-// inputs (see getReceptiveFieldInputNids) are ordered by [height, width, depth],
-// weights by [depth, width, height] (transposed kernel, see getLayerWeights)
+// kernel position [y, x, c] to index in weights: ordered by [depth, width, height]
+// (transposed kernel, see getLayerWeights)
 export function getConv2DWeightIdx(
-  i: number,
+  y: number,
+  x: number,
+  c: number,
   kernelHeight: number,
   kernelWidth: number,
-  depth: number,
 ) {
-  const c = i % depth
-  const x = Math.floor(i / depth) % kernelWidth
-  const y = Math.floor(i / (depth * kernelWidth))
   return (c * kernelWidth + x) * kernelHeight + y
 }
