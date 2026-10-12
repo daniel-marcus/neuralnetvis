@@ -86,6 +86,7 @@ interface NeuronLabelProps {
   color?: string | THREE.Color
   size?: number
   lookAtCamera?: boolean
+  doubleSided?: boolean // also visible from behind (mirrored)
 }
 
 function NeuronLabel(props: NeuronLabelProps) {
@@ -120,6 +121,7 @@ function TextLabelContent({
   color = LABEL_COLOR,
   size = 1,
   lookAtCamera,
+  doubleSided,
 }: NeuronLabelProps & { text: string }) {
   const labelRef = useRef<THREE.Object3D>(null)
 
@@ -136,7 +138,13 @@ function TextLabelContent({
   return (
     <group position={position} rotation={[0, -Math.PI / 2, 0]} ref={labelRef} scale={size * 1.2}>
       {isVector ? (
-        <VectorLabel font={font} text={text} align={align} color={color} />
+        <VectorLabel
+          font={font}
+          text={text}
+          align={align}
+          color={color}
+          doubleSided={doubleSided}
+        />
       ) : (
         <TextureLabel text={text} align={align} color={color} />
       )}
@@ -148,11 +156,18 @@ interface LabelContentProps {
   text: string
   align: "left" | "right"
   color: string | THREE.Color
+  doubleSided?: boolean
 }
 
 const geometryCache = new Map<string, THREE.BufferGeometry>()
 
-function VectorLabel({ font, text, align, color }: LabelContentProps & { font: Font }) {
+function VectorLabel({
+  font,
+  text,
+  align,
+  color,
+  doubleSided,
+}: LabelContentProps & { font: Font }) {
   const geometry = useMemo(() => {
     const key = `${text}-${align}`
     if (!geometryCache.has(key)) {
@@ -163,7 +178,7 @@ function VectorLabel({ font, text, align, color }: LabelContentProps & { font: F
   }, [font, text, align])
   return (
     <mesh geometry={geometry}>
-      <meshBasicMaterial color={color} />
+      <meshBasicMaterial color={color} side={doubleSided ? THREE.DoubleSide : THREE.FrontSide} />
     </mesh>
   )
 }

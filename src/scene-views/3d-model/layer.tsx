@@ -5,6 +5,7 @@ import { useSpring, config } from "@react-spring/web"
 import { useSceneStore } from "@/store"
 import { useAnimatedPosition, useIsClose } from "@/scene-views/3d-model/utils"
 import { LayerInteractions } from "./interactions"
+import { LayerLabel } from "./layer-label"
 import { useDidMount, usePrevious } from "@/utils/helpers"
 import { InstancedLayer, useNeuronSpacing } from "./layer-instanced"
 import { TexturedLayer } from "./layer-textured"
@@ -24,6 +25,7 @@ export const Layer = memo(function Layer(props: LayerProps) {
   return (
     <LayerScaler {...props}>
       <LayerInteractions {...props} measureRef={measureRef} />
+      <LayerLabel index={props.index} layerType={props.layerType} measureRef={measureRef} />
       {Array.from({ length: separateChannels }).map((_, i) => (
         <ColorChannelShifter {...props} channelIdx={i} key={i}>
           <LodComp {...props} channelIdx={i} measureRef={measureRef} />
