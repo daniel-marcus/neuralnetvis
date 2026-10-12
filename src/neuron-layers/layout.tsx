@@ -36,8 +36,6 @@ export function getMeshParams(
   layerPos: LayerPos,
   units: number,
 ): MeshParams {
-  const className = layer.getClassName()
-  // const layerDef = getLayerDef(className)
   const is1D = layer.outputShape.length === 2
   if (layerPos === "input") {
     if (units <= 12) return meshMap.boxBig
@@ -45,7 +43,8 @@ export function getMeshParams(
     else return meshMap.boxSmall
   } else if (layerPos === "output") {
     return meshMap.boxBig
-  } else if (className === "Dense" && is1D) {
+  } else if (is1D) {
+    // e.g. Dense, GlobalAveragePooling1D, ...
     if (units <= 128) return meshMap.sphere
     else return meshMap.sphereSmall
   } else {
