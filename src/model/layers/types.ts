@@ -43,6 +43,7 @@ export type LayerConfigMap = {
   Add: AddLayerArgs
   MultiHeadAttention: MultiHeadAttentionArgs
   ReversibleEmbedding: ReversibleEmbeddingLayerArgs
+  GlobalAveragePooling1D: LayerArgs
 }
 
 interface AddLayerArgs extends LayerArgs {

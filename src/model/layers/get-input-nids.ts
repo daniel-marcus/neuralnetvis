@@ -26,6 +26,17 @@ export const getOneToOneInputNids: GetInputNidsFunc = (_, nIdx, __, prevLayerIdx
   return [getNid(prevLayerIdx, nIdx)]
 }
 
+// for GlobalAveragePooling1D etc
+// each neuron is connected to its own channel at every position (e.g. token) in the previous layer
+export const getGlobalPoolingInputNids: GetInputNidsFunc = (_, nIdx, prevLayer, prevLayerIdx) => {
+  const prevShape = prevLayer.outputShape as number[]
+  const channels = prevShape[prevShape.length - 1]
+  const numPositions = getUnits(prevLayer) / channels
+  return Array.from({ length: numPositions }, (_, pos) =>
+    getNid(prevLayerIdx, pos * channels + nIdx),
+  )
+}
+
 // for Conv2D, DepthwiseConv2D, MaxPooling2D etc
 // each neuron is connected to a receptive field of neurons in the previous layer
 // inputs outside of the previous layer ("same" padding) are skipped

@@ -16,6 +16,7 @@ import { PositionEmbedding } from "./position-embedding"
 import { Add } from "./add"
 import { MultiHeadAttention } from "./multi-head-attention"
 import { ReversibleEmbedding } from "./reversible-embedding"
+import { GlobalAveragePooling1D } from "./global-average-pooling1d"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -37,6 +38,7 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   Add,
   MultiHeadAttention,
   ReversibleEmbedding,
+  GlobalAveragePooling1D,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(

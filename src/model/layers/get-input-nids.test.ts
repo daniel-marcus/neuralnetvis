@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import * as tf from "@tensorflow/tfjs"
 import {
   getFullyConnectedInputRange,
+  getGlobalPoolingInputNids,
   getReceptiveFieldInputNids,
   getReceptiveFieldOrigin,
 } from "./get-input-nids"
@@ -127,5 +128,16 @@ describe("getFullyConnectedInputRange", () => {
     expect(range).toEqual({ start: 10, length: 5 })
     // one weight per input
     expect((dense.getWeights()[0].shape as number[])[0]).toBe(range.length)
+  })
+})
+
+describe("getGlobalPoolingInputNids", () => {
+  it("connects a neuron to its own channel at every position", () => {
+    const [seqLength, dim] = [5, 4]
+    const pooling = tf.layers.globalAveragePooling1d()
+    pooling.apply(tf.input({ shape: [seqLength, dim] }))
+    const prevTfLayer = { outputShape: [null, seqLength, dim] } as tf.layers.Layer
+    const nids = getGlobalPoolingInputNids(pooling, 1, prevTfLayer, 3)
+    expect(nids).toEqual(["3_1", "3_5", "3_9", "3_13", "3_17"])
   })
 })
