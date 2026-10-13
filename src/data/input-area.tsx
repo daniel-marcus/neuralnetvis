@@ -11,8 +11,13 @@ interface InputAreaProps {
 // shared layout of DrawArea and TextArea: title bar with close button, input box, button bar
 export const InputArea = ({ title, buttons, children }: InputAreaProps) => {
   const toggleInputAreaShown = useSceneStore((s) => s.toggleInputAreaShown)
+  const hasSelected = useSceneStore((s) => !!s.selectedNid) // full NeuronInspector overlaps
   return (
-    <div className="z-20 w-40 lg:w-75 flex flex-col gap-2 pointer-events-auto pt-8">
+    <div
+      className={`z-20 w-40 lg:w-75 ${
+        hasSelected ? "hidden" : "flex"
+      } flex-col gap-2 pointer-events-auto pt-8`}
+    >
       <div className="flex justify-between items-center">
         <div>{title}</div>
         <Button onClick={toggleInputAreaShown} variant="transparent" className="-mr-2">
