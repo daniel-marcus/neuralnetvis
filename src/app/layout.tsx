@@ -21,11 +21,13 @@ export default function Layout({ children }: LayoutProps) {
         <meta name="theme-color" content={manifest.theme_color} id="theme-color" />
       </head>
       <body className={`antialiased`}>
-        <Suspense>
-          <DomRefsProvider>
-            <App>{children}</App>
-          </DomRefsProvider>
-        </Suspense>
+        <DomRefsProvider>
+          <Suspense>
+            <App />
+          </Suspense>
+          {/* outside of App (client-side rendering only), so that the page is part of the static HTML */}
+          {children}
+        </DomRefsProvider>
       </body>
     </html>
   )

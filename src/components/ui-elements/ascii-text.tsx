@@ -15,17 +15,23 @@ export function AsciiText({ children, className }: AsciiTextProps) {
   return <pre className={className}>{ascii}</pre>
 }
 
-const useAsciiText = (input: string) => {
-  return useMemo(() => {
-    const sanitizedInput = replaceUmlauts(input)
-    const textWithLineBreaks = splitWithThreshold(sanitizedInput).join("\n")
-    return figlet
-      .textSync(textWithLineBreaks, {
-        font: "Blur Vision ASCII",
-      })
-      .replace(/[░▒]/g, " ")
-      .replace(/^.{2}/gm, "")
-  }, [input])
+const useAsciiText = (input: string) => useMemo(() => getAsciiText(input), [input])
+
+function getFigletText(input: string) {
+  const sanitizedInput = replaceUmlauts(input)
+  const textWithLineBreaks = splitWithThreshold(sanitizedInput).join("\n")
+  return figlet.textSync(textWithLineBreaks, { font: "Blur Vision ASCII" })
+}
+
+export function getAsciiText(input: string) {
+  return getFigletText(input)
+    .replace(/[░▒]/g, " ")
+    .replace(/^.{2}/gm, "")
+}
+
+// the blur that getAsciiText strips: starts 2 columns further left
+export function getAsciiBlur(input: string) {
+  return getFigletText(input).replace(/[▓█]/g, " ")
 }
 
 function replaceUmlauts(str: string) {

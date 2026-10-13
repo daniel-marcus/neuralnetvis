@@ -47,6 +47,13 @@
       color: var(--color-accent);
     }
   }
+
+  --animate-blink: blink 1s infinite steps(1);
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 @custom-variant scroll-zero {

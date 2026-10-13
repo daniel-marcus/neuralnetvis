@@ -68,6 +68,7 @@ type WindowSize = { width: number; height: number }
 type GlobalStoreType = TabsSlice &
   StatusSlice & {
     backendReady: boolean
+    introDone: boolean // cover on "/" has been dismissed (or was skipped)
     isDebug: boolean
     scenes: SceneStore[]
     scene: SceneStore
@@ -84,6 +85,7 @@ export const useGlobalStore = create<GlobalStoreType>()((...apiProps) => ({
   ...createTabsSlice(...apiProps),
   ...createStatusSlice(...apiProps),
   backendReady: false,
+  introDone: false,
   isDebug: false,
   visLocked: false,
   scenes: [],

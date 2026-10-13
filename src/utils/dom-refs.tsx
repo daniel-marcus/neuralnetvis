@@ -4,6 +4,7 @@ import { createContext, useContext, useRef } from "react"
 
 type DomRefs = {
   rootRef: React.RefObject<HTMLDivElement | null>
+  logoRef: React.RefObject<HTMLAnchorElement | null>
   lessonOverlayRef: React.RefObject<HTMLDivElement | null>
   neuronInspectorRef: React.RefObject<HTMLDivElement | null>
   sampleViewerRef: React.RefObject<HTMLDivElement | null>
@@ -14,6 +15,7 @@ const DomRefsContext = createContext<DomRefs | null>(null)
 export function DomRefsProvider({ children }: { children: React.ReactNode }) {
   const refs = {
     rootRef: useRef<HTMLDivElement>(null),
+    logoRef: useRef<HTMLAnchorElement>(null),
     lessonOverlayRef: useRef<HTMLDivElement>(null),
     neuronInspectorRef: useRef<HTMLDivElement>(null),
     sampleViewerRef: useRef<HTMLDivElement>(null),

@@ -1,6 +1,6 @@
-import { Suspense, useState, type RefObject } from "react"
+import { Suspense, useContext, useEffect, useState, type RefObject } from "react"
 import { SceneStoreProvider } from "@/store/scene-provider"
-import { useSceneStore } from "@/store"
+import { SceneContext, useSceneStore } from "@/store"
 import { useDsDef, useDataset } from "@/data"
 import { useModel, useTraining } from "@/model"
 
@@ -111,7 +111,10 @@ function useShouldLoad(ref: RefObject<HTMLDivElement | null>, isActive: boolean)
   const [wasNearView, setWasNearView] = useState(false)
   // don't start loading tiles in the background while another scene is open
   if (nearView && !hasActive && !wasNearView) setWasNearView(true)
-  return isActive || wasNearView
+  const shouldLoad = isActive || wasNearView
+  const store = useContext(SceneContext)
+  useEffect(() => store?.setState({ shouldLoad }), [store, shouldLoad])
+  return shouldLoad
 }
 
 export const SceneViewer = (props: SceneViewerProps) => {
