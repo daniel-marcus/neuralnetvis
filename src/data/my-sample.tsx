@@ -11,14 +11,8 @@ type SampleAdderFunc = (arg: SampleAdderArgs) => Promise<SampleRaw | undefined> 
 
 export const AddSampleBtn = () => {
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
-  const toggleInputAreaShown = useSceneStore((s) => s.toggleInputAreaShown)
   const ds = useSceneStore((s) => s.ds)
-  const isTextInput = !!ds?.tokenizer
-  const addFunc: SampleAdderFunc | undefined = ds?.showAddImgBtn
-    ? getSampleFromImgUrl
-    : ds?.drawOptions || isTextInput
-      ? toggleInputAreaShown // DrawArea or TextArea
-      : undefined
+  const addFunc: SampleAdderFunc | undefined = ds?.showAddImgBtn ? getSampleFromImgUrl : undefined
 
   if (!addFunc) return null
 

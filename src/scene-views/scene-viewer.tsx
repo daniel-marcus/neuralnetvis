@@ -52,7 +52,7 @@ function SceneViewerInner(props: SceneViewerProps) {
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
   const { neuronInspectorRef, sampleViewerRef } = useDomRefs()
-  const inputAreaShown = useSceneStore((s) => s.inputAreaShown)
+  const hasInputArea = !!dsDef?.drawOptions || !!dsDef?.tokenizerName
   return (
     <div
       className={`flex justify-center items-center w-full h-full`}
@@ -75,9 +75,10 @@ function SceneViewerInner(props: SceneViewerProps) {
           <SceneTitle title={title} href={path} section={section} ds={ds ?? dsDef} />
           <LoadWeightsButton />
           {section === "play" && isActive && <SceneButtons />}
-          {isActive &&
+          {section === "play" &&
+            isActive &&
             view === "layers" &&
-            inputAreaShown &&
+            hasInputArea &&
             (dsDef?.tokenizerName ? (
               <TextArea title={dsDef.drawOptions?.title ?? "Write a review"} />
             ) : (
@@ -122,7 +123,6 @@ export const SceneViewer = (props: SceneViewerProps) => {
       uid={path}
       initialState={initialState}
       isLargeModel={props.isLargeModel}
-      inputAreaShown={props.hasInputArea}
     >
       <Suspense>
         <SceneViewerInner {...props} />

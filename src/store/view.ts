@@ -20,8 +20,6 @@ export interface ViewSlice {
   setHoveredLayerIdx: (arg: number | undefined | SetterFunc<number | undefined>) => void
   isScrolling: boolean
   setIsScrolling: (isScrolling: boolean) => void
-  inputAreaShown: boolean
-  toggleInputAreaShown: () => void
 }
 
 export const createViewSlice: StateCreator<
@@ -72,7 +70,4 @@ export const createViewSlice: StateCreator<
     })),
   isScrolling: false,
   setIsScrolling: (isScrolling) => set({ isScrolling }),
-
-  inputAreaShown: false,
-  toggleInputAreaShown: () => set(({ inputAreaShown }) => ({ inputAreaShown: !inputAreaShown })),
 })

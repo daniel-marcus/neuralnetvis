@@ -21,7 +21,6 @@ export interface TileDef {
   shouldLoadFullDs?: boolean
   isLargeModel?: boolean // don't expand hidden layers by default
   targetDevice?: DatasetDef["targetDevice"]
-  hasInputArea?: boolean
 }
 
 function getTags(dsDef: DatasetDef) {
@@ -48,7 +47,6 @@ export const tiles: TileDef[] = [
     disabled: dsDef.disabled,
     isLargeModel: dsDef.model?.lazyLoadWeights,
     targetDevice: dsDef.targetDevice,
-    hasInputArea: !!dsDef.drawOptions || !!dsDef.tokenizerName,
   })),
 ]
 
