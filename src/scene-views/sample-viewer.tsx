@@ -8,7 +8,7 @@ import { useKeyCommand } from "@/utils/key-command"
 import { useHasStatusOrSelected } from "./sample-slider"
 import { Slider } from "@/components/ui-elements"
 import { CustomBtns } from "./sample-viewer-btns"
-import { ClientOnly } from "@/utils/helpers"
+import { ClientOnly, useIsIntro } from "@/utils/helpers"
 import type { SampleRaw } from "@/data"
 
 const throttledScrollTo = throttle((el: Element | null, left: number) => el?.scrollTo({ left }), 50)
@@ -122,35 +122,32 @@ function SampleViewer_() {
   const atEnd = scrollLeft >= totalWidth - containerWidth
 
   const hasStatusOrSelected = useHasStatusOrSelected()
-  const [isShown, setIsShown] = useState(true)
+  const isIntro = useIsIntro(idxs)
 
   useKeyboardNavigation(idxs)
 
   if (!idxs.length && !isLayersView) return null
+  // auto-hide: only the label stays in the viewport, hover reveals the samples
   return (
     <div
-      className={`lg:fixed lg:bottom-0 lg:z-[-1] -mb-4! pt-4 pb-8 bg-linear-to-b from-transparent ${
+      className={`fixed bottom-0 right-0 z-[-1] -mb-4! bg-linear-to-b from-transparent ${
         hasDarkBg ? "via-[1rem] via-black to-black" : "to-background"
-      } transition-discrete duration-300 w-screen bottom-0 right-0 [--item-size:70px] pointer-events-none ${
-        isShown
+      } transition-discrete duration-300 w-screen [--item-size:70px] pointer-events-none ${
+        isIntro
           ? ""
-          : `fixed translate-y-[calc(100%-5rem)] ${
-              hasStatusOrSelected
-                ? "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto"
-                : ""
-            }`
-      }`}
+          : "translate-y-[calc(100%-5rem)] has-[>div:hover]:translate-y-0 [@media(hover:none)]:has-[>div:focus-within]:translate-y-0"
+      } ${hasStatusOrSelected ? "opacity-0 lg:opacity-100" : ""}`}
       style={{ "--item-aspect-ratio": aspectRatio } as React.CSSProperties}
     >
-      <div className="max-w-screen sm:max-w-150 mx-auto pointer-events-auto">
-        <div className="flex items-center justify-center pb-2">
-          <button onClick={() => setIsShown((s) => !s)}>{isShown ? "hide" : "show"} samples</button>
-        </div>
-        <div
-          className={`${
-            isShown ? "" : "opacity-0 pointer-events-none"
-          } transition-opacity duration-300`}
-        >
+      <div
+        tabIndex={-1} // touch: tap to reveal, tap outside to tuck away
+        data-intro={isIntro || undefined}
+        className={`group/sample-viewer max-w-screen sm:max-w-150 mx-auto pt-4 pb-8 outline-none ${
+          hasStatusOrSelected ? "pointer-events-none lg:pointer-events-auto" : "pointer-events-auto"
+        } ${isIntro ? "" : "[@media(hover:none)]:not-focus-within:*:pointer-events-none"}`}
+      >
+        <div className="flex items-center justify-center pb-2">samples</div>
+        <div className="opacity-0 transition-opacity duration-300 group-data-intro/sample-viewer:opacity-100 group-hover/sample-viewer:opacity-100 [@media(hover:none)]:group-focus-within/sample-viewer:opacity-100">
           <div className="relative flex gap-2">
             {isLayersView && <CustomBtns />}
             <div

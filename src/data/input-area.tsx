@@ -1,13 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { useSceneStore } from "@/store"
+import { useIsIntro } from "@/utils/helpers"
 
 interface InputAreaProps {
   title?: ReactNode
   buttons?: ReactNode // right-aligned below the input
   children: ReactNode // the input box (w-full), e.g. canvas or textarea
 }
-
-const INTRO_DURATION = 2000 // ms, fully shown after mount before it is tucked away
 
 // shared layout of DrawArea and TextArea: title, input box, button bar
 // auto-hide: only a strip stays in the viewport, hover (or typing) reveals the full area
@@ -35,14 +34,4 @@ export const InputArea = ({ title, buttons, children }: InputAreaProps) => {
       )}
     </div>
   )
-}
-
-// show the full area first, so that the user knows what is behind the strip
-function useIsIntro() {
-  const [isIntro, setIsIntro] = useState(true)
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsIntro(false), INTRO_DURATION)
-    return () => clearTimeout(timeout)
-  }, [])
-  return isIntro
 }
