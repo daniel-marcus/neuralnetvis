@@ -25,7 +25,8 @@ export const Lesson = (props: LessonProps) => {
       <LessonGradient hidden={!visLocked} />
       <div
         ref={ref}
-        className={`relative z-20 pt-[20vh] pb-[50dvh]! w-full max-w-screen overflow-x-clip ${
+        // bottom: the final CTA (h-10) stops in the viewport center
+        className={`relative z-20 pt-[20vh] pb-[calc(50dvh-1.25rem)]! w-full max-w-screen overflow-x-clip ${
           visLocked && !isDebug ? "" : "pointer-events-none"
         } ${visLocked ? "" : "opacity-0"} transition-opacity duration-[calc(2*var(--tile-duration))]`}
       >
@@ -65,8 +66,8 @@ function useContent(content: LessonDef["content"]) {
   const children = main.props.children.map((c, i, arr) =>
     cloneElement(c, { key: i, nextProps: arr[i + 1]?.props }),
   )
-  // last block: min-height to reach the viewport center (active) at the end of the page
-  return (<main className="*:last:min-h-[50dvh]">{children}</main>) as LessonContent
+  // last block: no gap, the page padding lets its final CTA stop in the viewport center
+  return (<main className="*:last:pb-0">{children}</main>) as LessonContent
 }
 
 export function useHasLesson() {
