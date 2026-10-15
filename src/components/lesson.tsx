@@ -65,7 +65,8 @@ function useContent(content: LessonDef["content"]) {
   const children = main.props.children.map((c, i, arr) =>
     cloneElement(c, { key: i, nextProps: arr[i + 1]?.props }),
   )
-  return (<main>{children}</main>) as LessonContent
+  // last block: min-height to reach the viewport center (active) at the end of the page
+  return (<main className="*:last:min-h-[50dvh]">{children}</main>) as LessonContent
 }
 
 export function useHasLesson() {

@@ -2,7 +2,7 @@
 
 import { useCurrScene } from "@/store"
 import { LockButton } from "@/scene-views/3d-model/lock"
-import { Block, Details, Head, Prediction } from "@/contents/elements"
+import { Block, BlockGroup, Details, Head, Prediction } from "@/contents/elements"
 import { useScrollTraining } from "@/contents/elements/scroll-training"
 import { DrawArea } from "@/data/draw-area"
 import { interpolate } from "@/scene-views/3d-model/utils"
@@ -149,7 +149,7 @@ export const IntroNetworks = (): LessonContent => {
           If that&apos;s right, it&apos;s pure luck.
         </p>
       </Block>
-      <Block
+      <BlockGroup
         onScroll={training.onScroll}
         onEnter={() => {
           training.onEnter()
@@ -157,12 +157,14 @@ export const IntroNetworks = (): LessonContent => {
         }}
         onLeave={training.onLeave}
       >
-        <p className="mb-[50vh]">
-          So how do we find better weights? We don&apos;t set them by hand. Instead, we show the
-          model lots of examples and let it learn from its mistakes. This is called{" "}
-          <em>training</em>.
-        </p>
-        <div className="mb-[50vh]">
+        <Block>
+          <p>
+            So how do we find better weights? We don&apos;t set them by hand. Instead, we show the
+            model lots of examples and let it learn from its mistakes. This is called{" "}
+            <em>training</em>.
+          </p>
+        </Block>
+        <Block>
           <p>
             For each example, the model makes a guess. We compare it with the correct answer and
             nudge all weights a tiny bit, so that the score of the right neuron goes up and the
@@ -182,12 +184,16 @@ export const IntroNetworks = (): LessonContent => {
               thousands of times, and the weights slowly turn into something useful.
             </p>
           </Details>
-        </div>
-        <p className="mb-[50vh]">
-          Keep scrolling to train the model, and watch the weights of the &quot;3&quot; neuron ...
-        </p>
-        <p className="mb-[50vh]">... does it look familiar?</p>
-      </Block>
+        </Block>
+        <Block>
+          <p>
+            Keep scrolling to train the model, and watch the weights of the &quot;3&quot; neuron ...
+          </p>
+        </Block>
+        <Block>
+          <p>... does it look familiar?</p>
+        </Block>
+      </BlockGroup>
       <Block
         onEnter={() => {
           training.ensureTrained().then(initialSample)

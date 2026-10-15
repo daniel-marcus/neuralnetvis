@@ -11,8 +11,9 @@ export function Block(props: ScrollBlockProps) {
   return (
     <div
       ref={ref}
+      // constant gap between blocks, the padding also adds scroll room for onScroll / camera
       // desktop: offset to avoid overlaps with the NeuronInspector (bottom left)
-      className={`min-h-[50dvh] pb-16 max-w-md space-y-4 lg:ml-52 xl:ml-24 ${
+      className={`pb-[35dvh] max-w-md space-y-4 lg:ml-52 xl:ml-24 ${
         inView ? "opacity-100 " : "opacity-30"
       } transition-opacity duration-100 ${className ?? ""}`}
     >

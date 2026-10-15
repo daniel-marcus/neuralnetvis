@@ -1,4 +1,5 @@
 export { Block } from "./block"
+export { BlockGroup } from "./block-group"
 export { Button } from "./ctas"
 export { Ctas } from "./ctas"
 export { CurrSceneProvider } from "./curr-scene"
