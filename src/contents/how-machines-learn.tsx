@@ -202,26 +202,14 @@ export const IntroNetworks = (): LessonContent => {
       >
         <p>
           The weights of the &quot;3&quot; neuron now look like a blurry 3: positive where a 3
-          usually has ink, negative where other digits have ink instead.
+          usually has ink, negative where other digits have ink instead. The other output neurons
+          have learned templates for their own digits in the same way.
         </p>
         <p>
           Remember our 3 from the beginning? After a few hundred examples, the model says:{" "}
           <Prediction />.
           <br />
           Not bad for a model that started with random numbers!
-        </p>
-      </Block>
-      <Block
-        onEnter={() => {
-          training.ensureTrained()
-          setup({ neuronView: "weights" })
-        }}
-        onScroll={({ percent }) => setSelectedNid(sweepNid(percent))}
-        onLeave={() => setSelectedNid(undefined)}
-      >
-        <p>
-          And it&apos;s not just the 3: every output neuron has learned its own template for its
-          digit.
         </p>
       </Block>
       <Block
