@@ -1,14 +1,12 @@
 "use client"
 
-import { useCurrScene, useGlobalStore } from "@/store"
-import { setStatus, clearStatus } from "@/store"
+import { useCurrScene } from "@/store"
 import { LockButton } from "@/scene-views/3d-model/lock"
 import { Block, Details, Head } from "@/contents/elements"
-import { trainOnBatch } from "@/model/training"
+import { useScrollTraining } from "@/contents/elements/scroll-training"
 import { interpolate } from "@/scene-views/3d-model/utils"
 import { defaultVisConfig } from "@/store/vis"
 import { getNid } from "@/neuron-layers/helpers"
-import type { OnScrollProps } from "@/contents/elements/types"
 import type { LessonContent } from "./types"
 import type { InitialState } from "@/utils/initial-state"
 
@@ -24,19 +22,19 @@ export const hmlInitialState: InitialState = {
   },
 }
 
-const SCROLL_TRAIN_STATUS_ID = "scroll-train-status"
-
 export const IntroNetworks = (): LessonContent => {
   const setVisConfig = useCurrScene((s) => s.vis.setConfig)
   const setSampleIdx = useCurrScene((s) => s.setSampleIdx)
   const setHoveredNid = useCurrScene((s) => s.setHoveredNid)
   const setSelectedNid = useCurrScene((s) => s.setSelectedNid)
+  const training = useScrollTraining({ totalSamples: 300 })
   return (
     <main>
       <Head
         title="How do machines learn?"
         description="Let's train a neural network to recognize handwritten digits (test content)"
         cameraPos={hmlInitialState.cameraPos}
+        onEnter={training.reset}
         onScroll={({ percent }) => {
           const initSpacing = hmlInitialState.vis!.neuronSpacing!
           const dflt = defaultVisConfig.neuronSpacing!
@@ -47,6 +45,7 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         cameraPos={[-60, 0, 30]}
         onEnter={() => {
+          training.reset()
           setSampleIdx(hmlInitialState.sampleIdx ?? 0)
           setVisConfig({
             excludedLayers: hmlInitialState.vis!.excludedLayers,
@@ -58,6 +57,7 @@ export const IntroNetworks = (): LessonContent => {
       <Block
         cameraPos={[-25, 0, 40]}
         onEnter={() => {
+          training.reset()
           setVisConfig({ excludedLayers: [] })
         }}
       >
@@ -74,6 +74,7 @@ export const IntroNetworks = (): LessonContent => {
           setHoveredNid(undefined)
         }}
         onEnter={() => {
+          training.reset()
           setVisConfig({ showPointer: false })
         }}
       >
@@ -85,19 +86,21 @@ export const IntroNetworks = (): LessonContent => {
           const sampleIdx = Math.round(percent * 100 + 1)
           setSampleIdx(sampleIdx)
         }}
-        onEnter={() => setVisConfig({ showPointer: true })}
+        onEnter={() => {
+          training.reset()
+          setVisConfig({ showPointer: true })
+        }}
       >
         Here comes: the pointer.
       </Block>
       <Block
-        onScroll={scrollTrain}
+        onScroll={training.onScroll}
         onEnter={() => {
-          abortFlag = false // reset abort flag
-          setSelectedNid(getNid(2, 2))
+          training.onEnter()
+          setSelectedNid(getNid(2, 3))
         }}
         onLeave={() => {
-          abortFlag = true // silence async training logs
-          clearStatus(SCROLL_TRAIN_STATUS_ID)
+          training.onLeave()
           setSelectedNid(undefined)
         }}
       >
@@ -105,7 +108,7 @@ export const IntroNetworks = (): LessonContent => {
         <p className="mb-[50vh]">Keep scrolling ...</p>
         <p className="mb-[50vh]">Just a little bit more ...</p>
       </Block>
-      <Block>
+      <Block onEnter={training.ensureTrained}>
         Try out!
         <br />
         <br />
@@ -128,35 +131,4 @@ export const IntroNetworks = (): LessonContent => {
       </Block>
     </main>
   )
-}
-
-let batch = 0
-const trainedIs = new Set<number>()
-let abortFlag = false
-
-function getRandomI(totalSamples: number) {
-  let i = Math.round(Math.random() * totalSamples - 1)
-  while (trainedIs.has(i)) {
-    i = Math.round(Math.random() * totalSamples - 1)
-  }
-  trainedIs.add(i)
-  return i
-}
-
-async function scrollTrain({ percent }: OnScrollProps) {
-  const scene = useGlobalStore.getState().scene
-  const totalSamples = scene.getState().totalSamples()
-  const sampleIdx = getRandomI(totalSamples)
-  batch++
-  scene.setState({ sampleIdx })
-
-  const sample = scene.getState().sample
-  if (!sample || typeof sample.y !== "number") return
-  const log = await trainOnBatch([sample.xTensor], [sample.y])
-
-  if (!log || abortFlag) return
-  scene.getState().addLog({ ...log, epoch: 0, batch })
-  setStatus(`Training loss: ${log.loss.toFixed(2)}`, percent, {
-    id: SCROLL_TRAIN_STATUS_ID,
-  })
 }

@@ -3,12 +3,14 @@
 import type { SceneState } from "@/store"
 import { defaultVisConfig } from "@/store/vis"
 import type { Pos } from "@/scene-views/3d-model/utils"
+import type { TrainingConfig } from "@/model"
 
 type ExposedStoreKeys = "sampleIdx" | "layerConfigs"
 type ExposedStoreType = Pick<SceneState, ExposedStoreKeys>
 
 export type InitialState = Partial<ExposedStoreType> & {
   vis?: Partial<SceneState["vis"]>
+  trainConfig?: Partial<TrainingConfig>
   cameraPos?: Pos
   cameraLookAt?: Pos
 }

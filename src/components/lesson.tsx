@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useGlobalStore } from "@/store"
 import { useDomRefs } from "@/utils/dom-refs"
 import { useLock } from "@/scene-views/3d-model/lock"
-import { Ctas } from "@/contents/elements"
+import { Ctas, CurrSceneProvider } from "@/contents/elements"
 import type { LessonContent, LessonDef, LessonPreview } from "@/contents/types"
 
 interface LessonProps extends LessonDef {
@@ -26,7 +26,7 @@ export const Lesson = (props: LessonProps) => {
         } transition-opacity duration-[calc(2*var(--tile-duration))]`}
       >
         <div className="p-main lesson-width">
-          {children}
+          <CurrSceneProvider>{children}</CurrSceneProvider>
           <Ctas nextLesson={nextLesson} />
         </div>
       </div>

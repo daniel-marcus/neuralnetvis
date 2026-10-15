@@ -187,22 +187,21 @@ async function train(model: tf.LayersModel, ds: Dataset, options: FitArgs) {
   return history
 }
 
-export async function trainOnBatch(xs: tf.Tensor[], ys: number[]) {
+// train a single batch from the training set (e.g. step by step in lessons)
+export async function trainOnBatch(batchIdx: number, batchSize: number) {
   const ds = getDs()
-  const setBatchCount = useGlobalStore.getState().scene.getState().setBatchCount
   const model = getModel()
   if (!ds || !model) return
-  if (ds.task === "nextToken") return // ys would have to be token sequences
-  const isClassification = ds?.task === "classification"
-  const trainShape = model.layers[0].batchInputShape as number[]
-  const [X, y] = tf.tidy(() => {
-    const returnX = tf.concat(xs).reshape([xs.length, ...trainShape.slice(1)]) // input already preprocessed
-    const returny = isClassification ? tf.oneHot(ys, ds.outputLabels.length) : tf.tensor(ys)
-    return [returnX, returny]
-  })
-  const [loss, acc] = (await model.trainOnBatch(X, y)) as number[]
-  setBatchCount((prev) => prev + 1)
-  X.dispose()
-  y.dispose()
-  return { loss, acc }
+  const { xs, ys } = await getSamplesAsBatch(ds, batchSize, batchIdx)
+  try {
+    const [loss, acc] = (await model.trainOnBatch(xs, ys)) as number[]
+    if (getModel() !== model) return // model was replaced in the meantime
+    useGlobalStore
+      .getState()
+      .scene.getState()
+      .setBatchCount((prev) => prev + 1)
+    return { loss, acc }
+  } finally {
+    tf.dispose([xs, ys])
+  }
 }

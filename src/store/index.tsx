@@ -23,20 +23,23 @@ export type SceneState = ViewSlice &
   NeuronsSlice &
   VisSlice
 
-type InitProps = Partial<SceneState> & {
+type InitProps = Omit<Partial<SceneState>, "trainConfig"> & {
   visConfig?: Partial<SceneState["vis"]>
+  trainConfig?: Partial<SceneState["trainConfig"]>
 }
 
 export const createSceneStore = (initProps?: InitProps) => {
-  const { visConfig = {}, ...otherInitProps } = initProps ?? {}
+  const { visConfig = {}, trainConfig = {}, ...otherInitProps } = initProps ?? {}
   return createStore<SceneState>()((...a) => {
     const visSlice = createVisSlice(...a)
+    const trainingSlice = createTrainingSlice(...a)
     return {
       ...createViewSlice(...a),
       ...createDataSlice(...a),
       ...createVideoSlice(...a),
       ...createModelSlice(...a),
-      ...createTrainingSlice(...a),
+      ...trainingSlice,
+      trainConfig: { ...trainingSlice.trainConfig, ...trainConfig }, // merge with initial train config
       ...createNeuronsSlice(...a),
       ...visSlice,
       vis: { ...visSlice.vis, ...visConfig }, // merge with initial vis config
