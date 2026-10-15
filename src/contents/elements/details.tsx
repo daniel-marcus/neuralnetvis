@@ -8,7 +8,11 @@ interface DetailsProps {
 
 export function Details({ title, children }: DetailsProps) {
   return (
-    <CollapsibleWithTitle title={title} collapsed className="inline-block mt-8 max-w-lg">
+    <CollapsibleWithTitle
+      title={title}
+      collapsed
+      className="inline-block mt-8 max-w-lg pointer-events-auto"
+    >
       {children}
     </CollapsibleWithTitle>
   )

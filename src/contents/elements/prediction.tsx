@@ -11,9 +11,10 @@ export function Prediction() {
   const maxIdx = activations.reduce((best, val, i, arr) => (val > arr[best] ? i : best), 0)
   const label = labels?.[maxIdx] ?? maxIdx
   const percent = Math.round(activations[maxIdx] * 100)
+  const paddedPercent = `${percent}`.padStart(2, " ") // figure space: stable width for 1-digit values
   return (
-    <span>
-      <strong>{label}</strong> ({percent}%)
+    <span className="tabular-nums whitespace-pre">
+      <strong>{label}</strong> ({paddedPercent}%)
     </span>
   )
 }

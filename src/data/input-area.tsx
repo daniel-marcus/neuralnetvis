@@ -6,13 +6,14 @@ interface InputAreaProps {
   title?: ReactNode
   buttons?: ReactNode // right-aligned below the input
   children: ReactNode // the input box (w-full), e.g. canvas or textarea
+  autoHide?: boolean
 }
 
 // shared layout of DrawArea and TextArea: title, input box, button bar
 // auto-hide: only a strip stays in the viewport, hover (or typing) reveals the full area
-export const InputArea = ({ title, buttons, children }: InputAreaProps) => {
+export const InputArea = ({ title, buttons, children, autoHide = true }: InputAreaProps) => {
   const hasSelected = useSceneStore((s) => !!s.selectedNid) // full NeuronInspector overlaps
-  const isIntro = useIsIntro()
+  const isIntro = useIsIntro() || !autoHide // without auto-hide: stays in intro state
   return (
     <div
       tabIndex={-1} // touch: tap to reveal, tap outside to tuck away

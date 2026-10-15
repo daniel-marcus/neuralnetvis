@@ -18,7 +18,7 @@ const scaleCanvas = (canvas: HTMLCanvasElement, rect: DOMRect) => {
   canvas.getContext("2d")?.scale(dpr, dpr)
 }
 
-export const DrawArea = ({ title = "" }) => {
+export const DrawArea = ({ title = "", autoHide = true }) => {
   const ref = useRef<HTMLCanvasElement>(null)
   const ds = useSceneStore((s) => s.ds)
   const setCustomSample = useSceneStore((s) => s.setCustomSample)
@@ -59,6 +59,7 @@ export const DrawArea = ({ title = "" }) => {
   return (
     <InputArea
       title={title}
+      autoHide={autoHide}
       buttons={
         <Button onClick={clear} variant="secondary">
           clear
