@@ -15,7 +15,7 @@ type LayerLabelProps = Pick<NeuronLayer, "index" | "layerType"> & {
 // the type of the hovered or focussed layer as label above its top right corner
 export function LayerLabel({ index, layerType, measureRef }: LayerLabelProps) {
   const isActive = useSceneStore((s) => s.hoveredLayerIdx === index || s.focussedLayerIdx === index)
-  // measured when the layer is mounted: later it might be scaled down (other layer focussed)
+  // not re-measured when scaled down (other layer focussed), see useSize
   const [, height, width] = useSize(measureRef)
   if (!isActive || !height) return null
   return (

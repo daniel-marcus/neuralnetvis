@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three/webgpu"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Controller, type SpringConfig, config } from "@react-spring/web"
-import { getThree, getVisConfig } from "@/store"
+import { getThree, getVisConfig, useSceneStore } from "@/store"
 import { getNeuronIdxAt, getNeuronPos, getNeuronSize } from "@/neuron-layers/layout"
 import type { Neuron, NeuronLayer } from "@/neuron-layers/types"
 import type { Three } from "@/store/vis"
@@ -224,7 +224,9 @@ export function interpolate(from: number, to: number, percent: number): number {
   return from + (to - from) * percent
 }
 
+// measured on mount and when the layout changes (neuronSpacing), but not when the layer gets scaled (focus)
 export function useSize(ref: React.RefObject<THREE.Object3D | null>, padding = 0) {
+  const neuronSpacing = useSceneStore((s) => s.vis.neuronSpacing)
   const bBox = useMemo(() => new THREE.Box3(), [])
   const sizeVec = useMemo(() => new THREE.Vector3(), [])
   const [size, setSize] = useState<[number, number, number]>([0, 0, 0])
@@ -234,7 +236,7 @@ export function useSize(ref: React.RefObject<THREE.Object3D | null>, padding = 0
     bBox.getSize(sizeVec)
     // value comes from ref, so state setting in effect is ok (https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect#valid)
     setSize([sizeVec.x + padding, sizeVec.y + padding, sizeVec.z + padding])
-  }, [ref, bBox, sizeVec, padding])
+  }, [ref, bBox, sizeVec, padding, neuronSpacing])
   return size
 }
 

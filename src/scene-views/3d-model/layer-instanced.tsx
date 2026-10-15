@@ -135,6 +135,8 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
       meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }
     meshRef.current.instanceMatrix.needsUpdate = true
+    meshRef.current.computeBoundingBox() // for measuring (useSize) & raycasting with the new layout
+    meshRef.current.computeBoundingSphere()
   }, [meshRef, tempObj, positions])
 
   return positions
