@@ -44,6 +44,8 @@ function SceneViewerInner(props: SceneViewerProps) {
   const model = useModel(ds)
   useTraining(model, ds)
   const view = useSceneStore((s) => s.view)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
+  const isExploring = section === "play" || !visIsLocked // learn: unlocked lesson
   const title = section === "play" && dsDef ? dsDef.name : props.title
   const showMap = dsDef?.task === "regression" && view !== "graph"
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
@@ -66,7 +68,7 @@ function SceneViewerInner(props: SceneViewerProps) {
       {!!dsDef?.camProps && <VideoWindow />}
       <SampleName />
       <CanvasView {...props} ownCanvas={ownCanvas} />
-      {section === "play" && isActive && didMount && <LayerWheel />}
+      {isExploring && isActive && didMount && <LayerWheel />}
       {isActive && <BlurMask />}
       <SceneOverlay section={section}>
         <div

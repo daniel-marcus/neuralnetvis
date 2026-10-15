@@ -121,12 +121,13 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   const isScreenSm = useIsScreen("sm")
   const isScreenLg = useIsScreen("lg")
   const viewShift = useSceneStore((s) => s.vis.viewShift)
+  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
   const inactiveZoom = ownCanvas ? 0.4 : 0.9
   useSpring({
     from: { zoom: 0.1, shift: 0 },
     to: {
       zoom: isActive ? (isScreenSm ? 1 : 0.5) : inactiveZoom,
-      shift: isActive && isScreenLg ? viewShift : 0,
+      shift: isActive && isScreenLg && visIsLocked ? viewShift : 0, // unlocked lesson: centered view
     },
     onChange: ({ value }) => {
       const camera = cameraRef.current
@@ -142,7 +143,6 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   useFlatView()
 
   const view = useSceneStore((s) => s.view)
-  const visIsLocked = useSceneStore((s) => s.vis.isLocked)
   const autoRotate = useSceneStore((s) => s.vis.autoRotate)
   const toggleAutoRotate = useSceneStore((s) => s.vis.toggleAutoRotate)
   useKeyCommand("r", toggleAutoRotate, isActive)

@@ -3,6 +3,7 @@ import throttle from "lodash.throttle"
 import { useInView } from "@/utils/screen"
 import type { ScrollBlockProps } from "./types"
 import { interpolateCamera } from "@/scene-views/3d-model/utils"
+import { useCurrScene } from "@/store"
 
 export function Block(props: ScrollBlockProps) {
   const { children, className, ...scrollProps } = props
@@ -24,9 +25,11 @@ export function useScrollCallbacks(scrollProps: ScrollBlockProps) {
   const { onScroll, onEnter, onLeave } = scrollProps
   const { cameraPos, nextProps } = scrollProps
   const [ref, inView] = useInView({ rootMargin: "-50% 0px" })
+  // unlocked (free exploration): pause the block, relock: re-enter to restore its state
+  const isActive = useCurrScene((s) => s.vis.isLocked) && inView
 
   useEffect(() => {
-    if (!inView) return
+    if (!isActive) return
     const onScrollCb = () => {
       if (!ref.current) return
       const percent = calculateScrolledPercent(ref)
@@ -41,16 +44,16 @@ export function useScrollCallbacks(scrollProps: ScrollBlockProps) {
     const throttledOnScrollCb = throttle(onScrollCb, 10)
     window.addEventListener("scroll", throttledOnScrollCb)
     return () => window.removeEventListener("scroll", throttledOnScrollCb)
-  }, [inView, onScroll, ref, cameraPos, nextProps])
+  }, [isActive, onScroll, ref, cameraPos, nextProps])
 
   useEffect(() => {
     if (!onEnter && !onLeave) return
-    if (!inView) return
+    if (!isActive) return
     if (onEnter) onEnter()
     return () => {
       if (onLeave) onLeave()
     }
-  }, [inView, onEnter, onLeave])
+  }, [isActive, onEnter, onLeave])
 
   return [ref, inView] as const
 }

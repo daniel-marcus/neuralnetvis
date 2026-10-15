@@ -232,7 +232,12 @@ export const IntroNetworks = (): LessonContent => {
           don&apos;t match anymore.
         </p>
       </Block>
-      <Block>
+      <Block
+        onEnter={() => {
+          training.ensureTrained()
+          setup({})
+        }}
+      >
         <p>
           To recognize digits more reliably, a model has to understand <em>shapes</em> rather than
           single pixels: lines, curves, loops. That&apos;s what <em>hidden layers</em> are for, and

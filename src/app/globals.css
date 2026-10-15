@@ -113,6 +113,9 @@
   .lesson-width {
     @apply lg:max-w-[90vw] xl:max-w-[calc(100vw-2*var(--logo-width))] mx-auto;
   }
+  .btn-mt {
+    @apply mt-4;
+  }
 
   .cursor-pencil {
     cursor:
