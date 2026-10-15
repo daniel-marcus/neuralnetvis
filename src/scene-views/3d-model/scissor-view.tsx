@@ -2,7 +2,7 @@ import * as React from "react"
 import * as THREE from "three/webgpu"
 import { context, createPortal, useFrame, useThree } from "@react-three/fiber"
 import { isWebGPUBackend } from "@/utils/webgpu"
-import { setIsRendered } from "./utils"
+import { applyViewOffset, setIsRendered } from "./utils"
 import { type RootState, Tunnel } from "@/components/main-canvas-tunnel"
 import type { ComputeFunction } from "@react-three/fiber"
 
@@ -115,9 +115,12 @@ function prepareSkissor(state: RootState, pos: DOMPosition, canvasSize: CanvasSi
     } else {
       state.camera.updateProjectionMatrix()
     }
-  } else if (state.camera.aspect !== aspect) {
-    state.camera.aspect = aspect
-    state.camera.updateProjectionMatrix()
+  } else {
+    if (state.camera.aspect !== aspect) {
+      state.camera.aspect = aspect
+      state.camera.updateProjectionMatrix()
+    }
+    applyViewOffset(state.camera, canvasSize.width, canvasSize.height) // viewShift only
   }
 
   const autoClear = state.gl.autoClear

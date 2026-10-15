@@ -1,9 +1,9 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
-import { CanvasTarget, Scene, Vector2, type Camera, type PerspectiveCamera } from "three/webgpu"
+import { CanvasTarget, Scene, Vector2 } from "three/webgpu"
 import { useFrame, useThree, createPortal, type RootState as RootStateGL } from "@react-three/fiber"
 import { Tunnel, type RootState } from "@/components/main-canvas-tunnel"
 import { useInView } from "@/utils/screen"
-import { setIsRendered } from "./utils"
+import { applyViewOffset, setIsRendered } from "./utils"
 
 // inspirations:
 // - https://github.com/mrdoob/three.js/blob/dev/examples/webgpu_multiple_canvas.html
@@ -110,7 +110,7 @@ const Container = (props: ContainerProps) => {
     // set as current target first: the renderer only listens to resize events of the current target
     state.gl.setCanvasTarget(canvasTarget)
     if (!hasSize(canvasTarget, width, height)) canvasTarget.setSize(width, height, false)
-    if (!isParked) updateViewOffset(state.camera, state.size, width, height)
+    if (!isParked) applyViewOffset(state.camera, state.size.width, state.size.height, width, height)
     state.gl.render(state.scene, state.camera)
   }
   const renderTargetRef = useRef(renderTarget)
@@ -148,33 +148,4 @@ const _size = new Vector2()
 function hasSize(canvasTarget: CanvasTarget, width: number, height: number) {
   const curr = canvasTarget.getSize(_size)
   return curr.width === width && curr.height === height
-}
-
-/**
- * The camera aspect is based on the root size (fullscreen main canvas). If the canvas is smaller (tile preview),
- * render only the centered part, so that the framing matches the (clipped) fullscreen canvas.
- */
-function updateViewOffset(camera: Camera, fullSize: Size, width: number, height: number) {
-  if (!("setViewOffset" in camera)) return
-  const cam = camera as PerspectiveCamera
-  const { width: fullW, height: fullH } = fullSize
-  const isFullSize = width >= fullW && height >= fullH
-  if (isFullSize) {
-    if (cam.view?.enabled) cam.clearViewOffset()
-    return
-  }
-  const offsetX = (fullW - width) / 2
-  const offsetY = (fullH - height) / 2
-  const v = cam.view
-  if (
-    v?.enabled &&
-    v.fullWidth === fullW &&
-    v.fullHeight === fullH &&
-    v.offsetX === offsetX &&
-    v.offsetY === offsetY &&
-    v.width === width &&
-    v.height === height
-  )
-    return
-  cam.setViewOffset(fullW, fullH, offsetX, offsetY, width, height)
 }

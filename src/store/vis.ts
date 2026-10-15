@@ -18,6 +18,7 @@ export const defaultVisConfig = {
   lightsOn: true,
   lightIntensity: 1,
   autoRotate: false,
+  viewShift: 0,
 }
 
 export interface VisConfig {
@@ -36,6 +37,7 @@ export interface VisConfig {
   lightsOn: boolean
   lightIntensity: number
   autoRotate: boolean
+  viewShift: number // horizontal shift of the rendered view (fraction of the width), e.g. to make room for lesson text
 }
 
 interface VisActions {

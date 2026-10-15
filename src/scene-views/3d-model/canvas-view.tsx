@@ -119,14 +119,20 @@ const CanvasViewInner = (props: CanvasViewProps) => {
   const invalidate = useThree((s) => s.invalidate)
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const isScreenSm = useIsScreen("sm")
+  const isScreenLg = useIsScreen("lg")
+  const viewShift = useSceneStore((s) => s.vis.viewShift)
   const inactiveZoom = ownCanvas ? 0.4 : 0.9
   useSpring({
-    from: { zoom: 0.1 },
-    to: { zoom: isActive ? (isScreenSm ? 1 : 0.5) : inactiveZoom },
+    from: { zoom: 0.1, shift: 0 },
+    to: {
+      zoom: isActive ? (isScreenSm ? 1 : 0.5) : inactiveZoom,
+      shift: isActive && isScreenLg ? viewShift : 0,
+    },
     onChange: ({ value }) => {
       const camera = cameraRef.current
       if (camera) {
         camera.zoom = value.zoom
+        camera.userData.viewShift = value.shift // applied before rendering, see applyViewOffset
         camera.updateProjectionMatrix()
         invalidate()
       }

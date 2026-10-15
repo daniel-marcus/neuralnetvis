@@ -171,6 +171,43 @@ export function moveCameraTo(
   })
 }
 
+/**
+ * The camera aspect is based on the root size (fullscreen main canvas). If the canvas is smaller (tile preview),
+ * render only the centered part, so that the framing matches the (clipped) fullscreen canvas.
+ * Additionally shifts the view horizontally by camera.userData.viewShift (fraction of the full width).
+ */
+export function applyViewOffset(
+  camera: THREE.Camera,
+  fullW: number,
+  fullH: number,
+  width = fullW,
+  height = fullH,
+) {
+  if (!("setViewOffset" in camera)) return
+  const cam = camera as THREE.PerspectiveCamera
+  const shift = (cam.userData.viewShift as number | undefined) ?? 0
+  const isFullSize = width >= fullW && height >= fullH
+  if (isFullSize && !shift) {
+    if (cam.view?.enabled) cam.clearViewOffset()
+    return
+  }
+  const [w, h] = isFullSize ? [fullW, fullH] : [width, height]
+  const offsetX = (fullW - w) / 2 - shift * fullW // negative offset: content moves right
+  const offsetY = (fullH - h) / 2
+  const v = cam.view
+  if (
+    v?.enabled &&
+    v.fullWidth === fullW &&
+    v.fullHeight === fullH &&
+    v.offsetX === offsetX &&
+    v.offsetY === offsetY &&
+    v.width === w &&
+    v.height === h
+  )
+    return
+  cam.setViewOffset(fullW, fullH, offsetX, offsetY, w, h)
+}
+
 export function interpolateCamera(from: Pos, to: Pos, percent: number) {
   const three = getThree()
   if (!three) return
