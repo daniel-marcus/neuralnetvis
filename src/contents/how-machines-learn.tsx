@@ -30,10 +30,12 @@ export const hmlInitialState: InitialState = {
 const OUTPUT_LAYER_IDX = 2
 const THREE_NID = getNid(OUTPUT_LAYER_IDX, 3) // output neuron for the digit "3"
 const sweepNid = (percent: number) => getNid(OUTPUT_LAYER_IDX, Math.round(percent * 9))
+const INPUT_UNITS = 28 * 28
 
 interface BlockSetup {
   outputLayer?: boolean
   pointer?: boolean
+  allLines?: boolean // show every connection of the hovered neuron
   selected?: Nid
   neuronView?: NeuronView
 }
@@ -47,8 +49,14 @@ export const IntroNetworks = (): LessonContent => {
   const training = useScrollTraining({ totalSamples: 300 })
   const initialSample = () => setSampleIdx(hmlInitialState.sampleIdx ?? 0)
   // each block sets its complete state: blocks can be skipped with fast scrolling or scrolled in both directions
-  const setup = ({ outputLayer = true, pointer = false, selected, neuronView }: BlockSetup) => {
-    setVisConfig({ excludedLayers: outputLayer ? [] : ["nnv_Output"], showPointer: pointer })
+  const setup = (props: BlockSetup) => {
+    const { outputLayer = true, pointer = false, allLines, selected, neuronView } = props
+    const maxLines = allLines ? INPUT_UNITS : defaultVisConfig.maxLines
+    setVisConfig({
+      excludedLayers: outputLayer ? [] : ["nnv_Output"],
+      showPointer: pointer,
+      maxLines,
+    })
     setHoveredNid(undefined)
     setSelectedNid(selected)
     if (neuronView) setNeuronView(neuronView)
@@ -101,7 +109,7 @@ export const IntroNetworks = (): LessonContent => {
         onEnter={() => {
           training.reset()
           initialSample()
-          setup({})
+          setup({ allLines: true })
         }}
         onScroll={({ percent }) => setHoveredNid(sweepNid(percent))}
         onLeave={() => setHoveredNid(undefined)}

@@ -1,6 +1,7 @@
 import type { StateCreator } from "zustand"
 import type { RootState } from "@react-three/fiber"
 import type { OrbitControls } from "three-stdlib"
+import { MAX_CONNECTIONS } from "@/neuron-layers/connections"
 
 export const defaultVisConfig = {
   showHiddenLayers: false,
@@ -11,6 +12,7 @@ export const defaultVisConfig = {
   neuronSpacing: 1.1,
   showPointer: true,
   showLines: true,
+  maxLines: MAX_CONNECTIONS,
   splitColors: false,
   lineActivationThreshold: 0.5,
   excludedLayers: [],
@@ -31,6 +33,7 @@ export interface VisConfig {
   showPointer: boolean
   splitColors: boolean
   showLines: boolean
+  maxLines: number // max. connections shown for a hovered/selected neuron
   lineActivationThreshold: number
   excludedLayers: string[] // currently used only in lesson: temporary switch off layers (positions remain)
   isLocked: boolean

@@ -8,7 +8,7 @@ import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js
 import { useSceneStore } from "@/store"
 import { getNeuronBoundsInto, getWorldPosInto } from "./utils"
 import { getActColor } from "@/utils/colors"
-import { getInputRegions, getTopInputs, MAX_CONNECTIONS } from "@/neuron-layers/connections"
+import { getInputRegions, getTopInputs } from "@/neuron-layers/connections"
 import { getLayerDef } from "@/model/layers"
 import type { Neuron, NeuronInput, NeuronStateful } from "@/neuron-layers/types"
 
@@ -42,24 +42,25 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
   const inputs = useVisibleInputs(neuron)
   const invalidate = useThree((s) => s.invalidate)
   const activations = useSceneStore((s) => s.activations)
+  const maxLines = useSceneStore((s) => s.vis.maxLines)
 
   // sorted by descending strength
   const connections = useMemo(() => {
     if (!neuron || getLayerDef(neuron.layer.layerType)?.hasRegionInputsOnly) return []
-    const k = Math.floor(MAX_CONNECTIONS / inputs.length) // the input layers share the buffers
+    const k = Math.floor(maxLines / inputs.length) // the input layers share the buffers
     return inputs
       .flatMap(({ layer, idxs }) => {
         const top = getTopInputs(neuron, activations[layer.index]?.activations, k, idxs)
         return top.map((connection) => ({ ...connection, layer }))
       })
       .toSorted((a, b) => Math.abs(b.strength) - Math.abs(a.strength))
-  }, [neuron, inputs, activations])
+  }, [neuron, inputs, activations, maxLines])
 
-  // buffers are allocated once and updated in place
+  // buffers are allocated once (per maxLines) and updated in place
   const line = useMemo(() => {
     const geometry = new LineSegmentsGeometry()
-    geometry.setPositions(new Float32Array(MAX_CONNECTIONS * 6))
-    geometry.setColors(new Float32Array(MAX_CONNECTIONS * 6))
+    geometry.setPositions(new Float32Array(maxLines * 6))
+    geometry.setColors(new Float32Array(maxLines * 6))
     const material = new THREE.Line2NodeMaterial({
       vertexColors: true,
       linewidth: 1,
@@ -72,7 +73,7 @@ export const HoverConnections = ({ neuron }: { neuron?: NeuronStateful }) => {
     lineSegments.raycast = () => {}
     lineSegments.visible = false
     return lineSegments
-  }, [])
+  }, [maxLines])
   useEffect(() => {
     return () => {
       line.geometry.dispose()
