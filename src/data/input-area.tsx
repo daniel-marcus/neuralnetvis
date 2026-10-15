@@ -14,12 +14,13 @@ interface InputAreaProps {
 export const InputArea = ({ title, buttons, children, autoHide = true }: InputAreaProps) => {
   const hasSelected = useSceneStore((s) => !!s.selectedNid) // full NeuronInspector overlaps
   const isIntro = useIsIntro() || !autoHide // without auto-hide: stays in intro state
+  const isHidden = hasSelected && autoHide // inline (lesson content): keep it to avoid layout shifts
   return (
     <div
       tabIndex={-1} // touch: tap to reveal, tap outside to tuck away
       data-intro={isIntro || undefined}
       className={`group/input-area relative hover:after:absolute hover:after:inset-0 hover:after:-right-8 hover:after:-bottom-8 hover:after:-z-10 z-20 box-content w-40 lg:w-75 pl-(--padding-main) -ml-(--padding-main) ${
-        hasSelected ? "hidden" : "flex"
+        isHidden ? "hidden" : "flex"
       } flex-col gap-2 pointer-events-auto pt-8 outline-none transition-transform duration-300 ${
         isIntro
           ? "translate-x-0"
