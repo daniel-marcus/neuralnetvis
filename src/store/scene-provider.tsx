@@ -52,7 +52,7 @@ export function SceneStoreProvider({
   useEffect(() => {
     if (!isActive) return
     useGlobalStore.getState().setScene(thisScene)
-    const defaultVisConfig = thisScene.getState().vis
+    const { vis: defaultVisConfig, showSampleViewer, neuronView } = thisScene.getState()
     thisScene.setState({ isActive: true })
     return () => {
       // cleanup when leaving the scene
@@ -62,6 +62,8 @@ export function SceneStoreProvider({
         subset: "train",
         focussedLayerIdx: undefined,
         vis: { ...defaultVisConfig },
+        showSampleViewer,
+        neuronView,
       })
       // bring camera back to initial/default position
       moveCameraTo(

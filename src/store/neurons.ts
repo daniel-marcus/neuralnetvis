@@ -2,6 +2,8 @@ import type { StateCreator } from "zustand"
 import type { Vector3 } from "three/webgpu"
 import type { Neuron, NeuronLayer, Nid } from "@/neuron-layers"
 
+export type NeuronView = "weights" | "weightedInputs" | "featureVis" | "topSamples"
+
 export interface NeuronsSlice {
   allLayers: NeuronLayer[]
   setAllLayers: (layers: NeuronLayer[]) => void
@@ -13,6 +15,9 @@ export interface NeuronsSlice {
 
   toggleHovered: (nid?: Nid) => void
   toggleSelected: (nid?: Nid) => void
+
+  neuronView: NeuronView // view in the neuron inspector
+  setNeuronView: (neuronView: NeuronView) => void
 
   // for experimental texture layer
   hoverOrigin?: Vector3
@@ -32,6 +37,8 @@ export const createNeuronsSlice: StateCreator<NeuronsSlice> = (set) => ({
     set(({ selectedNid }) => ({
       selectedNid: nid === selectedNid ? undefined : nid,
     })),
+  neuronView: "topSamples",
+  setNeuronView: (neuronView) => set({ neuronView }),
   toggleHovered: (nid) =>
     set(({ hoveredNid }) => ({
       hoveredNid: nid === hoveredNid ? undefined : nid,

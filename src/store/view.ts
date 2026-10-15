@@ -21,6 +21,8 @@ export interface ViewSlice {
   setHoveredLayerIdx: (arg: number | undefined | SetterFunc<number | undefined>) => void
   isScrolling: boolean
   setIsScrolling: (isScrolling: boolean) => void
+  showSampleViewer: boolean // can be toggled programmatically, e.g. in lessons
+  setShowSampleViewer: (showSampleViewer: boolean) => void
 }
 
 export const createViewSlice: StateCreator<
@@ -72,4 +74,6 @@ export const createViewSlice: StateCreator<
     })),
   isScrolling: false,
   setIsScrolling: (isScrolling) => set({ isScrolling }),
+  showSampleViewer: true,
+  setShowSampleViewer: (showSampleViewer) => set({ showSampleViewer }),
 })

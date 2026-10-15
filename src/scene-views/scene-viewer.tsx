@@ -48,7 +48,9 @@ function SceneViewerInner(props: SceneViewerProps) {
   const showMap = dsDef?.task === "regression" && view !== "graph"
   const setIsHovered = useSceneStore((s) => s.setIsHovered)
   const sampleViewerIdxs = useSceneStore((s) => s.sampleViewerIdxs)
-  const showSampleViewer = isActive && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
+  const sampleViewerEnabled = useSceneStore((s) => s.showSampleViewer)
+  const showSampleViewer =
+    isActive && sampleViewerEnabled && (!!sampleViewerIdxs.length || dsDef?.sampleViewer)
   const ownCanvas = !!dsDef?.mapProps
   useScreenshotSettings(isActive)
   const { neuronInspectorRef, sampleViewerRef } = useDomRefs()
@@ -93,7 +95,7 @@ function SceneViewerInner(props: SceneViewerProps) {
           <SampleViewer />
         </Portal>
       )}
-      {section === "play" && isActive && (
+      {isActive && (
         <Portal target={neuronInspectorRef}>
           <NeuronInspector />
         </Portal>
@@ -118,7 +120,7 @@ function useShouldLoad(ref: RefObject<HTMLDivElement | null>, isActive: boolean)
 }
 
 export const SceneViewer = (props: SceneViewerProps) => {
-  const { isActive, shouldLoadFullDs, path, initialState } = props
+  const { isActive, shouldLoadFullDs, path, initialState, section } = props
   return (
     <SceneStoreProvider
       isActive={isActive}
@@ -126,6 +128,7 @@ export const SceneViewer = (props: SceneViewerProps) => {
       uid={path}
       initialState={initialState}
       isLargeModel={props.isLargeModel}
+      showSampleViewer={section !== "learn"} // lessons can enable it via setShowSampleViewer
     >
       <Suspense>
         <SceneViewerInner {...props} />

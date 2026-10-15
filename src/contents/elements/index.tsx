@@ -1,5 +1,7 @@
 export { Block } from "./block"
 export { Button } from "./ctas"
 export { Ctas } from "./ctas"
+export { CurrSceneProvider } from "./curr-scene"
 export { Details } from "./details"
 export { Head } from "./head"
+export { Prediction } from "./prediction"

@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { useHovered, useSelected } from "@/neuron-layers/neurons"
 import { Select, Table } from "@/components/ui-elements"
@@ -12,8 +11,7 @@ import { WeightedInputsViewer } from "./weighted-inputs"
 import { FeatureVisViewer } from "./feature-vis"
 import { MIN_SAMPLES, TopSamplesViewer } from "./top-samples"
 import type { NeuronStateful } from "@/neuron-layers/types"
-
-type NeuronView = "weights" | "weightedInputs" | "featureVis" | "topSamples"
+import type { NeuronView } from "@/store/neurons"
 
 const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
   { value: "topSamples", label: "Top samples" },
@@ -25,22 +23,24 @@ const VIEW_OPTIONS: { value: NeuronView; label: string }[] = [
 export const NeuronInspector = () => {
   const _hovered = useHovered()
   const _selected = useSelected()
-  const selected = _selected ?? _hovered // a selected neuron pins the inspector
+  const hasLesson = useHasLesson()
+  const visLocked = useSceneStore((s) => s.vis.isLocked)
+  const displayOnly = hasLesson && visLocked // lesson controls selection & view
+  const selected = _selected ?? (displayOnly ? undefined : _hovered) // a selected neuron pins the inspector
   const infoOnly = !_selected // hover: compact info only
   const toggleSelected = useSceneStore((s) => s.toggleSelected)
   const hasStatus = !!useGlobalStore((s) => s.status.getCurrent())
-  const hasLesson = useHasLesson()
-  const visLocked = useSceneStore((s) => s.vis.isLocked)
   const model = useSceneStore((s) => s.model)
   const preprocessFunc = useSceneStore((s) => s.ds?.preprocessFunc)
   const totalSamples = useSceneStore((s) => s.totalSamples(s.subset))
   const hasSample = useSceneStore((s) => !!s.sample)
-  const [view, setView] = useState<NeuronView>("topSamples")
+  const view = useSceneStore((s) => s.neuronView)
+  const setView = useSceneStore((s) => s.setNeuronView)
   const handleClick = (e: React.MouseEvent) => {
     if (e.target instanceof Element && e.target.closest("button, select")) return // controls don't deselect
     toggleSelected(undefined)
   }
-  if (!selected || (hasLesson && visLocked)) return null
+  if (!selected) return null
   const inputRange = preprocessFunc && imageInputRanges[preprocessFunc]
   const hasFeatureVis = !!model && !!inputRange && supportsFeatureVis(model, selected.layer.tfLayer)
   const hasWeights = !!selected.weights?.length && !!selected.layer.prevLayer
@@ -57,17 +57,19 @@ export const NeuronInspector = () => {
   const currView = infoOnly ? undefined : isAvailable[view] ? view : options[0]?.value
   return (
     <div
-      className={`p-main flex gap-4 items-end sm:flex-col ${
-        hasStatus ? "hidden sm:flex" : ""
-      } pointer-events-auto [&:active:not(:has(button:active,select:active))]:brightness-120`}
-      onClick={handleClick}
+      className={`p-main flex gap-4 items-end sm:flex-col ${hasStatus ? "hidden sm:flex" : ""} ${
+        displayOnly
+          ? "pointer-events-none"
+          : "pointer-events-auto [&:active:not(:has(button:active,select:active))]:brightness-120"
+      }`}
+      onClick={displayOnly ? undefined : handleClick}
     >
       {!!currView && (
         <div
           className="shrink-0 w-(--grid-width) sm:w-(--grid-width-sm) mb-[0.3em]"
           style={GRID_STYLE}
         >
-          {options.length > 1 && (
+          {options.length > 1 && !displayOnly && (
             <Select
               className="mb-2"
               label="Neuron view"
