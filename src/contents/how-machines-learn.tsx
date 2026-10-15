@@ -144,8 +144,9 @@ export const IntroNetworks = (): LessonContent => {
         </p>
         <p>
           All 10 output neurons calculate their score this way, and the highest score wins. The
-          pointer marks the correct answer. And our untrained model says: <Prediction />. If
-          that&apos;s right, it&apos;s pure luck.
+          pointer marks the correct answer. And our untrained model says: <Prediction />.
+          <br />
+          If that&apos;s right, it&apos;s pure luck.
         </p>
       </Block>
       <Block
@@ -199,7 +200,9 @@ export const IntroNetworks = (): LessonContent => {
         </p>
         <p>
           Remember our 3 from the beginning? After a few hundred examples, the model says:{" "}
-          <Prediction />. Not bad for a model that started with random numbers!
+          <Prediction />.
+          <br />
+          Not bad for a model that started with random numbers!
         </p>
       </Block>
       <Block
