@@ -20,6 +20,7 @@ function useLayerInput(tfLayer: tf.layers.Layer) {
   const [current, setCurrent] = useState<LayerInput>()
   useEffect(() => {
     if (!model || !sample || isTraining) return // weights are changing
+    if (!model.layers.includes(tfLayer)) return // layer of an old model (not updated yet)
     let aborted = false
     const { xTensor } = sample
     async function load() {
