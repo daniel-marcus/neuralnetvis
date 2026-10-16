@@ -1,7 +1,10 @@
 import * as tf from "@tensorflow/tfjs"
+import { getAll } from "@/data/db"
+import { getSeqPosition } from "@/data/next-token"
 import type { TokenizerType } from "@/data/tokenizer"
+import type { Dataset, DbBatch } from "@/data/types"
 
-// Training data for next token prediction from a text: windows of seqLen + 1 tokens, the inputs are the first
+// Training data for next token prediction from texts: windows of seqLen + 1 tokens, the inputs are the first
 // seqLen tokens, the targets the same shifted by one. The last window is padded, padded targets are masked out
 // of the loss (otherwise the model would learn to predict padding after padding).
 
@@ -64,14 +67,16 @@ export function getBatches<T>(windows: T[], batchSize: number) {
   )
 }
 
+// trimmed to the longest window of the batch: the positions after it are padding without targets, in a causal
+// model they don't change the outputs at the earlier positions (batches of short samples are much cheaper)
 export function toTensors(windows: TokenWindow[]): TokenBatch {
-  const seqLen = windows[0].x.length
+  const length = Math.max(1, ...windows.map((w) => w.mask.findLastIndex((m) => m > 0) + 1))
   const concat = <T extends Int32Array | Float32Array>(
     arrays: T[],
     ArrayType: new (n: number) => T,
   ) => {
-    const result = new ArrayType(arrays.length * seqLen)
-    arrays.forEach((arr, i) => result.set(arr, i * seqLen))
+    const result = new ArrayType(arrays.length * length)
+    arrays.forEach((arr, i) => result.set(arr.subarray(0, length), i * length))
     return result
   }
   return {
@@ -80,7 +85,7 @@ export function toTensors(windows: TokenWindow[]): TokenBatch {
         windows.map((w) => w.x),
         Int32Array,
       ),
-      [windows.length, seqLen],
+      [windows.length, length],
       "int32",
     ),
     ys: tf.tensor1d(
@@ -97,4 +102,24 @@ export function toTensors(windows: TokenWindow[]): TokenBatch {
       ),
     ),
   }
+}
+
+// sample of a nextToken dataset (tokens as in the input area, padded) -> <START> text <END>
+export function sampleToTokens(X: ArrayLike<number>, tokenizer: TokenizerType) {
+  const end = tokenizer.encodeDict["<END>"]
+  const length = getSeqPosition(X, tokenizer) + 1 // up to the last token of the text
+  return Int32Array.from([...Array.from(X).slice(0, length), end])
+}
+
+// the train samples of the dataset (e.g. texts saved in the input area), one window per sample
+export async function loadTrainingWindows(ds: Dataset) {
+  const { tokenizer } = ds
+  if (!tokenizer) throw new Error("LoRA: dataset without tokenizer")
+  const [seqLen] = ds.inputDims
+  const pad = tokenizer.encodeDict["<PAD>"]
+  const batches = await getAll<DbBatch>(ds.key, "train")
+  const samples = batches
+    .flatMap((b) => getBatches(Array.from(b.xs), seqLen))
+    .slice(0, ds.train.totalSamples)
+  return samples.flatMap((X) => makeWindows(sampleToTokens(X, tokenizer), seqLen, pad))
 }

@@ -4,6 +4,8 @@ import { clearStatus, setStatus, useSceneStore } from "@/store"
 import { Button } from "@/components/ui-elements"
 import { getSeqPosition, sampleNextToken } from "./next-token"
 import { InputArea } from "./input-area"
+import { addTextSample } from "./dataset"
+import { isLoraDs } from "@/model/lora/training"
 import type { Dataset, SampleRaw } from "./types"
 
 export const TextArea = ({ title = "" }) => {
@@ -58,6 +60,11 @@ export const TextArea = ({ title = "" }) => {
     setIsAutocompleting(false) // typing stops autocomplete
     handleChange(newText)
   }
+  // after saving a training sample: ready for the next one
+  const clearAndFocus = () => {
+    handleInput("")
+    textareaRef.current?.focus()
+  }
 
   const canAutocomplete = ds?.task === "nextToken" && !!probs
   const toggleAutocomplete = () => setIsAutocompleting((v) => !v)
@@ -81,6 +88,7 @@ export const TextArea = ({ title = "" }) => {
           <Button onClick={() => handleInput("")} variant="secondary">
             clear
           </Button>
+          {isLoraDs(ds) && <SaveForTrainingButton text={text} onSaved={clearAndFocus} />}
           {ds?.task === "nextToken" && (
             <Button onClick={toggleAutocomplete} disabled={!canAutocomplete}>
               {isAutocompleting ? "stop" : "autocomplete"}
@@ -111,6 +119,38 @@ export const TextArea = ({ title = "" }) => {
     </InputArea>
   )
 }
+
+// LoRA: saves the text as training sample (see model/lora)
+function SaveForTrainingButton({ text, onSaved }: { text: string; onSaved: () => void }) {
+  const ds = useSceneStore((s) => s.ds)
+  const updateMeta = useSceneStore((s) => s.updateMeta)
+  const isTraining = useSceneStore((s) => s.isTraining)
+  const [isSaving, setIsSaving] = useState(false)
+  const save = async () => {
+    if (!ds) return
+    setIsSaving(true)
+    try {
+      const meta = await addTextSample(ds, text)
+      updateMeta("train", meta)
+      setStatus(`Saved as training sample ${meta.totalSamples}`, null, { id: SAVE_STATUS_ID })
+      onSaved()
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  return (
+    <Button
+      onClick={save}
+      variant="secondary"
+      disabled={!text.trim() || isTraining || isSaving}
+      title="Save as training data"
+    >
+      save
+    </Button>
+  )
+}
+
+const SAVE_STATUS_ID = "save_training_sample"
 
 const INPUT_THROTTLE = 0 // ms, min. time between sample updates (typing, suggestions, autocomplete)
 const NUM_SUGGESTIONS = 5

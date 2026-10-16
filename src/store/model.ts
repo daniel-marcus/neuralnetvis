@@ -6,6 +6,13 @@ import type { Evaluation, LayerActivations } from "@/model"
 import type { LayerConfigArray } from "@/model/layers/types"
 import type { ActivationStats } from "@/model/activation-stats"
 import type { ViewSlice } from "./view"
+import type { LoraAdapter } from "@/model/lora/adapter"
+import type { LoraTrainer } from "@/model/lora/train"
+
+export interface LoraState {
+  adapter: LoraAdapter
+  trainer: LoraTrainer
+}
 
 export type ModelLoadState = null | "no-weights" | "full"
 
@@ -34,6 +41,12 @@ export interface ModelSlice {
   evaluation: Evaluation
   setEvaluation: (props: Partial<Evaluation>) => void
   resetEvaluation: () => void
+
+  lora?: LoraState // disposed in useLora when replaced
+  setLora: (lora?: LoraState) => void
+  // changes when the outputs of the model change without a new model (LoRA trained, enabled, removed)
+  adapterVersion: number
+  bumpAdapterVersion: () => void
 }
 
 export const createModelSlice: StateCreator<
@@ -56,6 +69,7 @@ export const createModelSlice: StateCreator<
       activationStats: {},
       activations: {},
       focussedLayerIdx: undefined,
+      lora: undefined,
     })
   },
   layerConfigs: null,
@@ -89,4 +103,9 @@ export const createModelSlice: StateCreator<
       evaluation: { ...state.evaluation, ...props },
     })),
   resetEvaluation: () => set({ evaluation: {} }),
+
+  lora: undefined,
+  setLora: (lora) => set(({ adapterVersion }) => ({ lora, adapterVersion: adapterVersion + 1 })),
+  adapterVersion: 0,
+  bumpAdapterVersion: () => set(({ adapterVersion }) => ({ adapterVersion: adapterVersion + 1 })),
 })

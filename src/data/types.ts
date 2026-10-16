@@ -32,6 +32,7 @@ export interface DatasetMeta {
   sampleViewer?: boolean // show sample viewer instead of sample slider
   targetDevice?: "desktop" | "mobile" // to load smaller model versions on mobile
   tokenizerName?: TokenizerName
+  loraTraining?: boolean // nextToken with a pretrained model: train LoRA adapters on the user's texts (see model/lora)
   drawOptions?: DrawOptions // for datasets with an input area (drawing, or text with tokenizer)
 }
 

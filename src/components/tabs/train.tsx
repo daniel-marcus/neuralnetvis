@@ -1,8 +1,9 @@
 import React, { useState } from "react"
-import { useCurrScene, useGlobalStore } from "@/store"
+import { getScene, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { canUseLazyLoading } from "@/model/training"
 import { LogsPlot } from "@/components/ui-elements/logs-plot"
+import { canTrainLora, isLoraDs, MAX_LORA_BATCH_SIZE } from "@/model/lora/training"
 
 const { Box, Slider, InputRow, InputRowsWrapper, Checkbox } = Components
 const { Collapsible, CollapsibleWithTitle, Arrow, Button } = Components
@@ -20,9 +21,21 @@ export const Train = () => {
   const view = useCurrScene((s) => s.view)
   const setView = useCurrScene((s) => s.setView)
   const toggleTab = useGlobalStore((s) => s.toggleTab)
+  const isLora = useCurrScene((s) => isLoraDs(s.ds))
+  const hasLora = useCurrScene((s) => !!s.lora)
+  const loraEnabled = useCurrScene((s) => s.lora?.adapter.enabled ?? false)
+  const hasSamples = useCurrScene((s) => !!s.ds?.train.totalSamples)
+  const loraHint = !isLora
+    ? undefined
+    : !canTrainLora()
+      ? "Fine-tuning (LoRA) needs WebGPU."
+      : !hasSamples
+        ? 'Save texts in the input area ("save") to fine-tune the model on them.'
+        : undefined
   return (
     <Box>
       <TrainConfigControl />
+      {!!loraHint && <div className="px-4 pt-4 text-sm opacity-75">{loraHint}</div>}
       <Collapsible isOpen={showLogs}>{hasLogs && <LogsPlot className="px-4 pt-4" />}</Collapsible>
       <div className="p-4 flex justify-between">
         <button
@@ -33,8 +46,13 @@ export const Train = () => {
           logs
         </button>
         <div className="flex gap-2">
-          {!!batchCount && (
-            <Button variant="secondary" onClick={resetWeights}>
+          {hasLora && !isTraining && (
+            <Button variant="secondary" onClick={toggleLora}>
+              {loraEnabled ? "show base" : "show fine-tuned"}
+            </Button>
+          )}
+          {!!batchCount && !(isLora && isTraining) && (
+            <Button variant="secondary" onClick={isLora ? resetLora : resetWeights}>
               reset
             </Button>
           )}
@@ -49,17 +67,33 @@ export const Train = () => {
               evaluate
             </Button>
           )}
-          <Button onClick={toggleTraining}>{isTraining ? "stop" : "train"}</Button>
+          <Button onClick={toggleTraining} disabled={!isTraining && !!loraHint}>
+            {isTraining ? "stop" : "train"}
+          </Button>
         </div>
       </div>
     </Box>
   )
 }
 
+// LoRA: compare the fine-tuned with the base model
+function toggleLora() {
+  const { lora, bumpAdapterVersion } = getScene().getState()
+  lora?.adapter.setEnabled(!lora.adapter.enabled)
+  bumpAdapterVersion()
+}
+
+function resetLora() {
+  const { setLora, resetTrainCounts } = getScene().getState()
+  setLora(undefined) // disposed in useLora
+  resetTrainCounts()
+}
+
 const TrainConfigControl = () => {
   const config = useCurrScene((s) => s.trainConfig)
   const setConfig = useCurrScene((s) => s.setTrainConfig)
   const ds = useCurrScene((s) => s.ds)
+  const isLora = isLoraDs(ds)
 
   return (
     <CollapsibleWithTitle title="config" className="bg-box-solid">
@@ -75,7 +109,7 @@ const TrainConfigControl = () => {
             // value={config.batchSize}
             value={Math.log2(config.batchSize)}
             min={0} // 2^0 = 1
-            max={10} // 2^10 = 1024
+            max={isLora ? Math.log2(MAX_LORA_BATCH_SIZE) : 10} // 2^10 = 1024
             transform={(v) => 2 ** v}
             onChange={(batchSize) => setConfig({ batchSize })}
             showValue={true}
@@ -115,10 +149,15 @@ const TrainConfigControl = () => {
             lazyUpdate
           />
         </InputRow>
-        <InputRow label="silent" hint="Update visualization only after training (faster)">
-          <Checkbox checked={config.silent} onChange={(silent) => setConfig({ silent: silent })} />
-        </InputRow>
-        {!!ds && canUseLazyLoading(ds) && (
+        {!isLora && (
+          <InputRow label="silent" hint="Update visualization only after training (faster)">
+            <Checkbox
+              checked={config.silent}
+              onChange={(silent) => setConfig({ silent: silent })}
+            />
+          </InputRow>
+        )}
+        {!!ds && !isLora && canUseLazyLoading(ds) && (
           <InputRow
             label="lazyLoading"
             hint="Load data on the fly (could be slower, but saves memory)"

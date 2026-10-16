@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as tf from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
 import { getSample } from "@/data/sample"
+import { getSeqPosition } from "@/data/next-token"
 import { useCurrScene, useSceneStore } from "@/store"
 import { drawHandPoseSampleToCanvas } from "@/data/hand-pose"
 import { useKeyCommand } from "@/utils/key-command"
@@ -304,7 +305,8 @@ function TokenPreview({ sample }: PreviewProps) {
   const tokenizer = useSceneStore((s) => s.ds?.tokenizer)
   const text = useMemo(() => {
     if (!tokenizer || !sample.X) return ""
-    const tokens = [...sample.X].slice(1, 31).map(tokenizer.decode)
+    const end = getSeqPosition(sample.X, tokenizer) + 1 // without padding
+    const tokens = [...sample.X].slice(1, Math.min(end, 31)).map(tokenizer.decode)
     return tokens.join(" ") // using non-breaking space to allow arbitrary line breaks
   }, [sample.X, tokenizer])
   return (

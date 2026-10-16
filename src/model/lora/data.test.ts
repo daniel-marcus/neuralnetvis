@@ -1,11 +1,29 @@
 import { describe, it, expect } from "vitest"
 import type { TokenizerType } from "@/data/tokenizer"
-import { getBatches, makeWindows, shuffle, splitWindows, textToTokens, toTensors } from "./data"
+import { addTrainData, resetData } from "@/data/dataset"
+import { gpt2 } from "@/data/datasets/gpt2"
+import type { Dataset } from "@/data/types"
+import {
+  getBatches,
+  loadTrainingWindows,
+  makeWindows,
+  sampleToTokens,
+  shuffle,
+  splitWindows,
+  textToTokens,
+  toTensors,
+} from "./data"
 
 const PAD = 99
 const range = (n: number) => Array.from({ length: n }, (_, i) => i)
 const toArrays = (windows: ReturnType<typeof makeWindows>) =>
   windows.map(({ x, y, mask }) => ({ x: [...x], y: [...y], mask: [...mask] }))
+
+// <|endoftext|> as <START>, <END> and <PAD> as in GPT-2
+const END = 0
+const fakeTokenizer = {
+  encodeDict: { "<START>": END, "<END>": END, "<PAD>": END },
+} as unknown as TokenizerType
 
 describe("textToTokens", () => {
   it("adds <END> after the encoded text", () => {
@@ -77,5 +95,53 @@ describe("shuffle, getBatches, toTensors", () => {
     expect(xs.arraySync()).toEqual(windows.map((w) => [...w.x]))
     expect(ys.arraySync()).toEqual(windows.flatMap((w) => [...w.y]))
     expect(mask.arraySync()).toEqual(windows.flatMap((w) => [...w.mask]))
+  })
+
+  it("trims the batch to its longest window", () => {
+    const windows = [...makeWindows([1, 2, 3], 6, PAD), ...makeWindows([4, 5, 6, 7], 6, PAD)]
+    const { xs, ys, mask } = toTensors(windows)
+    expect(xs.arraySync()).toEqual([
+      [1, 2, PAD],
+      [4, 5, 6],
+    ])
+    expect(ys.arraySync()).toEqual([2, 3, PAD, 5, 6, 7])
+    expect(mask.arraySync()).toEqual([1, 1, 0, 1, 1, 1])
+  })
+})
+
+describe("samples as training data", () => {
+  it("takes the text tokens of a sample and adds <END>", () => {
+    expect([...sampleToTokens([END, 5, 6, 7, END, END], fakeTokenizer)]).toEqual([
+      END,
+      5,
+      6,
+      7,
+      END,
+    ])
+    expect([...sampleToTokens([END, 5, 6, 7], fakeTokenizer)]).toEqual([END, 5, 6, 7, END]) // full
+  })
+
+  it("loads one window per stored sample", async () => {
+    const ds = { ...gpt2, key: "lora_windows_test", inputDims: [4], storeBatchSize: 2 } as Dataset
+    await resetData(ds.key, "train")
+    const samples = [
+      [END, 5, END, END],
+      [END, 6, 7, 8],
+      [END, 9, 10, END],
+    ]
+    const meta = await addTrainData(
+      ds,
+      { data: Int32Array.from(samples.flat()), shape: [3, 4] },
+      {
+        data: new Int32Array(12),
+        shape: [3, 4],
+      },
+    )
+    const windows = await loadTrainingWindows({ ...ds, train: meta, tokenizer: fakeTokenizer })
+    expect(toArrays(windows)).toEqual([
+      { x: [END, 5, END, END], y: [5, END, END, END], mask: [1, 1, 0, 0] },
+      { x: [END, 6, 7, 8], y: [6, 7, 8, END], mask: [1, 1, 1, 1] },
+      { x: [END, 9, 10, END], y: [9, 10, END, END], mask: [1, 1, 1, 0] },
+    ])
   })
 })

@@ -99,13 +99,14 @@ describe("LoraTrainer", () => {
     expect(stopped).toEqual({ epochs: 0, steps: 1, stopped: true })
 
     const numTensors = tf.memory().numTensors // after the 1st step: incl. the optimizer state
-    const epochs: number[] = []
+    const epochLogs: EpochLog[] = []
     await trainer.train(
       windows,
       { ...config, initialEpoch: 3 },
-      { onEpochEnd: (l) => void epochs.push(l.epoch) },
+      { onEpochEnd: (l) => void epochLogs.push(l) },
     )
-    expect(epochs).toEqual([3, 4])
+    expect(epochLogs.map((l) => l.epoch)).toEqual([3, 4])
+    expect(epochLogs.every((l) => !("val_loss" in l))).toBe(true) // validationSplit: 0
     expect(tf.memory().numTensors).toBe(numTensors)
     cleanup()
   })

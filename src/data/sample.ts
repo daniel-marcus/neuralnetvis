@@ -40,6 +40,13 @@ export function useRawInput(layerIdx: number, neuronIdx: number) {
 type BatchCacheKey = string // `${ds.key}_${type}`
 let currBatchCache: Record<BatchCacheKey, DbBatch> = {}
 
+// after writing to the dataset (e.g. appended samples), otherwise getSample would read the old batch
+export function clearBatchCache(dsKey: string) {
+  currBatchCache = Object.fromEntries(
+    Object.entries(currBatchCache).filter(([key]) => !key.startsWith(`${dsKey}_`)),
+  )
+}
+
 export async function getSample(ds: Dataset, type: "train" | "test", sampleIdx: number) {
   const valsPerSample = ds.inputDims.reduce((a, b) => a * b)
   const storeBatchSize = ds.storeBatchSize

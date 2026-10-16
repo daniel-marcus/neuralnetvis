@@ -15,6 +15,7 @@ import { preprocessFuncs } from "./preprocess"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { tokenizers, type TokenizerType } from "./tokenizer"
+import { clearBatchCache } from "./sample"
 
 const DEFAULT_STORE_BATCH_SIZE = 100
 
@@ -178,38 +179,73 @@ async function saveData(
   const { key: dbName, storeBatchSize = DEFAULT_STORE_BATCH_SIZE } = dsDef
 
   let oldSamplesX = 0
+  let lastBatch: DbBatch | undefined // append: the samples of a partly filled last batch are written again
   if (overwrite) {
     await deleteAll(dbName, storeName)
   } else {
     const existingMeta = await getData<StoreMeta>(dbName, "meta", storeName)
     oldSamplesX = existingMeta?.totalSamples ?? 0
+    if (oldSamplesX % storeBatchSize) {
+      const lastIdx = Math.floor(oldSamplesX / storeBatchSize)
+      lastBatch = await getData<DbBatch>(dbName, storeName, lastIdx)
+    }
   }
 
   const [newSamplesX] = xs.shape
   const valsPerSample = dsDef.inputDims.reduce((a, b) => a * b)
   const valsPerSampleY = ys.shape.slice(1).reduce((a, b) => a * b, 1) // > 1 for sequences
 
+  const numCarried = lastBatch ? oldSamplesX % storeBatchSize : 0
+  const firstIdx = oldSamplesX - numCarried // multiple of storeBatchSize
+  const xsData = prepend(lastBatch?.xs, xs.data)
+  const ysData = prepend(lastBatch?.ys, ys.data)
+  const xsRawData = xsRaw && prepend(lastBatch?.xsRaw, xsRaw.data)
+  const names = sampleNames && [
+    ...(lastBatch?.sampleNames ?? Array<string>(numCarried).fill("")),
+    ...sampleNames,
+  ]
+
   const batches: DbBatch[] = []
-  for (let i = 0; i < newSamplesX; i += storeBatchSize) {
-    const index = Math.floor((i + oldSamplesX) / storeBatchSize)
+  for (let i = 0; i < numCarried + newSamplesX; i += storeBatchSize) {
+    const index = Math.floor((i + firstIdx) / storeBatchSize)
     const sliceIdxs = [i * valsPerSample, (i + storeBatchSize) * valsPerSample]
     const batch = {
       index,
-      xs: xs.data.slice(...sliceIdxs),
-      ys: ys.data.slice(i * valsPerSampleY, (i + storeBatchSize) * valsPerSampleY),
-      xsRaw: xsRaw?.data.slice(...sliceIdxs),
-      sampleNames: sampleNames?.slice(i, i + storeBatchSize),
+      xs: xsData.slice(...sliceIdxs),
+      ys: ysData.slice(i * valsPerSampleY, (i + storeBatchSize) * valsPerSampleY),
+      xsRaw: xsRawData?.slice(...sliceIdxs),
+      sampleNames: names?.slice(i, i + storeBatchSize),
     }
     batches.push(batch)
   }
 
   await putDataBatches(dbName, storeName, batches)
+  clearBatchCache(dbName)
 
   const totalSamples = oldSamplesX + newSamplesX
   aspectRatio = aspectRatio ?? dsDef.camProps?.aspectRatio
   const storeMeta = newStoreMeta(storeName, totalSamples, aspectRatio)
   await putData<StoreMeta>(dbName, "meta", storeMeta)
   return storeMeta
+}
+
+// nextToken: the text as training sample, encoded as in the input area (targets: the tokens shifted by one)
+export async function addTextSample(ds: Dataset, text: string) {
+  if (!ds.tokenizer || ds.task !== "nextToken")
+    throw new Error("Text samples need a nextToken dataset")
+  const [seqLen] = ds.inputDims
+  const X = Int32Array.from(ds.tokenizer.encode(text, seqLen))
+  const y = new Int32Array(seqLen).fill(ds.tokenizer.encodeDict["<PAD>"])
+  y.set(X.subarray(1))
+  return addTrainData(ds, { data: X, shape: [1, seqLen] }, { data: y, shape: [1, seqLen] })
+}
+
+function prepend<T extends ParsedLike["data"]>(prev: ParsedLike["data"] | undefined, data: T): T {
+  if (!prev?.length) return data
+  const result = new (data.constructor as new (length: number) => T)(prev.length + data.length)
+  result.set(prev)
+  result.set(data, prev.length)
+  return result
 }
 
 export async function addTrainData(
@@ -225,6 +261,7 @@ export async function addTrainData(
 
 export async function resetData(dsKey: string, storeName: "train" | "test") {
   await deleteAll(dsKey, storeName)
+  clearBatchCache(dsKey)
   const storeMeta = newStoreMeta(storeName, 0)
   await putData(dsKey, "meta", storeMeta)
 

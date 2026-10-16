@@ -17,7 +17,8 @@ import type { TokenizerType } from "@/data/tokenizer"
 import type { Dataset } from "@/data/types"
 import type { UserData } from "@/scene-views/3d-model/layer-instanced"
 
-type UpdateTracker = Map<Sample["index"], Set<NeuronLayer["lid"]>>
+// key: sample index and adapter version (LoRA: same model, new outputs)
+type UpdateTracker = Map<string, Set<NeuronLayer["lid"]>>
 
 export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const currSample = useSample()
@@ -30,6 +31,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   const hasRendered = useSceneStore((s) => s.hasRendered)
   const isRegression = useSceneStore((s) => s.isRegression())
   const ds = useSceneStore((s) => s.ds)
+  const adapterVersion = useSceneStore((s) => s.adapterVersion)
 
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
@@ -39,8 +41,9 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
     async (sample?: Sample, focusIdx?: number) => {
       if (!model || !sample) return
       latestSampleIdx.current = sample.index
+      const trackerKey = `${sample.index}_${adapterVersion}`
 
-      const updatedLayers = updateTracker.current.get(sample.index) ?? new Set()
+      const updatedLayers = updateTracker.current.get(trackerKey) ?? new Set()
       const needsUpdate = (l: NeuronLayer) => !updatedLayers.has(l.lid)
       // nextToken: the next word suggestions (TextArea) need the output layer even if another layer is focussed
       const keepOutput = ds?.task === "nextToken"
@@ -88,9 +91,9 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       const newUpdated = new Set(updatedLayers)
       layersToUpdate.forEach((l) => newUpdated.add(l.lid))
       updateTracker.current = new Map()
-      updateTracker.current.set(sample.index, newUpdated)
+      updateTracker.current.set(trackerKey, newUpdated)
     },
-    [backend, model, layers, invalidate, setActivations, isRegression, stats, ds],
+    [backend, model, layers, invalidate, setActivations, isRegression, stats, ds, adapterVersion],
   )
 
   // reset update tracker when model changes

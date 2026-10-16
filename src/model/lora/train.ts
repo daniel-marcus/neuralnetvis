@@ -110,8 +110,10 @@ export class LoraTrainer {
         await tf.nextFrame() // keep the UI responsive
         if (shouldStop?.()) return { epochs: epoch - initialEpoch, steps, stopped: true }
       }
+      const loss = lossSum / batches.length
+      // no val_loss key without validation data (the logs plot shows a metric for each key)
       const val_loss = validation.length ? await this.evaluate(validation, batchSize) : undefined
-      await onEpochEnd?.({ epoch, loss: lossSum / batches.length, val_loss })
+      await onEpochEnd?.({ epoch, loss, ...(val_loss !== undefined && { val_loss }) })
     }
     return { epochs, steps, stopped: false }
   }

@@ -16,6 +16,7 @@ export const gpt2: DatasetDef = {
   tokenizerName: "Gpt2Tokenizer",
   model: getModelDef("gpt2"),
   sampleViewer: true,
+  loraTraining: true, // samples: texts saved in the input area
   drawOptions: {
     title: "Write a text",
   },

@@ -9,6 +9,7 @@ interface ButtonProps {
   type?: "submit"
   variant?: "primary" | "secondary" | "transparent" | "chip" // chip: options inside a box, e.g. suggestions
   className?: string
+  title?: string // native tooltip
 }
 
 export const Button = ({
@@ -19,6 +20,7 @@ export const Button = ({
   type,
   variant = "primary",
   className = "",
+  title,
 }: ButtonProps) => {
   const Comp = href ? Link : "button"
   return (
@@ -36,6 +38,7 @@ export const Button = ({
       onClick={onClick}
       disabled={disabled}
       type={type}
+      title={title}
     >
       {children}
     </Comp>

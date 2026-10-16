@@ -8,6 +8,7 @@ import { getDbDataAsTensors } from "@/data/dataset"
 import { useGlobalStore, useSceneStore } from "@/store"
 import { getDs, getModel, isDebug } from "@/store"
 import type { Dataset, DbBatch } from "@/data"
+import { isLoraDs, trainLora, useLora } from "./lora/training"
 
 export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   const isTraining = useSceneStore((s) => s.isTraining)
@@ -18,11 +19,34 @@ export function useTraining(model?: tf.LayersModel, ds?: Dataset) {
   useKeyCommand("t", toggleTraining, isActive)
   const resetTrainCounts = useSceneStore((s) => s.resetTrainCounts)
   useEffect(() => resetTrainCounts(), [model, resetTrainCounts])
+  useLora(ds)
   useEffect(() => {
     if (!isTraining || !ds || !model) return
     const { validationSplit, batchSize, epochs: _epochs } = config
     const initialEpoch = useGlobalStore.getState().scene.getState().epochCount
     const epochs = initialEpoch + _epochs
+
+    if (isLoraDs(ds)) {
+      // pretrained model: LoRA adapters instead of model.fit
+      let isCancelled = false
+      startLoraTraining()
+      async function startLoraTraining() {
+        const scene = useGlobalStore.getState().scene
+        await scene.getState().trainingPromise // e.g. config changed during training
+        if (isCancelled || !model || !ds) return
+        const trainingPromise = trainLora(model, ds, config, initialEpoch, () => isCancelled)
+        scene.setState({ trainingPromise })
+        await trainingPromise.catch((e) => {
+          console.error("LoRA training failed", e)
+          scene.setState({ isTraining: false })
+        })
+        if (scene.getState().trainingPromise === trainingPromise)
+          scene.setState({ trainingPromise: null })
+      }
+      return () => {
+        isCancelled = true
+      }
+    }
 
     startTraining()
     async function startTraining() {
