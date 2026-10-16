@@ -1,6 +1,6 @@
 {
   "name": "neuralnetvis",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "Wrap your head around neural networks and watch machines learn",
   "keywords": [
