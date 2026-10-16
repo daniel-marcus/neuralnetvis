@@ -5,6 +5,7 @@ import { gpt2 } from "@/data/datasets/gpt2"
 import type { Dataset } from "@/data/types"
 import {
   getBatches,
+  getTokenBatches,
   loadTrainingWindows,
   makeWindows,
   sampleToTokens,
@@ -70,6 +71,23 @@ describe("splitWindows", () => {
     expect(splitWindows(windows, 0.1).validation).toEqual(windows.slice(9))
     expect(splitWindows(windows, 0.25).train).toEqual(windows.slice(0, 8))
     expect(splitWindows(windows.slice(0, 9), 0.1).validation).toEqual([])
+  })
+})
+
+describe("getTokenBatches", () => {
+  // windows with n targets (seqLen 8)
+  const w = (n: number) => makeWindows(range(n + 1), 8, PAD)[0]
+  const lengths = (batches: ReturnType<typeof getTokenBatches>) =>
+    batches.map((b) => b.map((win) => win.mask.reduce((a, c) => a + c, 0)))
+
+  it("limits the windows and the positions (windows x longest window) per batch", () => {
+    const windows = [w(2), w(2), w(3), w(8), w(1), w(1), w(1)]
+    expect(lengths(getTokenBatches(windows, 4, 8))).toEqual([[2, 2], [3], [8], [1, 1, 1]])
+    expect(lengths(getTokenBatches(windows, 2))).toEqual([[2, 2], [3, 8], [1, 1], [1]])
+  })
+
+  it("puts a window longer than maxTokens in its own batch", () => {
+    expect(lengths(getTokenBatches([w(1), w(8), w(1)], 4, 4))).toEqual([[1], [8], [1]])
   })
 })
 

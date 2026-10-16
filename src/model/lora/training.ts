@@ -14,7 +14,10 @@ import type { LoraState } from "@/store/model"
 // until the model changes or the training is reset, the logs and counts go to the training store as for
 // model.fit (logs plot, progress)
 
-export const MAX_LORA_BATCH_SIZE = 4 // GPU memory: ~3 GB per window of 128 tokens for GPT-2
+export const MAX_LORA_BATCH_SIZE = 4
+// GPU memory of a training step grows with the number of positions (GPT-2: ~4.5 GB above the model for 256),
+// longer batches are split (tfjs shares the GPU device with three.js: out of memory loses both)
+export const MAX_LORA_TOKENS_PER_STEP = 256
 
 const LORA_TRAIN_CONFIG: Partial<TrainingConfig> = {
   batchSize: 2,
@@ -85,15 +88,18 @@ export async function trainLora(
 
   const { epochs, validationSplit } = config
   const batchSize = Math.min(config.batchSize, MAX_LORA_BATCH_SIZE)
-  const numTrain = windows.length - Math.floor(windows.length * validationSplit)
-  const batchesPerEpoch = Math.ceil(numTrain / batchSize)
+  const maxTokens = MAX_LORA_TOKENS_PER_STEP
+  let batchesPerEpoch = 1
   const updateStatus = throttle(setStatus, 30)
   const startTime = Date.now()
 
   const result = await trainer.train(
     windows,
-    { epochs, batchSize, validationSplit, initialEpoch },
+    { epochs, batchSize, maxTokens, validationSplit, initialEpoch },
     {
+      onEpochBegin: (_, numBatches) => {
+        batchesPerEpoch = numBatches
+      },
       onBatchEnd: (log) => {
         const state = scene.getState()
         state.addLog(log)

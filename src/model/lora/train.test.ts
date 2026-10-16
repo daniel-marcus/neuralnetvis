@@ -111,6 +111,24 @@ describe("LoraTrainer", () => {
     cleanup()
   })
 
+  it("splits the batches by maxTokens", async () => {
+    const { trainer, cleanup } = setup()
+    const numBatches: number[] = []
+    const sizes: number[] = []
+    const result = await trainer.train(
+      windows.slice(0, 4), // full windows of seqLen 8
+      { epochs: 1, batchSize: 4, maxTokens: 2 * seqLen, validationSplit: 0 },
+      {
+        onEpochBegin: (_, n) => void numBatches.push(n),
+        onBatchEnd: (l) => void sizes.push(l.size),
+      },
+    )
+    expect(numBatches).toEqual([2])
+    expect(sizes).toEqual([2, 2])
+    expect(result.steps).toBe(2)
+    cleanup()
+  })
+
   it("starts a new optimizer for a new learning rate", async () => {
     const { trainer, cleanup } = setup()
     await trainer.step(windows.slice(0, 2))

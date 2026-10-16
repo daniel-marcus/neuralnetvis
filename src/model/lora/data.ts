@@ -67,10 +67,40 @@ export function getBatches<T>(windows: T[], batchSize: number) {
   )
 }
 
+// number of positions up to the last target (the rest is padding, trimmed in toTensors)
+export function getWindowLength(window: TokenWindow) {
+  return window.mask.findLastIndex((m) => m > 0) + 1
+}
+
+// batches of up to maxBatchSize windows with at most maxTokens positions (windows x longest window): the GPU
+// memory of a training step grows with the number of positions, a window longer than maxTokens gets its own batch
+export function getTokenBatches(
+  windows: TokenWindow[],
+  maxBatchSize: number,
+  maxTokens = Infinity,
+) {
+  const batches: TokenWindow[][] = []
+  let batch: TokenWindow[] = []
+  let maxLength = 0
+  for (const window of windows) {
+    const length = Math.max(maxLength, getWindowLength(window))
+    const fits = batch.length < maxBatchSize && (batch.length + 1) * length <= maxTokens
+    if (batch.length && !fits) {
+      batches.push(batch)
+      batch = []
+      maxLength = 0
+    }
+    batch.push(window)
+    maxLength = Math.max(maxLength, getWindowLength(window))
+  }
+  if (batch.length) batches.push(batch)
+  return batches
+}
+
 // trimmed to the longest window of the batch: the positions after it are padding without targets, in a causal
 // model they don't change the outputs at the earlier positions (batches of short samples are much cheaper)
 export function toTensors(windows: TokenWindow[]): TokenBatch {
-  const length = Math.max(1, ...windows.map((w) => w.mask.findLastIndex((m) => m > 0) + 1))
+  const length = Math.max(1, ...windows.map(getWindowLength))
   const concat = <T extends Int32Array | Float32Array>(
     arrays: T[],
     ArrayType: new (n: number) => T,

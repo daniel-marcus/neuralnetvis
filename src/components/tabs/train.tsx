@@ -3,7 +3,12 @@ import { getScene, useCurrScene, useGlobalStore } from "@/store"
 import * as Components from "@/components/ui-elements"
 import { canUseLazyLoading } from "@/model/training"
 import { LogsPlot } from "@/components/ui-elements/logs-plot"
-import { canTrainLora, isLoraDs, MAX_LORA_BATCH_SIZE } from "@/model/lora/training"
+import {
+  canTrainLora,
+  isLoraDs,
+  MAX_LORA_BATCH_SIZE,
+  MAX_LORA_TOKENS_PER_STEP,
+} from "@/model/lora/training"
 
 const { Box, Slider, InputRow, InputRowsWrapper, Checkbox } = Components
 const { Collapsible, CollapsibleWithTitle, Arrow, Button } = Components
@@ -104,7 +109,14 @@ const TrainConfigControl = () => {
           } as React.CSSProperties
         }
       >
-        <InputRow label="batchSize" hint="How many samples should be processed at once?">
+        <InputRow
+          label="batchSize"
+          hint={`How many samples should be processed at once?${
+            isLora
+              ? ` (max. ${MAX_LORA_TOKENS_PER_STEP} tokens per step, longer batches are split)`
+              : ""
+          }`}
+        >
           <Slider
             // value={config.batchSize}
             value={Math.log2(config.batchSize)}

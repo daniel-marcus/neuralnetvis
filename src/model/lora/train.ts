@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { model as createModel } from "@tensorflow/tfjs-layers/dist/exports"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
 import type { SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/topology"
-import { getBatches, shuffle, splitWindows, toTensors } from "./data"
+import { getTokenBatches, shuffle, splitWindows, toTensors } from "./data"
 import type { TokenBatch, TokenWindow } from "./data"
 import type { LoraAdapter } from "./adapter"
 import type { BatchLog, EpochLog } from "@/components/ui-elements/training-log"
@@ -13,13 +13,15 @@ import type { BatchLog, EpochLog } from "@/components/ui-elements/training-log"
 
 export interface LoraTrainConfig {
   epochs: number
-  batchSize: number
+  batchSize: number // max. windows per batch
+  maxTokens?: number // max. positions per batch (windows x longest window), limits the GPU memory per step
   validationSplit: number
   initialEpoch?: number // to continue the epoch count of previous runs
   random?: () => number // for shuffling
 }
 
 export interface LoraTrainCallbacks {
+  onEpochBegin?: (epoch: number, numBatches: number) => void | Promise<void>
   onBatchEnd?: (log: BatchLog) => void | Promise<void>
   onEpochEnd?: (log: EpochLog) => void | Promise<void>
   shouldStop?: () => boolean // checked after each batch
@@ -79,10 +81,10 @@ export class LoraTrainer {
   }
 
   // mean loss of all unmasked targets (weighted by the number of targets per batch)
-  async evaluate(windows: TokenWindow[], batchSize: number) {
+  async evaluate(windows: TokenWindow[], batchSize: number, maxTokens?: number) {
     let lossSum = 0
     let numTargets = 0
-    for (const batch of getBatches(windows, batchSize)) {
+    for (const batch of getTokenBatches(windows, batchSize, maxTokens)) {
       const loss = this.loss(batch)
       const [value] = await loss.data()
       loss.dispose()
@@ -94,13 +96,14 @@ export class LoraTrainer {
   }
 
   async train(windows: TokenWindow[], config: LoraTrainConfig, callbacks: LoraTrainCallbacks = {}) {
-    const { epochs, batchSize, validationSplit, initialEpoch = 0, random } = config
-    const { onBatchEnd, onEpochEnd, shouldStop } = callbacks
+    const { epochs, batchSize, maxTokens, validationSplit, initialEpoch = 0, random } = config
+    const { onEpochBegin, onBatchEnd, onEpochEnd, shouldStop } = callbacks
     const { train, validation } = splitWindows(windows, validationSplit)
     if (!train.length) throw new Error("LoRA: no training data")
     let steps = 0
     for (let epoch = initialEpoch; epoch < initialEpoch + epochs; epoch++) {
-      const batches = getBatches(shuffle(train, random), batchSize)
+      const batches = getTokenBatches(shuffle(train, random), batchSize, maxTokens)
+      await onEpochBegin?.(epoch, batches.length)
       let lossSum = 0
       for (const [batchIdx, batch] of batches.entries()) {
         const loss = await this.step(batch)
@@ -112,7 +115,9 @@ export class LoraTrainer {
       }
       const loss = lossSum / batches.length
       // no val_loss key without validation data (the logs plot shows a metric for each key)
-      const val_loss = validation.length ? await this.evaluate(validation, batchSize) : undefined
+      const val_loss = validation.length
+        ? await this.evaluate(validation, batchSize, maxTokens)
+        : undefined
       await onEpochEnd?.({ epoch, loss, ...(val_loss !== undefined && { val_loss }) })
     }
     return { epochs, steps, stopped: false }

@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import type * as THREE from "three/webgpu"
 import { useThree } from "@react-three/fiber"
-import { useGlobalStore } from "@/store"
+import { setStatus, useGlobalStore } from "@/store"
 import type Backend from "three/src/renderers/common/Backend.js"
 
 export function useGPUDevice() {
@@ -18,6 +18,14 @@ export function useGPUDevice() {
           ? (webGpuBackend.device as GPUDevice)
           : undefined
       useGlobalStore.setState({ gpuDevice: newGpuDevice })
+      // e.g. out of memory (LoRA training): tfjs and three.js can't continue without a new device
+      newGpuDevice?.lost.then((info) => {
+        console.error("WebGPU device lost:", info.reason, info.message)
+        if (info.reason === "destroyed") return // destroyed on purpose
+        const title = "GPU device lost (out of memory?)"
+        const opts = { id: "gpu_device_lost", permanent: true } // id: registered by each useGPUDevice
+        setStatus({ title, data: { "": "Please reload the page." } }, null, opts)
+      })
     }
     initGPU()
   }, [backendReady])
