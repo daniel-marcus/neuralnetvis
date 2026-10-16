@@ -9,6 +9,7 @@ import type { GetInputRangeFunc, LayerDef } from "./types"
 
 type Input = tf.Tensor | SymbolicTensor
 const toList = <T>(x: T | T[]) => (Array.isArray(x) ? x : [x])
+const prod = (dims: number[]) => dims.reduce((a, b) => a * b, 1)
 const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H] <-> [B, N, T, H]
 
 type CausalMask = { mask: tf.Tensor; adder: tf.Tensor }
@@ -115,6 +116,18 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     })
   }
 
+  // undefined if not built yet or a projection is computed with einsum (see replaceEinsumWithMatMul)
+  getProjections() {
+    if (!this.builtFromSignature) return
+    const denses = [this.queryDense, this.keyDense, this.valueDense, this.outputDense]
+    const projections = denses.map((d) => (d as unknown as EinsumDenseInternals).projection)
+    if (!projections.every((p) => !!p)) return
+    return Object.fromEntries(PROJECTION_NAMES.map((name, i) => [name, projections[i]])) as Record<
+      ProjectionName,
+      Projection
+    >
+  }
+
   getAttentionScores(query: tf.Tensor, value = query, key?: tf.Tensor) {
     // returns [batch, numHeads, queryLength, keyLength]
     const { useCausalMask } = this
@@ -159,7 +172,20 @@ type EinsumDenseInternals = {
   kernel: { read: () => tf.Tensor }
   bias?: { read: () => tf.Tensor } | null
   call: (inputs: tf.Tensor | tf.Tensor[]) => tf.Tensor
+  projection?: Projection // set by replaceEinsumWithMatMul
 }
+
+export const PROJECTION_NAMES = ["query", "key", "value", "output"] as const
+export type ProjectionName = (typeof PROJECTION_NAMES)[number]
+
+// a projection computed as a single matMul [n, inDim] x [inDim, outDim] (see replaceEinsumWithMatMul),
+// delta: added to the matMul result before the bias, e.g. a low-rank update of the kernel (LoRA, see model/lora)
+export interface Projection {
+  readonly inDim: number
+  readonly outDim: number
+  delta?: ProjectionDelta
+}
+export type ProjectionDelta = (x: tf.Tensor2D) => tf.Tensor2D // [n, inDim] -> [n, outDim]
 
 /**
  * The projections ("abc,cde->abde" for query/key/value, "abcd,cde->abe" for the output) contract
@@ -179,19 +205,30 @@ function replaceEinsumWithMatMul(dense: EinsumDense) {
     output === free + kernel.slice(contracted.length)
   if (!isMatMul) return
 
+  const kernelShape = layer.kernel.read().shape
+  const inDim = prod(kernelShape.slice(0, contracted.length))
+  const outDim = prod(kernelShape.slice(contracted.length))
+  const projection: Projection = { inDim, outDim }
+  layer.projection = projection
+
   layer.call = (inputs: tf.Tensor | tf.Tensor[]) =>
     tf.tidy(() => {
       const [input] = toList(inputs)
       const k = layer.kernel.read()
       const freeShape = input.shape.slice(0, free.length)
-      const contractedSize = k.shape.slice(0, contracted.length).reduce((a, b) => a * b, 1)
-      let ret = tf
-        .matMul(input.reshape([-1, contractedSize]), k.reshape([contractedSize, -1]))
-        .reshape([...freeShape, ...k.shape.slice(contracted.length)])
+      const flatInput = input.reshape([-1, inDim]) as tf.Tensor2D
+      let flat = tf.matMul(flatInput, k.reshape([inDim, outDim]))
+      if (projection.delta) flat = flat.add(projection.delta(flatInput))
+      let ret = flat.reshape([...freeShape, ...k.shape.slice(contracted.length)])
       if (layer.bias) ret = ret.add(layer.bias.read())
       if (layer.activation) ret = layer.activation.apply(ret)
       return ret
     })
+}
+
+// query, key, value and output projections of a MultiHeadAttention layer
+export function getProjections(layer: Layer) {
+  return layer instanceof Keras3MultiHeadAttentionLayer ? layer.getProjections() : undefined
 }
 
 // each neuron is connected to all neurons at the positions (e.g. tokens) it can attend to:
