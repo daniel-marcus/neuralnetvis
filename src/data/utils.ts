@@ -9,6 +9,21 @@ export function normalize(tensor: tf.Tensor): tf.Tensor {
   })
 }
 
+// sequences of token models (e.g. GPT-2: huge activations at the first token and in a few feature dimensions):
+// scaled by the mean absolute value of the text's positions (hardly affected by a few large values) and compressed
+// to [-1, 1] with tanh, so that the outliers saturate instead of washing out all other activations
+export function normalizeSequence(tensor: tf.Tensor, numPositions: number): tf.Tensor {
+  return tf.tidy(() => {
+    // numPositions: the text's tokens, the padding after them is left out of the scale. It contains zeros
+    // (incremental activations) or activations of padding tokens (full forward pass), which would make the
+    // scale depend on the length of the text
+    const text = tensor.slice([0, 0], [-1, numPositions]) // [B, numPositions, D]
+    const scale = text.abs().mean().mul(SEQUENCE_CONTRAST).maximum(1e-7)
+    return tensor.div(scale).tanh()
+  })
+}
+const SEQUENCE_CONTRAST = 8 // tanh(x / (8 * mean|x|)): average activations at ~1/8 of the color range
+
 export function scaleNormalize(tensor: tf.Tensor, _mean?: tf.Tensor, _std?: tf.Tensor) {
   // z-scale and normalize between -1 and 1
   return tf.tidy(() => {

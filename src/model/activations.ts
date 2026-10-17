@@ -6,7 +6,7 @@ import { useSceneStore, isDebug } from "@/store"
 import { type ActivationStats, useActivationStats } from "./activation-stats"
 import { getLayerActivationsAsync, getSingleOutput } from "./get-layer-activations"
 import { isWebGPUBackend, useBackend } from "@/utils/webgpu"
-import { normalize, scaleNormalize } from "@/data/utils"
+import { normalize, normalizeSequence, scaleNormalize } from "@/data/utils"
 import { getSeqPosition } from "@/data/next-token"
 import { imageInputRanges } from "@/data/preprocess"
 import { getTokenAttribution } from "./token-attribution"
@@ -214,6 +214,7 @@ async function getActivations(
   // make sure layer component has mounted and buffer is attached (skipped if already, e.g. autocomplete: ~3ms)
   if (!hasGPUBuffers(backend, layers)) await new Promise((r) => setTimeout(r, 0))
 
+  const numPositions = tokenInput && getSeqPosition(sample.X, tokenInput.tokenizer) + 1
   const newLayerActivations: { [layerIdx: number]: LayerActivations } = {}
   try {
     const start = performance.now()
@@ -224,7 +225,14 @@ async function getActivations(
       const normalized =
         tokenInput && layer.layerPos === "input"
           ? getTokenInputColors(model, sample, tokenInput)
-          : normalizeForLayer({ actTensor, layer, isRegression, layerStats, inputRange })
+          : normalizeForLayer({
+              actTensor,
+              layer,
+              isRegression,
+              layerStats,
+              inputRange,
+              numPositions,
+            })
       try {
         // WebGPU: try to copy the buffer directly in GPU
         let gpuUpdateSuccess = tryWebGPUUpdate({ backend, tfBackend, normalized, layer })
@@ -299,6 +307,7 @@ interface NormalizeForLayerProps {
   isRegression?: boolean
   layerStats?: ActivationStats
   inputRange?: [number, number]
+  numPositions?: number // token models: the text's positions (without padding), see normalizeSequence
 }
 
 function normalizeForLayer({
@@ -307,6 +316,7 @@ function normalizeForLayer({
   isRegression,
   layerStats,
   inputRange,
+  numPositions,
 }: NormalizeForLayerProps) {
   const isSoftmax = layer.tfLayer.getConfig().activation === "softmax"
   return tf.tidy(() => {
@@ -324,6 +334,8 @@ function normalizeForLayer({
       return scaleNormalize(tensor, meanTensor, stdTensor)
     } else if (isSoftmax) {
       return tensor
+    } else if (numPositions && tensor.rank === 3) {
+      return normalizeSequence(tensor, numPositions) // [B, seqLen, D]
     } else return normalize(tensor)
   })
 }
