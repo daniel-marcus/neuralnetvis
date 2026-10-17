@@ -28,9 +28,21 @@ describe("parseSafetensors", () => {
     expect(Object.keys(parsed)).toEqual(["b"])
   })
 
+  it("should read BF16 as float32, also unaligned", () => {
+    const data = [1.5, -0.25, 3, 0, -1024, 0.0078125]
+    for (const padding of [0, 1]) {
+      const parsed = parseSafetensors(
+        makeSafetensors({ c: { shape: [2, 3], data, dtype: "BF16" }, ...tensors }, padding),
+      )
+      expect(parsed.c.dtype).toBe("BF16")
+      expect(Array.from(parsed.c.data), `padding ${padding}`).toEqual(data)
+      expect(Array.from(parsed.b.data)).toEqual([-1.5, 0.25]) // F32 after BF16
+    }
+  })
+
   it("should throw for unsupported dtypes", () => {
-    const buffer = makeSafetensors({ c: { shape: [2], data: [1, 2], dtype: "BF16" } })
-    expect(() => parseSafetensors(buffer)).toThrow("Unsupported dtype BF16")
+    const buffer = makeSafetensors({ c: { shape: [2], data: [1, 2], dtype: "F16" } })
+    expect(() => parseSafetensors(buffer)).toThrow("Unsupported dtype F16")
   })
 })
 

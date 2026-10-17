@@ -8,7 +8,7 @@ import { mapGpt2 } from "./gpt2"
 export interface SafeTensor {
   dtype: string
   shape: number[]
-  data: Float32Array
+  data: Float32Array // parsed tensors: decoded on each access, see parseSafetensors
 }
 
 export type SafeTensors = Record<string, SafeTensor>
@@ -19,7 +19,10 @@ interface HeaderEntry {
   data_offsets: [number, number]
 }
 
-// tensors are copied: the data in the file is not necessarily 4-byte aligned, and tfjs needs separate buffers.
+// F32 or BF16 (e.g. LFM2.5), both as float32.
+// The data is decoded on each access of tensor.data (not kept): large checkpoints are not held in memory twice
+// while they are mapped to the model's weights, e.g. LFM2.5: 0.7 GB BF16 -> 1.4 GB float32 (+ transposed copies).
+// Tensors are copies: the data in the file is not necessarily 4-byte aligned, and tfjs needs separate buffers.
 // skip: names of tensors that are not needed (e.g. attention masks)
 export function parseSafetensors(buffer: ArrayBuffer, skip?: (name: string) => boolean) {
   const headerSize = Number(new DataView(buffer).getBigUint64(0, true))
@@ -38,16 +41,34 @@ export function parseSafetensors(buffer: ArrayBuffer, skip?: (name: string) => b
     },
   ] of Object.entries(header)) {
     if (skip?.(name)) continue
-    if (dtype !== "F32") throw new Error(`Unsupported dtype ${dtype} for ${name} (only F32)`)
-    const data = new Float32Array(buffer.slice(dataStart + start, dataStart + end))
-    tensors[name] = { dtype, shape, data }
+    const decode = decoders[dtype]
+    if (!decode) throw new Error(`Unsupported dtype ${dtype} for ${name} (only F32, BF16)`)
+    const [from, to] = [dataStart + start, dataStart + end]
+    tensors[name] = {
+      dtype,
+      shape,
+      get data() {
+        return decode(buffer.slice(from, to))
+      },
+    }
   }
   return tensors
 }
 
-// F32 only (as parseSafetensors), metadata values must be strings. The header is padded with spaces so that
-// the data starts 8-byte aligned (as in the reference implementation), the data is copied as it is in memory
-// (little-endian on all relevant platforms)
+const decoders: Record<string, (bytes: ArrayBuffer) => Float32Array> = {
+  F32: (bytes) => new Float32Array(bytes),
+  // bfloat16 = the upper 16 bits of a float32 (same sign and exponent, shorter mantissa): exact conversion
+  BF16: (bytes) => {
+    const bf16 = new Uint16Array(bytes)
+    const bits = new Uint32Array(bf16.length)
+    for (let i = 0; i < bf16.length; i++) bits[i] = bf16[i] << 16
+    return new Float32Array(bits.buffer)
+  },
+}
+
+// F32 only (parseSafetensors also reads BF16), metadata values must be strings. The header is padded with
+// spaces so that the data starts 8-byte aligned (as in the reference implementation), the data is copied as it
+// is in memory (little-endian on all relevant platforms)
 export function writeSafetensors(
   tensors: Record<string, Pick<SafeTensor, "shape" | "data">>,
   metadata: Record<string, string> = { format: "pt" },
