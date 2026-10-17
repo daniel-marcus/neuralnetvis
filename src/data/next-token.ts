@@ -35,10 +35,15 @@ export function sampleNextToken(
 // zeroes the weights outside the nucleus: the most likely tokens are kept until they reach topP of the total
 function keepNucleus(weights: number[], topP: number) {
   const target = topP * weights.reduce((a, b) => a + b, 0)
-  const order = Array.from(weights.keys()).toSorted((a, b) => weights[b] - weights[a])
-  let cumulative = 0
-  for (const token of order) {
-    if (cumulative >= target) weights[token] = 0
-    else cumulative += weights[token]
+  // the smallest weight in the nucleus (native numeric sort: fast for large vocabularies, GPT-2: 50257)
+  const sorted = Float64Array.from(weights).toSorted().toReversed()
+  let [cumulative, threshold] = [0, 0]
+  for (const weight of sorted) {
+    if (cumulative >= target) break
+    cumulative += weight
+    threshold = weight
   }
+  weights.forEach((weight, token) => {
+    if (weight < threshold) weights[token] = 0
+  })
 }

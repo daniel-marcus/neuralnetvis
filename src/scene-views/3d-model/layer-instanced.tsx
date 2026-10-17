@@ -97,15 +97,18 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   const layerActivations = useLayerActivations(props.index)
   // sort neurons by activation for output layers w/ many neurons
   const shouldSort = layerPos === "output" && h > OUTPUT_TRUNC_THRESHOLD
+  // ranks of the shown neurons only, the others are hidden (single pass instead of sorting, GPT-2: 50257)
   const idxMap = useMemo(() => {
-    if (!shouldSort || !layerActivations?.activations) return
-    const indexed = [...layerActivations.activations].map((v, i) => ({ v, i }))
-    const sorted = indexed.toSorted((a, b) => b.v - a.v)
-    const newIdxMap = new Map<number, number>()
-    sorted.forEach((item, sortedIndex) => {
-      newIdxMap.set(item.i, sortedIndex)
-    })
-    return newIdxMap
+    const acts = layerActivations?.activations
+    if (!shouldSort || !acts) return
+    const top: number[] = [] // neuron indices, sorted by activation
+    for (let i = 0; i < acts.length; i++) {
+      if (top.length === MAX_OUTPUT_NEURONS && acts[i] <= acts[top.at(-1)!]) continue
+      const rank = top.findIndex((j) => acts[i] > acts[j])
+      top.splice(rank === -1 ? top.length : rank, 0, i)
+      if (top.length > MAX_OUTPUT_NEURONS) top.pop()
+    }
+    return new Map(top.map((neuronIdx, rank) => [neuronIdx, rank]))
   }, [layerActivations, shouldSort])
 
   const positions: PosObj[] = useMemo(() => {
@@ -113,7 +116,7 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
     const arr = Array.from({ length: h * w * c })
     let hiddenIdx = -1
     return arr.map((_, i) => {
-      let sortedIdx = idxMap?.get(i) ?? i
+      let sortedIdx = idxMap ? (idxMap.get(i) ?? MAX_OUTPUT_NEURONS) : i
       const isHidden = shouldSort && sortedIdx >= MAX_OUTPUT_NEURONS
       if (isHidden) {
         sortedIdx = MAX_OUTPUT_NEURONS
@@ -135,9 +138,15 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
       meshRef.current?.setMatrixAt(i, tempObj.matrix)
     }
     meshRef.current.instanceMatrix.needsUpdate = true
-    meshRef.current.computeBoundingBox() // for measuring (useSize) & raycasting with the new layout
-    meshRef.current.computeBoundingSphere()
   }, [meshRef, tempObj, positions])
+
+  // for measuring (useSize) & raycasting with the new layout. Not when only the ranking changes (output layer):
+  // the shown neurons swap places, the bounds stay the same
+  const isRanked = !!idxMap
+  useLayoutEffect(() => {
+    meshRef.current?.computeBoundingBox()
+    meshRef.current?.computeBoundingSphere()
+  }, [meshRef, layerPos, spacedSize, h, w, c, isRanked])
 
   return positions
 }
