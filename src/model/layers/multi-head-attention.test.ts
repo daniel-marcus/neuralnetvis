@@ -240,6 +240,22 @@ describe("MultiHeadAttention causal mask cache", () => {
     expect(cache.size).toBe(1)
     expect([...cache.values()][0]).toBe(cached)
   })
+
+  it("keeps the masks of the last sequence lengths only", () => {
+    // e.g. LoRA training: batches trimmed to their longest sample
+    const layer = MultiHeadAttention.constructorFunc({ numHeads, keyDim }) as AttentionLayer
+    layer.apply([inp, inp], { useCausalMask: true })
+    const cache = (layer as unknown as { causalMasks: Map<string, unknown> }).causalMasks
+    const run = (length: number) =>
+      tf.tidy(() => layer.apply(tf.randomNormal([1, length, dim])) as tf.Tensor).dispose()
+    run(seqLen)
+    const numTensors = tf.memory().numTensors
+    for (let length = 1; length <= seqLen; length++) run(length)
+    expect(cache.size).toBe(4)
+    expect(tf.memory().numTensors).toBe(numTensors + 2 * 3) // 3 more masks + adders
+    expect([...cache.keys()]).toEqual(["3x3", "4x4", "5x5", "6x6"]) // seqLen 6
+    layer.dispose()
+  })
 })
 
 describe("getAttentionInputRange", () => {

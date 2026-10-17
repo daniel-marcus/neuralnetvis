@@ -14,12 +14,15 @@ const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H]
 
 type CausalMask = { mask: tf.Tensor; adder: tf.Tensor }
 
+// e.g. LoRA training trims each batch to its longest sample (see toTensors): a new length in almost every step
+const MAX_CAUSAL_MASKS = 4
+
 class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
   // Keras: mha(x, x, use_causal_mask=True). tfjs stores call kwargs on the node (and serializes them),
   // but predict/evaluate/fit don't pass them to call(), so keep it on the layer
   private useCausalMask = false
   // the causal mask only depends on the sequence lengths: computed once instead of in every call
-  // (tfjs: bandPart + the additive mask for the softmax, ~20 kernels per call)
+  // (tfjs: bandPart + the additive mask for the softmax, ~20 kernels per call), the most recently used lengths
   private causalMasks = new Map<string, CausalMask>()
 
   get isCausal() {
@@ -39,7 +42,9 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     const [qSeqLength, vSeqLength] = [query.shape[1]!, (value ?? query).shape[1]!]
     const cacheKey = `${qSeqLength}x${vSeqLength}`
     let cached = this.causalMasks.get(cacheKey)
-    if (!cached) {
+    if (cached) {
+      this.causalMasks.delete(cacheKey) // Map in insertion order: last = most recently used
+    } else {
       cached = tf.tidy(() => {
         // lower triangular matrix [1, T, S], as tfjs' computeCausalMask
         const mask = tf.linalg.bandPart(tf.ones([1, qSeqLength, vSeqLength], "bool"), -1, 0)
@@ -52,8 +57,14 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
           .expandDims(1)
         return { mask: tf.keep(mask), adder: tf.keep(adder) }
       })
-      this.causalMasks.set(cacheKey, cached)
+      if (this.causalMasks.size >= MAX_CAUSAL_MASKS) {
+        // safe to dispose: only used within a call, the tape keeps clones of the inputs for the gradients
+        const [oldestKey, oldest] = this.causalMasks.entries().next().value!
+        tf.dispose([oldest.mask, oldest.adder])
+        this.causalMasks.delete(oldestKey)
+      }
     }
+    this.causalMasks.set(cacheKey, cached)
     return cached
   }
 
