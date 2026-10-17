@@ -33,7 +33,9 @@ function useModelCreate(ds?: Dataset) {
   const [setModel] = useModelTransition(_setModel)
   const backendReady = useGlobalStore((s) => s.backendReady)
   const shouldLoadWeights = useSceneStore((s) => s.shouldLoadWeights)
+  const setLoadWeights = useSceneStore((s) => s.setLoadWeights)
   const configs = useSceneStore((s) => s.layerConfigs)
+  const cancelledDsKey = useRef<string>(undefined) // weights download cancelled: keep the preview model
   useEffect(() => {
     async function loadModel() {
       if (!ds || !backendReady) return
@@ -47,7 +49,19 @@ function useModelCreate(ds?: Dataset) {
 
       if (ds.model && !configs) {
         const noWeights = ds.model.lazyLoadWeights && !shouldLoadWeights
-        const pt = await getPretrained(ds.model, noWeights)
+        const isCancelled = cancelledDsKey.current === ds.key
+        cancelledDsKey.current = undefined
+        if (noWeights && isCancelled) return // the preview model is still there
+        // only by the cancel button: the effect also runs again for updated metadata (skipModelCreate)
+        const controller = new AbortController()
+        const onCancel = () => {
+          controller.abort()
+          cancelledDsKey.current = ds.key
+          setLoadWeights(false)
+        }
+        const { signal } = controller
+        const pt = await getPretrained(ds.model, noWeights, { signal, onCancel })
+        if (signal.aborted) return pt.model?.dispose()
         setModel(pt.model, pt.loadState, true)
       } else {
         const _model = getNewModel()
@@ -55,7 +69,7 @@ function useModelCreate(ds?: Dataset) {
       }
     }
     loadModel()
-  }, [backendReady, ds, configs, setModel, shouldLoadWeights])
+  }, [backendReady, ds, configs, setModel, setLoadWeights, shouldLoadWeights])
   return model
 }
 
@@ -64,12 +78,19 @@ type GetPretrainedModelResult = {
   loadState: ModelLoadState
 }
 
+interface DownloadOptions {
+  signal?: AbortSignal // cancels the download
+  onCancel?: () => void // for the cancel button in the status
+}
+
 async function getPretrained(
   modelDef: ModelDef,
   noWeights?: boolean,
+  { signal, onCancel }: DownloadOptions = {},
 ): Promise<GetPretrainedModelResult> {
   const { path, version, safetensors } = modelDef
   removeLegacyCache()
+  let statusId: string | undefined
   try {
     // weights already downloaded: load the full model also for previews
     if (noWeights && !(await isModelCached(modelDef))) {
@@ -78,21 +99,31 @@ async function getPretrained(
         : await tf.loadLayersModel(path, { streamWeights: true })
       return { model, loadState: "no-weights" }
     }
-    const statusId = setStatus(`Loading model weights ...`, 0)
+    const cancel = () => {
+      clearStatus(id)
+      onCancel?.()
+    }
+    const id = setStatus(<DownloadStatus onCancel={onCancel && cancel} />, 0)
+    statusId = id
     const time = getTimer()
     // download first (with progress), then build the model: tfjs creates all variables with random
     // initial values before assigning the weights, see loadLayersModelFromIOHandler
-    const fetchFunc = await getCachedFetch(version, (percent) =>
-      setStatus(`Loading model weights (${Math.round(percent * 100)}%)`, percent, {
-        id: statusId,
-      }),
-    )
+    const onProgress = (loaded: number, total: number) =>
+      setStatus(
+        <DownloadStatus {...{ loaded, total }} onCancel={onCancel && cancel} />,
+        loaded / total,
+        {
+          id,
+        },
+      )
+    const fetchFunc = await getCachedFetch(version, onProgress, signal)
     let artifacts: tf.io.ModelArtifacts | undefined
     if (safetensors) {
       const modelJson = (await (await fetchFunc(path)).json()) as tf.io.ModelJSON
       const weightsBuffer = await (await fetchFunc(safetensors.url)).arrayBuffer()
       time("download")
-      setStatus(`Initializing model ...`, -1, { id: statusId })
+      signal?.throwIfAborted() // e.g. from the cache
+      setStatus(`Initializing model ...`, -1, { id })
       const weightSpecs = modelJson.weightsManifest.flatMap((group) => group.weights)
       const weightData = getWeightsFromSafetensors(weightsBuffer, weightSpecs, safetensors.mapper)
       artifacts = { modelTopology: modelJson.modelTopology, weightSpecs, weightData }
@@ -101,17 +132,44 @@ async function getPretrained(
       artifacts = await tf.io.http(path, { fetchFunc }).load?.()
       if (!artifacts) throw new Error("No model artifacts")
       time("download")
-      setStatus(`Initializing model ...`, -1, { id: statusId })
+      signal?.throwIfAborted()
+      setStatus(`Initializing model ...`, -1, { id })
     }
     const model = await tf.loadLayersModel(tf.io.fromMemory(artifacts))
     time("init")
-    clearStatus(statusId)
+    clearStatus(id)
     removeOldVersions(modelDef)
     return { model, loadState: "full" }
   } catch (e) {
-    console.warn("Failed to load pretrained model from", path, e)
+    if (statusId) clearStatus(statusId)
+    if (!signal?.aborted) console.warn("Failed to load pretrained model from", path, e)
     return { model: undefined, loadState: null }
   }
+}
+
+const mb = (bytes: number, digits: number) => (bytes / 1e6).toFixed(digits)
+
+interface DownloadStatusProps {
+  loaded?: number // bytes
+  total?: number
+  onCancel?: () => void
+}
+
+// "Loading model weights", e.g. "12.8/709 MB (2 %)" and "cancel" in the rows below
+function DownloadStatus({ loaded = 0, total, onCancel }: DownloadStatusProps) {
+  return (
+    <>
+      <div>Loading model weights</div>
+      {!!total && (
+        <div>{`${mb(loaded, 1)}/${mb(total, 0)} MB (${Math.floor((loaded / total) * 100)} %)`}</div>
+      )}
+      {onCancel && (
+        <button className="text-muted hover:text-accent active:text-accent" onClick={onCancel}>
+          cancel
+        </button>
+      )}
+    </>
+  )
 }
 
 // model with random initial weights

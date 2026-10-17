@@ -24,24 +24,31 @@ function getCacheKey(url: string, version: string) {
 
 // fetchFunc for tf.io.http: from the cache if available, otherwise download and store in the cache.
 // onProgress: bytes of all weight files (from network or cache), model.json is not counted
-export async function getCachedFetch(version: string, onProgress?: (percent: number) => void) {
+// signal: cancels the downloads (nothing is cached then)
+export async function getCachedFetch(
+  version: string,
+  onProgress?: (loadedBytes: number, totalBytes: number) => void,
+  signal?: AbortSignal,
+) {
   const cache = await openCache()
   const loaded: Record<string, number> = {}
   const total: Record<string, number> = {}
   const cb: OnProgressCb = ({ path, loadedBytes, totalBytes }) => {
     loaded[path] = loadedBytes
     total[path] = totalBytes
-    onProgress?.(sum(loaded) / sum(total))
+    onProgress?.(sum(loaded), sum(total))
   }
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = input instanceof Request ? input.url : input.toString()
     const key = getCacheKey(url, version)
     let response = await cache?.match(key)
     if (!response) {
-      response = await fetch(url, init)
+      response = await fetch(url, { ...init, signal })
       if (cache && response.ok) {
         // not awaited: the body is read for the cache and for tfjs at the same time
-        cache.put(key, response.clone()).catch((e) => console.warn("Failed to cache", url, e))
+        cache.put(key, response.clone()).catch((e) => {
+          if (!signal?.aborted) console.warn("Failed to cache", url, e)
+        })
       }
     }
     const isWeights = !new URL(url, location.href).pathname.endsWith(".json")
