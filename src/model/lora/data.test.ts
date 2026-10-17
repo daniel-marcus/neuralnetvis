@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import type { TokenizerType } from "@/data/tokenizer"
-import { addTrainData, resetData } from "@/data/dataset"
+import { addTrainData, getTextSamples, resetData, saveTextSamples } from "@/data/dataset"
 import { gpt2 } from "@/data/datasets/gpt2"
 import type { Dataset } from "@/data/types"
 import {
@@ -128,7 +128,7 @@ describe("shuffle, getBatches, toTensors", () => {
 })
 
 describe("samples as training data", () => {
-  it("takes the text tokens of a sample and adds <END>", () => {
+  it("takes the text tokens of a sample and adds <END>, except for full samples (continued)", () => {
     expect([...sampleToTokens([END, 5, 6, 7, END, END], fakeTokenizer)]).toEqual([
       END,
       5,
@@ -136,7 +136,7 @@ describe("samples as training data", () => {
       7,
       END,
     ])
-    expect([...sampleToTokens([END, 5, 6, 7], fakeTokenizer)]).toEqual([END, 5, 6, 7, END]) // full
+    expect([...sampleToTokens([END, 5, 6, 7], fakeTokenizer)]).toEqual([END, 5, 6, 7]) // full
   })
 
   it("loads one window per stored sample", async () => {
@@ -158,8 +158,46 @@ describe("samples as training data", () => {
     const windows = await loadTrainingWindows({ ...ds, train: meta, tokenizer: fakeTokenizer })
     expect(toArrays(windows)).toEqual([
       { x: [END, 5, END, END], y: [5, END, END, END], mask: [1, 1, 0, 0] },
-      { x: [END, 6, 7, 8], y: [6, 7, 8, END], mask: [1, 1, 1, 1] },
+      // full: continued by the next sample, no <END> (8: the last token has no target, no input)
+      { x: [END, 6, 7, END], y: [6, 7, 8, END], mask: [1, 1, 1, 0] },
       { x: [END, 9, 10, END], y: [9, 10, END, END], mask: [1, 1, 1, 0] },
+    ])
+  })
+
+  it("splits long texts into samples that give the same targets as one long text, <END> only at the end", async () => {
+    // chars as tokens (a = 1, b = 2, ...), <START> = <END> = <PAD> = 0 as in GPT-2
+    const tokenizer = {
+      ...fakeTokenizer,
+      encode: (text: string) =>
+        Int32Array.from([END, ...[...text].map((c) => c.charCodeAt(0) - 96)]),
+    } as unknown as TokenizerType
+    const ds = {
+      ...gpt2,
+      key: "lora_split_test",
+      inputDims: [4],
+      storeBatchSize: 2,
+      tokenizer,
+    } as Dataset
+    await resetData(ds.key, "train")
+    const samples = getTextSamples(ds, [
+      { text: "abcdefg", name: "long.txt" },
+      { text: " \n " }, // empty: skipped
+      { text: "ab" },
+    ])
+    expect(samples.map((s) => [[...s.X], s.name])).toEqual([
+      [[END, 1, 2, 3], "long.txt (1/3)"],
+      [[3, 4, 5, 6], "long.txt (2/3)"], // starts with the last token of the previous sample
+      [[6, 7, END, END], "long.txt (3/3)"],
+      [[END, 1, 2, END], ""],
+    ])
+    const meta = await saveTextSamples(ds, samples)
+    const windows = await loadTrainingWindows({ ...ds, train: meta })
+    const targets = (w: (typeof windows)[number]) => [...w.y].filter((_, i) => w.mask[i])
+    expect(windows.map(targets)).toEqual([
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, END],
+      [1, 2, END],
     ])
   })
 })

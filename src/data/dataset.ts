@@ -229,15 +229,53 @@ async function saveData(
   return storeMeta
 }
 
-// nextToken: the text as training sample, encoded as in the input area (targets: the tokens shifted by one)
-export async function addTextSample(ds: Dataset, text: string) {
-  if (!ds.tokenizer || ds.task !== "nextToken")
+export interface TextSample {
+  X: Int32Array // [seqLen], padded
+  name: string // e.g. "notes.txt (2/7)", "" for typed texts
+}
+
+// nextToken: texts as training samples, encoded as in the input area. Longer texts are split into samples of
+// seqLen tokens: only the first one starts with <START>, each next one with the last token of the previous one
+// (its target is the next sample's 2nd token). Full samples are continued, without <END> in the training data,
+// the last sample is always shorter (see sampleToTokens). Empty texts are skipped.
+export function getTextSamples(ds: Dataset, texts: { text: string; name?: string }[]) {
+  const { tokenizer } = ds
+  if (!tokenizer || ds.task !== "nextToken")
     throw new Error("Text samples need a nextToken dataset")
   const [seqLen] = ds.inputDims
-  const X = Int32Array.from(ds.tokenizer.encode(text, seqLen))
-  const y = new Int32Array(seqLen).fill(ds.tokenizer.encodeDict["<PAD>"])
-  y.set(X.subarray(1))
-  return addTrainData(ds, { data: X, shape: [1, seqLen] }, { data: y, shape: [1, seqLen] })
+  const pad = tokenizer.encodeDict["<PAD>"]
+  const stride = seqLen - 1
+  return texts
+    .filter(({ text }) => text.trim())
+    .flatMap(({ text, name = "" }) => {
+      const tokens = tokenizer.encode(text)
+      const numSamples = Math.floor((tokens.length - 1) / stride) + 1
+      return Array.from({ length: numSamples }, (_, i): TextSample => {
+        const X = new Int32Array(seqLen).fill(pad)
+        X.set(tokens.subarray(i * stride, i * stride + seqLen))
+        return { X, name: name && numSamples > 1 ? `${name} (${i + 1}/${numSamples})` : name }
+      })
+    })
+}
+
+// appended to the train samples (targets: the tokens shifted by one)
+export async function saveTextSamples(ds: Dataset, samples: TextSample[]) {
+  const [seqLen] = ds.inputDims
+  const xs = new Int32Array(samples.length * seqLen)
+  const ys = new Int32Array(samples.length * seqLen).fill(ds.tokenizer!.encodeDict["<PAD>"])
+  for (const [i, { X }] of samples.entries()) {
+    xs.set(X, i * seqLen)
+    ys.set(X.subarray(1), i * seqLen)
+  }
+  const shape = [samples.length, seqLen]
+  // always with names: otherwise the names of the samples in a partly filled last batch would be lost
+  const names = samples.map((s) => s.name)
+  return saveData(ds, "train", { data: xs, shape }, { data: ys, shape }, undefined, names, false)
+}
+
+// nextToken: the text typed in the input area as training sample(s)
+export async function addTextSample(ds: Dataset, text: string) {
+  return saveTextSamples(ds, getTextSamples(ds, [{ text }]))
 }
 
 function prepend<T extends ParsedLike["data"]>(prev: ParsedLike["data"] | undefined, data: T): T {

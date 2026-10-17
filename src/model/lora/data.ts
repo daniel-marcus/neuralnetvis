@@ -134,11 +134,13 @@ export function toTensors(windows: TokenWindow[]): TokenBatch {
   }
 }
 
-// sample of a nextToken dataset (tokens as in the input area, padded) -> <START> text <END>
+// sample of a nextToken dataset (tokens as in the input area, padded) -> <START> text <END>.
+// A sample that fills the whole window is continued by the next one (long texts, see getTextSamples): no <END>
 export function sampleToTokens(X: ArrayLike<number>, tokenizer: TokenizerType) {
   const end = tokenizer.encodeDict["<END>"]
   const length = getSeqPosition(X, tokenizer) + 1 // up to the last token of the text
-  return Int32Array.from([...Array.from(X).slice(0, length), end])
+  const tokens = Array.from(X).slice(0, length)
+  return Int32Array.from(length < X.length ? [...tokens, end] : tokens)
 }
 
 // the train samples of the dataset (e.g. texts saved in the input area), one window per sample
