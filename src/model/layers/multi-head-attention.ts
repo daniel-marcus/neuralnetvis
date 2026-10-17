@@ -128,6 +128,25 @@ class Keras3MultiHeadAttentionLayer extends MultiHeadAttentionLayer {
     >
   }
 
+  /**
+   * Self-attention of new positions x [B, T, D] to the cached positions and themselves (KV cache, see
+   * IncrementalActivations). Returns the output [B, T, D] and the keys and values of all positions.
+   */
+  attendWithCache(x: tf.Tensor, cached?: CachedKeysValues) {
+    const project = (dense: EinsumDense) => toHeadsFirst(dense.apply(x) as tf.Tensor) // [B, N, T, H]
+    const [newKey, newValue] = [project(this.keyDense), project(this.valueDense)]
+    const key = cached ? tf.concat([cached.key, newKey], 2) : newKey // [B, N, S, H]
+    const value = cached ? tf.concat([cached.value, newValue], 2) : newValue
+    const query = project(this.queryDense).mul(1 / Math.sqrt(this.keyDim))
+    const scores = tf.matMul(query, key, false, true) // [B, N, T, S]
+    const [numQueries, offset] = [x.shape[1]!, cached?.key.shape[2] ?? 0]
+    const weights = tf.softmax(
+      numQueries > 1 ? scores.add(causalAdder(numQueries, offset)) : scores,
+    )
+    const output = toHeadsFirst(tf.matMul(weights, value)) // [B, T, N, H]
+    return { output: this.outputDense.apply(output) as tf.Tensor, key, value }
+  }
+
   getAttentionScores(query: tf.Tensor, value = query, key?: tf.Tensor) {
     // returns [batch, numHeads, queryLength, keyLength]
     const { useCausalMask } = this
@@ -229,6 +248,21 @@ function replaceEinsumWithMatMul(dense: EinsumDense) {
 // query, key, value and output projections of a MultiHeadAttention layer
 export function getProjections(layer: Layer) {
   return layer instanceof Keras3MultiHeadAttentionLayer ? layer.getProjections() : undefined
+}
+
+// keys and values of all positions so far [B, N, S, H]
+export type CachedKeysValues = { key: tf.Tensor; value: tf.Tensor }
+
+// see Keras3MultiHeadAttentionLayer.attendWithCache
+export function attendWithCache(layer: Layer, x: tf.Tensor, cached?: CachedKeysValues) {
+  if (!(layer instanceof Keras3MultiHeadAttentionLayer)) throw new Error("Not an attention layer")
+  return layer.attendWithCache(x, cached)
+}
+
+// [T, S] added to the scores: 0 for the keys up to each query's position (offset + i), -1e9 for later ones
+function causalAdder(numQueries: number, offset: number) {
+  const allowed = tf.linalg.bandPart(tf.ones([numQueries, offset + numQueries]), -1, offset)
+  return tf.scalar(1).sub(allowed).mul(-1e9)
 }
 
 // each neuron is connected to all neurons at the positions (e.g. tokens) it can attend to:

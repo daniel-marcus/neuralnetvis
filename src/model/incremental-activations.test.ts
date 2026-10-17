@@ -11,7 +11,7 @@ import {
 } from "@tensorflow/tfjs-layers/dist/exports_layers"
 import type { SymbolicTensor } from "@tensorflow/tfjs-layers/dist/engine/topology"
 import { MultiHeadAttention } from "./layers/multi-head-attention"
-import { IncrementalActivations, KVCache } from "./kv-cache"
+import { IncrementalActivations } from "./incremental-activations"
 
 const [vocabSize, seqLen, dim] = [11, 8, 8]
 
@@ -35,47 +35,9 @@ function createDecoder() {
   return createModel({ inputs: inp, outputs: out }) as unknown as tf.LayersModel
 }
 
-// next-token probabilities after the tokens with a full forward pass (padded input, causal: padding is ignored)
-function predictNext(model: tf.LayersModel, tokens: number[]) {
-  return tf.tidy(() => {
-    const probs = model.predict(tf.tensor2d([pad(tokens)], [1, seqLen], "int32")) as tf.Tensor
-    return probs.slice([0, tokens.length - 1], [1, 1]).reshape([-1])
-  })
-}
-
 const tokens = [3, 1, 4, 1, 5, 9, 2, 6]
 const pad = (text: number[]) => [...text, ...Array(seqLen - text.length).fill(0)]
 const maxDiff = (a: tf.Tensor, b: tf.Tensor) => tf.tidy(() => a.sub(b).abs().max().dataSync()[0])
-
-describe("KVCache", () => {
-  const model = createDecoder()
-
-  it("predicts the same as a full forward pass: prompt, then one token at a time", () => {
-    const cache = new KVCache(model)
-    const prompt = 3
-    const steps = [tokens.slice(0, prompt), ...tokens.slice(prompt).map((t) => [t])]
-    for (const step of steps) {
-      const [output] = cache.append(step) // [1, T, vocab]
-      const probs = output.slice([0, step.length - 1], [1, 1]).reshape([-1])
-      const expected = predictNext(model, tokens.slice(0, cache.length))
-      expect(probs.shape).toEqual([vocabSize])
-      expect(maxDiff(probs, expected)).toBeLessThan(1e-5)
-      tf.dispose([output, probs, expected])
-    }
-    expect(cache.length).toBe(tokens.length)
-    cache.dispose()
-  })
-
-  it("keeps only the cached keys and values between steps", () => {
-    const cache = new KVCache(model)
-    tf.dispose(cache.append(tokens.slice(0, 2)))
-    const numTensors = tf.memory().numTensors
-    tf.dispose(cache.append([tokens[2]]))
-    expect(tf.memory().numTensors).toBe(numTensors) // replaced, not added
-    cache.dispose()
-    expect(tf.memory().numTensors).toBe(numTensors - 2 * 2) // key + value of 2 attention layers
-  })
-})
 
 describe("IncrementalActivations", () => {
   const model = createDecoder()
@@ -103,7 +65,8 @@ describe("IncrementalActivations", () => {
 
   it("matches a full forward pass while the text grows and after an edit", () => {
     const incremental = new IncrementalActivations(model, outputs)
-    const texts = [tokens.slice(0, 3), tokens.slice(0, 4), tokens.slice(0, 6), [7, 7, 7, 7, 7]]
+    // prompt, one token, two tokens (causal mask with an offset), one token, edited text
+    const texts = [3, 4, 6, 7].map((n) => tokens.slice(0, n)).concat([[7, 7, 7, 7, 7]])
     for (const text of texts) {
       const activations = incremental.update(text, outputs)!
       expectSameAsFullPass(activations, text)
@@ -113,7 +76,7 @@ describe("IncrementalActivations", () => {
     expect(incremental.update(tokens, outputs)).toBeUndefined()
   })
 
-  it("keeps only the rows of the current text", () => {
+  it("keeps only the rows and the keys and values of the current text", () => {
     const incremental = new IncrementalActivations(model, outputs)
     tf.dispose(incremental.update(tokens.slice(0, 2), outputs))
     const numTensors = tf.memory().numTensors
