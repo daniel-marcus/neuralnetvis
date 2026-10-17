@@ -2,7 +2,8 @@ import { useEffect } from "react"
 import * as tf from "@tensorflow/tfjs"
 import throttle from "lodash.throttle"
 import { getScene, setStatus, useSceneStore } from "@/store"
-import { attachLora } from "./adapter"
+import { attachLora, type LoraAdapter } from "./adapter"
+import { exportPeft, importPeft, PEFT_CONFIG_FILE, PEFT_WEIGHTS_FILE } from "./peft"
 import { loadTrainingWindows } from "./data"
 import { LoraTrainer } from "./train"
 import type { LayersModel } from "@tensorflow/tfjs-layers"
@@ -61,6 +62,45 @@ function getOrCreateLora(model: LayersModel, learningRate: number): LoraState {
   const lora = { adapter, trainer: new LoraTrainer(model, adapter, learningRate) }
   scene.setLora(lora)
   return lora
+}
+
+// PEFT files of the adapter (see peft.ts), base model: Hugging Face repo of the model
+export async function exportLora(adapter: LoraAdapter, ds?: Dataset) {
+  const baseModel = ds?.model?.sourceUrl?.match(/^https:\/\/huggingface\.co\/(.+)$/)?.[1]
+  const { weights, config } = await exportPeft(adapter, baseModel)
+  return [
+    new File([weights], PEFT_WEIGHTS_FILE),
+    new File([JSON.stringify(config, null, 2)], PEFT_CONFIG_FILE, { type: "application/json" }),
+  ]
+}
+
+// replaces the current adapter (kept if the import fails), the training starts again (new optimizer and logs)
+export async function importLora(model: LayersModel, files: File[]) {
+  const weightsFile = files.find((f) => f.name.endsWith(".safetensors"))
+  const configFile = files.find((f) => f.name.endsWith(".json"))
+  if (!weightsFile || !configFile) {
+    throw new Error(`Select ${PEFT_WEIGHTS_FILE} and ${PEFT_CONFIG_FILE}`)
+  }
+  const [buffer, config] = await Promise.all([
+    weightsFile.arrayBuffer(),
+    configFile.text().then(JSON.parse),
+  ])
+  const scene = getScene().getState()
+  if (scene.isTraining) throw new Error("Stop the training first")
+  const old = scene.lora?.adapter
+  const wasEnabled = !!old?.enabled
+  if (wasEnabled) old!.setEnabled(false) // the projections can only have one adapter
+  let adapter: LoraAdapter | undefined
+  try {
+    adapter = importPeft(model, buffer, config)
+    const trainer = new LoraTrainer(model, adapter, scene.trainConfig.learningRate)
+    scene.setLora({ adapter, trainer }) // the old one is disposed in useLora
+  } catch (e) {
+    adapter?.detach()
+    if (wasEnabled) old!.setEnabled(true)
+    throw e
+  }
+  scene.resetTrainCounts()
 }
 
 export async function trainLora(

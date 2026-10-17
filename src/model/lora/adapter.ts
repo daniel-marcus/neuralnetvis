@@ -36,6 +36,8 @@ export class LoraAdapter {
   readonly config: LoraConfig
   // e.g. "multi_head_attention_12/qkv/A", "multi_head_attention_12/qkv/B_query", "multi_head_attention_12/output/A"
   readonly weights = new Map<string, tf.Variable>()
+  // adapted MultiHeadAttention layers in the order of the model (e.g. the transformer blocks)
+  readonly layerNames: string[] = []
   private deltas = new Map<Projection, ProjectionDelta>()
   private _enabled = true
   private _isDetached = false
@@ -70,6 +72,7 @@ export class LoraAdapter {
       if (!layers.length)
         throw new Error("LoRA: no MultiHeadAttention layers with matMul projections")
       for (const layer of layers) {
+        this.layerNames.push(layer.name)
         const projections = getProjections(layer)!
         if (hasQkv) {
           const key = `${layer.name}/qkv`
@@ -114,6 +117,22 @@ export class LoraAdapter {
     if (this._isDetached) throw new Error("LoRA: adapter is detached")
     this.setDeltas(enabled)
     this._enabled = enabled
+  }
+
+  // e.g. imported weights (see peft.ts): all keys with the same shapes, nothing is assigned if one doesn't match
+  setWeights(values: Map<string, tf.Tensor>) {
+    if (this._isDetached) throw new Error("LoRA: adapter is detached")
+    for (const key of values.keys()) {
+      if (!this.weights.has(key)) throw new Error(`LoRA: unknown weight ${key}`)
+    }
+    for (const [key, variable] of this.weights) {
+      const value = values.get(key)
+      if (!value) throw new Error(`LoRA: missing weight ${key}`)
+      if (!tf.util.arraysEqual(value.shape, variable.shape)) {
+        throw new Error(`LoRA: ${key} has shape [${value.shape}], expected [${variable.shape}]`)
+      }
+    }
+    for (const [key, variable] of this.weights) variable.assign(values.get(key)!)
   }
 
   // restores the base model and disposes the weights

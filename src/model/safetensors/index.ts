@@ -45,6 +45,34 @@ export function parseSafetensors(buffer: ArrayBuffer, skip?: (name: string) => b
   return tensors
 }
 
+// F32 only (as parseSafetensors), metadata values must be strings. The header is padded with spaces so that
+// the data starts 8-byte aligned (as in the reference implementation), the data is copied as it is in memory
+// (little-endian on all relevant platforms)
+export function writeSafetensors(
+  tensors: Record<string, Pick<SafeTensor, "shape" | "data">>,
+  metadata: Record<string, string> = { format: "pt" },
+) {
+  const header: Record<string, unknown> = { __metadata__: metadata }
+  let offset = 0
+  for (const [name, { shape, data }] of Object.entries(tensors)) {
+    header[name] = { dtype: "F32", shape, data_offsets: [offset, offset + data.byteLength] }
+    offset += data.byteLength
+  }
+  const json = new TextEncoder().encode(JSON.stringify(header))
+  const headerSize = Math.ceil(json.length / 8) * 8
+  const buffer = new ArrayBuffer(8 + headerSize + offset)
+  new DataView(buffer).setBigUint64(0, BigInt(headerSize), true)
+  const bytes = new Uint8Array(buffer)
+  bytes.fill(0x20, 8, 8 + headerSize)
+  bytes.set(json, 8)
+  let pos = 8 + headerSize
+  for (const { data } of Object.values(tensors)) {
+    bytes.set(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), pos)
+    pos += data.byteLength
+  }
+  return buffer
+}
+
 // maps the tensors of a checkpoint to the weights of the tfjs model, in the order of weightSpecs
 export type SafetensorsMapper = {
   skip?: (name: string) => boolean

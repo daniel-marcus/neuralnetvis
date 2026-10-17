@@ -56,7 +56,7 @@ export const Train = () => {
               {loraEnabled ? "show base" : "show fine-tuned"}
             </Button>
           )}
-          {!!batchCount && !(isLora && isTraining) && (
+          {(!!batchCount || hasLora) && !(isLora && isTraining) && (
             <Button variant="secondary" onClick={isLora ? resetLora : resetWeights}>
               reset
             </Button>
