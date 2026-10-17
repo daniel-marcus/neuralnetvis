@@ -26,7 +26,7 @@ const toHeadsFirst = (t: tf.Tensor) => t.transpose([0, 2, 1, 3]) // [B, T, N, H]
 /**
  * Next-token prediction without recomputing the previous positions (autocomplete): the attention layers keep
  * the keys and values of all positions so far, the other layers compute each position on its own.
- * Runs only the tokens (no padding), only the output of the model (no activations for the visualization).
+ * Runs only the tokens (no padding).
  */
 export class KVCache {
   private cache = new Map<tf.layers.Layer, { key: tf.Tensor; value: tf.Tensor }>() // [1, N, S, H]
@@ -40,10 +40,10 @@ export class KVCache {
       throw new Error(`KV cache: ${unsupported.sourceLayer.getClassName()} not supported`)
   }
 
-  // appends the tokens (prompt or the next token), returns the probabilities for the next one [vocab]
-  append(tokens: number[]): tf.Tensor1D {
+  // appends the tokens (prompt or the next token), returns the outputs at their positions [1, T, ...]
+  append(tokens: number[], outputs = this.model.outputs): tf.Tensor[] {
     const offset = this.length
-    const probs = tf.tidy(() => {
+    const result = tf.tidy(() => {
       const input = tf.tensor2d([tokens], [1, tokens.length], "int32")
       const values = new Map<tf.SymbolicTensor, tf.Tensor>([[this.model.inputs[0], input]])
       const mask = tokens.length > 1 ? causalMask(tokens.length, offset) : undefined
@@ -60,11 +60,10 @@ export class KVCache {
               : layer.apply(inputs)
         values.set(symbolic, output as tf.Tensor)
       }
-      const output = values.get(this.model.outputs[0])! // [1, T, vocab]
-      return output.slice([0, tokens.length - 1], [1, 1]).reshape([-1]) as tf.Tensor1D
+      return outputs.map((t) => values.get(t)!)
     })
     this.length += tokens.length
-    return probs
+    return result
   }
 
   // self-attention of the new positions to all positions so far
@@ -89,6 +88,74 @@ export class KVCache {
     for (const { key, value } of this.cache.values()) tf.dispose([key, value])
     this.cache.clear()
     this.length = 0
+  }
+}
+
+/**
+ * Activations of the visualized layers for a growing text (autocomplete, typing at the end): only the new
+ * positions are computed (KV cache), the previous ones are kept. Otherwise starts over with the whole text.
+ * Padding positions are zeros (full forward pass: the activations for the padding tokens).
+ */
+export class IncrementalActivations {
+  private cache: KVCache
+  private tokens: number[] = []
+  private rows = new Map<tf.SymbolicTensor, tf.Tensor>() // [1, L, ...]: the positions so far
+  private isDisposed = false
+
+  constructor(
+    private model: tf.LayersModel,
+    private outputs: tf.SymbolicTensor[], // all visualized layers
+  ) {
+    this.cache = new KVCache(model)
+  }
+
+  // [1, seqLen, ...] for the requested outputs, the model output only at the last token [1, 1, ...]
+  // undefined if disposed in the meantime (e.g. new model)
+  update(tokens: number[], requested: tf.SymbolicTensor[]): tf.Tensor[] | undefined {
+    if (this.isDisposed) return
+    const isAppended = this.tokens.every((token, i) => token === tokens[i])
+    if (!isAppended || tokens.length < this.tokens.length) this.reset()
+    const newTokens = tokens.slice(this.tokens.length)
+    if (newTokens.length) this.append(newTokens)
+    const seqLen = this.model.inputs[0].shape[1]!
+    return tf.tidy(() =>
+      requested.map((output) => {
+        const rows = this.rows.get(output)!
+        if (output === this.model.outputs[0]) return rows.clone()
+        const padding = rows.shape.map((size, axis) => [0, axis === 1 ? seqLen - size : 0])
+        return tf.pad(rows, padding as [number, number][])
+      }),
+    )
+  }
+
+  private append(newTokens: number[]) {
+    const newRows = this.cache.append(newTokens, this.outputs)
+    for (const [i, output] of this.outputs.entries()) {
+      const prev = this.rows.get(output)
+      const isModelOutput = output === this.model.outputs[0] // only the last position (vocabulary size)
+      const rows = tf.tidy(() =>
+        isModelOutput
+          ? newRows[i].slice([0, newTokens.length - 1], [1, 1])
+          : prev
+            ? tf.concat([prev, newRows[i]], 1)
+            : newRows[i].clone(),
+      )
+      this.rows.set(output, rows)
+      tf.dispose([prev, newRows[i]].filter((t) => !!t))
+    }
+    this.tokens.push(...newTokens)
+  }
+
+  private reset() {
+    tf.dispose([...this.rows.values()])
+    this.rows.clear()
+    this.cache.dispose()
+    this.tokens = []
+  }
+
+  dispose() {
+    this.reset()
+    this.isDisposed = true
   }
 }
 

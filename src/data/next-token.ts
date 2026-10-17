@@ -34,16 +34,33 @@ export function sampleNextToken(
 
 // zeroes the weights outside the nucleus: the most likely tokens are kept until they reach topP of the total
 function keepNucleus(weights: number[], topP: number) {
-  const target = topP * weights.reduce((a, b) => a + b, 0)
-  // the smallest weight in the nucleus (native numeric sort: fast for large vocabularies, GPT-2: 50257)
-  const sorted = Float64Array.from(weights).toSorted().toReversed()
-  let [cumulative, threshold] = [0, 0]
-  for (const weight of sorted) {
-    if (cumulative >= target) break
-    cumulative += weight
-    threshold = weight
-  }
+  const threshold = getNucleusThreshold(weights, topP * weights.reduce((a, b) => a + b, 0))
   weights.forEach((weight, token) => {
     if (weight < threshold) weights[token] = 0
   })
+}
+
+// the smallest weight in the nucleus without sorting (GPT-2: 50257 tokens, the nucleus can be thousands):
+// partitions around a random pivot and continues with the side that contains the threshold (weighted quickselect)
+function getNucleusThreshold(weights: number[], target: number) {
+  if (target <= 0) return 0
+  let values = Float64Array.from(weights)
+  for (;;) {
+    const pivot = values[Math.floor(Math.random() * values.length)]
+    const [upper, lower] = [new Float64Array(values.length), new Float64Array(values.length)]
+    let [numUpper, numLower, upperSum, pivotSum] = [0, 0, 0, 0]
+    for (const value of values) {
+      if (value > pivot) {
+        upper[numUpper++] = value
+        upperSum += value
+      } else if (value < pivot) lower[numLower++] = value
+      else pivotSum += value
+    }
+    if (upperSum >= target) values = upper.subarray(0, numUpper) // the threshold is larger than the pivot
+    else if (upperSum + pivotSum >= target || !numLower) return pivot // (no smaller weights: rounding errors)
+    else {
+      target -= upperSum + pivotSum // still needed from the smaller weights
+      values = lower.subarray(0, numLower)
+    }
+  }
 }

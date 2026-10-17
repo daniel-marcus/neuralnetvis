@@ -10,6 +10,7 @@ import { normalize, scaleNormalize } from "@/data/utils"
 import { getSeqPosition } from "@/data/next-token"
 import { imageInputRanges } from "@/data/preprocess"
 import { getTokenAttribution } from "./token-attribution"
+import { IncrementalActivations } from "./kv-cache"
 import type Backend from "three/src/renderers/common/Backend.js"
 import type { NeuronLayer } from "@/neuron-layers"
 import type { LayerActivations } from "./types"
@@ -36,6 +37,8 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
   // keep track which layers already show the current sample
   const updateTracker = useRef<UpdateTracker>(new Map())
   const latestSampleIdx = useRef<Sample["index"]>(-1)
+  // nextToken: only the new positions of a growing text, null: model not supported (see IncrementalActivations)
+  const incremental = useRef<IncrementalActivations | null>(undefined)
 
   const maybeUpdate = useCallback(
     async (sample?: Sample, focusIdx?: number) => {
@@ -60,6 +63,9 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
       const tokenInput = ds?.tokenizer ? { tokenizer: ds.tokenizer, task: ds.task } : undefined
       const inputRange = ds?.preprocessFunc && imageInputRanges[ds.preprocessFunc]
       const isStale = () => latestSampleIdx.current !== sample.index // model changed (see reset below)
+      if (ds?.task === "nextToken" && incremental.current === undefined) {
+        incremental.current = createIncremental(model, layers)
+      }
 
       const t0 = performance.now()
       // let lastYield = t0
@@ -79,6 +85,7 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
           tokenInput,
           inputRange,
           isStale,
+          incremental.current ?? undefined,
         )
         if (!newActivations) return // aborted
         setActivations(newActivations)
@@ -101,6 +108,8 @@ export function ActivationUpdater({ layers }: { layers: NeuronLayer[] }) {
     return () => {
       updateTracker.current.clear()
       latestSampleIdx.current = -1
+      incremental.current?.dispose()
+      incremental.current = undefined
     }
   }, [maybeUpdate])
 
@@ -161,17 +170,23 @@ async function getActivations(
   tokenInput?: TokenInput, // input layer colors for tokenizer datasets, see getTokenInputColors
   inputRange?: [number, number], // value range of preprocessed images, see imageInputRanges
   shouldAbort?: () => boolean,
+  incremental?: IncrementalActivations, // nextToken: only the new positions
 ) {
   const tfBackend = tf.getBackend()
   const outputs = layers.map(({ tfLayer }) => getSingleOutput(tfLayer))
   await tf.ready()
-  // yields to the main thread during the forward pass (rendering, input), see getLayerActivationsAsync
-  const tensors = await getLayerActivationsAsync(model, sample.xTensor, outputs, { shouldAbort })
+  const tokens = typeof seqPos === "number" ? Array.from(sample.X.slice(0, seqPos + 1)) : undefined
+  const isIncremental = !!incremental && !!tokens
+  // full forward pass: yields to the main thread (rendering, input), see getLayerActivationsAsync
+  const tensors = isIncremental
+    ? incremental.update(tokens, outputs)
+    : await getLayerActivationsAsync(model, sample.xTensor, outputs, { shouldAbort })
   if (!tensors) return
+  const outputPos = isIncremental ? 0 : seqPos // incremental: the output only at seqPos already
   const activationTensors = tf.tidy(() =>
     tensors.map((t, i) =>
-      typeof seqPos === "number" && layers[i].layerPos === "output"
-        ? t.slice([0, seqPos, 0], [1, 1, -1]).reshape([1, -1]) // [1, seqLen, vocab] -> [1, vocab]
+      typeof outputPos === "number" && layers[i].layerPos === "output"
+        ? t.slice([0, outputPos, 0], [1, 1, -1]).reshape([1, -1]) // [1, seqLen, vocab] -> [1, vocab]
         : t,
     ),
   )
@@ -222,6 +237,17 @@ async function getActivations(
     return {}
   } finally {
     activationTensors?.forEach((t) => t?.dispose())
+  }
+}
+
+function createIncremental(model: tf.LayersModel, layers: NeuronLayer[]) {
+  try {
+    return new IncrementalActivations(
+      model,
+      layers.map(({ tfLayer }) => getSingleOutput(tfLayer)),
+    )
+  } catch {
+    return null // layers that mix positions, e.g. LSTM: full forward passes
   }
 }
 

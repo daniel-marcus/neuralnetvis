@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useMemo } from "react"
+import { memo, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three/webgpu"
 import { useSceneStore } from "@/store"
 import { useNeuronInteractions } from "./interactions"
@@ -84,6 +84,7 @@ export interface PosObj {
 // when output layer has more than 10 neurons, only the first 5 are shown
 const OUTPUT_TRUNC_THRESHOLD = 10
 const MAX_OUTPUT_NEURONS = 5
+const MAX_PARTIAL_UPDATES = 100 // instance matrices uploaded one by one, otherwise the whole buffer
 
 function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
   const { layerPos, meshParams, outputShape, hasColorChannels } = props
@@ -111,6 +112,16 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
     return new Map(top.map((neuronIdx, rank) => [neuronIdx, rank]))
   }, [layerActivations, shouldSort])
 
+  // sorted: the positions of the shown neurons + one for all hidden ones. Shared by the positions below, so that
+  // the layout effect can skip the neurons that didn't move
+  const slots = useMemo(() => {
+    if (!shouldSort) return
+    const numSlots = MAX_OUTPUT_NEURONS + 1
+    return Array.from({ length: numSlots }, (_, i) =>
+      getNeuronPos(i, layerPos, numSlots, w, c, spacedSize),
+    )
+  }, [shouldSort, layerPos, w, c, spacedSize])
+
   const positions: PosObj[] = useMemo(() => {
     const _h = shouldSort ? MAX_OUTPUT_NEURONS + 1 : h
     const arr = Array.from({ length: h * w * c })
@@ -122,22 +133,37 @@ function useNeuronPositions(props: NeuronLayer, meshRef: MeshRef) {
         sortedIdx = MAX_OUTPUT_NEURONS
         hiddenIdx++
       }
-      const pos = getNeuronPos(sortedIdx, layerPos, _h, w, c, spacedSize)
+      const pos = slots?.[sortedIdx] ?? getNeuronPos(sortedIdx, layerPos, _h, w, c, spacedSize)
       return { pos, isHidden, hiddenIdx }
     })
-  }, [layerPos, spacedSize, h, w, c, idxMap, shouldSort])
+  }, [layerPos, spacedSize, h, w, c, idxMap, shouldSort, slots])
 
   // has to be useLayoutEffect, otherwise raycasting probably won't work
+  // only the neurons that moved (new pos), e.g. output layer: the old and new top neurons (GPT-2: 10 of 50257)
+  const written = useRef<{ mesh?: THREE.InstancedMesh | null; positions: PosObj[] }>({
+    positions: [],
+  })
   useLayoutEffect(() => {
-    if (!meshRef.current) return
+    const mesh = meshRef.current
+    if (!mesh) return
+    const prev = written.current.mesh === mesh ? written.current.positions : []
+    const moved: number[] = []
     for (const [i, position] of positions.entries()) {
+      if (position.pos === prev[i]?.pos) continue
+      moved.push(i)
       tempObj.position.set(...position.pos)
       // if (position.isHidden) tempObj.scale.set(0, 0, 0)
       // else tempObj.scale.set(1, 1, 1)
       tempObj.updateMatrix()
-      meshRef.current?.setMatrixAt(i, tempObj.matrix)
+      mesh.setMatrixAt(i, tempObj.matrix)
     }
-    meshRef.current.instanceMatrix.needsUpdate = true
+    written.current = { mesh, positions }
+    if (!moved.length) return
+    // upload only the moved matrices (16 floats each), the whole buffer if many moved
+    if (moved.length <= MAX_PARTIAL_UPDATES) {
+      for (const i of moved) mesh.instanceMatrix.addUpdateRange(i * 16, 16)
+    }
+    mesh.instanceMatrix.needsUpdate = true
   }, [meshRef, tempObj, positions])
 
   // for measuring (useSize) & raycasting with the new layout. Not when only the ranking changes (output layer):

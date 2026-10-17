@@ -59,4 +59,16 @@ describe("sampleNextToken", () => {
   it("keeps at least the most likely token", () => {
     expect(sampleNextToken(probs, { temperature: 1, topP: 0.01, random: () => 0.99 })).toBe(1)
   })
+
+  it("finds the nucleus in a long tail of small probabilities", () => {
+    // token 0: 0.5, tokens 1..n: decreasing, together 0.5. The nucleus (0.9) needs the largest tail tokens
+    // that cover 0.4 = 80% of the tail: (1 - k/n)^2 = 0.2, k ≈ 0.553 n
+    const n = 10_000
+    const tail = Array.from({ length: n }, (_, i) => n - i)
+    const tailSum = tail.reduce((a, b) => a + b, 0)
+    const longTail = [0.5, ...tail.map((w) => (0.5 * w) / tailSum)]
+    const last = sampleNextToken(longTail, { temperature: 1, topP: 0.9, random: () => 0.99999 })
+    expect(last).toBeGreaterThan(0.54 * n)
+    expect(last).toBeLessThan(0.57 * n)
+  })
 })
