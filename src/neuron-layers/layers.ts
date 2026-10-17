@@ -60,7 +60,7 @@ function createLayers(model: tf.LayersModel, modelKey: string, options: LayerOpt
 
     const { outputShape, units } = getLayerShape(tfLayer, layerPos, task)
     const meshParams =
-      ["BatchNormalization", "RandomRotation", "Add"].includes(className) && !!prevLayer
+      ["BatchNormalization", "RandomRotation", "Add", "Multiply"].includes(className) && !!prevLayer
         ? prevLayer.meshParams
         : getMeshParams(tfLayer, layerPos, units)
     // Dense on sequences: the units are applied to every position

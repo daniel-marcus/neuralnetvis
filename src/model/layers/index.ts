@@ -17,6 +17,11 @@ import { Add } from "./add"
 import { MultiHeadAttention } from "./multi-head-attention"
 import { ReversibleEmbedding } from "./reversible-embedding"
 import { GlobalAveragePooling1D } from "./global-average-pooling1d"
+import { RMSNormalization } from "./rms-normalization"
+import { Multiply } from "./multiply"
+import { ZeroPadding1D } from "./zero-padding1d"
+import { DepthwiseConv1D } from "./depthwise-conv1d"
+import { RotaryGroupQueryAttention } from "./rotary-group-query-attention"
 import type { LayerConfigMap, LayerDef } from "./types"
 
 export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
@@ -39,6 +44,11 @@ export const layerDefMap: { [K in keyof LayerConfigMap]: LayerDef<K> } = {
   MultiHeadAttention,
   ReversibleEmbedding,
   GlobalAveragePooling1D,
+  RMSNormalization,
+  Multiply,
+  ZeroPadding1D,
+  DepthwiseConv1D,
+  RotaryGroupQueryAttention,
 }
 
 export function getLayerDef<T extends keyof LayerConfigMap>(

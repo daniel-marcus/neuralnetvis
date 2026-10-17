@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import * as tf from "@tensorflow/tfjs"
-import { adaptReversibleEmbedding, importKerasModel, parseModelObject } from "./import-keras"
+import {
+  adaptReversibleEmbedding,
+  camelCaseToSnakeCase,
+  importKerasModel,
+  parseModelObject,
+} from "./import-keras"
 // register the custom layers of the fixture. Not via ./layers: under Node, multi-head-attention.ts loads a 2nd copy
 // of tfjs-layers (ESM) that replaces the registered Dense class (see multi-head-attention.test.ts)
 import "./layers/position-embedding"
@@ -151,5 +156,22 @@ describe("importKerasModel with tied embeddings", () => {
     expect(probs.shape).toEqual([2, 6, 12])
     const maxDiff = probs.sub(tf.tensor(expected.probs)).abs().max().dataSync()[0]
     expect(maxDiff).toBeLessThan(1e-4)
+  })
+})
+
+describe("camelCaseToSnakeCase", () => {
+  it("should give the layer names of Keras' weight paths (to_snake_case)", () => {
+    const expected = {
+      MultiHeadAttention: "multi_head_attention",
+      RMSNormalization: "rms_normalization",
+      DepthwiseConv1D: "depthwise_conv1d",
+      DepthwiseConv2D: "depthwise_conv2d",
+      RotaryGroupQueryAttention: "rotary_group_query_attention",
+      ReLU: "re_lu",
+      Dense: "dense",
+    }
+    for (const [className, path] of Object.entries(expected)) {
+      expect(camelCaseToSnakeCase(className)).toBe(path)
+    }
   })
 })

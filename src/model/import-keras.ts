@@ -6,6 +6,16 @@ import { isDebug } from "@/store"
 // experimental import for .keras files from Keras 3
 
 const multiHeadAttentionPathNames = ["query_dense", "key_dense", "value_dense", "output_dense"]
+// sublayers of RotaryGroupQueryAttention (Keras' GroupQueryAttention + qk-norm, see ml-notebooks/lfm2.py),
+// one weight each (no biases), in the order of the tfjs layer's weights
+const groupQueryAttentionPathNames = [
+  "_query_dense",
+  "_key_dense",
+  "_value_dense",
+  "_output_dense",
+  "_query_norm",
+  "_key_norm",
+]
 
 export async function importKerasModel(file: File) {
   if (isDebug()) console.log("Importing keras model file:", file)
@@ -47,6 +57,8 @@ export async function importKerasModel(file: File) {
           const sublayerIdx = Math.floor(i / 2) // 2 weights per sublayer
           const sublayerName = multiHeadAttentionPathNames[sublayerIdx] // query_dense, key_dense, value_dense, output_dense
           weightPath = `/${sublayerName}/vars/${i % 2}` // 0 or 1 for kernel / bias
+        } else if (className === "rotary_group_query_attention") {
+          weightPath = `/${groupQueryAttentionPathNames[i]}/vars/0`
         } else if (className === "sequential") {
           const weightLayerVar = layer.weights[i]
           const sublayerName = weightLayerVar.originalName.split("/")[0] // e.g. "dense_1"
@@ -221,6 +233,11 @@ export function adaptReversibleEmbedding<T>(modelJson: T): T {
   return modelJson
 }
 
-function camelCaseToSnakeCase(str: string): string {
-  return str.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase()
+// as Keras' to_snake_case for the weight paths, e.g. "RMSNormalization" -> "rms_normalization",
+// "DepthwiseConv1D" -> "depthwise_conv1d"
+export function camelCaseToSnakeCase(str: string): string {
+  return str
+    .replace(/(.)([A-Z][a-z]+)/g, "$1_$2")
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLowerCase()
 }

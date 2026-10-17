@@ -22,6 +22,10 @@ import type { PositionEmbeddingLayerArgs } from "./position-embedding"
 import type { ReversibleEmbeddingLayerArgs } from "./reversible-embedding"
 import type { LayerArgs } from "@tensorflow/tfjs-layers/dist/engine/topology"
 import type { MultiHeadAttentionArgs } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
+import type { RMSNormalizationLayerArgs } from "./rms-normalization"
+import type { ZeroPadding1DLayerArgs } from "./zero-padding1d"
+import type { DepthwiseConv1DLayerArgs } from "./depthwise-conv1d"
+import type { RotaryGroupQueryAttentionArgs } from "./rotary-group-query-attention"
 
 // TODO: import from tfjs layers?
 export type LayerConfigMap = {
@@ -44,6 +48,11 @@ export type LayerConfigMap = {
   MultiHeadAttention: MultiHeadAttentionArgs
   ReversibleEmbedding: ReversibleEmbeddingLayerArgs
   GlobalAveragePooling1D: LayerArgs
+  RMSNormalization: RMSNormalizationLayerArgs
+  Multiply: LayerArgs
+  ZeroPadding1D: ZeroPadding1DLayerArgs
+  DepthwiseConv1D: DepthwiseConv1DLayerArgs
+  RotaryGroupQueryAttention: RotaryGroupQueryAttentionArgs
 }
 
 interface AddLayerArgs extends LayerArgs {

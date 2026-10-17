@@ -253,14 +253,8 @@ export function getProjections(layer: Layer) {
 // keys and values of all positions so far [B, N, S, H]
 export type CachedKeysValues = { key: tf.Tensor; value: tf.Tensor }
 
-// see Keras3MultiHeadAttentionLayer.attendWithCache
-export function attendWithCache(layer: Layer, x: tf.Tensor, cached?: CachedKeysValues) {
-  if (!(layer instanceof Keras3MultiHeadAttentionLayer)) throw new Error("Not an attention layer")
-  return layer.attendWithCache(x, cached)
-}
-
 // [T, S] added to the scores: 0 for the keys up to each query's position (offset + i), -1e9 for later ones
-function causalAdder(numQueries: number, offset: number) {
+export function causalAdder(numQueries: number, offset: number) {
   const allowed = tf.linalg.bandPart(tf.ones([numQueries, offset + numQueries]), -1, offset)
   return tf.scalar(1).sub(allowed).mul(-1e9)
 }

@@ -1,31 +1,50 @@
 import * as tf from "@tensorflow/tfjs"
 import { getExecutionOrder } from "./get-layer-activations"
-import { attendWithCache, type CachedKeysValues } from "./layers/multi-head-attention"
+import { ZeroPadding1DLayer } from "./layers/zero-padding1d"
+import type { CachedKeysValues } from "./layers/multi-head-attention"
 
-// decoder-only transformers (tweets, TinyStories, GPT-2): only the attention layers mix positions
+// decoder-only transformers (tweets, TinyStories, GPT-2, LFM2): only the attention layers and the causal
+// convolutions (ZeroPadding1D + DepthwiseConv1D) mix positions
 const SUPPORTED_LAYERS = new Set([
   "InputLayer",
   "Embedding",
   "ReversibleEmbedding",
   "PositionEmbedding",
   "MultiHeadAttention",
+  "RotaryGroupQueryAttention",
   "LayerNormalization",
+  "RMSNormalization",
   "Dense",
   "Dropout",
   "Activation",
   "Add",
+  "Multiply",
+  "ZeroPadding1D",
+  "DepthwiseConv1D",
 ])
+
+// MultiHeadAttention, RotaryGroupQueryAttention
+type CachedAttentionLayer = tf.layers.Layer & {
+  attendWithCache: (
+    x: tf.Tensor,
+    cached?: CachedKeysValues,
+  ) => CachedKeysValues & { output: tf.Tensor }
+}
+const isCachedAttention = (layer: tf.layers.Layer): layer is CachedAttentionLayer =>
+  typeof (layer as Partial<CachedAttentionLayer>).attendWithCache === "function"
 
 /**
  * Activations of the visualized layers for a growing text (autocomplete, typing at the end): only the new
  * positions are computed, the previous ones are kept. The attention layers cache the keys and values of all
- * positions so far (KV cache), the other layers compute each position on its own. An edited text starts over.
+ * positions so far (KV cache), the causal paddings of convolutions the last positions before the new ones,
+ * the other layers compute each position on its own. An edited text starts over.
  * Only the text's tokens are computed: padding positions are zeros (full forward pass: padding tokens).
  */
 export class IncrementalActivations {
   private tokens: number[] = []
   private rows = new Map<tf.SymbolicTensor, tf.Tensor>() // [1, L, ...]: the positions so far
   private cache = new Map<tf.layers.Layer, CachedKeysValues>() // per attention layer
+  private convInputs = new Map<tf.layers.Layer, tf.Tensor>() // per ZeroPadding1D: its last inputs [1, before, C]
   private order: tf.SymbolicTensor[]
   private isDisposed = false
 
@@ -34,7 +53,7 @@ export class IncrementalActivations {
     private outputs: tf.SymbolicTensor[], // all visualized layers
   ) {
     this.order = getExecutionOrder(model.outputs)
-    const unsupported = this.order.find((t) => !SUPPORTED_LAYERS.has(t.sourceLayer.getClassName()))
+    const unsupported = this.order.find((t) => !isSupported(t))
     if (unsupported) throw new Error(`${unsupported.sourceLayer.getClassName()} not supported`)
   }
 
@@ -86,11 +105,12 @@ export class IncrementalActivations {
         const layer = symbolic.sourceLayer
         const inputs = symbolic.inputs.map((t) => values.get(t)!)
         const className = layer.getClassName()
-        const output =
-          className === "MultiHeadAttention"
-            ? this.attend(layer, inputs[0])
-            : className === "PositionEmbedding"
-              ? layer.apply(inputs, { startIndex: offset })
+        const output = isCachedAttention(layer)
+          ? this.attend(layer, inputs[0])
+          : className === "PositionEmbedding"
+            ? layer.apply(inputs, { startIndex: offset })
+            : layer instanceof ZeroPadding1DLayer
+              ? this.padCausal(layer, inputs[0])
               : layer.apply(inputs)
         values.set(symbolic, output as tf.Tensor)
       }
@@ -98,12 +118,23 @@ export class IncrementalActivations {
     })
   }
 
-  private attend(layer: tf.layers.Layer, x: tf.Tensor) {
+  private attend(layer: CachedAttentionLayer, x: tf.Tensor) {
     const prev = this.cache.get(layer)
-    const { output, key, value } = attendWithCache(layer, x, prev)
+    const { output, key, value } = layer.attendWithCache(x, prev)
     this.cache.set(layer, { key: tf.keep(key), value: tf.keep(value) })
     if (prev) tf.dispose([prev.key, prev.value])
     return output
+  }
+
+  // causal padding [before, 0] of the new positions x [1, T, C]: the inputs of the previous positions instead of
+  // zeros (at the start of the text: zeros), so that the following DepthwiseConv1D (valid) computes the new ones
+  private padCausal(layer: ZeroPadding1DLayer, x: tf.Tensor) {
+    const [before] = layer.padding
+    const prev = this.convInputs.get(layer) ?? tf.zeros([1, before, x.shape[2]!])
+    const padded = tf.concat([prev, x], 1)
+    this.convInputs.set(layer, tf.keep(padded.slice([0, padded.shape[1]! - before], [1, before])))
+    prev.dispose()
+    return padded
   }
 
   reset() {
@@ -111,6 +142,8 @@ export class IncrementalActivations {
     this.rows.clear()
     for (const { key, value } of this.cache.values()) tf.dispose([key, value])
     this.cache.clear()
+    tf.dispose([...this.convInputs.values()])
+    this.convInputs.clear()
     this.tokens = []
   }
 
@@ -118,4 +151,15 @@ export class IncrementalActivations {
     this.reset()
     this.isDisposed = true
   }
+}
+
+// convolutions only after a causal padding (kernelSize - 1 before, none after), see padCausal
+function isSupported({ sourceLayer: layer, inputs }: tf.SymbolicTensor) {
+  const className = layer.getClassName()
+  if (!SUPPORTED_LAYERS.has(className)) return false
+  if (layer instanceof ZeroPadding1DLayer) return layer.padding[1] === 0
+  if (className !== "DepthwiseConv1D") return true
+  const padding = inputs[0]?.sourceLayer
+  const { kernelSize } = layer as tf.layers.Layer & { kernelSize: number }
+  return padding instanceof ZeroPadding1DLayer && padding.padding[0] === kernelSize - 1
 }
