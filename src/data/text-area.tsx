@@ -6,6 +6,7 @@ import { getSeqPosition, sampleNextToken } from "./next-token"
 import { InputArea } from "./input-area"
 import { addTextSample } from "./dataset"
 import { isLoraDs } from "@/model/lora/training"
+import { matchesKeys } from "@/utils/key-command"
 import type { Dataset, SampleRaw } from "./types"
 
 export const TextArea = ({ title = "" }) => {
@@ -66,17 +67,23 @@ export const TextArea = ({ title = "" }) => {
     textareaRef.current?.focus()
   }
 
+  const canSaveForTraining = isLoraDs(ds)
+  const saveForTraining = useSaveForTraining(text, clearAndFocus)
+
   const canAutocomplete = ds?.task === "nextToken" && !!probs
   const toggleAutocomplete = () => setIsAutocompleting((v) => !v)
-  // Enter: autocomplete (Shift+Enter: new line), Esc: clear
+  // Enter: autocomplete (Shift+Enter: new line), Esc: clear, cmd+s: save
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.nativeEvent.isComposing) return // e.g. confirming an IME candidate
-    if (e.key === "Enter" && !e.shiftKey && canAutocomplete) {
+    if (matchesKeys(e, KEYS.autocomplete) && canAutocomplete) {
       e.preventDefault()
       toggleAutocomplete()
-    } else if (e.key === "Escape") {
+    } else if (matchesKeys(e, KEYS.clear)) {
       e.preventDefault()
       handleInput("")
+    } else if (matchesKeys(e, KEYS.save) && canSaveForTraining) {
+      e.preventDefault() // also if nothing to save: no browser save dialog
+      if (!saveForTraining.disabled) saveForTraining.save()
     }
   }
 
@@ -88,10 +95,24 @@ export const TextArea = ({ title = "" }) => {
           <Button onClick={() => handleInput("")} variant="secondary">
             clear
           </Button>
-          {isLoraDs(ds) && <SaveForTrainingButton text={text} onSaved={clearAndFocus} />}
+          {canSaveForTraining && (
+            <Button
+              onClick={saveForTraining.save}
+              variant="secondary"
+              disabled={saveForTraining.disabled}
+              title="Save as training data"
+              keyHint={KEYS.save}
+            >
+              save
+            </Button>
+          )}
           {ds?.task === "nextToken" && (
-            <Button onClick={toggleAutocomplete} disabled={!canAutocomplete}>
-              {isAutocompleting ? "stop" : "autocomplete"}
+            <Button
+              onClick={toggleAutocomplete}
+              disabled={!canAutocomplete}
+              keyHint={KEYS.autocomplete}
+            >
+              {isAutocompleting ? "stop" : "complete"}
             </Button>
           )}
         </>
@@ -121,7 +142,7 @@ export const TextArea = ({ title = "" }) => {
 }
 
 // LoRA: saves the text as training sample (see model/lora)
-function SaveForTrainingButton({ text, onSaved }: { text: string; onSaved: () => void }) {
+function useSaveForTraining(text: string, onSaved: () => void) {
   const ds = useSceneStore((s) => s.ds)
   const updateMeta = useSceneStore((s) => s.updateMeta)
   const isTraining = useSceneStore((s) => s.isTraining)
@@ -138,19 +159,13 @@ function SaveForTrainingButton({ text, onSaved }: { text: string; onSaved: () =>
       setIsSaving(false)
     }
   }
-  return (
-    <Button
-      onClick={save}
-      variant="secondary"
-      disabled={!text.trim() || isTraining || isSaving}
-      title="Save as training data"
-    >
-      save
-    </Button>
-  )
+  return { save, disabled: !text.trim() || isTraining || isSaving }
 }
 
 const SAVE_STATUS_ID = "save_training_sample"
+
+// while typing in the textarea (see handleKeyDown), shown as hints on the buttons (except clear: space)
+const KEYS = { autocomplete: "Enter", clear: "Escape", save: "mod+s" }
 
 const INPUT_THROTTLE = 0 // ms, min. time between sample updates (typing, suggestions, autocomplete)
 const NUM_SUGGESTIONS = 5

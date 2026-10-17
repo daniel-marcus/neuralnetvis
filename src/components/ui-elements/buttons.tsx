@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { MouseEventHandler, ReactNode } from "react"
+import { useKeysLabel } from "@/utils/key-command"
 
 interface ButtonProps {
   href?: string
@@ -10,6 +11,7 @@ interface ButtonProps {
   variant?: "primary" | "secondary" | "transparent" | "chip" // chip: options inside a box, e.g. suggestions
   className?: string
   title?: string // native tooltip
+  keyHint?: string // shown only, the caller handles the keys, e.g. "mod+s" (see matchesKeys)
 }
 
 export const Button = ({
@@ -21,26 +23,29 @@ export const Button = ({
   variant = "primary",
   className = "",
   title,
+  keyHint,
 }: ButtonProps) => {
   const Comp = href ? Link : "button"
+  const keysLabel = useKeysLabel(keyHint)
   return (
     <Comp
       href={href as string}
       className={`px-2 h-6.5 border ${
         variant === "primary"
-          ? "border-transparent bg-accent text-white disabled:brightness-50 active:bg-accent-hover"
+          ? "border-transparent bg-accent text-white active:bg-accent-hover"
           : variant === "secondary"
             ? "border-transparent bg-secondary active:text-white"
             : variant === "chip"
               ? "border-menu-border hover:text-white hover:border-accent active:text-white"
               : "border-transparent hover:text-white active:text-white"
-      } rounded-btn ${className}`}
+      } rounded-btn disabled:brightness-50 ${className}`}
       onClick={onClick}
       disabled={disabled}
       type={type}
-      title={title}
+      title={title && keysLabel ? `${title} (${keysLabel})` : title}
     >
       {children}
+      {keysLabel && <span className="opacity-50 pointer-coarse:hidden">&nbsp;{keysLabel}</span>}
     </Comp>
   )
 }

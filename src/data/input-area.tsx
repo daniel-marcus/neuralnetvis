@@ -30,7 +30,7 @@ export const InputArea = ({ title, buttons, children, autoHide = true }: InputAr
       {!!title && <div>{title}</div>}
       {children}
       {!!buttons && (
-        <div className="flex justify-end gap-2 opacity-0 transition-opacity duration-300 group-data-intro/input-area:opacity-100 group-hover/input-area:opacity-100 group-has-[textarea:focus]/input-area:opacity-100 [@media(hover:none)]:group-focus-within/input-area:opacity-100">
+        <div className="flex flex-wrap justify-end gap-2 opacity-0 transition-opacity duration-300 group-data-intro/input-area:opacity-100 group-hover/input-area:opacity-100 group-has-[textarea:focus]/input-area:opacity-100 [@media(hover:none)]:group-focus-within/input-area:opacity-100">
           {buttons}
         </div>
       )}
