@@ -11,6 +11,7 @@ import { quickDraw } from "./quickdraw"
 import { tweets } from "./tweets"
 import { tinyStories } from "./tinystories"
 import { gpt2 } from "./gpt2"
+import { lfm2 } from "./lfm2"
 import type { DatasetDef } from "@/data/types"
 
 export const datasets: DatasetDef[] = [
@@ -28,4 +29,5 @@ export const datasets: DatasetDef[] = [
   tweets,
   tinyStories,
   gpt2,
+  lfm2,
 ] as const

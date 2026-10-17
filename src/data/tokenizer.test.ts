@@ -208,3 +208,59 @@ describe("Gpt2Tokenizer", () => {
     expect(Array.from(tokenizer.encode(tokenizer.decodeText(tokens), 32))).toEqual(tokens)
   })
 })
+
+describe("Lfm2ChatTokenizer", () => {
+  const tokenizer = new tokenizers.Lfm2ChatTokenizer()
+
+  beforeAll(async () => {
+    await tokenizer.init()
+  })
+
+  const conversation =
+    "Hi, I'm Anna.\n\n🤖 Nice to meet you, Anna!\n\n👤 Schreib ein Haiku über eine Grafikkarte.\n\n🤖 "
+
+  it("encode should give the chat template's tokens of the Hugging Face tokenizer in lfm2.py", () => {
+    // tokenizer.apply_chat_template(messages, add_generation_prompt=True), see chat_template.jinja
+    const expected = {
+      // <|startoftext|><|im_start|>user\nWhat is a neural network?<|im_end|>\n<|im_start|>assistant\n
+      "What is a neural network?\n\n🤖 ": [
+        1, 6, 6423, 708, 3493, 856, 768, 16898, 3998, 540, 7, 708, 6, 64015, 708,
+      ],
+      [conversation]: [
+        1, 6, 6423, 708, 42120, 521, 859, 6217, 15640, 523, 7, 708, 6, 64015, 708, 555, 1139, 811,
+        4159, 1010, 521, 15640, 510, 7, 708, 6, 6423, 708, 7936, 13676, 1503, 8446, 24919, 3511,
+        2690, 21145, 1055, 56134, 523, 7, 708, 6, 64015, 708,
+      ],
+    }
+    for (const [text, tokens] of Object.entries(expected)) {
+      expect(Array.from(tokenizer.encode(text)), text).toEqual(tokens)
+    }
+  })
+
+  it("encode should pad with <|pad|>, <END> should be <|im_end|>", () => {
+    const { "<PAD>": pad, "<START>": start, "<END>": end } = tokenizer.encodeDict
+    expect([pad, start, end]).toEqual([0, 1, 7])
+    expect(tokenizer.decode(end)).toBe("<|im_end|>")
+    expect(Array.from(tokenizer.encode("Hi", 8))).toEqual([1, 6, 6423, 708, 42120, 0, 0, 0])
+  })
+
+  it("decodeText should return the conversation as in the text area", () => {
+    const tokens = Array.from(tokenizer.encode(conversation, 64))
+    expect(tokenizer.decodeText(tokens)).toBe(conversation)
+    expect(Array.from(tokenizer.encode(tokenizer.decodeText(tokens), 64))).toEqual(tokens)
+  })
+
+  it("should start the answer before the completion and the next message after it", () => {
+    expect(tokenizer.startCompletion("Hi ")).toBe("Hi\n\n🤖 ")
+    expect(tokenizer.startCompletion("Hi\n\n🤖 Hel")).toBe("Hi\n\n🤖 Hel") // unfinished answer
+    expect(tokenizer.startCompletion("Hi\n\n🤖 Hello!\n\n👤 Bye")).toBe(
+      "Hi\n\n🤖 Hello!\n\n👤 Bye\n\n🤖 ",
+    )
+    expect(tokenizer.endCompletion("Hi\n\n🤖 Hello!")).toBe("Hi\n\n🤖 Hello!\n\n👤 ")
+  })
+
+  it("should have a label for every output of the model (65536 embedding rows)", () => {
+    expect(Object.keys(tokenizer.decodeDict)).toHaveLength(65536)
+    expect(tokenizer.decodeDict[65535]).toBe("")
+  })
+})

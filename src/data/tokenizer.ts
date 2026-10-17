@@ -13,6 +13,10 @@ export interface TokenizerType {
   decodeDict: DecodeDict
   init?: () => Promise<void>
   normalize: (rawText: string) => string
+  // chat models: before the model completes the text, e.g. ends the user's message and starts the answer
+  startCompletion?: (text: string) => string
+  // chat models: after the model ended the text with <END>, e.g. starts the next message of the user
+  endCompletion?: (text: string) => string
 }
 
 class Tokenizer implements TokenizerType {
@@ -145,16 +149,11 @@ class TweetsTokenizer extends WordTokenizer {
 class HuggingFaceTokenizer extends Tokenizer {
   protected path = "" // tokenizer.json
   protected prefix = "" // added before each text, as in the training data
-  private hfTokenizer?: HFTokenizer
+  protected hfTokenizer?: HFTokenizer
   private endToken = 0
 
   async init() {
-    const [{ Tokenizer: HFTokenizer }, tokenizerJson] = await Promise.all([
-      import("@huggingface/tokenizers"),
-      fetch(this.path).then((res) => res.json()),
-    ])
-    this.hfTokenizer = new HFTokenizer(tokenizerJson, {})
-    const vocab = Object.fromEntries(this.hfTokenizer.get_vocab(true)) as EncodeDict
+    const vocab = await this.load()
     this.endToken = vocab["<|endoftext|>"]
     const end = this.endToken
     this.encodeDict = { ...vocab, "<PAD>": end, "<START>": end, "<END>": end }
@@ -189,7 +188,17 @@ class HuggingFaceTokenizer extends Tokenizer {
     return rawText.replaceAll("\r\n", "\n")
   }
 
-  private decodeIds(ids: number[]): string {
+  // the vocabulary incl. special tokens
+  protected async load() {
+    const [{ Tokenizer: HFTokenizer }, tokenizerJson] = await Promise.all([
+      import("@huggingface/tokenizers"),
+      fetch(this.path).then((res) => res.json()),
+    ])
+    this.hfTokenizer = new HFTokenizer(tokenizerJson, {})
+    return Object.fromEntries(this.hfTokenizer.get_vocab(true)) as EncodeDict
+  }
+
+  protected decodeIds(ids: number[]): string {
     // no clean up: would remove spaces before punctuation, e.g. " ," -> ","
     return this.hfTokenizer?.decode(ids, { clean_up_tokenization_spaces: false }) ?? ""
   }
@@ -205,6 +214,72 @@ class TinyStoriesTokenizer extends HuggingFaceTokenizer {
 // GPT-2 with the original tokenizer.json (<|endoftext|> = 50256), see ml-notebooks/gpt2.py
 class Gpt2Tokenizer extends HuggingFaceTokenizer {
   protected path = "/models/gpt2/tokenizer.json"
+}
+
+// Chat models with the ChatML template (LFM2.5, see ml-notebooks/lfm2.py). The text area shows the conversation
+// as plain text: the user's first message, then the answer after ANSWER_MARK, the next message after MESSAGE_MARK
+// etc. encode() builds the template, as chat_template.jinja (without system prompt and tools):
+// <|startoftext|><|im_start|>user\n{message}<|im_end|>\n<|im_start|>assistant\n{answer}<|im_end|>\n<|im_start|>user\n...
+// The model ends its answers with <|im_end|> (<END>), padding: <|pad|>
+class Lfm2ChatTokenizer extends HuggingFaceTokenizer {
+  protected path = "/models/lfm2.5-350m/tokenizer.json"
+  private static readonly ANSWER_MARK = "\n\n🤖 "
+  private static readonly MESSAGE_MARK = "\n\n👤 "
+  private static readonly START = "<|startoftext|><|im_start|>user\n"
+  private static readonly ANSWER = "<|im_end|>\n<|im_start|>assistant\n"
+  private static readonly MESSAGE = "<|im_end|>\n<|im_start|>user\n"
+  private static readonly VOCAB_SIZE = 65536 // embedding rows of the model: unused ids after the 64402 tokens
+  private padToken = 0
+
+  async init() {
+    const vocab = await this.load()
+    this.padToken = vocab["<|pad|>"]
+    const [start, end] = [vocab["<|startoftext|>"], vocab["<|im_end|>"]]
+    this.encodeDict = { ...vocab, "<PAD>": this.padToken, "<START>": start, "<END>": end }
+    // the output layer has a neuron for every embedding row, see getVocabulary in dataset.ts
+    const unused = Array.from({ length: Lfm2ChatTokenizer.VOCAB_SIZE }, (_, id) => [id, ""])
+    this.decodeDict = { ...Object.fromEntries(unused), ...this._reverse(vocab) }
+  }
+
+  public encode(rawText: string, length?: number): Int32Array {
+    const C = Lfm2ChatTokenizer
+    const chat = this.normalize(rawText)
+      .replaceAll(C.ANSWER_MARK, C.ANSWER)
+      .replaceAll(C.MESSAGE_MARK, C.MESSAGE)
+    // special tokens in the text (e.g. <|im_end|>) are encoded as such
+    const ids = this.hfTokenizer?.encode(C.START + chat, { add_special_tokens: false }).ids ?? []
+    const encoded = new Int32Array(length ?? ids.length).fill(this.padToken)
+    encoded.set(ids.slice(0, encoded.length))
+    return encoded
+  }
+
+  public decode(token: number): string {
+    return this.decodeIds([token])
+  }
+
+  public decodeText(tokens: ArrayLike<number>): string {
+    const C = Lfm2ChatTokenizer
+    const chat = this.decodeIds(Array.from(tokens).filter((t) => t !== this.padToken))
+    return (chat.startsWith(C.START) ? chat.slice(C.START.length) : chat)
+      .replaceAll(C.ANSWER, C.ANSWER_MARK)
+      .replaceAll(C.MESSAGE, C.MESSAGE_MARK)
+  }
+
+  public append(text: string, token: number): string {
+    return text + this.decode(token)
+  }
+
+  // the answer to the user's last message (or the rest of an unfinished answer)
+  public startCompletion(text: string): string {
+    const { ANSWER_MARK, MESSAGE_MARK } = Lfm2ChatTokenizer
+    const isAnswer = text.lastIndexOf(ANSWER_MARK) > text.lastIndexOf(MESSAGE_MARK)
+    return isAnswer ? text : text.trimEnd() + ANSWER_MARK
+  }
+
+  // ready for the next message
+  public endCompletion(text: string): string {
+    return text.trimEnd() + Lfm2ChatTokenizer.MESSAGE_MARK
+  }
 }
 
 class ShakespeareTokenizer extends Tokenizer {
@@ -223,6 +298,7 @@ export const tokenizers = {
   TweetsTokenizer,
   TinyStoriesTokenizer,
   Gpt2Tokenizer,
+  Lfm2ChatTokenizer,
   ShakespeareTokenizer,
 } as const
 

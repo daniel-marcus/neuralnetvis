@@ -50,7 +50,7 @@ export const TextArea = ({ title = "" }) => {
   const appendToken = (token: number) => {
     if (ds?.tokenizer) handleChange(ds.tokenizer.append(text, token))
   }
-  useAutocomplete(isAutocompleting, setIsAutocompleting, text, probs, appendToken)
+  useAutocomplete(isAutocompleting, setIsAutocompleting, text, probs, appendToken, handleChange)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     // autocomplete: keep the newest words in view (runs after each appended word)
@@ -202,24 +202,33 @@ function useNextWordSuggestions(probs?: Float32Array) {
 }
 
 // nextToken: appends sampled words until <END> or the max. length is reached. Each new word changes the
-// sample, the model computes the activations (visualized) and the probabilities for the next word
+// sample, the model computes the activations (visualized) and the probabilities for the next word.
+// Chat models: the tokenizer adapts the text before and after (e.g. starts the answer, see Lfm2ChatTokenizer)
 function useAutocomplete(
   isAutocompleting: boolean,
   setIsAutocompleting: (value: boolean) => void,
   text: string,
   probs: Float32Array | undefined,
   appendToken: (token: number) => void,
+  setText: (text: string) => void,
 ) {
   const ds = useSceneStore((s) => s.ds)
-  const latest = useRef({ text, appendToken }) // not as effect deps: re-renders would restart the delay
+  // not as effect deps: re-renders would restart the delay
+  const dsTokenizer = ds?.tokenizer
+  const latest = useRef({ text, probs, appendToken, setText, tokenizer: dsTokenizer })
   useEffect(() => {
-    latest.current = { text, appendToken }
+    latest.current = { text, probs, appendToken, setText, tokenizer: dsTokenizer }
   })
   const usedProbs = useRef<Float32Array>(undefined) // each prediction is used only once
   const stats = useRef({ numTokens: 0, firstTokenTime: 0, lastTokenTime: 0, contextUsed: 0 })
   useEffect(() => {
     if (!isAutocompleting) return
-    usedProbs.current = undefined // (re)start with the current prediction
+    const current = latest.current
+    const startText = current.tokenizer?.startCompletion?.(current.text) ?? current.text
+    const isChanged = startText !== current.text
+    if (isChanged) current.setText(startText)
+    // (re)start with the current prediction, for a changed text: with the next one
+    usedProbs.current = isChanged ? current.probs : undefined
     stats.current = { numTokens: 0, firstTokenTime: 0, lastTokenTime: 0, contextUsed: 0 }
     return () => {
       // stopped (or unmounted): keep the final stats, expiring
@@ -243,8 +252,12 @@ function useAutocomplete(
       })
       const seqLen = ds.inputDims[0]
       const seqPos = getSeqPosition(tokenizer.encode(latest.current.text, seqLen), tokenizer)
-      if (token === end || seqPos >= seqLen - 1) setIsAutocompleting(false)
-      else {
+      if (token === end || seqPos >= seqLen - 1) {
+        setIsAutocompleting(false)
+        const current = latest.current
+        if (token === end && tokenizer.endCompletion)
+          current.setText(tokenizer.endCompletion(current.text))
+      } else {
         latest.current.appendToken(token)
         const { current } = stats
         current.numTokens++

@@ -106,6 +106,18 @@ const models = defineModels({
       mapper: "gpt2",
     },
   },
+  "lfm2.5-350m": {
+    key: "lfm2.5-350m",
+    name: "LFM2.5-350M",
+    path: "/models/lfm2.5-350m/model.json", // see ml-notebooks/lfm2.py
+    version: "1.0",
+    sourceUrl: "https://huggingface.co/LiquidAI/LFM2.5-350M",
+    lazyLoadWeights: true,
+    safetensors: {
+      url: "https://huggingface.co/LiquidAI/LFM2.5-350M/resolve/9e6c6ccf47cd318696e137d381a7ded8fe4df09f/model.safetensors",
+      mapper: "lfm2",
+    },
+  },
 })
 
 export type ModelKey = keyof typeof models

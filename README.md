@@ -35,6 +35,7 @@ The app comes with a pretrained model for each of the above-mentioned datasets. 
 - [MobileNetV2](https://keras.io/api/applications/mobilenet/#mobilenetv2-function): Google's MobileNetV2 for image classification, trained on ImageNet data (224x224x3)
 - [TinyStories-3M](https://huggingface.co/roneneldan/TinyStories-3M): GPT-Neo model trained on TinyStories, converted with a smaller vocabulary (10,247 tokens)
 - [GPT-2](https://huggingface.co/openai-community/gpt2): OpenAI's GPT-2 small (124M parameters) for next token prediction on any text you type (no dataset). The weights (548 MB) are loaded from Hugging Face (`model.safetensors`) and mapped to the tfjs model in the browser
+- [LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M): Liquid AI's small chat model (354M parameters, short convolutions and grouped query attention) for chats in the text area (no dataset). The weights (709 MB, bfloat16) are loaded from Hugging Face and mapped to the tfjs model in the browser ([LFM Open License](https://huggingface.co/LiquidAI/LFM2.5-350M/blob/main/LICENSE))
 
 ### Model Import (experimental)
 
