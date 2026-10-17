@@ -88,7 +88,7 @@ export async function getLayerActivationsAsync(
 }
 
 // SymbolicTensors in topological order: each one after the inputs of the node that computes it
-function getExecutionOrder(outputs: tf.SymbolicTensor[]) {
+export function getExecutionOrder(outputs: tf.SymbolicTensor[]) {
   const sorted: tf.SymbolicTensor[] = []
   const visited = new Set<tf.SymbolicTensor>()
   const visit = (t: tf.SymbolicTensor) => {
