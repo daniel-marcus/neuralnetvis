@@ -93,7 +93,7 @@
     "patch-package": "^8.0.1",
     "postcss": "^8.5.32",
     "puppeteer": "^25.16.0",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "^6.0.3",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
