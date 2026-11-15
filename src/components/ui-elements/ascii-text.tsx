@@ -24,9 +24,7 @@ function getFigletText(input: string) {
 }
 
 export function getAsciiText(input: string) {
-  return getFigletText(input)
-    .replace(/[░▒]/g, " ")
-    .replace(/^.{2}/gm, "")
+  return getFigletText(input).replace(/[░▒]/g, " ").replace(/^.{2}/gm, "")
 }
 
 // the blur that getAsciiText strips: starts 2 columns further left
