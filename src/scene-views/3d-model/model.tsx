@@ -69,8 +69,9 @@ function useMountedLayers(layers: NeuronLayer[]) {
 
   return useMemo(() => {
     if (numMounted >= numHidden) return layers
-    let hiddenIdx = 0
-    return layers.filter((l) => l.layerPos !== "hidden" || hiddenIdx++ < numMounted)
+    const hidden = layers.filter((l) => l.layerPos === "hidden")
+    const mountedHidden = new Set(hidden.slice(0, numMounted))
+    return layers.filter((l) => l.layerPos !== "hidden" || mountedHidden.has(l))
   }, [layers, numMounted, numHidden])
 }
 
