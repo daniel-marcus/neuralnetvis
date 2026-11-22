@@ -53,7 +53,7 @@
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@tensorflow/tfjs-layers": "^4.22.0",
     "@use-gesture/react": "^10.3.1",
-    "figlet": "^1.12.0",
+    "figlet": "^1.13.0",
     "idb": "^8.0.4",
     "jsfive": "^0.4.2",
     "jszip": "^3.10.2",
@@ -95,7 +95,7 @@
     "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",
     "vite": "^8.3.8",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "packageManager": "pnpm@12.21.0",
   "postcss": {
