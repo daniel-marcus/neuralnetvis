@@ -185,8 +185,8 @@ importers:
         specifier: ^9.4.1
         version: 9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@loaders.gl/core@4.5.5)(@luma.gl/core@9.4.2)(@luma.gl/engine@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2)))
       '@deck.gl/react':
-        specifier: ^9.4.1
-        version: 9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@deck.gl/widgets@9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@luma.gl/core@9.4.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^9.4.2
+        version: 9.4.2(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@deck.gl/widgets@9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@luma.gl/core@9.4.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@huggingface/tokenizers':
         specifier: ^0.2.0
         version: 0.2.0
@@ -400,8 +400,8 @@ packages:
       '@luma.gl/core': ~9.4.0
       '@luma.gl/engine': ~9.4.0
 
-  '@deck.gl/react@9.4.1':
-    resolution: {integrity: sha512-mq7TKuC7+A4zHHTff4GxqBmSe5UCUoiwJ3jYMhDfBv4jFze3r6nCqVyWuLOP2XmYERNwkUc2XP8E7LkBGY+cdg==}
+  '@deck.gl/react@9.4.2':
+    resolution: {integrity: sha512-rP3tdqH1NGYDUxAvv00yGGXAMBJR0eZyq/wKwJd9BWw7FsaSKquwkE1ZCiuj/+igEl7+qjJ5e95WV2gYEUMmbA==}
     peerDependencies:
       '@deck.gl/core': ~9.4.0
       '@deck.gl/widgets': ~9.4.0
@@ -3287,7 +3287,7 @@ snapshots:
       '@types/geojson': 7946.0.16
       earcut: 2.2.4
 
-  '@deck.gl/react@9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@deck.gl/widgets@9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@luma.gl/core@9.4.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@deck.gl/react@9.4.2(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@deck.gl/widgets@9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@luma.gl/core@9.4.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@deck.gl/core': 9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2)))
       '@deck.gl/widgets': 9.4.1(@deck.gl/core@9.4.1(@luma.gl/webgpu@9.4.2(@luma.gl/core@9.4.2)(@luma.gl/shadertools@9.4.2(@luma.gl/core@9.4.2))))(@luma.gl/core@9.4.2)
